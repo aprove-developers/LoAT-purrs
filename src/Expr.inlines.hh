@@ -365,6 +365,11 @@ Expr::primpart(const Symbol& x) const {
 }
 
 inline Expr
+Expr::content(const Symbol& x) const {
+  return Base::content(x.s);
+}
+
+inline Expr
 Expr::numerator() const {
   return Base::numer();
 }

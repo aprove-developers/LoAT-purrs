@@ -126,7 +126,7 @@ Expr factorial(const Expr& x);
 // FIXME: what is a polynomial in a variable `x'?
 // The answer is necessary for the function quo(), rem(), prem(), gcd(),
 // lcm(), degree(), ldegree(), coeff(), lcoeff(), tcoeff(), expand(),
-// collect() and primpart(). 
+// collect(), primpart() and content(). 
 
 //! \brief
 //! Computes the quotient \f$ q(x) \f$ of polynomials \f$ a(x) \f$ and
@@ -531,12 +531,14 @@ public:
   Expr tcoeff(const Symbol& x) const;
 
   //! \brief
-  //! Returns the primitive polynomial of a multivariate polynomial in
+  //! Computes the primitive part of a multivariate polynomial in
   //! \f$ Z[x] \f$ with respect to \p x.
   /*!
-    By definition, a polynomial which generates all elements of an
-    extension field from a base field is called a
-    <EM>primitive polynomial</EM>.
+    By definition, <EM>primitive part</EM> of polynomial \f$ f \f$ is
+    a polynomial \f$ g \f$ whose coefficients are relatively prime such
+    that \f$ f = r * g \f$ for some element \f$ r \f$ of the coefficient
+    ring.
+    The product of content part and primitive part is the polynomial itself.
 
     \exception std::out_of_range     thrown if there is at least one exponent
                                      of the powers with base equal to \p x not
@@ -545,6 +547,17 @@ public:
     \exception std::invalid_argument thrown if VEDI TEST primpart.cc
   */
   Expr primpart(const Symbol& x) const;
+
+  //! \brief
+  //! Computes content part of a multivariate polynomial in \f$ Z[x]
+  //! \f$ with respect to \p x.
+  /*!
+    By definition, <EM>content part</EM> of polynomial is the greatest
+    common divisor of its coefficients.
+    The product of content part and primitive part is the polynomial itself.
+    // FIXME: rivedere eccezioni.
+  */
+  Expr content(const Symbol& x) const;
 
   //! Returns numerator of \p *this.
   /*!
