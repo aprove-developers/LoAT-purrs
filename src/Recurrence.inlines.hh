@@ -116,6 +116,7 @@ Recurrence::~Recurrence() {
 inline void
 Recurrence::replace_recurrence(const Expr& e) {
   recurrence_rhs = e;
+  classifier_status_ = NOT_CLASSIFIED_YET;
 }
 
 inline void
