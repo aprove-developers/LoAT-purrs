@@ -40,6 +40,7 @@ Recurrence::Recurrence()
     come_from_non_linear_rec(false),
     inhomogeneous_term(0),
     type_(ORDER_ZERO),
+    is_classified(false),
     finite_order_p(0),
     functional_eq_p(0),
     non_linear_p(0),
@@ -55,6 +56,7 @@ Recurrence::Recurrence(const Expr& e)
     come_from_non_linear_rec(false),
     inhomogeneous_term(0),
     type_(ORDER_ZERO),
+    is_classified(false),
     finite_order_p(0),
     functional_eq_p(0),
     non_linear_p(0),
@@ -71,6 +73,7 @@ Recurrence::Recurrence(const Recurrence& y)
     inhomogeneous_term(y.inhomogeneous_term),
     system_rhs(y.system_rhs),
     type_(y.type_),
+    is_classified(y.is_classified),
     finite_order_p(y.finite_order_p),
     functional_eq_p(y.functional_eq_p),    
     non_linear_p(y.non_linear_p),
@@ -98,6 +101,7 @@ Recurrence::operator=(const Recurrence& y) {
   inhomogeneous_term = y.inhomogeneous_term;
   system_rhs = y.system_rhs;
   type_ = y.type_;
+  is_classified = y.is_classified;
   finite_order_p = y.finite_order_p;
   functional_eq_p = y.functional_eq_p;
   non_linear_p = y.non_linear_p;

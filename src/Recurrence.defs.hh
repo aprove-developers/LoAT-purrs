@@ -388,6 +388,12 @@ private:
   };
 
   mutable Type type_;
+
+  //! \brief
+  //! It is <CODE>true</CODE> if the recurrence already it has been
+  //! classified; it is <CODE>false</CODE> otherwise.
+  mutable bool is_classified;
+
   mutable Finite_Order_Info* finite_order_p;
   mutable Functional_Equation_Info* functional_eq_p;
   mutable Non_Linear_Info* non_linear_p;
