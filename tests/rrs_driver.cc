@@ -60,7 +60,7 @@ static struct option long_options[] = {
   // FIXME: Option -m is deprecated.
   {"mathml",            no_argument,       0, 'm'},
   {"output",            required_argument, 0, 'o'},
-  {"regress-test",      no_argument,       0, 'r'},
+  {"regress-test",      optional_argument, 0, 'r'},
   {"verbose",           no_argument,       0, 'v'},
   {"version",           no_argument,       0, 'V'},
   {0, 0, 0, 0}
@@ -92,13 +92,13 @@ print_usage() {
     // Deprecated: accept them but hide them from help screen.
     //    "  -l, --latex              output LaTeX code\n"
     //    "  -m, --mathml             output MathML code\n"
-    "  -r, --regress-test       set regression-testing mode on\n"
+    "  -r, --regress-test [N]   set regression-testing mode on (N tries)\n"
     "  -v, --verbose            be verbose\n"
     "  -V, --version            show version number and exit"
        << endl;
 }
 
-#define OPTION_LETTERS "CEI:LPR:T:Uhilmo:rvV"
+#define OPTION_LETTERS "CEI:LPR:T:Uhilmo:r::vV"
 
 // To avoid mixing incompatible options.
 static bool production_mode = false;
@@ -133,6 +133,9 @@ static int output = TEXT;
 
 // Regression-testing mode is on when true.
 static bool regress_test = false;
+
+// Number of tries for each recurrence. Useful to diagnose weird bugs.
+static long tries = 1;
 
 // Verbose mode is on when true.
 static bool verbose = false;
@@ -395,9 +398,20 @@ process_options(int argc, char* argv[]) {
       break;
 
     case 'r':
+      {
+	if (optarg) {
+	  char* endptr;
+	  tries = strtol(optarg, &endptr, 10);
+	};
+	if (tries <= 0) {
+          cerr << program_name << ": invalid optional tries number in regression testing mode."
+               << endl;
+          my_exit(1);
+	};
       regress_test = true;
       test_mode = true;
       do_not_mix_modes();
+      }
       break;
 
     case 'v':
@@ -1104,108 +1118,117 @@ main(int argc, char *argv[]) try {
       "<head><title>MathML Output</title></head>\n"
       "<body>\n";
 
+  long try_number = 0;
+  string the_line;
+
   while (input_stream) {
-    ++line_number;
 
-    string the_line;
-    getline(input_stream, the_line);
-
+    if (try_number == 0) { 
+      ++line_number;
+      getline(input_stream, the_line);
+    };
+      
     // We may be at end of file.
     if (!input_stream)
       break;
-
+      
     // Skip comments.
     if (the_line.find("%") == 0)
       continue;
 
     istringstream line(the_line);
     string rhs_string;
-
+    
     if (regress_test) {
       // Read the expectations' string and use it.
       string expectations;
       line >> expectations;
-
+      
       // Skip empty lines.
       if (!line)
-        continue;
-
+	continue;
+      
       set_expectations(expectations);
-
+      
       // Avoid exploding.
       if (explodes)
-        continue;
-
+	continue;
+      
       getline(line, rhs_string);
       // Premature end of file?
       if (!line)
-        error("premature end of file after expectations' string");
+	error("premature end of file after expectations' string");
     }
     else
       getline(line, rhs_string);
-
+    
     // The string may be constituted by white space only.
     if (all_space(rhs_string))
       continue;
-
+    
     Expr rhs;
     if (!parse_expression(rhs_string, rhs)) {
       message(parse_error_message);
       continue;
     }
-
+    
     if (verbose) {
       if (output==LATEX)
-        cout << "\\bigskip\n\n\\noindent\n\\textbf{Line";
-      if (!interactive)
-        cout << line_number << ": ";
+	cout << "\\bigskip\n\n\\noindent\n\\textbf{Line";
+      if (!interactive) {
+	cout << line_number;
+	if (tries == 1)
+	  cout << ": ";
+	else
+	  cout << "/" << try_number << ": ";
+      };
       if (output==LATEX)
-        cout << "} $";
+	cout << "} $";
       cout << "x(n) = ";
       if (output==LATEX) {
-        rhs.latex_print(cout);
-        cout << "$";
+	rhs.latex_print(cout);
+	cout << "$";
       }
       else
-        cout << rhs;
+	cout << rhs;
       cout << endl;
       if (output==LATEX)
-        cout << endl;
+	cout << endl;
     }
-
+    
     Recurrence rec(rhs);
     Expr lower;
     Expr upper;
     Expr exact_solution;
-
+    
     // *** regress test
     if (regress_test) {
       if (expect_exactly_solved) {
-        if (compute_exact_solution_wrapper(rec) == Recurrence::SUCCESS) {
-          // Get the exact solution.
-          rec.exact_solution(exact_solution);
-          if (expect_provably_correct_result
+	if (compute_exact_solution_wrapper(rec) == Recurrence::SUCCESS) {
+	  // Get the exact solution.
+	  rec.exact_solution(exact_solution);
+	  if (expect_provably_correct_result
 	      || expect_partial_provably_correct_result
-              || expect_provably_wrong_result
-              || expect_inconclusive_verification) {
+	      || expect_provably_wrong_result
+	      || expect_inconclusive_verification) {
 #if PROFILE_VERIFICATION
 	    time_unit_t time_begin = get_time();
 #endif
-            Recurrence::Verify_Status status = rec.verify_exact_solution();
+	    Recurrence::Verify_Status status = rec.verify_exact_solution();
 #if PROFILE_VERIFICATION
 	    time_unit_t time_end = get_time(); 
 	    ves_profiler.accumulate(time_end-time_begin);
 #endif
-            result_of_the_verification(0, status,
-                                       unexpected_failures_to_verify,
-                                       unexpected_failures_to_partially_verify,
-                                       unexpected_failures_to_disprove,
-                                       unexpected_conclusive_verifications);
-          }
-          if (interactive) {
+	    result_of_the_verification(0, status,
+				       unexpected_failures_to_verify,
+				       unexpected_failures_to_partially_verify,
+				       unexpected_failures_to_disprove,
+				       unexpected_conclusive_verifications);
+	  }
+	  if (interactive) {
 	    if (output==MATHML)
 	      cout << "<p>\n";
-            cout << "*** EXACT SOLUTION ***" << endl;
+	    cout << "*** EXACT SOLUTION ***" << endl;
 	    if (output==MATHML)
 	      cout << "</p>\n";
 	    switch (output) {
@@ -1227,171 +1250,171 @@ main(int argc, char *argv[]) try {
 		 << (output==MATHML?"</p>\n":"")
 		 << endl << endl;
 #if 0
-            cout << "*** APPROXIMATED SOLUTION ***"
-                 << endl
-                 << rec.approximated_solution()
-                 << endl
-                 << "*****************************"
-                 << endl << endl;
+	    cout << "*** APPROXIMATED SOLUTION ***"
+		 << endl
+		 << rec.approximated_solution()
+		 << endl
+		 << "*****************************"
+		 << endl << endl;
 #endif
 	  }
 	  // FIXME: Double LaTeX output in non-interactive mode.
-          if (output==LATEX) {
-            cout << "\\medskip\\indent\n\\(\n x(n) = ";
-            exact_solution.latex_print(cout);
-          }
-        }
-        else
-          // There is not the exact solution.
-          if (verbose) {
-            cerr << "*** unexpected failure to find exact solution" << endl;
-            ++unexpected_exact_failures;
-          }
+	  if (output==LATEX) {
+	    cout << "\\medskip\\indent\n\\(\n x(n) = ";
+	    exact_solution.latex_print(cout);
+	  }
+	}
+	else
+	  // There is not the exact solution.
+	  if (verbose) {
+	    cerr << "*** unexpected failure to find exact solution" << endl;
+	    ++unexpected_exact_failures;
+	  }
       }
       if (expect_lower_bound)
-        if (rec.compute_lower_bound() == Recurrence::SUCCESS) {
-          // Get the lower bound.
-          rec.lower_bound(lower);
-          if (expect_provably_correct_result
+	if (rec.compute_lower_bound() == Recurrence::SUCCESS) {
+	  // Get the lower bound.
+	  rec.lower_bound(lower);
+	  if (expect_provably_correct_result
 	      || expect_partial_provably_correct_result
-              || expect_provably_wrong_result
-              || expect_inconclusive_verification) {
-            Recurrence::Verify_Status status = rec.verify_lower_bound();
-            result_of_the_verification(1, status,
-                                       unexpected_failures_to_verify,
-                                       unexpected_failures_to_partially_verify,
-                                       unexpected_failures_to_disprove,
-                                       unexpected_conclusive_verifications);
-          }
-          if (interactive)
-            cout << "*** LOWER BOUND ***"
-                 << endl
-                 << lower
-                 << endl
-                 << "*******************"
-                 << endl << endl;
-          if (output==LATEX) {
-            cout << "\\medskip\\indent\n\\(\n x(n) = ";
-            lower.latex_print(cout);
-          }
-        }
-        else {
-          // There is not the lower bound.
-          if (verbose)
-            cerr << "*** unexpected failure to find lower bound for "
-                 << "the solution" << endl;
-          ++unexpected_lower_failures;
-        }
+	      || expect_provably_wrong_result
+	      || expect_inconclusive_verification) {
+	    Recurrence::Verify_Status status = rec.verify_lower_bound();
+	    result_of_the_verification(1, status,
+				       unexpected_failures_to_verify,
+				       unexpected_failures_to_partially_verify,
+				       unexpected_failures_to_disprove,
+				       unexpected_conclusive_verifications);
+	  }
+	  if (interactive)
+	    cout << "*** LOWER BOUND ***"
+		 << endl
+		 << lower
+		 << endl
+		 << "*******************"
+		 << endl << endl;
+	  if (output==LATEX) {
+	    cout << "\\medskip\\indent\n\\(\n x(n) = ";
+	    lower.latex_print(cout);
+	  }
+	}
+	else {
+	  // There is not the lower bound.
+	  if (verbose)
+	    cerr << "*** unexpected failure to find lower bound for "
+		 << "the solution" << endl;
+	  ++unexpected_lower_failures;
+	}
       if (expect_upper_bound)
-        if (rec.compute_upper_bound() == Recurrence::SUCCESS) {
-          // Get the upper bound.
-          rec.upper_bound(upper);
-          if (expect_provably_correct_result
+	if (rec.compute_upper_bound() == Recurrence::SUCCESS) {
+	  // Get the upper bound.
+	  rec.upper_bound(upper);
+	  if (expect_provably_correct_result
 	      || expect_partial_provably_correct_result
-              || expect_provably_wrong_result
-              || expect_inconclusive_verification) {
-            Recurrence::Verify_Status status = rec.verify_upper_bound();
-            result_of_the_verification(2, status,
-                                       unexpected_failures_to_verify,
-                                       unexpected_failures_to_partially_verify,
-                                       unexpected_failures_to_disprove,
-                                       unexpected_conclusive_verifications);
-          }
-          if (interactive)
-            cout << "*** UPPER BOUND ***"
-                 << endl
-                 << upper
-                 << endl
-                 << "*******************"
-                 << endl << endl;
-          if (output==LATEX) {
-            cout << "\\medskip\\indent\n\\(\n x(n) = ";
-            upper.latex_print(cout);
-          }
-        }
-        else {
-          // There is not the upper bound.
-          if (verbose)
-            cerr << "*** unexpected failure to find upper bound for "
-                 << "the solution" << endl;
-          ++unexpected_upper_failures;
-        }
+	      || expect_provably_wrong_result
+	      || expect_inconclusive_verification) {
+	    Recurrence::Verify_Status status = rec.verify_upper_bound();
+	    result_of_the_verification(2, status,
+				       unexpected_failures_to_verify,
+				       unexpected_failures_to_partially_verify,
+				       unexpected_failures_to_disprove,
+				       unexpected_conclusive_verifications);
+	  }
+	  if (interactive)
+	    cout << "*** UPPER BOUND ***"
+		 << endl
+		 << upper
+		 << endl
+		 << "*******************"
+		 << endl << endl;
+	  if (output==LATEX) {
+	    cout << "\\medskip\\indent\n\\(\n x(n) = ";
+	    upper.latex_print(cout);
+	  }
+	}
+	else {
+	  // There is not the upper bound.
+	  if (verbose)
+	    cerr << "*** unexpected failure to find upper bound for "
+		 << "the solution" << endl;
+	  ++unexpected_upper_failures;
+	}
       if (expect_not_to_be_solved)
-        if (compute_exact_solution_wrapper(rec) == Recurrence::SUCCESS
-            || rec.compute_lower_bound() == Recurrence::SUCCESS
-            || rec.compute_upper_bound() == Recurrence::SUCCESS) {
-          if (verbose)
-            cerr << "*** unexpected solution or bounds for it" << endl;
-          ++unexpected_solution_or_bounds_for_it;
-        }
+	if (compute_exact_solution_wrapper(rec) == Recurrence::SUCCESS
+	    || rec.compute_lower_bound() == Recurrence::SUCCESS
+	    || rec.compute_upper_bound() == Recurrence::SUCCESS) {
+	  if (verbose)
+	    cerr << "*** unexpected solution or bounds for it" << endl;
+	  ++unexpected_solution_or_bounds_for_it;
+	}
       if (expect_not_diagnose_unsolvable)
-        if (compute_exact_solution_wrapper(rec)
-            == Recurrence::UNSOLVABLE_RECURRENCE
-            || rec.compute_lower_bound()
-            == Recurrence::UNSOLVABLE_RECURRENCE
-            || rec.compute_upper_bound()
-            == Recurrence::UNSOLVABLE_RECURRENCE) {
-          if (verbose)
-            cerr << "*** unexpected unsolvability diagnosis" << endl;
-          ++unexpected_unsolvability_diagnoses;
-          if (interactive)
-            cout << "Unsolvable." << endl;
-        }
-      if (expect_diagnose_unsolvable)
-        if (compute_exact_solution_wrapper(rec)
-            != Recurrence::UNSOLVABLE_RECURRENCE
-            || rec.compute_lower_bound()
-            != Recurrence::UNSOLVABLE_RECURRENCE
-            || rec.compute_upper_bound()
-            != Recurrence::UNSOLVABLE_RECURRENCE) {
-          if (verbose)
-            cerr << "*** unexpected failure to diagnose unsolvability" << endl;
-          ++unexpected_failures_to_diagnose_unsolvability;
-        }
-      if (expect_diagnose_indeterminate)
-        if (compute_exact_solution_wrapper(rec)
-            != Recurrence::INDETERMINATE_RECURRENCE
-            || rec.compute_lower_bound()
-            != Recurrence::INDETERMINATE_RECURRENCE
-            || rec.compute_upper_bound()
-            != Recurrence::INDETERMINATE_RECURRENCE) {
-          if (verbose)
-            cerr << "*** unexpected failure to diagnose indeterminably"
-                 << endl;
-          ++unexpected_failures_to_diagnose_indeterminably;
-        }
-      if (expect_diagnose_malformed)
-        if (compute_exact_solution_wrapper(rec)
-            != Recurrence::MALFORMED_RECURRENCE
-            || rec.compute_lower_bound()
-            != Recurrence::MALFORMED_RECURRENCE
-            || rec.compute_upper_bound()
-            != Recurrence::MALFORMED_RECURRENCE) {
-          if (verbose)
-            cerr << "*** unexpected failure to diagnose malformation"
-                 << endl;
-          ++unexpected_failures_to_diagnose_malformation;
-        }
-      if (expect_diagnose_domain_error)
-        if (compute_exact_solution_wrapper(rec)
-            != Recurrence::DOMAIN_ERROR
-            || rec.compute_lower_bound()
-            != Recurrence::DOMAIN_ERROR
-            || rec.compute_upper_bound()
-            != Recurrence::DOMAIN_ERROR) {
-          if (verbose)
-            cerr << "*** unexpected failure to diagnose domain error"
-                 << endl;
-          ++unexpected_failures_to_diagnose_domain_error;
-        }
+	if (compute_exact_solution_wrapper(rec)
+	    == Recurrence::UNSOLVABLE_RECURRENCE
+	    || rec.compute_lower_bound()
+	    == Recurrence::UNSOLVABLE_RECURRENCE
+	    || rec.compute_upper_bound()
+	    == Recurrence::UNSOLVABLE_RECURRENCE) {
+	  if (verbose)
+	    cerr << "*** unexpected unsolvability diagnosis" << endl;
+	  ++unexpected_unsolvability_diagnoses;
+	    if (interactive)
+	      cout << "Unsolvable." << endl;
+	  }
+	if (expect_diagnose_unsolvable)
+	  if (compute_exact_solution_wrapper(rec)
+	      != Recurrence::UNSOLVABLE_RECURRENCE
+	      || rec.compute_lower_bound()
+	      != Recurrence::UNSOLVABLE_RECURRENCE
+	      || rec.compute_upper_bound()
+	      != Recurrence::UNSOLVABLE_RECURRENCE) {
+	    if (verbose)
+	      cerr << "*** unexpected failure to diagnose unsolvability" << endl;
+	    ++unexpected_failures_to_diagnose_unsolvability;
+	  }
+	if (expect_diagnose_indeterminate)
+	  if (compute_exact_solution_wrapper(rec)
+	      != Recurrence::INDETERMINATE_RECURRENCE
+	      || rec.compute_lower_bound()
+	      != Recurrence::INDETERMINATE_RECURRENCE
+	      || rec.compute_upper_bound()
+	      != Recurrence::INDETERMINATE_RECURRENCE) {
+	    if (verbose)
+	      cerr << "*** unexpected failure to diagnose indeterminably"
+		   << endl;
+	    ++unexpected_failures_to_diagnose_indeterminably;
+	  }
+	if (expect_diagnose_malformed)
+	  if (compute_exact_solution_wrapper(rec)
+	      != Recurrence::MALFORMED_RECURRENCE
+	      || rec.compute_lower_bound()
+	      != Recurrence::MALFORMED_RECURRENCE
+	      || rec.compute_upper_bound()
+	      != Recurrence::MALFORMED_RECURRENCE) {
+	    if (verbose)
+	      cerr << "*** unexpected failure to diagnose malformation"
+		   << endl;
+	    ++unexpected_failures_to_diagnose_malformation;
+	  }
+	if (expect_diagnose_domain_error)
+	  if (compute_exact_solution_wrapper(rec)
+	      != Recurrence::DOMAIN_ERROR
+	      || rec.compute_lower_bound()
+	      != Recurrence::DOMAIN_ERROR
+	      || rec.compute_upper_bound()
+	      != Recurrence::DOMAIN_ERROR) {
+	    if (verbose)
+	      cerr << "*** unexpected failure to diagnose domain error"
+		   << endl;
+	    ++unexpected_failures_to_diagnose_domain_error;
+	  }
       
-    } // *** regress test
-    else {
-      switch (compute_exact_solution_wrapper(rec)) {
-      case Recurrence::SUCCESS:
-        // OK: get the exact solution and print it.
-        rec.exact_solution(exact_solution);
-        if (interactive) {
+      } // *** regress test
+      else {
+	switch (compute_exact_solution_wrapper(rec)) {
+	case Recurrence::SUCCESS:
+	  // OK: get the exact solution and print it.
+	  rec.exact_solution(exact_solution);
+	  if (interactive) {
 	    if (output==MATHML)
 	      cout << "<p>\n";
             cout << "*** EXACT SOLUTION ***" << endl;
@@ -1552,6 +1575,15 @@ main(int argc, char *argv[]) try {
 	break;
       }
     }
+  
+    try_number++;
+
+    // Exit regression testing after <CODE>tries</CODE> attempts.
+    if (try_number == tries) {
+      try_number = 0;
+      continue;
+    }
+
   } // while (input_stream)
   
   if (output==LATEX)
