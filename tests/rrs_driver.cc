@@ -201,7 +201,8 @@ solve_wrapper(const Recurrence& rec, const Symbol& n) {
   return false;
 }
 
-bool all_space(const string& s) {
+bool
+all_space(const string& s) {
   for (unsigned i = s.length(); i-- > 0; )
     if (!isspace(s[i]))
       return false;

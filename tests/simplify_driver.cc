@@ -25,8 +25,10 @@ http://www.cs.unipr.it/purrs/ . */
 #include <iostream>
 #include <stdexcept>
 #include <string>
+#include <cctype>
 
 #include "purrs_install.hh"
+#include "ehandlers.hh"
 
 #ifdef USE_READLINE
 #include "readlinebuf.hh"
@@ -40,7 +42,16 @@ using namespace Parma_Recurrence_Relation_Solver;
 #define NOISY 1
 #endif
 
-int main() try {
+bool
+all_space(const string& s) {
+  for (unsigned i = s.length(); i-- > 0; )
+    if (!isspace(s[i]))
+      return false;
+  return true;
+}
+
+int
+main() try {
   readlinebuf* prdlb = 0;
   istream* pinput_stream;
 
@@ -75,15 +86,15 @@ int main() try {
 
     cout << endl << "Insert an expression: ";
     Expr_List l(x, n, a, b, c, d);
+
     string s;
-    getline(input_stream, s);
+    do {
+      getline(input_stream, s);
+    } while (all_space(s));
+
     
     if (!input_stream)
 	return 0;
-    
-    // Skip comments.
-    if (s.find("%") == 0)
-      continue;
     
     e = Expr(s, l);
     // `expand' does the simplification of the rule E6.
