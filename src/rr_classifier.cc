@@ -1302,7 +1302,7 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	else if (result == 2)
 	  status = INDETERMINATE_RECURRENCE;
 	else
-	  return CLASSIFICATION_COMPLEX;
+	  status = CLASSIFICATION_COMPLEX;
 	exit_anyway = true;
       }
       break;
