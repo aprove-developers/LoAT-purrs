@@ -149,13 +149,11 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 			       "*this is a weighted-average recurrence "
 			       "and we need of 1 initial condition\n"
 			       "to uniquely determine it");
-      unsigned int lower = 0;
-      if (recurrence_rewritten)
-	lower = lower_limit();
-      if (initial_conditions.rbegin()->first < lower) {
-	s << "*this is well-defined for `n >= " << lower
+      if (initial_conditions.rbegin()->first < first_valid_index) {
+	s << "*this is well-defined for `n >= " << first_valid_index
 	  << "', then must be present at least an\n"
-	  << "initial condition with index larger or equal to " << lower;
+	  << "initial condition with index larger or equal to "
+	  << first_valid_index;
 	throw_invalid_argument(method, s.str().c_str());
       }
     }
@@ -768,51 +766,6 @@ subs_i_c_finite_order_and_functional_eq(const Expr& solution_or_bound) const {
 
 Expr
 PURRS::Recurrence::
-subs_i_c_weighted_average(const Expr& solution_or_bound) const {
-  Expr weight_rec;
-  Expr inhomogeneous;
-  unsigned int lower;
-  if (recurrence_rewritten) {
-    weight_rec = original_weight();
-    inhomogeneous = original_inhomogeneous();
-    lower = lower_limit();
-  }
-  else {
-    weight_rec = weight();
-    inhomogeneous = inhomogeneous_term;
-    lower = 0;
-  }
-  Expr sol_or_bound = solution_or_bound;
-
-  // Consider the maximum index of `x' function in the map
-  // `initial_conditions', i.e. the largest index of the initial
-  // conditions inserted by the user.
-  unsigned int max_index_user_i_c = get_max_index_initial_condition();
-  if (max_index_user_i_c > lower) {
-    // To solve `x(n) = f(n)*sum(k,n_0,n-1,x(k))+g(n)' with the
-    // initial condition `x(m) = h', where `m > n_0',
-    // is like to solve `x(n) = f(n)*sum(k,m,n-1,x(k))+g(n)'.
-    Symbol k;
-    Recurrence rec(weight_rec * PURRS::sum(k, max_index_user_i_c, n-1, x(k))
-		   + inhomogeneous);
-    // The following two methods called on the recurrence `rec'
-    // surely will return SUCCESS because they work always on the
-    // same recurrence (shifted backward).
-    rec.classify_and_catch_special_cases();
-    rec.compute_weighted_average_recurrence(sol_or_bound);
-    sol_or_bound
-      = sol_or_bound.substitute(x(max_index_user_i_c),
-				get_initial_condition(max_index_user_i_c));
-  }
-  else
-    sol_or_bound
-      = sol_or_bound.substitute(x(lower), get_initial_condition(lower));
-
-  return sol_or_bound;
-}
-
-Expr
-PURRS::Recurrence::
 compute_solution_finite_order_on_i_c(const Expr& solution) const {
   Expr solution_on_i_c = solution;
   
@@ -887,6 +840,47 @@ compute_solution_finite_order_on_i_c(const Expr& solution) const {
   return solution_on_i_c;
 }
 
+Expr
+PURRS::Recurrence::
+compute_solution_weighted_average_on_i_c(const Expr& solution) const {
+  Expr weight_rec;
+  Expr inhomogeneous;
+  if (recurrence_rewritten) {
+    weight_rec = original_weight();
+    inhomogeneous = original_inhomogeneous();
+  }
+  else {
+    weight_rec = weight();
+    inhomogeneous = inhomogeneous_term;
+  }
+  Expr sol = solution;
+
+  // Consider the maximum index of `x' function in the map
+  // `initial_conditions', i.e. the largest index of the initial
+  // conditions inserted by the user.
+  unsigned int max_index_user_i_c = get_max_index_initial_condition();
+  if (max_index_user_i_c > first_valid_index) {
+    // To solve `x(n) = f(n)*sum(k,n_0,n-1,x(k))+g(n)' with the
+    // initial condition `x(m) = h', where `m > n_0',
+    // is like to solve `x(n) = f(n)*sum(k,m,n-1,x(k))+g(n)'.
+    Symbol k;
+    Recurrence rec(weight_rec * PURRS::sum(k, max_index_user_i_c, n-1, x(k))
+		   + inhomogeneous);
+    // The following two methods called on the recurrence `rec'
+    // surely will return SUCCESS because they work always on the
+    // same recurrence (shifted backward).
+    rec.classify_and_catch_special_cases();
+    rec.compute_weighted_average_recurrence(sol);
+    sol = sol.substitute(x(max_index_user_i_c),
+			 get_initial_condition(max_index_user_i_c));
+  }
+  else
+    sol = sol.substitute(x(first_valid_index),
+			 get_initial_condition(first_valid_index));
+  
+  return sol;
+}
+
 /*!
   FIXME: update the comment!!
   \param solution_or_bound  Contains the solution or the bound computed
@@ -924,9 +918,8 @@ compute_solution_on_i_c(const Expr& solution_or_bound) const {
       = compute_solution_finite_order_on_i_c(solution_or_bound);
     break;
   case WEIGHTED_AVERAGE:
-    // FIXME: temporary!!
     solution_or_bound_on_i_c
-      = subs_i_c_weighted_average(solution_or_bound);
+      = compute_solution_weighted_average_on_i_c(solution_or_bound);
     break;
   case FUNCTIONAL_EQUATION:
     // FIXME: temporary!!

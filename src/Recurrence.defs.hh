@@ -1064,9 +1064,10 @@ private:
   subs_i_c_finite_order_and_functional_eq(const Expr& solution_or_bound) const;
 
   Expr
-  subs_i_c_weighted_average(const Expr& solution_or_bound) const;
+  compute_solution_finite_order_on_i_c(const Expr& solution) const;
 
-  Expr compute_solution_finite_order_on_i_c(const Expr& solution) const;
+  Expr
+  compute_solution_weighted_average_on_i_c(const Expr& solution) const;
 
   //! \brief
   //! Let \p solution_or_bound be the expression that represent the

@@ -1092,7 +1092,9 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	  weighted_average_p
 	    = new Weighted_Average_Info(Recurrence(rhs_first_order), weight);
 	  set_weighted_average();
-	  set_first_valid_index(first_valid_index);
+	  set_first_valid_index(std::max(first_valid_index,
+					 addend.arg(1).ex_to_number()
+					 .to_unsigned_int()));
 	  if (rewritten) {
 	    bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	    rec_rewritten = true;
@@ -1210,7 +1212,9 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	    weighted_average_p
 	      = new Weighted_Average_Info(Recurrence(rhs_first_order), weight);
 	    set_weighted_average();
-	    set_first_valid_index(first_valid_index);
+	    set_first_valid_index(std::max(first_valid_index,
+					   factor.arg(1).ex_to_number()
+					   .to_unsigned_int()));
 	    if (rewritten) {
 	      bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	      rec_rewritten = true;
@@ -1448,8 +1452,7 @@ PURRS::Recurrence::classify() const {
       if (!find_domain_in_N(i->second, n, z))
 	return CL_TOO_COMPLEX;
     functional_eq_p = new Functional_Equation_Info(homogeneous_terms);
-    index_type index = z.to_unsigned_int() > 1 ? z.to_unsigned_int() : 1;
-    set_first_valid_index(index);
+    set_first_valid_index(std::max(z.to_int(), 1));
   }
   // In the case of non linear recurrence or weighted-average recurrence
   // we have already done the operation `new ...' and we have already
