@@ -200,72 +200,79 @@ substitute_function_x(const Expr& e, const std::vector<Expr>& repls,
 Recurrence::VERIFY_STATUS
 PURRS::Recurrence::verify_solution() const {
   if (solved || solve()) {
-    // Verify the solution.
-    // Step 1: validation of initial conditions.
     D_VAR(order());
-    for (unsigned i = order(); i-- > 0; ) {
-      D_VAR(i);
-      if (substitute_symbol_with_expression(solution, n,
-					    first_initial_condition() + i)
-	  != x(i))
-	return DONT_KNOW;
-    }
-    // Step 2: find `partial_solution'.
-    // The initial conditions are verified. Build the expression
-    // `partial_solution' that has all terms of `solution' minus those
-    // containing an initial condition.
-    Expr partial_solution = 0;
-    if (solution.is_a_add())
-      for (unsigned i = solution.nops(); i-- > 0; )
-	partial_solution
-	  += find_term_without_function_x(solution.op(i));
-    else
-      partial_solution = find_term_without_function_x(solution);
-    D_VAR(partial_solution);
-    // The recurrence is homogeneous.
-    if (partial_solution == 0)
+    if (order() == 0)
       return CORRECT;
-    // Step 3: construct the vector `terms_to_sub': each element of it
-    // contains `partial_solution' with `n' substituted by `n - d'
-    // (the `d' are the decrements of the terms `x(n - d)').
-    // These new expressions contained in the vector `terms_to_sub' are
-    // substituted to the correspondenting values in `recurrence_rhs'.
-#if 0
-    std::vector<unsigned> decrements = tdip->get_decrements();
-    std::vector<Expr> terms_to_sub(decrements.size());
-    for (unsigned i = decrements.size(); i-- > 0; )
-      terms_to_sub[i] = substitute_symbol_with_expression(partial_solution,
-							  n, n-decrements[i]);
-    Expr substituted_rhs = simplify_on_input_ex(recurrence_rhs.expand(),
-						true);
-    substituted_rhs = substitute_function_x(recurrence_rhs, terms_to_sub,
-					    decrements);
-#else
-    std::vector<Expr> terms_to_sub(order());
-    for (unsigned i = order(); i-- > 0; )
-      terms_to_sub[i] = partial_solution.subs(Recurrence::n,
-					      Recurrence::n - i - 1);
-    D_VEC(terms_to_sub, 0, terms_to_sub.size()-1);
-
-    Expr substituted_rhs = simplify_on_input_ex(recurrence_rhs.expand(), true);
-    for (unsigned i = terms_to_sub.size(); i-- > 0; )
-      substituted_rhs = substituted_rhs.subs(x(Recurrence::n - i - 1),
-					     terms_to_sub[i]);
-#endif
-    D_VAR(substituted_rhs);
-    Expr diff = (partial_solution - substituted_rhs);
-    D_VAR(diff);
-    // `simplify_factorials_and_exponentials()' must be call on not
-    // expanded expression.
-    diff = simplify_factorials_and_exponentials(diff).expand();
-    diff = simplify_numer_denom(diff);
-    if (!diff.is_zero()) {
-      diff = simplify_factorials_and_exponentials(diff).expand();
-      if (!diff.is_zero()) {
-	return DONT_KNOW;
+    else {
+      // Step 1: validation of initial conditions.
+      for (unsigned i = order(); i-- > 0; ) {
+	Expr solution_valuated
+	  = substitute_symbol_with_expression(solution, n,
+					      first_initial_condition() + i);
+	solution_valuated = simplify_numer_denom(solution_valuated);
+	D_VAR(solution_valuated);
+	if (solution_valuated != x(i))
+	  return DONT_KNOW;
       }
+      // Step 2: find `partial_solution'.
+      // The initial conditions are verified. Build the expression
+      // `partial_solution' that has all terms of `solution' minus those
+      // containing an initial condition.
+      Expr partial_solution = 0;
+      if (solution.is_a_add())
+	for (unsigned i = solution.nops(); i-- > 0; )
+	  partial_solution
+	    += find_term_without_function_x(solution.op(i));
+      else
+	partial_solution = find_term_without_function_x(solution);
+      partial_solution = simplify_on_input_ex(partial_solution.expand(), true);
+      D_VAR(partial_solution);
+      // The recurrence is homogeneous.
+      if (partial_solution == 0)
+	return CORRECT;
+      // Step 3: construct the vector `terms_to_sub': each element of it
+      // contains `partial_solution' with `n' substituted by `n - d'
+      // (the `d' are the decrements of the terms `x(n - d)').
+      // These new expressions contained in the vector `terms_to_sub' are
+      // substituted to the correspondenting values in `recurrence_rhs'.
+#if 0
+      std::vector<unsigned> decrements = tdip->get_decrements();
+      std::vector<Expr> terms_to_sub(decrements.size());
+      for (unsigned i = decrements.size(); i-- > 0; )
+	terms_to_sub[i]
+	  = substitute_symbol_with_expression(partial_solution,
+					      n, n-decrements[i]);
+      Expr substituted_rhs = simplify_on_input_ex(recurrence_rhs.expand(),
+						  true);
+      substituted_rhs = substitute_function_x(recurrence_rhs, terms_to_sub,
+					      decrements);
+#else
+      std::vector<Expr> terms_to_sub(order());
+      for (unsigned i = order(); i-- > 0; )
+	terms_to_sub[i] = partial_solution.subs(Recurrence::n,
+						Recurrence::n - i - 1);
+      D_VEC(terms_to_sub, 0, terms_to_sub.size()-1);
+      Expr substituted_rhs = simplify_on_input_ex(recurrence_rhs.expand(),
+						  true);
+      for (unsigned i = terms_to_sub.size(); i-- > 0; )
+	substituted_rhs = substituted_rhs.subs(x(Recurrence::n - i - 1),
+					       terms_to_sub[i]);
+#endif
+      D_VAR(substituted_rhs);
+      Expr diff = (partial_solution - substituted_rhs);
+      D_VAR(diff);
+      // `simplify_factorials_and_exponentials()' must be call on not
+      // expanded expression.
+      diff = simplify_factorials_and_exponentials(diff).expand();
+      diff = simplify_numer_denom(diff);
+      if (!diff.is_zero()) {
+	diff = simplify_factorials_and_exponentials(diff).expand();
+	if (!diff.is_zero()) {
+	  return DONT_KNOW;
+	}
+      }
+      return CORRECT;
     }
-    return CORRECT;
   }
   // We failed to solve the recurrence.
   // If the client still insists in asking for the verification...
