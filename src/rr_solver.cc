@@ -29,10 +29,12 @@ http://www.cs.unipr.it/purrs/ . */
 #include "globals.hh"
 #include "util.hh"
 #include "sum_poly.hh"
+#include "rr_solver.hh"
 #include "simplify.hh"
 #include "alg_eq_solver.hh"
 #include <climits>
 #include <algorithm>
+#include <string>
 
 // TEMPORARY
 #include <iostream>
@@ -42,8 +44,8 @@ using namespace GiNaC;
 
 /*!
   Returns <CODE>true</CODE> if and only if \p e is of the form
-  \f$ n + d \f$ with \f$ d \f$ a <CODE>GiNaC::numeric</CODE>;
-  in this case the opposite of \f$ d \f$ is assigned to \p decrement.
+  \f$ n - d \f$ with \f$ d \f$ an integer; in this case the opposite
+  of \f$ d \f$ to \p decrement.
 */
 static bool
 get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
@@ -52,7 +54,9 @@ get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
   if (match(e, n_plus_d, substitution)) {
     GExpr d = get_binding(substitution, 0);
     if (is_a<numeric>(d)) {
-      decrement = -ex_to<numeric>(d);
+      GNumber i = ex_to<numeric>(d);
+      if (i.is_integer())
+	decrement = -i;
       return true;
     }
   }
@@ -81,9 +85,10 @@ build_characteristic_equation(const int order, const GSymbol& x,
   unsigned coefficients_size = coefficients.size();  
   for (unsigned i = 1; i < coefficients_size; ++i)
     if (!coefficients[i].is_rational())
-      throw("PURRS error: today the algebraic equation solver works\n"
-            "only with integer coefficients.\n"
-            "Please come back tomorrow.");
+      throw
+	"PURRS error: today the algebraic equation solver works\n"
+	"only with integer coefficients.\n"
+	"Please come back tomorrow.";
   std::vector<GNumber> denominators;
   // Find the least common multiple among the denominators of the
   // rational elements of 'coefficients'.
@@ -109,7 +114,6 @@ build_characteristic_equation(const int order, const GSymbol& x,
     p += pow(x, order);
   }
   return p;
-
 }
 
 /*!
@@ -230,13 +234,12 @@ compute_symbolic_sum(const int order, const GSymbol& n,
   - substitutes to \p lambda the corresponding value of the characteristic
     equation's root;
   - substitutes to \p alpha the corresponding base of the eventual
-    exponential.
-  Returns a <CODE>GExpr</CODE> \p solution with the sum of all sums of the
-  vectors.
- */
+    exponential.  Returns a <CODE>GExpr</CODE> \p solution with the
+    sum of all sums of the vectors.
+*/
 static GExpr
-subs_to_sum_roots_and_bases(const int order,
-			    const GSymbol& alpha, const GSymbol& lambda,
+subs_to_sum_roots_and_bases(const int order, const GSymbol& alpha,
+			    const GSymbol& lambda,
 			    const std::vector<Polynomial_Root>& roots,
 			    const std::vector<GExpr>& base_of_exps,
 			    std::vector<GExpr>& symbolic_sum_distinct,
@@ -251,11 +254,11 @@ subs_to_sum_roots_and_bases(const int order,
 	tmp = symbolic_sum_distinct[r].subs(lst(alpha == base_exp,
 						lambda == roots[j].value()));
       else
-	tmp =
-	  symbolic_sum_no_distinct[r].subs(lst(alpha == base_exp,
-					       lambda == roots[j].value()));
+	tmp
+	  = symbolic_sum_no_distinct[r].subs(lst(alpha == base_exp,
+						 lambda == roots[j].value()));
       if (order == 2)
-      	solution += tmp * pow(-1, j);
+	solution += tmp * pow(-1, j);
       else
 	solution += tmp;
       ++r;
@@ -277,15 +280,16 @@ add_initial_conditions(const GExpr& g_n, const GSymbol& n,
 
 static GExpr
 solve_order_2(const GSymbol& n, GExpr& g_n, const int order,
-              const bool all_distinct, const GSymbol& alpha,
-	      const GSymbol& lambda, const std::vector<GExpr>& base_of_exps,
+	      const bool all_distinct,
+	      const GSymbol& alpha, const GSymbol& lambda,
+	      const std::vector<GExpr>& base_of_exps,
 	      const std::vector<GExpr>& exp_poly_coeff,
 	      const std::vector<GNumber>& coefficients,
 	      const std::vector<Polynomial_Root>& roots);
 
 static GExpr
-solve_linear_constant_coeff(const GSymbol& n, GExpr& g_n,
-			    const int order, const bool all_distinct,
+solve_linear_constant_coeff(const GSymbol& n, GExpr& g_n, const int order,
+			    const bool all_distinct,
 			    const GSymbol& alpha, const GSymbol& lambda,
 			    const std::vector<GExpr>& base_of_exps,
 			    const std::vector<GExpr>& exp_poly_coeff,
@@ -298,8 +302,8 @@ verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
 
 /*!
   Returns an expression that is equivalent to \p e and that is
-  "maximally expanded" with respect to addition.  This amounts,
-  among other things, to distribute multiplication over addition.
+  "maximally expanded" with respect to addition.  This amounts, among
+  other things, to distribute multiplication over addition.
 */
 GExpr
 additive_form(const GExpr& e) {
@@ -307,63 +311,77 @@ additive_form(const GExpr& e) {
 }
 
 /*!
-...
+  This function solves recurrences of SOME TYPE provided they are
+  supplied in SOME FORM. (Explain.)
 */
-bool
+Solver_Status
 solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   // The following code depends on the possibility of recovering
   // the various parts of `rhs' as summands of an additive expression.
   GExpr e = additive_form(rhs);
-
+  
   // Initialize the computation of the order of the linear part of the
   // recurrence.  This works like the computation of a maximum: it is
   // the maximum `k' such that `rhs = a*x(n-k) + b' where `a' is not
-  // syntactically 0.
+  // syntactically 0. 
   int order = -1;
 
   // We will store here the coefficients of linear part of the recurrence.
   std::vector<GExpr> coefficients;
 
-  bool failed = false;
+  // Will be set to true if at least one element of coefficients is
+  // non-constant.
+  bool has_non_constant_coefficients = false;
+
   do {
+    // These patterns are used repeatedly for pattern matching.
+    // We avoid recreating them over and over again by declaring
+    // them static.
     static GExpr x_i = x(wild(0));
     static GExpr x_i_plus_r = x_i + wild(1);
     static GExpr a_times_x_i = wild(1)*x_i;
     static GExpr a_times_x_i_plus_r = a_times_x_i + wild(2);
 
+    // This will hold the substitutions produced by the various match
+    // operations.
     GList substitution;
-
+    
+    // This will hold the index `i' in contexts of the form `x(i)'.
     GExpr i;
+    
+    // This will hold the coefficient `a' in contexts of the form
+    // `a*x(i)'.
     GExpr a;
-    // The following matches are attempted starting from the most common,
-    // then the second most common and so forth.
-    // The check 'if (!i.has(n))' is necessary because otherwise do not
-    // accept 'x(i)' with 'i' numeric in a general recurrence relation
+    
+    // The following matches are attempted starting from the most
+    // common, then the second most common and so forth.  The check
+    // 'if (!i.has(n))' is necessary because otherwise do not accept
+    // 'x(i)' with 'i' numeric in a general recurrence relation
     // (es. x(n) = x(n-1)+x(0)).
     if (clear(substitution), match(e, x_i_plus_r, substitution)) {
       i = get_binding(substitution, 0);
-      if (!i.has(n))                                                
+      if (!i.has(n))
 	break;
       a = 1;
       e = get_binding(substitution, 1);
     }
     else if (clear(substitution), match(e, a_times_x_i_plus_r, substitution)) {
       i = get_binding(substitution, 0);
-      if (!i.has(n))                                                
+      if (!i.has(n))
 	break;
       a = get_binding(substitution, 1);
       e = get_binding(substitution, 2);
     }
     else if (clear(substitution), match(e, a_times_x_i, substitution)) {
       i = get_binding(substitution, 0);
-      if (!i.has(n))                                                
+      if (!i.has(n))
 	break;
       a = get_binding(substitution, 1);
       e = 0;
     }
     else if (clear(substitution), match(e, x_i, substitution)) {
       i = get_binding(substitution, 0);
-      if (!i.has(n))                                                
+      if (!i.has(n))
 	break;
       a = 1;
       e = 0;
@@ -372,125 +390,119 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       break;
 
     GNumber decrement;
-    if (!get_constant_decrement(i, n, decrement)) {
-      failed = true;
-      break;
-    }
+    if (!get_constant_decrement(i, n, decrement))
+      return HAS_NON_INTEGER_DECREMENT;
+    
+    if (decrement == 0)
+      return HAS_NULL_DECREMENT;
+    
+    if (decrement < 0)
+      return HAS_NEGATIVE_DECREMENT;
 
-    // FIXME: fare controllo sulle condizioni iniziali, cioe' verificare
-    // che se c'e' 'x(i)' con 'i' numerico allora 'i' sia un numero
-    // minore dell'ordine.
+    // Make sure that (1) we can represent `decrement' as a long, and
+    // (2) we will be able to store the coefficient into the appropriate
+    // position of the `coefficients' vector.
+    if (decrement <= LONG_MAX || decrement >= coefficients.max_size())
+      return HAS_HUGE_DECREMENT;
 
-
-    D_VAR(decrement);
-
-    if (!decrement.is_integer()
-	|| decrement < 0
-	|| decrement >= coefficients.max_size()) {
-      failed = true;
-      break;
-    }
-    // For the moment the coefficients of recurrence relation
-    // must be constants, i. e., it does not contains the variable n.
+    // Detect non-constant coefficients, i.e., those with occurrences of `n'.
     if (a.has(n))
-      throw ("PURRS error: today we only solve recurrence "
-	     "relations with constant coefficients.\n"
-             "Please come back tomorrow.");
-    GExpr coefficient = a;
+      has_non_constant_coefficients = true;
 
-    // FIXME: turn this assertion into something more appropriate.
-    assert(decrement >= LONG_MIN && decrement <= LONG_MAX);
+    // The `order' is defined as the maximum value of `index'.
     unsigned long index = decrement.to_long();
     if (order < 0 || index > unsigned(order))
       order = index;
 
-    // The vector 'coefficients' contains in the i-th position
-    // the coefficient of x(n-i); in the first position and in the
-    // positions corresponding to x(n-i) absent there is '0'.
+    // The vector `coefficients' contains in the `i'-th position the
+    // coefficient of `x(n-i)'.  The first position always contains 0.
     if (index > coefficients.size())
       coefficients.insert(coefficients.end(),
 			  index - coefficients.size(),
 			  GNumber(0));
     if (index == coefficients.size())
-      coefficients.insert(coefficients.end(), coefficient);
+      coefficients.push_back(a);
     else
-      coefficients[index] += coefficient;
-
+      coefficients[index] += a;
   } while (e != 0);
-  if (failed)
-    return false;
-
+  
   // Special case: `e' is a function of `n', the parameters and of
   // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
-  // non-negative integers.
+  // non-negative integers. 
   if (order < 0) {
     solution = e;
-    return true;
+    return OK;
   }
 
   D_VAR(order);
   D_VEC(coefficients, 1, order);
   D_MSGVAR("Inhomogeneous term: ", e);
 
+  if (has_non_constant_coefficients)
+    throw
+      "PURRS error: today we only solve recurrence"
+      "relations with constant coefficients.\n"
+      "Please come back tomorrow.";
 
   // Simplifies expanded expressions, in particular rewrites nested powers.
   e = simplify_on_input_ex(e, n, true);
 
   // We search exponentials in the variable 'n', so the expression 'e'
-  // must be expanded because otherwise the function not recognizes the
-  // the exponentials in the variable 'n' (i.e. 2^(n-1) is not considerated
-  // while 1/2*2^n, obtained from previous by 'expand()', yes).
-  // The vector 'base_of_exps' contains the exponential's bases of all
-  // exponentials in 'e'. In the i-th position of the vectors 'exp_poly_coeff'
-  // and 'exp_no_poly_coeff' there are respectively the polynomial part and
-  // non polynomial part of the coefficient of the exponential with the base
-  // in i-th position of 'base_of_exp' so that
-  // exp_poly_coeff[i] + exp_no_poly_coeff[i] represents the coefficient of
-  // base_of_exps[i]^n. 
+  // must be expanded because otherwise the function not recognizes
+  // the the exponentials in the variable 'n' (i.e. 2^(n-1) is not
+  // considerated while 1/2*2^n, obtained from previous by 'expand()',
+  // yes).  The vector 'base_of_exps' contains the exponential's bases
+  // of all exponentials in 'e'. In the i-th position of the vectors
+  // 'exp_poly_coeff' and 'exp_no_poly_coeff' there are respectively
+  // the polynomial part and non polynomial part of the coefficient of
+  // the exponential with the base in i-th position of 'base_of_exp'
+  // so that exp_poly_coeff[i] + exp_no_poly_coeff[i] represents the
+  // coefficient of base_of_exps[i]^n.
   std::vector<GExpr> base_of_exps;
   std::vector<GExpr> exp_poly_coeff;
   std::vector<GExpr> exp_no_poly_coeff;
-  exp_poly_decomposition(e, n, base_of_exps, exp_poly_coeff,
-			 exp_no_poly_coeff);
+  exp_poly_decomposition(e, n,
+			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
 
   D_VEC(base_of_exps, 0, base_of_exps.size()-1);
   D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
   D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
 
-  // Creates the vector of initial conditions.
+  // Create the vector of initial conditions.
   std::vector<GExpr> initial_conditions(order);
   for (int i = 0; i < order; ++i)
     initial_conditions[i] = x(i);
 
-  // Computes the characteristic equation and its roots.
+  // Compute the characteristic equation and its roots.
   GExpr characteristic_eq;
   GSymbol y("y");
   std::vector<Polynomial_Root> roots;
   bool all_distinct = true;
- 
   // FIXME: il seguente if sull'ordine e' temporaneo perche' cosi' si
   // riescono a fare le parametriche del primo ordine almeno.
   // Temporaneo fino a che 'find_roots()' accettera' i parametri anche
-  // per equazioni di grado superiore al primo. 
+  // per equazioni di grado superiore al primo.
   std::vector<GNumber> num_coefficients(order+1);
   if (order == 1) {
     characteristic_eq = y - coefficients[1];
     roots.push_back(coefficients[1]);
-  } 
+  }
   else {
-    // Check that the vector 'coefficients' contains only numeric
-    // elements and in this case uses a vector of GNumber.
-    for (int i = 1; i <= order; ++i)
+  // Check if the vector `coefficients' contains only numeric
+  // elements and in this case use a vector of GNumber.
+    //    for (int i = 1; i <= order; ++i)
+    for (unsigned i = coefficients.size(); i--> 0; )
       if (is_a<numeric>(coefficients[i]))
 	num_coefficients[i] = ex_to<numeric>(coefficients[i]);
       else
-	throw("PURRS error: today the recurrence relation\n"
-	      "does not support irrationals coefficients.\n"
-	      "Please come back tomorrow.");
-    characteristic_eq = build_characteristic_equation(order, y,
-						      num_coefficients);
+	throw
+	  "PURRS error: today the recurrence relation\n"
+	  "does not support irrationals coefficients.\n"
+	  "Please come back tomorrow.";
+    characteristic_eq
+      = build_characteristic_equation(order, y, num_coefficients);
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
-      return false;
+      return TOO_COMPLEX;
   }
 
   D_VAR(characteristic_eq);
@@ -524,68 +536,169 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	// FIXME: per ora non si puo' usare la funzione
 	// 'add_initial_conditions' perche' richiede un vettore di
 	// 'GNumber' come 'coefficients' e voglio risolvere anche le
-	// parametriche. 
-	// g_n = pow(roots[0].value(), n);
-	solution += initial_conditions[0] * pow(roots[0].value() ,n);
+	// parametriche (g_n = pow(roots[0].value(), n)).;
+	solution += initial_conditions[0] * pow(roots[0].value(), n);
       }
-      else 
-	throw ("PURRS error: today we only allow inhomogeneous terms\n"
-	       "in the form of polynomials or product of exponentials\n"
-	       "and polynomials.\n"
-	       "Please come back tomorrow.");
+      else
+	throw
+	  "PURRS error: today we only allow inhomogeneous terms\n"
+	  "in the form of polynomials or product of exponentials\n"
+	  "and polynomials.\n"
+	  "Please come back tomorrow.";
       break;
     }
-   case 2:
-     {
-       // Calculates the solution of the second order recurrences when
-       // the inhomogeneous term is a polynomial or the product of a
-       // polynomial and an exponential.
-       if (check_poly_times_exponential(exp_no_poly_coeff))
-	 solution = solve_order_2(n, g_n, order, all_distinct, alpha, lambda,
-				  base_of_exps, exp_poly_coeff,
-				  num_coefficients, roots);
-       else 
-	 throw ("PURRS error: today we only allow inhomogeneous terms\n"
-		"in the form of polynomials or product of exponentials\n"
-		"and polynomials.\n"
-		"Please come back tomorrow.");
-       break;
-     }
+  case 2:
+    {
+      // Calculates the solution of the second order recurrences when
+      // the inhomogeneous term is a polynomial or the product of a
+      // polynomial and an exponential.
+      if (check_poly_times_exponential(exp_no_poly_coeff))
+	solution = solve_order_2(n, g_n, order, all_distinct, alpha, lambda,
+				 base_of_exps, exp_poly_coeff,
+				 num_coefficients, roots);
+      else
+	throw
+	  "PURRS error: today we only allow inhomogeneous terms\n"
+	  "in the form of polynomials or product of exponentials\n"
+	  "and polynomials.\n"
+	  "Please come back tomorrow.";
+    break;
+  }
   default:
     // Calculates the solution of the recurrences when
     // the inhomogeneous term is a polynomial or the product of a
     // polynomial and an exponential.
     if (check_poly_times_exponential(exp_no_poly_coeff))
       solution = solve_linear_constant_coeff(n, g_n, order, all_distinct,
-					     alpha, lambda, base_of_exps,
-					     exp_poly_coeff, num_coefficients,
+					     alpha, lambda,
+					     base_of_exps, exp_poly_coeff,
+					     num_coefficients,
 					     roots);
     else
-      throw ("PURRS error: today we only allow inhomogeneous terms\n"
-	     "in the form of polynomials or product of exponentials\n"
-	     "and polynomials.\n"
-	     "Please come back tomorrow.");
-    break;
-  }
+      throw
+	"PURRS error: today we only allow inhomogeneous terms\n"
+	"in the form of polynomials or product of exponentials\n"
+	"and polynomials.\n"
+	"Please come back tomorrow.";
+ break;
+ }
   
-  if (order > 1)
-    add_initial_conditions(g_n, n, num_coefficients, initial_conditions,
-			   solution);
+  if (order > 1) add_initial_conditions(g_n, n, num_coefficients,
+    initial_conditions, solution);
   
-  D_MSGVAR("Before calling simplify: ", solution);  
-  solution = simplify_on_output_ex(solution.expand(), n, false);
-
+  D_MSGVAR("Before calling simplify: ", solution); solution =
+  simplify_on_output_ex(solution.expand(), n, false);
+  
   // Only for the output.
   GList conditions;
   for (unsigned i = order; i-- > 0; )
     conditions.append(initial_conditions[i]);
   solution = solution.collect(conditions);
-
+  
   if (!verify_solution(solution, order, rhs, n))
     D_MSG("ATTENTION: the following solution can be wrong\n"
 	  "or not enough simplified.");
-  
-  return true;
+
+  return OK;
+}
+
+
+void
+impose_condition(const std::string&) {
+}
+
+/*!
+  Assuming that \p rhs contains occurrences of <CODE>x(n-k)</CODE>
+  where <CODE>k</CODE> is a negative integer, this function tries to
+  perform suitable changes of variables that preserve the meaning of
+  the recurrence relation, but transforms it into its <EM>standard
+  form</EM> <CODE>x(n) = new_rhs</CODE>, where <CODE>new_rhs</CODE>
+  does not contain any instance of <CODE>x(n-k)</CODE>, with a
+  negative integer <CODE>k</CODE>.
+  Returns <CODE>true</CODE> if the transformation is successful;
+  returns <CODE>false</CODE> otherwise.
+*/
+static bool
+eliminate_negative_decrements(const GExpr& /* rhs */, GExpr& /* new_rhs */) {
+  // Let `j' be the largest positive integer such that `x(n+j)' occurs
+  // in `rhs' with a coefficient `a' which is not syntactically 0.
+  // Then the changes of variables include replacing `n' by `n-j',
+  // changing sign, and division by `a'.
+
+  return false;
+}
+
+/*!
+  Here we assume that \p rhs contains occurrences of <CODE>x(n)</CODE> itself.
+  Therefore the recurrence may be impossible.  This function decides
+  if this is the case and, if so, it returns <CODE>false</CODE>.  If the
+  recurrence is solvable, it is rewritten into its normal form, which
+  is then written in <CODE>new_rhs</CODE>, and the function returns
+  <CODE>true</CODE>.
+*/
+static bool
+eliminate_null_decrements(const GExpr& /* rhs */, GExpr& /* new_rhs */) {
+
+  //   Assume that `rhs = a*x(n) + b' and that `b' does not contain
+  //   `x(n)'.  The following cases are possible:
+  //   - If `a = 1' and `b' does not contain any occurrence of `x(n-k)'
+  //      where `k' is a positive integer, the recurrence is impossible.
+  //   - If `a = 1' and `b' contains `x(n-k)' for some positive integer `k'
+  //     and with a coefficient that is not syntactically 0, we remove
+  //     `x(n)' from both sides of `x(n) = rhs', and then rewrite the
+  //     recurrence into its standard form.
+  //   - If `a != 1' we move `a*x(n)' to the left-hand side, and divide
+  //     through by `1 - a', obtaining the standard form, which is 
+  //     `(rhs - a*x(n)) / (1-a)'.
+
+  return false;
+}
+
+/*!
+  This function solves recurrences of SOME TYPE provided they
+  are supplied in SOME FORM. (Explain.)
+  It does that by repeatedly calling solve() and handling
+  the errors that may arise.
+*/
+Solver_Status
+solve_try_hard(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
+  bool exit_anyway = false;
+  Solver_Status status;
+  do {
+    status = solve(rhs, n, solution);
+    switch (status) {
+    case OK:
+      break;
+    case HAS_NON_INTEGER_DECREMENT:
+    case HAS_HUGE_DECREMENT:
+      exit_anyway = true;
+      break;
+    case HAS_NEGATIVE_DECREMENT:
+      {
+	GExpr new_rhs;
+	if (eliminate_negative_decrements(rhs, new_rhs))
+	    status = solve(new_rhs, n, solution);
+	else
+	  exit_anyway = true;
+      }
+      break;
+    case HAS_NULL_DECREMENT:
+      {
+	GExpr new_rhs;
+	if (eliminate_null_decrements(rhs, new_rhs))
+	    status = solve(new_rhs, n, solution);
+	else
+	  exit_anyway = true;
+      }
+      exit_anyway = true;
+      break;
+    default:
+      throw std::runtime_error("PURRS internal error: "
+			       "solve_try_hard.");
+      break;
+    }
+  } while (!exit_anyway && status != OK);
+  return status;
 }
 
 static void

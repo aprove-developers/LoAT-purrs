@@ -22,18 +22,47 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#ifndef _rr_solver_hh
-#define _rr_solver_hh 1
+#ifndef PURRS_rr_solver_hh
+#define PURR_rr_solver_hh 1
 
 #include "globals.hh"
 
-enum Solve_Status {
+enum Solver_Status {
+  /*!
+    Solution was successful.
+  */
   OK,
+  /*!
+    The right-hand side of the recurrence contains at least an occurrence
+    of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is not an integer.
+  */
+  HAS_NON_INTEGER_DECREMENT,
+  /*!
+    The right-hand side of the recurrence contains at least an occurrence
+    of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is a negative integer.
+  */
   HAS_NEGATIVE_DECREMENT,
-  HAS_NULL_DECREMENT
+  /*!
+    The right-hand side of the recurrence contains at least an occurrence
+    of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is too big to be handled
+    by the standard solution techniques.
+  */
+  HAS_HUGE_DECREMENT,
+  /*!
+    The right-hand side of the recurrence contains at least an occurrence
+    of <CODE>x(n)</CODE>.
+  */
+  HAS_NULL_DECREMENT,
+  /*!
+    Catchall: the recurrence is generically too complex.
+  */
+  TOO_COMPLEX
 };
 
-bool
+Solver_Status
 solve(const GExpr& rhs, const GSymbol& n, GExpr& solution);
+
+Solver_Status
+solve_try_hard(const GExpr& rhs, const GSymbol& n, GExpr& solution);
 
 #endif
