@@ -85,6 +85,9 @@ print_usage() {
 static bool production_mode = false;
 static bool test_mode = false;
 
+// When true, the recurrence for the production mode has been inserted.
+static bool have_recurrence = false;
+
 // When true, the exact solution is required.
 static bool exact_solution_required = false;
 
@@ -153,6 +156,12 @@ do_not_mix_modes() {
 }
 
 static void
+invalid_recurrence(const char* culprit) {
+  cerr << program_name << ": invalid recurrence `" << culprit << "'" << endl;
+  my_exit(1);
+}
+
+static void
 invalid_initial_condition(const char* culprit) {
   cerr << program_name << ": invalid initial condition `" << culprit << "';\n"
        << "must be of the form `x(i)=k'"
@@ -184,16 +193,25 @@ process_options(int argc, char* argv[]) {
       break;
 
     case 'R':
-      production_mode = true;
-      do_not_mix_modes();
-      if (!optarg) {
-	cerr << program_name << ": the rhs expression must follow `-R'"
-	     << endl;
-	my_exit(1);
+      {
+	production_mode = true;
+	do_not_mix_modes();
+	if (!optarg) {
+	  cerr << program_name << ": the rhs expression must follow `-R'"
+	       << endl;
+	  my_exit(1);
+	}
+	// Here `optarg' points to the beginning of the rhs.
+	assert(optarg);
+	Expr rec;
+	if (!parse_expression(optarg, rec))
+	  invalid_recurrence(optarg);
+	have_recurrence = true;
+	init_production_recurrence();
+	production_recurrence->replace_recurrence(rec);
       }
-      // Here `optarg' points to the beginning of the rhs.
       break;
-
+      
     case 'I':
       {
 	production_mode = true;
@@ -206,7 +224,6 @@ process_options(int argc, char* argv[]) {
 	  invalid_initial_condition(optarg);
 	string lhs(cond, 0, eq_pos);
 	string rhs(cond, eq_pos+1);
-	cout << "lhs = " << lhs << ", rhs = " << rhs << endl;
 	Expr l;
 	if (!parse_expression(lhs, l))
 	  invalid_initial_condition(optarg);
@@ -438,12 +455,71 @@ main(int argc, char *argv[]) try {
 
   //purrs_initialize();
 
+  init_symbols();
+
   process_options(argc, argv);
 
+  Expr lower;
+  Expr upper;
+  Expr exact_solution;
+
   if (production_mode) {
+    if (have_recurrence) {
+      if (!exact_solution_required && !lower_bound_required
+	  && !upper_bound_required) {
+	exact_solution_required = true;
+	lower_bound_required = true;
+	upper_bound_required = true;
+      }
+      bool have_exact_solution = false;
+      if (exact_solution_required)
+	if (compute_exact_solution_wrapper(*production_recurrence)
+	    == Recurrence::SUCCESS) {
+	  have_exact_solution = true;
+	  // OK: get the exact solution and print it.
+	  production_recurrence->exact_solution(exact_solution);
+	  cout << "*** EXACT SOLUTION ***"
+	       << endl
+	       << exact_solution
+	       << endl
+	       << "**********************"
+	       << endl << endl;
+	}
+      if (!have_exact_solution) {
+	if (lower_bound_required
+	    && (production_recurrence->compute_lower_bound()
+		== Recurrence::SUCCESS)) {
+	  // OK: get the lower bound and print it.
+	  production_recurrence->lower_bound(lower);
+	  cout << "*** LOWER BOUND ***"
+	       << endl
+	       << lower
+	       << endl
+	       << "*******************"
+	       << endl << endl;
+	}
+	if (upper_bound_required
+	    && (production_recurrence->compute_upper_bound()
+		== Recurrence::SUCCESS)) {
+	  // OK: get the upper bound and print it.
+	  production_recurrence->upper_bound(upper);
+	  cout << "*** UPPER BOUND ***"
+	       << endl
+	       << upper
+	       << endl
+	       << "*******************"
+	       << endl << endl;
+	}
+      }
+    }
+    else {
+      cerr << program_name
+	   << ": the production mode requires the recurrence." << endl;
+      my_exit(1);
+    }
     my_exit(0);
   }
-
+  
   unsigned unexpected_solution_or_bounds_for_it = 0;
   unsigned unexpected_exact_failures = 0;
   unsigned unexpected_lower_failures = 0;
@@ -471,8 +547,6 @@ main(int argc, char *argv[]) try {
 
   if (latex)
     cout << "\\documentclass{article}\n\\begin{document}" << endl;
-
-  init_symbols();
 
   while (input_stream) {
     ++line_number;
@@ -545,9 +619,6 @@ main(int argc, char *argv[]) try {
 
     Recurrence rec(rhs);
 
-    Expr lower;
-    Expr upper;
-    Expr exact_solution;
     // *** regress test
     if (regress_test) {
       if (expect_exactly_solved) {
