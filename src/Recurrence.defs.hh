@@ -34,7 +34,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Functional_Equation_Info.defs.hh"
 #include "Expr.defs.hh"
 #include "alg_eq_solver.hh"
-
+#include <iterator>
 #include <map>
 #include <iosfwd>
 
@@ -462,11 +462,40 @@ public:
     \exception std::invalid_argument  thrown if \p num is not a non-negative
                                       integer bigger or equal to the least
 				      non-negative integer \f$ j \f$ such
-				      that the solution is valid for
+				      that the recurrence is valid for
 				      \f$ n \geq j \f$.
   */
   Expr evaluate_exact_solution(const Number& num) const;
 
+  //! \brief
+  //! Evaluates the exact solution, previously computed, for \f$ n = i \f$,
+  //! where \f$ i \f$ assumes all the values of the interval \f$ [l, r] \f$.
+  //! Puts the results in a container marked by \p oi.
+  /*!
+    This method replaces <CODE>Recurrence::n</CODE> with all numbers
+    in the interval \f$ [l, r] \f$ in the expression containing the
+    exact solution.
+    \f$ i \in [l, r] \f$ must be a non-negative integer in agreement with
+    the least non-negative integer \f$ j \f$ such that the 
+    recurrence is well-defined for \f$ n \geq j \f$ (for more details
+    see the method <CODE>evaluate_exact_solution()</CODE> with only
+    one argument).
+
+    \exception std::logic_error       thrown if this method is called
+                                      but no exact solution was computed.
+
+    \exception std::invalid_argument  thrown if \f$ l > r \f$ 
+                                      or \p l is not a non-negative
+                                      integer bigger or equal to the least
+				      non-negative integer \f$ j \f$ such
+				      that the recurrence is well-defined
+				      for \f$ n \geq j \f$.
+  */
+  template <class OutputIterator>
+  void
+  evaluate_exact_solution(const Number& l, const Number& r,
+			  OutputIterator oi) const;
+  
   //! \brief
   //! Returns the lower bound of \p *this, previously computed,
   //! evaluated for \f$ n = num \f$.
@@ -475,7 +504,9 @@ public:
     the expression containing the lower bound.
     \p num must be a non-negative integer in agreement with
     the least non-negative integer \f$ j \f$ such that the 
-    recurrence is well-defined for \f$ n \geq j \f$.
+    recurrence is well-defined for \f$ n \geq j \f$ (for more details
+    see the method <CODE>evaluate_exact_solution()</CODE> with only
+    one argument).
 
     \exception std::logic_error       thrown if this method is called
                                       but no lower bound was computed.
@@ -483,10 +514,39 @@ public:
     \exception std::invalid_argument  thrown if \p num is not a non-negative
                                       integer bigger or equal to the least
 				      non-negative integer \f$ j \f$ such
-				      that the bound is valid for
+				      that the recurrence is well-defined
 				      \f$ n \geq j \f$.
   */
   Expr evaluate_lower_bound(const Number& num) const;
+
+  //! \brief
+  //! Evaluates the lower bound, previously computed, for \f$ n = i \f$,
+  //! where \f$ i \f$ assumes all the values of the interval \f$ [l, r] \f$.
+  //! Puts the results in a container marked by \p oi.
+  /*!
+    This method replaces <CODE>Recurrence::n</CODE> with all numbers
+    in the interval \f$ [l, r] \f$ in the expression containing the
+    lower bound.
+    \f$ i \in [l, r] \f$ must be a non-negative integer in agreement with
+    the least non-negative integer \f$ j \f$ such that the 
+    recurrence is well-defined for \f$ n \geq j \f$ (for more details
+    see the method <CODE>evaluate_exact_solution()</CODE> with only
+    one argument).
+
+    \exception std::logic_error       thrown if this method is called
+                                      but no lower bound was computed.
+
+    \exception std::invalid_argument  thrown if \f$ l > r \f$ 
+                                      or \p l is not a non-negative
+                                      integer bigger or equal to the least
+				      non-negative integer \f$ j \f$ such
+				      that the recurrence is well-defined
+				      for \f$ n \geq j \f$.
+  */
+  template <class OutputIterator>
+  void
+  evaluate_lower_bound(const Number& l, const Number& r,
+		       OutputIterator oi) const;
 
   //! \brief
   //! Returns the upper bound of \p *this, previously computed,
@@ -496,7 +556,9 @@ public:
     the expression containing the upper bound.
     \p num must be a non-negative integer in agreement with
     the least non-negative integer \f$ j \f$ such that the 
-    recurrence is well-defined for \f$ n \geq j \f$.
+    recurrence is well-defined for \f$ n \geq j \f$ (for more details
+    see the method <CODE>evaluate_exact_solution()</CODE> with only
+    one argument).
 
     \exception std::logic_error       thrown if this method is called
                                       but no upper bound was computed.
@@ -504,10 +566,39 @@ public:
     \exception std::invalid_argument  thrown if \p num is not a non-negative
                                       integer bigger or equal to the least
 				      non-negative integer \f$ j \f$ such
-				      that the bound is valid for
+				      that the recurrence is well-defined for
 				      \f$ n \geq j \f$.
   */
   Expr evaluate_upper_bound(const Number& num) const;
+
+  //! \brief
+  //! Evaluates the upper bound, previously computed, for \f$ n = i \f$,
+  //! where \f$ i \f$ assumes all the values of the interval \f$ [l, r] \f$.
+  //! Puts the results in a container marked by \p oi.
+  /*!
+    This method replaces <CODE>Recurrence::n</CODE> with all numbers
+    in the interval \f$ [l, r] \f$ in the expression containing the
+    upper bound.
+    \f$ i \in [l, r] \f$ must be a non-negative integer in agreement with
+    the least non-negative integer \f$ j \f$ such that the 
+    recurrence is well-defined for \f$ n \geq j \f$ (for more details
+    see the method <CODE>evaluate_exact_solution()</CODE> with only
+    one argument).
+
+    \exception std::logic_error       thrown if this method is called
+                                      but no upper bound was computed.
+
+    \exception std::invalid_argument  thrown if \f$ l > r \f$ 
+                                      or \p l is not a non-negative
+                                      integer bigger or equal to the least
+				      non-negative integer \f$ j \f$ such
+				      that the recurrence is well-defined
+				      for \f$ n \geq j \f$.
+  */
+  template <class OutputIterator>
+  void
+  evaluate_upper_bound(const Number& l, const Number& r,
+		       OutputIterator oi) const;
 
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Checks if all the invariants are satisfied.

@@ -1,4 +1,3 @@
-
 /* Recurrence class implementation: inline functions.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
@@ -173,17 +172,65 @@ Recurrence::get_max_index_initial_condition() const {
 
 inline Expr
 Recurrence::evaluate_exact_solution(const Number& num) const {
+  // `0' means that is the case of exact solution.
   return evaluate(0, num);
+}
+
+template <class OutputIterator>
+void
+Recurrence::evaluate_exact_solution(const Number& l, const Number& r,
+				    OutputIterator oi) const {
+  if (l > r)
+    throw_invalid_argument("PURRS::Recurrence::evaluate_exact_solution()",
+			   "the numbers represent an interval and the first\n"
+			   "must be smaller or equal to the second");
+  for (Number i = l; i <= r; ++i) {
+    // `0' means that is the case of exact solution.
+    *oi = evaluate(0, i);
+    ++oi;
+  }
 }
 
 inline Expr
 Recurrence::evaluate_lower_bound(const Number& num) const {
+  // `1' means that is the case of lower bound.
   return evaluate(1, num);
+}
+
+template <class OutputIterator>
+void
+Recurrence::evaluate_lower_bound(const Number& l, const Number& r,
+				 OutputIterator oi) const {
+  if (l > r)
+    throw_invalid_argument("PURRS::Recurrence::evaluate_lower_bound()",
+			   "the numbers represent an interval and the first\n"
+			   "must be smaller or equal to the second");
+  for (Number i = l; i <= r; ++i) {
+    // `1' means that is the case of lower bound.
+    *oi = evaluate(1, i);
+    ++oi;
+  }
 }
 
 inline Expr
 Recurrence::evaluate_upper_bound(const Number& num) const {
+  // `2' means that is the case of upper bound.
   return evaluate(2, num);
+}
+
+template <class OutputIterator>
+void
+Recurrence::evaluate_upper_bound(const Number& l, const Number& r,
+				 OutputIterator oi) const {
+  if (l > r)
+    throw_invalid_argument("PURRS::Recurrence::evaluate_upper_bound()",
+			   "the numbers represent an interval and the first\n"
+			   "must be smaller or equal to the second");
+  for (Number i = l; i <= r; ++i) {
+    // `2' means that is the case of upper bound.
+    *oi = evaluate(2, i);
+    ++oi;
+  }
 }
 
 inline void
