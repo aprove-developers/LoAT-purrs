@@ -31,6 +31,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Recurrence.defs.hh"
 #include "util.hh"
 #include "simplify.hh"
+#include "Blackboard.defs.hh"
 #include <algorithm>
 #include <iostream>
 #include <fstream>
@@ -210,10 +211,10 @@ PURRS::Recurrence::verify_solution() const {
     else {
       // Step 1: validation of initial conditions.
       for (unsigned i = order(); i-- > 0; ) {
-	D_VAR(i);
 	Expr solution_valuated
 	  = substitute_symbol_with_expression(solution, n,
 					      first_initial_condition() + i);
+	solution_valuated = blackboard.rewrite(solution_valuated);
 	solution_valuated = simplify_numer_denom(solution_valuated);
 	D_VAR(solution_valuated);
 	// We have to substitute `first_initial_condition() + i'
@@ -224,7 +225,6 @@ PURRS::Recurrence::verify_solution() const {
 	unsigned i_c = first_initial_condition() + i;
 	if (gcd_decrements_old_rhs <= i)
 	  i_c -= gcd_decrements_old_rhs;
-	D_VAR(i_c);
 	if (solution_valuated != x(i_c))
 	  return INCONCLUSIVE_VERIFICATION;
       }
@@ -284,7 +284,8 @@ PURRS::Recurrence::verify_solution() const {
       D_VEC(terms_to_sub, 0, terms_to_sub.size()-1);
 #endif
       D_VAR(substituted_rhs);
-      Expr diff = simplify_all(partial_solution - substituted_rhs);
+      Expr diff = blackboard.rewrite(partial_solution - substituted_rhs);
+      diff = simplify_all(diff);
       D_VAR(diff);
       if (!diff.is_zero())
 	return INCONCLUSIVE_VERIFICATION;
