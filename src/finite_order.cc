@@ -603,12 +603,16 @@ compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
   return true;
 }
 
+//! Let \p e be the right hand side of a recurrence to which is possible
+//! to reduce the order. This function computes and returns the right hand 
+//! side of the reduced order recurrence.
 /*!
   Let \f$ x(n) = a_1 x(n-k_1) + \dotsb + a_h x(n-k_h) + p(n) \f$ be
-  a recurrence such that \f$ g = gcd(k_1, \dotsc, k_h) > 1 \f$.
-  In this case it is possible to reduce the order of the recurrence
-  so that we have to solve \f$ g \f$ recurrences of order smaller
-  than the original recurrence.
+  a recurrence such that \f$ g = gcd(k_1, \dotsc, k_h) > 1 \f$, its
+  right hand side is contained in \p e. For these recurrences
+  is possible to reduce the order.
+  This function computes and returns the right hand side of the reduced
+  order recurrence.
   Note: the expression \p e must be simplified so that not to have
   nested power (using the function <CODE>simplify_ex_for_input</CODE>).
 */
@@ -644,8 +648,30 @@ PURRS::rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
   return e_rewritten;
 }
 
+//! Let \p e be the expression that represent the solution of the reduced
+//! order recurrence: starting from it, this function computes and returns
+//! a new expression containing the solution of the original recurrence.
 /*!
-  ...
+  \param e                      The solution of the reduced order recurrence.
+  \param r                      The symbol used instead of the expression
+                                \f$ mod(n, gcd_among_decrements) \f$.
+  \param m                      The expression
+                                \f$ mod(n, gcd_among_decrements) \f$.
+  \param gcd_among_decrements   The greatest common divisor among the
+                                decrements \f$ d \f$ of the terms
+				\f$ x(n-d) \f$ in the right hand side
+				of the original recurrence.
+
+  \return                       A new expression containing the solution
+                                of the original recurrence.
+
+  This function crosses inductively the expression \p e and performs
+  the following substitutions:
+  - r                            -> mod(n, gcd_among_decrements);
+  - n                            -> 1 / gcd_among_decrements
+                                    * (n - mod(n, gcd_among_decrements));
+  - x(k), k non-negative integer -> x(mod(n, gcd_among_decrements))
+                                     + k * gcd_among_decrements.
 */
 PURRS::Expr 
 PURRS::come_back_to_original_variable(const Expr& e, const Symbol& r,
@@ -670,8 +696,11 @@ PURRS::come_back_to_original_variable(const Expr& e, const Symbol& r,
 	       come_back_to_original_variable(e.arg(1), r, m,
 					      gcd_among_decrements));
   else if (e.is_a_function())
-    if (e.is_the_x_function())
-      return x(m);
+    if (e.is_the_x_function()) {
+      assert(e.arg(0).is_a_number());
+      Number arg = e.arg(0).ex_to_number();
+      return x(gcd_among_decrements * arg + m);
+    }
     else if (e.nops() == 1)
       return apply(e.functor(),
 		   come_back_to_original_variable(e.arg(0), r,
@@ -693,9 +722,9 @@ PURRS::come_back_to_original_variable(const Expr& e, const Symbol& r,
   return e_rewritten;
 }
 
+//! Returns the expanded solution of the recurrence \p rec
+//! to which we have applied the order reduction.
 /*!
-  Returns the expanded solution of the recurrence \p rec
-  to which we have applied the order reduction.
   The expansion of the solution is obtained removing the use of the
   function \f$ mod() \f$ from the solution.
 */
