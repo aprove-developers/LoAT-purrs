@@ -245,7 +245,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   std::cout << "Inhomogeneous term = " << e << std::endl;
 #endif
 
-  // Simplifies expressions, in particular rewrite nested powers.
+  // Simplifies expressions, in particular rewrites nested powers.
   e = simplify_on_input_ex(e);
 
   // Now certainly the exponentials in the inhomogeneous term have
@@ -297,7 +297,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       // parameters and in this case creates a vector of GNumber.
       // FIXME: this is temporary until will supports also the second order
       // recurrence relation with parameters.
-      std::vector<GNumber>  num_coefficients(order+1);
+      std::vector<GNumber> num_coefficients(order+1);
       for (int i = 1; i <= order; ++i) {
 	if (is_a<numeric>(coefficients[i]))
 	  num_coefficients[i] = GiNaC::ex_to<GiNaC::numeric>(coefficients[i]);
@@ -448,7 +448,6 @@ order_1_sol_poly_times_exponentials(const GSymbol& n,
 #endif
   solution_tot = solution_tot.expand();
   solution_tot = simplify_on_output_ex(solution_tot);
-  solution_tot = simplify_roots(solution_tot);
 
   return true;
 } 
@@ -548,7 +547,6 @@ order_2_sol_roots_distinct(const GSymbol& n, const GMatrix& decomposition,
 #endif
   solution_tot = solution_tot.expand();
   solution_tot = simplify_on_output_ex(solution_tot);
-  solution_tot = simplify_roots(solution_tot);
   solution_tot = solution_tot.collect(lst(initials_conditions[0],
   					  initials_conditions[1]));
   return solution_tot;
@@ -655,7 +653,6 @@ order_2_sol_roots_no_distinct(const GSymbol& n, const GMatrix& decomposition,
 #endif
     solution_tot = solution_tot.expand();
     solution_tot = simplify_on_output_ex(solution_tot);
-    solution_tot = simplify_roots(solution_tot);
     solution_tot = solution_tot.collect(lst(initials_conditions[0],
 					    initials_conditions[1]));
   }

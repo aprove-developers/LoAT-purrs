@@ -33,7 +33,4 @@ simplify_on_input_ex(const GExpr&);
 GExpr
 simplify_on_output_ex(const GExpr& e);
 
-GExpr
-simplify_roots(const GExpr& e);
-
 #endif
