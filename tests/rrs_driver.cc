@@ -135,14 +135,14 @@ error(const string& s) {
   my_exit(1);
 }
 
-static bool expect_solved;
-static bool expect_not_solved;
+static bool expect_exactly_solved;
+static bool expect_not_exactly_solved;
 
 void
 set_expectations(const string& s) {
   // No expectations by default.
-  expect_solved
-    = expect_not_solved
+  expect_exactly_solved
+    = expect_not_exactly_solved
     = false;
 
   const char* p = s.c_str();
@@ -151,10 +151,10 @@ set_expectations(const string& s) {
       return;
     switch (c) {
     case 'y':
-      expect_solved = true;
+      expect_exactly_solved = true;
       break;
     case 'n':
-      expect_not_solved = true;
+      expect_not_exactly_solved = true;
       break;
     case '*':
       break;
@@ -204,6 +204,9 @@ main(int argc, char *argv[]) try {
 
   process_options(argc, argv);
 
+  unsigned unexpected_exact_solutions = 0;
+  unsigned unexpected_exact_failures = 0;
+
   readlinebuf* prdlb = 0;
   istream* pinput_stream;
 
@@ -234,7 +237,7 @@ main(int argc, char *argv[]) try {
 
     // We may be at end of file.
     if (!input_stream)
-      my_exit(0);
+      break;
 
     // Skip comments.
     if (the_line.find("%") == 0)
@@ -269,8 +272,7 @@ main(int argc, char *argv[]) try {
     Expr rhs;
     try {
       // Dirty trick here: GiNaC's parser sucks!
-      static string dummy_string = "0";
-      Expr dummy_expr(dummy_string, symbols);
+      Expr dummy_expr("0", symbols);
       // We sandwich the string to be parsed within
       // "x(" and ")" to force its complete parsing.
       Expr tmp("x(" + rhs_string + ")", symbols);
@@ -289,24 +291,58 @@ main(int argc, char *argv[]) try {
     if (verbose) {
       if (!interactive)
 	cerr << line_number << ": ";
-      cout << "trying to solve x(n) = " << rhs << endl;
+      cerr << "trying to solve x(n) = " << rhs << endl;
     }
 
     Recurrence rec(rhs);
 
     Expr solution;
-    if (!solve_wrapper(rec, n)) {
+    if (solve_wrapper(rec, n)) {
+      if (regress_test) {
+	if (expect_not_exactly_solved) {
+	  if (verbose)
+	    cerr << "*** unexpected exact solution" << endl;
+	  ++unexpected_exact_solutions;
+	}
+      }
+      if (interactive) {
+	cout << "*** SOLUTION ***"
+	     << endl
+	     << rec.exact_solution(n)
+	     << endl
+	     << "****************"
+	     << endl << endl;
+      }
+    }
+    else {
+      if (regress_test) {
+	if (expect_exactly_solved) {
+	  if (verbose)
+	    cerr << "*** unexpected failure to find exact solution" << endl;
+	  ++unexpected_exact_failures;
+	}
+      }
       if (interactive)
 	cout << "Sorry, this is too difficult." << endl;
     }
-    else if (interactive) {
-      cout << "*** SOLUTION ***"
-	   << endl
-	   << rec.exact_solution(n)
-	   << endl
-	   << "****************"
-	   << endl << endl;
+  }
+
+  if (regress_test) {
+    bool failed = false;
+    if (unexpected_exact_solutions > 0) {
+      failed = true;
+      cerr << unexpected_exact_solutions
+	   << " unexpected exact solutions"
+	   << endl;
     }
+    if (unexpected_exact_failures > 0) {
+      failed = true;
+      cerr << unexpected_exact_failures
+	   << " unexpected failures to find exact solutions"
+	   << endl;
+    }
+    if (failed)
+      my_exit(1);
   }
   my_exit(0);
 } 
