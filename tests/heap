@@ -24,28 +24,6 @@
 % B bizarre: even assuming it makes sense, we have no plans to deal with it
 % * no expectations
 
-E	2*x(n-1)+n^100
-I	x((3*n)/3)
-I	x(n)
-K	x(n)+n!
-K	x(n)-2
-M	1.01*x(n-1)*(20000)-b
-M	1.01*x(n-1)*20000-b
-M	1.1*(3000+x(n-1))
-M	1.1*x(n)
-M	1.1*x(n-1)+2000
-M	16*(1.5)^n
-M	x(0.02)+n
-M	x(0.02+n)+n
-M	x(n^.5)+1
-M	x(n-1)*1.005-599.55
-M	x(n-1)*1.05+1000
-M	x(n-3)+x(n-7.6)
-M	x(n/2+0.02)+n
-M	x(x(-1+n))*x(-1+n)^2
-M	x(x(n-1))
-M	x(x(n-1))+1
-M	x(x(n-1))+x(x(n-2))
 B	(n^(1/2))*x(n^(1/2))+n
 B	2*x((2^n)/2)
 B	2*x((2^n)/2)+2^n
@@ -66,6 +44,8 @@ B	n*x(n-1)+x(n*n-n+2)-1
 B	n^(1/2)*x(n^(1/2))+c*n
 B	n^(1/2)*x(n^(1/2))+n
 B	n^a*x(n^(1-a))+n^b*x(n^(1-b))+n
+B	n^a*x(n^(1-a))+n^b*x(n^(1-b))+n/k
+B	sin(n-1)*x(n-1)
 B	sin(x(n-1))
 B	sqrt(n)*x(sqrt(n))+n
 B	sqrt(n)*x(sqrt(n))+n/2+x(3*n/4)
@@ -84,6 +64,28 @@ B	x(n/2+2/100)+n
 B	x(n^(1/2))+1
 B	x(n^5)
 B	x(sqrt(n))+1
+E	2*x(n-1)+n^100
+I	x((3*n)/3)
+I	x(n)
+K	x(n)+n!
+K	x(n)-2
+M	1.01*x(n-1)*(20000)-b
+M	1.01*x(n-1)*20000-b
+M	1.1*(3000+x(n-1))
+M	1.1*x(n)
+M	1.1*x(n-1)+2000
+M	16*(1.5)^n
+M	x(0.02)+n
+M	x(0.02+n)+n
+M	x(n-1)*1.005-599.55
+M	x(n-1)*1.05+1000
+M	x(n-3)+x(n-7.6)
+M	x(n/2+0.02)+n
+M	x(n^.5)+1
+M	x(x(-1+n))*x(-1+n)^2
+M	x(x(n-1))
+M	x(x(n-1))+1
+M	x(x(n-1))+x(x(n-2))
 X	3*x(n/2)+n*log(n)+x(n-1)
 X	3*x(n/2)+x(n-3)+3*n
 X	n^2*x(n-1)-6*x(n/2)
@@ -91,6 +93,7 @@ X	n^2*x(n-1)-x(n/2)
 X	x(n-1)+3*x(n/3)
 X	x(n-1)+x(n/2)
 k	2^x(n)
+k	log(x(n))
 n	(((x(n-1))^3)*(x(n-3)))/((x(n-2))^3)
 n	((n + 2)*(n - a)*(4*n^3  + 4*n^2*a - 2*n*a^2  + 10*n*a*b - 10*n*b^2  - 2*a^3  + 8*a^2*b - 8*a*b^2 + 26*n^2  + 19*n*a - 5*n*b - 3*a^2  + 20*a*b - 24*b^2  + 57*n + 23*a - 12*b + 42)*x(n - 1)-(2*n + 3)*(n + 2)*(n + 1)*(n - a + 2*b + 2)*(n + a - 2*b + 1)*x(n - 2))/((n + b + 3)*(n + a + 3)*(n - a + 1)*(n - a)*(2*n + 2*a - 2*b + 5))
 n	((n-2)*x(n-3))+x(n-2)
@@ -166,6 +169,7 @@ n	factorial(n)-x(n-3)+3*x(n-2)+n*log(n)+a+x(n-1)-a*x(n+6)
 n	factorial(n)-x(n-3)+3*x(n-2)+n*log(n)+a+x(n-1)-x(n+6)
 n	factorial(n)-x(n-3)+x(n-2)+n*log(n)+x(n*3)
 n	factorial(n)-x(n-3)+x(n-2)+n*log(n)+x(n/3)
+n	log(x(n-1))
 n	n*(n-2)*x(n-2)-(n-1)*x(n-1)
 n	n*x(n-1)+n*x(n-2)
 n	n*x(n-1)+x(n-2)
@@ -177,6 +181,7 @@ n	n*x(n/3)+n*n*n
 n	n+x(n*2)
 n	sin(n-1)*x(n-1)
 n	x((3*(n-1)))
+n	x((3*n)/3)
 n	x((7/10)*n)+x((1/5)*n)+2*n
 n	x((n+1)/2)+x((n-1)/2)
 n	x(2*n)/4
@@ -228,9 +233,9 @@ n	x(n/3)+x(n/5)+x(n/7)+x(n/11)+x(n/13)+a
 n	x(n/3)+x(n/5)+x(n/7)+x(n/11)+x(n/13)+n
 n	x(n/a)+b
 ul	(n/2)^2-1+2*x(n/2)
-ul	10*x(n/3)+2*n^2
 ul	1/2*x(n/2)+1
 ul	1/2*x(n/2)+log(n)
+ul	10*x(n/3)+2*n^2
 ul	2*x(7/10*n)+3*n
 ul	2*x(n/2)+(4/3)^n
 ul	2*x(n/2)+1
@@ -243,10 +248,9 @@ ul	2*x(n/2)+n*log(log(n))
 ul	2*x(n/2)+n*log(n)
 ul	2*x(n/2)+n^2
 ul	2*x(n/2)+n^n
-ul      2*x(n/2)-3*2^n
 ul	2*x(n/3)+n
-ul	2*x(n/3)+n^2
 ul	2*x(n/3)+n*log(n)
+ul	2*x(n/3)+n^2
 ul	2*x(n/3)+sqrt(n)
 ul	2*x(n/4)+n^(1/2)
 ul	2*x(n/9)+sqrt(n)
@@ -259,8 +263,8 @@ ul	3*x(n/2)+n*log(n)+n
 ul	3*x(n/2)+n*log(n*n)
 ul	3*x(n/2)+n*n*log(n)
 ul	3*x(n/3)+3^n
-ul	3*x(n/3)+n^2
 ul	3*x(n/3)+n*log(n)
+ul	3*x(n/3)+n^2
 ul	3*x(n/4)+n*log(n)
 ul	4*x(n/2)+(n^2)*n
 ul	4*x(n/2)+(n^2)*n^(1/2)
@@ -276,7 +280,6 @@ ul	6*x(n/7)+n
 ul	7*x(n/2)+18*n^2
 ul	7*x(n/2)+9/2*n*n
 ul	7*x(n/5)+10*n
-ul      8*x(n/2)+n*log(n)
 ul	9*x(n/3)+n^2
 ul	log(n)+2*x(n/2)
 ul	n^n+x(n/3)
@@ -287,6 +290,8 @@ ul	x(n/2)+2^n
 ul	x(n/2)+2^n*log(n)
 ul	x(n/2)+log(log(n))
 ul	x(n/2)+log(n)
+ul      2*x(n/2)-3*2^n
+ul      8*x(n/2)+n*log(n)
 ulv	1+2*x(n/2)
 ulv	1+3*x(n/3)
 ulv	1+x(n/2)
@@ -312,6 +317,7 @@ ulv	3*x((2/3)*n)
 ulv	3*x(2*n/3)
 ulv	3*x(2/3*n)
 ulv	3*x(n/2)
+ulv	3*x(n/2)+n*log(n)/log(2)
 ulv	3*x(n/2)+n+1
 ulv	3*x(n/3)
 ulv	3*x(n/3)+(2*n-1)
@@ -324,6 +330,7 @@ ulv	3*x(n/3)+5*n/3
 ulv	3*x(n/3)+n
 ulv	3*x(n/3)+n*n*n
 ulv	4*x(n/2)
+ulv	4*x(n/2)+(n^2)*n
 ulv	4*x(n/2)+1
 ulv	4*x(n/4)
 ulv	5*x(n/5)+5*n
@@ -350,8 +357,8 @@ y	(x(n-3)+x(n-4))/2
 y	-sum(k,0,n-1,x(k))
 y	-sum(k,0,n-1,x(k))+n^2
 y	16*x(n-2)-91*x(n-4)-180*x(n-8)+216*x(n-6)+1
-y	2*sum(a,0,n-1,x(a))+5
 y	2*sum(a,0,n-1,x(a))+2*n
+y	2*sum(a,0,n-1,x(a))+5
 y	2*x(n-1)*x(n-2)
 y	2*x(n-1)+3*x(n-3)
 y	2*x(n-1)+8*x(n-2)+9*x(n-3)-18
@@ -529,6 +536,7 @@ yv	2*x(n-1)+a+b
 yv	2*x(n-1)+b
 yv	2*x(n-1)+c
 yv	2*x(n-1)+c*n
+yv	2*x(n-1)+g
 yv	2*x(n-1)+n
 yv	2*x(n-1)+n*n
 yv	2*x(n-1)+n+1
@@ -551,7 +559,9 @@ yv	2*x(n-1)-2*x(n-2)
 yv	2*x(n-1)-3*x(n-2)+5^n
 yv	2*x(n-1)-4*x(n-2)
 yv	2*x(n-1)-5*x(n-2)
+yv	2*x(n-1)-b
 yv	2*x(n-1)-b+3*x(n-2)
+yv	2*x(n-1)-b+c
 yv	2*x(n-1)-n
 yv	2*x(n-1)-x(n-2)
 yv	2*x(n-1)-x(n-2)+1
@@ -699,6 +709,9 @@ yv	a*x(n-1)+n^5
 yv	a*x(n-1)+x(n-1)
 yv	a*x(n-2)+mod(n,b)
 yv	a+(1-a)*x(n-1)
+yv	a+b+c+d+f+x(n-1)+1
+yv	a+b+c+d+x(n-1)+1
+yv	a+b+x(n-1)+1
 yv	a^2+a*2^c*b+3^c*b
 yv	a^3+2^c*a^2*b+3^c*a*b+4^c*b
 yv	c+x(n-1)
@@ -776,7 +789,6 @@ yv	x(n-1)*0
 yv	x(n-1)*10
 yv	x(n-1)*1000
 yv	x(n-1)*2
-yv      x(n-1)*3^(2^n)
 yv	x(n-1)*4
 yv	x(n-1)*5
 yv	x(n-1)*a
@@ -838,6 +850,7 @@ yv	x(n-1)+3*n^2-3*n+1
 yv	x(n-1)+4
 yv	x(n-1)+4*x(n-2)
 yv	x(n-1)+5
+yv	x(n-1)+5*x(n-2)-5*x(n-3)-4*x(n-4)+4*x(n-5)-3^(n-2)+2^n
 yv	x(n-1)+6
 yv	x(n-1)+6*x(n-2)
 yv	x(n-1)+7
@@ -941,6 +954,7 @@ yv	x(n-5)
 yv	x(n-8)
 yv 	144*x(n-3)+56*x(n-2)+x(n-1)
 yv 	144*x(n-3)+56*x(n-2)+x(n-1)+3^n*n+4
+yv      x(n-1)*3^(2^n)
 yv      x(n-1)+(4^n-2^(n+1)+1)/7^n
 yv      x(n-1)+(4^n-2^n)/7^n
 yv      x(n-1)+4^n/7^n
