@@ -71,7 +71,9 @@ Recurrence::Recurrence(const Recurrence& y)
     finite_order_p(y.finite_order_p),
     functional_eq_p(y.functional_eq_p),    
     solved(y.solved),
-    solution(y.solution) {
+    solution(y.solution),
+    lower_bound(y.lower_bound),
+    upper_bound(y.upper_bound) {
 }
 
 inline
@@ -94,6 +96,8 @@ Recurrence::operator=(const Recurrence& y) {
   functional_eq_p = y.functional_eq_p;
   solved = y.solved;
   solution = y.solution;
+  lower_bound = y.lower_bound;
+  upper_bound = y.upper_bound;
   return *this;
 }
 
@@ -285,12 +289,49 @@ Recurrence::solve() const {
 }
 
 inline Expr
-Recurrence::exact_solution() const {
-  if (solved || solve())
-    return solution;
+Recurrence::lower_bound_solution() const {
+  if (solved || solve()) {
+    assert(is_linear_finite_order() || is_functional_equation());
+    if (is_linear_finite_order())
+      return solution;
+    else
+      return lower_bound;
+  }
   else
     // Well, if the client insists...
     return recurrence_rhs;
+}
+
+inline Expr
+Recurrence::upper_bound_solution() const {
+  if (solved || solve()) {
+    assert(is_linear_finite_order() || is_functional_equation());
+    if (is_linear_finite_order())
+      return solution;
+    else
+      return upper_bound;
+  }
+  else
+    // Well, if the client insists...
+    return recurrence_rhs;
+}
+
+inline bool
+Recurrence::exact_solution(Expr& exact_sol) const {
+  if (solved || solve()) {
+    assert(is_linear_finite_order() || is_functional_equation());
+    if (is_linear_finite_order())
+      exact_sol = solution;
+    else
+      if (lower_bound == upper_bound)
+	exact_sol = lower_bound;
+      else
+	return false;
+  }
+  else
+    // Well, if the client insists...
+    exact_sol = recurrence_rhs;
+  return true;
 }
 
 inline Expr

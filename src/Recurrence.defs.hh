@@ -173,11 +173,6 @@ public:
     TOO_COMPLEX
   };
 
-
-  Solver_Status solve() const;
-  Expr exact_solution() const;
-  Expr approximated_solution() const;
-
   enum Verify_Status {
     /*!
       The system can prove that the recurrence has been successfully
@@ -196,6 +191,12 @@ public:
     */
     INCONCLUSIVE_VERIFICATION
   };
+
+  Solver_Status solve() const;
+  Expr lower_bound_solution() const;
+  Expr upper_bound_solution() const;
+  bool exact_solution(Expr& exact_sol) const;
+  Expr approximated_solution() const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if the <CODE>solution</CODE> is right.
@@ -431,6 +432,9 @@ private:
   mutable bool solved;
 
   mutable Expr solution;
+
+  mutable Expr lower_bound;
+  mutable Expr upper_bound;
 
   mutable Blackboard blackboard;
 
