@@ -378,7 +378,7 @@ Expr::diff(const Symbol& symb, unsigned nth) {
 
 inline Expr
 wild(unsigned label) {
-  return wild(label);
+  return GiNaC::wild(label);
 }
 
 inline Expr
