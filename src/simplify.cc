@@ -359,35 +359,37 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
 
   // Now adds to `e_rewritten' the factor of `e' not considered in the
   // previous simplification, i.e., the factor which are not powers .
-  for (i = e.nops(); i-- > 0; ) {
+  for (i = e.nops(); i-- > 0; )
     if (!e.op(i).is_a_power()) {
       // We must consider those factors that are not powers but are equal
       // to some base of the vector `bases', in order to apply the rule `C1',
       // i.e., `a * a^e = a^(e + 1)'. In this case, we add `1' to the
       // correspondenting exponent.
       bool to_sum = false;
+      Expr old_factor;
+      Expr new_factor;
       for (unsigned j = bases.size(); j-- > 0; )
 	if (bases[j] == e.op(i) && !exponents[j].is_zero()) {
 	  to_sum = true;
 	  // If the base is `integer' then automatically, for instance,
 	  // `2^(3/2)' is transformed in `2*sqrt(2)':
-	  // in this case we do not add 1 to the exponent. 
-	  if (!bases[j].is_a_number() || !exponents[j].is_a_number())
-	    exponents[j] = exponents[j] + 1;
-	  else {
-	    Number base = bases[j].ex_to_number();
-	    if (!base.is_integer() || base == -1)
-	      exponents[j] = exponents[j] + 1;
-	  }
+	  // in this case we do not add 1 to the exponent.
+  	  old_factor = pwr(bases[j], exponents[j]);
+	  Number base;
+	  if (bases[j].is_a_number(base)
+	      && (!base.is_integer() || base == -1))
+	    new_factor = pwr(bases[j], exponents[j]+1);
+	  else if (!bases[j].is_a_number() || !exponents[j].is_a_number())
+	    new_factor = pwr(bases[j], exponents[j]+1);
+	  else
+	    new_factor = pwr(bases[j], exponents[j]) * e.op(i);
 	}
       // Applies rule `C1'.
       if (to_sum)
-	e_rewritten = e_rewritten.subs(pwr(e.op(i), wild(0)),
-				       pwr(e.op(i), wild(0) + 1));
+	e_rewritten = e_rewritten.subs(old_factor, new_factor);
       else
 	e_rewritten *= e.op(i);
     }
-  }
   return e_rewritten;
 }
 
@@ -802,7 +804,6 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
   else
     if (e_rewritten.is_a_mul())
       e_rewritten = collect_base_exponent(e_rewritten);
-  
   return e_rewritten;
 }
 
