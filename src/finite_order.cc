@@ -42,6 +42,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Number.defs.hh"
 #include "Matrix.defs.hh"
 #include "Recurrence.defs.hh"
+#include "Recurrence.inlines.hh"
 
 #include <algorithm>
 #include <vector>
