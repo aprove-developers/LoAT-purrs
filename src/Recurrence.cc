@@ -972,7 +972,7 @@ compute_infinite_order_recurrence(Expr& solution) const {
 	// Transform the recurrence `x(n) = f(n) sum(k, n_0, n, x(k)) + g(n)'
 	// in the equivalent recurrence
 	// `x(n) = f(n) / (1-f(n)) sum(k, n_0, n-1, x(k)) + g(n) / (1-f(n))'.
-	if (weight_inf_order() != -1) {
+	if (weight_inf_order() != 1) {
 	  Expr tmp = 1 - weight_inf_order();
 	  Expr weight_rewritten = weight_inf_order() / tmp;
 	  Expr inhomogeneous_rewritten = inhomogeneous_term / tmp;
