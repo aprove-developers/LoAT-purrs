@@ -31,12 +31,46 @@
 */
 
 /*! \mainpage Recurrence Relations and the PURRS
-\section preamble A C++ library for the (possibly approximate)
-	  	  solution of recurrence relations.
+\section preamble A C++ library for the (possibly approximate) solution of recurrence relations.
 
 FIXME: Abstract to be written.
 
 \section introduction An Introduction to Recurrence Relation
+
+In this section we introduce recurrence relations,
+as considered by the library, in more detail.
+
+<B>Recurrence relation</B>
+
+Given a sequence \f$ (x_n)_{n \in \Nset} \f$ of complex numbers, we say
+that it satisfies the <EM>recurrence relation</EM> (or, more briefly,
+the <EM>recurrence</EM>) \f$ F_n \f$ if
+\f[
+  F_n(n, x_n, x_{n-1}, \dots, x_1, x_0) = 0.
+\f]
+Note that, in general, we allow \f$ F_n \f$ to depend on \f$ n \f$:
+in the definition above, in fact, its arity is \f$ n+2 \f$.
+Here we want to include the possibility that, say,
+\f$ F_n(n, x_n, x_{n-1}, \dots, x_1, x_0) = \sum_{k=0}^n x_k \f$.
+
+\anchor normal_form
+<B>Normal form of a recurrence</B>
+
+We say that the recurrence \f$ F_n \f$ is in its <EM>normal form</EM>
+if there exists a function \f$ G_n \f$ such that
+\f[
+  F_n(n, x_n, x_{n-1}, \dots, x_1, x_0)
+  =
+  x_n - G_n(n, x_{n-1}, \dots, x_1, x_0).
+\f]
+In this case, we also call normal form of the recurrence the equivalent
+statement
+\f[
+  x_n
+  =
+  G_n(n, x_{n-1}, \dots, x_1, x_0).
+\f]
+
 
 homogeneous
 
@@ -52,3 +86,4 @@ initial conditions (symbolic, user defined)
 
 
 
+*/
