@@ -30,19 +30,21 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
-Functional_Equation_Info::Functional_Equation_Info(const Expr& a,
-						   const Number& b,
-						   unsigned c)
-  : coefficient_(a),
-    divisor_arg_(b),
+Functional_Equation_Info::
+Functional_Equation_Info(unsigned int k, const std::vector<Expr>& coeffs,
+			 const std::vector<Number>& divisors, unsigned c)
+  : rank_(k),
+    coefficients_fe_(coeffs),
+    divisors_arg_(divisors),
     applicability_condition_(c) {
 }
 
 inline
 Functional_Equation_Info::
 Functional_Equation_Info(const Functional_Equation_Info& y)
-  : coefficient_(y.coefficient_),
-    divisor_arg_(y.divisor_arg_),
+  : rank_(y.rank_),
+    coefficients_fe_(y.coefficients_fe_),
+    divisors_arg_(y.divisors_arg_),
     applicability_condition_(y.applicability_condition_) {
 }
 
@@ -52,30 +54,41 @@ Functional_Equation_Info::~Functional_Equation_Info() {
 
 inline Functional_Equation_Info&
 Functional_Equation_Info::operator=(const Functional_Equation_Info& y) {
-  coefficient_ = y.coefficient_;
-  divisor_arg_ = y.divisor_arg_;
+  rank_ = y.rank_;
+  coefficients_fe_ = y.coefficients_fe_;
+  divisors_arg_ = y.divisors_arg_;
   applicability_condition_ = y.applicability_condition_;
   return *this;
 }
 
-inline Expr
-Functional_Equation_Info::coefficient() const {
-  return coefficient_;
+inline unsigned int
+Functional_Equation_Info::rank() const {
+  return rank_;
 }
 
-inline Expr&
-Functional_Equation_Info::coefficient() {
-  return coefficient_;
+inline unsigned int&
+Functional_Equation_Info::rank() {
+  return rank_;
 }
 
-inline Number
-Functional_Equation_Info::divisor_arg() const {
-  return divisor_arg_;
+inline const std::vector<Expr>&
+Functional_Equation_Info::coefficients_fe() const {
+  return coefficients_fe_;
 }
 
-inline Number&
-Functional_Equation_Info::divisor_arg() {
-  return divisor_arg_;
+inline std::vector<Expr>&
+Functional_Equation_Info::coefficients_fe() {
+  return coefficients_fe_;
+}
+
+inline const std::vector<Number>&
+Functional_Equation_Info::divisors_arg() const {
+  return divisors_arg_;
+}
+
+inline std::vector<Number>&
+Functional_Equation_Info::divisors_arg() {
+  return divisors_arg_;
 }
 
 inline unsigned

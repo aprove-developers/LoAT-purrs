@@ -37,9 +37,12 @@ namespace Parma_Recurrence_Relation_Solver {
 class Functional_Equation_Info {
 public:
   //! \brief
-  //! Constructor: sets \f$ coefficient_ = a \f$, \f$ divisor_arg_ = b \f$
+  //! Constructor: sets \f$ rank_ = k \f$,
+  //! \f$ coefficients_fe_ = coeffs \f$, \f$ divisors_arg_ = divisors \f$
   //! and \f$ applicability_condition_ = c \f$
-  Functional_Equation_Info(const Expr& a, const Number& b, unsigned c = 1);
+  Functional_Equation_Info(unsigned int k, const std::vector<Expr>& coeffs,
+			   const std::vector<Number>& divisors,
+			   unsigned c = 1);
 
   //! Copy-constructor.
   Functional_Equation_Info(const Functional_Equation_Info& y);
@@ -50,17 +53,23 @@ public:
   //! Assignment operator.
   Functional_Equation_Info& operator=(const Functional_Equation_Info& y);
 
-  //! Returns <CODE>coefficient_</CODE>.
-  Expr coefficient() const;
+  //! Returns <CODE>rank_</CODE>.
+  unsigned int rank() const;
 
-  //! Returns <CODE>coefficient_</CODE>.
-  Expr& coefficient();
+  //! Returns <CODE>rank_</CODE>.
+  unsigned int& rank();
 
-  //! Returns <CODE>divisor_arg_</CODE>.
-  Number divisor_arg() const;
+  //! Returns <CODE>coefficients_fe_</CODE>.
+  const std::vector<Expr>& coefficients_fe() const;
 
-  //! Returns <CODE>divisor_arg_</CODE>.
-  Number& divisor_arg();
+  //! Returns <CODE>coefficients_fe_</CODE>.
+  std::vector<Expr>& coefficients_fe();
+
+  //! Returns <CODE>divisors_arg_</CODE>.
+  const std::vector<Number>& divisors_arg() const;
+
+  //! Returns <CODE>divisors_arg_</CODE>.
+  std::vector<Number>& divisors_arg();
 
   //! Returns <CODE>applicability_condition_</CODE>.
   unsigned applicability_condition() const;
@@ -73,14 +82,19 @@ public:
 
 private:
   //! \brief
-  //! Stores the coefficient \f$ a \f$ of the equation
-  //! \f$ x_n = a x_{n/b} + d n^e \f$. 
-  Expr coefficient_;
+  //! The rank of the functional equation, i. e., the number of terms
+  //! of the form \f$ a x(n/b) \f$ where \f$ b \f$ is a rational number
+  //! larger than one.
+  unsigned int rank_;
+
+  //! Stores the coefficients of the functional equation.
+  std::vector<Expr> coefficients_fe_;
 
   //! \brief
-  //! Stores the divisor\f$ b \f$ of the argument of the function
-  //! \f$ x \f$ in the equation \f$ x_n = a x_{n/b} + d n^e \f$.
-  Number divisor_arg_;
+  //! Stores the divisors \f$ b \f$ of the argument of the function
+  //! \f$ x \f$ in the terms of the form \f$ a x_{n/b} \f$ contained in
+  //! the functional equation.
+  std::vector<Number> divisors_arg_;
 
   //! \brief
   //! The positive integer starting from which the inhomogeneous term
