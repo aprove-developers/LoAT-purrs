@@ -68,7 +68,6 @@ using namespace PURRS;
 void
 solve_equation_2(const Expr& b, const Expr& c,
 		 Expr& x1, Expr& x2) {
-  Symbol n("n");
   Expr sqrt_d = sqrt(b*b - 4*c);
   D_MSGVAR("Before: ", sqrt_d);
   sqrt_d = simplify_ex_for_output(sqrt_d, false);
@@ -97,7 +96,6 @@ solve_equation_2(const Expr& b, const Expr& c,
 bool
 solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
 		 Expr& x1, Expr& x2, Expr& x3) {
-  Symbol n("n");
   Number Q = (3*a2 - a1*a1) / 9;
   Number R = (9*a1*a2 - 27*a3 -2*a1*a1*a1) / 54;
   Number d = Q*Q*Q + R*R;
