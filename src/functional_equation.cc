@@ -132,7 +132,7 @@ is_non_decreasing_poly(const Expr& e, const Symbol& x) {
   We consider separately the mathematical functions:
   - a logarithm with a base grater or equal than \f$ 1 \f$
     is a non-decreasing function in \f$ x \f$;
-  - the function \f$ p(x)^q(x) = e^{q(x) log(p(x))} \f$ is a
+  - the function \f$ p(x)^{q(x)} = e^{q(x) log(p(x))} \f$ is a
     non-decreasing function in \f$ x \f$ if \f$ p(x) \f$ and
     \f$ q(x) \f$ are non-decreasing functions in \f$ x \f$.
 */

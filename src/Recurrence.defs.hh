@@ -506,13 +506,13 @@ private:
   std::vector<Expr>& coefficients_fe();
 
   //! \brief
-  //! Returns \f$ b \f$, the divisor of \f$ n \f$ in the functional equation
-  //! \f$ x_n = a x_{n/b} + p(n).
+  //! Returns the divisors \f$ b \f$ of the arguments of \f$ x \f$ functions
+  //! of the form \f$ x(n/b) \f$ of the functional equation.
   const std::vector<Number>& divisors_arg() const;
 
   //! \brief
-  //! Returns \f$ b \f$, the divisor of \f$ n \f$ in the functional equation
-  //! \f$ x_n = a x_{n/b} + p(n).
+  //! Returns the divisors \f$ b \f$ of the arguments of \f$ x \f$ functions
+  //! of the form \f$ x(n/b) \f$ of the functional equation.
   std::vector<Number>& divisors_arg();
 
   //! \brief

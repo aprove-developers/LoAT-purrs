@@ -441,7 +441,7 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
       g_n = a_1 g_{n-1} + a_2 g_{n-2} + \cdots + a_k g_{n-k}, \\
       g_0 = 1, \\
       g_n = a_1 g_{n-1} + a_2 g_{n-2} + \cdots + a_{n-1} g_1 + a_n g_0
-        & \text{for $1 \le n < k$,} \\
+        \quad \text{for } 1 \le n < k, \\
      \end{cases}
   \f]
   this function returns the general solution of recurrence relation

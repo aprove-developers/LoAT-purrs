@@ -36,10 +36,10 @@ namespace Parma_Recurrence_Relation_Solver {
 class Finite_Order_Info {
 public:
   //! \brief
-  //! Constructor: sets \f$ order_ = k \f$,
-  //! \f$ first_i_c_for_linear_ = i_c \f$,
-  //! \f$ coefficients_lfo_ = coeffs \f$ and
-  //! \f$ gcd_among_decrements_ = gcd \f$.
+  //! Constructor: sets \f$ order{\_} = k \f$,
+  //! \f$ first{\_}i{\_}c{\_}for{\_}linear{\_} = i{\_}c \f$,
+  //! \f$ coefficients{\_}lfo{\_} = coeffs \f$ and
+  //! \f$ gcd{\_}among{\_}decrements{\_} = gcd \f$.
   Finite_Order_Info(int k, unsigned i_c, const std::vector<Expr>& coeffs,
 		    unsigned gcd);
 

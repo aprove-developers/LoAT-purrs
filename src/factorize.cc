@@ -76,7 +76,7 @@ assign_common_factor_and_rem(const Expr& base_factor,
 /*!
   Let \f$ e = e_1 + e_2 + \dots + e_k \f$ be the expression contained
   in \p e and let \p factor be a factor of one subexpression of \p e,
-  i. e., \f$ \exist i \in \{ 1, \cdots, k \} \itc e_i = factor * r \f$,
+  i. e., \f$ \exists i \in \{ 1, \cdots, k \} \itc e_i = factor * r \f$,
   where \f$ r \f$ represents the possibly other factors of \f$ e_i \f$.
   This function looks if \p factor is a common factor to every term
   of \p e and, in this case, if it is not already in \p common_factor,
@@ -143,7 +143,7 @@ in_all_factors(const Expr& e,
 /*!
   Let \f$ e = e_1 + e_2 + \dots + e_k \f$ be the expression contained
   in \p e and let \p term be one subexpression of \p e, i. e.,
-  \f$ \exist i \in \{ 1, \cdots, k \} \itc e_i = term \f$.
+  \f$ \exists i \in \{ 1, \cdots, k \} \itc e_i = term \f$.
   This function returns in \p common_factor the factors of \p term
   that are contained also in all other terms of \p e, i. e. the common
   factors, and leaves in \p rem_summand the other factors of \p term.

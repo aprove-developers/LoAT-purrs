@@ -37,9 +37,10 @@ namespace Parma_Recurrence_Relation_Solver {
 class Functional_Equation_Info {
 public:
   //! \brief
-  //! Constructor: sets \f$ rank_ = k \f$,
-  //! \f$ coefficients_fe_ = coeffs \f$, \f$ divisors_arg_ = divisors \f$
-  //! and \f$ applicability_condition_ = c \f$
+  //! Constructor: sets \f$ rank{\_} = k \f$,
+  //! \f$ coefficients{\_}fe{\_} = coeffs \f$,
+  //! \f$ divisors{\_}arg{\_} = divisors \f$
+  //! and \f$ applicability{\_}condition{\_} = c \f$
   Functional_Equation_Info(unsigned int k, const std::vector<Expr>& coeffs,
 			   const std::vector<Number>& divisors,
 			   unsigned c = 1);

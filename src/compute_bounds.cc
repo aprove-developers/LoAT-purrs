@@ -73,14 +73,14 @@ bounds_for_exp_function(const Number& coeff, const Number& divisor,
     x(n) \le \begin{cases}
                \dfrac12 \log n \,
 	       \Bigl( \dfrac{\log n}{\log(b)} + 1 \Bigr)
-	         & \text{if \f$ a = 1 \f$;} \\
+	         \quad \text{if } a = 1; \\
 	       \dfrac{1}{a - 1} \log(n) \,
 	         \bigl( n^{(\log(a))/\log(b)} - 1 \bigr)
 	         + \\
 	       \qquad +
 	         \dfrac{\log(b)}{(a - 1)^2}
 	         \bigl( (a + 1) n^{(\log(a))/\log(b)} - a \bigr)
-	         & \text{if \f$ a > 1 \f$.} \\
+	         \quad \text{if } a > 1. \\
 	     \end{cases}
   \f]
 */
@@ -103,18 +103,18 @@ upper_bound_for_log_function(const Number& coeff, const Number& divisor,
 /*!
   Let \f$ x(n) \f$ be a sequence satisfying the generalized recurrence
   \f$ x_n = a x_{n/b} + g(n) \f$ with \f$ g(n) = n^k log(n) \f$,
-  where \f$ k \in \Rset \f$, with \f$ k \ge 0 \f$.
-  Then for all \f$ n \ge 1 \f$ have
+  where \f$ k \in \Rset \f$, with \f$ k \geq 0 \f$.
+  Then for all \f$ n \geq 1 \f$ have
   \f[
     x(n) \le \begin{cases}
                \dfrac{b^k}{b^k - a} \, n^k \log(n)
-                 & \text{if \f$ a < b^k \f$;} \\
+                 \quad \text{if } a < b^k ; \\
 	       n^k \, \dfrac{(\log n)^2}{\log(b)}
-                 & \text{if \f$ a = b^k \f$;} \\
+                 \quad \text{if } a = b^k; \\
 	       \dfrac{b^k}{a - b^k} \, n^k
 	         \biggl( \Bigl( \dfrac{a}{b^k}
 		         \Bigr)^{(\log(n))/\log(b)} - 1
-		 \biggl) \log n & \text{if \f$ a > b^k \f$.} \\
+		 \biggl) \log n \quad \text{if } a > b^k. \\
 	     \end{cases}
   \f]
 */
@@ -136,18 +136,18 @@ upper_bound_for_log_times_power_function(const Number& coeff,
 /*!
   Let \f$ x(n) \f$ be a sequence satisfying the generalized recurrence
   \f$ x_n = a x_{n/b} + g(n) \f$ with \f$ g(n) = n^k \f$,
-  where \f$ k \in \Rset \f$, with \f$ k \ge 0 \f$.
-  Then for all $n \ge 1$ have
+  where \f$ k \in \Rset \f$, with \f$ k \geq 0 \f$.
+  Then for all $n \geq 1$ have
   \f[
     x(n) \le \begin{cases}
                \dfrac{b^k}{b^k - a} \, n^k
-	         & \text{if \f$ a < b^k \f$;} \\
+	         \quad \text{if } a < b^k ; \\
 	       n^k \, \dfrac{\log n}{\log b}
-	         & \text{if \f$ a = b^k \f$;} \\
+	         \quad \text{if } a = b^k ; \\
 	       \dfrac{b^k}{a - b^k} \, n^k
 	         \biggl( \Bigl( \dfrac{a}{b^k}
 		         \Bigr)^{(\log n)/\log b} - 1
-		 \biggl)      & \text{if \f$ a > b^k \f$.} \\
+		 \biggl)      \quad \text{if } a > b^k . \\
 	     \end{cases}
   \f]
 */
@@ -169,16 +169,16 @@ upper_bound_for_power_function(const Number& coeff, const Number& divisor,
   Let \f$ x(n) \f$ be a sequence satisfying the generalized recurrence
   \f$ x_n = a x_{n/b} + g(n) \f$ with \f$ g(n) = n^k \f$,
   where \f$ k \in \Nset \f$.
-  Then for all \f$ n \ge 1 \f$ have
+  Then for all \f$ n \geq 1 \f$ have
   \f[
-    x(n) \ge \begin{cases}
+    x(n) \geq \begin{cases}
                \dfrac{n - a + 1}{(a-1)^2}
-                 & \text{if \f$ k = 0 \f$ and \f$ a = b \f$;} \\
+                 \quad \text{if } k = 0 \text{ and } a = b; \\
                n \Bigl(\dfrac{\log n}{\log a} - 1 \Bigr)
-                 & \text{if \f$ k = 1 \f$ and \f$ a = b \f$;} \\
+                 \quad \text{if } k = 1 { and } a = b; \\
                \dfrac{a^{k-1}}{a^{k-1} - 1}
                  \Bigl( n^k - (a - 1) n^{k-1} \Bigr)
-                   & \text{if \f$ k > 1 \f$ and \f$ a = b \f$.}
+                   \quad \text{if } k > 1 { and } a = b.
 	     \end{cases}
   \f]
 */
@@ -567,7 +567,7 @@ try_to_compute_sum(const Expr& summand,
 /*!
   Computes
   \f[
-    \a^q x \left( \frac n{\b^q} \right)
+    a^q x ( \frac {n}{b^q} )
   \f]
   where \f$ a \f$ is stored in <CODE>coefficient()</CODE>, \f$ b \f$
   is stored <CODE>divisor_arg()</CODE>.
