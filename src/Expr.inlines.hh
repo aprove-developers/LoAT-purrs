@@ -200,6 +200,12 @@ Expr::ex_to_symbol() const {
   return GiNaC::ex_to<GiNaC::symbol>(*this);
 }
 
+inline Complex_Interval
+Expr::ex_to_complex_interval() const {
+  assert(GiNaC::is_a<GiNaC::complint>(*this));
+  return GiNaC::ex_to<GiNaC::complint>(*this);
+}
+
 // FIXME: info, temporary
 inline bool
 Expr::is_integer_polynomial() const {

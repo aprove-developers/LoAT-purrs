@@ -485,11 +485,16 @@ public:
   //! <CODE>prod()</CODE>.
   bool is_the_prod_function() const;
 
-  //! Returns the numeric value of \p *this.
+  //! If \p *this is a number, returns the corresponding value.
   Number ex_to_number() const;
 
-  //! Returns the symbolic value of \p *this.
+  //! If \p *this is symbolic, returns the corresponding symbol.
   Symbol ex_to_symbol() const;
+
+  //! \brief
+  //! If \p *this is an interval expression,
+  //! returns the corresponding complex interval.
+  Complex_Interval ex_to_complex_interval() const;
 
   // FIXME: info, temporary
   bool is_integer_polynomial() const;
