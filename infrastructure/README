@@ -4,9 +4,9 @@ autoconf 2.52g
 automake 1.5
 gcc 3.0.3
 gmp 4.0.1      (configure with -fexceptions) (1)
-cln 1.1.4      (manually copy cln.m4 (2)
+cln 1.1.4      (manually copy cln.m4) (2)
 ginac 1.0.5
-fi_lib++ 2.0   (apply patches and be careful about how you build it (3)
+fi_lib++ 2.0   (follow the instructions) (3)
 ntl 5.2        (4)
 
 Just for the web-based demos:
@@ -25,9 +25,13 @@ Namely,
   cp my/path/to/cln/sources/cln.m4 my/path/to/build/dir
 
 (3)
-cd my/path/to/interval/
-patch -p1 <my/path/to/purrs/infrastructure/patch_filib++-2.0
+mkdir filib++
+cd filib++
+cvs -d cvs.cs.unipr.it:/cvs/filib++ checkout interval
+cd interval
 ln -s makefiles/Makefile.gcc Makefile
+make libs
+(it will complain because some `lib' directory is missing: create it by hand)
 make libs
 su
 <root password>
