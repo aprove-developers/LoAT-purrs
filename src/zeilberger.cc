@@ -23,13 +23,15 @@ For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
 #ifndef NOISY
-#define NOISY 0
+#define NOISY 1
 #endif
 
 #include "zeilberger.hh"
+#include "factorize_giac.hh"
 #include "globals.hh"
 #include "simplify.hh"
 #include "util.hh"
+#include "Recurrence.defs.hh"
 #include "Expr.defs.hh"
 #include "Symbol.defs.hh"
 
@@ -42,8 +44,8 @@ using namespace PURRS;
 
 /*!
   By definition, an expression \f$ F(m, k) \f$ is an hypergeometric term
-  in both argument, i.e., \f$ F(m+1, k) / F(m, k) \f$ and
-  \f$ K(m, k+1) / F(m, k) \f$ are both rational functions of \f$ m \f$
+  in both arguments if \f$ F(m+1, k) / F(m, k) \f$ and
+  \f$ F(m, k+1) / F(m, k) \f$ are both rational functions of \f$ m \f$
   and \f$ k \f$.
   This function returns <CODE>true</CODE> if \p F_m_k is a hypergeometric
   term and in this case, called
@@ -66,17 +68,23 @@ zeilberger_step_one(const Expr& F_m_k,
   Expr first
     = simplify_binomials_factorials_exponentials(F_m_k.substitute(m, m+1))
     * pwr(simplify_binomials_factorials_exponentials(F_m_k), -1);
+  DD_MSGVAR("ZEIL step one A -> ", first);
   Expr second
     = simplify_binomials_factorials_exponentials(F_m_k.substitute(k, k+1))
     * pwr(simplify_binomials_factorials_exponentials(F_m_k), -1);
-  // FIXME: we must understand the better simplification to use in this case.
+  // FIXME: we must decide on the best simplification to use in this case.
+  DD_MSGVAR("ZEIL step one B -> ", second);
+  //  simplify_all(first);
   first = simplify_numer_denom(first);
+  DD_MSGVAR("ZEIL step one C -> ", first);
   second = simplify_numer_denom(second);
+  D_VAR(first);
+  D_VAR(second);
   if (!first.is_rational_function(m) || !second.is_rational_function(k))
     return false;
 
-  // F_m_k is an hypergeometric term in both argument and then the
-  // Zeilberger's algorithm is applicable.
+  // F_m_k is an hypergeometric term in both arguments and we can thus
+  // apply Zeilberger's algorithm.
   Expr tmp
     = simplify_binomials_factorials_exponentials(F_m_k)
     * pwr(simplify_binomials_factorials_exponentials(F_m_k.substitute(m, m-1)),
@@ -108,6 +116,8 @@ zeilberger_step_one(const Expr& F_m_k,
   D_VAR(s_1);
   D_VAR(s_2);
 
+  // FIXME: Assert that r_1,r_2, s_1, s_2 are polynomials.
+
   // Computes `p_0_k'.
   index_type order = coefficients.size() - 1;
   for (index_type j = 0; j <= order; ++j) {
@@ -134,18 +144,317 @@ zeilberger_step_one(const Expr& F_m_k,
   return true;
 }
 
+// Factorize the rational function q(k) as q(k) = p1(k+1)/p1(k) * p2(k)/p3(k)
+// where p2(k) and p3(k) are coprime.
+// FIXME: Write a longer comment.
 bool
-parametric_gosper_step_two(const Symbol& /*m*/, const Expr& /*r_m*/,
-			   Expr& /*a_m*/, Expr& /*b_m*/, Expr& /*c_m*/) {
+parametric_gosper_step_two(const Symbol& k, const Expr& q_k,
+			   Expr& p1_k, Expr& p2_k, Expr& p3_k) {
+  // FIXME: Consider all special cases as well.
+  Expr num;
+  Expr den;
+  q_k.numerator_denominator(num, den);
+
+  Expr a_k = num;
+  Expr b_k = den;
+  Expr c_k = 1;
+
+  for (Number h = 1; h <= 100; ++h) {
+    // FIXME: Zeilberger trick.
+    if (gcd(num, den).degree(k) > 0) {
+      Expr temp_b_k = (b_k.substitute(k, k + h)).expand();
+      Expr s = gcd(a_k, temp_b_k);
+      a_k = quo(a_k, s, k);
+      Expr temp_s = s.substitute(k, k - h);
+      b_k = quo(b_k, temp_s, k);
+      // FIXME: integer_roots[i] is an Expr, not a Number!
+      for (Number j = 1; j <= h; ++j)
+	c_k *= s.substitute(k, k - j);  
+   }
+  }
+
+  /*
+  //  Symbol h("h");
+  //  num = (k+1)*(k+3);
+  //  den = h * k + h;
+
+  den = 2 - 2*k;
+  num = num.expand();
+  den = den.expand();
+
+  D_VAR(num);
+  D_VAR(den);
+
+  //  Expr s = general_gcd(num, den, k);
+  // FIXME: Improve GiNaC's gcd.
+  Expr s = gcd(num, den);
+  D_VAR(s);
+  */
+
+#if 0
+  Symbol h("h");
+  Expr shifted_den = den.substitute(k, k+h);
+  Expr res;
+  res = sylvester_matrix_resultant(num, shifted_den, k);
+  D_VAR(res);
+
+  // Factorize resultant in order to get integer roots.
+  // Not needed for the time being.
+  Expr numeric;
+  Expr non_numeric;
+  factorize_giac(res, numeric, non_numeric);
+  //  numeric = 1;
+  //  non_numeric = h+2;
+  D_VAR(numeric);
+  D_VAR(non_numeric);
+#endif
+
+#if 0
+  integer_roots.push_back(-Recurrence::n-2);
+  Expr a_k;
+  Expr b_k;
+
+  // normalize f and g, and store conversion factor in Z
+  Expr lead_num = num.lcoeff(k);
+  Expr lead_den = den.lcoeff(k);
+  Expr Z = lead_num * pwr(lead_den, -1);
+  a_k = num * pwr(lead_num, -1);
+  b_k = den * pwr(lead_den, -1);
+  // Computation of the output polynomials.
+  c_k = 1;
+  unsigned int integer_roots_size = integer_roots.size();
+  for (unsigned int i = 0; i < integer_roots_size; ++i) {
+    Expr temp_b_k = (b_k.substitute(k, k + integer_roots[i])).expand();
+    Expr s = general_gcd(a_k, temp_b_k, k);
+    a_k = quo(a_k, s, k);
+    Expr temp_s = s.substitute(k, k - integer_roots[i]);
+    b_k = quo(b_k, temp_s, k);
+    // FIXME: integer_roots[i] is an Expr, not a Number!
+    //    for (Number j = 1; j <= integer_roots[i]; ++j)
+    //     c_k *= s.substitute(k, k - j);
+  }
+  a_k *= Z;
+  // The polynomials `a_m' and `b_m' may have rational coefficients.
+  // Multiply numerator and denominator of the fraction `a_m/b_m'
+  // by suitable integers, so that the output values of `a_m' and `b_m'
+  // have integer coefficients. 
+
+  if (!a_m.is_integer_polynomial(m)) {
+    Expr a_m_factor;
+    a_m = convert_to_integer_polynomial(a_m, m, a_m_factor);
+    a_m *= a_m_factor.numerator();
+    b_m *= a_m_factor.denominator();
+  } 
+
+  if (!b_m.is_integer_polynomial(m)) {
+    Expr b_m_factor;
+    b_m = convert_to_integer_polynomial(b_m, m, b_m_factor);
+    a_m *= b_m_factor.denominator();
+    b_m *= b_m_factor.numerator();
+  }
+#endif
+
+  D_VAR(a_k);
+  D_VAR(b_k);
+  D_VAR(c_k);
+
+  p2_k = a_k;
+  p3_k = b_k;
+  p1_k = c_k;
 
   return true;
 }
 
 
+  // Coefficients represent the originary unknown related to the order J of
+  // sought recurrence.
 bool
-parametric_gosper_step_three(const Symbol& /*m*/,
-			     const Expr& /*a_m*/, const Expr& /*b_m*/,
-			     const Expr& /*c_m*/, Expr& /*x_m*/) {
+parametric_gosper_step_three(const Symbol& m, const std::vector<Symbol>& coefficients,
+			     const Expr& p2_m, const Expr& p3_m,
+			     const Expr& p_m, Expr& b_m, std::vector<Expr>& coefficients_values) {
+  std::cout << "Zeilberger step 3\n";
+  D_VAR(m);
+  D_VAR(p2_m);
+  D_VAR(p3_m);
+  D_VAR(p_m);
+
+
+  // Gosper's algorithm, step 3.1.
+  // Finds the degree of `x(n)'.
+  unsigned int deg_a = p2_m.degree(m);
+  unsigned int deg_b = p3_m.degree(m);
+  unsigned int deg_c = p_m.degree(m);
+  Expr lead_a = p2_m.lcoeff(m);
+  Expr lead_b = p3_m.lcoeff(m);
+  Number deg_x = -1;
+  // On output, if a possible degree exists,
+  // `deg_x' will contain a non-negative number.
+  // FIXME: lead_a and lead_b might contain parameters.
+  if (deg_a != deg_b || lead_a != lead_b) {
+    if (deg_a >= deg_b && deg_c >= deg_a)
+      deg_x = deg_c - deg_a;
+    if (deg_b > deg_a && deg_c >= deg_b)
+      deg_x = deg_c - deg_b;
+  }
+  else {
+    // `deg_a = deg_b' and `lead_a = lead_b'. [FIXME: consider parameters]
+    D_VAR(deg_a);
+    Expr A = p2_m.coeff(m, deg_a - 1);
+    Expr B = p3_m.substitute(m, m - 1).expand().coeff(m, deg_a - 1);
+    // FIXME; B_A is not a Number. Only nonnegative integers are to be
+    // considered (A=B, 5.4).
+   //    Number B_A = ((B - A) * pwr(lead_a, -1)).ex_to_number();
+    Number possible_deg = Number(deg_c) - Number(deg_a) + 1;
+    //    if (B_A.is_nonnegative_integer())
+    //      if (B_A > possible_deg)
+    //	possible_deg = B_A;
+    deg_x = possible_deg >= 0 ? possible_deg : -1;
+  }
+  if (deg_x == -1)
+    return false;
+
+  DD_MSGVAR("Looking for a polynomial solution of degree (at most) ", deg_x);
+
+  //Number deg_x = 2;
+  //unsigned int deg_a = p2_m.degree(m);
+  //unsigned int deg_b = p3_m.degree(m);
+  //unsigned int deg_c = p_m.degree(m);
+  // `number_of_coeffs' is the number of coefficients of 
+  // the polynomial `p', that is, 1 + deg_x.
+  unsigned int number_of_coeffs = (1 + deg_x).to_unsigned_int();
+
+  // FIXME: What?
+  // Compute the real number of unknowns of the polynomial equation
+  // `a(m) * p(m+1) - b(m-1) * p(m) - c(m) = 0'.
+  // In general, this is larger than `number_of_coeffs' because 
+  // the polynomial equation above may have large degree.
+  unsigned int number_of_unknowns = number_of_coeffs;
+  number_of_unknowns += deg_a > deg_b ? deg_a : deg_b;
+  number_of_unknowns = number_of_unknowns > deg_c ? number_of_unknowns : deg_c;
+
+  // FIXME: Calculate upper bound for degree.
+  //  unsigned int upper_bound_degree_b = 10;
+
+  //  unsigned int number_of_unknowns = 10;
+  //  unsigned int number_of_coeffs = 9;
+  //  unsigned int number_of_unknowns = number_of_coeffs;
+  //  number_of_unknowns += deg_a > deg_b ? deg_a : deg_b;
+  //  number_of_unknowns = number_of_unknowns > deg_c ? number_of_unknowns : deg_c;
+
+  //   Expr_List unknowns;
+  Expr_List unknowns;
+  for (unsigned int i = 0; i < number_of_unknowns; ++i) {
+    static char buf[2];
+    buf[0] = 'A'+i;
+    buf[1] = '\0';
+    unknowns.append(Symbol(buf));
+    D_VAR(unknowns.op(unknowns.nops()-1));
+  }
+  // Add our originary unknowns to the coefficients. These MUST be added last.
+  for (unsigned int i = 0; i < coefficients.size(); ++i) {
+    unknowns.append(coefficients[i]);
+    number_of_unknowns++;
+    D_VAR(unknowns.op(unknowns.nops()-1));
+  }
+
+  // Builds the generic polynomial `p' of degree `deg_x'.
+  b_m = 0;
+  for (unsigned int i = 0; i < number_of_coeffs; ++i)
+    b_m += pwr(m, i) * unknowns.op(i);
+
+  D_VAR(p2_m);
+  D_VAR(b_m);
+  D_VAR(p_m);
+  Expr b_m_forward = b_m.substitute(m, m+1).expand();
+  D_VAR(b_m_forward);
+  Expr p3_back = p3_m.substitute(m, m-1).expand();
+  D_VAR(p3_back);
+
+  // Considers the recurrence relation to solve.
+  Expr rr = p2_m * b_m_forward - p3_back * b_m - p_m;
+  rr = rr.expand();
+  D_VAR(rr);
+  D_VAR(rr.coeff(m,0));
+  D_VAR(rr.coeff(m,1));
+  D_VAR(rr.coeff(m,2));
+  D_VAR(rr.coeff(m,3));
+
+  // Builds the lists to put in the matrix `rr_coefficients' and `rhs'.
+  Expr_List equations;
+  for (unsigned int i = 0; i < number_of_unknowns; ++i) {
+    Expr lhs = rr.coeff(m, i);
+    // D_VAR(lhs);
+    equations.prepend(Expr(lhs, 0));
+    D_VAR(equations.op(0));
+  }
+    
+  //Expr solution;
+  Expr solution = lsolve(equations, unknowns);  
+  if (solution.nops() == 0) {
+    DD_MSGVAR("Solution not found: ", solution);
+    return false;
+  }
+  else {
+    DD_MSGVAR("Polynomial solution found: ", solution);
+  }
+
+#if 1
+  // FIXME: +1?
+  std::vector<unsigned int> dummy_vars(number_of_unknowns);
+  //unsigned int ct = 0;
+  // Replace solutions in the form "A==A" by putting A=1.
+  for (unsigned int j = 0; j < solution.nops(); ++j)
+    if (solution.op(j).op(0) == solution.op(j).op(1))
+      for (unsigned int i = 0; i < number_of_unknowns; ++i)
+	if (solution.op(j).op(1) == unknowns.op(i))
+	  dummy_vars.push_back(i);
+  Expr solution_tmp = solution;
+  for (unsigned int i = 0; i < dummy_vars.size(); ++i) {
+    solution_tmp = solution.substitute(unknowns.op(dummy_vars[i]), 1);
+  }
+  for (unsigned int i = 0; i < solution_tmp.nops(); ++i) {
+    D_VAR(solution_tmp.op(i));
+  }
+  /*
+	  DD_MSGVAR("Replacing dummy variable ", solution.op(j));
+	  for (unsigned int k = 0; k < solution.nops(); ++k) {
+	    DD_MSGVAR("Before: ", solution.op(k));
+	    Expr temp = solution.op(k).op(1).substitute(unknowns.op(i), 1);
+	    D_VAR(temp);
+	    solution.op(k).op(1) = temp;
+	    D_VAR(solution.op(k).op(1));
+	    DD_MSGVAR("After:  ", solution.op(k));
+	  }
+	}
+      }
+    }
+  }
+  */
+#endif
+
+
+  // Builds the solution `x(n)'.
+  for (unsigned int i = 0; i < number_of_coeffs; ++i)
+    b_m = b_m.substitute(unknowns.op(i), solution.op(i).op(1));
+
+  // Give unknown coefficients the values just found.
+  //  for (unsigned int i = 0; i < number_of_coeffs; ++i)
+  //    b_m = b_m.substitute(unknowns.op(i), solution.op(i).op(1));
+  for (unsigned int i = 0; i < dummy_vars.size(); ++i) {
+    b_m = b_m.substitute(unknowns.op(dummy_vars[i]), 1);
+  }
+
+  D_VAR(b_m);
+
+  for (unsigned int j = 0; j < coefficients.size(); ++j) {
+    Expr coeff_expr = solution.op(number_of_unknowns - coefficients.size() + j).op(1);
+    D_VAR(coeff_expr);
+    for (unsigned int i = 0; i < dummy_vars.size(); ++i)
+      coeff_expr = coeff_expr.substitute(unknowns.op(dummy_vars[i]), 1);
+    coefficients_values[j]=coeff_expr;
+  }
+
+  //for 
 
   return true;
 }
@@ -169,11 +478,14 @@ PURRS::zeilberger_algorithm(const Expr& F_m_k,
   // FIXME: temporary.
   // We must consider the maximum order for the
   // recurrence ... and, starting from the lower, if the algorithm fails,
-  // to increase the order until `order' and to repeat the algorithm.
+  // increase the order until `order' and to repeat the algorithm.
   index_type order = 1; // TEMPORARY
   std::vector<Symbol> coefficients(order + 1);
-  for (index_type i = 0; i < order+1; ++i)
-    coefficients[i] = Symbol();
+  std::vector<Expr> coefficients_values(order + 1);
+  coefficients[0] = Symbol("F");
+  coefficients[1] = Symbol("G");
+  //  for (index_type i = 0; i < order+1; ++i)
+  //    coefficients[i] = Symbol();
   if (!zeilberger_step_one(F_m_k, m, k, coefficients, p_0_k, r_k, s_k))
     return false;
   DD_VAR(p_0_k);
@@ -183,7 +495,7 @@ PURRS::zeilberger_algorithm(const Expr& F_m_k,
   Expr p_1_k;
   Expr p_2_k;
   Expr p_3_k;
-#if 0
+#if 1
   if (!parametric_gosper_step_two(k, r_k / s_k, p_1_k, p_2_k, p_3_k))
     // Problem in the computation of the resultant and its roots.
     return false;
@@ -197,10 +509,40 @@ PURRS::zeilberger_algorithm(const Expr& F_m_k,
   DD_VAR(p_2_k);
   DD_VAR(p_3_k);
 
+  Expr p_k = p_0_k * p_1_k;
   Expr b_k;
-  if (parametric_gosper_step_three(k, p_2_k.expand(), p_3_k.expand(),
-				   (p_0_k * p_1_k).expand(), b_k)) {
+  if (parametric_gosper_step_three(k, coefficients, p_2_k.expand(), p_3_k.expand(),
+				   p_k.expand(), b_k, coefficients_values)) {
+    DD_MSGVAR("Polynomial solution is:", b_k);
+    DD_MSGVAR("Coefficient 0 is: ", coefficients_values[0]);
+    DD_MSGVAR("Coefficient 1 is: ", coefficients_values[1]);
   }
+  else return false;
+
+  for (unsigned int i = 0; i < coefficients.size(); ++i) {
+    p_2_k = p_2_k.substitute(coefficients[i], coefficients_values[i]);
+    p_3_k = p_2_k.substitute(coefficients[i], coefficients_values[i]);
+    p_k = p_2_k.substitute(coefficients[i], coefficients_values[i]);
+  }
+
+  const Symbol& n = Recurrence::n;
+  Recurrence rec( - (x(n+1) * coefficients_values[1]) / coefficients_values[0]);
+  //D_VAR(myrec);
+
+  //  Recurrence myrec(rec);
+  Expr exact_solution;
+  std::map<index_type, Expr> initial_conditions;
+  // FIXME: Calculate this explicitly.
+  rec.compute_exact_solution();
+  initial_conditions[0] = 1;
+  rec.set_initial_conditions(initial_conditions);
+  rec.exact_solution(exact_solution);
+  exact_solution = simplify_all(exact_solution);
+  D_VAR(exact_solution);
+
+  //  Expr G_n_k = ((p_3_k.substitute(k, k-1)) / p_k * b_k * F_m_k).expand();
+
+  //  DD_MSGVAR("Telescoped recurrence: ",G_n_k);
 
   return true;
 }
