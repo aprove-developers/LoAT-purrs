@@ -67,7 +67,7 @@ int main() try {
 #endif
     getline(input_stream,s);
     Expr_List l(n, a, b, c, d);
-    Expr t = Expr(s,l);
+    Expr t_n = Expr(s,l);
 #if NOISY   
     cout << endl << "Insert the lower bound of the sum: ";
 #endif
