@@ -206,14 +206,25 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
 				       const Number& coeff,
 				       const Number& divisor,
 				       Expr& bound) {
-  // Case `g(n) = a n^0' with `a' positive number.
+  // Case `g(n) = a n^0'.
   Number num;
-  if (poly_coeff.is_a_number(num) && num.is_positive()
-      && compute_bounds_for_power_of_n(lower, coeff, divisor, num, 0, bound))
+  if (poly_coeff.is_a_number(num)) {
+    // `a' positive number.
+    if (num.is_positive())
+      compute_bounds_for_power_of_n(lower, coeff, divisor, num, 0, bound);
+    // `a' negative number -> swap lower with upper or upper with lower.
+    else
+      compute_bounds_for_power_of_n(!lower, coeff, divisor, num, 0, bound);
     return true;
+  }
   // Case `g(n) = n^1'.
   else if (poly_coeff == Recurrence::n
 	   && compute_bounds_for_power_of_n(lower, coeff, divisor, 1, 1,
+					    bound))
+    return true;
+  // Case `g(n) = -n^1' -> swap lower with upper or upper with lower.
+  else if (poly_coeff == -Recurrence::n
+	   && compute_bounds_for_power_of_n(!lower, coeff, divisor, 1, 1,
 					    bound))
     return true;
   // Case `g(n) = n^k' with `k > 1' integer.
@@ -224,37 +235,67 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
 	   && compute_bounds_for_power_of_n(lower, coeff, divisor, 1, num,
 					    bound))
     return true;
+  // Case `g(n) = a * n^k', with `k' positive integer number.
   else if (poly_coeff.is_a_mul() && poly_coeff.nops() == 2) {
     const Expr& first = poly_coeff.op(0);
     const Expr& second = poly_coeff.op(1);
-    // Case `g(n) = a * n^k', with `a' and `k' positive integer numbers.
-    if (first.is_a_number(num) && num.is_positive()) {
-      if (second == Recurrence::n
-	  && compute_bounds_for_power_of_n(lower, coeff, divisor, num, 1,
-					   bound))
+    if (first.is_a_number(num)) {
+      // `k == 1'.
+      if (second == Recurrence::n) {
+	// `a' positive number.
+	if (num.is_positive())
+	  compute_bounds_for_power_of_n(lower, coeff, divisor, num, 1,
+					bound);
+	// `a' negative number -> swap lower with upper or upper with lower.
+	else
+	  compute_bounds_for_power_of_n(!lower, coeff, divisor, num, 1,
+					bound);
 	return true;
+      }
       Number k;
+      // `k != 1'.
       if (second.is_a_power()
 	  && second.arg(0) == Recurrence::n
 	  && second.arg(1).is_a_number(k)
-	  && k.is_positive()
-	  && compute_bounds_for_power_of_n(lower, coeff, divisor, num, k,
-					   bound))
+	  && k.is_positive()) {
+	// `a' positive number.
+	if (num.is_positive())
+	  compute_bounds_for_power_of_n(lower, coeff, divisor, num, k,
+					bound);
+	// `a' negative number -> swap lower with upper or upper with lower.
+	else
+	  compute_bounds_for_power_of_n(!lower, coeff, divisor, num, k,
+					bound);
 	return true;
+      }
     }
-    else if (second.is_a_number(num) && num.is_positive()) {
-      if (first == Recurrence::n
-	  && compute_bounds_for_power_of_n(lower, coeff, divisor, num, 1,
-					   bound))
+    else if (second.is_a_number(num)) {
+      // `k == 1'.
+      if (first == Recurrence::n) {
+	// `a' positive number.
+	if (num.is_positive())
+	  compute_bounds_for_power_of_n(lower, coeff, divisor, num, 1,
+					bound);
+	// `a' negative number -> swap lower with upper or upper with lower.
+	else
+	  compute_bounds_for_power_of_n(!lower, coeff, divisor, num, 1,
+					bound);
 	return true;
+      }
       Number k;
+      // `k != 1'.
       if (first.is_a_power()
 	  && first.arg(0) == Recurrence::n
 	  && first.arg(1).is_a_number(k)
-	  && k.is_positive()
-	  && compute_bounds_for_power_of_n(lower, coeff, divisor, num, k,
-					   bound))
+	  && k.is_positive()) {
+	// `a' positive number.
+	if (num.is_positive())
+	  compute_bounds_for_power_of_n(lower, coeff, divisor, num, k, bound);
+	// `a' negative number -> swap lower with upper or upper with lower.
+	else
+	  compute_bounds_for_power_of_n(!lower, coeff, divisor, num, k, bound);
 	return true;
+      }
     }
   }
   return false;
@@ -291,11 +332,18 @@ sharper_bounds_for_no_polynomial_function(bool lower,
       const Expr& first = no_poly_coeff.op(0);
       const Expr& second = no_poly_coeff.op(1);
       if (first == log(Recurrence::n)) {
-	// Case `g(n) = a log(n)' with `a' positive number.
-	if (second.is_a_number(num) && num.is_positive()
-	    && compute_bounds_for_logarithm_function(lower, coeff, divisor,
-						     num, bound))
+	// Case `g(n) = a log(n)'.
+	if (second.is_a_number(num)) {
+	  // `a' positive number.
+	  if (num.is_positive())
+	    compute_bounds_for_logarithm_function(lower, coeff, divisor,
+						  num, bound);
+	  // `a' negative number -> swap lower with upper or upper with lower.
+	  else
+	    compute_bounds_for_logarithm_function(!lower, coeff, divisor,
+						  num, bound);
 	  return true;
+	}
 	// Case `g(n) = n^k log(n)' with `k > 0'.
 	// `k = 1'.
 	if (second == Recurrence::n
@@ -314,11 +362,18 @@ sharper_bounds_for_no_polynomial_function(bool lower,
 	  return true;
       }
       else if (second == log(Recurrence::n)) {
-	// Case `g(n) = a log(n)' with `a' positive number.
-	if (first.is_a_number(num) && num.is_positive()
-	    && compute_bounds_for_logarithm_function(lower, coeff, divisor,
-						     num, bound))
+	// Case `g(n) = a log(n)'.
+	if (first.is_a_number(num)) {
+	  // `a' positive number.
+	  if (num.is_positive())
+	    compute_bounds_for_logarithm_function(lower, coeff, divisor,
+						  num, bound);
+	  // `a' negative number -> swap lower with upper or upper with lower.
+	  else
+	    compute_bounds_for_logarithm_function(!lower, coeff, divisor,
+						  num, bound);
 	  return true;
+	}
 	// Case `g(n) = n^k log(n)' with `k > 0'.
 	// `k = 1'.
 	if (first == Recurrence::n
@@ -336,19 +391,21 @@ sharper_bounds_for_no_polynomial_function(bool lower,
 								      bound))
 	  return true;
       }
-      // Case `g(n) = a n^k' with `a' positive number and `k' positive
-      // rational non-integer number.
-      else if (((first.is_a_number(num) && num.is_positive()
-	   && second.is_a_power()&& second.arg(0) == Recurrence::n
-	   && second.arg(1).is_a_number(k) && k.is_positive())
-	  || (second.is_a_number(num) && num.is_positive()
-	      && first.is_a_power()&& first.arg(0) == Recurrence::n
-	      && first.arg(1).is_a_number(k) && k.is_positive()))
-	  && compute_bounds_for_power_of_n(lower, coeff, divisor, num, k,
-					   bound))
+      // Case `g(n) = a n^k' with `k' positive rational non-integer number.
+      else if ((first.is_a_number(num)
+		&& second.is_a_power()&& second.arg(0) == Recurrence::n
+		&& second.arg(1).is_a_number(k) && k.is_positive())
+	       || (second.is_a_number(num)
+		   && first.is_a_power()&& first.arg(0) == Recurrence::n
+		   && first.arg(1).is_a_number(k) && k.is_positive())) {
+	if (num.is_positive())
+	  compute_bounds_for_power_of_n(lower, coeff, divisor, num, k, bound);
+	else
+	  compute_bounds_for_power_of_n(!lower, coeff, divisor, num, k, bound);
 	return true;
+      }
     }
-    // Case `g(n) = a n^k log(n)' with `a' positive number and `k >= 1'.
+    // Case `g(n) = a n^k log(n)' with `k > 0'.
     if (no_poly_coeff.nops() == 3) {
       Expr log_part;
       unsigned j;
@@ -360,36 +417,49 @@ sharper_bounds_for_no_polynomial_function(bool lower,
       Number num_part;
       unsigned h;
       for (unsigned i = 0; i <= 2; ++i)
-	if (i != j && no_poly_coeff.op(i).is_a_number(num_part)
-	    && num_part.is_positive())
+	if (i != j && no_poly_coeff.op(i).is_a_number(num_part))
 	  h = i;
       Expr power_part;
       for (unsigned i = 0; i <= 2; ++i)
 	if (i != j && i != h)
 	  power_part = no_poly_coeff.op(i);
       // `k == 1'.
-      if (power_part == Recurrence::n
-	  && compute_bounds_for_power_times_logarithm_function(lower, coeff,
-							       divisor,
-							       num_part, 1,
-							       bound))
+      if (power_part == Recurrence::n) {
+	if (num_part.is_positive())
+	  compute_bounds_for_power_times_logarithm_function(lower, coeff,
+							    divisor,
+							    num_part, 1,
+							    bound);
+	else
+	  compute_bounds_for_power_times_logarithm_function(!lower, coeff,
+							    divisor,
+							    num_part, 1,
+							    bound);
 	return true;
+      }
       // `k != 1'.
       Number k;
       if (power_part.is_a_power() && power_part.arg(0) == Recurrence::n
-	  && power_part.op(1).is_a_number(k) && k.is_positive()
-	  && compute_bounds_for_power_times_logarithm_function(lower, coeff,
-							       divisor,
-							       num_part, k,
-							       bound))
+	  && power_part.op(1).is_a_number(k) && k.is_positive()) {
+	if (num_part.is_positive())
+	  compute_bounds_for_power_times_logarithm_function(lower, coeff,
+							    divisor,
+							    num_part, k,
+							    bound);
+	else
+	  compute_bounds_for_power_times_logarithm_function(!lower, coeff,
+							    divisor,
+							    num_part, k,
+							    bound);
 	return true;
+      }
     }
   }
   return false;
 }
 
 /*!  
-  g(n) = c^n, c > 1
+  g(n) = a c^n, c > 1, a number.
 */
 bool
 sharper_bounds_for_exponential(bool lower,
@@ -397,10 +467,17 @@ sharper_bounds_for_exponential(bool lower,
 			       const Number& coeff, const Number& divisor,
 			       Expr& bound) {
   Number num;
-  if (poly_coeff.is_a_number(num) && num.is_positive())
-    if (coeff >= 1) {
+  if (coeff >= 1)
+    if (poly_coeff.is_a_number(num)) {
       Expr tmp_bound;
-      compute_bounds_for_exp_function(lower, coeff, divisor, base, tmp_bound);
+      // `a' positive number.
+      if (num.is_positive())
+	compute_bounds_for_exp_function(lower, coeff, divisor, base,
+					tmp_bound);
+      // `a' negative number -> swap lower with upper or upper with lower.
+      else
+	compute_bounds_for_exp_function(!lower, coeff, divisor, base,
+					tmp_bound);
       bound += num * tmp_bound;
       return true;
     }
@@ -553,7 +630,8 @@ compute_non_homogeneous_part(bool lower,
 	  // Check if the polynomial part is a non-negative,
 	  // non-decreasing function.
 	  if (!is_non_negative_non_decreasing(1, poly_coeff, true,
-					      Recurrence::n, true, condition))
+					      Recurrence::n, true,
+					      condition))
 	    return false ;
 	  Expr sum;
 	  try_to_compute_sum(lower, poly_coeff, coeff, divisor_arg, sum);
