@@ -250,6 +250,13 @@ Gosper's algorithm to try to use the method for polynomials and
 exponentials (maybe this method is more efficient than the
 Gosper's algorithm?)
 
+\item (Added on 9-3-2003)
+In the function \texttt{find\_roots()} there is a \texttt{switch} on the
+order of the equation but at this point of the function is impossible
+that the degree is $1$: in fact we consider equations with integer
+coefficients and we have already found rational roots.
+Therefore, the \texttt{case 1} of the \texttt{switch} is useless. 
+
 \end{enumerate}
 
 \end{document}
