@@ -209,7 +209,11 @@ PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_finite_order() const {
   // We will store here the order of the recurrence.
   index_type order_rec;
-  // FIXME: chiarire discorso dell'ordine con le non lineari.
+  // The order of the non-linear recurrence is equal to the order of the
+  // associated first_order linear recurrence.
+  // In order to compute the solution we need the order of the linear
+  // recurrence and so we can use it and to avoid to store in a variable
+  // the order of the non-linear recurrence.
   if (is_non_linear_finite_order())
     order_rec = associated_linear_rec().order();
   else
@@ -258,22 +262,25 @@ PURRS::Recurrence::verify_finite_order() const {
 #if 0
   // Step 3: by substitution, verifies that `summands_with_i_c'
   // satisfies the homogeneous part of the recurrence.
-  // `substituted_homogeneous_rhs' is the homogeneous part of the
-  // recurrence where `n' is substituted by `n - d' (where `d' is
-  // the decrement of the i-th term `a_i(n) x(n - d)').
-  Expr substituted_homogeneous_rhs = recurrence_rhs - inhmogeneous_term;
+  // Computes `substituted_homogeneous_rhs' by substituting, in the
+  // hoomogeneous part of the recurrence, `n' by `n - d' (where `d' is
+  // the decrement of the i-th term `a_i(n)*x(n - d)').
+  Expr substituted_homogeneous_rhs = recurrence_rhs - inhomogeneous_term;
   // Substitutes in the homogeneous part of the recurrence the terms
   // of the form `x(n-i)'.
-  for (index_type i = 0; i < order_rec; ++i) {
+  for (index_type d = 1; d <= order_rec; ++d) {
     Expr shifted_solution
-      = simplify_all(summands_with_i_c.substitute(n, n - (i + 1)));
+      = simplify_all(summands_with_i_c.substitute(n, n - d));
     shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
     substituted_homogeneous_rhs
-      = substituted_homogeneous_rhs
-      .substitute(x(n - (i + 1)), shifted_solution);
+      = substituted_homogeneous_rhs.substitute(x(n - d), shifted_solution);
   }
-  Expr diff
-    = blackboard.rewrite(summands_with_i_c - substituted_homogeneous_rhs);
+  Expr diff = summands_with_i_c - substituted_homogeneous_rhs;
+  // Differently from the step 1 (validation of symbolic initial condition)
+  // the expression `diff' now contains `n' and is more difficult
+  // to simplify it. For this motive we performed simplification also
+  // before to expand blackboard's definitions.
+  diff = blackboard.rewrite(diff);
   diff = simplify_all(diff);
   if (!diff.is_zero()) {
     diff = simplify_all(diff);
@@ -286,6 +293,7 @@ PURRS::Recurrence::verify_finite_order() const {
   if (summands_without_i_c == 0)
     return PROVABLY_CORRECT;
   
+#if 1
   // Start the method of the paper
   // "Checking and Confining the Solutions of Recurrence Realtions".
   // FIXME: can the new method work also in the case of order reduction?
@@ -320,16 +328,21 @@ PURRS::Recurrence::verify_finite_order() const {
     bool all_distinct = true;
     // FIXME: this method is applied only on linear finite order
     // with constant coefficients!
-     if (is_linear_finite_order_const_coeff()) {
+    if (is_linear_finite_order_const_coeff()) {
       Expr characteristic_eq;
       if (!characteristic_equation_and_its_roots(order_rec,
 						 coefficients(),
 						 num_coefficients,
 						 characteristic_eq, roots,
-						 all_distinct))
+						 all_distinct)) {
+#if 0
 	abort();
-	}
-    
+#else
+	//	DD_MSG("OLD");
+	goto traditional;
+#endif
+      }
+    }
     // Find the maximum degree of a polynomial that may occur in the
     // solution.
     for (unsigned int i = 0, nroots = roots.size(); i < nroots; ++i) {
@@ -341,6 +354,8 @@ PURRS::Recurrence::verify_finite_order() const {
     }
     
     Expr substituted_rhs = recurrence_rhs;
+    // FIXME: fare i = i-gcd se e' stata applicata la riduzione dell'ordine.
+    // for (index_type i = order_rec; i > 0; i = i - gcd_among_decrements()) {
     for (index_type i = order_rec; i-- > 0; ) {
       Expr shifted_solution = summands_without_i_c.substitute(n, n - (i + 1));
       //shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
@@ -496,11 +511,12 @@ PURRS::Recurrence::verify_finite_order() const {
   }
 
   traditional:
+#endif
   // Step 4: by substitution, verifies that `summands_without_i_c'
   // satisfies the recurrence.
   // Computes `substituted_rhs' by substituting, in the rhs
   // of the recurrence, `n' by `n - d' (where `d' is the decrement
-  // of the i-th term `a(n)*x(n - d)').
+  // of the i-th term `a_i(n)*x(n - d)').
   Expr substituted_rhs = recurrence_rhs;
   for (index_type d = 1; d <= order_rec; ++d) {
     Expr shifted_solution
