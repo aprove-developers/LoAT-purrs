@@ -31,27 +31,59 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+enum Number_Type {
+  /*!
+    The expression is a rational number.
+  */
+  RATIONAL,
+
+  /*!
+    The expression is not a rational number.
+  */
+  NON_RATIONAL
+};
+
 class Polynomial_Root {
 private:
   Expr value_;
+  Number_Type type_;
   Number multiplicity_;
 
 public:
-  Polynomial_Root(const Expr& e, Number m = 1)
-    : value_(e), multiplicity_(m) {
+  Polynomial_Root(const Expr& e, Number_Type t, Number m = 1)
+    : value_(e), type_(t), multiplicity_(m) {
   }
 
   const Expr& value() const {
     return value_;
   }
+
   Expr& value() {
     return value_;
   }
+
   Number multiplicity() const {
     return multiplicity_;
   }
+
   void set_multiplicity(Number m) {
     multiplicity_ = m;
+  }
+
+  Number_Type type() const {
+    return type_;
+  }
+
+  bool is_rational() const {
+    return type() == RATIONAL;
+  }
+
+  bool is_non_rational() const {
+    return type() == NON_RATIONAL;
+  }
+
+  void set_type(Number_Type t) {
+    type_ = t;
   }
 };
 

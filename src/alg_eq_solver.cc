@@ -230,7 +230,7 @@ find_roots(const Expr& p, const Symbol& x,
     assert(q.is_a_symbol());
     // 0 is the only solution of x = 0.
     all_distinct = true;
-    roots.push_back(zero);
+    roots.push_back(Polynomial_Root(zero, RATIONAL, 1));
     return true;
   }
 }
@@ -256,7 +256,7 @@ find_roots(const Expr& p, const Symbol& x,
   assert(ldegree <= 1);
   Expr q;
   if (ldegree == 1) {
-    roots.push_back(Polynomial_Root(zero, multiplicity));
+    roots.push_back(Polynomial_Root(zero, RATIONAL, multiplicity));
     q = quo(p, x, x);
   }
   else
@@ -266,7 +266,7 @@ find_roots(const Expr& p, const Symbol& x,
   Number tc = q.tcoeff(x).ex_to_number();
   unsigned degree = q.degree(x);
   if (degree == 1) {
-    roots.push_back(Polynomial_Root(-tc/lc, multiplicity));
+    roots.push_back(Polynomial_Root(-tc/lc, RATIONAL, multiplicity));
     return true;
   }
 
@@ -285,14 +285,14 @@ find_roots(const Expr& p, const Symbol& x,
 	if (q.subs(x, r).is_zero()) {
 	  q = quo(q, x-r, x);
 	  --degree;
-	  roots.push_back(Polynomial_Root(r, multiplicity));
+	  roots.push_back(Polynomial_Root(r, RATIONAL, multiplicity));
 	  coefficients_changed = true;
 	}
 	r = -r;
 	if (q.subs(x, r).is_zero()) {
 	  q = quo(q, x-r, x);
 	  --degree;
-	  roots.push_back(Polynomial_Root(r, multiplicity));
+	  roots.push_back(Polynomial_Root(r, RATIONAL, multiplicity));
 	  coefficients_changed = true;
 	}
       }
@@ -314,18 +314,20 @@ find_roots(const Expr& p, const Symbol& x,
   if (degree <= 4) {
     unsigned position = roots.size();
     // Insert `degree' elements at the end of roots.
-    roots.insert(roots.end(), degree, Expr(0));
+    roots.insert(roots.end(), degree, Polynomial_Root(Expr(0), RATIONAL));
 
     switch (degree) {
     case 1:
       {
-	roots.push_back(Polynomial_Root(-tc/lc, multiplicity));
+	roots.push_back(Polynomial_Root(-tc/lc, RATIONAL, multiplicity));
 	return true;
       }
     case 2:
       {
 	Number b = q.coeff(x, 1).ex_to_number() / lc;
 	Number c = tc / lc;
+	roots[position].set_type(NON_RATIONAL);
+	roots[position+1].set_type(NON_RATIONAL);
 	solve_equation_2(b, c,
 			 roots[position].value(),
 			 roots[position+1].value());
@@ -336,6 +338,9 @@ find_roots(const Expr& p, const Symbol& x,
 	Number a1 = q.coeff(x, 2).ex_to_number() / lc;
 	Number a2 = q.coeff(x, 1).ex_to_number() / lc;
 	Number a3 = tc / lc;
+	roots[position].set_type(NON_RATIONAL);
+	roots[position+1].set_type(NON_RATIONAL);
+	roots[position+2].set_type(NON_RATIONAL);
 	solve_equation_3(a1, a2, a3,
 			 roots[position].value(),
 			 roots[position+1].value(),
@@ -350,6 +355,10 @@ find_roots(const Expr& p, const Symbol& x,
 	Number a2 = q.coeff(x, 2).ex_to_number() / lc;
 	Number a3 = q.coeff(x, 1).ex_to_number() / lc;
 	Number a4 = tc / lc;
+	roots[position].set_type(NON_RATIONAL);
+	roots[position+1].set_type(NON_RATIONAL);
+	roots[position+2].set_type(NON_RATIONAL);
+	roots[position+3].set_type(NON_RATIONAL);
 	solve_equation_4(a1, a2, a3, a4,
 			 roots[position].value(),
 			 roots[position+1].value(),
@@ -384,7 +393,8 @@ find_roots(const Expr& p, const Symbol& x,
 	for (size_t i = 0; i < num_r_roots; ++i)
 	  roots.push_back(Polynomial_Root(pwr(roots_r[i].value(),
 					      Number(1, nested_degree))
-					  * root_of_unity, multiplicity));
+					  * root_of_unity,
+					  NON_RATIONAL, multiplicity));
       }
       return true;
     }
