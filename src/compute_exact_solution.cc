@@ -548,7 +548,7 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::solve_linear_finite_order() const {
   D_VAR(order());
-  D_VEC(coefficients_lfo(), 1, order());
+  D_VEC(coefficients(), 1, order());
 
   if (is_order_zero()) {
     exact_solution_.set_expression(inhomogeneous_term);

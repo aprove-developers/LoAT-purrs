@@ -38,7 +38,7 @@ public:
   //! \brief
   //! Constructor: sets \f$ order{\_} = k \f$,
   //! \f$ first{\_}i{\_}c{\_}for{\_}linear{\_} = i{\_}c \f$,
-  //! \f$ coefficients{\_}lfo{\_} = coeffs \f$ and
+  //! \f$ coefficients{\_} = coeffs \f$ and
   //! \f$ gcd{\_}among{\_}decrements{\_} = gcd \f$.
   Finite_Order_Info(int k, unsigned i_c, const std::vector<Expr>& coeffs,
 		    unsigned gcd);
