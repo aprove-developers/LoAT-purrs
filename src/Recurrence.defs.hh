@@ -455,12 +455,12 @@ private:
   //! \brief
   //! Returns \f$ b \f$, the divisor of \f$ n \f$ in the functional equation
   //! \f$ x_n = a x_{n/b} + p(n).
-  unsigned divisor_arg() const;
+  Number divisor_arg() const;
 
   //! \brief
   //! Returns \f$ b \f$, the divisor of \f$ n \f$ in the functional equation
   //! \f$ x_n = a x_{n/b} + p(n).
-  unsigned& divisor_arg();
+  Number& divisor_arg();
 
   //! \brief
   //! Returns the positive integer starting from which the inhomogeneous term

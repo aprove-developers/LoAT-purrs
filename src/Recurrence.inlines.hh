@@ -301,14 +301,14 @@ Recurrence::coefficient() {
   return functional_eq_p -> coefficient();
 }
 
-inline unsigned
+inline Number
 Recurrence::divisor_arg() const {
   assert(is_functional_equation());
   assert(functional_eq_p);
   return functional_eq_p -> divisor_arg();
 }
 
-inline unsigned&
+inline Number&
 Recurrence::divisor_arg() {
   assert(is_functional_equation());
   assert(functional_eq_p);

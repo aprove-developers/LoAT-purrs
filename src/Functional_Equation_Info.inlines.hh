@@ -30,7 +30,8 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
-Functional_Equation_Info::Functional_Equation_Info(const Expr& a, unsigned b,
+Functional_Equation_Info::Functional_Equation_Info(const Expr& a,
+						   const Number& b,
 						   unsigned c)
   : coefficient_(a),
     divisor_arg_(b),
@@ -67,12 +68,12 @@ Functional_Equation_Info::coefficient() {
   return coefficient_;
 }
 
-inline unsigned
+inline Number
 Functional_Equation_Info::divisor_arg() const {
   return divisor_arg_;
 }
 
-inline unsigned&
+inline Number&
 Functional_Equation_Info::divisor_arg() {
   return divisor_arg_;
 }

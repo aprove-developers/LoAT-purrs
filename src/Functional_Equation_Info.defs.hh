@@ -39,7 +39,7 @@ public:
   //! \brief
   //! Constructor: sets \f$ coefficient_ = a \f$, \f$ divisor_arg_ = b \f$
   //! and \f$ applicability_condition_ = c \f$
-  Functional_Equation_Info(const Expr& a, unsigned b, unsigned c = 1);
+  Functional_Equation_Info(const Expr& a, const Number& b, unsigned c = 1);
 
   //! Copy-constructor.
   Functional_Equation_Info(const Functional_Equation_Info& y);
@@ -57,10 +57,10 @@ public:
   Expr& coefficient();
 
   //! Returns <CODE>divisor_arg_</CODE>.
-  unsigned divisor_arg() const;
+  Number divisor_arg() const;
 
   //! Returns <CODE>divisor_arg_</CODE>.
-  unsigned& divisor_arg();
+  Number& divisor_arg();
 
   //! Returns <CODE>applicability_condition_</CODE>.
   unsigned applicability_condition() const;
@@ -80,7 +80,7 @@ private:
   //! \brief
   //! Stores the divisor\f$ b \f$ of the argument of the function
   //! \f$ x \f$ in the equation \f$ x_n = a x_{n/b} + d n^e \f$.
-  unsigned divisor_arg_;
+  Number divisor_arg_;
 
   //! \brief
   //! The positive integer starting from which the inhomogeneous term

@@ -58,10 +58,11 @@ PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::approximate_functional_equation() const {
   D_VAR(coefficient());
   D_VAR(divisor_arg());
-  // We already know that `b' is a positive integer and we want also
+  // We want that `b' is a positive integer and we want also
   // that `a' is a positive number.
   Number coeff;
-  if (!coefficient().is_a_number(coeff) || !coeff.is_positive())
+  if (!divisor_arg().is_positive_integer()
+      || !coefficient().is_a_number(coeff) || !coeff.is_positive())
     return TOO_COMPLEX;
   // Check if the inhomogeneous term `p(n)' is a non-negative,
   // non-decreasing function. For to do this, the parameters are
