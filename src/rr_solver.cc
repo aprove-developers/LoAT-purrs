@@ -210,7 +210,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
 
   static GList substitution;
 
-  int degree = -1;
+  int order = -1;
   std::vector<GNumber> coefficients;
   GExpr e = rhs;
   bool failed = false;
@@ -262,8 +262,8 @@ solve(const GExpr& rhs, const GSymbol& n) {
     // FIXME: turn this assertion into something more appropriate.
     assert(decrement >= LONG_MIN && decrement <= LONG_MAX);
     unsigned long index = decrement.to_long();
-    if (degree < 0 || index > unsigned(degree))
-      degree = index;
+    if (order < 0 || index > unsigned(order))
+      order = index;
     if (index > coefficients.size())
       coefficients.insert(coefficients.end(),
 			  index - coefficients.size(),
@@ -289,9 +289,9 @@ solve(const GExpr& rhs, const GSymbol& n) {
   if (failed)
     return false;
 
-  std::cout << "Degree = " << degree << std::endl;
+  std::cout << "Order = " << order << std::endl;
   std::cout << "Coefficients = ";
-  for (int i = 1; i <= degree; ++i)
+  for (int i = 1; i <= order; ++i)
     std::cout << coefficients[i] << " ";
   std::cout << std::endl;
   std::cout << "Inhomogeneous term = " << e << std::endl;
@@ -317,7 +317,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
   // Build the expression here.
   static GSymbol x("x");
   GExpr p = 0;
-  for (int i = 1; i <= degree; ++i)
+  for (int i = 1; i <= order; ++i)
     p += coefficients[i]*pow(x, i);
   
   std::vector<Polynomial_Root> roots;
@@ -325,7 +325,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
   if (!find_roots(p, x, roots, all_distinct))
     return false;
 
-  std::cout << degree << " " << roots.size() << " " << all_distinct << std::endl;
+  std::cout << order << " " << roots.size() << " " << all_distinct << std::endl;
   */
   return true;
 }
