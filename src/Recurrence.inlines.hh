@@ -469,6 +469,13 @@ Recurrence::weight_inf_order() {
 }
 
 inline unsigned
+Recurrence::lower_bound_sum() const {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  return infinite_order_p -> lower_bound_sum();
+}
+
+inline unsigned
 Recurrence::infinite_order_fwdr() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);

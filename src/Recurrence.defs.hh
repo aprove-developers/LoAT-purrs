@@ -696,16 +696,23 @@ private:
   //! \brief
   //! Returns the factor \f$ f(n) \f$ of the infinite order recurrence
   //! \f[
-  //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
+  //!   T(n) = f(n) \sum_{k=n_0}^{n-1} T(k) + g(n).
   //! \f]
   Expr weight_inf_order() const;
 
   //! \brief
   //! Returns the factor \f$ f(n) \f$ of the infinite order recurrence
   //! \f[
-  //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
+  //!   T(n) = f(n) \sum_{k=n_0}^{n-1} T(k) + g(n).
   //! \f]
   Expr& weight_inf_order();
+
+  //! \brief
+  //! Returns the lower bound \f$ n_0 \f$ of the infinite order recurrence
+  //! \f[
+  //!   T(n) = f(n) \sum_{k=n_0}^{n-1} T(k) + g(n).
+  //! \f]
+  unsigned lower_bound_sum() const;
 
   //! \brief
   //! Stores the smallest positive integer for which the infinite

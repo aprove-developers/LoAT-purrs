@@ -673,9 +673,10 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 */
 bool
 known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
-			      const Expr& weight, unsigned& first_well_defined,
+			      const Expr& weight,
 			      Expr& coeff_first_order,
-			      Expr& inhomog_first_order) {
+			      Expr& inhomog_first_order,
+			      unsigned& first_well_defined) {
   Expr inhomog_infinite_order_rec = rhs - weight * term_sum;
 
   // If `f(n)' or `g(n)' contain other `x' function with `n' in the
@@ -837,20 +838,24 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 	Expr coeff_first_order;
 	Expr inhomog_first_order;
 	unsigned first_well_defined;
-	if (known_class_of_infinite_order(rhs, addend, 1, first_well_defined,
+	if (known_class_of_infinite_order(rhs, addend, 1,
 					  coeff_first_order,
-					  inhomog_first_order)) {
+					  inhomog_first_order,
+					  first_well_defined)) {
 	  // The lower bound of the sum must be greater or equal than
 	  // the positive integer `n_0' starting from which `weight'
 	  // is well defined, i. e., for each `n' greater or equal to
 	  // `n_0' `weight' evaluated in `n' is well-defined.
-	  if (addend.arg(1).ex_to_number() < first_well_defined)
+	  unsigned lower_bound_sum
+	    = addend.arg(1).ex_to_number().to_unsigned();
+	  if (lower_bound_sum < first_well_defined)
 	    return DOMAIN_ERROR;
 	  infinite_order_p = new Infinite_Order_Info(coeff_first_order
 						     * x(Recurrence::n - 1)
 						     + inhomog_first_order,
 						     coeff_first_order,
-						     inhomog_first_order, 1);
+						     inhomog_first_order, 1,
+						     lower_bound_sum);
 	  set_linear_infinite_order();
 	  set_infinite_order_fwdr(first_well_defined);
 	  inhomogeneous = rhs - addend;
@@ -932,21 +937,24 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 	  Expr inhomog_first_order;
 	  unsigned first_well_defined;
 	  if (known_class_of_infinite_order(rhs, factor, weight,
-					    first_well_defined,
 					    coeff_first_order,
-					    inhomog_first_order)) {
+					    inhomog_first_order,
+					    first_well_defined)) {
 	    // The lower bound of the sum must be greater or equal than
 	    // the positive integer `n_0' starting from which `weight'
 	    // is well defined, i. e., for each `n' greater or equal to
 	    // `n_0' `weight' evaluated in `n' is well-defined.
-	    if (factor.arg(1).ex_to_number() < first_well_defined)
+	    unsigned lower_bound_sum
+	      = factor.arg(1).ex_to_number().to_unsigned();
+	    if (lower_bound_sum < first_well_defined)
 	      return DOMAIN_ERROR;
 	    infinite_order_p = new Infinite_Order_Info(coeff_first_order
 						       * x(Recurrence::n - 1)
 						       + inhomog_first_order,
 						       coeff_first_order,
 						       inhomog_first_order,
-						       weight);
+						       weight,
+						       lower_bound_sum);
 	    set_linear_infinite_order();
 	    set_infinite_order_fwdr(first_well_defined);
 	    inhomogeneous = rhs - addend;
