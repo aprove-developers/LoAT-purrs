@@ -588,29 +588,51 @@ do_production_mode() {
 }
 
 void
-result_of_the_verification(const Recurrence::Verify_Status& status,
+result_of_the_verification(unsigned type,
+			   const Recurrence::Verify_Status& status,
 			   unsigned& unexpected_failures_to_verify,
 			   unsigned& unexpected_failures_to_disprove,
 			   unsigned& unexpected_conclusive_verifications) {
   if (expect_provably_correct_result
       && status != Recurrence::PROVABLY_CORRECT) {
     if (verbose)
-      cerr << "*** unexpected failure to verify solution: gave "
-	   << status << endl;
+      if (type == 0)
+	cerr << "*** unexpected failure to verify solution: gave "
+	     << status << endl;
+      else if (type == 1)
+	cerr << "*** unexpected failure to verify lower bound: gave "
+	     << status << endl;
+      else
+	cerr << "*** unexpected failure to verify upper bound: gave "
+	     << status << endl;
     ++unexpected_failures_to_verify;
   }
   if (expect_provably_wrong_result
       && status != Recurrence::PROVABLY_INCORRECT) {
     if (verbose)
-      cerr << "*** unexpected failure to disprove solution: gave "
-	   << status << endl;
+      if (type == 0)
+	cerr << "*** unexpected failure to disprove solution: gave "
+	     << status << endl;
+      else if (type == 1)
+	cerr << "*** unexpected failure to disprove lower bound: gave "
+	     << status << endl;
+      else
+	cerr << "*** unexpected failure to disprove upper bound: gave "
+	     << status << endl;
     ++unexpected_failures_to_disprove;
   }
   if (expect_inconclusive_verification
       && status != Recurrence::INCONCLUSIVE_VERIFICATION) {
     if (verbose)
-      cerr << "*** unexpected conclusive verification: gave "
-	   << status << endl;
+      if (type == 0)
+	cerr << "*** unexpected conclusive solution's verification: gave "
+	     << status << endl;
+      else if (type == 1)
+	cerr << "*** unexpected conclusive lower bound's verification: gave "
+	     << status << endl;
+      else
+	cerr << "*** unexpected conclusive upper bound's verification: gave "
+	     << status << endl;
     ++unexpected_conclusive_verifications;
   }  
 }
@@ -742,7 +764,7 @@ main(int argc, char *argv[]) try {
 	      || expect_provably_wrong_result
 	      || expect_inconclusive_verification) {
 	    Recurrence::Verify_Status status = rec.verify_solution();
-	    result_of_the_verification(status,
+	    result_of_the_verification(0, status,
 				       unexpected_failures_to_verify,
 				       unexpected_failures_to_disprove,
 				       unexpected_conclusive_verifications);
@@ -783,7 +805,7 @@ main(int argc, char *argv[]) try {
 	      || expect_provably_wrong_result
 	      || expect_inconclusive_verification) {
 	    Recurrence::Verify_Status status = rec.verify_bound(false);
-	    result_of_the_verification(status,
+	    result_of_the_verification(1, status,
 				       unexpected_failures_to_verify,
 				       unexpected_failures_to_disprove,
 				       unexpected_conclusive_verifications);
@@ -815,7 +837,7 @@ main(int argc, char *argv[]) try {
 	      || expect_provably_wrong_result
 	      || expect_inconclusive_verification) {
 	    Recurrence::Verify_Status status = rec.verify_bound(true);
-	    result_of_the_verification(status,
+	    result_of_the_verification(2, status,
 				       unexpected_failures_to_verify,
 				       unexpected_failures_to_disprove,
 				       unexpected_conclusive_verifications);
