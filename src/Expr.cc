@@ -110,12 +110,10 @@ sum_eval(const ex& index, const ex& lower, const ex& upper,
       for (numeric j = num_lower; j <= num_upper; ++j)
 	s += summand.subs(index == j);
   }
-  else {
-    ex upper_limit = wild(0) + wild(1);
-    lst substitution;
-    if (upper.match(upper_limit, substitution)) {
-      ex first_term = substitution.op(0).rhs();
-      ex second_term = substitution.op(1).rhs();
+  else
+    if (is_a<add>(upper) && upper.nops() == 2) {
+      ex first_term = upper.op(0);
+      ex second_term = upper.op(1);
       numeric numeric_term;
       symbol symbolic_term;
       if (is_a<numeric>(first_term) && is_a<symbol>(second_term)) {
@@ -142,7 +140,6 @@ sum_eval(const ex& index, const ex& lower, const ex& upper,
     }
     else
       return sum(index, lower, upper, summand).hold();
-  }
   return s;
 }
 
@@ -227,12 +224,10 @@ prod_eval(const ex& index, const ex& lower, const ex& upper,
       for (numeric j = num_lower; j <= num_upper; ++j)
 	p *= factor.subs(index == j);
   }
-  else {
-    ex upper_limit = wild(0) + wild(1);
-    lst substitution;
-    if (upper.match(upper_limit, substitution)) {
-      ex first_term = substitution.op(0).rhs();
-      ex second_term = substitution.op(1).rhs();
+  else
+    if (is_a<add>(upper) && upper.nops() == 2) {
+      ex first_term = upper.op(0);
+      ex second_term = upper.op(1);
       numeric numeric_term;
       symbol symbolic_term;
       if (is_a<numeric>(first_term) && is_a<symbol>(second_term)) {
@@ -259,7 +254,6 @@ prod_eval(const ex& index, const ex& lower, const ex& upper,
     }
     else
       return prod(index, lower, upper, factor).hold();
-  }
   return p;
 }
 
