@@ -646,6 +646,71 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
 }
 
 /*!
+  Compute a special solution of the linear recurrence
+  of finite order with constant coefficients
+  \f$ x(n) = homo_rhs + poly * base^n \f$
+  where
+    `homo_rhs' is the homogeneous part of the rhs of the recurrence
+    `poly' is a polynomial in the variable `n'
+    `base' is some complex number, which is a root of the characteristic
+       polynomial with multiplicity `mult' (possibly zero)
+  The solution has the form \f$ p * base^n \f$
+  where `p' is a polynomial of degree deg(poly) + mult
+*/
+PURRS::Expr
+compute_special_solution(const Expr& homo_rhs, const index_type order_rec,
+			 const Expr& poly, const Expr& base,
+			 const unsigned int mult) {
+
+  // Build the generic polynomial `q' of the correct degree
+  // with unknown coefficients.
+  unsigned int deg = poly.degree(Recurrence::n) + mult;
+  Expr_List unknowns;
+  for (unsigned int i = 0; i < deg + 1; ++i)
+    unknowns.append(Symbol());
+  Expr q = 0;
+  for (unsigned int i = 0; i < deg + 1; ++i)
+    q += pwr(Recurrence::n, i) * unknowns.op(i);
+  q *= pwr(base, Recurrence::n);
+  // At this point, the expression `q' has the desired form poly * base^n.
+
+  Expr diff = x(Recurrence::n) - homo_rhs
+    - poly * pwr(base, Recurrence::n);
+
+  // Substitute the expected solution `q' into the original recurrence.
+  for (index_type d = 0; d <= order_rec; ++d) {
+    const Expr& shifted_poly = q.substitute(Recurrence::n, Recurrence::n - d);
+    diff = diff.substitute(x(Recurrence::n - d), shifted_poly);
+  }
+
+  // Remove a factor `base^n' from all terms of the expression `diff'
+  diff *= pwr(base, -Recurrence::n);
+  // After expansion, `diff' is a polynomial with unknown coefficients
+  // with the property that the expression `q' built above satisfies
+  // the original recurrence if, and only if, `diff' is the zero polynomial.
+  diff = diff.expand();
+
+  // Set up a system of `deg + 1' unknowns, forcing all coefficients
+  // of the polynomial `diff' to vanish.
+  Expr_List equations;
+  for (unsigned int i = 0; i < deg + 1; ++i) {
+    const Expr& coeff = diff.coeff(Recurrence::n, i);
+    equations.prepend(Expr(coeff, 0));
+  }
+
+  // Solve the system.
+  Expr sol_system = lsolve(equations, unknowns);
+  
+  // Compute the actual form of the function `q' by substituting the
+  // correct values of the coefficients found above
+  for (unsigned int i = sol_system.nops(); i-- > 0; )
+    q = q.substitute(unknowns.op(i), sol_system.op(i).op(1));
+
+  return q;
+}
+
+
+/*!
   Solves the linear recurrence of finite order with constant or variable
   coefficients.
 */
@@ -687,6 +752,8 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       return TOO_COMPLEX;
   }
 
+#define OLD_METHOD 0
+#if OLD_METHOD
   // `g_n' is defined here because it is necessary in the function
   // `compute_term_about_initial_conditions()' (at the end of function
   // `solve_linear_finite_order()').
@@ -737,6 +804,59 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       return TOO_COMPLEX;
     break;
   }
+#else
+  // `g_n' is defined here because it is necessary in the function
+  // `compute_term_about_initial_conditions()' (at the end of function
+  // `solve_linear_finite_order()').
+  Expr g_n;
+  if (is_linear_finite_order_const_coeff()) {
+#if DEBUG
+    for (size_t i = 0; i < roots.size(); ++i)
+      std::cerr << i << " - " << roots[i].value()  << " - " << roots[i].multiplicity() << std::endl;
+#endif
+    Expr homo_rhs = recurrence_rhs - inhomogeneous_term;
+    // DD_MSGVAR("Homogeneous term: ", homo_rhs);
+    const index_type order_rec = order();
+    Expr sol = 0;
+    Expr poly;
+    Expr base;
+    std::vector<Expr> base_of_exps;
+    std::vector<Expr> exp_poly_coeff;
+    std::vector<Expr> exp_no_poly_coeff;
+    exp_poly_decomposition(inhomogeneous_term.expand(), Recurrence::n,
+			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
+    D_VEC(base_of_exps, 0, base_of_exps.size()-1);
+    D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
+    D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
+
+    // FIXME: If we are able to deal with non-zero extra terms in some cases,
+    // do not give up.
+    if (vector_not_all_zero(exp_no_poly_coeff))
+      return TOO_COMPLEX;
+
+    // FIXME: mult is temporarily set to k; use the right multiplicity.
+    size_t mult = order();
+    for (size_t j = 0; j < base_of_exps.size(); ++j) {
+      poly = exp_poly_coeff[j];
+      base = base_of_exps[j];
+      sol += compute_special_solution(homo_rhs, order_rec, poly, base, mult);
+    }
+    solution = sol; 
+    // FIXME: Take into account initial conditions here. Use 
+    // compute_term_about_initial_conditions(). Or just find_g_n().
+  }
+  else 
+    if (order()==1) {
+      Solver_Status status;
+      // Compute the complete solution.
+      if ((status = solve_variable_coeff_order_1(coefficients(), solution))
+	  != SUCCESS)
+	return status;
+    }
+    else
+      return TOO_COMPLEX;
+#endif
+
 
   D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
   solution = simplify_ex_for_output(solution, false);
@@ -782,67 +902,3 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   return SUCCESS;
 }
 
-/*
-  Compute a special solution of the linear recurrence
-  of finite order with constant coefficients
-  x(n) = homo_rhs + poly * base^n
-  where
-    `homo_rhs' is the homogeneous part of the rhs of the recurrence
-    `poly' is a polynomial in the variable `n'
-    `base' is some complex number, which is a root of the characteristic
-       polynomial with multiplicity `mult' (possibly zero)
-  The solution has the form p * base^n
-  where `p' is a polynomial of degree deg(poly) + mult
-*/
-
-Expr
-compute_special_solution(const Expr& homo_rhs, const index_type order_rec,
-			 const Expr& poly, const Expr& base,
-			 const unsigned int mult) {
-
-  // Build the generic polynomial `q' of the correct degree
-  // with unknown coefficients.
-  unsigned int deg = poly.degree(Recurrence::n) + mult;
-  Expr_List unknowns;
-  for (unsigned int i = 0; i < deg + 1; ++i)
-    unknowns.append(Symbol());
-  Expr q = 0;
-  for (unsigned int i = 0; i < deg + 1; ++i)
-    q += pwr(Recurrence::n, i) * unknowns.op(i);
-  q *= pwr(base, Recurrence::n);
-  // At this point, the expression `q' has the desired form poly * base^n
-
-  Expr diff = x(Recurrence::n) - homo_rhs
-    - poly * pwr(base, Recurrence::n);
-
-  // Substitute the expected solution `q' into the original recurrence
-  for (index_type d = 0; d <= order_rec; ++d) {
-    const Expr& shifted_poly = q.substitute(Recurrence::n, Recurrence::n - d);
-    diff = diff.substitute(x(Recurrence::n - d), shifted_poly);
-  }
-
-  // Remove a factor `base^n' from all terms of the expression `diff'
-  diff *= pwr(base, -Recurrence::n);
-  // After expansion, `diff' is a polynomial with unknown coefficients
-  // with the property that the expression `q' built above satisfies
-  // the original recurrence if, and only if, `diff' is the zero polynomial.
-  diff = diff.expand();
-
-  // Set up a system of `deg + 1' unknowns, forcing all coefficients
-  // of the polynomial `diff' to vanish.
-  Expr_List equations;
-  for (unsigned int i = 0; i < deg + 1; ++i) {
-    const Expr& coeff = diff.coeff(Recurrence::n, i);
-    equations.prepend(Expr(coeff, 0));
-  }
-
-  // Solve the system.
-  Expr sol_system = lsolve(equations, unknowns);
-  
-  // Compute the actual form of the function `q' by substituting the
-  // correct values of the coefficients found above
-  for (unsigned int i = sol_system.nops(); i-- > 0; )
-    q = q.substitute(unknowns.op(i), sol_system.op(i).op(1));
-
-  return q;
-}
