@@ -432,6 +432,7 @@ PURRS::Recurrence::apply_order_reduction() const {
       (simplify_ex_for_output(exact_solution_.expression(), false));
     lower_bound_.set_expression(exact_solution_.expression());
     upper_bound_.set_expression(exact_solution_.expression());
+    recurrence_rhs_rewritten = true;
     return SUCCESS;
   }
   else
@@ -483,6 +484,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 					     get_auxiliary_definition
 					     (auxiliary_symbols()[i]));
 	}
+	recurrence_rhs_rewritten = true;
 	return SUCCESS;
       }
       else
@@ -515,6 +517,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 					     get_auxiliary_definition
 					     (auxiliary_symbols()[i]));
 	  D_VAR(solution_or_bound);
+	  recurrence_rhs_rewritten = true;
 	  return SUCCESS;
 	}
 	else

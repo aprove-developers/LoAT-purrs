@@ -320,7 +320,9 @@ private:
   //! \brief
   //! It is <CODE>true</CODE> if the recurrence has been rewritten, i. e.,
   //! in the case there are null or negative decrements or if has been applied
-  //! the order reduction; it is <CODE>false</CODE> in all the other cases.
+  //! the order reduction or the recurrence is non-linear (and then, in
+  //! order to solve it we have rewritten the recurrence in linear);
+  //! it is <CODE>false</CODE> in all the other cases.
   mutable bool recurrence_rhs_rewritten;
 
   //! \brief
