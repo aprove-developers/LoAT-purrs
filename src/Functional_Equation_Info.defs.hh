@@ -59,6 +59,10 @@ public:
   void set_applicability_condition(unsigned c);
 
 private:
+  //! \brief
+  //! Contains the two elements of the terms in the form \f$ a x(n/b) \f$:
+  //! in the first position there is \f$ b \f$; in the second position there
+  //! is \f$ a \f$.
   typedef std::map<Number, Expr> Homogeneous_Terms; 
   
 public:
