@@ -227,22 +227,6 @@ Recurrence::compute_exact_solution() const {
     assert(is_linear_finite_order() || is_functional_equation());
     if (is_linear_finite_order()) {
       if ((status = solve_linear_finite_order()) == SUCCESS) {
-	if (order_reduction_p) {
-	  // Perform three substitutions:
-	  // - r                      -> mod(n, gcd_among_decrements);
-	  // - n                      -> 1 / gcd_among_decrements
-	  //                             * (n - mod(n, gcd_among_decrements));
-	  // - x(k), k non-negative integer -> x(mod(n, gcd_among_decrements)).
-	  set_solution_order_reduced(exact_solution_.expression());
-	  exact_solution_.set_expression(come_back_to_original_variable
-					 (exact_solution_.expression(),
-					  symbol_for_mod(),
-					  get_auxiliary_definition
-					  (symbol_for_mod()),
-					  gcd_decrements_old_rhs()));
-	  exact_solution_.set_expression
-	    (simplify_ex_for_output(exact_solution_.expression(), false));
-	}
 	lower_bound_.set_expression(exact_solution_.expression());
 	upper_bound_.set_expression(exact_solution_.expression());
 	return SUCCESS;

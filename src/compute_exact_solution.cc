@@ -247,9 +247,10 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
       // (forse prima di vedere gosper)
       Symbol h;
       solution
-	+= alpha_factorial * get_initial_condition(z.to_unsigned()) + alpha_factorial 
-	* PURRS::sum(h, z + 1, n, inhomogeneous_term.substitute(n, h) 
-		     / alpha_factorial.substitute(n, h));
+	+= alpha_factorial * get_initial_condition(z.to_unsigned())
+	+ alpha_factorial * PURRS::sum(h, z + 1, n,
+				       inhomogeneous_term.substitute(n, h) 
+				       / alpha_factorial.substitute(n, h));
       exact_solution_.set_expression(solution);
       return SUCCESS;
     }
@@ -649,6 +650,21 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     else
       add_term_with_initial_conditions(g_n, num_coefficients);
 
+  if (order_reduction_p) {
+    // Perform three substitutions:
+    // - r                      -> mod(n, gcd_among_decrements);
+    // - n                      -> 1 / gcd_among_decrements
+    //                             * (n - mod(n, gcd_among_decrements));
+    // - x(k), k non-negative integer -> x(mod(n, gcd_among_decrements)).
+    set_solution_order_reduced(exact_solution_.expression());
+    exact_solution_.set_expression(come_back_to_original_variable
+				   (exact_solution_.expression(),
+				    symbol_for_mod(),
+				    get_auxiliary_definition
+				    (symbol_for_mod()),
+				    gcd_decrements_old_rhs()));
+  }
+
   D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
   exact_solution_.set_expression
     (simplify_ex_for_output(exact_solution_.expression(), false));
@@ -665,5 +681,6 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     exact_solution_
       .set_expression(exact_solution_.expression().collect(conditions));
   }
+
   return SUCCESS;
 }
