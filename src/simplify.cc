@@ -44,7 +44,6 @@ GExpr
 simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input);
 
 
-
 static void
 split_exponent(GExpr& num, GExpr& not_num, const GExpr& e) {
   if (!is_a<numeric>(e))
@@ -59,13 +58,12 @@ split_exponent(GExpr& num, GExpr& not_num, const GExpr& e) {
      and has like a factor \p n:
      returns the <CODE>GExpr</CODE> \p not_num_exp_minus_n with
      all the factors of \p not_num_exponent minus \p n;
-  2. the <CODE>GExpr</CODE> \p not_num_exponent is a <CODE>GiNaC::mul</CODE>
-     and not contains \p n:
-     returns the <CODE>GExpr</CODE> \p not_num_exp_minus_n equal to
-     \p not_num_exponent;
-  3. the <CODE>GExpr</CODE> \p not_num_exponent is not a
+  2. the <CODE>GExpr</CODE> \p not_num_exponent is not a
      <CODE>GiNaC::mul</CODE> and it is equal to \p n:
-     returns the <CODE>GExpr</CODE> \p not_num_exp_minus_n equal to \f$ 1 \f$. 
+     returns the <CODE>GExpr</CODE> \p not_num_exp_minus_n equal to \f$ 1 \f$; 
+  3. the <CODE>GExpr</CODE> \p not_num_exponent not contains \p n:
+     returns the <CODE>GExpr</CODE> \p not_num_exp_minus_n equal to
+     \p not_num_exponent.
 */
 static GExpr
 found_and_erase_n(const GExpr& not_num_exponent, const GSymbol& n) {
@@ -78,38 +76,36 @@ found_and_erase_n(const GExpr& not_num_exponent, const GSymbol& n) {
  else
    if (not_num_exponent.is_equal(n))
      found = true;
+
  GExpr not_num_exp_minus_n = 1;
- if (found) {
-   assert(not_num_exponent.has(n));
+ if (found)
    if (is_a<mul>(not_num_exponent)) {
      for (unsigned i = not_num_exponent.nops(); i-- > 0; )
        if (!not_num_exponent[i].is_equal(n))
 	 not_num_exp_minus_n *= not_num_exponent[i];
    }
- }
  else
    not_num_exp_minus_n = not_num_exponent;
+
  return not_num_exp_minus_n;
 }
 
 /*!
   Returns <CODE>true</CODE> if \p base and \p exp_num are rational numbers
   and \f$ base^exp_num \f$ is again a rational number; <CODE>false</CODE>
-  otherwise, i. e., for example \f$ base = 3 \f$ and \f$ exp_num = 1/2 \f$.
+  otherwise (for example \f$ base = 3 \f$ and \f$ exp_num = 1/2 \f$).
 */
 static bool
-perfect_root(const GExpr& base, const GNumber& exp_num)
-{
-  bool ok = false;
+perfect_root(const GExpr& base, const GNumber& exp_num) {
   if (exp_num.is_rational()) {
     GExpr pow_base_num_exp = pow(base, exp_num);
     if (is_a<numeric>(pow_base_num_exp)) {
       GNumber tmp = GiNaC::ex_to<GiNaC::numeric>(pow_base_num_exp);
       if (tmp.is_rational())
-	ok = true;
+	return true;
     }
   }
-  return ok;
+  return false;
 }
 
 /*!
