@@ -359,7 +359,7 @@ irem(const Number& x, const Number& y) {
   // See http://www.cs.unipr.it/pipermail/purrs-devel/2002-October/000417.html.
   if (y.is_zero())
     throw std::runtime_error("Division by zero in PURRS::Number::irem()");
-  return irem(x, y);
+  return GiNaC::irem(x.n, y.n);
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

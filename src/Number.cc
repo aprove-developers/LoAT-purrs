@@ -27,4 +27,4 @@ site: http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
-const PURRS::Number PURRS::I = GiNaC::I;
+const PURRS::Number PURRS::Number::I = GiNaC::I;

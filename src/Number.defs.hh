@@ -116,7 +116,7 @@ Number lcm(const Number& x, const Number& y);
 Number power(const Number& x, const Number& y);
 
 //! If \f$ x \f$ and \f$ y \f$ are integer and \f$ y \neq 0 \f$,
-//! returns the reminder of the division of \f$ x \f$ by \f$ y \f$.
+//! returns the remainder of the division of \f$ x \f$ by \f$ y \f$.
 //! If \f$ y = 0 \f$ an exception is thrown.
 //! Returns zero otherwise.
 //! If the result is not zero, its sign is the sign of \f$ x \f$
@@ -253,6 +253,8 @@ public:
   //! Returns the denominator of \p *this, seen as a fraction.
   Number denominator() const;
 
+  static const Number I;
+
 private:
   friend class Expr;
 
@@ -287,12 +289,9 @@ private:
 private:
   GiNaC::numeric n;
 
-public:
-  // Made public only to initialize the constant I.
+  //! Builds the number corresponding to \p gn.
   Number(const GiNaC::numeric& gn);
 };
-
-extern const Number I;
 
 } // namespace Parma_Recurrence_Relation_Solver
 

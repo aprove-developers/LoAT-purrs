@@ -388,7 +388,7 @@ find_roots(const GExpr& p, const GSymbol& x,
       size_t num_r_roots = roots_r.size();
       GExpr theta = 2*Pi/nested_degree;
       for (int j = 0; j < nested_degree; ++j) {
-	GExpr root_of_unity = cos(j*theta) + I*sin(j*theta);
+	GExpr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
 	for (size_t i = 0; i < num_r_roots; ++i)
 	  roots.push_back(Polynomial_Root(power(roots_r[i].value(),
 						1/nested_degree)
@@ -506,7 +506,7 @@ solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
     // Is there a way to simplify this?
 
     GExpr t1 = -S_plus_T/2 - a1_div_3;
-    GExpr t2 = (S - T)*I*sqrt(GExpr(3))/2;
+    GExpr t2 = (S - T) * Number::I * sqrt(GExpr(3))/2;
     x1 = S_plus_T - a1_div_3;
     x2 = t1 + t2;
     x3 = t1 - t2;
