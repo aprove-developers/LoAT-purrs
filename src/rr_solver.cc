@@ -234,12 +234,14 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 
   int order = -1;
   std::vector<GExpr> coefficients;
-  GExpr e = rhs;
+  // 'expand()' is necessary to simplify expressions,to find coefficients
+  // and to decompose the inhomogeneous term of the recurrence relation.  
+  GExpr e = rhs.expand();
 
   // Special case: 'e' is only a function in n or a constant.
   // If there is not in 'e' 'x(argument)' or there is but with
   // 'argument' that not contains the variable 'n', then the solution
-  // is obviously 'e'. 
+  // is obviously 'e'.
   GList occurrences;
   bool finished = true;
   if (e.find(x_i, occurrences)) {
@@ -361,12 +363,16 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   std::cout << "Inhomogeneous term = " << e << std::endl;
 #endif
 
-  // Simplifies expressions, in particular rewrites nested powers.
+  // Simplifies expanded expressions, in particular rewrites nested powers.
   e = simplify_on_input_ex(e, n, true);
-  
+
   // 'decomposition' is a matrix with three rows and a number of columns
   // which is at most the number of exponentials in the inhomogeneous term
   // plus one.
+  // We search exponentials in the variable 'n', so the expression 'e'
+  // must be expanded because otherwise the function not recognizes the
+  // the exponentials in the variable 'n' (i.e. 2^(n-1) is not considerated
+  // while 1/2*2^n, obtained from previous by 'expand()', yes).
   // In every column there is a exponential in the first row and its
   // coefficient in the second and third row: in the second row there is
   // the polynomial part of the coefficient and in the third row there is
@@ -545,6 +551,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   contains \f$ \alpha_i^n \f$ in the first row and \f$ p(n)_i \f$
   in the second and third row: the polynomial part of \f$ p(n)_i \f$ in the
   second row and the non polynomial part in the third row.
+  The <CODE>GExpr</CODE> \p e must be expanded. 
 */
 static GMatrix
 decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
