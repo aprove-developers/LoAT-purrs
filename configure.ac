@@ -324,8 +324,8 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 
 dnl Checks for library functions.
 AC_HEADER_TIME
-AC_CHECK_HEADERS(sys/resource.h sys/time.h)
-AC_CHECK_FUNCS(gettimeofday getrlimit setrlimit)
+AC_CHECK_HEADERS(unistd.h sys/resource.h sys/time.h)
+AC_CHECK_FUNCS(nice gettimeofday getrlimit setrlimit)
 
 AC_SUBST(extra_includes)
 AC_SUBST(extra_cpp_flags)

@@ -34,6 +34,10 @@ http://www.cs.unipr.it/purrs/ . */
 #include <vector>
 #include <cassert>
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+
 #ifdef HAVE_SYS_RESOURCE_H
 #include <sys/resource.h>
 #endif
@@ -218,6 +222,12 @@ main() try {
   std::set_unexpected(my_unexpected_exception);
   std::set_terminate(my_uncaught_exception);
 
+#ifdef HAVE_NICE
+  // Be very nice to the system
+  if (nice(20) != 0)
+    error("cannot be nice");
+#endif
+
   // Get the expression, if any.
   const_form_iterator expr = cgi.getElement("expr");
 
@@ -327,14 +337,18 @@ main() try {
   // Get a pointer to the environment.
   const CgiEnvironment& env = cgi.getEnvironment();
 
+#if HAVE_GETTIMEOFDAY
   // Timings and thank you.
   long us = ((end.tv_sec - start.tv_sec) * 1000000)
     + (end.tv_usec - start.tv_usec);
+#endif
 
   cout << br() << br()
-       <<cgicc::div().set("align", "center").set("class", "bigger") << endl
-       << "The computation of roots took " << us << " us"
+       <<cgicc::div().set("align", "center").set("class", "bigger") << endl;
+#if HAVE_GETTIMEOFDAY
+  cout << "The computation of roots took " << us << " us"
        << " (" << (double) (us/1000000.0) << " s)" << br() << br() << endl;
+#endif
   string host = env.getRemoteHost();
   if (host.empty())
     host = env.getRemoteAddr();
