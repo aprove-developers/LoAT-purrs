@@ -26,4 +26,26 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Symbol.defs.hh"
 
+#include <string>
+
 namespace PURRS = Parma_Recurrence_Relation_Solver;
+
+bool
+PURRS::Symbol::is_a_bad_symbol() const {
+  const std::string str = get_name();
+  // `str' has less than 7 characters: it can not be a bad symbol.
+  if (str.size() < 7)
+    return false;
+  else {
+    std::string::size_type pos = str.find("symbol");
+    // `str' does not have the substring `symbol' or has the substring
+    // `symbol' but not in the first positions of the string:
+    // it can not be a bad symbol. 
+    if (pos != 0)
+      return false;
+    const std::string numbers("0123456789");
+    // Finds the first non-numeric character in `str' occurring after `symbol'.
+    pos = str.find_first_not_of(numbers, 6);
+    return (pos == std::string::npos);
+  }
+}

@@ -61,6 +61,11 @@ Symbol::get_name() const {
   return s.get_name();
 }
 
+inline bool
+Symbol::NameCompare::operator()(const Symbol& x, const Symbol& y) const {
+  return x.get_name() < y.get_name();
+}
+
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_Symbol_inlines_hh)

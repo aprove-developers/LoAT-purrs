@@ -53,6 +53,25 @@ public:
   //! Return the symbol's name.
   std::string get_name() const;
 
+  //! \brief
+  //! Returns <CODE>true</CODE> if \p *this is a bad symbol;
+  //! returns <CODE>false</CODE> otherwise.
+  /*!
+    A symbol is <EM>bad</EM> if its name has the shape "symbol"
+    followed by a number.
+  */
+  bool is_a_bad_symbol() const;
+
+  //! Binary predicate defining the total ordering on the names of symbols.
+  struct NameCompare {
+    //! \brief
+    //! Returns <CODE>true</CODE> if the name of \p x comes before
+    //! (lexicographically) the name of \p y.
+    bool operator()(const Symbol& x, const Symbol& y) const;
+  };
+
+  typedef std::set<Symbol, Symbol::NameCompare> SymbolSet;
+
 private:
   friend class Expr;
   friend class Expr_List;
