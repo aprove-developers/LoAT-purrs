@@ -105,7 +105,7 @@ find_term_without_function_x(const Expr& term) {
 */
 Recurrence::Verify_Status
 PURRS::Recurrence::verify_solution() const {
-  if (exact_solution_.has_expression()) {
+  if (is_linear_finite_order() && exact_solution_.has_expression()) {
     D_VAR(recurrence_rhs);
     D_VAR(order());
     D_VAR(first_initial_condition());
