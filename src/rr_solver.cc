@@ -347,13 +347,14 @@ add_initial_conditions(const Expr& g_n, const Symbol& n,
 		       const std::vector<Expr>& initial_conditions,
 		       Expr& solution);
 
-static Expr
+static Solver_Status
 solve_constant_coeff_order_1(const Symbol& n,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff,
 			     const std::vector<Expr>& exp_no_poly_coeff,
 			     const std::vector<Polynomial_Root>& roots,
-			     const std::vector<Expr>& initial_conditions);
+			     const std::vector<Expr>& initial_conditions,
+			     Expr& solution);
 
 static Expr
 solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
@@ -685,8 +686,8 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   unsigned num_summands = expanded_rhs.is_a_add() ? expanded_rhs.nops() : 1;
   if (num_summands > 1)
     for (unsigned i = num_summands; i-- > 0; ) {
-      status = classification_summand(expanded_rhs.op(i), n, e, coefficients, order,
-				      has_non_constant_coefficients);
+      status = classification_summand(expanded_rhs.op(i), n, e, coefficients,
+				      order, has_non_constant_coefficients);
       if (status != OK)
 	return status;
     }
@@ -758,10 +759,17 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
 						 characteristic_eq, roots,
 						 all_distinct))
 	return TOO_COMPLEX;
-      solution = solve_constant_coeff_order_1(n, base_of_exps,
-					      exp_poly_coeff,
-					      exp_no_poly_coeff, roots,
-					      initial_conditions);
+      Solver_Status status = solve_constant_coeff_order_1(n, base_of_exps,
+							  exp_poly_coeff,
+							  exp_no_poly_coeff,
+							  roots,
+							  initial_conditions,
+							  solution);
+      if (status != OK) {
+	D_MSG("Summand not hypergeometric: no chance of using Gosper's "
+	      "algorithm");
+	return status;
+      }
     }
     else
       solution = solve_variable_coeff_order_1(n, e, coefficients[1]);
@@ -1272,14 +1280,15 @@ gosper_algorithm(const Symbol& n, Expr& t_n, Number lower, const Expr& upper,
           + \sum_{k=1}^n \lambda^{n-k} p(k).
   \f]
 */
-static Expr
+static Solver_Status
 solve_constant_coeff_order_1(const Symbol& n,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff,
 			     const std::vector<Expr>& exp_no_poly_coeff,
 			     const std::vector<Polynomial_Root>& roots,
-			     const std::vector<Expr>& initial_conditions) {
-  Expr solution = 0;
+			     const std::vector<Expr>& initial_conditions,
+			     Expr& solution) {
+  solution = 0;
   // Computes the sum when `\lambda^{n-k} p(k)' is a polynomial or
   // a product of a polynomial times an exponential.
   if (vector_not_all_zero(exp_poly_coeff)) {
@@ -1315,10 +1324,10 @@ solve_constant_coeff_order_1(const Symbol& n,
 			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff,
 			 roots, gosper_solution))
       solution += gosper_solution;
-    else {
+    else
       // FIXME: the summand is not hypergeometric:
       // no chance of using Gosper's algorithm.
-    }
+      return TOO_COMPLEX;
   }
   // FIXME: per ora non si puo' usare la funzione
   // `add_initial_conditions' perche' richiede un vettore di
@@ -1327,8 +1336,7 @@ solve_constant_coeff_order_1(const Symbol& n,
   // add_initial_conditions(g_n, n, coefficients, initial_conditions,
   //		              solution);
   solution += initial_conditions[0] * pwr(roots[0].value(), n);
-  D_MSGVAR("SOLUTION = ", solution);
-  return solution;
+  return OK;
 }
 
 /*!
@@ -1612,7 +1620,7 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
     throw
       "PURRS error: today we only allow inhomogeneous terms\n"
       "in the form of polynomials or product of exponentials\n"
-      "and polynomials.\n"
+      "and polynomials for second order recurrences.\n"
       "Please come back tomorrow.";
   return solution;
 }
@@ -1707,7 +1715,7 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
     throw
       "PURRS error: today we only allow inhomogeneous terms\n"
       "in the form of polynomials or product of exponentials\n"
-      "and polynomials.\n"
+      "and polynomials for recurrence of order greater than one.\n"
       "Please come back tomorrow.";
   return solution;
 }
