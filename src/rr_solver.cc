@@ -1614,7 +1614,8 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
   Expr solution;
   // Calculates the solution of the second order recurrences when
   // the inhomogeneous term is a polynomial or the product of a
-  // polynomial and an exponential.
+  // polynomial and an exponential; return the symbolic solution with
+  // the object `sum' otherwise.
   if (all_distinct) {
     const Expr& root_1 = roots[0].value();
     const Expr& root_2 = roots[1].value();
@@ -1736,18 +1737,21 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
   D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
   D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
 
-  Expr solution;  
+  Expr solution;
   // Calculates the solution of the recurrences when
   // the inhomogeneous term is a polynomial or the product of a
-  // polynomial and an exponential.
-  if (!vector_not_all_zero(exp_no_poly_coeff)) {
-    // Solve system in order to finds `alpha_i' (i = 1,...,order).
-    Matrix sol = solve_system(all_distinct, coefficients, roots);
-    
-    // Finds `g_n', always taking into account the root's multiplicity
-    g_n = find_g_n(n, all_distinct, sol, roots);
-    D_VAR(g_n);
-    if (all_distinct) {      
+  // polynomial and an exponential; return the symbolic solution with
+  // the object `sum' otherwise.
+
+  // Solve system in order to finds `alpha_i' (i = 1,...,order).
+  Matrix sol = solve_system(all_distinct, coefficients, roots);
+  
+  // Finds `g_n', always taking into account the root's multiplicity
+  g_n = find_g_n(n, all_distinct, sol, roots);
+  D_VAR(g_n);
+
+  if (all_distinct)
+    if (!vector_not_all_zero(exp_no_poly_coeff)) {
       // Prepare for to compute the symbolic sum.
       std::vector<Expr> poly_coeff_tot;
       prepare_for_symbolic_sum(n, g_n, roots, exp_poly_coeff, poly_coeff_tot);
@@ -1768,17 +1772,21 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
 					     symbolic_sum_distinct,
 					     symbolic_sum_no_distinct);
     }
-    else
+    else {
+      Symbol h;
+      solution = sum(Expr(h), Expr(order), Expr(n),
+		     g_n.subs(n, n - h) * e.subs(n, h));
+    }
+  else
+    if (!vector_not_all_zero(exp_no_poly_coeff))
       // There are roots with multiplicity greater than 1.
       solution = compute_non_homogeneous_part(n, g_n, order, base_of_exps,
 					      exp_poly_coeff);
-  }
-  else
-    throw
-      "PURRS error: today we only allow inhomogeneous terms\n"
-      "in the form of polynomials or product of exponentials\n"
-      "and polynomials for recurrence of order greater than one.\n"
-      "Please come back tomorrow.";
+    else {
+      Symbol h;
+      solution = sum(Expr(h), Expr(order), Expr(n),
+		     g_n.subs(n, n - h) * e.subs(n, h));
+    }
   return solution;
 }
 
