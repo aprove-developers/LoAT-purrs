@@ -1761,7 +1761,7 @@ compute_product_on_add(const Expr& e, const Symbol& n,
     if (tmp.is_a_number()) {
       Number num = tmp.ex_to_number();
       if (num.is_positive_integer()) {
-	e_prod = factorial(e) / factorial(num);
+	e_prod = factorial(e) / factorial(lower + num - 1);
 	e_prod_computed = true;
       }
       else
@@ -1785,7 +1785,7 @@ compute_product_on_add(const Expr& e, const Symbol& n,
     e_prod_computed = true;
   }
   else {
-    // Allows to compute `e!(n)' for function as `a*n+a*b'
+    // Allows to compute `\prod_{k=lower}^upper e(k)' for function as `a*n+a*b'
     // (`a' not rational).
     Expr a = e.content(n);
     if (a != 1) {
@@ -1824,12 +1824,15 @@ compute_product_on_power(const Expr& e, const Symbol& n,
   bool e_prod_computed = false;
   if (e.op(0).has(n)) {
     if (e.op(1).is_a_number()) {
-      e_prod = pwr(compute_product(e.op(0), n, lower, upper, true),
-			    e.op(1));
+      Number exponent = e.op(1).ex_to_number();
+      if (exponent.is_positive_integer())
+	e_prod = pwr(compute_product(e.op(0), n, lower, upper), e.op(1));
+      else
+	e_prod = pwr(compute_product(e.op(0), n, lower, upper, true), e.op(1));
       e_prod_computed = true;
     }
   }
-  // In this case `e!(n) = k^{\sum_{h=1}^n f(h)}'.
+  // In this case `\prod_{k=lower}^upper e(k) = k^{\sum_{h=lower}^upper f(h)}'.
   else {
     std::vector<Expr> base_of_exps;
     std::vector<Expr> exp_poly_coeff;
@@ -1870,32 +1873,38 @@ compute_product_on_power(const Expr& e, const Symbol& n,
 //! \f[
 //!   \e!(0) \defeq 1,
 //!   \qquad
-//!   \e!(n) \defeq \prod_{k=lower}^upper \e(k).
+//!   \e!(n) \defeq \prod_{k=lower}^upper e(k).
 //! \f]
 /*!
-  When possible to find the closed form for \f$ \prod_{k=lower}^upper \e(k) \f$,
+  When possible to find the closed form for \f$ \prod_{k=lower}^upper e(k) \f$,
   we compute it; when it is not possible we returns the symbolic function
   for the product.
   We observe that if also \f$ upper \f$ is a number, in particular it must be
   an integer number, than the product is always computable: so the following
   definition is applied only when \f$ upper \f$ is not a number.
-  We defined inductively \f$ \e!(n) \f$ as follows:
+  We defined inductively \f$ \prod_{k=lower}^upper e(k) \f$ as follows:
   - if \f$ e \f$ is a constant, i.e. it not contains \f$ n \f$,
-    then \f$ e!(n) = e^n \f$;
-  - if \f$ e = n \f$, then \f$ e!(n) = n! \f$;
-  - if \f$ e = n + k \f$, where \f$ k \in \Nset \setminus \{0\} \f$,
-    then \f$ e!(n) = \frac{(n + k)!}{k!}  \f$;
+    then \f$ \prod_{k=lower}^upper e(k) = e^{upper - lower + 1} \f$;
+  - if \f$ e = n \f$ then
+      if \f$ lower > 0 \f$ then
+        \f$ \prod_{k=lower}^upper e(k) = upper! / (lower - 1)! \f$;
+      else \f$ \prod_{k=lower}^upper e(k) = 0 \f$;
+  - if \f$ e = n + k \f$ where \f$ k \in \Zset \f$
+      if \f$ lower > -k \f$
+        \f$ e_prod = e! / (lower + k - 1)! \f$;
+      else \f$ \prod_{k=lower}^upper e(k) = 0 \f$;
   - if \f$ e = 2*n+1 \f$,
-    then \f$ e!(n) = \frac{(2*n + 1)!}{2^n * n} \f$;
+    then \f$ \prod_{k=lower}^upper e(k) = \frac{(2*n + 1)!}{2^n * n} \f$;
   - if \f$ e \f$ is a power there are two cases.
     We consider \f$ a \f$ and \f$ b \f$ so that \f$ e = a^b \f$, 
     - if \f$ a \f$ contains \f$ n \f$ and \f$ b \f$ is a number,
-      then \f$ e!(n) = a!(n)^b;
+      then \f$ \prod_{k=lower}^upper e(k) = (\prod_{k=lower}^upper a(k))^b;
     - if \f$ a \f$ not contains \f$ n, i.e. \f$ a \f$ is a constant,
-      then \f$ e!(n) = k^{\sum_{h=1}^n f(h)} \f$;
-  - if \f$ e = e_1 \cdots e_k \f$, where \f$ e_i \f$,
-    for \f$ i = 1, \dots, k \f$, is one of the previous case,
-    then \f$ e!(n) =  e_1!(n) \cdots e_k!(n) \f$.  
+      then \f$ \prod_{k=lower}^upper e(k) = k^{\sum_{h=lower}^upper f(h)} \f$;
+  - if \f$ e = e_1 \cdots e_m \f$, where \f$ e_i \f$,
+    for \f$ i = 1, \dots, m \f$, is one of the previous case,
+    then \f$ \prod_{k=lower}^upper e(k) =  \prod_{k=lower}^upper e_1(k) \cdots
+    \prod_{k=lower}^upper e_m(k) \f$.  
 */
 static Expr
 compute_product(const Expr& e, const Symbol& n,
@@ -1904,6 +1913,7 @@ compute_product(const Expr& e, const Symbol& n,
   assert(lower.is_integer());
   if (upper.is_a_number()) {
     Number num_upper = upper.ex_to_number();
+    assert(num_upper.is_integer());
     if (lower > num_upper)
       return 1;
     else if (lower == num_upper)
@@ -1920,9 +1930,15 @@ compute_product(const Expr& e, const Symbol& n,
   if (!e.has(n))
     e_prod = pwr(e, exp_power);
   else if (e == n) {
-    e_prod = factorial(upper);
-    if (lower > 1)
-      e_prod *= 1 / factorial(lower - 1);
+    if (lower > 0)
+      e_prod = factorial(upper) / factorial(lower - 1);
+    else
+      if (is_denominator)
+	throw std::domain_error("Cannot compute a product at the "
+				"denominator if one of the factor "
+				"is zero");
+      else
+	e_prod = 0;
   }
   else if (e.is_a_add())
     e_prod = compute_product_on_add(e, n, lower, upper, is_denominator);
