@@ -725,19 +725,21 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
   // `term_with_ic' will contain the term of the solution relative to
   // the initial condition; `remainder_solution' will contain the
   // rest of the solution.
+  D_VAR(rec.exact_solution_.expression());
   Expr term_with_ic = 0;
   Expr remainder_solution = 0;
   if (rec.exact_solution_.expression().is_a_add())
     for (unsigned int i = rec.exact_solution_.expression().nops(); i-- > 0; )
-      if (has_only_symbolic_initial_conditions
-	  (rec.exact_solution_.expression().op(i)))
+      if (rec.exact_solution_.expression().op(i).has_x_function())
 	term_with_ic += rec.exact_solution_.expression().op(i);
       else
 	remainder_solution += rec.exact_solution_.expression().op(i);
   else {
-    assert(rec.exact_solution_.expression().is_the_x_function());
+    assert(rec.exact_solution_.expression().has_x_function());
     term_with_ic = rec.exact_solution_.expression();
   }
+  D_VAR(term_with_ic);
+  D_VAR(remainder_solution);
 
   // Compute `to_sub_in_solution': it is the value to substitute to the
   // function `mod()'.
@@ -752,6 +754,7 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
   }
   // Add the contribution of the root of unity equal to `1'.
   to_sub_in_solution += Number(1, 2) * (gcd_among_decrements - 1);
+  D_VAR(to_sub_in_solution);
 
   // 1. rewrite the part of the solution depending on the
   // initial conditions.
@@ -775,6 +778,8 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
   }
   term_with_ic = term_with_ic.substitute(mod(n, gcd_among_decrements),
 					 to_sub_in_solution);
+  D_VAR(term_with_ic);
+  D_VAR(remainder_solution);
 
   // 2. rewrite the part of the solution not depending on the
   // initial conditions.
