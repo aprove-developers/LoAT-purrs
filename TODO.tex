@@ -46,6 +46,14 @@ Find suitable notations in \texttt{GiNaC} for formal sums, formal products
 and hypergeometric functions.
 Also, give rules to combine and simplify sums and products.
 
+\item (Added om 20.9.2002)
+In order to apply the ``transcendental'' methods of summation contained
+in the book by Petkov\v sek, Wilf and Zeilberger, we
+need to be able to simplify ratios of factorials.
+Of course the same remark holds for binomial coefficients.
+\texttt{GiNaC} shows no ability at that (just try
+\texttt{factorial$(n+1)$/factorial$(n)$}).
+
 \end{enumerate}
 
 \end{document}
