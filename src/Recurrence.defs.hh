@@ -1114,6 +1114,14 @@ private:
 			      index_type first_valid_index) const;
 
   //! \brief
+  //! Apply the method explained in the paper
+  //! <EM>Checking and Confining the Solutions of Recurrence Realtions</EM>
+  //! in order to validate solution of linear finite order with constant
+  // coefficient.
+  bool verify_new_method_exp_poly(index_type order_rec,
+				  const Expr& summands_without_i_c) const;
+
+  //! \brief
   //! Verifies the exact solution of the finite order recurrence \p *this.
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
   //! the verification.
