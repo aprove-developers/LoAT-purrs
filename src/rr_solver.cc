@@ -1680,8 +1680,6 @@ PURRS::Recurrence::solve_linear_finite_order(int gcd_among_decrements) const {
   // the solution with their original values.
   //solution = blackboard.rewrite(solution);
   // Only for the output.
-  // FIXME: the initial conditions can not start always from 0 then
-  // the following `for' is temporary.
   if (solution.is_a_add()) {
     Expr_List conditions;
     for (unsigned i = order(); i-- > 0; )
@@ -1728,19 +1726,41 @@ PURRS::Recurrence::approximate_functional_equation() const {
 			 bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
   assert(coefficient().is_a_number());
   Expr sum = 0;
-  // FIXME: rivedere questa parte perche' nei casi di `log' e' possibile 
-  if (vector_not_all_zero(exp_no_poly_coeff))
+  if (vector_not_all_zero(exp_poly_coeff)
+      && vector_not_all_zero(exp_no_poly_coeff))
     return TOO_COMPLEX;
-  else
+  else if (vector_not_all_zero(exp_poly_coeff))
     for (unsigned i = bases_of_exp.size(); i-- > 0; ) {
       Symbol k("k");
-      Expr exp_poly_coeff_k = exp_poly_coeff[i].substitute(n, k);
-      sum += sum_poly_times_exponentials(exp_poly_coeff_k, k,
+      sum += sum_poly_times_exponentials(exp_poly_coeff[i].substitute(n, k), k,
 					 bases_of_exp[i] / coefficient());
       // `sum_poly_times_exponentials' computes the sum from 0, whereas
       // we want that the sum start from `1'.
-      sum -= exp_poly_coeff_k.substitute(k, 0);
+      sum -= exp_poly_coeff[i].substitute(n, 0);
     }
+  else
+    if (bases_of_exp.size() == 1) {
+      Expr& no_poly = exp_no_poly_coeff[0];
+      assert(!no_poly.is_a_add());
+      if (no_poly.is_a_mul()) {
+	for (unsigned i = no_poly.nops(); i-- > 0; )
+	  if (!no_poly.op(i).is_polynomial(n)
+	      && !no_poly.op(i).is_the_log_function())
+	    return TOO_COMPLEX;
+      }
+      else
+	if (!no_poly.is_polynomial(n) && !no_poly.is_the_log_function())
+	  return TOO_COMPLEX;
+      Symbol k("k");
+      no_poly = simplify_logarithm(no_poly);
+      sum += sum_poly_times_exponentials(no_poly.substitute(n, k), k,
+					 bases_of_exp[0] / coefficient());
+      // `sum_poly_times_exponentials' computes the sum from 0, whereas
+      // we want that the sum start from `1'.
+      sum -= no_poly.substitute(n, 0); 
+    }
+    else
+      return TOO_COMPLEX;
   sum *= pwr(coefficient(), n);
   sum = simplify_on_output_ex(sum.expand(), false);
   D_VAR(sum);
