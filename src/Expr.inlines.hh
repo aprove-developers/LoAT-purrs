@@ -597,6 +597,12 @@ factorial(const Expr& x) {
 }
 
 inline Expr
+binom(const Expr& n, const Expr& k) {
+  return binom(static_cast<const Expr::Base>(n),
+	       static_cast<const Expr::Base>(k));
+}
+
+inline Expr
 gamma(const Expr& x) {
   return GiNaC::tgamma(static_cast<const Expr::Base>(x));
 }
