@@ -974,6 +974,30 @@ simplify_numer_denom(const Expr& e) {
 #endif
 }
 
+static Expr
+rewrite_factorial(const Symbol& n, const Number& a, const Number& b) {
+  Expr prod = factorial(a*n);
+  if (b > 0)
+    for (Number j = 1; j <= b; ++j)
+      prod *= a*n + j; 
+  else
+    for (Number j = 0; j < abs(b); ++j)
+      prod *= pwr(a*n - j, -1);
+  return prod;
+}
+
+static bool
+check_form_of_mul(const Symbol& n, const Expr& e, Number& a) {
+  assert(e.is_a_mul() && e.nops() == 2);
+  const Expr& first = e.op(0);
+  const Expr& second = e.op(1);
+  if ((first == n && second.is_a_number(a) && a.is_positive_integer())
+      || (second == n && first.is_a_number(a) && a.is_positive_integer()))
+    return true;
+  else
+    return false;
+}
+
 /*!
   Given the factorial expression \f$ (a n + b)! \f$, this function 
   returns a new expression that contains explicitly \f$ (a n)! \f$.
@@ -981,124 +1005,91 @@ simplify_numer_denom(const Expr& e) {
   <CODE>rewrite_factorials()</CODE>
 */
 static Expr
-decompose_factorial(const Expr& a, const Expr& b, const Expr& c,
-		    const Symbol& n) {
-  Expr prod = c * factorial(a*n);
-  if (b.is_a_number()) {
-    Number tmp_b = b.ex_to_number();
-    if (tmp_b > 0)
-      for (Number j = 1; j <= tmp_b; ++j)
-	prod *= a*n + j; 
-    else
-      for (Number j = 0; j < abs(tmp_b); ++j)
-	prod *= pwr(a*n - j, -1);
+decompose_factorial(const Expr& e, const Symbol& n) {
+  assert(e.is_the_factorial_function());
+  const Expr& argument = e.arg(0);
+  if (argument.is_a_add() && argument.nops() == 2) {
+    const Expr& first = argument.op(0);
+    const Expr& second = argument.op(1);
+    Number b;
+    if (first.is_a_number(b) && b.is_integer())
+      if (second.is_a_mul() && second.nops() == 2) {
+	Number a;
+	// Checks if `second' has the form `a*n with `a' a positive
+	// integer number'. 
+	if (check_form_of_mul(n, second, a))
+	  return rewrite_factorial(n, a, b);
+      }
+      else if (second == n)
+	return rewrite_factorial(n, 1, b);
+    if (second.is_a_number(b) && b.is_integer())
+      if (first.is_a_mul() && first.nops() == 2) {
+	Number a;
+	// Checks if `second' has the form `a*n with `a' a positive
+	// integer number'. 
+	if (check_form_of_mul(n, first, a))
+	  return rewrite_factorial(n, a, b);
+      }
+      else if (first == n)
+	return rewrite_factorial(n, 1, b);
   }
-  return prod;
+  return e;
 }
 
 /*!
-  Applies the following rewrite rule where \f$ a \in \Nset \setminus \{0\} \f$
-  and \f$ b \in \Zset \f$:
-  \f[
-    \begin{cases}
-      (a n + b)!
-      =
-      (a n)! \cdot (a n + 1) \cdots (a n + b),
-        \quad \text{if } b \in \Nset \setminus \{0\}; \\
-      (a n)!,
-        \quad \text{if } b = 0; \\
-      \dfrac{(a n)!}{(a n) \cdot (a n - 1) \cdots (a n + b + 1))},
-        \quad \text{if } b \in \Zset \setminus \Nset.
-    \end{cases}
-  \f]
+  Applies the following rewrite rules:
+  - \f[
+      a^{b n + c} = a^{b n} \cdot a^c;
+    \f]
+  - let \f$ a \in \Nset \setminus \{0\} \f$ and let \f$ b \in \Zset \f$:
+    \f[
+      \begin{cases}
+        (a n + b)!
+        =
+        (a n)! \cdot (a n + 1) \cdots (a n + b),
+          \quad \text{if } b \in \Nset \setminus \{0\}; \\
+        (a n)!,
+          \quad \text{if } b = 0; \\
+        \dfrac{(a n)!}{(a n) \cdot (a n - 1) \cdots (a n + b + 1))},
+          \quad \text{if } b \in \Zset \setminus \Nset.
+      \end{cases}
+    \f]
 */
 static Expr
-rewrite_factorials(const Expr& e, const Symbol& n) {
-  Expr e_rewritten;
-  Expr fact_of_sum = factorial(n + wild(0));
-  Expr a_times_fact_of_sum = wild(1) * fact_of_sum;
-  Expr fact_of_sum_coeff = factorial(wild(0) * n + wild(1));
-  Expr a_times_fact_of_sum_coeff = wild(2) * fact_of_sum_coeff;
-  Expr_List substitution;
-  if (e.is_a_add()) {
-    e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
-      if (clear(substitution), e.op(i).match(fact_of_sum, substitution))
-	e_rewritten += decompose_factorial(1, get_binding(substitution, 0), 1,
-					   n);
-      else if (clear(substitution),
-	       e.op(i).match(a_times_fact_of_sum, substitution))
-	e_rewritten += decompose_factorial(1, get_binding(substitution, 0),
-					   get_binding(substitution, 1), n);
-      else if (clear(substitution),
-	       e.op(i).match(fact_of_sum_coeff, substitution))
-	e_rewritten += decompose_factorial(get_binding(substitution, 0),
-					   get_binding(substitution, 1), 1, n);
-      else if (clear(substitution),
-	       e.op(i).match(a_times_fact_of_sum_coeff, substitution))
-	e_rewritten += decompose_factorial(get_binding(substitution, 0),
-					   get_binding(substitution, 1),
-					   get_binding(substitution, 2), n);
-      else
-	e_rewritten += e.op(i);
-  }
-  else if (e.is_a_mul()) {
-    e_rewritten = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
-      if (clear(substitution), e.op(i).match(fact_of_sum, substitution))
-	e_rewritten *= decompose_factorial(1, get_binding(substitution, 0), 1,
-					   n);
-      else if (clear(substitution),
-	       e.op(i).match(fact_of_sum_coeff, substitution))
-	e_rewritten *= decompose_factorial(get_binding(substitution, 0),
-					   get_binding(substitution, 1), 1, n);
-      else
-	e_rewritten *= e.op(i);
-  }
-  else {
-    e_rewritten = 0;
-    if (clear(substitution), e.match(fact_of_sum, substitution))
-      e_rewritten += decompose_factorial(1, get_binding(substitution, 0), 1,
-					 n);
-    else if (clear(substitution), e.match(fact_of_sum_coeff, substitution))
-      e_rewritten += decompose_factorial(get_binding(substitution, 0),
-					 get_binding(substitution, 1), 1, n);
-    else
-      e_rewritten += e;
-  }
-  return e_rewritten;
-}
-
-/*!
-  Applies the following rewrite rule
-  \f[
-    a^{b n + c} = a^{b n} \cdot a^c
-  \f]
-  without expanding.
-*/
-static Expr
-simpl_exponentials(const Expr& e, const Symbol& n) {
+rewrite_factorials_and_exponentials(const Expr& e, const Symbol& n) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten += simpl_exponentials(e.op(i), n);
+      e_rewritten += rewrite_factorials_and_exponentials(e.op(i), n);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
-      if (e.op(i).match(pwr(wild(0), n + wild(1)))
-	  || e.op(i).match(pwr(wild(0), wild(2) * n + wild(1))))
-	e_rewritten *= e.op(i).expand();
-      else
-	e_rewritten *= e.op(i);
+      e_rewritten *= rewrite_factorials_and_exponentials(e.op(i), n);
   }
+  else if (e.is_a_power()) {
+    e_rewritten = pwr(rewrite_factorials_and_exponentials(e.arg(0), n),
+		      rewrite_factorials_and_exponentials(e.arg(1), n));
+    if (e_rewritten.is_a_power() && e_rewritten.arg(1).is_a_add())
+      e_rewritten = e_rewritten.expand();
+  }
+  else if (e.is_a_function())
+    if (e.is_the_factorial_function())
+      e_rewritten = decompose_factorial(e, n);
+    else
+      if (e.nops() == 1)
+	e_rewritten = apply(e.functor(),
+			    rewrite_factorials_and_exponentials(e.arg(0), n));
+      else {
+	unsigned num_argument = e.nops();
+	std::vector<Expr> argument(num_argument);
+	for (unsigned i = 0; i < num_argument; ++i)
+	  argument[i] = rewrite_factorials_and_exponentials(e.arg(i), n);
+	e_rewritten = apply(e.functor(), argument);
+      }
   else
-    if (e.match(pwr(wild(0), n + wild(1)))
-	|| e.match(pwr(wild(0), wild(2) * n + wild(1))))
-      e_rewritten += e.expand();
-    else
-      e_rewritten += e;
+    e_rewritten = e;
   return e_rewritten;
 }
 
@@ -1120,11 +1111,8 @@ simplify_factorials_and_exponentials(const Expr& e, const Symbol& n) {
   Expr e_numerator;
   Expr e_denominator;
   numerator_denominator_purrs(e, e_numerator, e_denominator);
-  e_numerator = rewrite_factorials(e_numerator, n);
-  e_numerator = simpl_exponentials(e_numerator, n);
-  e_denominator = rewrite_factorials(e_denominator, n);
-  e_denominator = simpl_exponentials(e_denominator, n);
-
+  e_numerator = rewrite_factorials_and_exponentials(e_numerator, n);
+  e_denominator = rewrite_factorials_and_exponentials(e_denominator, n);
   return e_numerator / e_denominator;
 }
 
