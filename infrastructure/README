@@ -24,6 +24,9 @@ CPPFLAGS=-fexceptions my/path/to/gmp-4.0.1/configure --prefix=/usr/local --enabl
 (2)
 Build cln out of the source tree, then ignore the error about
 a missing cln.m4 when you do `make install'.
+Note that if you had already installed cln before (from inside
+the source tree), you should remove by hand the previously
+installed configuration file <prefix>/share/aclocal/cln.m4
 
 (3)
 mkdir filib++
