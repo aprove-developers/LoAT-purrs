@@ -201,6 +201,26 @@ isolate_polynomial_part(const Expr& e, const Symbol& x,
   }
 }
 
+//! \brief
+//! Returns <CODE>true</CODE> if \p e is a rational function in \p x;
+//! returns <CODE>false</CODE> otherwise.
+/*!
+  A quotient of two polynomials \f$ P(x) \f$ and \f$ Q(x) \f$,
+  \f[
+    R(x) = \frac{P(x)}{Q(x)},
+  \f]
+  is called a <EM>rational function</EM>.
+*/
+bool
+is_rational_function(const Expr& e, const Symbol& x) {
+  Expr num;
+  Expr den;
+  e.numerator_denominator(num, den);
+  if (is_polynomial(num, x) && is_polynomial(den, x))
+    return true;
+  return false;
+}
+
 /*!
   A polynomial with integer coefficients is <EM>primitive</EM> if its
   leading coefficient is positive and its coefficients have no common factor.
@@ -262,6 +282,8 @@ convert_to_integer_polynomial(const Expr& p, const Symbol& x,
 */
 Expr
 resultant(const Expr& p, const Expr& q, const Symbol& x) {
+  D_VAR(p);
+  D_VAR(q);
   assert(p.is_rational_polynomial());
   assert(q.is_rational_polynomial());
   Expr f = p.expand();

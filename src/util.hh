@@ -66,6 +66,9 @@ void
 isolate_polynomial_part(const Expr& p, const Symbol& var,
 			Expr& poly, Expr& no_poly);
 
+bool
+is_rational_function(const Expr& e, const Symbol& x);
+
 //! Finds associate primitive polynomial with integer coefficients.
 Expr
 convert_to_integer_polynomial(const Expr& p, const Symbol& x);
