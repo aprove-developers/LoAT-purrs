@@ -1627,10 +1627,11 @@ main(int argc, char *argv[]) try {
 
   if (regress_test) {
     bool failed = false;
+    errors_summary(unexpected_failures_to_verify, "unexpected failures to verify solutions", failed);
     errors_summary(unexpected_failures_to_partially_verify, "unexpected failures to partially verify solutions", failed);
     errors_summary(unexpected_failures_to_disprove,  "unexpected failures to disprove", failed);
     errors_summary(unexpected_conclusive_verifications, "unexpected conclusive verifications", failed);
-    errors_summary(unexpected_solution_or_bounds_for_it, "unexpected solution or bounds for it", failed);
+    errors_summary(unexpected_solution_or_bounds_for_it, "unexpected solutions or bounds for it", failed);
     errors_summary(unexpected_exact_failures, "unexpected failures to find exact solutions", failed);
     errors_summary(unexpected_lower_failures, "unexpected failures to find lower bound for solutions", failed);
     errors_summary(unexpected_upper_failures, "unexpected failures to find upper bound for solutions", failed);
