@@ -206,7 +206,7 @@ PURRS::Recurrence::verify_solution() const {
 	Expr solution_valuated = exact_solution_.expression()
 	  .substitute(n, first_initial_condition() + i);
 	solution_valuated = blackboard.rewrite(solution_valuated);
-	solution_valuated = simplify_numer_denom(solution_valuated);
+	solution_valuated = simplify_all(solution_valuated);
 	D_VAR(solution_valuated);
 	// We have to substitute `first_initial_condition() + i'
 	// in `x(mod(first_initial_condition() + i, gcd))' and, when
