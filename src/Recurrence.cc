@@ -47,17 +47,24 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
 namespace {
 using namespace PURRS;
 
+void
+split(const Expr& e, const Expr& d, Expr& term_with_d, Expr& other_terms) {
+  assert(e.is_a_add());
+  for (unsigned i = e.nops(); i-- > 0; ) {
+    const Expr& term = e.op(i);
+    if (term.has(d))
+      term_with_d += term;
+    else
+      other_terms += term;
+  }
+}
+
 bool
 ok_inequalities(const Expr& e, unsigned condition) {
+  assert(e.is_a_add());
   Expr term_with_n = 0;
   Expr other_terms = 0;
-  for (unsigned i = e.nops(); i-- > 0; ) {
-    const Expr& factor = e.op(i);
-    if (factor.has(Recurrence::n))
-      term_with_n += factor;
-    else
-      other_terms += factor;
-  }
+  split(e, Recurrence::n, term_with_n, other_terms);
   D_VAR(other_terms);
   if (term_with_n == Recurrence::n || term_with_n.is_a_mul()) {
     Expr coeff_n = 1;
@@ -84,6 +91,62 @@ ok_inequalities(const Expr& e, unsigned condition) {
     // 	}
   }
   return false;
+}
+
+bool
+validation_initial_conditions_in_bound(bool upper, const Expr& bound,
+				       unsigned index) {
+  Expr bound_valuated = bound.substitute(Recurrence::n, index);
+  D_VAR(bound_valuated);
+  if (bound_valuated != x(index))
+    if (bound_valuated.is_a_mul()) {
+      Expr coeff_ic = 1;
+      for (unsigned i = bound_valuated.nops(); i-- > 0; ) {
+	const Expr& factor = bound_valuated.op(i);
+	if (factor != x(index))
+	  coeff_ic *= factor;
+      }
+      D_VAR(coeff_ic);
+      Number num;
+      if (upper) {
+	if (coeff_ic.is_a_number(num) && num < 1)
+	  return false;
+      }
+      else
+	if (coeff_ic.is_a_number(num) && num > 1)
+	  return false;
+    }
+    else if (bound_valuated.is_a_add()) {
+      Expr term_with_ic = 0;
+      Expr other_terms = 0;
+      split(bound_valuated, x(index),
+	    term_with_ic, other_terms);
+      Expr coeff_ic = 1;
+      if (term_with_ic.is_a_mul()) {
+	for (unsigned i = term_with_ic.nops(); i-- > 0; ) {
+	  const Expr& factor = term_with_ic.op(i);
+	  if (factor != x(index))
+	    coeff_ic *= factor;
+	}
+      }
+      D_VAR(coeff_ic);
+      D_VAR(other_terms);
+      Number num_coeff;
+      Number num_other;
+      if (coeff_ic.is_a_number(num_coeff)
+	  && other_terms.is_a_number(num_other)) {
+	if (upper) {
+	  if (!(num_coeff >= 1 && num_other.is_positive()))
+	    return false;
+	}
+	else
+	  if (!(num_coeff <= 1 && num_other.is_negative()))
+	    return false;
+      }
+      else
+	return false;
+    }
+  return true;
 }
 
 } // anonymous namespace
@@ -247,8 +310,10 @@ PURRS::Recurrence::verify_bound(bool upper) const {
 	bound = lower_bound_.expression();
       
       // Step 1: validation of initial conditions.
+      if (!validation_initial_conditions_in_bound(upper, bound,
+						  applicability_condition()))
+	return INCONCLUSIVE_VERIFICATION;
       
-
       // Step 2: find `partial_bound'.
       // We not consider the terms containing the initial conditions:
       // `partial_bound' will contain all the other terms.
