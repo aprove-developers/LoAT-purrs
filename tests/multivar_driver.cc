@@ -210,12 +210,12 @@ init_production_recurrence() {
 static void
 process_options(int argc, char* argv[]) {
   int option_index;
-  int c;
   std::map<index_type, Expr> initial_conditions;
 
   while (true) {
     option_index = 0;
-    c = getopt_long(argc, argv, OPTION_LETTERS, long_options, &option_index);
+    int c = getopt_long(argc, argv, OPTION_LETTERS, long_options,
+			&option_index);
     if (c == EOF)
       break;
 
@@ -885,21 +885,19 @@ main(int argc, char *argv[]) try {
 
   process_options(argc, argv);
 
-  if (recs.size() > 1) {
-    cerr << "Systems are not supported yet.\n";
-    my_exit(1);
-  }
+  if (recs.size() > 1)
+    error_message("Systems of recurrences are not yet supported");
 
-  Expr this_rec=recs[0];
+  Expr this_rec = recs[0];
 
-  // FIXME: Check that it is actually an equality.
-  assert (this_rec.is_a_relational());
+  if (!this_rec.is_a_relational())
+    error_message("Invalid equation: must be in the form `lhs == rhs'");
 
-  Expr lhs=this_rec.op(0);
-  Expr rhs=this_rec.op(1);
+  Expr lhs = this_rec.op(0);
+  Expr rhs = this_rec.op(1);
 
   if (!lhs.is_the_x2_function())
-    error_message("Invalid lhs: must be in the form x(index, {arg_list})");
+    error_message("Invalid lhs: must be in the form `x(index, {arg_list})'");
 
   const Expr& index_expr = lhs.arg(0);
   const Expr& param_list = lhs.arg(1);
