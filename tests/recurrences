@@ -37,10 +37,6 @@ x(n) = 3 * x(n-1) + 2^n
 
 % ORDER 2 
 
-% Plain Fibonacci 
-x(n) = x(n-1) + x(n-2)
-% Solution: x(n) = (-1/5*(1/2-1/2*sqrt(5))^n*sqrt(5)+1/5*(1/2+1/2*sqrt(5))^n*sqrt(5))*x(1)+(-1/5*(1/2-1/2*sqrt(5))^(-1)*(1/2-1/2*sqrt(5))^n*sqrt(5)+1/5*(1/2+1/2*sqrt(5))^(-1)*(1/2+1/2*sqrt(5))^n*sqrt(5))*x(0)
-
 % Symbolic, with double root (a != 0)
 x(n) = 2 * a * x(n-1) - a^2 * x(n-2)
 % Solution: x(n) = x(0) * (1 - n) * a^n + x(1) * n * a^n
@@ -124,9 +120,9 @@ x(n) = x(n-2) + (n - 2)^2
 x(n) = 2 * x(n-1) - x(n-2) + 3 * n - 1
 % Solution: x(n) = (-x(0) + x(1)) * n + x(0) + numeric(1, 2) * n^3 + n^2 - numeric(3, 2) * n
 
-% 6. Parametric with parameter m
-x(n) = 7 * x(n-1) + 10 * (2^(n-1) * m)^2
-% Solution: x(n) = 7^n * x(0) + m^2 * numeric (10, 3) * (7^n - 4^n)
+% 6. Parametric with parameter c
+x(n) = 7 * x(n-1) + 10 * (2^(n-1) * c)^2
+% Solution: x(n) = 7^n * x(0) + c^2 * numeric (10, 3) * (7^n - 4^n)
 
 % 7. Parametric with parameters a, b 
 x(n) = (1-a) * x(n-1) + b * (1 - x(n-1))

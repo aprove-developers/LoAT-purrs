@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "globals.hh"
 #include "alg_eq_solver.hh"
 #include "poly_factor.hh"
+#include "simplify.hh"
 #include <cassert>
 #include <iostream>
 
@@ -43,6 +44,9 @@ static const unsigned
 FIND_DIVISORS_THRESHOLD = FIND_DIVISORS_MAX*FIND_DIVISORS_MAX;
 
 static GExpr zero = 0;
+
+// FIXME: always call 'simplify_on_output_ex()' when solving equations of
+// degree two or more.
 
 /*!
   This routine inserts into \p divisors all the positive divisors of
@@ -345,6 +349,8 @@ find_roots(const GExpr& p, const GSymbol& x,
       }
     case 4:
       {
+	// FIXME: call 'is_nested_polynomial(q, x, r)' here?
+	// (ex. 1+x^4+x^2 = 0)
 	assert(is_a<numeric>(q.coeff(x, 1)));
 	assert(is_a<numeric>(q.coeff(x, 2)));
 	assert(is_a<numeric>(q.coeff(x, 3)));
@@ -500,31 +506,39 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   std::cout << "f = " << f << std::endl; 
   std::cout << "g = " << g << std::endl; 
   std::cout << "h = " << h << std::endl;
-#endif 
-  solve_equation_3(f*numeric(1)/2,
-		   (f*f - 4*h)*numeric(1)/16,
-		   -g*g*numeric(1)/64,
-		   y1, y2, y3);
+#endif
+  // If 'g' is zero then the auxiliary equation
+  // y^3 +  f/2*y^2 + (f*f - 4*h)/16*y - g*g/64 = 0
+  // has the root 0, in this case we solve the simpler
+  // auxiliary equation
+  // y^2 +  f/2*y + (f*f - 4*h)/16 = 0.
   GExpr p, q;
-  if (!y1.is_zero() && !y2.is_zero()) {
-    p = sqrt(y1);
-    q = sqrt(y2);
-  }
-  else if (!y1.is_zero() && !y3.is_zero()) {
-    p = sqrt(y1);
-    q = sqrt(y3);
+  if (g.is_zero()) {
+    solve_equation_2(f*numeric(1)/2,
+		     (f*f - 4*h)*numeric(1)/16,
+		     y1, y2);
+    // FIXME: Is it true that both roots are non zero?
   }
   else {
-    p = sqrt(y2);
-    q = sqrt(y3);
-  }
-  // FIXME: simplify p and q if possible 
+    solve_equation_3(f*numeric(1)/2,
+		     (f*f - 4*h)*numeric(1)/16,
+		     -g*g*numeric(1)/64,
+		     y1, y2, y3);
+  } 
+  p = sqrt(y1);
+  q = sqrt(y2);
+#if NOISY
+  std::cout << "p = " << p << std::endl; 
+  std::cout << "q = " << q << std::endl;
+#endif
+  p = simplify_on_output_ex(p);
+  q = simplify_on_output_ex(q);
 #if NOISY
   std::cout << "p = " << p << std::endl; 
   std::cout << "q = " << q << std::endl;
 #endif
   GExpr r = numeric(-g)/(8*p*q);
-  // FIXME: simplify r as well 
+  r = simplify_on_output_ex(r);
   GExpr s = numeric(a1)/4;
 #if NOISY
   std::cout << "r = " << r << std::endl; 
@@ -534,7 +548,20 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   x2 = p - q - r - s;
   x3 = -p + q - r - s;
   x4 = -p - q + r - s;
+#if NOISY
+   std::cout << "Solutions before calling simplify: " << std::endl; 
+   std::cout << "x1 = " << x1 << std::endl; 
+   std::cout << "x2 = " << x2 << std::endl; 
+   std::cout << "x3 = " << x3 << std::endl; 
+   std::cout << "x4 = " << x4 << std::endl;
+   std::cout << std::endl;
+#endif
+   x1 = simplify_on_output_ex(x1);
+   x2 = simplify_on_output_ex(x2);
+   x3 = simplify_on_output_ex(x3);
+   x4 = simplify_on_output_ex(x4);
 }
+
 // The old method used to solve equation of degree 4 was wrong, as you
 // can see by the following examples:
 // 1. Trying to solve 2+x^4-x = 0
