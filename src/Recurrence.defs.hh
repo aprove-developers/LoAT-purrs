@@ -427,6 +427,9 @@ private:
   //! Sets <CODE>type_recurrence = FUNCTIONAL_EQUATION</CODE>.
   void set_functional_equation() const;
 
+
+  // Methods to access to private data of `Finite_Order_Info'.
+
   //! Returns the order of the finite order recurrence.
   unsigned int order() const;
 
@@ -453,6 +456,9 @@ private:
 
   //! Returns the coefficients of the finite order recurrence.
   std::vector<Expr>& coefficients();
+
+
+  // Methods to access to private data of `Functional_Equation_Info'.
 
   //! \brief
   //! Returns the coefficient \f$ a \f$ of the functional equation
@@ -488,38 +494,114 @@ private:
   //! of a functional equation is a non negative, non decreasing function.
   void set_applicability_condition(unsigned c) const;
 
+
   // Method to access to private data of `Order_Reduction_Info'.
 
+  //! \brief
+  //! Stores the value of the <CODE>recurrence_rhs</CODE> before
+  //! to apply the order reduction.
   Expr old_recurrence_rhs() const;
+
+  //! \brief
+  //! Stores the value of the <CODE>recurrence_rhs</CODE> before
+  //! to apply the order reduction.
   Expr& old_recurrence_rhs();
 
+  //! \brief
+  //! Stores the greatest common divisor among the decrements
+  //! <CODE>d</CODE> of the terms <CODE>x(n-d)</CODE> present in the
+  //! right hand side of the recurrence before to apply the order reduction.
   unsigned gcd_decrements_old_rhs() const;
+
+  //! \brief
+  //! Stores the greatest common divisor among the decrements
+  //! <CODE>d</CODE> of the terms <CODE>x(n-d)</CODE> present in the
+  //! right hand side of the recurrence before to apply the order reduction.
   unsigned& gcd_decrements_old_rhs();
+
+  //! \brief
+  //! Sets to \p g the greatest common divisor among the decrements
+  //! <CODE>d</CODE> of the terms <CODE>x(n-d)</CODE> present in the
+  //! right hand side of the recurrence before to apply the order reduction.
   void set_gcd_decrements_old_rhs(unsigned g) const;
 
+  //! \brief
+  //! Stores the auxiliary symbol used in place of the function
+  //! \f$ mod() \f$.
   Symbol symbol_for_mod() const;
+
+  //! \brief
+  //! Stores the auxiliary symbol used in place of the function
+  //! \f$ mod() \f$.
   Symbol& symbol_for_mod();
   
+  //! Stores the solution of the reduced order recurrence.
   Expr solution_order_reduced() const;
+
+  //! Stores the solution of the reduced order recurrence.
   Expr& solution_order_reduced();
+
+  //! Sets to \p e the solution of the reduced order recurrence.
   void set_solution_order_reduced(const Expr& e) const;
 
+  //! \brief
+  //! If \p verified_one_time_ is true means that the system will
+  //! try to verify the non-reduced recurrence; if \p verified_one_time_
+  //! is false then the system will verify only the reduced recurrence.
   bool verified_one_time() const;
+
+  //! \brief
+  //! If \p verified_one_time_ is true means that the system will
+  //! try to verify the non-reduced recurrence; if \p verified_one_time_
+  //! is false then the system will verify only the reduced recurrence.
   void not_verified_one_time() const; 
   
+
   // Method to access to private data of `Non_Linear_Info'.
 
+  //! \brief
+  //! If the rewriting of the non-linear recurrence in a linear
+  //! recurrence has success then this data contains 
+  //! <CODE>recurrence_rhs</CODE> of the non-linear recurrence.
   Expr original_recurrence_rhs() const;
+
+  //! \brief
+  //! If the rewriting of the non-linear recurrence in a linear
+  //! recurrence has success then this data contains 
+  //! <CODE>recurrence_rhs</CODE> of the non-linear recurrence.
   Expr& original_recurrence_rhs();
 
+  //! \brief
+  //! If the rewriting of the non-linear recurrence in a linear
+  //! recurrence has success then this data contains the value that
+  //! will be the logarithm's base or the exponential's base
+  //! used in the rewriting.
   Expr base_exp_log() const;
+
+  //! \brief
+  //! If the rewriting of the non-linear recurrence in a linear
+  //! recurrence has success then this data contains the value that
+  //! will be the logarithm's base or the exponential's base
+  //! used in the rewriting.
   Expr& base_exp_log();
 
+  //! \brief
+  //! Stores the symbols associated to the eventual negative numbers
+  //! that will be the arguments of the logarithms.
+  const std::vector<Symbol>& auxiliary_symbols() const;
+
+  //! \brief
+  //! Stores the symbols associated to the eventual negative numbers
+  //! that will be the arguments of the logarithms.
+  std::vector<Symbol>& auxiliary_symbols();
 
   mutable Cached_Expr exact_solution_;
   mutable Cached_Expr lower_bound_;
   mutable Cached_Expr upper_bound_;
 
+  //! \brief
+  //! If \p tested_exact_solution is true then the system have already
+  //! try to compute the exact solution.
   mutable bool tested_exact_solution;
 
   mutable Blackboard blackboard;

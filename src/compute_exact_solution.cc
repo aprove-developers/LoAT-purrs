@@ -751,7 +751,14 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     Expr solution = pwr(base_exp_log(), exact_solution_.expression());
     solution = substitute_x_function(solution, base_exp_log(), false);
     solution = simplify_ex_for_input(solution, true);
-    exact_solution_.set_expression(simplify_logarithm(solution));
+    solution = simplify_logarithm(solution);
+    // Resubstitute eventual auxiliary symbols with the respective
+    // negative number.
+    for (unsigned i = auxiliary_symbols().size(); i-- > 0; )
+      solution = solution.substitute(auxiliary_symbols()[i],
+				     get_auxiliary_definition
+				     (auxiliary_symbols()[i]));
+    exact_solution_.set_expression(solution);
   }
 
   // Resubstitutes eventually auxiliary definitions contained in

@@ -741,10 +741,21 @@ PURRS::Recurrence::approximate_functional_equation() const {
     ub = pwr(base_exp_log(), ub);
     ub = substitute_x_function(ub, base_exp_log(), false);
     ub = simplify_ex_for_input(ub, true);
+    ub = simplify_logarithm(ub);
 
     lb = pwr(base_exp_log(), lb);
     lb = substitute_x_function(lb, base_exp_log(), false);
     lb = simplify_ex_for_input(lb, true);
+    lb = simplify_logarithm(lb);
+
+    // Resubstitute eventual auxiliary symbols with the respective
+    // negative number.
+    for (unsigned i = auxiliary_symbols().size(); i-- > 0; ) {
+      ub = ub.substitute(auxiliary_symbols()[i],
+			 get_auxiliary_definition(auxiliary_symbols()[i]));
+      lb = lb.substitute(auxiliary_symbols()[i],
+			 get_auxiliary_definition(auxiliary_symbols()[i]));
+    }
   }
 
   upper_bound_.set_expression(simplify_logarithm(ub));

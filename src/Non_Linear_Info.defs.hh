@@ -37,7 +37,8 @@ public:
   //! \brief
   //! Constructor: sets \f$ original_recurrence_rhs_ = rhs \f$,
   //! \f$ base_exp_log_ = base_exp_log \f$.
-  Non_Linear_Info(const Expr& rhs, const Expr& base_exp_log);
+  Non_Linear_Info(const Expr& rhs, const Expr& base_exp_log,
+		  const std::vector<Symbol> auxiliary_symbols);
 
   //! Copy-constructor.
   Non_Linear_Info(const Non_Linear_Info& y);
@@ -48,19 +49,41 @@ public:
   //! Assignment operator.
   Non_Linear_Info& operator=(const Non_Linear_Info& y);
 
+  //! Returns <CODE>original_recurrence_rhs_</CODE>.
   Expr original_recurrence_rhs() const;
+
+  //! Returns <CODE>original_recurrence_rhs_</CODE>.
   Expr& original_recurrence_rhs();
 
+  //! Returns <CODE>base_exp_log_</CODE>.
   Expr base_exp_log() const;
+
+  //! Returns <CODE>base_exp_log_</CODE>.
   Expr& base_exp_log();
- 
+
+  //! Returns <CODE>auxiliary_symbols_</CODE>.
+  const std::vector<Symbol>& auxiliary_symbols() const;
+  
+  //! Returns <CODE>auxiliary_symbols_</CODE>.
+  std::vector<Symbol>& auxiliary_symbols();
 private:
-  //!
+  //! \brief
+  //! If the rewriting of the non-linear recurrence in a linear
+  //! recurrence has success then this data contains 
+  //! <CODE>recurrence_rhs</CODE> of the non-linear recurrence.
   Expr original_recurrence_rhs_;
 
-  //!
+  //! \brief
+  //! If the rewriting of the non-linear recurrence in a linear
+  //! recurrence has success then this data contain the value that
+  //! will be the logarithm's base or the exponential's base
+  //! used in the rewriting.
   Expr base_exp_log_;
 
+  //! \brief
+  //! Stores the symbols associated to the eventual negative numbers
+  //! that will be the arguments of the logarithms.
+  std::vector<Symbol> auxiliary_symbols_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

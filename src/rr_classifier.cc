@@ -535,7 +535,9 @@ find_non_linear_recurrence(const Expr& e) {
   -  x(n) = x(n-k)^b, where \f$ b > 1 \f$ and \f$ k \f$ are positive integers.
 */
 bool
-rewrite_non_linear_recurrence(const Expr& rhs, Expr& new_rhs, Expr& base) {
+rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
+			      Expr& new_rhs, Expr& base,
+			      std::vector<Symbol>& auxiliary_symbols) {
   D_MSGVAR("*** ", rhs);
   // First case.
   if (rhs.is_a_mul()) {
@@ -565,8 +567,16 @@ rewrite_non_linear_recurrence(const Expr& rhs, Expr& new_rhs, Expr& base) {
 	base = Nepero;
 	Expr tmp = substitute_x_function(rhs, Nepero, true);
 	tmp = simplify_ex_for_input(tmp, true);
-	for (unsigned i = tmp.nops(); i-- > 0; )
-	  new_rhs += log(tmp.op(i));
+	for (unsigned i = tmp.nops(); i-- > 0; ) {
+	  Number num;
+	  if (tmp.op(i).is_a_number(num) && num.is_negative()) {
+	    Symbol s = rec.insert_auxiliary_definition(num);
+	    auxiliary_symbols.push_back(s);
+	    new_rhs += log(s);
+	  }
+	  else
+	    new_rhs += log(tmp.op(i));
+	}
 	new_rhs = simplify_logarithm(new_rhs);
 	D_VAR(new_rhs);
 	return true;
@@ -577,8 +587,16 @@ rewrite_non_linear_recurrence(const Expr& rhs, Expr& new_rhs, Expr& base) {
 	base = common_exponent;
 	Expr tmp = substitute_x_function(rhs, common_exponent, true);
 	tmp = simplify_ex_for_input(tmp, true);
-	for (unsigned i = tmp.nops(); i-- > 0; )
-	  new_rhs += log(tmp.op(i)) / log(common_exponent);
+	for (unsigned i = tmp.nops(); i-- > 0; ) {
+	  Number num;
+	  if (tmp.op(i).is_a_number(num) && num.is_negative()) {
+	    Symbol s = rec.insert_auxiliary_definition(num);
+	    auxiliary_symbols.push_back(s);
+	    new_rhs += log(s) / log(common_exponent);
+	  }
+	  else
+	    new_rhs += log(tmp.op(i)) / log(common_exponent);
+	}
 	new_rhs = simplify_logarithm(new_rhs);
 	D_VAR(new_rhs);
 	return true;
@@ -595,7 +613,14 @@ rewrite_non_linear_recurrence(const Expr& rhs, Expr& new_rhs, Expr& base) {
       base = num_exp;
       Expr tmp = substitute_x_function(rhs, num_exp, true);
       tmp = simplify_ex_for_input(tmp, true);
-      new_rhs += log(tmp) / log(num_exp);
+      Number num;
+      if (tmp.is_a_number(num) && num.is_negative()) {
+	Symbol s = rec.insert_auxiliary_definition(num);
+	auxiliary_symbols.push_back(s);
+	new_rhs += log(s) / log(num_exp);
+      }
+      else
+	new_rhs += log(tmp) / log(num_exp);
       new_rhs = simplify_logarithm(new_rhs);
       D_VAR(new_rhs);
       return true;
@@ -917,10 +942,13 @@ PURRS::Recurrence::classify() const {
   if (is_non_linear_finite_order()) {
     Expr new_rhs;
     Expr base;
-    if (rewrite_non_linear_recurrence(rhs, new_rhs, base)) {
+    std::vector<Symbol> auxiliary_symbols;
+    if (rewrite_non_linear_recurrence(*this, rhs, new_rhs, base,
+				      auxiliary_symbols)) {
       set_unknown();
       recurrence_rhs_rewritten = true;
-      non_linear_p = new Non_Linear_Info(recurrence_rhs, base);
+      non_linear_p = new Non_Linear_Info(recurrence_rhs, base,
+					 auxiliary_symbols);
       recurrence_rhs = new_rhs;
       status = classify();
     }

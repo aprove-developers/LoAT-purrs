@@ -431,6 +431,17 @@ Recurrence::base_exp_log() {
   return non_linear_p -> base_exp_log();
 }
 
+inline const std::vector<Symbol>&
+Recurrence::auxiliary_symbols() const {
+  assert(non_linear_p);
+  return non_linear_p -> auxiliary_symbols();
+}
+
+inline std::vector<Symbol>&
+Recurrence::auxiliary_symbols() {
+  assert(non_linear_p);
+  return non_linear_p -> auxiliary_symbols();
+}
 
 inline void
 Recurrence::exact_solution(Expr& e) const {
