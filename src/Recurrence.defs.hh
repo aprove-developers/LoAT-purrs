@@ -141,6 +141,18 @@ private:
   Expr get_initial_condition(unsigned k) const;
 
 public:
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+  //! Kinds of bounds for the solution that is possible to compute.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+  enum Kind_of_Bound {
+    /*! The upper bound for the solution. */
+    UPPER_BOUND,
+
+    /*! The lower bound for the solution. */
+    LOWER_BOUND,
+  };
+
+
   //! The possible states of the recurrence.
   enum Solver_Status {
     /*!
@@ -221,7 +233,6 @@ public:
     */
     INCONCLUSIVE_VERIFICATION
   };
-
 
   //! \brief
   //! Tries to solve \p *this exactly and returns <CODE>SUCCESS</CODE>
@@ -327,8 +338,7 @@ private:
   //! solution or the bound computed for the recurrence \p *this.
   //! This function substitutes eventual initial conditions specified
   //! by the user shifting the solution or the bound if necessary.
-  Expr substitute_i_c_shifting(bool exact,
-			       const Expr& solution_or_bound) const;
+  Expr substitute_i_c_shifting(const Expr& solution_or_bound) const;
 
   //! Classifies the recurrence \p *this sliding it recursively.
   Solver_Status classify() const;
@@ -376,7 +386,6 @@ private:
 				    const std::vector<Polynomial_Root>&
 				    roots) const;
 
-  //! \brief
   //! Computes the lower bound for the functional equation. 
   Solver_Status approximate_functional_equation_lower() const;
 
@@ -792,7 +801,8 @@ private:
   static Expr
   write_expanded_solution(const Recurrence& rec,
 			  unsigned gcd_among_decrements);
-  static Verify_Status verify_bound(const Recurrence& rec, bool upper);
+  static
+  Verify_Status verify_bound(const Recurrence& rec, Kind_of_Bound kind);
   static Verify_Status verify_exact_solution(const Recurrence& rec);
 
   //! \brief

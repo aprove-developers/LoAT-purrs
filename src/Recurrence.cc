@@ -97,8 +97,8 @@ ok_inequalities(const Expr& e, unsigned condition) {
 }
 
 bool
-validation_initial_conditions_in_bound(bool upper, const Expr& bound,
-				       unsigned index) {
+validation_initial_conditions_in_bound(Recurrence::Kind_of_Bound kind,
+				       const Expr& bound, unsigned index) {
   Expr bound_valuated = bound.substitute(Recurrence::n, index);
   D_VAR(bound_valuated);
   if (bound_valuated != x(index))
@@ -111,7 +111,7 @@ validation_initial_conditions_in_bound(bool upper, const Expr& bound,
       }
       D_VAR(coeff_ic);
       Number num;
-      if (upper) {
+      if (kind == Recurrence::UPPER_BOUND) {
 	if (coeff_ic.is_a_number(num) && num < 1)
 	  return false;
       }
@@ -138,7 +138,7 @@ validation_initial_conditions_in_bound(bool upper, const Expr& bound,
       Number num_other;
       if (coeff_ic.is_a_number(num_coeff)
 	  && other_terms.is_a_number(num_other)) {
-	if (upper) {
+	if (kind == Recurrence::UPPER_BOUND) {
 	  if (!(num_coeff >= 1 && num_other.is_positive()))
 	    return false;
 	}
@@ -627,16 +627,18 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
   is correct.
 */
 PURRS::Recurrence::Verify_Status
-PURRS::Recurrence::verify_bound(const Recurrence& rec, bool upper) {
+PURRS::Recurrence::verify_bound(const Recurrence& rec,
+				Kind_of_Bound kind) {
   assert(rec.is_functional_equation());
+  assert(kind == UPPER_BOUND || kind == LOWER_BOUND);
   Expr bound;
-  if (upper)
+  if (kind == UPPER_BOUND)
     bound = simplify_sum(rec.upper_bound_.expression(), true);
   else
     bound = simplify_sum(rec.lower_bound_.expression(), true);
   
   // Step 1: validation of initial conditions.
-  if (!validation_initial_conditions_in_bound(upper, bound,
+  if (!validation_initial_conditions_in_bound(kind, bound,
 					      rec.applicability_condition()))
     return INCONCLUSIVE_VERIFICATION;
   
@@ -659,11 +661,13 @@ PURRS::Recurrence::verify_bound(const Recurrence& rec, bool upper) {
   
   // Step 3: verification of the inductive base.
   Number num;
-  if (upper && partial_bound
+  if (kind == UPPER_BOUND
+      && partial_bound
       .substitute(n, rec.applicability_condition()).is_a_number(num)
       && num.is_negative())
     return INCONCLUSIVE_VERIFICATION;
-  if (!upper && partial_bound
+  if (kind == LOWER_BOUND
+      && partial_bound
       .substitute(n, rec.applicability_condition()).is_a_number(num)
       && num.is_positive())
     return INCONCLUSIVE_VERIFICATION;
@@ -680,7 +684,7 @@ PURRS::Recurrence::verify_bound(const Recurrence& rec, bool upper) {
   D_VAR(approx);
   
   Expr diff;
-  if (upper)
+  if (kind == UPPER_BOUND)
     diff = partial_bound - approx;
   else
     diff = approx - partial_bound;
@@ -1105,10 +1109,6 @@ compute_infinite_order_recurrence(Expr& solution) const {
 //! This function substitutes eventual initial conditions specified
 //! by the user shifting the solution or the bound if necessary.
 /*!
-  \param linear             <CODE>true</CODE> if the system has solved
-                            a linear recurrence of finite order;
-                            <CODE>false</CODE> if the system has solved
-			    a functional equation.
   \param solution_or_bound  Contains the solution or the bound computed
                             for the recurrence \p *this in function of
 			    arbitrary initial conditions.
@@ -1128,16 +1128,16 @@ compute_infinite_order_recurrence(Expr& solution) const {
 */
 Expr
 PURRS::Recurrence::
-substitute_i_c_shifting(bool linear, const Expr& solution_or_bound) const {
+substitute_i_c_shifting(const Expr& solution_or_bound) const {
   assert(!initial_conditions.empty());
   Expr sol_or_bound = solution_or_bound;
   unsigned first_well_defined_rhs;
   unsigned order_or_rank;
-  if (linear) {
+  if (is_linear_finite_order()) {
     first_well_defined_rhs = first_well_defined_rhs_linear();
     order_or_rank = order();
   }
-  else {
+  else if (is_functional_equation()) {
     first_well_defined_rhs = applicability_condition();
     order_or_rank = rank();
   }
@@ -1254,7 +1254,7 @@ PURRS::Recurrence::compute_exact_solution() const {
       // generic `x(i)'.
       if (!initial_conditions.empty())
 	exact_solution_.set_expression
-	  (substitute_i_c_shifting(true, exact_solution_.expression()));
+	  (substitute_i_c_shifting(exact_solution_.expression()));
       lower_bound_.set_expression(exact_solution_.expression());
       upper_bound_.set_expression(exact_solution_.expression());
       return SUCCESS;
@@ -1266,7 +1266,7 @@ PURRS::Recurrence::compute_exact_solution() const {
 	  && lower_bound_.expression() == upper_bound_.expression()) {
 	if (!initial_conditions.empty())
 	  lower_bound_.set_expression
-	    (substitute_i_c_shifting(false, lower_bound_.expression()));
+	    (substitute_i_c_shifting(lower_bound_.expression()));
 	upper_bound_.set_expression(lower_bound_.expression());
 	exact_solution_.set_expression(lower_bound_.expression());
 	return SUCCESS;
@@ -1342,7 +1342,7 @@ PURRS::Recurrence::compute_lower_bound() const {
 	return status;
       if (!initial_conditions.empty())
 	lower_bound_.set_expression
-	  (substitute_i_c_shifting(false, lower_bound_.expression()));
+	  (substitute_i_c_shifting(lower_bound_.expression()));
       return SUCCESS;
     }
     // Non linear finite order.
@@ -1393,7 +1393,7 @@ PURRS::Recurrence::compute_upper_bound() const {
 	return status;
       if (!initial_conditions.empty())
 	upper_bound_.set_expression
-	  (substitute_i_c_shifting(false, upper_bound_.expression()));
+	  (substitute_i_c_shifting(upper_bound_.expression()));
       return SUCCESS;
     }
     // Non linear finite order.

@@ -570,7 +570,7 @@ Recurrence::verify_lower_bound() const {
     return verify_exact_solution();
   else if (lower_bound_.has_expression())
     if (is_functional_equation())
-      return verify_bound(*this, false);
+      return verify_bound(*this, LOWER_BOUND);
     else
       // At the moment this case is impossible!
       return INCONCLUSIVE_VERIFICATION;
@@ -585,7 +585,7 @@ Recurrence::verify_upper_bound() const {
     return verify_exact_solution();
   else if (upper_bound_.has_expression())
     if (is_functional_equation())
-      return verify_bound(*this, true);
+      return verify_bound(*this, UPPER_BOUND);
     else
       // At the moment this case is impossible!
       return INCONCLUSIVE_VERIFICATION;
