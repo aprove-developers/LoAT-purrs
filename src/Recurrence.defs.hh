@@ -264,9 +264,9 @@ public:
 
   Expr approximated_solution() const;
 
-  // @@@
   //! \brief
-  //! Verifies the exact solution of \p *this.
+  //! Verifies the exact solution of \p *this; note that the system
+  //! supposes the exact solution already has been computed.
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
   //! that the recurrence \p *this has been successfully solved.
   //! Returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
@@ -275,6 +275,13 @@ public:
   //! not able to prove if the solution of the recurrence \p *this
   //! is correct or not.
   /*!
+    Since the system supposes the exact solution already has been
+    computed, the user must call this method after to have checked
+    the system has successfully computed the exact solution:
+    this is possibile invoking the method
+    <CODE>compute_exact_solution</CODE> and verifying it has returned
+    <CODE>SUCCESS</CODE>.
+
     \exception std::logic_error thrown if this method is called
                                 when no exact solution was computed.
   */
@@ -282,7 +289,8 @@ public:
  
   // @@@
   //! \brief
-  //! Verifies the lower bound for \p *this.
+  //! Verifies the lower bound for \p *this; note that the system
+  //! supposes the lower bound already has been computed.
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
   //! that the recurrence \p *this has been successfully approximated
   //! from below.
@@ -300,7 +308,8 @@ public:
 
   // @@@
   //! \brief
-  //! Verifies the upper bound for \p *this.
+  //! Verifies the upper bound for \p *this; note that the system
+  //! supposes the upper bound already has been computed.
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
   //! that the recurrence \p *this has been successfully approximated
   //! from above.
