@@ -69,6 +69,7 @@ get_binding(const GList& substitution, unsigned wild_index) {
 */
 static bool
 find_polynomial_part(const GExpr& p, const GSymbol& var, bool poly) {
+  assert(poly);
   // 'is_a<add>' is necessary even if the 'add' are considerated in
   // function 'assign_poly_part_and_no_poly_part' because could be,
   // for example, (sqrt(6)+2)^a
@@ -88,10 +89,10 @@ find_polynomial_part(const GExpr& p, const GSymbol& var, bool poly) {
     // If the exponent contains 'var', then 'p' is not a polynomial in 'var'.
     if (p.op(1).has(var))
       poly = false;
-  // The exponent is a GiNaC::numeric.
-  // The only case in which the power is not a polynomial in 'var' is
-  // when the exponent is not a positive integer and the base contains
-  // 'var'.
+    // The exponent is a GiNaC::numeric.
+    // The only case in which the power is not a polynomial in 'var' is
+    // when the exponent is not a positive integer and the base contains
+    // 'var'.
     if (is_a<numeric>(p.op(1))) {
       GNumber exp = GiNaC::ex_to<GiNaC::numeric>(p.op(1));
       if (!exp.is_pos_integer() && p.op(0).has(var))
