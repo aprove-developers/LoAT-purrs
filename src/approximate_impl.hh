@@ -70,6 +70,13 @@ template <typename SymbolHandler>
 bool
 generic_approximate(const Expr& e, const SymbolHandler& sh,
 		    Expr& ae, CInterval& aci) {
+#if 0
+  static unsigned indent = 0;
+  for (unsigned int i = 0; i < indent; ++i)
+    std::cout << ' ';
+  std::cout << "approx " << e << std::endl;
+  ++indent;
+#endif
   static Expr operand_ae;
   static CInterval operand_aci;
   bool interval_result = true;
@@ -138,6 +145,8 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
 	  else if (exponent_aci.re().sup() < 0.0)
 	    aci = CInterval(Interval::ONE(), Interval::ZERO())
 	      / pow(base_aci, -exponent_aci);
+	  else
+	    aci = pow(base_aci, exponent_aci);
 	}
 	else
 	  aci = pow(base_aci, exponent_aci);
@@ -211,6 +220,16 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
   }
   else
     abort();
+
+#if 0
+  --indent;
+  for (unsigned int i = 0; i < indent; ++i)
+    std::cout << ' ';
+  if (interval_result)
+    std::cout << "gives " << aci << std::endl;
+  else
+    std::cout << "gives " << ae << std::endl;
+#endif
 
   return interval_result;
 }
