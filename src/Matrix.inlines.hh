@@ -87,7 +87,7 @@ Matrix::operator()(unsigned r, unsigned c) {
 
 inline Matrix
 Matrix::solve(const Matrix& vars, const Matrix& rhs) const {
-  return m.solve(vars.m, rhs.m);
+  return m.solve(vars.m, rhs.m, GiNaC::solve_algo::gauss);
 }
 
 } // namespace Parma_Recurrence_Relation_Solver
