@@ -627,7 +627,7 @@ PURRS::Recurrence::compute_exact_solution() const {
   Solver_Status status;
   if ((status = classify_and_catch_special_cases()) == SUCCESS) {
     assert(is_linear_finite_order() || is_functional_equation()
-	   || is_non_linear_finite_order());
+	   || is_non_linear_finite_order() || is_linear_infinite_order());
 
     // Linear finite order.
     if (is_linear_finite_order()) {
@@ -670,13 +670,34 @@ PURRS::Recurrence::compute_exact_solution() const {
       else
 	return TOO_COMPLEX;
     // Non linear finite order.
-    else {
+    else if (is_non_linear_finite_order()){
       Expr solution;
       if ((status = compute_non_linear_recurrence(solution, 0))
 	  == SUCCESS) {
 	exact_solution_.set_expression(solution);
 	lower_bound_.set_expression(solution);
 	upper_bound_.set_expression(solution);
+	return SUCCESS;
+      }
+      else
+	return status;
+    }
+    // Linear infinite order.
+    else {
+      D_MSG("compute_linear_infinite_order_recurrence");
+      std::vector<Expr> coefficients(2);
+      coefficients[1] = coeff_var_first_order();
+      Recurrence rec_rewritten(rhs_transformed_in_first_order_var_coeffs());
+      rec_rewritten.finite_order_p = new Finite_Order_Info(1, coefficients, 1);
+      rec_rewritten.set_type(LINEAR_FINITE_ORDER_VAR_COEFF);
+      rec_rewritten.set_inhomogeneous_term(inhomog_var_first_order());
+      if ((status = rec_rewritten.solve_linear_finite_order())
+	  == SUCCESS) {
+	D_VAR(rec_rewritten.exact_solution_.expression());
+	exact_solution_.set_expression(rec_rewritten
+				       .exact_solution_.expression());
+	lower_bound_.set_expression(exact_solution_.expression());
+	upper_bound_.set_expression(exact_solution_.expression());
 	return SUCCESS;
       }
       else
@@ -704,10 +725,10 @@ PURRS::Recurrence::compute_lower_bound() const {
   Solver_Status status;
   if ((status = classify_and_catch_special_cases()) == SUCCESS) {
     assert(is_linear_finite_order() || is_functional_equation()
-	   || is_non_linear_finite_order());
+	   || is_non_linear_finite_order() || is_linear_infinite_order());
 
-    if (is_linear_finite_order())
-      if (!tested_exact_solution)
+    if (is_linear_finite_order() || is_linear_infinite_order())
+      if (!tested_exact_solution) {
 	// There is an exact solution.
 	if ((status = compute_exact_solution()) == SUCCESS) {
 	  lower_bound_.set_expression(exact_solution_.expression());
@@ -715,6 +736,7 @@ PURRS::Recurrence::compute_lower_bound() const {
 	}
 	else
 	  return status;
+      }
       else
 	return TOO_COMPLEX;
     // Functional equation.
@@ -762,8 +784,9 @@ PURRS::Recurrence::compute_upper_bound() const {
   Solver_Status status;
   if ((status = classify_and_catch_special_cases()) == SUCCESS) {
     assert(is_linear_finite_order() || is_functional_equation()
-	   || is_non_linear_finite_order());
-    if (is_linear_finite_order())
+	   || is_non_linear_finite_order() || is_linear_infinite_order());
+
+    if (is_linear_finite_order() || is_linear_infinite_order())
       if (!tested_exact_solution)
 	// There is an exact solution.
 	if ((status = compute_exact_solution()) == SUCCESS) {
