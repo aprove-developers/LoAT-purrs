@@ -144,7 +144,7 @@ return_sum(const bool distinct, const GSymbol& n, const GNumber& order,
   // `sum_poly_times_exponentials' calculates the sum from 0 while
   // we want to start from `order'.
   symbolic_sum -= q_k.subs(k, 0);
-  for (int j = 1; j < order; ++j)
+  for (GNumber j = 1; j < order; ++j)
     symbolic_sum -= q_k.subs(k, j) * power(alpha, j) * power(lambda, -j);
   if (distinct)
     symbolic_sum = symbolic_sum.subs(x, alpha/lambda);
@@ -1053,11 +1053,11 @@ find_g_n(const GSymbol& n, const bool all_distinct, const GMatrix sol,
     order += roots[i].multiplicity();
   GExpr g_n = 0;
   if (all_distinct)
-    for (int i = 0; i < order; ++i)
+    for (unsigned i = 0; i < order; ++i)
       g_n += sol(i, 0) * power(roots[i].value(), n);
   else
     for (unsigned i = roots.size(); i-- > 0; ) {
-      int h = 0;
+      unsigned h = 0;
       for (GNumber j = roots[i].multiplicity(); j-- > 0 && h < order; ) {
 	g_n += sol(h, 0) * power(n, j) * power(roots[i].value(), n);
 	++h;
