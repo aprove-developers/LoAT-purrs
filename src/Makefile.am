@@ -51,6 +51,7 @@ sum_poly.hh \
 util.hh
 
 libpurrs_a_SOURCES = \
+Recurrence.cc \
 Expr.cc \
 Symbol.cc \
 Expr_List.cc \

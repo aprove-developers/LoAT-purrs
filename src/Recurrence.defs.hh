@@ -26,7 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Recurrence_defs_hh 1
 
 #include "Recurrence.types.hh"
-#include "Expr.defs.hh"
+#include "globals.hh"
 
 #include <map>
 
@@ -38,7 +38,7 @@ namespace Parma_Recurrence_Relation_Solver {
   and that the term \f$ (x_k)_n \f$ is represented by the expression
   <CODE>x(k, n)</CODE>.
 */
-class Parma_Recurrence_Relation_Solver::Recurrence {
+class Recurrence {
 public:
   //! Default constructor: it builds the recurrence \f$ x_n = 0 \f$.
   Recurrence();
@@ -53,9 +53,9 @@ public:
   Recurrence& operator=(const Recurrence& y);
 
   //! Replace the main equation
-  void replace_recurrence(const Expr& e);
+  void replace_recurrence(const GExpr& e);
 
-  void replace_recurrence(unsigned k, const Expr& e);
+  void replace_recurrence(unsigned k, const GExpr& e);
 
 private:
   //! Holds the right-hand side of the global recurrence to be solved.
@@ -63,33 +63,35 @@ private:
   //! result of transforming a system into a single recurrence.
   //! The global recurrence is thus of the form
   //! <CODE>x(n) = recurrence_rhs</CODE>.
-  Expr recurrence_rhs;
+  GExpr recurrence_rhs;
 
   //! Holds the right-hand sides of a system of  recurrence equations.
   //! If <CODE>i == system_rhs.find(k)</CODE> then
   //! <CODE>x(k,n) = (*i).second()</CODE>
   //! is one of the equations of the system.
-  std::map<unsigned, Expr> system_rhs;
+  std::map<unsigned, GExpr> system_rhs;
 
 
 #if 0
-    Expr poly_char;
-    Expr symb_solution;
+    GExpr poly_char;
+    GExpr symb_solution;
 
 public:
-  insert_auxilliary_equation(const GSymbol& x, const Expr& e);
-  insert_exact_solution(const Expr& e);
-  insert_side_condition(int n, const Expr& e);
+  insert_auxilliary_equation(const GSymbol& x, const GExpr& e);
+  insert_exact_solution(const GExpr& e);
+  insert_side_condition(int n, const GExpr& e);
   // Restituisce le condizioni iniziali non assegnate.
   std::set<unsigned int> undefined_side_conditions();
-  complex_interval approximate(const std::vector<Expr> side_conditions,
+  complex_interval approximate(const std::vector<GExpr> side_conditions,
 			       int n);
-//    Expr big_o(...);
-//    Expr big_omega(...);
+//    GExpr big_o(...);
+//    GExpr big_omega(...);
 #endif
 };
 
 } // namespace Parma_Recurrence_Relation_Solver
 
-// !defined(PURRS_Recurrence_defs_hh)
-#endif
+#include "Recurrence.inlines.hh"
+
+#endif // !defined(PURRS_Recurrence_defs_hh)
+

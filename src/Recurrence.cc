@@ -27,25 +27,3 @@ site: http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
-PURRS::Recurrence::Recurrence()
-  : recurrence_rhs(0) {
-}
-
-//! Copy-constructor.
-PURRS::Recurrence::Recurrence(const Recurrence& y) {
-}
-
-PURRS::Recurrence::~Recurrence() {
-}
-
-PURRS::Recurrence&
-PURRS::Recurrence::operator=(const Recurrence& y) {
-}
-
-void
-PURRS::Recurrence::replace_recurrence(const Expr& e) {
-}
-
-void
-PURRS::Recurrence::replace_recurrence(unsigned k, const Expr& e) {
-}

@@ -1,4 +1,4 @@
-/* Main object PURRS operates upon: a recurrence: inline functions.
+/* Implementation of the Recurrence class: inline functions.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -25,5 +25,44 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_Recurrence_inlines_hh
 #define PURRS_Recurrence_inlines_hh
 
+namespace Parma_Recurrence_Relation_Solver {
+
+inline
+Recurrence::Recurrence()
+  : recurrence_rhs(0) {
+}
+
+inline
+Recurrence::Recurrence(const Recurrence& y)
+  : recurrence_rhs(y.recurrence_rhs),
+    system_rhs(y.system_rhs) {
+}
+
+inline
+Recurrence::~Recurrence() {
+}
+
+inline Recurrence&
+Recurrence::operator=(const Recurrence& y) {
+  recurrence_rhs = y.recurrence_rhs;
+  system_rhs = y.system_rhs;
+  return *this;
+}
+
+inline void
+Recurrence::replace_recurrence(const GExpr& e) {
+  recurrence_rhs = e;
+}
+
+void
+Recurrence::replace_recurrence(unsigned k, const GExpr& e) {
+  std::pair<std::map<unsigned, GExpr>::iterator, bool> stat
+    = system_rhs.insert(std::map<unsigned, GExpr>::value_type(k, e));
+  if (!stat.second)
+    // There was already something associated to `k': overwrite it.
+    stat.first->second = e;
+}
+
+} // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_Recurrence_inlines_hh)
