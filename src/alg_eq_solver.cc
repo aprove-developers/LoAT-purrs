@@ -59,7 +59,7 @@ find_divisors(GNumber n, std::vector<GNumber>& divisors) {
   assert(n.is_pos_integer());
   assert(n > 0 && n < FIND_DIVISORS_THRESHOLD);
   unsigned m = n.to_int();
-  // Once a divisor `i' is found, it is pushed onto the vector divisors,
+  // Once a divisor `i' is found, it is pushed onto the vector `divisors'
   // along with its conjugate `j = n/i', provided that `j' is less than `i'.
   if (m == 1)
     divisors.push_back(1);
