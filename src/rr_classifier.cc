@@ -941,7 +941,7 @@ PURRS::Recurrence::classify() const {
     //  non-negative integers.
     if (order == 0)
       set_order_zero();
-    finite_order_p = new Finite_Order_Info(order, 0, coefficients,
+    finite_order_p = new Finite_Order_Info(order, coefficients,
 					   gcd_among_decrements);
   }
   assert(is_linear_finite_order() || is_functional_equation());

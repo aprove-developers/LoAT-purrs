@@ -277,7 +277,7 @@ PURRS::Recurrence::verify_solution() const {
 					      new_coefficients,
 					      inhomogeneous));
 	  rec_rewritten.finite_order_p
-	    = new Finite_Order_Info(dim - 1, 0, new_coefficients, 1);
+	    = new Finite_Order_Info(dim - 1, new_coefficients, 1);
 	  rec_rewritten.set_type(type());
 	  rec_rewritten.set_inhomogeneous_term(inhomogeneous);
 	  rec_rewritten.solve_linear_finite_order();
@@ -404,7 +404,7 @@ PURRS::Recurrence::apply_order_reduction() const {
 				      coefficients(), new_coefficients,
 				      inhomogeneous));
   rec_rewritten.finite_order_p
-    = new Finite_Order_Info(dim - 1, 0, new_coefficients, 1);
+    = new Finite_Order_Info(dim - 1, new_coefficients, 1);
   rec_rewritten.set_type(type());
   rec_rewritten.set_inhomogeneous_term(inhomogeneous);
   Solver_Status status;

@@ -37,11 +37,11 @@ class Finite_Order_Info {
 public:
   //! \brief
   //! Constructor: sets \f$ order{\_} = k \f$,
-  //! \f$ first{\_}i{\_}c{\_}for{\_}linear{\_} = i{\_}c \f$,
   //! \f$ coefficients{\_} = coeffs \f$ and
-  //! \f$ gcd{\_}among{\_}decrements{\_} = gcd \f$.
-  Finite_Order_Info(int k, unsigned i_c, const std::vector<Expr>& coeffs,
-		    unsigned gcd);
+  //! \f$ gcd{\_}among{\_}decrements{\_} = gcd \f$,
+  //! \f$ first{\_}i{\_}c{\_}for{\_}linear{\_} = i{\_}c \f$.
+  Finite_Order_Info(int k, const std::vector<Expr>& coeffs,
+		    unsigned gcd, unsigned i_c = 0);
 
   //! Copy-constructor.
   Finite_Order_Info(const Finite_Order_Info& y);
@@ -83,11 +83,6 @@ private:
   //! The order of the recurrence. 
   unsigned int order_;
 
-  //! \brief
-  //! The smallest positive integer for which the recurrence is
-  //! well-defined: the initial conditions will start from it.
-  unsigned first_i_c_for_linear_;
-
   //! Stores the coefficients of the recurrence.
   std::vector<Expr> coefficients_;
 
@@ -97,6 +92,11 @@ private:
   //! hand side of the recurrence. If the order is zero then
   //! \p gcd_among_decrements_ stores \f$ 0 \f$.
   unsigned gcd_among_decrements_;
+
+  //! \brief
+  //! The smallest positive integer for which the recurrence is
+  //! well-defined: the initial conditions will start from it.
+  unsigned first_i_c_for_linear_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver
