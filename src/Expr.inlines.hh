@@ -591,6 +591,11 @@ Expr::is_the_acos_function() const {
   return is_ex_the_function(*this, acos);
 }
 
+inline void
+Expr::latex_print(std::ostream& s) {
+  print(GiNaC::print_latex(s));
+}
+
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_Expr_inlines_hh)

@@ -642,8 +642,10 @@ public:
 
   //! \brief
   //! Returns partial derivative of \p nth order of \p *this with respect
-  //! to the varable \p x.
+  //! to the variable \p x.
   Expr diff(const Symbol& x, unsigned nth = 1);
+
+  void latex_print(std::ostream& s);
 
 private:
   friend class Number;
