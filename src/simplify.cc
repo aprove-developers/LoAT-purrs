@@ -33,7 +33,9 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+#ifndef NOISY
 #define NOISY 0
+#endif
 
 static const unsigned
 FACTOR_THRESHOLD = 100;
