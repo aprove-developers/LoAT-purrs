@@ -75,42 +75,67 @@ get_binding(const GList& substitution, unsigned wild_index) {
 }
 
 /*!
-  Return <CODE>true</CODE> if the <CODE>GiNaC::GExpr</CODE> \p p is a
-  polynomial in a variable 'var', <CODE>false</CODE> otherwise.
+  Return <CODE>true</CODE> if the <CODE>GiNaC::GExpr</CODE> \p p is an
+  object <CODE>scalar_for_poly_in_var</CODE>, <CODE>false</CODE> otherwise.
 */
 static bool
-find_polynomial_part(const GExpr& p, const GSymbol& var, bool poly) {
-  assert(poly);
-  // 'is_a<add>' is necessary even if the 'add' are considerated in
-  // function 'assign_poly_part_and_no_poly_part' because could be,
-  // for example, (sqrt(6)+2)^a
-  if (is_a<mul>(p) || is_a<add>(p))
-    for (unsigned i = p.nops(); i-- > 0; )
-      poly = find_polynomial_part(p.op(i), var, poly);
-  else if (is_a<function>(p)) {
-    // Checks the argument of the function and if it contains 'var' then
-    // the function is not a polynomial..
-    if (p.op(0).has(var))
-      poly = false; 
+is_scalar_for_poly(const GExpr& e, const GSymbol& var) {
+  bool found;
+  if (is_a<numeric>(e))
+    found = true;
+  else if (is_a<constant>(e))
+    found = true;
+  else if (is_a<symbol>(e) && !e.is_equal(var))
+    found = true;
+  else if (is_a<power>(e))
+    found = is_scalar_for_poly(e.op(0), var)
+      && is_scalar_for_poly(e.op(1), var);
+  else if (is_a<function>(e))
+    found = is_scalar_for_poly(e.op(0), var);
+  else if (is_a<add>(e) || is_a<mul>(e)) {
+    found = true;
+    for (unsigned i = e.nops(); i-- > 0; )
+      found = found && is_scalar_for_poly(e.op(i), var);
   }
-  // NOTE: I suppose that there are not nested powers.
-  else if (is_a<power>(p)) {
-    poly = find_polynomial_part(p.op(0), var, poly);
-    poly = find_polynomial_part(p.op(1), var, poly);
-    // If the exponent contains 'var', then 'p' is not a polynomial in 'var'.
-    if (p.op(1).has(var))
-      poly = false;
-    // The exponent is a GiNaC::numeric.
-    // The only case in which the power is not a polynomial in 'var' is
-    // when the exponent is not a positive integer and the base contains
-    // 'var'.
-    if (is_a<numeric>(p.op(1))) {
-      GNumber exp = GiNaC::ex_to<GiNaC::numeric>(p.op(1));
-      if (!exp.is_pos_integer() && p.op(0).has(var))
-	poly = false;
+  else
+    found = false;
+  
+  return found;
+}
+
+
+/*!
+  Return <CODE>true</CODE> if the <CODE>GiNaC::GExpr</CODE> \p p is an
+  object <CODE>polynomial_in_var</CODE>, <CODE>false</CODE> otherwise.
+*/
+static bool
+is_polynomial(const GExpr& e, const GSymbol& var) {
+  bool found;
+  if (is_scalar_for_poly(e, var))
+    found = true;
+  else if (e.is_equal(var))
+    found = true;
+  else if (is_a<power>(e)) {
+    bool exp_ok = false;
+    if (is_a<numeric>(e.op(1))) {
+      GNumber exp = GiNaC::ex_to<GiNaC::numeric>(e.op(1));
+      if (exp.is_pos_integer())
+	exp_ok = true;
     }
+    if (is_polynomial(e.op(0), var) && exp_ok)
+      found = true;
+    else
+      found = false;
   }
-  return poly;
+  else if (is_a<add>(e) || is_a<mul>(e)) {
+    found = true;
+    for (unsigned i = e.nops(); i-- > 0; )
+      found = found && is_polynomial(e.op(i), var);
+  }
+  else
+    found = false;
+
+  return found;
 }
 
 /*!
@@ -125,27 +150,34 @@ find_polynomial_part(const GExpr& p, const GSymbol& var, bool poly) {
   Step 1
   We consider the variable \p var.
   Definition the object <CODE>scalar_for_poly_in_var</CODE> in inductive way:
-  1. every <CODE>GiNaC::numeric</CODE> is a
-     <CODE>scalar_for_poly_in_var</CODE>;
-  2. every <CODE>GiNaC::symbol</CODE> different from \p var is a
-     <CODE>scalar_for_poly_in_var</CODE>;
-  3. give a function <CODE>f</CODE>, <CODE>f(scalar_for_poly_in_var)</CODE>
-     is a <CODE>scalar_for_poly_in_var</CODE>.
-     <CODE>f<CODE> is one of those listed in 5.10 of GiNaC 1.0.8.
+  - every <CODE>GiNaC::numeric</CODE> is a
+    <CODE>scalar_for_poly_in_var</CODE>;
+  - every <CODE>GiNaC::constant</CODE> is a
+    <CODE>scalar_for_poly_in_var</CODE>;
+  - every <CODE>GiNaC::symbol</CODE> different from \p var is a
+    <CODE>scalar_for_poly_in_var</CODE>;
+  - given \f$ e \f$ a <CODE>GiNaC::power</CODE>, if \f$ e.op(0) \f$ and
+    \f$ e.op(1) \f$ are <CODE>scalar_for_poly_in_var</CODE>
+    then \f$ e \f$ is a <CODE>scalar_for_poly_in_var</CODE>;
+  - given \f$ f \f$ a <CODE>GiNaC::function</CODE>,
+    if \f$ f.op(0) \f$ is <CODE>scalar_for_poly_in_var</CODE>
+    then \f$ f \f$ is a <CODE>scalar_for_poly_in_var</CODE>;
+  - given the binary operations sum (\f$ + \f$) and multiplication (\f$ * \f$),
+    if \f$ a \f$ and \f$ b \f$ are <CODE>scalar_for_poly_in_var</CODE> then
+    \f$ a + b \f$ and \f$ a * b \f$ are <CODE>scalar_for_poly_in_var</CODE>.
   Step 2
-  Definition of <CODE>polynomial in var</CODE> in inductive way
-  1. every <CODE>scalar_for_poly_in_var</CODE> is a
-     <CODE>polynomial_in_var</CODE>;
-  2. \p var is a <CODE>polynomial_in_var</CODE>;
-  3. give the binary operations sum (\f$ + \f$) and multiplication (\f$ * \f$),
-     <CODE>scalar_for_poly_in_var + scalar_for_poly_in_var</CODE>
-     is a </CODE>polynomial_in_var</CODE> and
-     <CODE>scalar_for_poly_in_var * scalar_for_poly_in_var</CODE>
-     is a <CODE>polynomial_in_var</CODE>;
-  4. give i of the type <CODE>GiNaC::numeric</CODE> with
-     <CODE>i.info(info_flags::posint) == true</CODE>
-     <CODE>power(polynomial_in_var, i)</CODE> is a
-     <CODE>polynomial_in_var</CODE>.
+  Definition of <CODE>polynomial_in_var</CODE> in inductive way
+  - every <CODE>scalar_for_poly_in_var</CODE> is a
+    <CODE>polynomial_in_var</CODE>;
+  - \p var is a <CODE>polynomial_in_var</CODE>;
+  - given \f$ e \f$ a <CODE>GiNaC::power</CODE>,
+    if \f$ e.op(0) \f$ is <CODE>polynomial_in_var</CODE> and
+    \f$ e.op(1) \f$ is <CODE>GiNaC::numeric</CODE> such that
+    <CODE>e.op(1).GiNaC::is_pos_integer()</CODE>
+    then \f$ e \f$ is a <CODE>valid_base</CODE>;
+  - given the binary operations sum (\f$ + \f$) and multiplication (\f$ * \f$),
+    if \f$ a \f$ and \f$ b \f$ are <CODE>polynomial_in_var</CODE> then
+    \f$ a + b \f$ and \f$ a * b \f$ are <CODE>polynomial_in_var</CODE>.
 */
 void
 assign_poly_part_and_no_poly_part(const GExpr& p, const GSymbol& var,
@@ -154,9 +186,7 @@ assign_poly_part_and_no_poly_part(const GExpr& p, const GSymbol& var,
     p_poly = 0;
     p_no_poly = 0;
     for (unsigned i = p.nops(); i-- > 0; ) {
-      bool poly = true;
-      poly = find_polynomial_part(p.op(i), var, poly);
-      if (poly)
+      if (is_polynomial(p.op(i), var))
 	p_poly += p.op(i);
       else
 	p_no_poly += p.op(i);
@@ -165,9 +195,7 @@ assign_poly_part_and_no_poly_part(const GExpr& p, const GSymbol& var,
   else {
     p_poly = 1;
     p_no_poly = 1;
-    bool poly = true;
-    poly = find_polynomial_part(p, var, poly);
-    if (poly) {
+    if (is_polynomial(p, var)) {
       p_poly *= p;
       p_no_poly = 0;
     }
