@@ -76,14 +76,14 @@ erase_factor(Expr& e) {
     unsigned num_factors = e.nops();
     unsigned i;
     for (i = 0; i < num_factors; ++i)
-      if (e[i] == Recurrence::n)
+      if (e.op(i) == Recurrence::n)
 	break;
     if (i < num_factors) {
       // Found an occurrence of the symbol `n'.
       Expr r = 1;
       for (unsigned j = 0; j < num_factors; ++j)
 	if (i != j)
-	  r *= e[j];
+	  r *= e.op(j);
       e = r;
       return true;
     }
