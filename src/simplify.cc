@@ -255,6 +255,7 @@ simplify_powers_with_bases_mul(const Expr& base, const Expr& num_exponent,
 Expr
 simplify_powers(const Expr& e, bool input) {
   assert(e.is_a_power());
+  assert(e.is_expanded());
   // Accumulate here the numerical part of the exponent.
   Expr num_exponent = 1;
   // Accumulate here the non-numerical part of the exponent.
@@ -775,14 +776,16 @@ manip_factor(const Expr& e, bool input) {
   for (unsigned i = e.nops(); i-- > 0; ) {
     const Expr& factor_e = e.op(i);
     if (factor_e.is_a_power()) {
-      Expr base = simplify_expanded_ex_for_output(factor_e.arg(0), input);
-      Expr exp = simplify_expanded_ex_for_output(factor_e.arg(1), input);
+      const Expr& base
+	= simplify_expanded_ex_for_output(factor_e.arg(0).expand(), input);
+      const Expr& exp
+	= simplify_expanded_ex_for_output(factor_e.arg(1).expand(), input);
       Number num_base;
       Number num_exp;
       if (base.is_a_number(num_base) && exp.is_a_number(num_exp))
 	e_rewritten *= red_prod(num_base, num_exp, 1, 1);
       else {
-	Expr tmp = pwr(base, exp);
+	const Expr& tmp = pwr(base, exp).expand();
 	if (tmp.is_a_power())
 	  e_rewritten *= simplify_powers(tmp, input);
 	else
@@ -805,15 +808,15 @@ manip_factor(const Expr& e, bool input) {
 	if (factor_e_rewritten.nops() == 1)
 	  factor_function
 	    *= apply(factor_e_rewritten.functor(),
-		     simplify_expanded_ex_for_output(factor_e_rewritten.arg(0),
-						     input));
+		     simplify_expanded_ex_for_output(factor_e_rewritten.arg(0)
+						     .expand(), input));
 	else {
 	  unsigned num_argument = factor_e_rewritten.nops();
 	  std::vector<Expr> argument(num_argument);
 	  for (unsigned i = 0; i < num_argument; ++i)
 	    argument[i]
-	      = simplify_expanded_ex_for_output(factor_e_rewritten.arg(i),
-						input);
+	      = simplify_expanded_ex_for_output(factor_e_rewritten.arg(i)
+						.expand(), input);
 	  factor_function *= apply(factor_e_rewritten.functor(), argument);
 	}
       else
@@ -824,14 +827,14 @@ manip_factor(const Expr& e, bool input) {
   else if (e_rewritten.is_a_function()) {
     if (e_rewritten.nops() == 1)
       e_rewritten = apply(e_rewritten.functor(),
-			  simplify_expanded_ex_for_output(e_rewritten.arg(0),
-							  input));
+			  simplify_expanded_ex_for_output(e_rewritten.arg(0)
+							  .expand(), input));
     else {
       unsigned num_argument = e_rewritten.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = simplify_expanded_ex_for_output(e_rewritten.arg(i),
-						      input);
+	argument[i] = simplify_expanded_ex_for_output(e_rewritten.arg(i)
+						      .expand(), input);
       e_rewritten = apply(e_rewritten.functor(), argument);
     }
   }
@@ -904,16 +907,17 @@ manip_factor(const Expr& e, bool input) {
 */
 Expr
 simplify_expanded_ex_for_input(const Expr& e, bool input) {
+  assert(e.is_expanded());
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten += simplify_expanded_ex_for_input(e.op(i), input);
+      e_rewritten += simplify_expanded_ex_for_input(e.op(i).expand(), input);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten *= simplify_expanded_ex_for_input(e.op(i), input);
+      e_rewritten *= simplify_expanded_ex_for_input(e.op(i).expand(), input);
     // In the case of expressions for input we are interesting to collect
     // powers with the same exponents when this is equal to `Recurrence::n'.
     if (e_rewritten.is_a_mul())
@@ -924,12 +928,12 @@ simplify_expanded_ex_for_input(const Expr& e, bool input) {
   else if (e.is_a_function()) {
     if (e.nops() == 1)
       return apply(e.functor(),
-		   simplify_expanded_ex_for_input(e.arg(0), input));
+		   simplify_expanded_ex_for_input(e.arg(0).expand(), input));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = simplify_expanded_ex_for_input(e.arg(i), input);
+	argument[i] = simplify_expanded_ex_for_input(e.arg(i).expand(), input);
       return apply(e.functor(), argument);
     }
   }
@@ -952,11 +956,12 @@ simplify_expanded_ex_for_input(const Expr& e, bool input) {
 */
 Expr
 simplify_expanded_ex_for_output(const Expr& e, bool input) {
+  assert(e.is_expanded());
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten += simplify_expanded_ex_for_output(e.op(i), input);
+      e_rewritten += simplify_expanded_ex_for_output(e.op(i).expand(), input);
   }
   else if (e.is_a_mul())
     // We can not call `simplify_expanded_ex_for_output()' on every factor
@@ -964,15 +969,17 @@ simplify_expanded_ex_for_output(const Expr& e, bool input) {
     return manip_factor(e, input);
   else if (e.is_a_power()) {
     // Is necessary to call `red_prod()' in order to rewrite irrational
-    // numbers, i.e., powers with base and exponent both numerics. 
-    Expr base = simplify_expanded_ex_for_output(e.arg(0), input);
-    Expr exp = simplify_expanded_ex_for_output(e.arg(1), input);
+    // numbers, i.e., powers with base and exponent both numerics.
+    const Expr& base = simplify_expanded_ex_for_output(e.arg(0).expand(),
+						       input);
+    const Expr& exp = simplify_expanded_ex_for_output(e.arg(1).expand(),
+						      input);
     Number num_base;
     Number num_exp;
     if (base.is_a_number(num_base) && exp.is_a_number(num_exp))
       e_rewritten = red_prod(num_base, num_exp, 1, 1);
     else {
-      Expr tmp = pwr(base, exp);
+      const Expr& tmp = pwr(base, exp).expand();
       if (tmp.is_a_power())
 	e_rewritten = simplify_powers(tmp, input);
       else
@@ -987,12 +994,13 @@ simplify_expanded_ex_for_output(const Expr& e, bool input) {
   else if (e.is_a_function()) {
     if (e.nops() == 1)
       return apply(e.functor(),
-		   simplify_expanded_ex_for_output(e.arg(0), input));
+		   simplify_expanded_ex_for_output(e.arg(0).expand(), input));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = simplify_expanded_ex_for_output(e.arg(i), input);
+	argument[i] = simplify_expanded_ex_for_output(e.arg(i).expand(),
+						      input);
       return apply(e.functor(), argument);
     }
   }
