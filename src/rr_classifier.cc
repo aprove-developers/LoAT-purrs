@@ -249,7 +249,6 @@ find_max_decrement_and_coeff(const Expr& e,
 */
 void
 eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs) {
-  D_MSG("*** eliminate negative decrements");
   // Seeks `max_decrement', i.e., the largest positive integer `j' such that
   // `x(n+j)' occurs in `rhs' with a coefficient `coefficient' which is not
   // syntactically 0.
@@ -315,7 +314,6 @@ find_coeff_x_n_and_remainder(const Expr& e,
 */
 unsigned
 eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
-  D_MSG("*** eliminate null decrements");
   // Collect the terms `x(n)' so that the right hand side of the recurrence
   // `rhs' is in the form `rhs = a*x(n) + b' and that `b' does different to
   // zero and does not contain `x(n)'.
@@ -543,7 +541,8 @@ find_non_linear_term(const Expr& e) {
      where \f$ k_1, \dots, k_h, b_1, \dots, b_h \f$ are positive integers
      and \f$ h > 1 \f$ or \f$ b_1 > 1 \f$;
   -  \f$ x(n) = x(n-k)^b \f$,
-     where \f$ b > 1 \f$ and \f$ k \f$ are positive integers.
+     where \f$ b \f$ is a positive rational numbers while \f$ k \f$ is a
+     positive integers.
   The two cases above hold also if instead of terms like `x(n-k)' there are
   term like `x(n/k)'.
 */
@@ -551,7 +550,6 @@ bool
 rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 			      Expr& new_rhs, Expr& base,
 			      std::vector<Symbol>& auxiliary_symbols) {
-  D_MSGVAR("*** ", rhs);
   // First case.
   if (rhs.is_a_mul()) {
     bool simple_cases = false;
@@ -626,19 +624,20 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
     const Expr& exponent_rhs = rhs.arg(1);
     Number num_exp;
     if (base_rhs.is_the_x_function() && exponent_rhs.is_a_number(num_exp)
-	&& num_exp.is_positive_integer()) {
-      // Substitute any `x' function `f' with `exponent_x_function^f'.
+	&& num_exp.is_positive()) {
+      // Substitute any function `x()' with `num_exp^{x()}'.
       base = num_exp;
-      Expr tmp = substitute_x_function(rhs, num_exp, true);
-      tmp = simplify_ex_for_input(tmp, true);
+      const Expr tmp
+	= simplify_ex_for_input(substitute_x_function(rhs, num_exp, true),
+				true);
       Number num;
       if (tmp.is_a_number(num) && num.is_negative()) {
 	Symbol s = rec.insert_auxiliary_definition(num);
 	auxiliary_symbols.push_back(s);
-	new_rhs += log(s) / log(num_exp);
+	new_rhs = log(s) / log(num_exp);
       }
       else
-	new_rhs += log(tmp) / log(num_exp);
+	new_rhs = log(tmp) / log(num_exp);
       new_rhs = simplify_logarithm(new_rhs);
       D_VAR(new_rhs);
       return true;
