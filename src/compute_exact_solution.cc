@@ -63,11 +63,10 @@ void
 PURRS::Recurrence::
 add_term_with_initial_conditions(const Expr& g_n,
 				 const std::vector<Number>& coefficients) const {
-  // `coefficients.size()' has `order + 1' elements because in the first
-  // position there is the value 0.
   Expr solution = exact_solution_.expression();
-  for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
-    Expr g_n_i = g_n.substitute(n, n - i);
+  for (unsigned i = 0; i < order(); ++i) {
+    const Expr& g_n_i
+      = g_n.substitute(n, n - i - first_well_defined_rhs_linear());
     Expr tmp = x(first_well_defined_rhs_linear() + i);
     for (unsigned j = i; j > 0; j--)
       tmp -= coefficients[j] * x(first_well_defined_rhs_linear() + i - j);
@@ -327,8 +326,9 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
     }
     else {
       Symbol h;
-      unsigned lower = first_well_defined_rhs_linear() > 1
-	? first_well_defined_rhs_linear() + 1 : 2;
+      // In this function we know the order: 2.
+      // unsigned lower = first_well_defined_rhs_linear() + order();
+      unsigned lower = first_well_defined_rhs_linear() + 2;
       solution = 1 / diff_roots
 	* (pwr(root_1, Recurrence::n+1)
 	   * PURRS::sum(h, lower, Recurrence::n, pwr(root_1, -h)
@@ -353,8 +353,9 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
 					      exp_poly_coeff);
     else {
       Symbol h;
-      unsigned lower = first_well_defined_rhs_linear() > 1
-	? first_well_defined_rhs_linear() + 1 : 2;
+      // In this function we know the order: 2.
+      // unsigned lower = first_well_defined_rhs_linear() + order();
+      unsigned lower = first_well_defined_rhs_linear() + 2;
       solution
 	= PURRS::sum(h, lower, Recurrence::n,
 		     g_n.substitute(Recurrence::n, Recurrence::n - h)
@@ -466,8 +467,7 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
     }
     else {
       Symbol h;
-      unsigned lower = first_well_defined_rhs_linear() > order() - 1
-	? first_well_defined_rhs_linear() + 1 : order();
+      unsigned lower = first_well_defined_rhs_linear() + order();
       solution
 	= PURRS::sum(h, lower, Recurrence::n,
 		     g_n.substitute(Recurrence::n, Recurrence::n - h)
@@ -480,8 +480,7 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
 					      exp_poly_coeff);
     else {
       Symbol h;
-      unsigned lower = first_well_defined_rhs_linear() > order() - 1
-	? first_well_defined_rhs_linear() + 1 : order();
+      unsigned lower = first_well_defined_rhs_linear() + order();
       solution
 	= PURRS::sum(h, lower, Recurrence::n,
 		     g_n.substitute(Recurrence::n, Recurrence::n - h)
@@ -515,15 +514,12 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   // `inhomogeneous_term' and store it in `z' if it is bigger than `0'.
   Number z = 0;
   if (!inhomogeneous_term.is_zero()) {
-    if (has_parameters(denominator(inhomogeneous_term))) {
-      D_MSG("Linear finite order with parameters in the denominator of "
-	    "the inhomogeneous term.");
+    if (has_parameters(denominator(inhomogeneous_term)))
       return TOO_COMPLEX;
-    }
-    // The system not finds an integer that cancel `inhomogeneous_term' or
-    // starting from which `inhomogeneous_term' is well-defined
-    // (polynomials are always well-defined).
     if (!largest_positive_int_zero(denominator(inhomogeneous_term), n, z))
+      // The system not finds an integer that cancel `inhomogeneous_term' or
+      // starting from which `inhomogeneous_term' is well-defined
+      // (polynomials are always well-defined).
       return TOO_COMPLEX;
   }
   // The initial conditions will start from `z'.
@@ -593,26 +589,17 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   }
 
   if (is_linear_finite_order_const_coeff())
-    if (order() == 1 ) {
+    if (order() == 1 )
       // FIXME: per ora non si puo' usare la funzione
       // `add_term_with_initial_conditions' perche' richiede un vettore di
       // `Number' come `coefficients' e voglio risolvere anche le
       // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
       // add_term_with_initial_conditions(g_n, coefficients, solution);
-      Expr solution = exact_solution_.expression();
-      // The substitution of the initial condition will be later:
-      // -  in the case of order recuction on the expanded solution 
-      //    (and not on the reduced solution);
-      // -  in the case of non linear recurrence on solution after
-      //    the change of the variable.
-      if (applied_order_reduction || come_from_non_linear_rec)
-	solution
-	  += x(first_well_defined_rhs_linear()) * pwr(coefficients()[1], n);
-      else
-	solution
-	  += x(first_well_defined_rhs_linear()) * pwr(coefficients()[1], n);
-      exact_solution_.set_expression(solution);
-    }
+      exact_solution_.set_expression(exact_solution_.expression()
+				     + x(first_well_defined_rhs_linear())
+				     * pwr(coefficients()[1],
+					   n-(first_well_defined_rhs_linear()
+					      -order()+1)));
     else
       add_term_with_initial_conditions(g_n, num_coefficients);
 

@@ -559,9 +559,7 @@ compute_sum_with_transcendental_method(const Number& lower, const Expr& upper,
 	// The summand is not hypergeometric:
 	// no chance of using Gosper's algorithm.
 	Symbol h;
-	Number lower_sum = lower - 1 > 0 ? lower : 1;
-	gosper_solution += PURRS::sum(h, lower_sum,
-				      Recurrence::n,
+	gosper_solution += PURRS::sum(h, lower, Recurrence::n,
 				      pwr(roots[0].value(), -h)
 				      * exp_no_poly_coeff[i]
 				      .substitute(Recurrence::n, h)
