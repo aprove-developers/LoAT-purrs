@@ -238,7 +238,31 @@ public:
 
   Expr approximated_solution() const;
 
-  Verify_Status verify(const char c) const;
+  //! \brief
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the solution is certainly right.
+  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> if the solution
+  //! can be wrong or we failed to simplify it.
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system can neither
+  //! be proved nor be disproved the correctness of the solution.
+  Verify_Status verify_exact_solution();
+ 
+  //! \brief
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the lower bound is certainly
+  //! right.
+  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> if the lower bound
+  //! can be wrong or we failed to simplify it.
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system can neither
+  //! be proved nor be disproved the correctness of the lower bound.
+  Verify_Status verify_lower_bound();
+
+  //! \brief
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the upper bound is certainly
+  //! right.
+  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> if the upper bound
+  //! can be wrong or we failed to simplify it.
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system can neither
+  //! be proved nor be disproved the correctness of the upper bound.
+  Verify_Status verify_upper_bound();
 
   //! \brief
   //! Returns <CODE>false</CODE> if there are not undefined initial conditions;
@@ -586,21 +610,8 @@ private:
   static Expr
   write_expanded_solution(const Recurrence& rec,
 			  unsigned gcd_among_decrements);
-  //! \brief
-  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the solution is certainly right.
-  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> if the solution
-  //! can be wrong or we failed to simplify it.
-  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system can neither
-  //! be proved nor be disproved the correctness of the solution.
-  static Verify_Status verify_solution(const Recurrence& rec);
-
-    //! \brief
-  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the bound is certainly right.
-  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> if the bound
-  //! can be wrong or we failed to simplify it.
-  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system can neither
-  //! be proved nor be disproved the correctness of the bound.
   static Verify_Status verify_bound(const Recurrence& rec, bool upper);
+  static Verify_Status verify_exact_solution(const Recurrence& rec);
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

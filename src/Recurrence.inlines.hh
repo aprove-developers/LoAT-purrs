@@ -421,6 +421,52 @@ Recurrence::upper_bound(Expr& e) const {
   e = upper_bound_.expression();
 }
 
+inline Recurrence::Verify_Status
+Recurrence::verify_exact_solution() {
+  if (exact_solution_.has_expression()) {
+    if (is_linear_finite_order() || is_non_linear_finite_order())
+      return verify_exact_solution(*this);
+    else {
+      assert(is_functional_equation());
+      // Special case: functional equation of the form `x(n) = x(n/b)'. 
+      return PROVABLY_CORRECT;
+    }
+  }
+  else
+    throw std::logic_error("PURRS::Recurrence::verify_exact_solution() "
+			   "called, but no exact solution were computed");
+}
+
+inline Recurrence::Verify_Status
+Recurrence::verify_lower_bound() {
+  if (exact_solution_.has_expression())
+    return verify_exact_solution();
+  else if (lower_bound_.has_expression())
+    if (is_functional_equation())
+      return verify_bound(*this, false);
+    else
+      // At the moment this case is impossible!
+      return INCONCLUSIVE_VERIFICATION;
+  else
+    throw std::logic_error("PURRS::Recurrence::verify_lower_bound() "
+			   "called, but no lower bound were computed");
+}
+
+inline Recurrence::Verify_Status
+Recurrence::verify_upper_bound() {
+  if (exact_solution_.has_expression())
+    return verify_exact_solution();
+  else if (upper_bound_.has_expression())
+    if (is_functional_equation())
+      return verify_bound(*this, true);
+    else
+      // At the moment this case is impossible!
+      return INCONCLUSIVE_VERIFICATION;
+  else
+    throw std::logic_error("PURRS::Recurrence::verify_upper_bound() "
+			   "called, but no upper bound were computed");
+}
+
 inline Expr
 Recurrence::approximated_solution() const {
   if (exact_solution_.has_expression())

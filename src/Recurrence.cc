@@ -186,9 +186,8 @@ PURRS::Recurrence::n = Symbol("n");
   case, to return <CODE>PROVABLY_INCORRECT</CODE>.
 */
 PURRS::Recurrence::Verify_Status
-PURRS::Recurrence::verify_solution(const Recurrence& rec) {
-  assert((rec.is_linear_finite_order() || rec.is_non_linear_finite_order())
-	 && rec.exact_solution_.has_expression());
+PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
+  assert (rec.is_linear_finite_order() || rec.is_non_linear_finite_order());
   unsigned int order_rec;
   unsigned int first_i_c;
   if (rec.is_non_linear_finite_order()) {
@@ -201,8 +200,8 @@ PURRS::Recurrence::verify_solution(const Recurrence& rec) {
   }
   
   D_VAR(rec.recurrence_rhs);
-  D_VAR(rec.order_rec);
-  D_VAR(rec.first_i_c);
+  D_VAR(order_rec);
+  D_VAR(first_i_c);
   
   if (order_rec == 0)
     return PROVABLY_CORRECT;
@@ -260,9 +259,9 @@ PURRS::Recurrence::verify_solution(const Recurrence& rec) {
     if (!diff.is_zero())
       if (rec.applied_order_reduction) {
 	rec.applied_order_reduction = false;
-	// If we have applied the order reduction and we do not have success
-	// in the verification of the original recurrence, then we please
-	// ourselves if is verified the reduced recurrence.
+	// If we have applied the order reduction and we do not have
+	// success in the verification of the original recurrence, then
+	// we please ourselves if is verified the reduced recurrence.
 	Symbol r
 	  = rec.insert_auxiliary_definition(mod(n,
 						rec.gcd_among_decrements()));
@@ -281,8 +280,8 @@ PURRS::Recurrence::verify_solution(const Recurrence& rec) {
 	rec_rewritten.set_type(rec.type());
 	rec_rewritten.set_inhomogeneous_term(inhomogeneous);
 	rec_rewritten.solve_linear_finite_order();
-	D_VAR(rec.exact_solution_.expression());
-	return verify_solution(rec_rewritten);
+	D_VAR(exact_solution_.expression());
+	return verify_exact_solution(rec_rewritten);
       }
       else
 	return INCONCLUSIVE_VERIFICATION;
@@ -379,58 +378,6 @@ PURRS::Recurrence::verify_bound(const Recurrence& rec, bool upper) {
     if (ok_inequalities(diff, rec.applicability_condition()))
       return PROVABLY_CORRECT;
   return INCONCLUSIVE_VERIFICATION;
-}
-
-PURRS::Recurrence::Verify_Status
-PURRS::Recurrence::verify(const char c) const {
-  switch (c) {
-  case 'e':
-    if (exact_solution_.has_expression()) {
-      if (is_linear_finite_order() || is_non_linear_finite_order())
-	return verify_solution(*this);
-      if (is_functional_equation())
-	// Special case: functional equation of the form `x(n) = x(n/b)'. 
-	return PROVABLY_CORRECT;
-    }
-    else
-      throw std::logic_error("PURRS::Recurrence::verify(e) called, "
-			     "but no exact solution were computed");
-  case 'u':
-    if (exact_solution_.has_expression()) {
-      if (is_linear_finite_order() || is_non_linear_finite_order())
-	return verify_solution(*this);
-      if (is_functional_equation())
-	// Special case: functional equation of the form `x(n) = x(n/b)'. 
-	return PROVABLY_CORRECT;
-    }
-    else if (upper_bound_.has_expression()) {
-      assert(is_functional_equation());
-      return verify_bound(*this, true);
-    }
-    else
-      throw std::logic_error("PURRS::Recurrence::verify(u) called, "
-			     "but no upper limit were computed");
-  case 'l':
-    if (exact_solution_.has_expression()) {
-      if (is_linear_finite_order() || is_non_linear_finite_order())
-	return verify_solution(*this);
-      if (is_functional_equation())
-	// Special case: functional equation of the form `x(n) = x(n/b)'. 
-	return PROVABLY_CORRECT;
-    }
-    else if (lower_bound_.has_expression()) {
-      assert(is_functional_equation());
-      return verify_bound(*this, false);
-    }
-    else
-      throw std::logic_error("PURRS::Recurrence::verify(l) called, "
-			     "but no lower limit were computed");
-  default:
-    throw std::logic_error("PURRS::Recurrence::verify() called, "
-			   "you must specify what solution or limit "
-			   "you want to verify putting like argument "
-			   "'e', 'l' or 'u'.");
-  }
 }
 
 PURRS::Recurrence::Solver_Status
