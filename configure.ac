@@ -322,6 +322,9 @@ dnl Checks for header files.
 dnl Checks for typedefs, structures, and compiler characteristics.
 # Nothing for the time being.
 
+dnl Checks whether the readline library should be used.
+AC_CHECK_USE_READLINE
+
 dnl Checks for library functions.
 AC_HEADER_TIME
 AC_CHECK_HEADERS(unistd.h sys/resource.h sys/time.h)
@@ -354,4 +357,13 @@ then
   AC_MSG_WARN([*** If you are using g++, make sure you use version 3.0.1])
   AC_MSG_WARN([*** or later and use a version of GMP compiled with])
   AC_MSG_WARN([*** the option -fexceptions.])
+fi
+  AC_DEFINE(NDEBUG, 1, [Assertions are disabled when this is defined])
+
+if test x"${ac_cv_header_readline_readline_h}" = xno -o x"${ac_cv_header_readline_history_h}" = xno -o x"${ac_cv_lib_readline_readline}" = xno
+then
+  AC_MSG_WARN([+++ CANNOT FIND THE READLINE LIBRARY:])
+  AC_MSG_WARN([+++ USING SOME TEST PROGRAMS WILL BE UNEASY.])
+else
+  AC_DEFINE(USE_READLINE, 1, [The readline library is used if this is defined])
 fi
