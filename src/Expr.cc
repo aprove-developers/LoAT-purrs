@@ -122,7 +122,6 @@ sum_eval(const ex& index, const ex& lower, const ex& upper,
   if (!num_lower.is_integer())
     throw std::invalid_argument("The lower limit of a sum must be an integer");
   ex s = 0;
-
   // `upper' is a number.
   if (is_a<numeric>(upper)) {
     numeric num_upper = ex_to<numeric>(upper);
@@ -154,8 +153,9 @@ sum_eval(const ex& index, const ex& lower, const ex& upper,
 }
 
 ex
-sum_evalf(const ex&, const ex&, const ex&, const ex&) {
-  abort();
+sum_evalf(const ex& index, const ex& lower, const ex& upper,
+	  const ex& summand) {
+  return sum(index, lower, upper, summand).hold();
 }
 
 ex
@@ -309,8 +309,9 @@ prod_eval(const ex& index, const ex& lower, const ex& upper,
 }
 
 ex
-prod_evalf(const ex&, const ex&, const ex&, const ex&) {
-  abort();
+prod_evalf(const ex& index, const ex& lower, const ex& upper,
+	   const ex& factor) {
+  return prod(index, lower, upper, factor).hold();
 }
 
 ex
