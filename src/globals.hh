@@ -1,4 +1,7 @@
 
+#ifndef _globals_hh
+#define _globals_hh 1
+
 #include <ginac/ginac.h>
 #include <cln/complex.h>
 
@@ -15,3 +18,4 @@ namespace GiNaC {
   DECLARE_FUNCTION_1P(x);
 }
 
+#endif

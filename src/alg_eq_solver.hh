@@ -1,3 +1,55 @@
+/* Declaration of the main function of the algebraic equation solver.
+   Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
+
+This file is part of the Parma University's Recurrence Relation
+Solver (PURRS).
+
+The PURRS is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2 of the License, or (at your
+option) any later version.
+
+The PURRS is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+USA.
+
+For the most up-to-date information see the PURRS site:
+http://www.cs.unipr.it/purrs/ . */
+
+#ifndef _alg_eq_solver_hh
+#define _alg_eq_solver_hh 1
+
+#include <vector>
+#include "globals.hh"
+
+class Polynomial_Root {
+private:
+  GExpr value_;
+  GNumber multiplicity_;
+
+public:
+  Polynomial_Root(const GExpr& e, GNumber m = 1)
+    : value_(e), multiplicity_(m) {
+  }
+  const GExpr& value() const {
+    return value_;
+  }
+  GExpr& value() {
+    return value_;
+  }
+  GNumber multiplicity() const {
+    return multiplicity_;
+  }
+  void set_multiplicity(GNumber m) {
+    multiplicity_ = m;
+  }
+};
 
 //! Let \p p be a polynomial with integer coefficients in \p x and
 //! \p roots be a (possibly non-empty) vector.
@@ -19,4 +71,6 @@
 //! \p all_distinct is set to <CODE>false</CODE> otherwise.
 bool
 find_roots(const GExpr& p, const GSymbol& x,
-	   vector<GExpr>& roots, bool& all_distinct);
+	   std::vector<Polynomial_Root>& roots, bool& all_distinct);
+
+#endif

@@ -29,9 +29,10 @@ BUGS = bug1
 
 bug1_SOURCES = bug1.cc
 
-check_PROGRAMS = eqs_driver $(TESTS) $(BUGS)
+check_PROGRAMS = eqs_driver rrs_driver $(TESTS) $(BUGS)
 
 eqs_driver_SOURCES = eqs_driver.cc
+rrs_driver_SOURCES = rrs_driver.cc
 
 
 check-local: eqs_driver polynomials

@@ -1,10 +1,30 @@
+/* Definition of the main recurrence relation solver.
+   Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
-void
-clear(GList& l) {
-  for (unsigned n = l.nops(); n-- > 0; )
-    l.remove_first();
-  assert(l.nops() == 0);
-}
+This file is part of the Parma University's Recurrence Relation
+Solver (PURRS).
+
+The PURRS is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2 of the License, or (at your
+option) any later version.
+
+The PURRS is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+USA.
+
+For the most up-to-date information see the PURRS site:
+http://www.cs.unipr.it/purrs/ . */
+
+#include "globals.hh"
+#include "util.hh"
+#include "alg_eq_solver.hh"
 
 static GExpr
 get_binding(const GList& l, unsigned wild_index) {
@@ -30,8 +50,6 @@ get_linear_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
 
 bool
 solve(const GExpr& rhs, const GSymbol& n) {
-  cout << "Trying to solve x(n) = " << rhs << endl;
-
   static GExpr x_i = x(GiNaC::wild(0));
   static GExpr x_i_plus_r = x_i + GiNaC::wild(1);
   static GExpr a_times_x_i = GiNaC::wild(1)*x_i;
@@ -106,60 +124,25 @@ solve(const GExpr& rhs, const GSymbol& n) {
 
   if (failed)
     return false;
-  else {
-    cout << "Degree = " << degree << endl;
-    cout << "Coefficients = ";
-    for (int i = 1; i <= degree; ++i)
-      cout << coefficients[i] << " ";
-    cout << endl;
-    cout << "Inhomogeneous term = " << e << endl;
-    switch (degree) {
-    case 1:
-      cout << "1 root: " << coefficients[1] << endl;
-      break;
-    case 2:
-      {
-	GExpr x1;
-	GExpr x2;
-	bool d = solve_equation_2(-coefficients[1], -coefficients[2], x1, x2);
-	cout << "2 " << (d ? "distinct" : "non-distinct") << " roots:" << endl
-	     << x1 << endl << x2 << endl;
-      }
-      break;
-    case 3:
-      {
-	bool all_real;
-	GExpr x1;
-	GExpr x2;
-	GExpr x3;
-	bool d = solve_equation_3(-coefficients[1], -coefficients[2],
-				  -coefficients[3],
-				  x1, x2, x3, all_real);
-	cout << "3 " << (d ? "distinct" : "non-distinct") << " roots:" << endl
-	     << x1 << endl << x2 << endl << x3 << endl
-	     << x1.evalf() << endl
-	     << x2.evalf() << endl
-	     << x3.evalf() << endl
-	     << x1.expand() << endl << x2 << endl << x3 << endl;
-      }
-      break;
-    case 4:
-      {
-	GExpr x1;
-	GExpr x2;
-	GExpr x3;
-	GExpr x4;
-	bool d = solve_equation_4(-coefficients[1], -coefficients[2],
-				  -coefficients[3], -coefficients[4],
-				  x1, x2, x3, x4);
-	cout << "4 " << (d ? "distinct" : "non-distinct") << " roots:" << endl
-	     << x1 << endl << x2 << endl << x3 << endl << x4 << endl;
-      }
-      break;
-    default:
-      abort();
-      break;
-    }
-    return true;
-  }
+
+  cout << "Degree = " << degree << endl;
+  cout << "Coefficients = ";
+  for (int i = 1; i <= degree; ++i)
+    cout << coefficients[i] << " ";
+  cout << endl;
+  cout << "Inhomogeneous term = " << e << endl;
+
+  // Build the expression here.
+  static GSymbol x("x");
+  GExpr p = 0;
+  for (int i = 1; i <= degree; ++i)
+    p += coefficients[i]*pow(x, i);
+  
+  std::vector<Polynomial_Root> roots;
+  bool all_distinct;
+  if (!find_roots(p, x, roots, all_distinct))
+    return false;
+
+  cout << degree << " " << roots.size() << " " << all_distinct << endl;
+  return true;
 }

@@ -1,6 +1,29 @@
+/* Definition of the main function of the algebraic equation solver.
+   Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
+This file is part of the Parma University's Recurrence Relation
+Solver (PURRS).
+
+The PURRS is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+Free Software Foundation; either version 2 of the License, or (at your
+option) any later version.
+
+The PURRS is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
+USA.
+
+For the most up-to-date information see the PURRS site:
+http://www.cs.unipr.it/purrs/ . */
 
 #include "globals.hh"
+#include "alg_eq_solver.hh"
 #include <cassert>
 
 using namespace GiNaC;
@@ -13,6 +36,8 @@ static const unsigned FIND_DIVISORS_MAX = 11;
 static const unsigned
 FIND_DIVISORS_THRESHOLD = FIND_DIVISORS_MAX*FIND_DIVISORS_MAX;
 
+static GExpr zero = 0;
+
 /*!
   This routine inserts into \p divisors all the positive divisors of
   the strictly positive integer \p n which is also less than
@@ -23,9 +48,8 @@ find_divisors(GNumber n, vector<GNumber>& divisors) {
   assert(n.is_pos_integer());
   assert(n > 0 && n < FIND_DIVISORS_THRESHOLD);
   unsigned m = n.to_int();
-  // No particular ingenuity is used here: once a divisor `i' is
-  // found, it is pushed onto the vector divisors, along with its
-  // conjugate `j = n/i', provided that `j' is less than `i'.
+  // Once a divisor `i' is found, it is pushed onto the vector divisors,
+  // along with its conjugate `j = n/i', provided that `j' is less than `i'.
   if (m == 1)
     divisors.push_back(1);
   else
@@ -41,10 +65,12 @@ find_divisors(GNumber n, vector<GNumber>& divisors) {
 }
 
 static bool
-find_roots(const GExpr& p, const GSymbol& x, vector<GExpr>& roots);
+find_roots(const GExpr& p, const GSymbol& x,
+	   vector<Polynomial_Root>& roots, GNumber multiplicity = 1);
 
 static bool
-find_power_roots(const GExpr& p, const GSymbol& x, vector<GExpr>& roots);
+find_power_roots(const GExpr& p, const GSymbol& x,
+		 vector<Polynomial_Root>& roots);
 
 static void
 solve_equation_2(const GExpr& b, const GExpr& c,
@@ -81,7 +107,8 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
 */
 bool
 find_roots(const GExpr& p, const GSymbol& x,
-	   vector<GExpr>& roots, bool& all_distinct) {
+	   vector<Polynomial_Root>& roots,
+	   bool& all_distinct) {
   assert(p.info(info_flags::integer_polynomial));
   assert(!p.info(info_flags::numeric));
   // Compute a square-free decomposition for p.
@@ -121,36 +148,34 @@ find_roots(const GExpr& p, const GSymbol& x,
     assert(is_a<symbol>(q));
     // 0 is the only solution of x = 0.
     all_distinct = true;
-    roots.push_back(0);
+    roots.push_back(zero);
     return true;
   }
 }
 
 static bool
-find_power_roots(const GExpr& p, const GSymbol& x, vector<GExpr>& roots) {
+find_power_roots(const GExpr& p, const GSymbol& x,
+		 vector<Polynomial_Root>& roots) {
   assert(is_a<power>(p));
   GExpr base = p.op(0);
   assert(is_a<numeric>(p.op(1)));
   GNumber exponent = ex_to<numeric>(p.op(1));
   assert(exponent.is_pos_integer() && exponent >= 2);
-  size_t h = roots.size();
-  if (!find_roots(base, x, roots))
+  if (!find_roots(base, x, roots, exponent))
     // No way: we were unable to solve the base.
     return false;
-  size_t k = roots.size();
-  for (GNumber i = 1; i < exponent; ++i)
-    for (size_t j = h; j < k; ++j)
-      roots.push_back(roots[j]);
   return true;
 }
 
 static bool
-find_roots(const GExpr& p, const GSymbol& x, vector<GExpr>& roots) {
+find_roots(const GExpr& p, const GSymbol& x,
+	   vector<Polynomial_Root>& roots,
+	   GNumber multiplicity) {
   int ldegree = p.ldegree(x);
   assert(ldegree <= 1);
   GExpr q;
   if (ldegree == 1) {
-    roots.push_back(0);
+    roots.push_back(Polynomial_Root(zero, multiplicity));
     q = quo(p, x, x);
   }
   else
@@ -162,7 +187,7 @@ find_roots(const GExpr& p, const GSymbol& x, vector<GExpr>& roots) {
   GNumber tc = ex_to<numeric>(q.tcoeff(x));
   int degree = q.degree(x);
   if (degree == 1) {
-    roots.push_back(-tc/lc);
+    roots.push_back(Polynomial_Root(-tc/lc, multiplicity));
     return true;
   }
 
@@ -181,14 +206,14 @@ find_roots(const GExpr& p, const GSymbol& x, vector<GExpr>& roots) {
 	if (q.subs(x == r) == 0) {
 	  q = quo(q, x-r, x);
 	  --degree;
-	  roots.push_back(r);
+	  roots.push_back(Polynomial_Root(r, multiplicity));
 	  coefficients_changed = true;
 	}
 	r = -r;
 	if (q.subs(x == r) == 0) {
 	  q = quo(q, x-r, x);
 	  --degree;
-	  roots.push_back(r);
+	  roots.push_back(Polynomial_Root(r, multiplicity));
 	  coefficients_changed = true;
 	}
       }
@@ -217,7 +242,9 @@ find_roots(const GExpr& p, const GSymbol& x, vector<GExpr>& roots) {
 	assert(is_a<numeric>(q.coeff(x, 1)));
 	GNumber b = ex_to<numeric>(q.coeff(x, 1)) / lc;
 	GNumber c = tc / lc;
-	solve_equation_2(b, c, roots[position], roots[position+1]);
+	solve_equation_2(b, c,
+			 roots[position].value(),
+			 roots[position+1].value());
 	return true;
       }
     case 3:
@@ -228,9 +255,9 @@ find_roots(const GExpr& p, const GSymbol& x, vector<GExpr>& roots) {
 	GNumber a2 = ex_to<numeric>(q.coeff(x, 1)) / lc;
 	GNumber a3 = tc / lc;
 	solve_equation_3(a1, a2, a3,
-			 roots[position],
-			 roots[position+1],
-			 roots[position+2]);
+			 roots[position].value(),
+			 roots[position+1].value(),
+			 roots[position+2].value());
 	return true;
       }
     case 4:
@@ -243,10 +270,10 @@ find_roots(const GExpr& p, const GSymbol& x, vector<GExpr>& roots) {
 	GNumber a3 = ex_to<numeric>(q.coeff(x, 1)) / lc;
 	GNumber a4 = tc / lc;
 	solve_equation_4(a1, a2, a3, a4,
-			 roots[position],
-			 roots[position+1],
-			 roots[position+2],
-			 roots[position+3]);
+			 roots[position].value(),
+			 roots[position+1].value(),
+			 roots[position+2].value(),
+			 roots[position+3].value());
 	return true;
       }
     default:
