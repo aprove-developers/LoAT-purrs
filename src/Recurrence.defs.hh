@@ -142,6 +142,10 @@ public:
 private:
   Solver_Status solve_easy_cases() const;
   Solver_Status solve_try_hard() const;
+  Solver_Status classification_summand(const Expr& r, Expr& e,
+				       std::vector<Expr>& coefficients,
+				       int& order, int& gcd_among_decrements,
+				       int num_term) const;
 
   //! Holds the right-hand side of the global recurrence to be solved.
   //! This may have been set directly by the constructor or it may be the
@@ -183,7 +187,7 @@ private:
     FUNCTIONAL_EQUATION
   };
 
-  Type type;
+  mutable Type type;
 
   Finite_Order_Info* tdip;
 
@@ -193,7 +197,7 @@ private:
   bool is_linear_finite_order_const_coeff() const;
 
   //! Sets <CODE>type_recurrence = LINEAR_FINITE_ORDER_CONST_COEFF</CODE>.
-  void set_linear_finite_order_const_coeff();
+  void set_linear_finite_order_const_coeff() const;
 
   //! Returns <CODE>true</CODE> if the recurrence is linear
   //! of finite order with variable coefficient;
@@ -201,25 +205,25 @@ private:
   bool is_linear_finite_order_var_coeff() const;
 
   //! Sets <CODE>type_recurrence = LINEAR_FINITE_ORDER_VAR_COEFF</CODE>.
-  void set_linear_finite_order_var_coeff();
+  void set_linear_finite_order_var_coeff() const;
 
   //! Returns <CODE>true</CODE> if the recurrence is non linear
   //! of finite order; returns <CODE>false</CODE> otherwise.
   bool is_non_linear_finite_order() const;
 
   //! Sets <CODE>type_recurrence = NON_LINEAR_FINITE_ORDER</CODE>.
-  void set_non_linear_finite_order();
+  void set_non_linear_finite_order() const;
 
   //! Returns the order of the finite order recurrence.
-  int get_order();
+  int get_order() const;
 
   //! Returns the positive integers \f$ d \f$ of the \f$ x(n - d) \f$
   //! contained in the right hand side of the finite order recurrence.  
-  std::vector<unsigned> get_decrements();
+  std::vector<unsigned> get_decrements() const;
 
   //! Returns the initial conditions associated to the finite order
   //! recurrence.
-  std::vector<unsigned> get_initial_conditions();
+  std::vector<unsigned> get_initial_conditions() const;
 
   mutable bool solved;
 
@@ -235,12 +239,6 @@ private:
   static Solver_Status
   compute_order(const Number& decrement, int& order, unsigned long& index,
 		unsigned long max_size);
-  static Solver_Status
-  classification_summand(const Expr& r, Expr& e,
-			 std::vector<Expr>& coefficients,
-			 bool& has_non_constant_coefficients,
-			 int& order, int& gcd_among_decrements,
-			 int num_term);
   static Solver_Status
   solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
 			       const std::vector<Polynomial_Root>& roots,

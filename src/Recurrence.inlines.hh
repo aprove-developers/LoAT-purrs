@@ -33,6 +33,7 @@ namespace Parma_Recurrence_Relation_Solver {
 inline
 Recurrence::Recurrence()
   : recurrence_rhs(0),
+    type(LINEAR_FINITE_ORDER_CONST_COEFF),
     tdip(0),
     solved(false) {
 }
@@ -40,6 +41,7 @@ Recurrence::Recurrence()
 inline
 Recurrence::Recurrence(const Expr& e)
   : recurrence_rhs(e),
+    type(LINEAR_FINITE_ORDER_CONST_COEFF),
     tdip(0),
     solved(false) {
 }
@@ -48,6 +50,7 @@ inline
 Recurrence::Recurrence(const Recurrence& y)
   : recurrence_rhs(y.recurrence_rhs),
     system_rhs(y.system_rhs),
+    type(y.type),
     tdip(y.tdip),    
     solved(y.solved),
     solution(y.solution) {
@@ -62,6 +65,7 @@ inline Recurrence&
 Recurrence::operator=(const Recurrence& y) {
   recurrence_rhs = y.recurrence_rhs;
   system_rhs = y.system_rhs;
+  type = y.type,
   tdip = y.tdip;
   solved = y.solved;
   solution = y.solution;
@@ -88,7 +92,7 @@ Recurrence::is_linear_finite_order_const_coeff() const {
 }
 
 inline void
-Recurrence::set_linear_finite_order_const_coeff() {
+Recurrence::set_linear_finite_order_const_coeff() const {
   type = LINEAR_FINITE_ORDER_CONST_COEFF;
 }
 
@@ -98,7 +102,7 @@ Recurrence::is_linear_finite_order_var_coeff() const {
 }
 
 inline void
-Recurrence::set_linear_finite_order_var_coeff() {
+Recurrence::set_linear_finite_order_var_coeff() const {
   type = LINEAR_FINITE_ORDER_VAR_COEFF;
 }
 
@@ -108,12 +112,12 @@ Recurrence::is_non_linear_finite_order() const {
 }
 
 inline void
-Recurrence::set_non_linear_finite_order() {
+Recurrence::set_non_linear_finite_order() const {
   type = NON_LINEAR_FINITE_ORDER;
 }
 
 inline int
-Recurrence::get_order() {
+Recurrence::get_order() const {
   assert(is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
@@ -122,7 +126,7 @@ Recurrence::get_order() {
 }
 
 inline std::vector<unsigned>
-Recurrence::get_decrements() {
+Recurrence::get_decrements() const {
   assert(is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
@@ -131,7 +135,7 @@ Recurrence::get_decrements() {
 }
 
 inline std::vector<unsigned>
-Recurrence::get_initial_conditions() {
+Recurrence::get_initial_conditions() const {
   assert(is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());

@@ -41,6 +41,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Symbol.defs.hh"
 #include "Number.defs.hh"
 #include "Matrix.defs.hh"
+#include "Finite_Order_Info.defs.hh"
 #include "Recurrence.defs.hh"
 
 #include <climits>
@@ -1451,10 +1452,9 @@ insert_coefficients(const Expr& coeff, unsigned long index,
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 					  std::vector<Expr>& coefficients,
-					  bool& has_non_constant_coefficients,
 					  int& order,
 					  int& gcd_among_decrements,
-					  int num_term) {
+					  int num_term) const {
   unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
   if (num_factors == 1)
     if (r.is_the_x_function()) {
@@ -1528,7 +1528,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
     if (found_function_x) {
       insert_coefficients(possibly_coeff, index, coefficients);
       if (found_n)
-	has_non_constant_coefficients = true;
+	set_linear_finite_order_var_coeff();
     }
     else
       e += possibly_coeff;
@@ -1565,9 +1565,6 @@ PURRS::Recurrence::solve_easy_cases() const {
   // We will store here the coefficients of linear part of the recurrence.
   std::vector<Expr> coefficients;
 
-  // Will be set to true if at least one element of coefficients is
-  // non-constant.
-  bool has_non_constant_coefficients = false;
 #if 0
   do {
     // These patterns are used repeatedly for pattern matching.
@@ -1667,19 +1664,20 @@ PURRS::Recurrence::solve_easy_cases() const {
     // It is necessary that the following loop starts from `0'.
     for (unsigned i = 0; i < num_summands; ++i) {
       status = classification_summand(expanded_rhs.op(i), inhomogeneous_term,
-				      coefficients, has_non_constant_coefficients,
-				      order, gcd_among_decrements, i);
+				      coefficients, order,
+				      gcd_among_decrements, i);
       if (status != OK)
 	return status;
     }
   else {
     status = classification_summand(expanded_rhs, inhomogeneous_term,
-				    coefficients, has_non_constant_coefficients,
-				    order, gcd_among_decrements, 0);
+				    coefficients, order,
+				    gcd_among_decrements, 0);
     if (status != OK)
       return status;
   }
 #endif
+
   // Check if the recurrence is non linear, i.e. there is a non-linear term
   // containing in `e' containing `x(a*n+b)'.
   status = find_non_linear_recurrence(inhomogeneous_term);
@@ -1693,10 +1691,9 @@ PURRS::Recurrence::solve_easy_cases() const {
     solution = inhomogeneous_term;
     return OK;
   }
-  D_VAR(gcd_among_decrements);
   // If the greatest common divisor among the decrements is greater than one,
   // the order reduction is applicable.
-  if (gcd_among_decrements > 1 && !has_non_constant_coefficients) {
+  if (gcd_among_decrements > 1 && is_linear_finite_order_const_coeff()) {
     D_MSG("Order reduction");
     Expr m = mod(n, gcd_among_decrements);
     Expr new_rhs = rewrite_reduced_order_recurrence(expanded_rhs, m,
@@ -1737,7 +1734,7 @@ PURRS::Recurrence::solve_easy_cases() const {
   case 1:
     {
       Solver_Status status;
-      if (!has_non_constant_coefficients) {
+      if (is_linear_finite_order_const_coeff()) {
 	Expr characteristic_eq;
 	std::vector<Polynomial_Root> roots;
 	bool all_distinct = true;
@@ -1761,7 +1758,7 @@ PURRS::Recurrence::solve_easy_cases() const {
     break;
 
   case 2:
-    if (!has_non_constant_coefficients) {
+    if (is_linear_finite_order_const_coeff()) {
       Expr characteristic_eq;
       std::vector<Polynomial_Root> roots;
       bool all_distinct = true;
@@ -1784,7 +1781,7 @@ PURRS::Recurrence::solve_easy_cases() const {
     break;
 
   default:
-    if (!has_non_constant_coefficients) {
+    if (is_linear_finite_order_const_coeff()) {
       Expr characteristic_eq;
       std::vector<Polynomial_Root> roots;
       bool all_distinct = true;
