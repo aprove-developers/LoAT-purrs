@@ -26,12 +26,15 @@ http://www.cs.unipr.it/purrs/ . */
 
 #define NOISY 0
 
-#include "globals.hh"
-#include "util.hh"
-#include "sum_poly.hh"
 #include "rr_solver.hh"
-#include "simplify.hh"
+
+#include "globals.hh"
+#include "gosper.hh"
 #include "alg_eq_solver.hh"
+#include "simplify.hh"
+#include "sum_poly.hh"
+#include "util.hh"
+
 #include <climits>
 #include <algorithm>
 #include <string>
@@ -286,7 +289,7 @@ add_initial_conditions(const GExpr& g_n, const GSymbol& n,
 		       GExpr& solution);
 
 static GExpr
-solve_constant_coeff_order_1(const GSymbol& n,
+solve_constant_coeff_order_1(const GSymbol& n, const int order,
 			     const std::vector<GExpr>& base_of_exps,
 			     const std::vector<GExpr>& exp_poly_coeff,
 			     const std::vector<GExpr>& exp_no_poly_coeff,
@@ -516,7 +519,8 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   switch (order) {
   case 1:
     if (!has_non_constant_coefficients)
-      solution = solve_constant_coeff_order_1(n, base_of_exps, exp_poly_coeff,
+      solution = solve_constant_coeff_order_1(n, order, base_of_exps,
+					      exp_poly_coeff,
 					      exp_no_poly_coeff, roots,
 					      initial_conditions);
     else
@@ -806,6 +810,50 @@ add_initial_conditions(const GExpr& g_n, const GSymbol& n,
 }
 
 /*!
+  Applies the Gosper's algorithm to express in closed form, if it is
+  possible, sum with the summand an hypergeometric term not polynomials
+  or polynomials times exponentials (these last sums are computed by the
+  functions <CODE>compute_symbolic_sum()</CODE> and
+  <CODE>subs_to_sum_roots_and_bases()</CODE>).  This function returns
+  <CODE>true</CODE> if the summand is an hypergeometric term,
+  independently if it is possible or not to express the sum in closed form.
+  Returns <CODE>false</CODE> otherwise.
+*/
+static bool
+gosper(const int order, const GSymbol& n,
+       const std::vector<GExpr>& base_of_exps,
+       const std::vector<GExpr>& exp_no_poly_coeff,
+       const std::vector<Polynomial_Root>& roots,
+       GExpr& solution) {
+  solution = 0;
+  for (unsigned i = exp_no_poly_coeff.size(); i-- > 0; ) {
+    GExpr tmp;
+    if (!exp_no_poly_coeff[i].is_zero()) {
+      // FIXME: `r_n' is temporary until the implementation
+      // of the step one of gosper's algorithm.
+      GExpr r_n =
+	exp_no_poly_coeff[i].subs(n == n + 1) * pow(base_of_exps[i], n+1)
+	* pow(exp_no_poly_coeff[i], -1) * pow(base_of_exps[i], -n);
+      r_n = simplify_on_output_ex(r_n.expand(), n, false);
+      r_n = simplify_numer_denom(r_n);
+      // FIXME: the lower bound for the sum is not `order'
+      // ex. \sum 1/(n^2-1) must be start from 2.
+      // FIXME: this is a temporary assert untile he generalization of
+      // this function.
+      assert(order == 1);
+      GExpr t = pow(base_of_exps[i], n) * exp_no_poly_coeff[i]
+	* pow(roots[0].value(), -n);
+//        std::cout << "t(n) = " << t << std::endl;
+//        std::cout << "r(n) = " << r_n << std::endl;
+      if (!gosper(t, r_n, n, order, n, tmp))
+	return false;
+    }
+    solution += tmp;
+  }
+  return true;
+}
+
+/*!
   Consider the linear recurrence relation of first order with
   constant coefficients
   \f[
@@ -821,17 +869,16 @@ add_initial_conditions(const GExpr& g_n, const GSymbol& n,
   \f]
 */
 static GExpr
-solve_constant_coeff_order_1(const GSymbol& n,
+solve_constant_coeff_order_1(const GSymbol& n, const int order,
 			     const std::vector<GExpr>& base_of_exps,
 			     const std::vector<GExpr>& exp_poly_coeff,
 			     const std::vector<GExpr>& exp_no_poly_coeff,
 			     const std::vector<Polynomial_Root>& roots,
 			     const std::vector<GExpr>& initial_conditions) {
-  GExpr solution;
-  // Calculates the solution of the first order recurrences when
-  // the inhomogeneous term is a polynomial or the product of a
-  // polynomial and an exponential.
-  if (!vector_not_all_zero(exp_no_poly_coeff)) {
+  GExpr solution = 0;
+  // Computes the sum when `\lambda^{n-k} p(k)' is a polynomial or
+  // a product of a polynomial times an exponential.
+  if (vector_not_all_zero(exp_poly_coeff)) {
     GSymbol alpha("alpha");
     GSymbol lambda("lambda");
     std::vector<GExpr> symbolic_sum_distinct;
@@ -844,24 +891,32 @@ solve_constant_coeff_order_1(const GSymbol& n,
     // root and of the bases of the eventual exponentials.
     // In `solution' put the sum of all sums of the vectors after the
     // substitution.
-    solution = subs_to_sum_roots_and_bases(alpha, lambda, roots,
-					   base_of_exps,
-					   symbolic_sum_distinct,
-					   symbolic_sum_no_distinct);
-    // FIXME: per ora non si puo' usare la funzione
-    // `add_initial_conditions' perche' richiede un vettore di
-    // `GNumber' come `coefficients' e voglio risolvere anche le
-    // parametriche.
-    // add_initial_conditions(1, n, coefficients, initial_conditions,
-    //		              solution);
-    solution += initial_conditions[0] * pow(roots[0].value(), n);
+    solution += subs_to_sum_roots_and_bases(alpha, lambda, roots,
+					    base_of_exps,
+					    symbolic_sum_distinct,
+					    symbolic_sum_no_distinct);
   }
-  else
-    throw
-      "PURRS error: today we only allow inhomogeneous terms\n"
-      "in the form of polynomials or product of exponentials\n"
-      "and polynomials.\n"
-      "Please come back tomorrow.";
+  // Computes the sum when `\lambda^{n-k} p(k)' is not a polynomial or
+  // a product of a polynomial times an exponential.
+  if (vector_not_all_zero(exp_no_poly_coeff)) {
+    // FIXME: for the moment gosper returns the right solution only
+    // if the summand is an hypergeometric term.
+    GExpr gosper_solution;
+    if (gosper(order, n, base_of_exps, exp_no_poly_coeff, roots,
+	       gosper_solution))
+      solution += gosper_solution;
+    // The summand is not an hypergeometric term.
+    //        else
+    //  	....
+  }
+  // FIXME: per ora non si puo' usare la funzione
+  // `add_initial_conditions' perche' richiede un vettore di
+  // `GNumber' come `coefficients' e voglio risolvere anche le
+  // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
+  // add_initial_conditions(g_n, n, coefficients, initial_conditions,
+  //		              solution);
+  solution += initial_conditions[0] * pow(roots[0].value(), n);
+
   return solution;
 }
 
