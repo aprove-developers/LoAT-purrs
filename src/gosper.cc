@@ -256,10 +256,10 @@ gosper_step_three(const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
   GExpr lead_a = a_n.lcoeff(n);
   GExpr lead_b = b_n.lcoeff(n);
   GNumber deg_x = -1;
-  // On output, if a possible degree exixts,
+  // On output, if a possible degree exists,
   // `deg_x' will contain a non-negative number.
   if (deg_a != deg_b || !lead_a.is_equal(lead_b)) {
-    if (deg_a > deg_b && deg_c >= deg_a)
+    if (deg_a >= deg_b && deg_c >= deg_a)
       deg_x = deg_c - deg_a;
     if (deg_b > deg_a && deg_c >= deg_b)
       deg_x = deg_c - deg_b;
@@ -271,15 +271,11 @@ gosper_step_three(const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
     GExpr B = shift_b.coeff(n, deg_a - 1);
     assert(is_a<numeric>((B - A) * pow(lead_a, -1)));
     GNumber B_A = ex_to<numeric>((B - A) * pow(lead_a, -1));
-    if (!B_A.is_nonneg_integer())
-      B_A = -1;
-    GNumber possible_deg;
-    if (deg_c + 1 < deg_a)
-      possible_deg = -1;
-    if ((possible_deg - B_A).is_pos_integer())
-      deg_x = possible_deg;
-    else
-      deg_x = B_A;
+    GNumber possible_deg = deg_c - deg_a + 1;
+    if (B_A.is_nonneg_integer())
+      if (B_A > possible_deg)
+	possible_deg = B_A;
+    deg_x = possible_deg >= 0 ? possible_deg : -1;
   }
   if (deg_x.is_equal(-1))
     return false;
