@@ -435,14 +435,14 @@ PURRS::largest_positive_int_zero(const Expr& e, Number& z) {
   containig \p n.
 */
 bool
-PURRS::find_parameters(const Expr& e) {
+PURRS::has_parameters(const Expr& e) {
   if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned i = e.nops(); i-- > 0; )
-      if (find_parameters(e.op(i)))
+      if (has_parameters(e.op(i)))
 	return true;
   }
   else if (e.is_a_power()) {
-    if (find_parameters(e.arg(0)) || find_parameters(e.arg(1)))
+    if (has_parameters(e.arg(0)) || has_parameters(e.arg(1)))
       return true;
   }
   else if (e.is_a_function()) {
@@ -451,7 +451,7 @@ PURRS::find_parameters(const Expr& e) {
       return true;
     else
       for (unsigned i = e.nops(); i-- > 0; )
-	if (find_parameters(e.arg(i)))
+	if (has_parameters(e.arg(i)))
 	  return true;
   }
   else

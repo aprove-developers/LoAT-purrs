@@ -66,7 +66,7 @@ PURRS::Recurrence::approximate_functional_equation() const {
   // Check if the inhomogeneous term `p(n)' is a non-negative,
   // non-decreasing function. For to do this, the parameters are
   // not allowed.
-  if (find_parameters(inhomogeneous_term)
+  if (has_parameters(inhomogeneous_term)
       || !is_non_negative_non_decreasing(inhomogeneous_term, n))
     return TOO_COMPLEX;
   // Compute `sum_{k = 1}^n a^{n-k} p(b^k)'.

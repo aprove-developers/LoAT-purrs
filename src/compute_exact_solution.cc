@@ -192,7 +192,7 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
 solve_variable_coeff_order_1(const Expr& coefficient) const {
-  if (find_parameters(coefficient)) {
+  if (has_parameters(coefficient)) {
     D_MSG("Variable coefficient with parameters");
     return TOO_COMPLEX;
   }
@@ -544,7 +544,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   // `inhomogeneous_term' and store it in `z' if it is bigger than `0'.
   Number z = 0;
   if (!inhomogeneous_term.is_zero()) {
-    if (find_parameters(denominator(inhomogeneous_term))) {
+    if (has_parameters(denominator(inhomogeneous_term))) {
       D_MSG("Constant coefficient with parameters in the denominator of "
 	    "the inhomogeneous term.");
       return TOO_COMPLEX;

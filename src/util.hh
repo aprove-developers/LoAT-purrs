@@ -93,7 +93,7 @@ void
 largest_positive_int_zero(const Expr& e, Number& z);
 
 bool
-find_parameters(const Expr& e);
+has_parameters(const Expr& e);
 
 #if defined(NOISY) && NOISY
 #define D_MSG(s) std::cout << s << std::endl
