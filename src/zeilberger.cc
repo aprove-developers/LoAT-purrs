@@ -64,22 +64,16 @@ zeilberger_step_one(const Expr& F_m_k,
 		    const Symbol& m, const Symbol& k,
 		    const std::vector<Symbol>& coefficients,
 		    Expr& p_0_k, Expr& r_k, Expr& s_k) {
-  DD_MSGVAR("ZEIL step one -> ", F_m_k);
+  DD_MSGVAR("Zeilberger step one -> ", F_m_k);
   Expr first
     = simplify_binomials_factorials_exponentials(F_m_k.substitute(m, m+1))
     * pwr(simplify_binomials_factorials_exponentials(F_m_k), -1);
-  DD_MSGVAR("ZEIL step one A -> ", first);
   Expr second
     = simplify_binomials_factorials_exponentials(F_m_k.substitute(k, k+1))
     * pwr(simplify_binomials_factorials_exponentials(F_m_k), -1);
   // FIXME: we must decide on the best simplification to use in this case.
-  DD_MSGVAR("ZEIL step one B -> ", second);
-  //  simplify_all(first);
   first = simplify_numer_denom(first);
-  DD_MSGVAR("ZEIL step one C -> ", first);
   second = simplify_numer_denom(second);
-  D_VAR(first);
-  D_VAR(second);
   if (!first.is_rational_function(m) || !second.is_rational_function(k))
     return false;
 
@@ -144,9 +138,14 @@ zeilberger_step_one(const Expr& F_m_k,
   return true;
 }
 
-// Factorize the rational function q(k) as q(k) = p1(k+1)/p1(k) * p2(k)/p3(k)
-// where p2(k) and p3(k) are coprime.
-// FIXME: Write a longer comment.
+/*!
+  Reduce the rational function \f$ q(k) \f$ to canonical form as
+  follows.
+  Every rational function \f$ q(k) \f$ can be written in the form
+  \f$ q(k) = p_1(k+1)/p_1(k) * p_2(k)/p_3(k) \f$ where 
+  \f$ p_1, p_2, p_3 \f$ are polynomials in \f$ k \f$ and
+  \f$ gdc(p_2(n), p_3(n+h)) = 1 \f$ for all nonnegative integers \f$ k \f$.
+*/
 bool
 parametric_gosper_step_two(const Symbol& k, const Expr& q_k,
 			   Expr& p1_k, Expr& p2_k, Expr& p3_k) {
@@ -167,29 +166,11 @@ parametric_gosper_step_two(const Symbol& k, const Expr& q_k,
       a_k = quo(a_k, s, k);
       Expr temp_s = s.substitute(k, k - h);
       b_k = quo(b_k, temp_s, k);
-      // FIXME: integer_roots[i] is an Expr, not a Number!
+      // Using this trick integer_roots[i] is a Number and not an Expr.
       for (Number j = 1; j <= h; ++j)
 	c_k *= s.substitute(k, k - j);  
    }
   }
-
-  /*
-  //  Symbol h("h");
-  //  num = (k+1)*(k+3);
-  //  den = h * k + h;
-
-  den = 2 - 2*k;
-  num = num.expand();
-  den = den.expand();
-
-  D_VAR(num);
-  D_VAR(den);
-
-  //  Expr s = general_gcd(num, den, k);
-  // FIXME: Improve GiNaC's gcd.
-  Expr s = gcd(num, den);
-  D_VAR(s);
-  */
 
 #if 0
   Symbol h("h");
@@ -266,8 +247,8 @@ parametric_gosper_step_two(const Symbol& k, const Expr& q_k,
 }
 
 
-  // Coefficients represent the originary unknown related to the order J of
-  // sought recurrence.
+// Coefficients represent the originary unknown related to the order J of
+// sought recurrence.
 bool
 parametric_gosper_step_three(const Symbol& m, const std::vector<Symbol>& coefficients,
 			     const Expr& p2_m, const Expr& p3_m,
@@ -437,8 +418,6 @@ parametric_gosper_step_three(const Symbol& m, const std::vector<Symbol>& coeffic
   for (unsigned int i = 0; i < number_of_coeffs; ++i)
     b_m = b_m.substitute(unknowns.op(i), solution.op(i).op(1));
 
-  // Give unknown coefficients the values just found.
-  //  for (unsigned int i = 0; i < number_of_coeffs; ++i)
   for (unsigned int i = 0; i < dummy_vars.size(); ++i) {
     b_m = b_m.substitute(unknowns.op(dummy_vars[i]), 1);
   }
@@ -450,6 +429,8 @@ parametric_gosper_step_three(const Symbol& m, const std::vector<Symbol>& coeffic
   if (b_m.is_zero())
     return false;
 
+  // Give unknown coefficients the values just found.
+  //  for (unsigned int i = 0; i < number_of_coeffs; ++i)
   for (unsigned int j = 0; j < coefficients.size(); ++j) {
     Expr coeff_expr = solution.op(number_of_unknowns - coefficients.size() + j).op(1);
     D_VAR(coeff_expr);
@@ -543,7 +524,7 @@ bool zeilberger_for_fixed_order(const Expr& F_m_k,
   rec.compute_exact_solution();
   for (unsigned int i = 0; i < order; ++i) {
     // FIXME: This happens very often, but we must compute it explicitly.
-    initial_conditions[i] = 1;
+    initial_conditions[1] = 2;
     // initial_conditions[i] = sum (k, 0, 10, F_m_k.substitute(m,i));
   }
   rec.set_initial_conditions(initial_conditions);
