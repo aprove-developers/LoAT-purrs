@@ -451,7 +451,7 @@ main() try {
 
   // Start the HTML body.
   cout << body() << endl
-       << h1() << "PURRS Demo " << span("Results", set("class", "red"))
+       << h1() << "PURRS Demo " << span("Results", set("class", "green"))
        << h1() << endl;
 
   cout << h2();
