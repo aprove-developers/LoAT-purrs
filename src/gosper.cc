@@ -68,11 +68,12 @@ using namespace PURRS;
 bool
 gosper_step_one(const Expr& t_n, Expr& r_n, bool full) {
   // Not is the case of variable coefficient.
-  if (full)
+  if (full) 
     r_n = simplify_factorials_and_exponentials(t_n.subs(Recurrence::n,
 							Recurrence::n+1))
       * pwr(simplify_factorials_and_exponentials(t_n), -1);
-  r_n = transform_in_single_fraction(r_n);
+  // FIXME: we must understand the better simplification to use in this case.
+  r_n = simplify_numer_denom(r_n);
   D_VAR(r_n);
   if (r_n.is_rational_function(Recurrence::n))
     return true;
