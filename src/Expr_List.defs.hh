@@ -48,7 +48,7 @@ public:
   Expr_List(const Expr& x1, const Expr& x2, const Expr& x3,
 	    const Expr& x4, const Expr& x5);
 
-  //! Builds a list containing \p x1, \p x2, \p x3, \p x4 and \p x5.
+  //! Builds a list containing \p x1, \p x2, \p x3, \p x4, \p x5 and \p x6.
   Expr_List(const Expr& x1, const Expr& x2, const Expr& x3,
 	    const Expr& x4, const Expr& x5, const Expr& x6);
 
