@@ -105,7 +105,11 @@ PURRS::Recurrence::
 validate_initial_conditions(index_type order,
 			    index_type first_valid_index) const {
   for (index_type i = 0; i < order; ++i) {
-    Expr e = exact_solution_.expression().substitute(n, first_valid_index + i);
+    // 
+    unsigned int index =
+      get_max_index_initial_condition() > first_valid_index + i
+      ? get_max_index_initial_condition() : first_valid_index + i;
+    Expr e = exact_solution_.expression().substitute(n, index);
     // Expand blackboard's definitions in order to increase the
     // opportunities for simplifications.
     e = blackboard.rewrite(e);
@@ -114,7 +118,7 @@ validate_initial_conditions(index_type order,
     // `e' correspondent to the integer `first_valid_index + i'
     // (the index of the initial condition), then returns `e';
     // returns `x(first_valid_index + i)' otherwise.
-    if (e != get_initial_condition(first_valid_index + i))
+    if (e != get_initial_condition(index))
       // FIXME: pravably_incorrect nei casi semplici.
       return INCONCLUSIVE_VERIFICATION;
   }
@@ -823,6 +827,35 @@ PURRS::Recurrence::verify_upper_bound() const {
 			   "called, but no upper bound was computed");
 }
 
+/*!
+  Replaces the values in the \f$ k \f$-th position of the map
+  <CODE>initial_conditions</CODE> with the expression \p e.
+*/
+void
+PURRS::Recurrence::replace_initial_condition(unsigned int k, const Expr& e) {
+  std::pair<std::map<unsigned int, Expr>::iterator, bool> stat
+    = initial_conditions.insert(std::map<unsigned int, Expr>::value_type(k, e));
+  if (!stat.second)
+    // There was already something associated to `i': overwrite it.
+    stat.first->second = e;
+
+  // If the system has already computed the solution or the bound
+  // then we must substitute the value `e' in the place of `x(k)'
+  // shifting, if necessary, the solution or the bound.
+  if (exact_solution_.has_expression()
+      && has_at_least_a_symbolic_ic(exact_solution_.expression()))
+    exact_solution_.set_expression
+      (substitute_i_c_shifting(exact_solution_.expression()));
+  if (lower_bound_.has_expression()
+      && has_at_least_a_symbolic_ic(exact_solution_.expression()))
+    lower_bound_.set_expression
+      (substitute_i_c_shifting(lower_bound_.expression()));
+  if (upper_bound_.has_expression()
+      && has_at_least_a_symbolic_ic(exact_solution_.expression()))
+    upper_bound_.set_expression
+      (substitute_i_c_shifting(upper_bound_.expression()));
+}
+
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::apply_order_reduction() const {
   set_order_reduction();
@@ -1177,7 +1210,7 @@ compute_weighted_average_recurrence(Expr& solution) const {
 //! \brief
 //! Let \p solution_or_bound be the expression that represent the
 //! solution or the bound computed for the recurrence \p *this.
-//! This function substitutes eventual symbolic initial conditions
+//! This function substitutes possible symbolic initial conditions
 //! specified by the user shifting the solution or the bound if necessary.
 /*!
   \param solution_or_bound  Contains the solution or the bound computed
@@ -1194,13 +1227,15 @@ compute_weighted_average_recurrence(Expr& solution) const {
   This function checks if in the map \p initial_conditions there are
   some initial conditions of the form \f$ x(i) = k \f$ with \f$ k > s \f$:
   in this case the function shifts the solution or the bound.
-  Finally substitutes to the arbitrary initial conditions in the solution or
-  in the bound the eventual values specified by the user.
+  Finally replaces the possible symbolic initial conditions in the
+  solution or in the bound with the values specified by the user.
 */
 Expr
 PURRS::Recurrence::
 substitute_i_c_shifting(const Expr& solution_or_bound) const {
   assert(!initial_conditions.empty());
+  assert(has_at_least_a_symbolic_ic(solution_or_bound));
+
   Expr sol_or_bound = solution_or_bound;
   index_type first_valid_index_rhs;
   index_type order_or_rank;
@@ -1222,20 +1257,17 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
   // shifts (the rank of functional equations can not to be zero, it is
   // greater or equal to one).
   if (order_or_rank != 0) {
+
     // Consider the maximum index of `x' function in the map
     // `initial_conditions', i.e. the largest index of the initial
     // conditions inserted by the user.
-    unsigned int max_index_user_i_c = 0;
-    for (std::map<unsigned int, Expr>::const_iterator i
-	   = initial_conditions.begin(),
-	   iend = initial_conditions.end(); i != iend; ++i)
-      if (i->first > max_index_user_i_c)
-	max_index_user_i_c = i->first;
-    
+    unsigned int max_index_user_i_c = get_max_index_initial_condition();
+
     // `max_index_symb_i_c' represents the largest
     // index of the symbolic initial conditions.
     unsigned int max_index_symb_i_c
       = first_valid_index_rhs + order_or_rank - 1;
+
     // If `max_index_user_i_c' is bigger than `max_index_symb_i_c',
     // then we must shift the solution or the bound.
     // There are two different steps:
@@ -1283,7 +1315,6 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
 					    - order_or_rank + 1));
     }
   }
-
   // Substitute symbolic initial conditions with the values in the map
   // `initial_conditions'.
   for (std::map<unsigned int, Expr>::const_iterator i
@@ -1293,6 +1324,7 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
 					   get_initial_condition(i->first));
   sol_or_bound = simplify_numer_denom(sol_or_bound);
   sol_or_bound = simplify_ex_for_output(sol_or_bound, false);
+
   return sol_or_bound;
 }
 

@@ -1,4 +1,4 @@
-/* Finding the xxx factors of a polynomial.
+/* To be written.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -94,6 +94,9 @@ find_functor_ptr(const std::string& str, unary_function_ptr tab[]) {
   return 0;
 }
 
+/*!
+  Translate the GiNaC expression stored in \p e in a giac expression.
+*/
 gen
 translate(const Expr& e, Expr& num_factors, Expr& not_num_factors,
 	  Blackboard& blackboard) {
@@ -128,14 +131,28 @@ translate(const Expr& e, Expr& num_factors, Expr& not_num_factors,
       // because in this way is applicable the factorization's process
       // (on symbolic object the factorization's process does not work).
       if (functor == 0)
+#if 1
 	return symbolic(unary_function_abstract(e.get_function_name()),
 			translate(num_factors_arg*not_num_factors_arg,
 				  num_factors, not_num_factors,
 				  blackboard));
+#else
+      {
+// 	const Expr& tmp = apply(e.functor(), argument);
+// 	return identificateur(blackboard.find_symbol(tmp).get_name());
+	
+      }
+#endif
       else
+#if 1
 	return symbolic(functor, translate(num_factors_arg*not_num_factors_arg,
 					   num_factors, not_num_factors,
 					   blackboard));
+#else
+      {
+	
+      }
+#endif
     }
     else {
       // Recursevely factorize the arguments of the function `e'.
@@ -172,6 +189,88 @@ translate(const Expr& e, Expr& num_factors, Expr& not_num_factors,
   return e_giac;
 }
 
+#if 0
+/*!
+  For `factors'. 
+*/
+gen
+translate(const Expr& e, Blackboard& blackboard) {
+  gen e_giac;
+  if (e.is_a_add()) {
+    e_giac = 0;
+    for (unsigned int i = e.nops(); i-- > 0; )
+      e_giac = e_giac + translate(e.op(i), blackboard);
+  }
+  if (e.is_a_mul()) {
+    e_giac = 1;
+    for (unsigned int i = e.nops(); i-- > 0; )
+      e_giac = e_giac * translate(e.op(i), blackboard);
+  }
+  else if (e.is_a_power())
+    return pow(translate(e.arg(0), blackboard),
+	       translate(e.arg(1), blackboard));
+  else if (e.is_a_function()) {
+    if (e.nops() == 1) {
+      // Recursevely factorize the argument of the function `e'.
+      Expr num_factors_arg;
+      Expr not_num_factors_arg;
+      factorize_giac_recursive(e.arg(0), num_factors_arg, not_num_factors_arg);
+      unary_function_ptr functor = find_functor_ptr(e.get_function_name(),
+						    archive_function_tab);
+      // FIXME: Not to use the constructor of the class `symbolic' but 
+      // to use the identificateur (as for the functions with more than one
+      // arguments).
+      // Using the identificateur is better than the symbolic object
+      // because in this way is applicable the factorization's process
+      // (on symbolic object the factorization's process does not work).
+      if (functor == 0)
+	return symbolic(unary_function_abstract(e.get_function_name()),
+			translate(num_factors_arg*not_num_factors_arg,
+				  blackboard));
+      else
+	return symbolic(functor, translate(num_factors_arg*not_num_factors_arg,
+					   blackboard));
+    }
+    else {
+      // Recursevely factorize the arguments of the function `e'.
+      unsigned int num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned int i = 0; i < num_argument; ++i) {
+	Expr num_factors_arg;
+	Expr not_num_factors_arg;
+	factorize_giac_recursive(e.arg(i),
+				 num_factors_arg, not_num_factors_arg);
+	argument[i] = num_factors_arg * not_num_factors_arg;
+      }
+      const Expr& tmp = apply(e.functor(), argument);
+      return identificateur(blackboard.find_symbol(tmp).get_name());
+    }
+  }
+  else if (e.is_a_symbol())
+    return identificateur(blackboard.find_symbol(e).get_name());
+  else if (e.is_a_number()) {
+    Number e_num = e.ex_to_number();
+    if (e_num.is_integer())
+      return e_num.to_int();
+    else if (e_num.is_rational())
+      return fraction(e_num.numerator().to_int(),
+		      e_num.denominator().to_int());
+    else {
+      assert(e_num.is_complex_rational());
+      return identificateur(blackboard.find_symbol(e).get_name());
+    }
+  }
+  else if (e.is_a_constant())
+    return identificateur(blackboard.find_symbol(e).get_name());
+  
+  return e_giac;
+}
+#endif
+
+/*!
+  Translate the giac expression stored in \p e_giac in a GiNaC
+  expression.
+*/
 Expr
 translate(const gen& e_giac) {
   Expr e;
@@ -221,7 +320,9 @@ void
 factorize_giac_recursive(const Expr& e,
 			 Expr& num_factors, Expr& not_num_factors) {
   Blackboard blackboard;
+  // Translate GiNaC expressions in giac expressions.
   gen giac_e = translate(e, num_factors, not_num_factors, blackboard);
+  // Call the giac function in order to factorize expression.
   gen giac_e_factorized = factor(giac_e);
   // The decomposition executed by `giac' considers the numeric factors,
   // but when we come back to the GiNaC's expressions, the numeric
@@ -253,18 +354,40 @@ factorize_giac_recursive(const Expr& e,
   not_num_factors = blackboard.rewrite(not_num_factors);
 }
 
+#if 0
+void
+factors_giac_recursive(const Expr& e,
+		       std::vector<std::pair<Expr, int> >& factors_e) {
+  Blackboard blackboard;
+  gen giac_e = translate(e, blackboard);
+  gen giac_e_factorized = factors(giac_e);
+  translate(giac_e_factorized, factors_e);
+  for (unsigned int i = factors_e.size(); i-- > 0; )
+    blackboard.rewrite(factors_e[i].first);
+}
+#endif
+
 } // anonymous namespace
 
 
+/*!
+  Factorizes as much as possible the expression \p e dividing
+  numeric factors and not numeric factors, respectively stored in
+  \p num_factors and \p not_num_factors.
+*/
 void
 PURRS::factorize_giac(const Expr& e,
 		      Expr& num_factors, Expr& not_num_factors) {
   factorize_giac_recursive(e, num_factors, not_num_factors);
   // FIXME: to uncomment the following rows when will be solved
   // the problem about the method `expand()' on functions.
-  //  assert(e.expand() == (num_factors * not_num_factors).expand());
+  // assert(e.expand() == (num_factors * not_num_factors).expand());
 }
 
+#if 0
 void
-PURRS::factors_giac(const Expr& /*e*/, std::pair<Expr, int>& /*factors*/) {
+PURRS::factors_giac(const Expr& e,
+		    std::vector<std::pair<Expr, int> >& factors_e) {
+  factors_giac_recursive(e, factors_e);
 }
+#endif

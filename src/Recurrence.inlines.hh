@@ -28,6 +28,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Non_Linear_Info.defs.hh"
 #include "Weighted_Average_Info.defs.hh"
+#include "Expr.types.hh"
 
 #include <iostream>
 #include <utility>
@@ -128,15 +129,6 @@ Recurrence::replace_recurrence(unsigned int k, const Expr& e) {
     stat.first->second = e;
 }
 
-inline void
-Recurrence::replace_initial_condition(unsigned int k, const Expr& e) {
-  std::pair<std::map<unsigned int, Expr>::iterator, bool> stat
-    = initial_conditions.insert(std::map<unsigned int, Expr>::value_type(k, e));
-  if (!stat.second)
-    // There was already something associated to `i': overwrite it.
-    stat.first->second = e;
-}
-
 #if 0
 inline bool
 Recurrence::
@@ -159,6 +151,17 @@ Recurrence::get_initial_condition(unsigned int k) const {
     return (*i).second;
   else
     return x(k);
+}
+
+inline unsigned int
+Recurrence::get_max_index_initial_condition() const {
+  unsigned int max_index = 0;
+  for (std::map<unsigned int, Expr>::const_iterator i
+	 = initial_conditions.begin(),
+	 iend = initial_conditions.end(); i != iend; ++i)
+    if (i->first > max_index)
+      max_index = i->first;
+  return max_index;
 }
 
 inline void

@@ -226,12 +226,15 @@ public:
   //! \brief
   //! Allows to specify the value \p e of the symbolic initial condition
   //! with index \p k: \f$ x(k) = e \f$.
-#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   /*!
-    Replaces the values in the \f$ k \f$-th position of the map
-    <CODE>initial_conditions</CODE> with the expression \p e.
+    If the system has not still computed the solution or the bound,
+    then it will be compute already without the symbolic initial
+    condition \f$ x(k) \f$, but with the value \f$ e \f$ in place
+    of it.
+    If the system has already computed the solution or the bound,
+    then the method sustitutes the value \f$ e \f$ in place of
+    \f$ x(k) \f$ in the solution or the bound.
   */
-#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   void replace_initial_condition(unsigned int k, const Expr& e);
 
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
@@ -268,6 +271,12 @@ private:
   //! expression \f$ e \f$ correspondent to \p k then returns \f$ e \f$;
   //! returns \f$ x(k) \f$ otherwise.
   Expr get_initial_condition(unsigned int k) const;
+
+  //! \brief
+  //! If the map <CODE>initial_conditions</CODE> is not empty returns
+  //! the maximum integer among the first elements of it;
+  //! returns \f$ 0 \f$ if the map is empty.
+  unsigned int get_max_index_initial_condition() const;
 
 public:
   //! The possible states of the recurrence.

@@ -29,7 +29,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr.types.hh"
 #include "Symbol.types.hh"
 #include <vector>
-#include<utility>
+#include <utility>
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -41,10 +41,11 @@ factorize_giac(const Expr& e, const Symbol& x,
 	       Expr& num_factors, Expr& not_num_factors);
 
 void
-factors_giac(const Expr& e, std::pair<Expr, int>& factors);
+factors_giac(const Expr& e, std::vector<std::pair<Expr, int> >& factors);
 
 void
-factors_giac(const Expr& p, const Symbol& x, std::pair<Expr, int>& factors);
+factors_giac(const Expr& e, const Symbol& x,
+	     std::vector<std::pair<Expr, int> >& factors_e);
 
 } // namespace Parma_Recurrence_Relation_Solver
 
