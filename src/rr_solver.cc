@@ -35,6 +35,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 using namespace GiNaC;
 
+#define NOISY 1
+
 static GExpr
 get_binding(const GList& l, unsigned wild_index) {
   assert(wild_index < l.nops());
@@ -307,7 +309,9 @@ solve(const GExpr& rhs, const GSymbol& n) {
       failed = true;
       break;
     }
+#if NOISY
     std::cout << "decrement = " << decrement << std::endl;
+#endif
     if (!decrement.is_integer()
 	|| decrement < 0
 	|| decrement >= coefficients.max_size()) {
@@ -348,14 +352,14 @@ solve(const GExpr& rhs, const GSymbol& n) {
 
   if (failed)
     return false;
-
+#if NOISY
   std::cout << "Order = " << order << std::endl;
   std::cout << "Coefficients = ";
   for (int i = 1; i <= order; ++i)
     std::cout << coefficients[i] << " ";
   std::cout << std::endl;
   std::cout << "Inhomogeneous term = " << e << std::endl;
-
+#endif
   // The factors of the form a^(bn+c) (a,b,c numeric) must be transformed
   // into (a^b)^n*a^c. GiNaC tranforms only a^(bn+c) in a^c*a^(bn) but not
   // a^(bn) into (a^b)^n.
@@ -372,8 +376,10 @@ solve(const GExpr& rhs, const GSymbol& n) {
   // coefficient in the second row. In the last column there is the
   // constant exponential with its coefficients. 
   GMatrix decomposition = decomposition_inhomogeneous_term(e, n);
+#if NOISY
   std::cout << "Inhomogeneous term's decomposition"
 	    << decomposition << std::endl;
+#endif
   // Calculates the number of columns of the matrix.
   unsigned num_columns = decomposition.cols();
 
@@ -403,11 +409,12 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	    solution = sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
 					pow(coefficients[1], -1));
 	  }	  
-	  else {
-	    std::cout << "We want only polynomials or product" << std::endl
-		      << "of exponentials times polynomials" << std::endl;
-	    abort();
-	  }
+	  else
+	    throw ("PURRS error: at the moment the recurrence "
+		   "relation is solved only when the inhomogeneous term "
+		   "is polynomials or product of exponentials times "
+		   "polynomials.");
+
 	else
 	  // For non constant exponentials check if the base of the
 	  // exponential is a constant and its coefficient is a polynomial.
@@ -417,11 +424,11 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	    solution = sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
 		       exponential.op(0)*pow(coefficients[1], -1));
 	  }
-	  else {
-	    std::cout << "We want only polynomials or product" << std::endl
-	    	      << "of exponentials times polynomials" << std::endl;
-	    abort();
-	  }
+	  else
+	    throw ("PURRS error: at the moment the recurrence "
+		   "relation is solved only when the inhomogeneous term "
+		   "is polynomials or product of exponentials times "
+		   "polynomials."); 
 	// 'sum_poly_times_exponentials' calculates the sum from 0 while
 	// we want to start from 1. 
 	solution -= coeff_of_exp.subs(n == 0);	
@@ -432,15 +439,15 @@ solve(const GExpr& rhs, const GSymbol& n) {
     }
   default:
     {
-      std::cout << "Too large order" << std::endl;
-      abort();
+      throw ("PURRS error: order too large"); 
     } 
   } 
 
   solution_tot = solution_tot.expand();
   transform_exponentials(solution_tot, n);
+#if NOISY
   std::cout << "Solution  " << solution_tot << std::endl << std::endl;
-
+#endif
   /*
   // Build the expression here.
   static GSymbol x("x");
