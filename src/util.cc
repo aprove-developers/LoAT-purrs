@@ -248,6 +248,7 @@ PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
+  assert(p.coeff(x, deg_p).is_a_number());
   Number t_lcm = p.coeff(x, deg_p).ex_to_number().denominator();
   for (unsigned i = 0; i <= deg_p; ++i) {
     Expr t_coeff = p.coeff(x, i);
@@ -270,6 +271,7 @@ PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x,
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
+  assert(p.coeff(x, deg_p).is_a_number());
   Number t_lcm = p.coeff(x, deg_p).ex_to_number().denominator();
   for (unsigned i = 0; i <= deg_p; ++i) {
     Expr t_coeff = p.coeff(x, i);
@@ -382,9 +384,8 @@ PURRS::resultant(const Expr& p, const Expr& q, const Symbol& x) {
       }
       if (!f.is_rational_polynomial(x) || !g.is_rational_polynomial(x))
 	// The last chanche to compute the resultant is to use the
-	// method of the Sylvester matrix
-	// (see http://mathworld.wolfram.com/SylvesterMatrix.html).
-	return sylvester_matrix_resultant(f.expand(), g.expand(), x);
+	// Sylvester matrix method.
+	return sylvester_matrix_resultant(p.expand(), q.expand(), x);
       Expr r = prem(g, f, x);
       Expr factor = pwr(f.lcoeff(x), deg_g - deg_f + 1);
       // The rest of euclidean's division is given by the ratio
