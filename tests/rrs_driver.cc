@@ -948,12 +948,12 @@ main(int argc, char *argv[]) try {
 	break;
       case Recurrence::INDETERMINATE_RECURRENCE:
 	if (interactive)
-	  cout << "Indeterminate" << endl << endl;
+	  cout << endl << "Indeterminate" << endl << endl;
 	goto finish;
 	break;
       case Recurrence::MALFORMED_RECURRENCE:
 	if (interactive)
-	  cout << "Malformed" << endl << endl;
+	  cout << endl << "Malformed" << endl << endl;
 	goto finish;
 	break;
       case Recurrence::HAS_NON_INTEGER_DECREMENT:
@@ -982,12 +982,12 @@ main(int argc, char *argv[]) try {
 	break;
       case Recurrence::INDETERMINATE_RECURRENCE:
 	if (interactive)
-	  cout << "Indeterminate" << endl;
+	  cout << endl << "Indeterminate" << endl;
 	goto finish;
 	break;
       case Recurrence::MALFORMED_RECURRENCE:
 	if (interactive)
-	  cout << "Malformed" << endl;
+	  cout << endl << "Malformed" << endl;
 	goto finish;
 	break;
       case Recurrence::HAS_NON_INTEGER_DECREMENT:
