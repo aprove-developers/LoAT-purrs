@@ -1219,13 +1219,8 @@ PURRS::Recurrence::compute_lower_bound() const {
     // symbolic initial conditions `x(i)'.
     if (!initial_conditions_.empty()
 	&& !evaluated_lower_bound_.has_expression()) {
-# if 0
-      evaluated_exact_solution_.set_expression
-	(substitute_i_c_shifting(exact_solution_.expression()));
-#else
       evaluated_exact_solution_.set_expression
 	(compute_solution_on_i_c(exact_solution_.expression()));
-#endif
       evaluated_lower_bound_.set_expression
 	(evaluated_exact_solution_.expression());
     }
