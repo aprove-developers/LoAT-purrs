@@ -83,7 +83,7 @@ process_options(int argc, char* argv[]) {
   int option_index;
   int c;
 
-  while (1) {
+  while (true) {
     option_index = 0;
     c = getopt_long(argc, argv, OPTION_LETTERS, long_options, &option_index);
     if (c == EOF)
@@ -169,10 +169,9 @@ set_expectations(const string& s) {
 }
 
 bool
-solve_wrapper(const Expr& rhs, const Symbol& n, Expr& solution) {
+solve_wrapper(const Recurrence& rec) {
   try {
-    if (solve_try_hard(rhs, n, solution) == OK)
-      return true;
+    return rec.solve();
   }
   catch (exception& e) {
     if (verbose) {
@@ -219,7 +218,6 @@ main(int argc, char *argv[]) try {
   Symbol c("c");
   Symbol d("d");
   Expr_List symbols(n, a, b, c, d);
-  Expr rhs;
 
   while (input_stream) {
     ++line_number;
@@ -257,6 +255,7 @@ main(int argc, char *argv[]) try {
     else
       getline(line, rhs_string);
 
+    Expr rhs;
     try {
       rhs = Expr(rhs_string, symbols);
     }
@@ -273,15 +272,17 @@ main(int argc, char *argv[]) try {
       cout << "trying to solve x(n) = " << rhs << endl;
     }
 
+    Recurrence rec(rhs);
+
     Expr solution;
-    if (!solve_wrapper(rhs, n, solution)) {
+    if (!solve_wrapper(rec)) {
       if (interactive)
 	cout << "Sorry, this is too difficult." << endl;
     }
     else if (interactive) {
       cout << "*** SOLUTION ***"
 	   << endl
-	   << solution
+	   << rec.exact_solution()
 	   << endl
 	   << "****************"
 	   << endl << endl;
