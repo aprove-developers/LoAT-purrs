@@ -58,9 +58,6 @@ PURRS::vector_not_all_zero(const std::vector<Expr>& v) {
   return false;
 }
 
-/*!
-  Computes the gcd between the integers \p n and \p m.
-*/
 int
 PURRS::gcd(int n, int m) {
   int r = m;
@@ -83,9 +80,6 @@ PURRS::general_gcd(const Expr& p, const Expr& q, const Symbol& x) {
   return gcd(f,g);
 }
 
-/*!
-  Computes the LCM among the numbers in the vector \p v.
-*/
 PURRS::Number
 PURRS::lcm(const std::vector<Number>& v) {
   Number n = 1;

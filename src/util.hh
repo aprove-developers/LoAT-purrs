@@ -41,15 +41,22 @@ namespace Parma_Recurrence_Relation_Solver {
 bool
 vector_not_all_zero(const std::vector<Expr>& v);
 
-//! Computes the gcd between \p n and \p m.
+//! \brief
+//! Computes the gcd, greatest common divisor, between the integers
+//! \p n and \p m.
 int
 gcd(int n, int m);
 
-//! Computes the gcd between polynomials with possibly rational coefficients.
+//! \brief
+//! Computes the gcd, greatest common divisor, between polynomials
+//! with possibly rational coefficients.
 Expr
 general_gcd(const Expr& p, const Expr& q, const Symbol& x);
 
-//! Computes the lcm among the integers in the vector \p v.
+//! \brief
+//! If all the elements of \p v are integers returns the lcm,
+//! least common multiple, among them; returns the product of
+//! them otherwise.
 Number
 lcm(const std::vector<Number>& v);
 
