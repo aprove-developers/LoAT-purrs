@@ -118,7 +118,7 @@ Recurrence::get_order() {
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
   assert(tdip);
-  return tdip -> order;
+  return tdip -> get_order();
 }
 
 inline std::vector<unsigned>
@@ -127,7 +127,7 @@ Recurrence::get_decrements() {
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
   assert(tdip);
-  return tdip -> decrements;
+  return tdip -> get_decrements();
 }
 
 inline std::vector<unsigned>
@@ -136,7 +136,7 @@ Recurrence::get_initial_conditions() {
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
   assert(tdip);
-  return tdip -> initial_conditions;
+  return tdip -> get_initial_conditions();
 }
 
 inline Recurrence::Solver_Status
