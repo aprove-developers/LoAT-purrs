@@ -283,14 +283,15 @@ Installing (as root):
 Checking whether you built right executable:
   ginsh --version
 You should obtain the following output:
+
   ginsh - GiNaC Interactive Shell (GiNaC V1.0.13)
-    __,  _______  Copyright (C) 1999-2002 Johannes Gutenberg University Mainz,
+    __,  _______  Copyright (C) 1999-2003 Johannes Gutenberg University Mainz,
    (__) *       | Germany.  This is free software with ABSOLUTELY NO WARRANTY.
     ._) i N a C | You are welcome to redistribute it under certain conditions.
   <-------------' For details type `warranty;'.
-
+  
   Type ?? for a list of help topics.
-  >
+  > 
   <Type CTRL-D to exit the GiNaC shell>
 
 ============================================================================
