@@ -16,6 +16,7 @@
 % L expected to find lower bound with a provably correct result
 % l expected to find lower bound
 % E explodes
+% B bizarre: even assuming it makes sense, we have no plans to deal with it
 % * no expectations
 
 E	2*x(n-1)+n^100

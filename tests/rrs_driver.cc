@@ -407,6 +407,7 @@ set_expectations(const string& s) {
     case 'l':
       expect_lower_bound = true;
       break;
+    case 'B':
     case 'n':
       expect_not_to_be_solved = true;
       break;
