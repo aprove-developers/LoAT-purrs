@@ -743,6 +743,14 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     break;
   }
 
+  D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
+  exact_solution_.set_expression
+    (simplify_ex_for_output(exact_solution_.expression(), false));
+  exact_solution_.set_expression
+    (simplify_binomials_factorials_exponentials(exact_solution_.expression()));
+  exact_solution_.set_expression
+    (simplify_logarithm(exact_solution_.expression()));
+
   if (is_linear_finite_order_const_coeff())
     if (order() == 1 )
       // FIXME: per ora non si puo' usare la funzione
@@ -764,14 +772,6 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   // Resubstitutes eventually auxiliary definitions contained in
   // the solution with their original values.
   //exact_solution_.set_expression(blackboard.rewrite(solution));
-
-  D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
-  exact_solution_.set_expression
-    (simplify_ex_for_output(exact_solution_.expression(), false));
-  exact_solution_.set_expression
-    (simplify_binomials_factorials_exponentials(exact_solution_.expression()));
-  exact_solution_.set_expression
-    (simplify_logarithm(exact_solution_.expression()));
 
   // Only for the output.
   if (exact_solution_.expression().is_a_add()) {
