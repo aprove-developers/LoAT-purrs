@@ -83,11 +83,11 @@ compute_product_on_add(const Expr& e, const Number& lower, const Expr& upper,
 	    e_prod = 0;
 	    e_prod_computed = true;
 	  }
-  }
-  else if (e == 2*Recurrence::n+1) {
-    e_prod = factorial(2*Recurrence::n+1) * pwr(2, -Recurrence::n)
-      / factorial(Recurrence::n);
-    e_prod_computed = true;
+    else if (e == 2*Recurrence::n+1) {
+      e_prod = factorial(2*Recurrence::n+1) * pwr(2, -Recurrence::n)
+	/ factorial(Recurrence::n);
+      e_prod_computed = true;
+    }
   }
   else {
     // Allows to compute `\prod_{k=lower}^upper e(k)' for function as `a*n+a*b'
@@ -215,58 +215,57 @@ comp_prod(const Expr& e, const Number& lower, const Expr& upper,
 //! \f[
 //!   e!(0) \defeq 1,
 //!   \qquad
-//!   e!(n) \defeq \prod_{k=lower}^upper e(k).
+//!   e!(n) \defeq \prod_{k=lower}^n e(k),
 //! \f]
+//! where \f$ lower \f$ is an integer.
 /*!
-  When possible to find the closed form for \f$ \prod_{k=lower}^upper e(k) \f$,
+  When possible to find the closed form for \f$ \prod_{k=lower}^n e(k) \f$,
   we compute it; when it is not possible we returns the symbolic function
   for the product.
-  We observe that if also \f$ upper \f$ is a number, in particular it must be
-  an integer number, than the product is always computable: so the following
-  definition is applied only when \f$ upper \f$ is not a number.
-  We defined inductively \f$ \prod_{k=lower}^upper e(k) \f$ as follows:
+  We defined inductively \f$ \prod_{k=lower}^n e(k) \f$ as follows:
   - if \f$ e \f$ is a constant, i.e. it not contains \f$ n \f$,
-    then \f$ \prod_{k=lower}^upper e(k) = e^{upper - lower + 1} \f$;
+    then \f$ \prod_{k=lower}^n e(k) = e^{n - lower + 1} \f$;
   - if \f$ e = n \f$ then
       if \f$ lower > 0 \f$ then
-        \f$ \prod_{k=lower}^upper e(k) = upper! / (lower - 1)! \f$;
-      else \f$ \prod_{k=lower}^upper e(k) = 0 \f$;
+        \f$ \prod_{k=lower}^n e(k) = n! / (lower - 1)! \f$;
+      else \f$ \prod_{k=lower}^n e(k) = 0 \f$;
   - if \f$ e = n + k \f$ where \f$ k \in \Zset \f$
       if \f$ lower > -k \f$
         \f$ e_prod = e! / (lower + k - 1)! \f$;
-      else \f$ \prod_{k=lower}^upper e(k) = 0 \f$;
+      else \f$ \prod_{k=lower}^n e(k) = 0 \f$;
   - if \f$ e = 2*n+1 \f$,
-    then \f$ \prod_{k=lower}^upper e(k) = \frac{(2*n + 1)!}{2^n * n} \f$;
+    then \f$ \prod_{k=lower}^n e(k) = \frac{(2*n + 1)!}{2^n * n!} \f$;
   - if \f$ e \f$ is a power there are two cases.
     We consider \f$ a \f$ and \f$ b \f$ so that \f$ e = a^b \f$, 
     - if \f$ a \f$ contains \f$ n \f$ and \f$ b \f$ is a number,
-      then \f$ \prod_{k=lower}^upper e(k) = (\prod_{k=lower}^upper a(k))^b;
+      then \f$ \prod_{k=lower}^n e(k) = (\prod_{k=lower}^n a(k))^b;
     - if \f$ a \f$ not contains \f$ n, i.e. \f$ a \f$ is a constant,
-      then \f$ \prod_{k=lower}^upper e(k) = k^{\sum_{h=lower}^upper f(h)} \f$;
+      then \f$ \prod_{k=lower}^n e(k) = k^{\sum_{h=lower}^n f(h)} \f$;
   - if \f$ e = e_1 \cdots e_m \f$, where \f$ e_i \f$,
     for \f$ i = 1, \dots, m \f$, is one of the previous case,
-    then \f$ \prod_{k=lower}^upper e(k) =  \prod_{k=lower}^upper e_1(k) \cdots
-    \prod_{k=lower}^upper e_m(k) \f$.
+    then \f$ \prod_{k=lower}^n e(k) =  \prod_{k=lower}^n e_1(k) \cdots
+    \prod_{k=lower}^n e_m(k) \f$.
 */
 PURRS::Expr
 PURRS::compute_product(const Expr& e,
 		       const Number& lower, const Expr& upper) {
   assert(lower.is_integer());
-  // Special case: `upper' is a number. 
-  if (upper.is_a_number()) {
-    Number num_upper = upper.ex_to_number();
-    assert(num_upper.is_integer());
-    if (lower > num_upper)
-      return 1;
-    else if (lower == num_upper)
-      return e.substitute(Recurrence::n, lower);
-    else {
-      Expr tmp = 1;
-      for (Number i = lower; i <= num_upper; ++i)
-	tmp *= e.substitute(Recurrence::n, i);
-      return tmp;
-    }
-  }
+  assert(upper == Recurrence::n);
+//   // Special case: `upper' is a number. 
+//   if (upper.is_a_number()) {
+//     Number num_upper = upper.ex_to_number();
+//     assert(num_upper.is_integer());
+//     if (lower > num_upper)
+//       return 1;
+//     else if (lower == num_upper)
+//       return e.substitute(Recurrence::n, lower);
+//     else {
+//       Expr tmp = 1;
+//       for (Number i = lower; i <= num_upper; ++i)
+// 	tmp *= e.substitute(Recurrence::n, i);
+//       return tmp;
+//     }
+//   }
   Expr common_factor;
   Expr rem;
   factorize(e, common_factor, rem);
