@@ -34,11 +34,11 @@ namespace Parma_Recurrence_Relation_Solver {
 //! Gosper's algorithm, from Chapter 5 of \f$ A = B \f$, by 
 //! M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
 bool
-full_gosper(const Expr& t_n, const Number& lower, const Expr& upper,
-	    Expr& solution);
+full_gosper(const Symbol& m, const Expr& t_n,
+	    const Number& lower, const Expr& upper, Expr& solution);
 
 bool
-partial_gosper(const Expr& t_n, Expr& r_n,
+partial_gosper(const Symbol& m, const Expr& t_n, Expr& r_n,
 	       const Number& lower, const Expr& upper, Expr& solution);
 
 } // namespace Parma_Recurrence_Relation_Solver

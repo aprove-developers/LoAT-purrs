@@ -83,7 +83,7 @@ int main() try {
     l = Expr_List(Recurrence::n, a, b, c, d);
     Expr u_b = Expr(s,l);
 
-    if (full_gosper(t_n, l_b, u_b, solution))
+    if (full_gosper(Recurrence::n, t_n, l_b, u_b, solution))
 #if NOISY
     std::cout << endl << "The sum is: " << solution << std::endl;
 #endif
