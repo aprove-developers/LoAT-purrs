@@ -71,6 +71,7 @@ gosper.hh \
 simplify.hh \
 numerator_denominator.hh \
 factorize.hh \
+factorize_giac.hh \
 compute_prod.hh \
 ep_decomp.hh \
 sum_poly.hh \
@@ -117,6 +118,7 @@ zeilberger.cc \
 gosper.cc \
 numerator_denominator.cc \
 factorize.cc \
+factorize_giac.cc \
 poly_factor.cc \
 finite_order.cc \
 functional_equation.cc \
