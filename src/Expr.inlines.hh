@@ -713,81 +713,97 @@ prod(const Expr& index, const Expr& lower, const Expr& upper,
 
 inline bool
 Expr::is_the_abs_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, abs);
 }
 
 inline bool
 Expr::is_the_exp_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, exp);
 }
 
 inline bool
 Expr::is_the_log_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, log);
 }
 
 inline bool
 Expr::is_the_sin_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, sin);
 }
 
 inline bool
 Expr::is_the_cos_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, cos);
 }
 
 inline bool
 Expr::is_the_tan_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, tan);
 }
 
 inline bool
 Expr::is_the_acos_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, acos);
 }
 
 inline bool
 Expr::is_the_factorial_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, factorial);
 }
 
 inline bool
 Expr::is_the_gamma_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, tgamma);
 }
 
 inline bool
 Expr::is_the_binom_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, binom);
 }
 
 inline bool
 Expr::is_the_x_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, x);
 }
 
 inline bool
 Expr::is_the_floor_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, floor);
 }
 
 inline bool
 Expr::is_the_Sc_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, Sc);
 }
 
 inline bool
 Expr::is_the_mod_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, mod);
 }
 
 inline bool
 Expr::is_the_sum_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, sum);
 }
 
 inline bool
 Expr::is_the_prod_function() const {
+  using namespace GiNaC;
   return is_ex_the_function(*this, prod);
 }
 
