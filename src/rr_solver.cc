@@ -26,6 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "globals.hh"
 #include "util.hh"
+#include "sum_poly.hh"
 #include "alg_eq_solver.hh"
 #include <climits>
 
@@ -311,7 +312,81 @@ solve(const GExpr& rhs, const GSymbol& n) {
   // constant exponential with its coefficients. 
   GMatrix decomposition = decomposition_inhomogeneous_term(e, n);
   std::cout << "Inhomogeneous term's decomposition"
-	    << decomposition << std::endl; 
+	    << decomposition << std::endl;
+  // Calculates the number of columns of the matrix.
+  unsigned num_columns = decomposition.cols();
+
+  GSymbol k("k");
+  // Initial condition.
+  GSymbol x_0("x_0");
+  GExpr solution_tot = x_0;
+
+  switch (order) {
+  case 1:
+    {
+      // The solution of x(n) = \alpha * x(n-1) + p(n) with x_0 as
+      // initial condition is
+      // x(n) = \alpha^n * x_0 + sum_{k=1}^n \alpha^(n-k)*p(k)
+      // that can be rewritten as
+      // x(n) = \alpha^n * ( x_0 - p(0) + sum_{k=0}^n \alpha^(-k)*p(k) )
+      GExpr prod = pow(coefficients[1],n);
+      //std::cout << "Part of solution  " << prod << std::endl;
+      for (size_t i = 0; i < num_columns; ++i) {
+	GExpr solution = 0;
+	GExpr exponential = decomposition(0, i);
+	GExpr coeff = decomposition(1, i);
+	if (i < num_columns -1) 
+	  // For non constant exponentials check if the base of the
+	  // exponential is a constant and its coefficient is a polynomial.
+	  if (GiNaC::is_a<GiNaC::numeric>(exponential.op(0)) && 
+	      coeff.info(info_flags::polynomial))  {
+	    GExpr coeff_k = coeff.subs(n == k);
+	    sum_poly_times_exponentials(coeff_k, k, n, 
+					exponential.op(0)*pow(coefficients[1],
+							      -1),
+					solution);
+	    // std::cout << "solution formula " << prod << std::endl;
+	    // 'sum_poly_times_exponentials' calculates the sum from 0 while
+	    // we want start from 1. 
+	    solution -= coeff.subs(n == 0);
+	    //std::cout << "solution - p(0) " << prod << std::endl;
+	  }
+	  else {
+	    std::cout << "We want only polynomials or product" << std::endl
+	    	      << "of exponentials times polynomials" << std::endl;
+	    abort();
+	  }
+	else
+	  // For the constant exponential check only if the coefficient
+	  // is a polynomial.
+	  if (coeff.info(info_flags::polynomial)) {
+	    GExpr coeff_k = coeff.subs(n == k);  
+	    sum_poly_times_exponentials(coeff, k, n, pow(coefficients[1], -1),
+					solution);
+	    //std::cout << "solution formula " << solution << std::endl;
+	    //std::cout << "coeff " << coeff << std::endl;
+	    //solution -= coeff.subs(n == 0);
+  	    solution -= coeff*pow(coefficients[1], -1).subs(n == 0);
+	    //std::cout << "coeff after subs " << coeff << std::endl;
+	  }
+	  else {
+	    std::cout << "We want only polynomials or product" << std::endl
+		      << "of exponentials times polynomials" << std::endl;
+	    abort();
+	  }
+	solution_tot += solution;
+      }
+      solution_tot *= prod;
+      break;
+    }
+  default:
+    {
+      std::cout << "Too large order" << std::endl;
+      abort();
+    } 
+  } 
+
+  std::cout << "Solution  " << solution_tot.expand() << std::endl;
 
   /*
   // Build the expression here.
