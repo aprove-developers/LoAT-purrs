@@ -792,12 +792,9 @@ PURRS::Recurrence::compute_lower_bound() const {
     else if (is_functional_equation()) {
       if ((status = approximate_functional_equation_lower()) != SUCCESS)
 	return status;
-      if (!initial_conditions.empty()) {
+      if (!initial_conditions.empty())
 	lower_bound_.set_expression
 	  (substitute_i_c_shifting(false, lower_bound_.expression()));
-	upper_bound_.set_expression
-	  (substitute_i_c_shifting(false, upper_bound_.expression()));
-      }
       return SUCCESS;
     }
     // Non linear finite order.
@@ -851,12 +848,9 @@ PURRS::Recurrence::compute_upper_bound() const {
     else if (is_functional_equation()) {
       if ((status = approximate_functional_equation_upper()) != SUCCESS)
 	return status;
-      if (!initial_conditions.empty()) {
+      if (!initial_conditions.empty())
 	upper_bound_.set_expression
 	  (substitute_i_c_shifting(false, upper_bound_.expression()));
-	lower_bound_.set_expression
-	  (substitute_i_c_shifting(false, lower_bound_.expression()));
-      }
       return SUCCESS;
     }
     // Non linear finite order.
