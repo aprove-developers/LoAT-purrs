@@ -199,9 +199,6 @@ solve_equation_4(const Number& a1, const Number& a2,
   D_MSGVAR("Before: ", p); 
   D_MSGVAR("Before: ", q);
 
-  // FIXME: the one and only `n' symbol should be global,
-  // i.e., created once and for all.
-  Symbol n("n");
   p = simplify_ex_for_output(p, false);
   q = simplify_ex_for_output(q, false);
   D_VAR(p); 
