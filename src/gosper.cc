@@ -303,7 +303,7 @@ gosper_step_three(const Symbol& m, const Expr& a_m, const Expr& b_m,
 
 /*!
   Gosper's algorithm, step 4: see Chapter 5 of \f$ A = B \f$, by 
-  M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
+  M.~Petkovsek, H.~Wilf and D.~Zeilberger.
 */
 Expr
 gosper_step_four(const Symbol& m, const Expr& t,
@@ -343,7 +343,7 @@ gosper_step_four(const Symbol& m, const Expr& t,
 
 /*!
   Gosper's algorithm, from Chapter 5 of \f$ A = B \f$, by 
-  M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
+  M.~Petkovsek, H.~Wilf and D.~Zeilberger.
   Let
   \f[
     S_m = \sum_{k=0}^{m-1} t_k

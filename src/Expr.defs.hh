@@ -1088,7 +1088,7 @@ private:
   friend Expr mod(const Expr& x, const Expr& y);
 
   //! Builds the expression corresponding to \p ge.
-  Expr(const GiNaC::ex& ge);
+  Expr(const Base& ge);
 
   //! Builds the function corresponding to \p gf.
   Expr(const GiNaC::function& gf);

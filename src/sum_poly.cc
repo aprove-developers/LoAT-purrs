@@ -62,7 +62,8 @@ falling_product(const Expr& x, const Number& k, Expr& q) {
 
 /*!
   This routine computes \f$\sum_{j=0}^N j_{(k)} x^j \f$ for a non negative
-  integer \f$ k \f$ by means of a formula explained in purrs.tex, \S4.3.2.
+  integer \f$ k \f$ by means of a formula explained in purrs.tex,
+  section~4.3.2.
   The closed formula is returned in the expression <CODE>q</CODE>.
 */
 void
@@ -81,7 +82,7 @@ sum_falling_prod_times_exp(const Number& k, const Symbol& x, const Symbol& N,
 /*!
   This routine computes the polynomial decomposition
   \f$ p(x) = \sum_{k=0}^d b_k x_{(k)} \f$ where \f$ d \f$ is the degree
-  of the polynomial \f$ p \f$, as explained in purrs.tex, \S4.3.2.
+  of the polynomial \f$ p \f$, as explained in purrs.tex, section~4.3.2.
   The coefficients \f$ b_0\f$, \f$\dots\f$, \f$ b_d \f$ are stored
   in the vector <CODE> summands </CODE>.
 */
@@ -136,7 +137,7 @@ sum_poly_alt(const Expr& p, const Symbol& x, const Symbol& N, Expr& q) {
 /*!
   This routine computes \f$\sum_{j=0}^N p(j) \f$ for a non
   negative integer \f$ N \f$ and a polynomial \f$ p \f$ by means
-  of a formula explained in purrs.tex, \S4.3.3.
+  of a formula explained in purrs.tex, section~4.3.3.
   The closed formula is returned in the expression <CODE> q </CODE>.
 */
 void

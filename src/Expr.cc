@@ -85,7 +85,6 @@ get_out_factors_from_argument(const ex& e, const ex& x, ex& in, ex& out) {
 
 //! Evaluation of the <CODE>sum(index, lower, upper, summand)</CODE>.
 /*!
-  \fn GiNaC::ex
   sum_eval(const ex& index, const ex& lower, const ex& upper,
            const ex& summand)
 
@@ -179,7 +178,6 @@ REGISTER_FUNCTION(sum,
 
 //! Evaluation of the <CODE>prod(index, lower, upper, factor)</CODE>.
 /*!
-  \fn GiNaC::ex
   prod_eval(const ex& index, const ex& lower, const ex& upper,
   const ex& factor)
 
@@ -335,7 +333,6 @@ REGISTER_FUNCTION(prod,
 
 //! Evaluation of the <CODE>mod(x, y)</CODE>.
 /*!
-  \fn GiNaC::ex
   mod_eval(const ex& x, const ex& y)
 
   \param x    The expression that we want divide.
