@@ -8,7 +8,7 @@
 % Some solutions have to be fixed.
 %
 % Notational convention: we write mod(n, k) for the least non negative 
-% integer that is congruent to n modulo k (not a funcion of GiNaC)
+% integer that is congruent to n modulo k (not a function of GiNaC)
 %
 
 % from purrs.tex
@@ -133,7 +133,7 @@ x(n-1) + x(n-2)
 % 3. Order 2 (wrong answer in CK!)
 % x(n) =
 -2 * x(n-1) - x(n-2) + 2^n
-% Solution: x(n) = 4/9 * 2^n + (-1)^n * n * 4/3 - (-1)^n * 4/9 + (-1)^n *(1-n) * x(0) - (-1)^n * n x(1)
+% Solution: x(n) = 4/9 * 2^n + (-1)^n * n * 4/3 - (-1)^n * 4/9 + (-1)^n *(1-n) * x(0) - (-1)^n * n * x(1)
 
 % 4. Order 2 (actually, order 1 disguised)
  % x(n) =
