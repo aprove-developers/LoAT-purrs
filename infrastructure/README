@@ -6,9 +6,9 @@ libtool 1.4.2
 gcc 3.0.3
 gmp 4.0.1      (configure with --enable-cxx and using -fexceptions) (1)
 cln 1.1.4      (ignore the errors given by `make install') (2)
-ginac 1.0.5
 fi_lib++ 2.0   (follow the instructions) (3)
 ntl 5.2        (4)
+ginac          (use our CVS version and forget about religion) (5)
 
 Just for the web-based demos:
 
@@ -47,6 +47,17 @@ cd ntl-5.2/src
 ./configure NTL_GMP_LIP=on NTL_STD_CXX=on GMP_PREFIX=/usr/local
 make
 make check
+su
+<root password>
+make install
+
+(5)
+cvs -d cvs.cs.unipr.it:/cvs/GiNaC checkout GiNaC
+touch Makefile.in aclocal.m4 configure
+mkdir /tmp/objdir
+cd /tmp/objdir
+~/GiNaC/configure --prefix=/usr/local
+make
 su
 <root password>
 make install
