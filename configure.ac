@@ -125,6 +125,14 @@ LIBS="$ac_save_LIBS"
 extra_includes="${extra_includes} ${gmp_includes_option}"
 
 
+dnl GiNaC library
+
+AC_PATH_GINAC(1.0.3, [
+  LIBS="$LIBS $GINACLIB_LIBS"
+  extra_includes="${extra_includes} $GINACLIB_CPPFLAGS"  
+], AC_MSG_ERROR([need to have GiNaC installed]))
+
+
 dnl Compilation flags
 
 if test x"$GXX" = xyes
