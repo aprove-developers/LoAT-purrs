@@ -983,6 +983,8 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	Expr rhs_first_order;
 	bool rewritten;
 	index_type first_valid_index;
+	// If it is possible, rewrites the recurrence in
+	//! the form of a weighted-average recurrence.
 	if (rewrite_weighted_average_recurrence(rhs_rewritten, addend, weight,
 						inhomogeneous, rhs_first_order,
 						first_valid_index,
@@ -996,6 +998,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	    bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	    rec_rewritten = true;
 	    set_original_rhs(rhs);
+	    set_lower_limit(addend.arg(1).ex_to_number().to_unsigned_int());
 	    Symbol h;
 	    rhs = weight * PURRS::sum(h, 0, n-1, x(h)) + inhomogeneous;
 	  }
@@ -1090,6 +1093,8 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	  Expr rhs_first_order;
 	  bool rewritten;
 	  index_type first_valid_index;
+	  // If it is possible, rewrites the recurrence in
+	  //! the form of a weighted-average recurrence.
 	  if (rewrite_weighted_average_recurrence(rhs_rewritten, factor,
 						  weight, inhomogeneous,
 						  rhs_first_order,
@@ -1104,6 +1109,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	      bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	      rec_rewritten = true;
 	      set_original_rhs(rhs);
+	      set_lower_limit(factor.arg(1).ex_to_number().to_unsigned_int());
 	      Symbol h;
 	      rhs = weight * PURRS::sum(h, 0, n-1, x(h)) + inhomogeneous;
 	    }
