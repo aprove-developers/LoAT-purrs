@@ -593,31 +593,43 @@ factorial(const Expr& x) {
 
 inline Expr
 quo(const Expr& a, const Expr& b, const Symbol& x) {
+  assert(a.is_polynomial(x.s));
+  assert(b.is_polynomial(x.s));
   return GiNaC::quo(a, b, x.s);
 }
 
 inline Expr
 rem(const Expr& a, const Expr& b, const Symbol& x) {
+  assert(a.is_polynomial(x.s));
+  assert(b.is_polynomial(x.s));
   return GiNaC::rem(a, b, x.s);
 }
 
 inline Expr
 prem(const Expr& a, const Expr& b, const Symbol& x) {
+  assert(a.is_polynomial(x.s));
+  assert(b.is_polynomial(x.s));
   return GiNaC::prem(a, b, x.s);
 }
 
 inline Expr
 gcd(const Expr& a, const Expr& b) {
+  assert(a.is_multivariate_polynomial());
+  assert(b.is_multivariate_polynomial());
   return GiNaC::gcd(a, b);
 }
 
 inline Expr
 lcm(const Expr& a, const Expr& b) {
+  assert(a.is_multivariate_polynomial());
+  assert(b.is_multivariate_polynomial());
   return GiNaC::lcm(a, b);
 }
 
 inline Expr
 sqrfree(const Expr& x, const Expr_List& y = Expr_List()) {
+  for (unsigned i = y.nops(); i-- > 0; )
+    assert(x.is_polynomial(y.op(i).ex_to_symbol()));
   return GiNaC::sqrfree(x, y.l);
 }
 
@@ -628,6 +640,9 @@ lsolve(const Expr_List& x, const Expr_List& y) {
 
 inline Expr
 x(const Expr& y) {
+  Number num;
+  if (y.is_a_number(num))
+    assert(num.is_nonnegative_integer());
   return x(static_cast<const Expr::Base>(y));
 }
 
