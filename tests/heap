@@ -229,7 +229,6 @@ n	n*x(n/356)+n*log(n)/log(2)
 n	n+x(n*2)
 n	sin(n-1)*x(n-1)
 n	sqrt(n)*x(sqrt(n))+n
-n	sum(k,0,n,x(k))+n^2
 n	x((3*(n-1)))
 n	x((3*n)/3)
 n	x((7/10)*n)+x((1/5)*n)+2*n
@@ -978,6 +977,7 @@ yv	sqrt(n)
 yv	sum(a,0,n-1,x(a))
 yv	sum(a,0,n-1,x(a))+1
 yv	sum(a,1,n,log(a)^2)
+yv	sum(k,0,n,x(k))+n^2
 yv	sum(k,0,n,1/n^2)
 yv	sum(k,0,n-1,x(k))
 yv	sum(k,0,n-1,x(k)+1)
