@@ -26,15 +26,18 @@ http://www.cs.unipr.it/purrs/ . */
 #define NOISY 0
 #endif
 
+#include "Expr.defs.hh"
+#include "Number.defs.hh"
+#include "Symbol.defs.hh"
 #include "util.hh"
 
-namespace Parma_Recurrence_Relation_Solver {
+namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 /*!
   Computes the gcd between the integers \p n and \p m.
 */
 int
-gcd(int n, int m) {
+PURRS::gcd(int n, int m) {
   int r = m;
   while (r != 0){
     r = n % m;
@@ -48,8 +51,8 @@ gcd(int n, int m) {
   Accept rational polynomial as input, and normalize them 
   before calling GiNaC's <CODE>gcd()</CODE>.
 */
-Expr
-general_gcd(const Expr& p, const Expr& q, const Symbol& x) {
+PURRS::Expr
+PURRS::general_gcd(const Expr& p, const Expr& q, const Symbol& x) {
   Expr f = convert_to_integer_polynomial(p, x);
   Expr g = convert_to_integer_polynomial(q, x);
   return gcd(f,g);
@@ -58,22 +61,22 @@ general_gcd(const Expr& p, const Expr& q, const Symbol& x) {
 /*!
   Computes the LCM among the numbers in the vector \p v.
 */
-Number
-lcm(const std::vector<Number>& v) {
+PURRS::Number
+PURRS::lcm(const std::vector<Number>& v) {
   Number n = 1;
   for (unsigned i = v.size(); i-- > 0; )
     n = lcm(n, v[i]);
   return n;
 }
 
-Expr
-cubic_root(const Expr& e) {
+PURRS::Expr
+PURRS::cubic_root(const Expr& e) {
   static Expr one_third = Expr(1)/3;
   return pwr(e, one_third);
 }
 
 void
-clear(Expr_List& l) {
+PURRS::clear(Expr_List& l) {
   for (unsigned n = l.nops(); n-- > 0; )
     l.remove_first();
   assert(l.nops() == 0);
@@ -84,8 +87,8 @@ clear(Expr_List& l) {
   <CODE>GiNaC::match()</CODE> and that the binding for the wildcard of
   index \p wild_index is in the position \p wild_index of \p substitution.
 */
-Expr
-get_binding(const Expr_List& substitution, unsigned wild_index) {
+PURRS::Expr
+PURRS::get_binding(const Expr_List& substitution, unsigned wild_index) {
   assert(wild_index < substitution.nops());
   assert(substitution.op(wild_index).is_relation_equal());
   //assert(substitution.op(wild_index).lhs() == wild(wild_index));
@@ -104,7 +107,7 @@ get_binding(const Expr_List& substitution, unsigned wild_index) {
   \f$ e = p + r \f$.
 */
 void
-isolate_polynomial_part(const Expr& e, const Symbol& x,
+PURRS::isolate_polynomial_part(const Expr& e, const Symbol& x,
 			Expr& polynomial, Expr& rest) {
   if (e.is_a_add()) {
     polynomial = 0;
@@ -133,8 +136,8 @@ isolate_polynomial_part(const Expr& e, const Symbol& x,
   This function converts a polynomial with rational coefficients into the
   associate primitive polynomial divides the input polynomial.
 */
-Expr
-convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
+PURRS::Expr
+PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
   assert(p.is_rational_polynomial());
   unsigned deg_p = p.degree(x);
 
@@ -154,8 +157,8 @@ convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
   This version also returns a Number containing the factor used to 
   convert.
 */
-Expr
-convert_to_integer_polynomial(const Expr& p, const Symbol& x,
+PURRS::Expr
+PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x,
                               Number& factor) {
   assert(p.is_rational_polynomial());
   unsigned deg_p = p.degree(x);
@@ -186,8 +189,8 @@ convert_to_integer_polynomial(const Expr& p, const Symbol& x,
     Here \f$ a \f$ is the leading coefficient of the polynomial \f$ f \f$.
   - \f$ Res(f, b) = b^{\deg(f)} \f$ if \f$ b \f$ is a scalar.
 */
-Expr
-resultant(const Expr& p, const Expr& q, const Symbol& x) {
+PURRS::Expr
+PURRS::resultant(const Expr& p, const Expr& q, const Symbol& x) {
   D_VAR(p);
   D_VAR(q);
   assert(p.is_rational_polynomial());
@@ -233,5 +236,3 @@ resultant(const Expr& p, const Expr& q, const Symbol& x) {
   D_MSGVAR("Resultant(f(x), g(x)): ", res);
   return res;
 }
-
-} // namespace Parma_Recurrence_Relation_Solver
