@@ -360,6 +360,12 @@ main(int argc, char *argv[]) try {
 	     << "****************"
 	     << endl << endl;
 	rec.dump(cout);
+	cout << "*** APPROXIMATED SOLUTION ***"
+	     << endl
+	     << rec.approximated_solution()
+	     << endl
+	     << "****************"
+	     << endl << endl;
       }
       if (latex) {
 	cout << "\\medskip\\indent\n\\(\n x(n) = ";

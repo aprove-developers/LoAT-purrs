@@ -131,7 +131,7 @@ PURRS::Blackboard::approximate(Cached<Expr>& ce) const {
 
 PURRS::Expr
 PURRS::Blackboard::approximate(const Expr& e) const {
-  return generic_size_norm(e, *this);
+  return generic_approximate(e, *this);
 }
 
 void

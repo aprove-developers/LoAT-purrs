@@ -141,7 +141,11 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
     switch (e.nops()) {
     case 1:
       {
-	if (generic_approximate(e.arg(0), sh, operand_ae, operand_aci))
+	if (e.is_the_x_function()) {
+	  ae = e;
+	  interval_result = false;
+	}
+	else if (generic_approximate(e.arg(0), sh, operand_ae, operand_aci))
 	  if (e.is_the_exp_function())
 	    aci = exp(operand_aci);
 	  else if (e.is_the_log_function())
@@ -154,8 +158,10 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
 	    aci = tan(operand_aci);
 	  else if (e.is_the_acos_function())
 	    aci = acos(operand_aci);
-	  else
-	    abort();
+	  else {
+	    ae = apply(e.functor(), Complex_Interval(operand_aci));
+	    interval_result = false;
+	  }
 	else
 	  ae = apply(e.functor(), operand_ae);
       }
