@@ -416,12 +416,6 @@ solve_equation_2(const GExpr& b, const GExpr& c,
   x2 = (-b - sqrt_d)/2;
 }
 
-static GExpr
-cubic_root(const GExpr& e) {
-  static GExpr one_third = GExpr(1)/3;
-  return pow(e, one_third);
-}
-
 /*!
   Solve the equation \f$x^3 + a_1 x^2 + a_2 x + a_3 = 0\f$
   and return <CODE>true</CODE> if and only if all the solutions are real.
@@ -571,42 +565,3 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   x3 = simplify_on_output_ex(x3, n, false);
   x4 = simplify_on_output_ex(x4, n, false);
 }
-
-// The old method used to solve equation of degree 4 was wrong, as you
-// can see by the following examples:
-// 1. Trying to solve 2+x^4-x = 0
-//    The four solutions, estimated, are
-//    x_1= -0.849848 + 0.654272*I
-//    x_2= -0.849848 - 0.654272*I
-//    x_3= 0.849848 + 1.008172*I
-//    x_4= 0.849848 - 1.008172*I
-//    Instead the correct ones are
-//    x_1= -0.849848 + 1.00817*I
-//    x_2= -0.849848 - 1.00817*I
-//    x_3= 0.849848 + 0.654272*I
-//    x_4= 0.849848 - 0.654272*I
-// 2. Trying to solve (1+x)^4+4 = 0
-//    x_1 = -2+1/2*sqrt(12)    <- real!! 
-//    x_2 = -2-1/2*sqrt(12)    <- real!!
-//    x_3 = 1/2*sqrt(-20)
-//    x_4 = -1/2*sqrt(-20)
-//    Instead the correct ones are
-//    x_1 = I
-//    x_2 = -I
-//    x_3 = -2+I
-//    x_4 = -2-I
-// Strangely the equation x^4+4 = 0 gave the right solutions.
-// Several equations gave the right solutions (for example x^4+3*x^3-1 = 0).
-// 
-// OLD CODE:
-//
-//   solve_equation_3(-a2,
-// 	              a1*a3 - 4*a4,
-// 		      4*a2*a4 - a3*a3 - a1*a1*a4,
-// 		      y1, y2, y3);
-//   GExpr d1 = pow(a1, 2) - 4*a2 + 4*y1;
-//   GExpr d2 = pow(y1, 2) - 4*a4;
-//   GExpr sqrt_d1 = sqrt(d1);
-//   GExpr sqrt_d2 = sqrt(d2);
-//   solve_equation_2((a1 + sqrt_d1)/2, (y1 - sqrt_d2)/2, x1, x2);
-//   solve_equation_2((a1 - sqrt_d1)/2, (y1 + sqrt_d2)/2, x3, x4);

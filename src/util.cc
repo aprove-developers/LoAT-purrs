@@ -37,6 +37,12 @@ gcd(int n, int m) {
   return n;  
 }
 
+GExpr
+cubic_root(const GExpr& e) {
+  static GExpr one_third = GExpr(1)/3;
+  return pow(e, one_third);
+}
+
 void
 clear(GList& l) {
   for (unsigned n = l.nops(); n-- > 0; )

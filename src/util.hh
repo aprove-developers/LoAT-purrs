@@ -32,6 +32,10 @@ http://www.cs.unipr.it/purrs/ . */
 int
 gcd(int n, int m);
 
+//! Computes the cubic root of \f$e\f$.
+GExpr
+cubic_root(const GExpr& e);
+
 //! Removes all the elements from \p l.
 void
 clear(GList& l);
