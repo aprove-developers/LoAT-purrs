@@ -195,7 +195,7 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 	  Number num = initial_conditions.begin()->second.ex_to_number();
 	  if (num.is_negative()) {
 	    s << "at the moment are allowed only non-negative values\n"
-	      << "for the initial conditions.";
+	      << "for the initial conditions of functional equations.";
 	    throw_invalid_argument(method, s.str().c_str());
 	  }
 	}
@@ -221,7 +221,7 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 	    Number num = i->second.ex_to_number();
 	    if (num.is_negative()) {
 	      s << "at the moment are allowed only non-negative values\n"
-		<< "for the initial conditions.";
+		<< "for the initial conditions of functional equations.";
 	      throw_invalid_argument(method, s.str().c_str());
 	    }
 	  }
