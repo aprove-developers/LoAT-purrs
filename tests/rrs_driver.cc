@@ -122,11 +122,14 @@ Expr_List symbols;
 
 static void
 init_symbols() {
-  Symbol a("a");
-  Symbol b("b");
-  Symbol c("c");
-  Symbol d("d");
-  symbols = Expr_List(Recurrence::n, a, b, c, d);
+  symbols.append(Recurrence::n);
+  char a[2];
+  a[1] = '\0';
+  for (char c = 'a'; c <= 'z'; ++c)
+    if (c != 'e' && c != 'n' && c != 'x') {
+      a[0] = c;
+      symbols.append(Symbol(a));
+    }
 }
 
 static string parse_error_message;
@@ -134,6 +137,8 @@ static string parse_error_message;
 static bool
 parse_expression(const string& s, Expr& expr) {
   try {
+    //  for (unsigned int i = 0; i < symbols.nops(); ++i)
+    //    cout << symbols.op(i) << endl;
     expr = Expr(s, symbols);
     return true;
   }
