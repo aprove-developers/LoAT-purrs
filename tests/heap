@@ -147,6 +147,8 @@ n	x(n-2)-log(x(n-1))
 n	x(n-2)-x(n-1)*n
 n	x(n-3)+x(n-7)
 n	x(n-3)+x(n-7.6)
+n	x(n-log(n))
+n	x(n-log(n))+log(n)
 n	x(n/2)+(1-(-1)^n)/2
 n	x(n/2)+1/n
 n	x(n/2)+a
@@ -197,9 +199,13 @@ ulv	3*x(n/2)+n
 ulv	3*x(n/3)
 ulv	3*x(n/3)+(2*n-1)
 ulv	3*x(n/3)+2*n
+ulv	3*x(n/3)+n
 ulv	3*x(n/3)+n*n*n
 ulv	5*x(n/5)+5*n
 ulv	6*x(n/7)+n
+ulv	7*x(n/2)
+ulv	7*x(n/2)+18*n^2
+ulv	7*x(n/2)+9/2*n*n
 ulv	7*x(n/5)
 ulv	7*x(n/5)+10
 ulv	7*x(n/5)+10*n
@@ -261,7 +267,9 @@ yv	(n/2)^2+2*x(n-1)
 yv	(n/2)^2-1+2*x(n-1)
 yv	(x(n)+1)+x(n+1)+2
 yv	(x(n+1))/3
+yv	-(x(n-1)^2)
 yv	-1*x(n-1)+1
+yv	-1+2*x(-1+n)+n
 yv	-1-x(-2+n)+2*x(-1+n)+3*n
 yv	-2*x(n-1)+15*x(n-2)
 yv	-2*x(n-1)-x(n-2)+2^n
@@ -269,7 +277,6 @@ yv	-3*x(n-1)
 yv	-3*x(n-1)+4*x(n-2)
 yv	-n^2*exp(-n)
 yv	-x(n-1)-x(n-2)
-yv	-(x(n-1)^2)
 yv	0
 yv	1
 yv	1*x(n)+1*x(n-1)
@@ -310,6 +317,7 @@ yv	2*n*x(n-1)
 yv	2*n+3
 yv	2*n+3*(n-1)
 yv	2*n/3*x(n-1)+4
+yv	2*x(-1+n)
 yv	2*x(n+1)+4
 yv	2*x(n-1)
 yv	2*x(n-1)+1
@@ -344,6 +352,7 @@ yv	2*x(n-1)+n
 yv	2*x(n-1)+n*n
 yv	2*x(n-1)+n+1
 yv	2*x(n-1)+n+17
+yv	2*x(n-1)+n-1
 yv	2*x(n-1)+n^2
 yv	2*x(n-1)+n^25
 yv	2*x(n-1)+n^5
@@ -441,6 +450,7 @@ yv	5*x(n-1)-6*x(n-2)
 yv	5*x(n-1)-6*x(n-2)+2*n+2^n
 yv	5*x(n-1)-6*x(n-2)+4
 yv	5*x(n-4)+n*log(log(n))
+yv	50000*x(n-1)+1000
 yv	55*x(n-1)+10628640*x(n-9)-1320*x(n-2)-157773*x(n-4)-12753576*x(n-8)+902055*x(n-5)-3628800*x(n-10)+18150*x(n-3)-3416930*x(n-6)+8409500*x(n-7)+n^10
 yv	5^n
 yv	6*x(n-1)-9*x(n-2)
@@ -492,6 +502,7 @@ yv	n*x(n-1)-1/(n+1)
 yv	n*x(n-1)^2
 yv	n+(-1)^n
 yv	n+1
+yv	n+2*x(n-1)
 yv	n+x(n-1)
 yv	n^2
 yv	n^2*x(n-1)
@@ -553,6 +564,7 @@ yv	x(n-1)+2^n
 yv	x(n-1)+2^n*factorial(1+n)^(-1)*factorial(2+n)^(-1)*(3+n)*n
 yv	x(n-1)+3*n
 yv	x(n-1)+3*n+1
+yv	x(n-1)+3*n-2
 yv	x(n-1)+3*n-3
 yv	x(n-1)+3*n^2-3*n+1
 yv	x(n-1)+4
@@ -588,6 +600,7 @@ yv	x(n-1)+x(n-2)+n^2
 yv	x(n-1)+x(n-2)-2
 yv	x(n-1)+x(n-2)-n
 yv	x(n-1)-1/4*x(n-2)
+yv	x(n-1)-2
 yv	x(n-1)-a*x(n-1)+b-b*x(n-1)
 yv	x(n-1)-n
 yv	x(n-1)-n+3
