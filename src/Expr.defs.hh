@@ -76,11 +76,6 @@ Expr& operator*=(Expr& x, const Expr& y);
 */
 Expr& operator/=(Expr& x, const Expr& y);
 
-#if 0
-bool operator==(const Expr& x, const Expr& y);
-bool operator!=(const Expr& x, const Expr& y);
-#endif
-
 //! Builds an arbitrary expression, called <EM>wildacard</EM>, with the
 //! specified label \p label. The label allows to have multiple different
 //! wildcard in a single expression.
@@ -290,11 +285,6 @@ private:
   friend Expr& operator-=(Expr& x, const Expr& y);
   friend Expr& operator*=(Expr& x, const Expr& y);
   friend Expr& operator/=(Expr& x, const Expr& y);
-
-#if 0
-  friend Expr& operator==(const Expr& x, const Expr& y);
-  friend Expr& operator!=(const Expr& x, const Expr& y);
-#endif
 
   friend Expr wild(unsigned label);
 

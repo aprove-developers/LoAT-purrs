@@ -83,13 +83,13 @@ Expr::Expr(const Expr& x, const Expr& y)
 inline
 Expr::Expr(const Expr& y)
   : Base(y) {
-};
+}
 
 inline Expr&
 Expr::operator=(const Expr& y) {
   Base::operator=(y);
   return *this;
-};
+}
 
 inline
 Expr::Expr(const Base& ge)
@@ -109,7 +109,7 @@ inline std::ostream&
 operator<<(std::ostream& s, const Expr& x) {
   s << static_cast<const Expr::Base&>(x);
   return s;
-};
+}
 
 inline Expr
 operator+(const Expr& x) {
@@ -164,18 +164,6 @@ operator/=(Expr& x, const Expr& y) {
   static_cast<Expr::Base&>(x) /= static_cast<const Expr::Base&>(y);
   return x;
 }
-
-#if 0
-inline bool
-operator==(const Expr& x, const Expr& y) {
-  return static_cast<const Expr::Base&>(x) == static_cast<const Expr::Base&>(y);
-}
-
-inline bool
-operator!=(const Expr& x, const Expr& y) {
-  return static_cast<const Expr::Base&>(x) != static_cast<const Expr::Base&>(y);
-}
-#endif
 
 inline Expr
 Expr::operator[](int i) const {
@@ -390,37 +378,37 @@ power(const Expr& x, const Expr& y) {
 inline Expr
 sqrt(const Expr& x) {
   return GiNaC::sqrt(static_cast<const Expr::Base>(x));
-};
+}
 
 inline Expr
 sin(const Expr& x) {
   return GiNaC::sin(static_cast<const Expr::Base>(x));
-};
+}
 
 inline Expr
 cos(const Expr& x) {
   return GiNaC::cos(static_cast<const Expr::Base>(x));
-};
+}
 
 inline Expr
 acos(const Expr& x) {
   return GiNaC::acos(static_cast<const Expr::Base>(x));
-};
+}
 
 inline Expr
 tan(const Expr& x) {
   return GiNaC::tan(static_cast<const Expr::Base>(x));
-};
+}
 
 inline Expr
 exp(const Expr& x) {
   return GiNaC::exp(static_cast<const Expr::Base>(x));
-};
+}
 
 inline Expr
 log(const Expr& x) {
   return GiNaC::log(static_cast<const Expr::Base>(x));
-};
+}
 
 inline Expr
 quo(const Expr& a, const Expr& b, const Symbol& x) {
@@ -460,7 +448,7 @@ lsolve(const Expr_List& x, const Expr_List& y) {
 inline Expr
 x(const Expr& y) {
   return x(static_cast<const Expr::Base>(y));
-};
+}
 
 inline bool
 Expr::is_the_abs_function() const {

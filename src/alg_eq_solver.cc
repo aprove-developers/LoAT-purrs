@@ -130,7 +130,7 @@ is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
     q = p.coeff(x, 0);
     // Note that `n' divides `degree'.
     for (unsigned j = 1, m = degree/n; j <= m; ++j)
-      q += p.coeff(x, n*j) * power(x, j); 
+      q += p.coeff(x, n*j) * Parma_Recurrence_Relation_Solver::power(x, j); 
   }
   else
     // n == 1, the polynomial q is equal to the polynomial p.

@@ -110,13 +110,13 @@ build_characteristic_equation(const Symbol& x,
     for (unsigned i = coefficients.size(); i-- > 1; )
       int_coefficients[i] *= least_com_mul;
     for (unsigned i = coefficients.size() - 1; i-- > 0; )
-      p += power(x, i) * (-int_coefficients[coefficients.size() - 1 - i]);
-    p += least_com_mul * power(x, coefficients.size() - 1);
+      p += Parma_Recurrence_Relation_Solver::power(x, i) * (-int_coefficients[coefficients.size() - 1 - i]);
+    p += least_com_mul * Parma_Recurrence_Relation_Solver::power(x, coefficients.size() - 1);
   }
   else {
     for (unsigned i = coefficients.size() - 1; i-- > 0; )
-      p += power(x, i) * (-coefficients[coefficients.size() - 1 - i]);
-    p += power(x, coefficients.size() - 1);
+      p += Parma_Recurrence_Relation_Solver::power(x, i) * (-coefficients[coefficients.size() - 1 - i]);
+    p += Parma_Recurrence_Relation_Solver::power(x, coefficients.size() - 1);
   }
   return p;
 }
@@ -149,10 +149,10 @@ return_sum(const bool distinct, const Symbol& n, const Number& order,
   // we want to start from `order'.
   symbolic_sum -= q_k.subs(k, 0);
   for (Number j = 1; j < order; ++j)
-    symbolic_sum -= q_k.subs(k, j) * power(alpha, j) * power(lambda, -j);
+    symbolic_sum -= q_k.subs(k, j) * Parma_Recurrence_Relation_Solver::power(alpha, j) * Parma_Recurrence_Relation_Solver::power(lambda, -j);
   if (distinct)
     symbolic_sum = symbolic_sum.subs(x, alpha/lambda);
-  symbolic_sum *= power(lambda, n);
+  symbolic_sum *= Parma_Recurrence_Relation_Solver::power(lambda, n);
   symbolic_sum = simplify_on_output_ex(symbolic_sum.expand(), n, false);
 
   return symbolic_sum;
@@ -646,7 +646,7 @@ eliminate_negative_decrements(const Expr& /* rhs */, Expr& /* new_rhs */,
 
 //   new_rhs /= coeff;
 //   new_rhs
-//     = new_rhs.subs(x(n-max_decrement), x(n-max_decrement)*power(coeff, -1));
+//     = new_rhs.subs(x(n-max_decrement), x(n-max_decrement)*Parma_Recurrence_Relation_Solver::power(coeff, -1));
 
 //   std::cout << "NUOVA = " << new_rhs << std::endl; 
   return false;

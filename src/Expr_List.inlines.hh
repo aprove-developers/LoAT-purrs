@@ -37,7 +37,7 @@ Expr_List::Expr_List() {
 inline
 Expr_List::Expr_List(const Symbol& x)
   : l(x.s) {
-};
+}
 
 inline
 Expr_List::Expr_List(const Expr& e1, const Expr& e2)
