@@ -126,7 +126,7 @@ footer() {
   cout << cgicc::div() << br() << hr().set("class", "half") << endl;
   cout << cgicc::div().set("align", "center") << endl;
   cout << a("PURRS ").set("href", "http://www.cs.unipr.it/purrs/")
-       << span("algebraic equation solver", set("class", "red")) << br()
+       << span("recurrence relation solver", set("class", "red")) << br()
        << " by the "
        << a("PURRS development team")
     .set("href", "mailto:purrs-devel@cs.unipr.it") << "." << br() << br()
@@ -244,16 +244,6 @@ main() try {
   GSymbol d("d");
   GList symbols(n, a, b, c, d);
   GExpr rhs = GExpr(**expr, symbols);
-#if 0
-  if (p == GExpr(0)
-      || !p.info(info_flags::integer_polynomial)
-      || p.info(info_flags::numeric)) {
-    std::ostringstream s;
-    s << "you call '<TT>" << p << "</TT>' a polynomial in <TT>x</TT> "
-      << "with integer coefficients?";
-    error(s.str());
-  }
-#endif
 
 #if HAVE_GETRUSAGE
   timeval start;
@@ -336,32 +326,6 @@ main() try {
   cout << h2() << "Random formula for x(n) = " << rhs << h2() << endl;
 
   cout << "x(n) = " << solution << endl;
-
-#if 0
-  cout << cgicc::div().set("align", "center") << endl
-       << table()
-    .set("border", "0").set("rules", "none").set("frame", "void")
-    .set("cellspacing", "2").set("cellpadding", "2")
-    .set("class", "cgi") << endl
-       << colgroup().set("span", "2") << endl
-       << col().set("align", "center").set("span", "2") << endl
-       << colgroup() << endl
-       << tr().set("class", "title") << td("Multiplicity") 
-       << td("Value or Approximation") << tr() << endl;
-  
-  size_t n = roots.size();
-  for (size_t i = 0; i < n; ++i) {
-    std::ostringstream m;
-    m << roots[i].multiplicity();
-    std::ostringstream v;
-    v << roots[i].value();
-    cout << tr().set("class", "data")
-	 << td(m.str()) 
-	 << td(v.str())
-	 << tr() << endl;
-  }
-  cout << table() << cgicc::div() << endl;
-#endif
 
   // Get a pointer to the environment.
   const CgiEnvironment& env = cgi.getEnvironment();
