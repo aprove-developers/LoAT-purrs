@@ -655,7 +655,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 //! is able to compute; returns <CODE>false</CODE> otherwise.
 /*!
   The system is able to compute linear infinite order recurrence
-  of the shape
+  of the form
   \f[
     T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n)
   \f]
@@ -664,12 +664,12 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
     T(n) = \frac{f(n)}{f(n-1)} (1+f(n-1)) T(n-1)
       + f(n) \left( \frac{g(n)}{f(n)} - \frac{g(n-1)}{f(n-1)} \right).
   \f]
-  If the recurrence stored in \p rhs is of that shape then the function
+  If the recurrence stored in \p rhs is of that form then the function
   returns <CODE>true</CODE> and stores the coefficient of the new recurrence
   in \p coefficient and the non-homogeneous part \f$ g(n) \f$ in
   \p inhomogeneous.
   
-  If the recurrence stored in \p rhs not is of the aforesaid shape
+  If the recurrence stored in \p rhs not is of the aforesaid form
   then the function returns <CODE>false</CODE>.
 */
 bool
@@ -841,8 +841,9 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 					  first_well_defined)) {
 	  // The lower bound of the sum must be greater or equal than
 	  // the positive integer `n_0' starting from which `weight'
-	  // is well defined, i. e., for each `n' greater or equal to
-	  // `n_0' `weight' evaluated in `n' is well-defined.
+	  // and `inhomogeneous_term' are well defined, i. e., for each
+	  // `n' greater or equal to `n_0' `weight' and `inhomogeneous_term'
+	  // evaluated in `n' are well-defined.
 	  unsigned lower_bound_sum
 	    = addend.arg(1).ex_to_number().to_unsigned();
 	  if (lower_bound_sum < first_well_defined)
@@ -940,8 +941,9 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 					    first_well_defined)) {
 	    // The lower bound of the sum must be greater or equal than
 	    // the positive integer `n_0' starting from which `weight'
-	    // is well defined, i. e., for each `n' greater or equal to
-	    // `n_0' `weight' evaluated in `n' is well-defined.
+	    // and `inhomogeneous_term' are well defined, i. e., for each
+	    // `n' greater or equal to `n_0' `weight' and `inhomogeneous_term'
+	    // evaluated in `n' are well-defined.
 	    unsigned lower_bound_sum
 	      = factor.arg(1).ex_to_number().to_unsigned();
 	    if (lower_bound_sum < first_well_defined)
