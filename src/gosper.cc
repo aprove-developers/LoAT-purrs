@@ -101,6 +101,8 @@ compute_resultant_and_its_roots(const Symbol& m, const Expr& f, const Expr& g,
   if (!R.is_integer_polynomial(m))
     R = convert_to_integer_polynomial(R, h);
   std::vector<Number> potential_roots;
+  if (!R.tcoeff(h).is_a_number())
+    return false;
   Number constant_term = abs(R.tcoeff(h).ex_to_number());
   // If `constant_term == 0', divide `R' by `h', and repeat.
   // The constant `0' is a root of the original resultant `R'
@@ -110,6 +112,8 @@ compute_resultant_and_its_roots(const Symbol& m, const Expr& f, const Expr& g,
     if (potential_roots.size() == 0)
       potential_roots.push_back(0);
     R = quo(R, h, h);
+    if (!R.tcoeff(h).is_a_number())
+      return false;
     constant_term = abs(R.tcoeff(h).ex_to_number());
   }
   if (!find_divisors(constant_term, potential_roots))
@@ -120,10 +124,8 @@ compute_resultant_and_its_roots(const Symbol& m, const Expr& f, const Expr& g,
     if (temp == 0)
       integer_roots.push_back(potential_roots[i]);
   }
-
   // It is more efficient to have the roots sorted. 
   sort(integer_roots.begin(), integer_roots.end());
-
   return true;
 }
 
