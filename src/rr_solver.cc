@@ -30,7 +30,7 @@ get_linear_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
 
 bool
 solve(const GExpr& rhs, const GSymbol& n) {
-  cout << "Trying to solve a(n) = " << rhs << endl;
+  cout << "Trying to solve x(n) = " << rhs << endl;
 
   static GExpr x_i = x(GiNaC::wild(0));
   static GExpr x_i_plus_r = x_i + GiNaC::wild(1);
@@ -44,7 +44,6 @@ solve(const GExpr& rhs, const GSymbol& n) {
   GExpr e = rhs;
   bool failed = false;
   do {
-    cout << "e = " << e << endl;
     GExpr i;
     GExpr a;
     // The following matches are attempted starting from the most common,
