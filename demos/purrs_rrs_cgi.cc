@@ -60,6 +60,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 using std::string;
 using std::cout;
+using std::cerr;
 using std::endl;
 using std::vector;
 
@@ -213,6 +214,12 @@ my_uncaught_exception() {
   error("uncaught exception");
 }
 
+static void
+my_exit(int status) {
+  //(void) purrs_finalize();
+  exit(status);
+}
+
 Expr_List symbols;
 
 static void
@@ -235,6 +242,129 @@ mark_verified_solution() {
 	    .set("border", "0"))
     .set("href", "http://www.cs.unipr.it/purrs/details#verification")
        << " ";
+}
+
+static string parse_error_message;
+
+static bool
+parse_expression(const string& s, Expr& expr) {
+  try {
+    //  for (unsigned int i = 0; i < symbols.nops(); ++i)
+    //    cout << symbols.op(i) << endl;
+    expr = Expr(s, symbols);
+    return true;
+  }
+  catch (std::exception& e) {
+    std::ostringstream m;
+    m << "parse error: " << e.what();
+    parse_error_message = m.str();
+    return false;
+  }
+}
+
+static bool
+invalid_initial_condition(const Expr& e) {
+  Number value;
+  if (e.is_a_number(value) && !value.is_rational())
+    return true;
+  if (e == Recurrence::n)
+    return true;
+  else if (e.is_a_power())
+    return invalid_initial_condition(e.arg(0))
+      || invalid_initial_condition(e.arg(1));
+  else if (e.is_a_function()) {
+    if (e.is_the_x_function())
+      return true;
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (invalid_initial_condition(e.arg(i)))
+        return true;
+  }
+  else if (e.is_a_add() || e.is_a_mul())
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (invalid_initial_condition(e.op(i)))
+        return true;
+  return false;
+}
+
+static void
+invalid_initial_condition(const string& culprit) {
+  cerr << "Invalid initial condition `" << culprit << "';\n"
+       << "must be of the form `x(i)=k'"
+       << "for `i' a non-negative integer\n"
+       << "and `k' a number (not a floating point) "
+       << "or a symbolic expression\n"
+       << "containing the parameters a, b,..., z"
+       << " different from `n', `x' and `e'." << endl;
+  my_exit(1);
+}
+
+#if 0
+static void
+invalid_list_initial_conditions(const string& s) {
+  cerr << "Invalid list of initial conditions `" << s << "'.\n"
+       << "If the initial conditions are more than one\n"
+       << "they must be separated by a semicolon (;)." << endl;
+  my_exit(1);
+}
+#endif
+
+void
+check_single_initial_condition(const string& cond,
+			       std::map<index_type, Expr>&
+			       initial_conditions) {
+  // Special case: `cond' is a string containing only blanks.
+  bool only_blank_spaces = true;
+  for (unsigned i = cond.size(); i-- > 0; )
+    if (cond[i] != ' ') {
+      only_blank_spaces = false;
+      break;
+    }
+  if (only_blank_spaces)
+    return;
+
+  string::size_type eq_pos = cond.find('=');
+  if (eq_pos == string::npos)
+    invalid_initial_condition(cond);
+  string lhs(cond, 0, eq_pos);
+  string rhs(cond, eq_pos+1);
+  Expr l;
+  if (!parse_expression(lhs, l))
+    invalid_initial_condition(cond);
+  if (!l.is_the_x_function())
+    invalid_initial_condition(cond);
+  Number index;
+  if (!l.arg(0).is_a_number(index)
+      || !index.is_nonnegative_integer()
+      || index > LONG_MAX)
+    invalid_initial_condition(cond);
+  Expr r;
+  if (!parse_expression(rhs, r))
+    invalid_initial_condition(cond);
+  if (invalid_initial_condition(r))
+    invalid_initial_condition(cond);
+  // Insert the pair (index, r), which represents the initial
+  // condition `x(index) = r', in the map `initial_conditions'.
+  initial_conditions.insert(std::map<index_type, Expr>
+			    ::value_type(index.to_unsigned_int(), r));
+}
+
+void
+check_sintax_initial_conditions(const string& list_i_c,
+				std::map<index_type, Expr>&
+				initial_conditions) {
+  string::size_type pos_first = 0;
+  for (unsigned int i = 0; i < list_i_c.size(); ++i) {
+    string::size_type pos_second = list_i_c.find(";", pos_first);
+    string cond;
+    if (pos_second == string::npos)
+      cond = list_i_c.substr(pos_first);
+    else
+      cond = list_i_c.substr(pos_first, pos_second-pos_first);
+    check_single_initial_condition(cond, initial_conditions);
+    if (pos_second == string::npos)
+      break;
+    pos_first = pos_second+1;
+  }
 }
 
 bool
@@ -300,8 +430,11 @@ main() try {
     error("cannot be nice");
 #endif
 
-  // Get the expression, if any.
+  // Get the expression (rhs of the recurrence), if any.
   const_form_iterator expr = cgi.getElement("expr");
+
+  // Get the expression (initial conditions for the recurrence), if any.
+  const_form_iterator i_c = cgi.getElement("i_c");
 
   // Get options, if any.
   bool verify = false;
@@ -322,6 +455,19 @@ main() try {
 
   Expr rhs = Expr(**expr, symbols);
   Recurrence recurrence(rhs);
+
+  string list_i_c;
+  if(i_c == (*cgi).end() || expr->isEmpty())
+    list_i_c = "";
+  else
+    list_i_c = **i_c;
+
+  std::map<index_type, Expr> initial_conditions;
+  if (!list_i_c.empty())
+    check_sintax_initial_conditions(list_i_c, initial_conditions);
+  
+  if (!initial_conditions.empty())
+    recurrence.set_initial_conditions(initial_conditions);
 
   bool have_exact_solution = false;
   bool have_lower_bound = false;
@@ -512,6 +658,7 @@ main() try {
        << h1() << endl;
 
   cout << h2();
+  // Print the recurrence.
   if (have_exact_solution) {
     if (have_verified_exact_solution)
       cout << span("Verified", set("class", "red")) << " exact solution";
@@ -522,9 +669,24 @@ main() try {
     cout << span("Verified", set("class", "red")) << " bounds";
   else
     cout << "Bounds";
-  cout<< " for x(n) = " << rhs
+  cout << " for x(n) = " << rhs
       << h2() << endl;
 
+  // Print the possibly initial conditions.
+  cout << h2();
+  if ((have_exact_solution || have_lower_bound || have_upper_bound)
+      && !initial_conditions.empty()) {
+    cout << "Initial conditions:" << br() << endl;
+    for (std::map<index_type, Expr>::const_iterator i
+	   = initial_conditions.begin(),
+	   initial_conditions_end = initial_conditions.end();
+	 i != initial_conditions_end; ++i)
+      cout << "  x(" << i->first << ")"
+	   << " = " << i->second << br() << endl;
+  }
+  cout << h2() << endl;
+
+  // Print the solution or the bounds.
   if (have_exact_solution) {
     if (have_verified_exact_solution)
       mark_verified_solution();
