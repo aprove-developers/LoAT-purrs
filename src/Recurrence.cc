@@ -120,7 +120,6 @@ validate_initial_conditions(index_type order,
     exact_solution = exact_solution_.expression();
 
   for (index_type i = 0; i < order; ++i) {
-    // 
     index_type index =
       get_max_index_initial_condition() > first_valid_index + i
       ? get_max_index_initial_condition() : first_valid_index + i;
@@ -198,19 +197,24 @@ verify_new_method_exp_poly(index_type order_rec,
       if (roots[i].value() == bases_of_exp[j])
 	++max_polynomial_degree;
   }
-  
+
   Expr substituted_rhs = recurrence_rhs;
   // FIXME: fare i = i-gcd se e' stata applicata la riduzione dell'ordine.
-  // for (index_type i = order_rec; i > 0; i = i - gcd_among_decrements()) {
   for (index_type i = order_rec; i-- > 0; ) {
-    Expr shifted_solution = summands_without_i_c.substitute(n, n - (i + 1));
+    const Expr& shifted_solution
+      = summands_without_i_c.substitute(n, n - (i + 1));
     //shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
     substituted_rhs = substituted_rhs
       .substitute(x(n - (i + 1)), shifted_solution);
   }
   Expr diff = blackboard.rewrite(summands_without_i_c - substituted_rhs);
   diff = diff.expand();
-  
+  D_VAR(diff);
+  // FIXME: if `diff == 0' then the validation is successfully terminated,
+  // hence is useless to continue.
+  //   if (diff == 0)
+  //     return true;
+
   std::vector<Expr> coefficients_of_exponentials(max_polynomial_degree+1);
   if (diff.is_a_add()) {
     for (unsigned int i = 0; i < diff.nops(); ++i) {
@@ -336,7 +340,6 @@ verify_new_method_exp_poly(index_type order_rec,
   }
   
   D_VEC(coefficients_of_exponentials, 0, max_polynomial_degree);
-  
   Number num_tests = num_of_exponentials + order_rec;
   for (unsigned int i = 0; i < max_polynomial_degree; ++i) {
     if (!coefficients_of_exponentials[i].is_zero()) {
@@ -489,6 +492,7 @@ PURRS::Recurrence::verify_finite_order() const {
   Expr substituted_homogeneous_rhs = recurrence_rhs - inhomogeneous_term;
   // Substitutes in the homogeneous part of the recurrence the terms
   // of the form `x(n-i)'.
+  //for (index_type d = 1; d <= order_rec; d = d + gcd) {
   for (index_type d = 1; d <= order_rec; ++d) {
     Expr shifted_solution
       = simplify_all(summands_with_i_c.substitute(n, n - d));
