@@ -161,12 +161,11 @@ Recurrence::get_initial_condition(unsigned int k) const {
 
 inline unsigned int
 Recurrence::get_max_index_initial_condition() const {
-  unsigned int max_index = 0;
-  for (std::map<index_type, Expr>::const_iterator i
-	 = initial_conditions_.begin(),
-	 iend = initial_conditions_.end(); i != iend; ++i)
-    if (i->first > max_index)
-      max_index = i->first;
+  unsigned int max_index;
+  if (initial_conditions_.empty())
+    max_index = 0;
+  else
+    max_index = initial_conditions_.rbegin()->first;
   return max_index;
 }
 
