@@ -247,7 +247,7 @@ Downloading and unpacking:
 
 Configuring and building (and optionally check the build):
   cd your-path-to-download-dir
-  cd ntl-5.2/src
+  cd ntl-5.3/src
   ./configure NTL_GMP_LIP=on NTL_STD_CXX=on GMP_PREFIX=/usr/local
   make
   make check
@@ -281,7 +281,7 @@ Installing (as root):
   exit
 
 Checking whether you built right executable:
-  ginsh --version
+  ginsh
 You should obtain the following output:
 
   ginsh - GiNaC Interactive Shell (GiNaC V1.0.13)
