@@ -435,7 +435,9 @@ substitute_critical_ex(const Expr& e, const Expr_List& y,
 	break;
     return blackboard.insert_definition(e);
   }
-  return e;
+  else
+    e_rewritten = e;
+  return e_rewritten;
 }
 
 } // anonymous namespace
