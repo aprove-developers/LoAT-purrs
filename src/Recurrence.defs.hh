@@ -32,15 +32,15 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 /*!
-  Explain that the term \f$ x_n \f$ is represented by the expression
-  <CODE>x(n)</CODE>
-  and that the term \f$ (x_k)_n \f$ is represented by the expression
-  <CODE>x(k, n)</CODE>.
+  Explain...
 */
 class Recurrence {
 public:
-  //! Default constructor: it builds the recurrence \f$ x_n = 0 \f$.
+  //! Default constructor: it builds the recurrence \f$ x(n) = 0 \f$.
   Recurrence();
+
+  //! Builds the recurrence \f$ x(n) = e \f$.
+  explicit Recurrence(const Expr& e);
 
   //! Copy-constructor.
   Recurrence(const Recurrence& y);
@@ -51,14 +51,23 @@ public:
   //! Assignment operator.
   Recurrence& operator=(const Recurrence& y);
 
-  //! Replace the main equation
+  //! WRITEME
   void replace_recurrence(const Expr& e);
 
+  //! \brief
+  //! Sets to \f$ e \f$ the right-hand side of the recurrence
+  //! of index \f$ k \f$.  The system of recurrences will then
+  //! include \f$ x_k(n) = e \f$.
   void replace_recurrence(unsigned k, const Expr& e);
+
+  //! 
+  Symbol insert_auxiliary_equation(const Expr& e);
+
+  bool solve();
 
 private:
   //! Holds the right-hand side of the global recurrence to be solved.
-  //! This may have been set directly by the user or it may be the
+  //! This may have been set directly by the constructor or it may be the
   //! result of transforming a system into a single recurrence.
   //! The global recurrence is thus of the form
   //! <CODE>x(n) = recurrence_rhs</CODE>.
@@ -76,7 +85,6 @@ private:
     Expr symb_solution;
 
 public:
-  insert_auxilliary_equation(const GSymbol& x, const Expr& e);
   insert_exact_solution(const Expr& e);
   insert_side_condition(int n, const Expr& e);
   // Restituisce le condizioni iniziali non assegnate.
