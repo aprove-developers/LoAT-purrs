@@ -259,14 +259,16 @@ eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs) {
   int max_decrement = INT_MIN;
   Expr coefficient;
   find_max_decrement_and_coeff(rhs, max_decrement, coefficient);
+  // D_VAR(max_decrement);
 
+  // FIXME: Some exotic recurrences can have x(n) = f(x(n), ...).
   // We wish to transform `x(n) = a_1 * x(n+1) + ... + a_m * x(n+m)'
   // into `x(t) = (-x(t-m) + a_1 * x (t-m+1) + ... ) / (-a_m)' where
   // `t=n+m' and the coefficients a_m may depend on n.
 
   // 1: Let `m = max_decrement'. Put `t = n + m'. (For efficiency,
   // actually replace `n' with `n+m' everywhere).
-  //  DD_MSGVAR("Eliminate negative decrements in ", rhs);
+  // DD_MSGVAR("Eliminate negative decrements in ", rhs);
   const Symbol& n = Recurrence::n;
   new_rhs = rhs.substitute(n, n - max_decrement);
   coefficient = coefficient.substitute(n, n - max_decrement);
@@ -277,14 +279,16 @@ eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs) {
   // 3: Divide everything by the leading coefficient.
   new_rhs /= -coefficient;
 
+  // FIXME: This has been fixed in order to deal with the "exotic
+  // recurrences" above.
   // 4: The coefficient of `x(n+m)' is now -1. Move it to the left hand side
   // (i.e., remove it from the right hand side).
-  // FIXME: Assert that coeff(x(n)) is actually -1.
-  new_rhs = new_rhs.substitute(x(n), 0);
+  // new_rhs = new_rhs.substitute(x(n), 0);
+  new_rhs = new_rhs.collect(Expr_List(x(n)));
 
   new_rhs = new_rhs.expand();
 
-  //  DD_MSGVAR("Rewritten recurrence: ", new_rhs);
+  // DD_MSGVAR("Rewritten recurrence: ", new_rhs);
 }
 
 /*!
