@@ -1,0 +1,149 @@
+%
+% Some test recurrences 
+% They are ordered by source (purrs.tex, papers, books, tests, ...) 
+% and by order of the recurrence. 
+% The parametric solution is given, with explicit 
+% indication of the initial value(s). 
+% Comments are added when appropriate. 
+% Some solutions have to be fixed.
+%
+
+% from purrs.tex
+% ORDER 1 
+
+% "Spanish" recurrence n. 1 
+x(n) = 2 * x(n-1) + 2^(n-1) + n + 1
+% Solution: x(n) = x(0) * 2^n + n * 2^(n-1) + 3 * 2^n - n - 3
+
+% "Spanish" recurrence n. 2 
+x(n) = 2 * x(n-1) + 2^n
+% Solution: x(n) = (x(0) + n) * 2^n
+
+x(n) = x(n-1) + n^2
+% Solution: x(n) = x(0) + numeric(1, 6) * n * (n + 1) * (2n + 1)
+
+% here a != 1
+x(n) = a * x(n-1) + n^2
+% Solution: x(n) = x(0) * a^n + ( a^(n+2) + a^(n+1) - n^2 + (2 * n^2 + 2 * n - 1) * a - (n + 1)^2 * a^2 ) / (a-1)^3 
+
+x(n) = 2 * x(n-1) + 2^n
+% Solution: x(n) = (x(0) + n) * 2^n
+
+x(n) = 2 * x(n-1) + 3^n
+% Solution: x(n) = 3 * (3^n - 2^n) + 2^n * x(0)
+
+x(n) = 3 * x(n-1) + 2^n
+% Solution: x(n) = 2 * (3^n - 2^n) + 3^n * x(0)
+
+% ORDER 2 
+
+% Plain Fibonacci 
+x(n) = x(n-1) + x(n-2)
+% Solution: x(n) = (-1/5*(1/2-1/2*sqrt(5))^n*sqrt(5)+1/5*(1/2+1/2*sqrt(5))^n*sqrt(5))*x(1)+(-1/5*(1/2-1/2*sqrt(5))^(-1)*(1/2-1/2*sqrt(5))^n*sqrt(5)+1/5*(1/2+1/2*sqrt(5))^(-1)*(1/2+1/2*sqrt(5))^n*sqrt(5))*x(0)
+
+% Symbolic, with double root 
+x(n) = 2 * a * x(n-1) - a^2 * x(n-2)
+% Solution: x(n) = (x(0) + (x(1) - x(0)) * n) * a^n
+
+% With complex roots (two different shapes for the solution) 
+x(n) = 2 * x(n-1) - 2 * x(n-2)
+% Solution: x(n) = numeric(1, 2 * I) * ( (1 + I)^n - (1 - I)^n )
+% Solution: x(n) = 2^(n/2) * sin( n * Pi / 4)
+
+% non homogeneous, Fibonacci plus one      to be completed!!!!!
+x(n) = x(n-1) + x(n-2) + 1
+% Solution: x(n) = x_1 f_n + x_0 f_{n-1} + f_{n+1} - 1
+
+% non homogeneous     to be completed!!!!!
+x(n) = numeric(1, 2) * x(n-1) + numeric(1, 2) * x(n-2) + 1
+% Solution: x(n) = numeric(2, 3) * n - numeric(4, 9) + numeric(4, 9) * pow(numeric(-1, 2), n)
+
+% non homogeneous, double root 
+x(n) = 2 x(n-1) - x(n-2) + 1
+% Solution: x(n) = numeric(1, 2) * n * (n-1) + x(0) + n * x(1)
+
+% polynomial non homogeneous part     to be completed!!!!!
+x(n) = x(n-1) + x(n-2) + n
+% Solution: x(n) = 4f_n + 3f_{n-1} - n - 3
+
+% polynomial non homogeneous part     to be completed!!!!!
+x(n) = x(n-1) + x(n-2) + n^2
+% Solution: x(n) = 20 f_n + 13 f_{n-1} - n^2 - 6n - 13
+
+% polynomial non homogeneous part     to be completed!!!!!
+x(n) = x(n-1) + x(n-2) + n^3
+% Solution: x(n) = 94 f_n + 54 f_{n-1} - n^3 - 9n^2 - 30n - 54
+
+% Symbolic, 2 a + b \ne 4     to be completed!!!!!
+x(n) = a * x(n-1) + b * x(n-2) + 2^n
+% Solution: x(n) = alpha * x(0) + beta * x(1) + 4 * 2^n / (2 a + b - 4)
+
+% Symbolic, a != 4     to be completed!!!!!
+x(n) = a * x(n-1) + (4 - 2 * a) * x(n-2) + 2^n
+% Solution: x(n) = alpha * x(0) + beta * x(1) - n * 2^n / (4 - a)
+
+% Missing case a == 4     to be completed!!!!!
+x(n) = 4 * x(n-1) - 4 * x(n-2) + 2^n
+% Solution: x(n) = a * x(0) + b * x(1) - numeric(1, 2) * n^2 * 2^n
+
+% HIGHER ORDER
+
+% Order three, characteristic equation with complex conjugate roots     to be completed!!!!!
+x(n) = 2 x(n-1) - x(n-2) + 2 x(n-3)
+% Solution: x(n) = numeric(1, 5) * (x(0) + x(2)) * 2^n + \dots
+
+
+
+% from Cohen & Katcoff, Table II, p. 268 
+
+% 1. Fibonacci 
+x(n) = x(n-1) + x(n-2)
+% Solution: x(n) = ...
+
+% 2. Order 3 
+x(n) = -6 * x(n-1) - 12 * x(n-2) - 8 * x(n-3)
+% Solution: x(n) = ...
+
+% 3. Order 2 (wrong answer in CK!)
+x(n) = -2 * x(n-1) - x(n-2) + 2^n
+% Solution: x(n) = numeric(4, 9) * 2^n + (-1)^n * n * numeric(4, 3) - (-1)^n * numeric(4, 9) + (-1)^n *(1-n) * x(0) - (-1)^n * n x(1)
+
+% 4. Order 2 (actually, order 1 disguised) 
+x(n) = x(n-2) + (n - 2)^2
+% Solution: x(n) = ...
+
+% 5. 
+x(n) = 2 * x(n-1) - x(n-2) + 3* n - 1
+% Solution: x(n) = 
+
+% 6. Parametric with parameter m
+x(n) = 7 * x(n-1) + 10 * (2^(n-1) * m)^2
+% Solution: x(n) = ...
+
+% 7. Parametric with parameters a, b 
+x(n) = (1-a) * x(n-1) + b * (1 - x(n-1))
+% Solution: x(n) = ...
+
+% 8. Order 1, variable coefficients 
+x(n) = 3 / n * x(n-1)
+% Solution: x(n) = 3^n * x(0) / factorial(n)
+
+% 9. Order 1, variable coefficients 
+x(n) = e^(-2 * a * (n-1) ) * x(n-1) + e^(- a * (n-1)^2)
+% Solution: x(n) = 
+
+% 10. Order 1, variable coefficients 
+x(n) = x(n-1) / n + 2
+% Solution: x(n) = 
+
+% from Lueker 
+
+% Order two, non homogeneous 
+x(n) = 5 * x(n-1) - 6 * x(n-2) + 4
+% Solution
+
+% from Ivie 
+
+% from Kelley & Peterson 
+
+
