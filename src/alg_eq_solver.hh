@@ -25,29 +25,32 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_alg_eq_solver_hh
 #define PURRS_alg_eq_solver_hh 1
 
+#include "Expr.defs.hh"
+#include "Number.defs.hh"
 #include <vector>
-#include "globals.hh"
+
+namespace Parma_Recurrence_Relation_Solver {
 
 class Polynomial_Root {
 private:
-  GExpr value_;
-  GNumber multiplicity_;
+  Expr value_;
+  Number multiplicity_;
 
 public:
-  Polynomial_Root(const GExpr& e, GNumber m = 1)
+  Polynomial_Root(const Expr& e, Number m = 1)
     : value_(e), multiplicity_(m) {
   }
 
-  const GExpr& value() const {
+  const Expr& value() const {
     return value_;
   }
-  GExpr& value() {
+  Expr& value() {
     return value_;
   }
-  GNumber multiplicity() const {
+  Number multiplicity() const {
     return multiplicity_;
   }
-  void set_multiplicity(GNumber m) {
+  void set_multiplicity(Number m) {
     multiplicity_ = m;
   }
 };
@@ -74,10 +77,13 @@ std::ostream& operator<<(std::ostream& s, const Polynomial_Root& r);
 //! possible to prove that all the roots of \p p are distinct;
 //! \p all_distinct is set to <CODE>false</CODE> otherwise.
 bool
-find_roots(const GExpr& p, const GSymbol& x,
+find_roots(const Expr& p, const Symbol& x,
 	   std::vector<Polynomial_Root>& roots, bool& all_distinct);
 
 //! Finds divisors of positive integer \p n.
 void
-find_divisors(GNumber n, std::vector<GNumber>& divisors);
-#endif
+find_divisors(Number n, std::vector<Number>& divisors);
+
+} // namespace Parma_Recurrence_Relation_Solver
+
+#endif // !defined(PURRS_alg_eq_solver_hh)

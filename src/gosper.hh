@@ -25,12 +25,17 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_gosper_hh
 #define PURRS_gosper_hh 1
 
-#include "globals.hh"
+#include "Expr.types.hh"
+#include "Symbol.types.hh"
+
+namespace Parma_Recurrence_Relation_Solver {
 
 //! Gosper's algorithm, from Chapter 5 of \f$ A = B \f$, by 
 //! M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
 bool
-gosper(const GExpr& t, GExpr& r_n, const GSymbol& n,
-       const int lower_bound, const GExpr& upper_bound, GExpr& solution);
+gosper(const Expr& t, Expr& r_n, const Symbol& n,
+       const int lower_bound, const Expr& upper_bound, Expr& solution);
+
+} // namespace Parma_Recurrence_Relation_Solver
 
 #endif

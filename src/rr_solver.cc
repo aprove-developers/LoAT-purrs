@@ -27,13 +27,16 @@ http://www.cs.unipr.it/purrs/ . */
 #define NOISY 0
 
 #include "rr_solver.hh"
-
-#include "globals.hh"
 #include "gosper.hh"
 #include "alg_eq_solver.hh"
 #include "simplify.hh"
 #include "sum_poly.hh"
 #include "util.hh"
+#include "Expr.defs.hh"
+#include "Expr_List.defs.hh"
+#include "Symbol.defs.hh"
+#include "Number.defs.hh"
+#include "Matrix.defs.hh"
 
 #include <climits>
 #include <algorithm>
@@ -43,7 +46,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <iostream>
 #include <fstream>
 
-using namespace Parma_Recurrence_Relation_Solver;
+namespace Parma_Recurrence_Relation_Solver {
 
 /*!
   Returns <CODE>true</CODE> if and only if \p e is of the form
@@ -51,13 +54,13 @@ using namespace Parma_Recurrence_Relation_Solver;
   of \f$ d \f$ to \p decrement.
 */
 static bool
-get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
-  static GExpr n_plus_d = n + wild(0);
-  GList substitution;
+get_constant_decrement(const Expr& e, const Symbol& n, Number& decrement) {
+  static Expr n_plus_d = n + wild(0);
+  Expr_List substitution;
   if (e.match(n_plus_d, substitution)) {
-    GExpr d = get_binding(substitution, 0);
+    Expr d = get_binding(substitution, 0);
     if (d.is_a_number()) {
-      GNumber i = d.ex_to_number();
+      Number i = d.ex_to_number();
       if (i.is_integer())
 	decrement = -i;
       return true;
@@ -79,30 +82,30 @@ get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
   \p int_coefficients, with the element of \p coefficients multiplied for
   the lcm among their denominators.
 */
-static GExpr
-build_characteristic_equation(const GSymbol& x,
-			      const std::vector<GNumber>& coefficients) {
+static Expr
+build_characteristic_equation(const Symbol& x,
+			      const std::vector<Number>& coefficients) {
   for (unsigned i = coefficients.size(); i-- > 0; )
     if (!coefficients[i].is_rational())
       throw
 	"PURRS error: today the algebraic equation solver works\n"
 	"only with integer coefficients.\n"
 	"Please come back tomorrow.";
-  std::vector<GNumber> denominators;
+  std::vector<Number> denominators;
   // Find the least common multiple among the denominators of the
   // rational elements of `coefficients'.
   for (unsigned i = coefficients.size(); i-- > 0; )
     if (!coefficients[i].is_integer())
       denominators.push_back(coefficients[i].denominator());
-  GExpr p = 0;
+  Expr p = 0;
   // Build the vector `int_coefficients' with the elements of
   // `coefficients' multiplied for the least common multiple
   // `least_com_mul'.
   // There is no need to `order' because the order of the recurrence relation
   // is equal to `coefficients.size() - 1'.
   if (denominators.size() != 0) {
-    GNumber least_com_mul = lcm(denominators);
-    std::vector<GNumber> int_coefficients(coefficients);
+    Number least_com_mul = lcm(denominators);
+    std::vector<Number> int_coefficients(coefficients);
     // In the first position of `coefficients' there is 0.
     for (unsigned i = coefficients.size(); i-- > 1; )
       int_coefficients[i] *= least_com_mul;
@@ -124,20 +127,20 @@ build_characteristic_equation(const GSymbol& x,
 //! Returns <CODE>false</CODE> otherwise, i. e., all the elements of \p v
 //! are equal to \f$ 0 \f$. 
 static bool
-vector_not_all_zero(const std::vector<GExpr>& v) {
+vector_not_all_zero(const std::vector<Expr>& v) {
   for (unsigned i = v.size(); i-- > 0; )
     if (!v[i].is_zero())
       return true;
   return false;
 }
 
-static GExpr
-return_sum(const bool distinct, const GSymbol& n, const GNumber& order,
-	   const GExpr& coeff, const GSymbol& alpha, const GSymbol& lambda) {
+static Expr
+return_sum(const bool distinct, const Symbol& n, const Number& order,
+	   const Expr& coeff, const Symbol& alpha, const Symbol& lambda) {
   Symbol k;
   Symbol x;
-  GExpr q_k = coeff.subs(n,k);
-  GExpr symbolic_sum;  
+  Expr q_k = coeff.subs(n,k);
+  Expr symbolic_sum;  
   if (distinct)
     symbolic_sum = sum_poly_times_exponentials(q_k, k, n, x);
   else
@@ -145,7 +148,7 @@ return_sum(const bool distinct, const GSymbol& n, const GNumber& order,
   // `sum_poly_times_exponentials' calculates the sum from 0 while
   // we want to start from `order'.
   symbolic_sum -= q_k.subs(k, 0);
-  for (GNumber j = 1; j < order; ++j)
+  for (Number j = 1; j < order; ++j)
     symbolic_sum -= q_k.subs(k, j) * power(alpha, j) * power(lambda, -j);
   if (distinct)
     symbolic_sum = symbolic_sum.subs(x, alpha/lambda);
@@ -163,7 +166,7 @@ return_sum(const bool distinct, const GSymbol& n, const GNumber& order,
   We call \p \lambda the generic root of the characteristic equation
   and \p alpha the generic base of an exponential.
 
-  This function fills the two vectors of <CODE>GExpr</CODE>
+  This function fills the two vectors of <CODE>Expr</CODE>
   \p symbolic_sum_distinct and \p symbolic_sum_no_distinct,
   with two different sums:
   fixed tha base \p alpha_i, for each root \p lambda 
@@ -184,15 +187,15 @@ return_sum(const bool distinct, const GSymbol& n, const GNumber& order,
     so that the two vector have always the same dimensions.
 */
 static void
-compute_symbolic_sum(const GSymbol& n,
-		     const GSymbol& alpha, const GSymbol& lambda,
+compute_symbolic_sum(const Symbol& n,
+		     const Symbol& alpha, const Symbol& lambda,
 		     const std::vector<Polynomial_Root>& roots,
-		     const std::vector<GExpr>& base_of_exps,
-		     const std::vector<GExpr>& exp_poly_coeff,
-		     std::vector<GExpr>& symbolic_sum_distinct,
-		     std::vector<GExpr>& symbolic_sum_no_distinct) {
+		     const std::vector<Expr>& base_of_exps,
+		     const std::vector<Expr>& exp_poly_coeff,
+		     std::vector<Expr>& symbolic_sum_distinct,
+		     std::vector<Expr>& symbolic_sum_no_distinct) {
   // Compute the order of the recurrence relation.
-  GNumber order = 0;
+  Number order = 0;
   for (unsigned i = roots.size(); i-- > 0; )
     order += roots[i].multiplicity();
   unsigned r = 0;
@@ -242,25 +245,25 @@ compute_symbolic_sum(const GSymbol& n,
   - substitutes to \p lambda the corresponding value of the characteristic
     equation's root;
   - substitutes to \p alpha the corresponding base of the eventual
-    exponential.  Returns a <CODE>GExpr</CODE> \p solution with the
+    exponential.  Returns a <CODE>Expr</CODE> \p solution with the
     sum of all sums of the vectors.
 */
-static GExpr
-subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
+static Expr
+subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
 			    const std::vector<Polynomial_Root>& roots,
-			    const std::vector<GExpr>& base_of_exps,
-			    std::vector<GExpr>& symbolic_sum_distinct,
-			    std::vector<GExpr>& symbolic_sum_no_distinct) {
+			    const std::vector<Expr>& base_of_exps,
+			    std::vector<Expr>& symbolic_sum_distinct,
+			    std::vector<Expr>& symbolic_sum_no_distinct) {
   // Compute the order of the recurrence relation.
-  GNumber order = 0;
+  Number order = 0;
   for (unsigned i = roots.size(); i-- > 0; )
     order += roots[i].multiplicity();
-  GExpr solution = 0;
+  Expr solution = 0;
   unsigned r = 0;
   for (unsigned i = base_of_exps.size(); i-- > 0; )
     for (unsigned j = roots.size(); j-- > 0; ) {
-      GExpr base_exp = base_of_exps[i];
-      GExpr tmp;
+      Expr base_exp = base_of_exps[i];
+      Expr tmp;
       ///
       Expr_List cac(alpha, lambda);
       Expr_List cacd(base_exp, roots[j].value());
@@ -285,54 +288,54 @@ subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
 }
 
 static void
-exp_poly_decomposition(const GExpr& e, const GSymbol& n,
-		       std::vector<GExpr>& alpha,
-		       std::vector<GExpr>& p,
-		       std::vector<GExpr>& q);
+exp_poly_decomposition(const Expr& e, const Symbol& n,
+		       std::vector<Expr>& alpha,
+		       std::vector<Expr>& p,
+		       std::vector<Expr>& q);
 
 static void
-add_initial_conditions(const GExpr& g_n, const GSymbol& n,
-		       const std::vector<GNumber>& coefficients,
-		       const std::vector<GExpr>& initial_conditions,
-		       GExpr& solution);
+add_initial_conditions(const Expr& g_n, const Symbol& n,
+		       const std::vector<Number>& coefficients,
+		       const std::vector<Expr>& initial_conditions,
+		       Expr& solution);
 
-static GExpr
-solve_constant_coeff_order_1(const GSymbol& n, const int order,
-			     const std::vector<GExpr>& base_of_exps,
-			     const std::vector<GExpr>& exp_poly_coeff,
-			     const std::vector<GExpr>& exp_no_poly_coeff,
+static Expr
+solve_constant_coeff_order_1(const Symbol& n, const int order,
+			     const std::vector<Expr>& base_of_exps,
+			     const std::vector<Expr>& exp_poly_coeff,
+			     const std::vector<Expr>& exp_no_poly_coeff,
 			     const std::vector<Polynomial_Root>& roots,
-			     const std::vector<GExpr>& initial_conditions);
+			     const std::vector<Expr>& initial_conditions);
 
-static GExpr
-solve_constant_coeff_order_2(const GSymbol& n, GExpr& g_n, const int order,
+static Expr
+solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, const int order,
 			     const bool all_distinct,
-			     const std::vector<GExpr>& base_of_exps,
-			     const std::vector<GExpr>& exp_poly_coeff,
-			     const std::vector<GExpr>& exp_no_poly_coeff,
-			     const std::vector<GNumber>& coefficients,
+			     const std::vector<Expr>& base_of_exps,
+			     const std::vector<Expr>& exp_poly_coeff,
+			     const std::vector<Expr>& exp_no_poly_coeff,
+			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots);
 
-static GExpr
-solve_constant_coeff_order_k(const GSymbol& n, GExpr& g_n, const int order,
+static Expr
+solve_constant_coeff_order_k(const Symbol& n, Expr& g_n, const int order,
 			     const bool all_distinct,
-			     const std::vector<GExpr>& base_of_exps,
-			     const std::vector<GExpr>& exp_poly_coeff,
-			     const std::vector<GExpr>& exp_no_poly_coeff,
-			     const std::vector<GNumber>& coefficients,
+			     const std::vector<Expr>& base_of_exps,
+			     const std::vector<Expr>& exp_poly_coeff,
+			     const std::vector<Expr>& exp_no_poly_coeff,
+			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots);
 
 static bool
-verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
-		const GSymbol& n);
+verify_solution(const Expr& solution, const int& order, const Expr& rhs,
+		const Symbol& n);
 
 /*!
   Returns an expression that is equivalent to \p e and that is
   "maximally expanded" with respect to addition.  This amounts, among
   other things, to distribute multiplication over addition.
 */
-GExpr
-additive_form(const GExpr& e) {
+Expr
+additive_form(const Expr& e) {
   return e.expand();
 }
 
@@ -341,10 +344,10 @@ additive_form(const GExpr& e) {
   supplied in SOME FORM. (Explain.)
 */
 Solver_Status
-solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
+solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   // The following code depends on the possibility of recovering
   // the various parts of `rhs' as summands of an additive expression.
-  GExpr e = additive_form(rhs);
+  Expr e = additive_form(rhs);
   
   // Initialize the computation of the order of the linear part of the
   // recurrence.  This works like the computation of a maximum: it is
@@ -353,7 +356,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   int order = -1;
 
   // We will store here the coefficients of linear part of the recurrence.
-  std::vector<GExpr> coefficients;
+  std::vector<Expr> coefficients;
 
   // Will be set to true if at least one element of coefficients is
   // non-constant.
@@ -363,21 +366,21 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     // These patterns are used repeatedly for pattern matching.
     // We avoid recreating them over and over again by declaring
     // them static.
-    static GExpr x_i = x(wild(0));
-    static GExpr x_i_plus_r = x_i + wild(1);
-    static GExpr a_times_x_i = wild(1)*x_i;
-    static GExpr a_times_x_i_plus_r = a_times_x_i + wild(2);
+    static Expr x_i = x(wild(0));
+    static Expr x_i_plus_r = x_i + wild(1);
+    static Expr a_times_x_i = wild(1)*x_i;
+    static Expr a_times_x_i_plus_r = a_times_x_i + wild(2);
 
     // This will hold the substitutions produced by the various match
     // operations.
-    GList substitution;
+    Expr_List substitution;
     
     // This will hold the index `i' in contexts of the form `x(i)'.
-    GExpr i;
+    Expr i;
     
     // This will hold the coefficient `a' in contexts of the form
     // `a*x(i)'.
-    GExpr a;
+    Expr a;
     
     // The following matches are attempted starting from the most
     // common, then the second most common and so forth.  The check
@@ -415,7 +418,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     else
       break;
 
-    GNumber decrement;
+    Number decrement;
     if (!get_constant_decrement(i, n, decrement))
       return HAS_NON_INTEGER_DECREMENT;
     if (decrement == 0)
@@ -442,7 +445,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     if (index > coefficients.size())
       coefficients.insert(coefficients.end(),
 			  index - coefficients.size(),
-			  GNumber(0));
+			  Number(0));
     if (index == coefficients.size())
       coefficients.push_back(a);
     else
@@ -473,9 +476,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   // of the exponential with the base in `i'-th position of `base_of_exp'.
   // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
   // coefficient of base_of_exps[i]^n.
-  std::vector<GExpr> base_of_exps;
-  std::vector<GExpr> exp_poly_coeff;
-  std::vector<GExpr> exp_no_poly_coeff;
+  std::vector<Expr> base_of_exps;
+  std::vector<Expr> exp_poly_coeff;
+  std::vector<Expr> exp_no_poly_coeff;
   exp_poly_decomposition(e, n,
 			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
 
@@ -484,12 +487,12 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
 
   // Create the vector of initial conditions.
-  std::vector<GExpr> initial_conditions(order);
+  std::vector<Expr> initial_conditions(order);
   for (int i = 0; i < order; ++i)
     initial_conditions[i] = x(i);
 
   // Compute the characteristic equation and its roots.
-  GExpr characteristic_eq;
+  Expr characteristic_eq;
   Symbol y;
   std::vector<Polynomial_Root> roots;
   bool all_distinct = true;
@@ -497,14 +500,14 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   // riescono a fare le parametriche del primo ordine almeno.
   // Temporaneo fino a che `find_roots()' accettera' i parametri anche
   // per equazioni di grado superiore al primo.
-  std::vector<GNumber> num_coefficients(order+1);
+  std::vector<Number> num_coefficients(order+1);
   if (order == 1) {
     characteristic_eq = y - coefficients[1];
     roots.push_back(coefficients[1]);
   }
   else {
   // Check if the vector `coefficients' contains only numeric
-  // elements and in this case use a vector of GNumber.
+  // elements and in this case use a vector of Number.
     for (unsigned i = coefficients.size(); i--> 0; )
       if (coefficients[i].is_a_number())
 	num_coefficients[i] = coefficients[i].ex_to_number();
@@ -523,7 +526,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   D_VEC(roots, 0, roots.size()-1);
   D_MSG("");
 
-  GExpr g_n;
+  Expr g_n;
   switch (order) {
   case 1:
     if (!has_non_constant_coefficients)
@@ -571,7 +574,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   solution = simplify_on_output_ex(solution.expand(), n, false);
   
   // Only for the output.
-  GList conditions;
+  Expr_List conditions;
   for (unsigned i = order; i-- > 0; )
     conditions.append(initial_conditions[i]);
   solution = solution.collect(conditions);
@@ -600,18 +603,18 @@ impose_condition(const std::string&) {
   returns <CODE>false</CODE> otherwise.
 */
 static bool
-eliminate_negative_decrements(const GExpr& /* rhs */, GExpr& /* new_rhs */,
-			      const GSymbol& /* n */) {
+eliminate_negative_decrements(const Expr& /* rhs */, Expr& /* new_rhs */,
+			      const Symbol& /* n */) {
   // Let `max_decrement' be the largest positive integer such that `x(n+j)'
   // occurs in `rhs' with a coefficient `a' which is not syntactically 0.
 //   int max_decrement = 0;
-//   GExpr coeff;
+//   Expr coeff;
 //   for (unsigned j = rhs.nops(); j-- > 0; ) {
-//     static GExpr x_i = x(wild(0));
-//     static GExpr a_times_x_i = x_i * wild(1);
-//     GList substitution;
-//     GExpr i;
-//     GExpr a;
+//     static Expr x_i = x(wild(0));
+//     static Expr a_times_x_i = x_i * wild(1);
+//     Expr_List substitution;
+//     Expr i;
+//     Expr a;
 //     bool found = false;
 //     if (clear(substitution), match(rhs.op(j), a_times_x_i, substitution)) {
 //       i = get_binding(substitution, 0);
@@ -624,7 +627,7 @@ eliminate_negative_decrements(const GExpr& /* rhs */, GExpr& /* new_rhs */,
 //       found = true;
 //     }
 //     if (found) {
-//       GNumber decrement;
+//       Number decrement;
 //       get_constant_decrement(i, n, decrement);
 //       int dec = -decrement.to_int();
 //       if (dec > max_decrement) {
@@ -658,7 +661,7 @@ eliminate_negative_decrements(const GExpr& /* rhs */, GExpr& /* new_rhs */,
   <CODE>true</CODE>.
 */
 static bool
-eliminate_null_decrements(const GExpr& /* rhs */, GExpr& /* new_rhs */) {
+eliminate_null_decrements(const Expr& /* rhs */, Expr& /* new_rhs */) {
 
   //   Assume that `rhs = a*x(n) + b' and that `b' does not contain
   //   `x(n)'.  The following cases are possible:
@@ -682,7 +685,7 @@ eliminate_null_decrements(const GExpr& /* rhs */, GExpr& /* new_rhs */) {
   the errors that may arise.
 */
 Solver_Status
-solve_try_hard(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
+solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
   bool exit_anyway = false;
   Solver_Status status;
   do {
@@ -696,7 +699,7 @@ solve_try_hard(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       break;
     case HAS_NEGATIVE_DECREMENT:
       {
-	GExpr new_rhs;
+	Expr new_rhs;
 	if (eliminate_negative_decrements(rhs, new_rhs, n))
 	    status = solve(new_rhs, n, solution);
 	else
@@ -705,7 +708,7 @@ solve_try_hard(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       break;
     case HAS_NULL_DECREMENT:
       {
-	GExpr new_rhs;
+	Expr new_rhs;
 	if (eliminate_null_decrements(rhs, new_rhs))
 	    status = solve(new_rhs, n, solution);
 	else
@@ -723,11 +726,11 @@ solve_try_hard(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 }
 
 static void
-exp_poly_decomposition_factor(const GExpr& base,
-			      const GExpr& e, const GSymbol& n,
-			      std::vector<GExpr>& alpha,
-			      std::vector<GExpr>& p,
-			      std::vector<GExpr>& q) {
+exp_poly_decomposition_factor(const Expr& base,
+			      const Expr& e, const Symbol& n,
+			      std::vector<Expr>& alpha,
+			      std::vector<Expr>& p,
+			      std::vector<Expr>& q) {
   unsigned alpha_size = alpha.size();
   unsigned position;
   bool found = false;
@@ -746,25 +749,25 @@ exp_poly_decomposition_factor(const GExpr& base,
   // Here `alpha[position]' contains `base' and the polynomial and
   // possibly not polynomial parts of `e' can be added to
   // `p[position]' and `q[position]', respectively.
-  GExpr polynomial;
-  GExpr possibly_not_polynomial;
+  Expr polynomial;
+  Expr possibly_not_polynomial;
   isolate_polynomial_part(e, n, polynomial, possibly_not_polynomial);
   p[position] += polynomial;
   q[position] += possibly_not_polynomial;
 }
 
 static void
-exp_poly_decomposition_summand(const GExpr& e, const GSymbol& n,
-			       std::vector<GExpr>& alpha,
-			       std::vector<GExpr>& p,
-			       std::vector<GExpr>& q) {
-  static GExpr exponential = power(wild(0), n);
-  GList substitution;
+exp_poly_decomposition_summand(const Expr& e, const Symbol& n,
+			       std::vector<Expr>& alpha,
+			       std::vector<Expr>& p,
+			       std::vector<Expr>& q) {
+  static Expr exponential = Parma_Recurrence_Relation_Solver::power(wild(0), n);
+  Expr_List substitution;
   unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
   if (num_factors == 1) {
     if (e.match(exponential, substitution)) {
       // We have found something of the form `power(base, n)'.
-      GExpr base = get_binding(substitution, 0);
+      Expr base = get_binding(substitution, 0);
       assert(!base.is_zero());
       if (is_scalar_representation(base, n)) {
 	// We have found something of the form `power(base, n)'
@@ -778,13 +781,13 @@ exp_poly_decomposition_summand(const GExpr& e, const GSymbol& n,
     for (unsigned i = num_factors; i-- > 0; ) {
       if (clear(substitution), e.op(i).match(exponential, substitution)) {
 	// We have found something of the form `power(base, n)'.
-	GExpr base = get_binding(substitution, 0);
+	Expr base = get_binding(substitution, 0);
 	assert(!base.is_zero());
 	if (is_scalar_representation(base, n)) {
 	  // We have found something of the form `power(base, n)'
 	  // and `base' is good for the decomposition: determine
 	  // `r = e/power(base, n)'.
-	  GExpr r = 1;
+	  Expr r = 1;
 	  for (unsigned j = num_factors; j-- > 0; )
 	    if (i != j)
 	      r *= e.op(j);
@@ -812,10 +815,10 @@ exp_poly_decomposition_summand(const GExpr& e, const GSymbol& n,
   \p alpha, \p p and \p q, respectively.
 */
 static void
-exp_poly_decomposition(const GExpr& e, const GSymbol& n,
-		       std::vector<GExpr>& alpha,
-		       std::vector<GExpr>& p,
-		       std::vector<GExpr>& q) {
+exp_poly_decomposition(const Expr& e, const Symbol& n,
+		       std::vector<Expr>& alpha,
+		       std::vector<Expr>& p,
+		       std::vector<Expr>& q) {
   unsigned num_summands = e.is_a_add() ? e.nops() : 1;
   // An upper bound to the number of exponentials is the number of
   // summands in `e': reserve space in the output vectors so that
@@ -838,19 +841,19 @@ exp_poly_decomposition(const GExpr& e, const GSymbol& n,
       \bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \bigr).
   \f]
 */
-// FIXME: il vettore `coefficients' dovra' diventare di `GExpr' quando
+// FIXME: il vettore `coefficients' dovra' diventare di `Expr' quando
 // sapremo risolvere anche le eq. di grado superiore al primo con i
 // parametri.
 static void
-add_initial_conditions(const GExpr& g_n, const GSymbol& n,
-                       const std::vector<GNumber>& coefficients,
-		       const std::vector<GExpr>& initial_conditions,
-		       GExpr& solution) {
+add_initial_conditions(const Expr& g_n, const Symbol& n,
+                       const std::vector<Number>& coefficients,
+		       const std::vector<Expr>& initial_conditions,
+		       Expr& solution) {
   // `coefficients.size()' has `order + 1' elements because in the first
   // position there is the value 0. 
   for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
-    GExpr g_n_i = g_n.subs(n, n - i);
-    GExpr tmp = initial_conditions[i];
+    Expr g_n_i = g_n.subs(n, n - i);
+    Expr tmp = initial_conditions[i];
     for (unsigned j = i; j > 0; j--)
       tmp -= coefficients[j] * initial_conditions[i-j];
     solution += tmp * g_n_i;
@@ -868,20 +871,20 @@ add_initial_conditions(const GExpr& g_n, const GSymbol& n,
   Returns <CODE>false</CODE> otherwise.
 */
 static bool
-gosper(const int order, const GSymbol& n,
-       const std::vector<GExpr>& base_of_exps,
-       const std::vector<GExpr>& exp_no_poly_coeff,
+gosper(const int order, const Symbol& n,
+       const std::vector<Expr>& base_of_exps,
+       const std::vector<Expr>& exp_no_poly_coeff,
        const std::vector<Polynomial_Root>& roots,
-       GExpr& solution) {
+       Expr& solution) {
   solution = 0;
   for (unsigned i = exp_no_poly_coeff.size(); i-- > 0; ) {
-    GExpr tmp;
+    Expr tmp;
     if (!exp_no_poly_coeff[i].is_zero()) {
       // FIXME: `r_n' is temporary until the implementation
       // of the step one of gosper's algorithm.
-      GExpr r_n =
-	exp_no_poly_coeff[i].subs(n, n + 1) * power(base_of_exps[i], n+1)
-	* power(exp_no_poly_coeff[i], -1) * power(base_of_exps[i], -n);
+      Expr r_n =
+	exp_no_poly_coeff[i].subs(n, n + 1) * Parma_Recurrence_Relation_Solver::power(base_of_exps[i], n+1)
+	* Parma_Recurrence_Relation_Solver::power(exp_no_poly_coeff[i], -1) * Parma_Recurrence_Relation_Solver::power(base_of_exps[i], -n);
       r_n = simplify_on_output_ex(r_n.expand(), n, false);
       r_n = simplify_numer_denom(r_n);
       // FIXME: the lower bound for the sum is not `order'
@@ -889,8 +892,8 @@ gosper(const int order, const GSymbol& n,
       // FIXME: this is a temporary assert untile he generalization of
       // this function.
       assert(order == 1);
-      GExpr t = power(base_of_exps[i], n) * exp_no_poly_coeff[i]
-	* power(roots[0].value(), -n);
+      Expr t = Parma_Recurrence_Relation_Solver::power(base_of_exps[i], n) * exp_no_poly_coeff[i]
+	* Parma_Recurrence_Relation_Solver::power(roots[0].value(), -n);
 //        std::cout << "t(n) = " << t << std::endl;
 //        std::cout << "r(n) = " << r_n << std::endl;
       if (!gosper(t, r_n, n, order, n, tmp))
@@ -916,21 +919,21 @@ gosper(const int order, const GSymbol& n,
           + \sum_{k=1}^n \lambda^{n-k} p(k).
   \f]
 */
-static GExpr
-solve_constant_coeff_order_1(const GSymbol& n, const int order,
-			     const std::vector<GExpr>& base_of_exps,
-			     const std::vector<GExpr>& exp_poly_coeff,
-			     const std::vector<GExpr>& exp_no_poly_coeff,
+static Expr
+solve_constant_coeff_order_1(const Symbol& n, const int order,
+			     const std::vector<Expr>& base_of_exps,
+			     const std::vector<Expr>& exp_poly_coeff,
+			     const std::vector<Expr>& exp_no_poly_coeff,
 			     const std::vector<Polynomial_Root>& roots,
-			     const std::vector<GExpr>& initial_conditions) {
-  GExpr solution = 0;
+			     const std::vector<Expr>& initial_conditions) {
+  Expr solution = 0;
   // Computes the sum when `\lambda^{n-k} p(k)' is a polynomial or
   // a product of a polynomial times an exponential.
   if (vector_not_all_zero(exp_poly_coeff)) {
     Symbol alpha;
     Symbol lambda;
-    std::vector<GExpr> symbolic_sum_distinct;
-    std::vector<GExpr> symbolic_sum_no_distinct;
+    std::vector<Expr> symbolic_sum_distinct;
+    std::vector<Expr> symbolic_sum_no_distinct;
     compute_symbolic_sum(n, alpha, lambda, roots,
 			 base_of_exps, exp_poly_coeff,
 			 symbolic_sum_distinct, symbolic_sum_no_distinct);
@@ -949,7 +952,7 @@ solve_constant_coeff_order_1(const GSymbol& n, const int order,
   if (vector_not_all_zero(exp_no_poly_coeff)) {
     // FIXME: for the moment gosper returns the right solution only
     // if the summand is an hypergeometric term.
-    GExpr gosper_solution;
+    Expr gosper_solution;
     if (gosper(order, n, base_of_exps, exp_no_poly_coeff, roots,
 	       gosper_solution))
       solution += gosper_solution;
@@ -959,11 +962,11 @@ solve_constant_coeff_order_1(const GSymbol& n, const int order,
   }
   // FIXME: per ora non si puo' usare la funzione
   // `add_initial_conditions' perche' richiede un vettore di
-  // `GNumber' come `coefficients' e voglio risolvere anche le
+  // `Number' come `coefficients' e voglio risolvere anche le
   // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
   // add_initial_conditions(g_n, n, coefficients, initial_conditions,
   //		              solution);
-  solution += initial_conditions[0] * power(roots[0].value(), n);
+  solution += initial_conditions[0] * Parma_Recurrence_Relation_Solver::power(roots[0].value(), n);
 
   return solution;
 }
@@ -993,48 +996,48 @@ solve_constant_coeff_order_1(const GSymbol& n, const int order,
   to insert in order to determine <CODE>g_n</CODE>.
   Returns in the matrix \p solution the solution of the system. 
 */
-static GMatrix
+static Matrix
 solve_system(const bool all_distinct,
-	     const std::vector<GNumber>& coefficients,
+	     const std::vector<Number>& coefficients,
 	     const std::vector<Polynomial_Root>& roots) {
   unsigned coefficients_size = coefficients.size();
   // Prepare a list with the elments for the right hand side of the system
   // to solve.
   // The elements of the list are `g_0, g_1, ..., g_{k-1}'.
   // Note that `tmp[i]' is built on `tmp[i-1]'.
-  std::vector<GExpr> tmp(coefficients_size - 1);
+  std::vector<Expr> tmp(coefficients_size - 1);
   tmp[0] = 1;
   for (unsigned i = 1; i < coefficients_size - 1; ++i)
     for (unsigned j = 0; j < i; ++j)
       tmp[i] += coefficients[j+1] * tmp[i-j-1];
-  GList g_i;
+  Expr_List g_i;
   for (unsigned i = coefficients_size - 1; i-- > 0; )
     g_i.prepend(tmp[i]);
   
   // Prepare a list with the coefficients of the equations of the system
   // to solve. This calculus is based on different form of `g_n'
   // in according to the roots' multiplicity.
-  GList coeff_equations;
+  Expr_List coeff_equations;
   if (all_distinct)
     for (unsigned i = coefficients_size - 1; i-- > 0; )
       for (unsigned j = coefficients_size - 1; j-- > 0; )
-	coeff_equations.prepend(power(roots[j].value(), i));
+	coeff_equations.prepend(Parma_Recurrence_Relation_Solver::power(roots[j].value(), i));
   else
     for (unsigned h = 0; h < coefficients_size - 1; ++h)
       for (unsigned i = roots.size(); i-- > 0; ) {
-	for (GNumber j = roots[i].multiplicity(); j-- > 1; )
-	  coeff_equations.append(power(h, j) * power(roots[i].value(), h));
-	coeff_equations.append(power(roots[i].value(), h));
+	for (Number j = roots[i].multiplicity(); j-- > 1; )
+	  coeff_equations.append(Parma_Recurrence_Relation_Solver::power(h, j) * Parma_Recurrence_Relation_Solver::power(roots[i].value(), h));
+	coeff_equations.append(Parma_Recurrence_Relation_Solver::power(roots[i].value(), h));
       }
 
   // Define the matrices and solve the system.
-  GMatrix coeff_alpha(coefficients_size - 1, coefficients_size - 1,
+  Matrix coeff_alpha(coefficients_size - 1, coefficients_size - 1,
 		      coeff_equations);
-  GMatrix rhs(coefficients_size - 1, 1, g_i);
-  GMatrix vars(coefficients_size - 1, 1);
+  Matrix rhs(coefficients_size - 1, 1, g_i);
+  Matrix vars(coefficients_size - 1, 1);
   for (unsigned i = coefficients_size - 1; i-- > 0; )
     vars(i, 0) = Symbol();
-  GMatrix solution = coeff_alpha.solve(vars, rhs);
+  Matrix solution = coeff_alpha.solve(vars, rhs);
 #if NOISY
   std::cout << "g_i: " << g_i << std::endl;
   std::cout << "equations: " << coeff_equations << std::endl;
@@ -1045,22 +1048,22 @@ solve_system(const bool all_distinct,
   return solution;
 }
 
-static GExpr
-find_g_n(const GSymbol& n, const bool all_distinct, const GMatrix sol,
+static Expr
+find_g_n(const Symbol& n, const bool all_distinct, const Matrix sol,
 	 const std::vector<Polynomial_Root>& roots) {
   // Compute the order of the recurrence relation.
-  GNumber order = 0;
+  Number order = 0;
   for (unsigned i = roots.size(); i-- > 0; )
     order += roots[i].multiplicity();
-  GExpr g_n = 0;
+  Expr g_n = 0;
   if (all_distinct)
     for (unsigned i = 0; i < order; ++i)
-      g_n += sol(i, 0) * power(roots[i].value(), n);
+      g_n += sol(i, 0) * Parma_Recurrence_Relation_Solver::power(roots[i].value(), n);
   else
     for (unsigned i = roots.size(); i-- > 0; ) {
       unsigned h = 0;
-      for (GNumber j = roots[i].multiplicity(); j-- > 0 && h < order; ) {
-	g_n += sol(h, 0) * power(n, j) * power(roots[i].value(), n);
+      for (Number j = roots[i].multiplicity(); j-- > 0 && h < order; ) {
+	g_n += sol(h, 0) * Parma_Recurrence_Relation_Solver::power(n, j) * Parma_Recurrence_Relation_Solver::power(roots[i].value(), n);
 	++h;
       }
     }
@@ -1084,13 +1087,13 @@ find_g_n(const GSymbol& n, const bool all_distinct, const GMatrix sol,
   \f$ 0 \f$ and it will have like parameters the elements of \p poly_coeff_tot.
 */
 static void
-prepare_for_symbolic_sum(const GSymbol& n, const GExpr& g_n,
+prepare_for_symbolic_sum(const Symbol& n, const Expr& g_n,
 			 const std::vector<Polynomial_Root>& roots,
-			 const std::vector<GExpr>& exp_poly_coeff,
-			 std::vector<GExpr>& poly_coeff_tot) {
-  std::vector<GExpr> bases_exp_g_n;
-  std::vector<GExpr> g_n_poly_coeff;
-  std::vector<GExpr> g_n_no_poly_coeff;
+			 const std::vector<Expr>& exp_poly_coeff,
+			 std::vector<Expr>& poly_coeff_tot) {
+  std::vector<Expr> bases_exp_g_n;
+  std::vector<Expr> g_n_poly_coeff;
+  std::vector<Expr> g_n_no_poly_coeff;
   exp_poly_decomposition(g_n, n, bases_exp_g_n,
 			 g_n_poly_coeff, g_n_no_poly_coeff);
   // `bases_of_exp_g_n' must have same elements of `roots' in the same order.
@@ -1099,9 +1102,9 @@ prepare_for_symbolic_sum(const GSymbol& n, const GExpr& g_n,
     if (!roots[i].value().is_equal(bases_exp_g_n[i]))
       equal = false;
   if (!equal) {
-    std::vector<GExpr> tmp_exp(roots.size());
-    std::vector<GExpr> tmp_coeff_poly(roots.size());
-    std::vector<GExpr> tmp_coeff_no_poly(roots.size());
+    std::vector<Expr> tmp_exp(roots.size());
+    std::vector<Expr> tmp_coeff_poly(roots.size());
+    std::vector<Expr> tmp_coeff_no_poly(roots.size());
     for (unsigned i = roots.size(); i-- > 0; )
       tmp_exp[i] = roots[i].value();
     for (unsigned i = tmp_exp.size(); i-- > 0; )
@@ -1127,15 +1130,15 @@ prepare_for_symbolic_sum(const GSymbol& n, const GExpr& g_n,
 #endif
 }
 
-static GExpr
-compute_non_homogeneous_part(const GSymbol& n, const GExpr& g_n,
+static Expr
+compute_non_homogeneous_part(const Symbol& n, const Expr& g_n,
 			     const int order,
-			     const std::vector<GExpr>& base_of_exps,
-			     const std::vector<GExpr>& exp_poly_coeff) {
-  GExpr solution_tot = 0;
-  std::vector<GExpr> bases_exp_g_n;
-  std::vector<GExpr> g_n_poly_coeff;
-  std::vector<GExpr> g_n_no_poly_coeff;
+			     const std::vector<Expr>& base_of_exps,
+			     const std::vector<Expr>& exp_poly_coeff) {
+  Expr solution_tot = 0;
+  std::vector<Expr> bases_exp_g_n;
+  std::vector<Expr> g_n_poly_coeff;
+  std::vector<Expr> g_n_no_poly_coeff;
   exp_poly_decomposition(g_n, n, bases_exp_g_n,
 			 g_n_poly_coeff, g_n_no_poly_coeff);
 #if NOISY
@@ -1145,10 +1148,10 @@ compute_non_homogeneous_part(const GSymbol& n, const GExpr& g_n,
 #endif  
   for (unsigned i = bases_exp_g_n.size(); i-- > 0; )
     for (unsigned j = base_of_exps.size(); j-- > 0; ) {
-      GExpr solution = 0;
+      Expr solution = 0;
       Symbol k;
-      GExpr g_n_coeff_k = g_n_poly_coeff[i].subs(n, n - k);
-      GExpr exp_poly_coeff_k = exp_poly_coeff[j].subs(n, k);
+      Expr g_n_coeff_k = g_n_poly_coeff[i].subs(n, n - k);
+      Expr exp_poly_coeff_k = exp_poly_coeff[j].subs(n, k);
       solution = sum_poly_times_exponentials(g_n_coeff_k * exp_poly_coeff_k,
 					     k, n, 1/bases_exp_g_n[i]
 					     * base_of_exps[j]);
@@ -1157,8 +1160,8 @@ compute_non_homogeneous_part(const GSymbol& n, const GExpr& g_n,
       solution -= (g_n_coeff_k * exp_poly_coeff_k).subs(k, 0);
       for (int h = 1; h < order; ++h)
 	solution -= (g_n_coeff_k * exp_poly_coeff_k).subs(k, h)
-	  * power(1/bases_exp_g_n[i] * base_of_exps[j], h);
-      solution *= power(bases_exp_g_n[i], n);
+	  * Parma_Recurrence_Relation_Solver::power(1/bases_exp_g_n[i] * base_of_exps[j], h);
+      solution *= Parma_Recurrence_Relation_Solver::power(bases_exp_g_n[i], n);
       solution_tot += solution;
     }
   return solution_tot;
@@ -1208,27 +1211,27 @@ compute_non_homogeneous_part(const GSymbol& n, const GExpr& g_n,
   part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
   the function <CODE>add_initial_conditions()</CODE>), respectively.
 */
-static GExpr
-solve_constant_coeff_order_2(const GSymbol& n, GExpr& g_n, const int order,
+static Expr
+solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, const int order,
 			     const bool all_distinct, 
-			     const std::vector<GExpr>& base_of_exps,
-			     const std::vector<GExpr>& exp_poly_coeff,
-			     const std::vector<GExpr>& exp_no_poly_coeff,
-			     const std::vector<GNumber>& coefficients,
+			     const std::vector<Expr>& base_of_exps,
+			     const std::vector<Expr>& exp_poly_coeff,
+			     const std::vector<Expr>& exp_no_poly_coeff,
+			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots) {
-  GExpr solution;
+  Expr solution;
   // Calculates the solution of the second order recurrences when
   // the inhomogeneous term is a polynomial or the product of a
   // polynomial and an exponential.
   if (!vector_not_all_zero(exp_no_poly_coeff))
     if (all_distinct) {
-      GExpr root_1 = roots[0].value();
-      GExpr root_2 = roots[1].value();
-      GExpr diff_roots = root_1 - root_2;
+      Expr root_1 = roots[0].value();
+      Expr root_2 = roots[1].value();
+      Expr diff_roots = root_1 - root_2;
       Symbol alpha;
       Symbol lambda;
-      std::vector<GExpr> symbolic_sum_distinct;
-      std::vector<GExpr> symbolic_sum_no_distinct;
+      std::vector<Expr> symbolic_sum_distinct;
+      std::vector<Expr> symbolic_sum_no_distinct;
       compute_symbolic_sum(n, alpha, lambda, roots,
 			   base_of_exps, exp_poly_coeff,
 			   symbolic_sum_distinct, symbolic_sum_no_distinct);
@@ -1245,7 +1248,7 @@ solve_constant_coeff_order_2(const GSymbol& n, GExpr& g_n, const int order,
 					     base_of_exps,
 					     symbolic_sum_distinct,
 					     symbolic_sum_no_distinct);
-      g_n = (power(root_1, n+1) - power(root_2, n+1)) / diff_roots;
+      g_n = (Parma_Recurrence_Relation_Solver::power(root_1, n+1) - Parma_Recurrence_Relation_Solver::power(root_2, n+1)) / diff_roots;
       // FIXME: forse conviene semplificare g_n
       D_VAR(g_n);
     }
@@ -1255,7 +1258,7 @@ solve_constant_coeff_order_2(const GSymbol& n, GExpr& g_n, const int order,
       assert(roots[0].multiplicity() == 2);      
       
       // Solve system in order to finds `alpha_i' (i = 1,...,order).
-      GMatrix sol = solve_system(all_distinct, coefficients, roots);
+      Matrix sol = solve_system(all_distinct, coefficients, roots);
       
       // Finds `g_n', always taking into account the root's multiplicity
       g_n = find_g_n(n, all_distinct, sol, roots);
@@ -1314,21 +1317,21 @@ solve_constant_coeff_order_2(const GSymbol& n, GExpr& g_n, const int order,
   part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
   the function <CODE>add_initial_conditions()</CODE>), respectively.
 */
-static GExpr
-solve_constant_coeff_order_k(const GSymbol& n, GExpr& g_n,
+static Expr
+solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
 			     const int order, const bool all_distinct,
-			     const std::vector<GExpr>& base_of_exps,
-			     const std::vector<GExpr>& exp_poly_coeff,
-			     const std::vector<GExpr>& exp_no_poly_coeff,
-			     const std::vector<GNumber>& coefficients,
+			     const std::vector<Expr>& base_of_exps,
+			     const std::vector<Expr>& exp_poly_coeff,
+			     const std::vector<Expr>& exp_no_poly_coeff,
+			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots) {
-  GExpr solution;  
+  Expr solution;  
   // Calculates the solution of the recurrences when
   // the inhomogeneous term is a polynomial or the product of a
   // polynomial and an exponential.
   if (!vector_not_all_zero(exp_no_poly_coeff)) {
     // Solve system in order to finds `alpha_i' (i = 1,...,order).
-    GMatrix sol = solve_system(all_distinct, coefficients, roots);
+    Matrix sol = solve_system(all_distinct, coefficients, roots);
     
     // Finds `g_n', always taking into account the root's multiplicity
     g_n = find_g_n(n, all_distinct, sol, roots);
@@ -1336,12 +1339,12 @@ solve_constant_coeff_order_k(const GSymbol& n, GExpr& g_n,
     
     if (all_distinct) {      
       // Prepare for to compute the symbolic sum.
-      std::vector<GExpr> poly_coeff_tot;
+      std::vector<Expr> poly_coeff_tot;
       prepare_for_symbolic_sum(n, g_n, roots, exp_poly_coeff, poly_coeff_tot);
       Symbol alpha;
       Symbol lambda;
-      std::vector<GExpr> symbolic_sum_distinct;
-      std::vector<GExpr> symbolic_sum_no_distinct;
+      std::vector<Expr> symbolic_sum_distinct;
+      std::vector<Expr> symbolic_sum_no_distinct;
       compute_symbolic_sum(n, alpha, lambda, roots,
 			   base_of_exps, poly_coeff_tot,
 			   symbolic_sum_distinct, symbolic_sum_no_distinct);
@@ -1370,7 +1373,7 @@ solve_constant_coeff_order_k(const GSymbol& n, GExpr& g_n,
 }
 
 static void
-print_bad_exp(const GExpr& e, const GExpr rhs, bool conditions) {
+print_bad_exp(const Expr& e, const Expr rhs, bool conditions) {
   std::ofstream outfile("not_verified.out", std::ios_base::app);
   if (conditions)
     outfile << std::endl << "not verified initial conditions in x(n) = "
@@ -1411,12 +1414,12 @@ print_bad_exp(const GExpr& e, const GExpr rhs, bool conditions) {
   decide whether the solution is right or it is really wrong.
 */
 static bool
-verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
-		const GSymbol& n) {
+verify_solution(const Expr& solution, const int& order, const Expr& rhs,
+		const Symbol& n) {
   // Validation of initial conditions.
   for (int i = order; i-- > 0; ) {
-    GExpr g_i = x(i);
-    GExpr sol_subs = simplify_numer_denom(solution.subs(n, i));
+    Expr g_i = x(i);
+    Expr sol_subs = simplify_numer_denom(solution.subs(n, i));
     if (!g_i.is_equal(sol_subs)) {
       print_bad_exp(sol_subs, rhs, true);
       return false;
@@ -1425,19 +1428,19 @@ verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
   // The initial conditions are verified. Build an other expression
   // that has all terms of `solution' minus those containing an initial
   // condition.
-  GExpr partial_solution = 0;
+  Expr partial_solution = 0;
   for (unsigned i = solution.nops(); i-- > 0; )
     if (!solution.op(i).match(x(wild(0)))
 	&& !solution.op(i).match(wild(1) * x(wild(0))))
       partial_solution += solution.op(i);
 
-  std::vector<GExpr> terms_to_sub(order);
+  std::vector<Expr> terms_to_sub(order);
   for (int i = 0; i < order; ++i)
     terms_to_sub[i] = partial_solution.subs(n, n - i - 1);
-  GExpr substituted_rhs = simplify_on_input_ex(rhs.expand(), n, true);
+  Expr substituted_rhs = simplify_on_input_ex(rhs.expand(), n, true);
   for (unsigned i = terms_to_sub.size(); i-- > 0; )
     substituted_rhs = substituted_rhs.subs(x(n - i - 1), terms_to_sub[i]);
-  GExpr diff = (partial_solution - substituted_rhs).expand();
+  Expr diff = (partial_solution - substituted_rhs).expand();
   diff = simplify_numer_denom(diff);
   if (diff.is_zero())
     return true;
@@ -1446,3 +1449,5 @@ verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
     return false;
   }
 }
+
+} // namespace Parma_Recurrence_Relation_Solver

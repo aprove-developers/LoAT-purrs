@@ -24,21 +24,23 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
-#include "globals.hh"
+
+#include "approx_expr.hh"
+#include "Number.defs.hh"
+#include "cimath.h"
 #include <cln/rational.h>
 #include <ginac/ginac.h>
-#include "cimath.h"
 
-using namespace Parma_Recurrence_Relation_Solver;
+namespace Parma_Recurrence_Relation_Solver {
 
 Interval
-approximate_integer(const GNumber& n) {
+approximate_integer(const Number& n) {
   // Kludge!!!
   return Interval(n.to_int());
 }
 
 Interval
-approximate_rational(const GNumber& n) {
+approximate_rational(const Number& n) {
   if (n.is_integer())
     return approximate_integer(n);
   else if (n.is_rational())
@@ -48,7 +50,7 @@ approximate_rational(const GNumber& n) {
 }
 
 CInterval
-approximate(const GNumber& n) {
+approximate(const Number& n) {
   if (n.is_real())
     return CInterval(approximate_rational(n.real()),
 		     0);
@@ -58,7 +60,7 @@ approximate(const GNumber& n) {
 }
 
 CInterval
-approximate(const GExpr& e) {
+approximate(const Expr& e) {
   CInterval r;
   if (e.is_a_number())
     return approximate(e.ex_to_number());
@@ -73,9 +75,9 @@ approximate(const GExpr& e) {
       r *= approximate(e.op(i));
   }
   else if (e.is_a_power()) {
-    static GExpr one_half = GNumber(1)/2;
-    const GExpr& base = e.op(0);
-    const GExpr& exponent = e.op(1);
+    static Expr one_half = Number(1)/2;
+    const Expr& base = e.op(0);
+    const Expr& exponent = e.op(1);
 #if 0
     return pow(approximate(base), approximate(exponent));
 #else
@@ -89,7 +91,7 @@ approximate(const GExpr& e) {
 #endif
   }
   else if (e.is_a_function()) {
-    const GExpr& arg = e.op(0);
+    const Expr& arg = e.op(0);
     CInterval aarg = approximate(arg);
 #if 0
     if (e.is_the_function(abs))
@@ -127,3 +129,5 @@ approximate(const GExpr& e) {
 
   return r;
 }
+
+} // namespace Parma_Recurrence_Relation_Solver

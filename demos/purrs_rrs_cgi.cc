@@ -242,8 +242,8 @@ main() try {
   Symbol b;
   Symbol c;
   Symbol d;
-  GList symbols(n, a, b, c, d);
-  GExpr rhs = GExpr(**expr, symbols);
+  Expr_List symbols(n, a, b, c, d);
+  Expr rhs = Expr(**expr, symbols);
 
 #if HAVE_GETRUSAGE
   timeval start;
@@ -254,7 +254,7 @@ main() try {
     start = rsg.ru_utime;
 #endif
 
-  GExpr solution;
+  Expr solution;
   try {
     if (!solve(rhs, n, solution))
       error("sorry, this is too difficult");

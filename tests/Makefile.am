@@ -25,9 +25,7 @@ TESTS =
 
 # noinst_HEADERS = ehandlers.hh print.hh
 
-BUGS = bug1
-
-bug1_SOURCES = bug1.cc
+BUGS =
 
 check_PROGRAMS = eqs_driver rrs_driver $(TESTS) $(BUGS)
 

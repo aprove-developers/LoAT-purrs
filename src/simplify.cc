@@ -25,30 +25,31 @@ http://www.cs.unipr.it/purrs/ . */
 #include "simplify.hh"
 
 #include "util.hh"
+#include "Expr.defs.hh"
 #include <vector>
 
 // TEMPORARY
 #include <iostream>
 
-using namespace Parma_Recurrence_Relation_Solver;
+namespace Parma_Recurrence_Relation_Solver {
 
 #define NOISY 0
 
 static const unsigned
 FACTOR_THRESHOLD = 100;
 
-GExpr
-simplify_on_input_ex(const GExpr& e, const GSymbol& n, const bool& input);
+Expr
+simplify_on_input_ex(const Expr& e, const Symbol& n, const bool& input);
 
-GExpr
-simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input);
+Expr
+simplify_on_output_ex(const Expr& e, const Symbol& n, const bool& input);
 
 
 /*!
   Separates numeric factors and not numeric factors of an expression \p e. 
 */
 static void
-split_exponent(GExpr& num, GExpr& not_num, const GExpr& e) {
+split_exponent(Expr& num, Expr& not_num, const Expr& e) {
   if (!e.is_a_number())
     not_num *= e;
   else
@@ -57,19 +58,19 @@ split_exponent(GExpr& num, GExpr& not_num, const GExpr& e) {
 
 /*!
   There are three cases:
-  1. the <CODE>GExpr</CODE> \p not_num_exponent is a <CODE>GiNaC::mul</CODE>
+  1. the <CODE>Expr</CODE> \p not_num_exponent is a <CODE>GiNaC::mul</CODE>
      and has like a factor \p n:
-     returns the <CODE>GExpr</CODE> \p not_num_exp_minus_n with
+     returns the <CODE>Expr</CODE> \p not_num_exp_minus_n with
      all the factors of \p not_num_exponent minus \p n;
-  2. the <CODE>GExpr</CODE> \p not_num_exponent is not a
+  2. the <CODE>Expr</CODE> \p not_num_exponent is not a
      <CODE>GiNaC::mul</CODE> and it is equal to \p n:
-     returns the <CODE>GExpr</CODE> \p not_num_exp_minus_n equal to \f$ 1 \f$; 
-  3. the <CODE>GExpr</CODE> \p not_num_exponent not contains \p n:
-     returns the <CODE>GExpr</CODE> \p not_num_exp_minus_n equal to
+     returns the <CODE>Expr</CODE> \p not_num_exp_minus_n equal to \f$ 1 \f$; 
+  3. the <CODE>Expr</CODE> \p not_num_exponent not contains \p n:
+     returns the <CODE>Expr</CODE> \p not_num_exp_minus_n equal to
      \p not_num_exponent.
 */
-static GExpr
-found_and_erase_n(const GExpr& not_num_exponent, const GSymbol& n) {
+static Expr
+found_and_erase_n(const Expr& not_num_exponent, const Symbol& n) {
  bool found = false;
  if (not_num_exponent.is_a_mul()) {
    for (unsigned i = not_num_exponent.nops(); i-- > 0; )
@@ -80,7 +81,7 @@ found_and_erase_n(const GExpr& not_num_exponent, const GSymbol& n) {
    if (not_num_exponent.is_equal(n))
      found = true;
 
- GExpr not_num_exp_minus_n = 1;
+ Expr not_num_exp_minus_n = 1;
  if (found) {
    if (not_num_exponent.is_a_mul()) {
      for (unsigned i = not_num_exponent.nops(); i-- > 0; )
@@ -100,11 +101,11 @@ found_and_erase_n(const GExpr& not_num_exponent, const GSymbol& n) {
   otherwise (for example \f$ base = 3 \f$ and \f$ exp_num = 1/2 \f$).
 */
 static bool
-perfect_root(const GExpr& base, const GNumber& exp_num) {
+perfect_root(const Expr& base, const Number& exp_num) {
   if (exp_num.is_rational()) {
-    GExpr pow_base_num_exp = power(base, exp_num);
+    Expr pow_base_num_exp = Parma_Recurrence_Relation_Solver::power(base, exp_num);
     if (pow_base_num_exp.is_a_number()) {
-      GNumber tmp = pow_base_num_exp.ex_to_number();
+      Number tmp = pow_base_num_exp.ex_to_number();
       if (tmp.is_rational())
 	return true;
     }
@@ -118,26 +119,26 @@ perfect_root(const GExpr& base, const GNumber& exp_num) {
   returns the right power in according with some conditions checked
   by the boolean \p input and \p is_numeric_base.
 */
-static GExpr
+static Expr
 return_power(const bool& is_numeric_base, const bool& input,
-	     const GExpr& num_exp, const GExpr& not_num_exp,
-	     const GExpr& base, const GSymbol& n) {
-  GExpr not_num_exp_minus_n;
+	     const Expr& num_exp, const Expr& not_num_exp,
+	     const Expr& base, const Symbol& n) {
+  Expr not_num_exp_minus_n;
   if (input)	
     not_num_exp_minus_n = found_and_erase_n(not_num_exp, n);
   // We do not want put in evidence the special symbol `n' or it is
   // not in `vect_not_num_exp[i]'.
   if (!input || not_num_exp_minus_n.is_equal(not_num_exp))
     if (is_numeric_base)
-      return power(power(base, num_exp), not_num_exp);
+      return Parma_Recurrence_Relation_Solver::power(Parma_Recurrence_Relation_Solver::power(base, num_exp), not_num_exp);
     else
-      return power(base, num_exp * not_num_exp);
+      return Parma_Recurrence_Relation_Solver::power(base, num_exp * not_num_exp);
   // We put in evidence the special symbol `n'. 
   else
     if (is_numeric_base)
-      return power(power(power(base, num_exp), not_num_exp_minus_n), n);
+      return Parma_Recurrence_Relation_Solver::power(Parma_Recurrence_Relation_Solver::power(Parma_Recurrence_Relation_Solver::power(base, num_exp), not_num_exp_minus_n), n);
     else
-      return power(power(base, num_exp * not_num_exp_minus_n), n);
+      return Parma_Recurrence_Relation_Solver::power(Parma_Recurrence_Relation_Solver::power(base, num_exp * not_num_exp_minus_n), n);
 }
 
 /*!
@@ -156,20 +157,20 @@ return_power(const bool& is_numeric_base, const bool& input,
   which put in evidence the special symbol \p n; otherwise, i. e. \p input
   is <CODE>false</CODE>, \p n is like the other parameters.
  */
-static GExpr
-simpl_powers_base(const GExpr& base, const GExpr& num_exponent,
-                  const GExpr& not_num_exponent, const GSymbol& n,
+static Expr
+simpl_powers_base(const Expr& base, const Expr& num_exponent,
+                  const Expr& not_num_exponent, const Symbol& n,
 		  const bool& input) {
-  std::vector<GExpr> vect_base(base.nops());
-  std::vector<GExpr> vect_num_exp(base.nops());
-  std::vector<GExpr> vect_not_num_exp(base.nops());
+  std::vector<Expr> vect_base(base.nops());
+  std::vector<Expr> vect_num_exp(base.nops());
+  std::vector<Expr> vect_not_num_exp(base.nops());
   for (unsigned i = base.nops(); i-- > 0; ) {
     vect_num_exp[i] = num_exponent;
     vect_not_num_exp[i] = not_num_exponent;
   }
   for (unsigned i = base.nops(); i-- > 0; )
     if (base.op(i).is_a_power()) {
-      GExpr tmp = base.op(i);
+      Expr tmp = base.op(i);
       while (tmp.is_a_power()) {
         // The exponent of the factor `base.op(i)' is a multiplication.
         if (tmp.op(1).is_a_mul())
@@ -188,7 +189,7 @@ simpl_powers_base(const GExpr& base, const GExpr& num_exponent,
 
   // Now, for each factor of the base, is individualized numeric
   // and not numeric part of its exponent.
-  GExpr tot = 1;
+  Expr tot = 1;
   for (unsigned i = base.nops(); i-- > 0; )
     if (!vect_base[i].is_a_number())
       tot *= return_power(false, input, vect_num_exp[i], vect_not_num_exp[i],
@@ -202,7 +203,7 @@ simpl_powers_base(const GExpr& base, const GExpr& num_exponent,
 /*!
   Applies the rules \f$ \textbf{E1}, \textbf{E2}, \textbf{E4} \f$ and
   \f$ \textbf{E5} \f$ of the rules'set <EM>Expand</EM>.
-  The <CODE>GExpr</CODE> \p e is a <CODE>GiNaC::power</CODE>:
+  The <CODE>Expr</CODE> \p e is a <CODE>GiNaC::power</CODE>:
   it finds the base and the exponent of the power (\p e could be a serie
   of nested powers). While it does this operation divides the exponents
   (that can be multiplications but not addictions because the expression
@@ -215,11 +216,11 @@ simpl_powers_base(const GExpr& base, const GExpr& num_exponent,
   which put in evidence the special symbol \p n; otherwise, i. e. \p input
   is <CODE>false</CODE>, \p n is like the other parameters.
 */
-static GExpr
-pow_simpl(const GExpr& e, const GSymbol& n, const bool& input) {
-  GExpr num_exponent = 1;
-  GExpr not_num_exponent = 1;
-  GExpr base = e;
+static Expr
+pow_simpl(const Expr& e, const Symbol& n, const bool& input) {
+  Expr num_exponent = 1;
+  Expr not_num_exponent = 1;
+  Expr base = e;
   // At the end of the following cycle `base' will contains the `real' base
   // of the power.
   while (base.is_a_power()) {
@@ -245,7 +246,7 @@ pow_simpl(const GExpr& e, const GSymbol& n, const bool& input) {
   // i.e., call the function `simpl_powers_base'.
   else {
     if (base.is_a_number()) {
-      GNumber num_exp = num_exponent.ex_to_number();
+      Number num_exp = num_exponent.ex_to_number();
       // The function `perfect_root' allows to apply the rule `E1'.
       if (num_exp.is_integer() || perfect_root(base, num_exp))
 	return return_power(true, input, num_exp, not_num_exponent,
@@ -262,21 +263,21 @@ pow_simpl(const GExpr& e, const GSymbol& n, const bool& input) {
 
 /*!
   Applies the rule \f$ \textbf{C3} \f$ of the set of rules
-  <EM>Collect</EM> to the <CODE>GExpr</CODE> \p e  under condition
+  <EM>Collect</EM> to the <CODE>Expr</CODE> \p e  under condition
   that the common exponent to the powers is not integer
   because, in this case, <CODE>GiNaC</CODE> automatically decomposes the
   power, i. e., \f$ (a*b)^4 \f$ is automatically transformed in
   \f$ a^4*b^4 \f$.
-  Returns a new <CODE>GExpr</CODE> \p ris containing the modified
+  Returns a new <CODE>Expr</CODE> \p ris containing the modified
   expression \p e and the modified vectors \p bases and \p exponents will
   be use by the function <CODE>collect_same_exponent()</CODE> called soon
   afterwards this.
 */
-static GExpr
-collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
-		       std::vector<GExpr>& exponents) {
+static Expr
+collect_same_exponents(const Expr& e, std::vector<Expr>& bases,
+		       std::vector<Expr>& exponents) {
   assert(e.is_a_mul());
-  GExpr ris = 1;
+  Expr ris = 1;
   // At the end of the cycle `ris' will contain the powers of `e', with
   // the same exponents, simplified in only one power with the base equal
   // to the previous bases multiplicated among themselves (rule `C3').
@@ -291,7 +292,7 @@ collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
 	  bases[i] *= bases[j];
 	  exponents[j] = 0;
 	}
-      ris *= power(bases[i], exponents[i]);
+      ris *= Parma_Recurrence_Relation_Solver::power(bases[i], exponents[i]);
     }
   }
   // FIXME: si potrebbe migliorare togliendo da `exponents'
@@ -308,23 +309,23 @@ collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
 
 /*!
   Applies the rules \f$ \textbf{C1} \f$ and \f$ \textbf{C2} \f$ of the set
-  of rules <EM>Collect</EM> to the <CODE>GExpr</CODE> \p e that is
+  of rules <EM>Collect</EM> to the <CODE>Expr</CODE> \p e that is
   certainly a <CODE>GiNaC::mul</CODE>.
   The vectors \p bases and \p exponents contain rispectively all bases and
   exponents of the powers that are in \p e and, at the end, will contain
   the new bases and exponents of the powers in \p e after the simplification.
   This function is called after <CODE>collect_same_exponents()</CODE>.
-  Returns a new <CODE>GExpr</CODE> \p ris containing the modified
+  Returns a new <CODE>Expr</CODE> \p ris containing the modified
   expression \p e.
 */
-static GExpr
-collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
-		  std::vector<GExpr>& exponents) {
+static Expr
+collect_same_base(const Expr& e, std::vector<Expr>& bases,
+		  std::vector<Expr>& exponents) {
   assert(e.is_a_mul());
   // At the end of the cycle `while', `ris' will contain all the powers of `e'.
   // The powers with the same bases will simplified in only one power with
   // the summed exponents (rule `C2').
-  GExpr ris = 1;
+  Expr ris = 1;
   unsigned i = bases.size();
   while (i > 0) {
     --i;
@@ -336,7 +337,7 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 	  exponents[i] += exponents[j];
 	  exponents[j] = 0;
 	}
-      ris *= power(bases[i], exponents[i]);
+      ris *= Parma_Recurrence_Relation_Solver::power(bases[i], exponents[i]);
     }
   }
   // FIXME: si potrebbe migliorare togliendo da `exponents'
@@ -361,14 +362,14 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 	  if (!bases[j].is_a_number() || !exponents[j].is_a_number())
 	    exponents[j] = exponents[j] + 1;
 	  else {
-	    GNumber base = bases[j].ex_to_number();
+	    Number base = bases[j].ex_to_number();
 	    if (!base.is_integer() || base == -1)
 	      exponents[j] = exponents[j] + 1;
 	  }
 	}
       // Applies rule `C1'.
       if (to_sum)
-	ris = ris.subs(power(e.op(i), wild(0)), power(e.op(i), wild(0) + 1));
+	ris = ris.subs(Parma_Recurrence_Relation_Solver::power(e.op(i), wild(0)), Parma_Recurrence_Relation_Solver::power(e.op(i), wild(0) + 1));
       else
 	ris *= e.op(i);
     }
@@ -377,18 +378,18 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 }
 
 /*!
-  Applies the rules of the set <EM>Collect</EM> to <CODE>GExpr</CODE>
+  Applies the rules of the set <EM>Collect</EM> to <CODE>Expr</CODE>
   \p e, that is certainly a <CODE>GiNaC::mul</CODE>.
-  Returns a new <CODE>GExpr</CODE> containing the modified expression \p e. 
+  Returns a new <CODE>Expr</CODE> containing the modified expression \p e. 
 */
-static GExpr
-collect_base_exponent(const GExpr& e) {
+static Expr
+collect_base_exponent(const Expr& e) {
   assert(e.is_a_mul());
-  GExpr tmp = e;
+  Expr tmp = e;
   // Builds two vectors containing the bases and the exponents of
   // the eventual multiplication's factors which are powers. 
-  std::vector<GExpr> bases;
-  std::vector<GExpr> exponents;
+  std::vector<Expr> bases;
+  std::vector<Expr> exponents;
   for (unsigned i = tmp.nops(); i-- > 0; )
     if (tmp.op(i).is_a_power()) {
       bases.push_back(tmp.op(i).op(0));
@@ -417,15 +418,15 @@ collect_base_exponent(const GExpr& e) {
   \p n is tested for divisibility by 2 and by odd integers between 3
   and <CODE>FACTOR_THRESHOLD</CODE>.
   The partially factored form is returned in the pair of vectors 
-  \p bases and \p exponents, of <CODE>GNumber</CODE>s
+  \p bases and \p exponents, of <CODE>Number</CODE>s
   and <CODE>int</CODE>s respectively.
 */
 static void 
-partial_factor(const GNumber n, std::vector<GNumber>& bases,
+partial_factor(const Number n, std::vector<Number>& bases,
 	       std::vector<int>& exponents) {
   
   assert(n.is_integer());
-  GNumber m = abs(n);
+  Number m = abs(n);
   assert(m != 0);
   int k = 0;
   while (mod(m, 2) == 0) { // the case 2 is handled separately 
@@ -472,14 +473,14 @@ partial_factor(const GNumber n, std::vector<GNumber>& bases,
   \f$ b_1^{1 + [e_1/|k|]} \f$ and replace the exponent by 
   \f$ |k| - (e_1 \mod |k|) \f$. 
 */
-static GExpr
-to_std_form(const GNumber k, const std::vector<GNumber>& bases, 
+static Expr
+to_std_form(const Number k, const std::vector<Number>& bases, 
 	    std::vector<int>& exponents) {
   
   assert(k != 0);
   assert(k.is_integer());
-  int abs_k = abs(k.to_int());
-  GExpr m = 1;
+  int abs_k = ::abs(k.to_int());
+  Expr m = 1;
   for (unsigned i = 0; i < bases.size(); ++i) {
     int remainder = exponents[i] % abs_k;
     int quotient  = exponents[i] / abs_k;
@@ -488,7 +489,7 @@ to_std_form(const GNumber k, const std::vector<GNumber>& bases,
       remainder = abs_k - remainder;
     }
     exponents[i] = remainder;
-    m *= power(bases[i], quotient);
+    m *= Parma_Recurrence_Relation_Solver::power(bases[i], quotient);
   }
   return m;
 }
@@ -540,8 +541,8 @@ to_std_form(const GNumber k, const std::vector<GNumber>& bases,
     \f]
     where the sign is chosen according to the sign of \p k.
 */
-static GExpr 
-reduce_to_standard_form(const GNumber root_index, const GNumber r) {
+static Expr 
+reduce_to_standard_form(const Number root_index, const Number r) {
   
   assert(root_index.is_integer());
   assert(root_index != 0);
@@ -551,44 +552,44 @@ reduce_to_standard_form(const GNumber root_index, const GNumber r) {
   if (k > 0)
     if (r == 0)
       return 0;
-  GNumber num = r.numerator();
-  GNumber den = r.denominator();
+  Number num = r.numerator();
+  Number den = r.denominator();
   // FIXME: deal with complex numbers
   if (!r.is_real()) {
-    GExpr index = 1 / root_index;
-    return power(r, index);
+    Expr index = 1 / root_index;
+    return Parma_Recurrence_Relation_Solver::power(r, index);
   }
-  GNumber sign = r > 0 ? 1 : -1;
-  GNumber g = gcd(num, den);
+  Number sign = r > 0 ? 1 : -1;
+  Number g = gcd(num, den);
   num /= g;
   den /= g; // clear any common factors from num, den
   if ((k % 2 == 0) && (sign == -1)) // complex sign if k is even and r < 0
     sign = k > 0 ? Number::I : -Number::I;
   if (k < 0) { // swap numerator and denominator, and change sign of k 
-    GNumber i = num;
+    Number i = num;
     num = den;
      den = i;
      k *= -1;
   } // now, num, den and k are all positive
   
   if (k == 1)
-    return sign * num * power(den, -1);
+    return sign * num * Parma_Recurrence_Relation_Solver::power(den, -1);
   
-  std::vector<GNumber> num_bases;
+  std::vector<Number> num_bases;
   std::vector<int> num_exponents;
-  std::vector<GNumber> den_bases;
+  std::vector<Number> den_bases;
   std::vector<int> den_exponents;
   
   // partial factor and reduce numerator and denominator
   partial_factor(num, num_bases, num_exponents);
   unsigned num_size = num_bases.size();
-  GExpr reduced_num = to_std_form(k, num_bases, num_exponents);
+  Expr reduced_num = to_std_form(k, num_bases, num_exponents);
   
   // here <CODE>to_std_form</CODE> is called with a negative value of k 
   // because we are dealing with the denominator of r 
   partial_factor(den, den_bases, den_exponents);
   unsigned den_size = den_bases.size();
-  GExpr reduced_den = to_std_form(-k, den_bases, den_exponents);
+  Expr reduced_den = to_std_form(-k, den_bases, den_exponents);
   
   // Try one last simplification: if all exponents have a common factor 
   // with the root index, remove it
@@ -606,15 +607,15 @@ reduce_to_standard_form(const GNumber root_index, const GNumber r) {
       den_exponents[i] /= gc;
   }
   
-  GNumber irr_part = 1;
+  Number irr_part = 1;
   for (unsigned i=0; i < num_size; ++i)
-    irr_part *= power(num_bases[i], num_exponents[i]);
+    irr_part *= Parma_Recurrence_Relation_Solver::power(num_bases[i], num_exponents[i]);
   for (unsigned i=0; i < den_size; ++i)
-    irr_part *= power(den_bases[i], den_exponents[i]);
+    irr_part *= Parma_Recurrence_Relation_Solver::power(den_bases[i], den_exponents[i]);
   
-  GExpr q = sign * reduced_num * power(reduced_den, -1);
+  Expr q = sign * reduced_num * Parma_Recurrence_Relation_Solver::power(reduced_den, -1);
   if (irr_part > 1)
-    q *= power(irr_part, 1/k);
+    q *= Parma_Recurrence_Relation_Solver::power(irr_part, 1/k);
   
   return q;
 }
@@ -622,52 +623,52 @@ reduce_to_standard_form(const GNumber root_index, const GNumber r) {
 /*!
   ...
 */
-static GExpr
-red_prod(const GNumber& base1, const GNumber& exp1, 
-	 const GNumber& base2, const GNumber& exp2) {
-  GNumber base_1 = base1;  
-  GNumber base_2 = base2;
+static Expr
+red_prod(const Number& base1, const Number& exp1, 
+	 const Number& base2, const Number& exp2) {
+  Number base_1 = base1;  
+  Number base_2 = base2;
   assert(exp1 != 0);
   assert(exp2 != 0);
   
-  GNumber k1_num = exp1.numerator();
-  GNumber k1_den = exp1.denominator();
-  GNumber k2_num = exp2.numerator();
-  GNumber k2_den = exp2.denominator();
+  Number k1_num = exp1.numerator();
+  Number k1_den = exp1.denominator();
+  Number k2_num = exp2.numerator();
+  Number k2_den = exp2.denominator();
   
-  base_1 = power(base_1, k1_num);
-  base_2 = power(base_2, k2_num);
+  base_1 = Parma_Recurrence_Relation_Solver::power(base_1, k1_num);
+  base_2 = Parma_Recurrence_Relation_Solver::power(base_2, k2_num);
   
-  GNumber g = gcd(k1_den, k2_den);
-  GNumber k = k1_den * k2_den / g;
-  GNumber b1 = power(base_1, k2_den / g);
-  GNumber b2 = power(base_2, k1_den / g);
-  GNumber b = b1 * b2;
+  Number g = gcd(k1_den, k2_den);
+  Number k = k1_den * k2_den / g;
+  Number b1 = Parma_Recurrence_Relation_Solver::power(base_1, k2_den / g);
+  Number b2 = Parma_Recurrence_Relation_Solver::power(base_2, k1_den / g);
+  Number b = b1 * b2;
   return reduce_to_standard_form(k, b);
 }
 
 /*!
   Applies the rules of the set <EM>Irrationals</EM> to
-  <CODE>GExpr</CODE> \p e if \p e is a <CODE>GiNaC::power</CODE> or to
+  <CODE>Expr</CODE> \p e if \p e is a <CODE>GiNaC::power</CODE> or to
   each \p e's factor which is a <CODE>GiNaC::power</CODE> if \p e is a
   <CODE>GiNaC::mul</CODE>.
 */
-static GExpr
-reduce_product(const GExpr& e) {
+static Expr
+reduce_product(const Expr& e) {
   if (e.is_a_mul()) {
-    GExpr tmp = e;
-    GExpr factor_to_reduce = 1;
-    GExpr factor_no_to_reduce = 1;
-    GNumber base_1 = 1;
-    GNumber exp_1 = 1;
+    Expr tmp = e;
+    Expr factor_to_reduce = 1;
+    Expr factor_no_to_reduce = 1;
+    Number base_1 = 1;
+    Number exp_1 = 1;
     for (unsigned i = tmp.nops(); i-- > 0; )
       if (tmp.op(i).is_a_power()) {
 	// Base and exponent of `tmp.op(i)' are both numerics.
 	if (tmp.op(i).op(0).is_a_number() &&
 	    tmp.op(i).op(1).is_a_number()) {
-	  GNumber base_2 = tmp.op(i).op(0).ex_to_number();
-	  GNumber exp_2  = tmp.op(i).op(1).ex_to_number();
-	  GExpr to_reduce = red_prod(base_1, exp_1, base_2, exp_2);
+	  Number base_2 = tmp.op(i).op(0).ex_to_number();
+	  Number exp_2  = tmp.op(i).op(1).ex_to_number();
+	  Expr to_reduce = red_prod(base_1, exp_1, base_2, exp_2);
 	  // red_prod returns `numeric' or `numeric^numeric' or
 	  // `numeric * numeric^numeric'.
 	  if (to_reduce.is_a_mul()) {
@@ -678,7 +679,7 @@ reduce_product(const GExpr& e) {
 		assert(to_reduce.op(j).op(1).is_a_number());
 		base_1 = to_reduce.op(j).op(0).ex_to_number();
 		exp_1  = to_reduce.op(j).op(1).ex_to_number();
-		factor_to_reduce = power(to_reduce.op(j).op(0),
+		factor_to_reduce = Parma_Recurrence_Relation_Solver::power(to_reduce.op(j).op(0),
 				       to_reduce.op(j).op(1));
 	      }
 	      else
@@ -689,13 +690,13 @@ reduce_product(const GExpr& e) {
 	    assert(to_reduce.op(1).is_a_number());
 	    base_1 = to_reduce.op(0).ex_to_number();
 	    exp_1 = to_reduce.op(1).ex_to_number();
-	    factor_to_reduce = power(to_reduce.op(0), to_reduce.op(1));
+	    factor_to_reduce = Parma_Recurrence_Relation_Solver::power(to_reduce.op(0), to_reduce.op(1));
 	  }
 	  else {
 	    assert(to_reduce.is_a_number());
 	    base_1 = to_reduce.ex_to_number();
 	    exp_1 = 1;
-	    factor_to_reduce = power(to_reduce, 1);
+	    factor_to_reduce = Parma_Recurrence_Relation_Solver::power(to_reduce, 1);
 	  }
 	}
 	// Base and exponent of `tmp.op(i)' are not both numerics.
@@ -709,8 +710,8 @@ reduce_product(const GExpr& e) {
   }
   else if (e.is_a_power())
     if (e.op(0).is_a_number() && e.op(1).is_a_number()) {
-      GNumber base = e.op(0).ex_to_number();
-      GNumber exp  = e.op(1).ex_to_number();
+      Number base = e.op(0).ex_to_number();
+      Number exp  = e.op(1).ex_to_number();
       return red_prod(base, exp, 1, 1);
     }
   return e;
@@ -719,22 +720,22 @@ reduce_product(const GExpr& e) {
 /*!
   Applies all rules of term rewriting system \f$ \mathfrak{R}_o \f$ which
   are applicable on factors.
-  Returns a <CODE>GExpr</CODE> that contains the modified expression \p e.
+  Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
 */
-static GExpr
-manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
+static Expr
+manip_factor(const Expr& e, const Symbol& n, const bool& input) {
   assert(e.is_a_mul());
-  GExpr tmp = 1;
+  Expr tmp = 1;
 
   // Simplifies each factor that is a `GiNaC::power'.
   for (unsigned i = e.nops(); i-- > 0; )
     if (e.op(i).is_a_power()) {
-      GExpr base = simplify_on_output_ex(e.op(i).op(0), n, input);
-      GExpr exp = simplify_on_output_ex(e.op(i).op(1), n, input);
+      Expr base = simplify_on_output_ex(e.op(i).op(0), n, input);
+      Expr exp = simplify_on_output_ex(e.op(i).op(1), n, input);
       if (base.is_a_number() && exp.is_a_number())
-	tmp *= reduce_product(power(base, exp));
+	tmp *= reduce_product(Parma_Recurrence_Relation_Solver::power(base, exp));
       else
-	tmp *= pow_simpl(power(base, exp), n, input);
+	tmp *= pow_simpl(Parma_Recurrence_Relation_Solver::power(base, exp), n, input);
     }
     else
       tmp *= e.op(i);
@@ -746,11 +747,11 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
   // Simplifies recursively the factors which are functions simplifying
   // their arguments.
   if (tmp.is_a_mul()) {
-    GExpr factor_function = 1;
-    GExpr factor_no_function = 1;
+    Expr factor_function = 1;
+    Expr factor_no_function = 1;
     for (unsigned i = tmp.nops(); i-- > 0; )
       if (tmp.op(i).is_a_function()) {
-	GExpr argument = simplify_on_output_ex(tmp.op(i).op(0), n, input);
+	Expr argument = simplify_on_output_ex(tmp.op(i).op(0), n, input);
 	factor_function *= tmp.op(i).subs(tmp.op(i).op(0), argument);
       }
       else
@@ -758,7 +759,7 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
     tmp = factor_function * factor_no_function;
   }
   else if (tmp.is_a_function()) {
-    GExpr argument = simplify_on_output_ex(tmp.op(0), n, input);
+    Expr argument = simplify_on_output_ex(tmp.op(0), n, input);
     tmp = tmp.subs(tmp.op(0), argument);
   }
 #if NOISY
@@ -767,10 +768,10 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
   // Special case: the exponential `exp' is a `GiNaC::function' but it has
   // the same properties of the powers.
   if (tmp.is_a_mul()) {
-    GExpr argument = 0;
-    GExpr rem = 1;
+    Expr argument = 0;
+    Expr rem = 1;
     for (unsigned i = tmp.nops(); i-- > 0; ) {
-      GList l;
+      Expr_List l;
       if (tmp.op(i).match(exp(wild(0)), l))
 	argument += l.op(0).rhs();
       else
@@ -784,7 +785,7 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
   
   // Simplifies eventual powers with same base or same exponents.
   if (tmp.is_a_add()) {
-    GExpr terms = 0;
+    Expr terms = 0;
     for (unsigned i = tmp.nops(); i-- > 0; ) 
       if (tmp.op(i).is_a_mul())
 	terms += collect_base_exponent(tmp.op(i));
@@ -814,11 +815,11 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
   \p input is always <CODE>true</CODE> and this means that \p n is a special
   symbol, i. e., in the simplifications is always put in evidence in respect
   of the others parameters.
-  Returns a <CODE>GExpr</CODE> that contains the modified expression \p e.
+  Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
 */
-GExpr
-simplify_on_input_ex(const GExpr& e, const GSymbol& n, const bool& input) {
-  GExpr ris;
+Expr
+simplify_on_input_ex(const Expr& e, const Symbol& n, const bool& input) {
+  Expr ris;
   if (e.is_a_add()) {
     ris = 0;
     for (unsigned i = e.nops(); i-- > 0; )
@@ -832,8 +833,8 @@ simplify_on_input_ex(const GExpr& e, const GSymbol& n, const bool& input) {
   else if (e.is_a_power())
       return pow_simpl(e, n, input);
   else if (e.is_a_function()) {
-    GExpr f = e;
-    GExpr tmp = simplify_on_input_ex(e.op(0), n, input);
+    Expr f = e;
+    Expr tmp = simplify_on_input_ex(e.op(0), n, input);
     ris = f.subs(f.op(0), tmp);
   }
   else
@@ -851,11 +852,11 @@ simplify_on_input_ex(const GExpr& e, const GSymbol& n, const bool& input) {
   \f$ \textbf{E2} \f$, are also in \f$ \mathfrak{R}_o \f$.
   \p input is always <CODE>false</CODE> and this means that \p n is not
   considerated like a special symbol but like the others parameters.
-  Returns a <CODE>GExpr</CODE> that contains the modified expression \p e.
+  Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
 */
-GExpr
-simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input) {
-  GExpr ris;
+Expr
+simplify_on_output_ex(const Expr& e, const Symbol& n, const bool& input) {
+  Expr ris;
   if (e.is_a_add()) {
     ris = 0;
     for (unsigned i = e.nops(); i-- > 0; )
@@ -866,20 +867,20 @@ simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input) {
     // otherwise it is not possible to transform products.
     ris = manip_factor(e, n, input);
   else if (e.is_a_power()) {
-    GExpr base = simplify_on_output_ex(e.op(0), n, input);
-    GExpr exp = simplify_on_output_ex(e.op(1), n, input);
+    Expr base = simplify_on_output_ex(e.op(0), n, input);
+    Expr exp = simplify_on_output_ex(e.op(1), n, input);
     if (base.is_a_number() && exp.is_a_number())
-      ris = reduce_product(power(base, exp));
+      ris = reduce_product(Parma_Recurrence_Relation_Solver::power(base, exp));
     else
-      ris = pow_simpl(power(base, exp), n, input);
+      ris = pow_simpl(Parma_Recurrence_Relation_Solver::power(base, exp), n, input);
     // Necessary for l'output: for example if `e = sqrt(18)^a' then
     // `ris = sqrt(2)^a*3^a'.
     if (ris.is_a_mul())
       ris = collect_base_exponent(ris);
   }
   else if (e.is_a_function()) {
-    GExpr f = e;
-    GExpr tmp = simplify_on_output_ex(e.op(0), n, input);
+    Expr f = e;
+    Expr tmp = simplify_on_output_ex(e.op(0), n, input);
     ris = f.subs(f.op(0), tmp);
   }
   else
@@ -893,15 +894,17 @@ simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input) {
   Using the function <CODE>GiNaC::numer_denom()</CODE> we are able to
   simplify better rational expression.
 */
-GExpr
-simplify_numer_denom(const GExpr& e) {
+Expr
+simplify_numer_denom(const Expr& e) {
   // Since we need both numerator and denominator, to call 'numer_denom'
   // is faster than to use 'numer()' and 'denom()' separately.
   Expr numer_e;
   Expr denom_e;
   e.numerator_denominator(numer_e, denom_e);
-  GExpr num = numer_e.expand();
-  GExpr den = denom_e.expand();
-  GExpr ris = num * power(den, -1);
+  Expr num = numer_e.expand();
+  Expr den = denom_e.expand();
+  Expr ris = num * Parma_Recurrence_Relation_Solver::power(den, -1);
   return ris;
 }
+
+} // namespace Parma_Recurrence_Relation_Solver

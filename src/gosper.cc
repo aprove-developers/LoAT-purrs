@@ -23,7 +23,6 @@ For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
 #include "gosper.hh"
-
 #include "alg_eq_solver.hh"
 #include "simplify.hh"
 #include "util.hh"
@@ -33,7 +32,7 @@ http://www.cs.unipr.it/purrs/ . */
 // TEMPORARY
 #include <iostream>
 
-using namespace Parma_Recurrence_Relation_Solver;
+namespace Parma_Recurrence_Relation_Solver {
 
 #define NOISY 0
 
@@ -51,10 +50,10 @@ FACTOR_THRESHOLD = 100;
   If this is the case, return also numerator and denominator.
 */
 // static bool
-// is_hypergeometric_term(const GExpr& p, const GSymbol& n,
-// 		       GExpr& num_den) {
+// is_hypergeometric_term(const Expr& p, const GSymbol& n,
+// 		       Expr& num_den) {
 
-//   GExpr q = (p.subs(n == n+1)) / p;
+//   Expr q = (p.subs(n == n+1)) / p;
 
 //   q.expand(); // FIXME: simplify factorials here!
 //   if (!q.info(info_flags::rational_function))
@@ -67,7 +66,7 @@ FACTOR_THRESHOLD = 100;
 //! Gosper's algorithm, step 1: see Chapter 5 of \f$ A = B \f$, by 
 //! M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
 static bool
-gosper_step_one(const GExpr&/*t*/, const GSymbol& /*n*/, GExpr& num_den_r_n) {
+gosper_step_one(const Expr& /*t*/, const Symbol& /*n*/, Expr& num_den_r_n) {
   // FIXME: general simplifications to be inserted here.
   Expr numer;
   Expr denom;
@@ -80,19 +79,19 @@ gosper_step_one(const GExpr&/*t*/, const GSymbol& /*n*/, GExpr& num_den_r_n) {
   of Gosper's algorithm.
 */
 static void
-compute_resultant_and_its_roots(const GExpr& f, const GExpr& g, 
-				const GSymbol& n,
-				std::vector<GNumber>& integer_roots) {
+compute_resultant_and_its_roots(const Expr& f, const Expr& g, 
+				const Symbol& n,
+				std::vector<Number>& integer_roots) {
   Symbol h;
-  GExpr temp_g = g.subs(n, n + h);
-  GExpr R = resultant(f, temp_g, n);
+  Expr temp_g = g.subs(n, n + h);
+  Expr R = resultant(f, temp_g, n);
   R = R.primpart(h);
   if (!R.is_integer_polynomial())
     R = convert_to_integer_polynomial(R, h);
   
-  std::vector<GNumber> potential_roots;
+  std::vector<Number> potential_roots;
   assert(R.tcoeff(h).is_a_number());
-  GNumber constant_term = abs(R.tcoeff(h).ex_to_number());
+  Number constant_term = abs(R.tcoeff(h).ex_to_number());
   // If `constant_term == 0', divide `R' by `h', and repeat.
   // The constant `0' is a root of the original resultant `R'
   // and is therefore pushed in the vector `potential_roots'.
@@ -106,7 +105,7 @@ compute_resultant_and_its_roots(const GExpr& f, const GExpr& g,
   find_divisors(constant_term, potential_roots);
   // Find non-negative integral roots of the resultant.
   for(unsigned i = potential_roots.size(); i-- > 0; ) {
-    GNumber temp = R.subs(h, potential_roots[i]).ex_to_number();
+    Number temp = R.subs(h, potential_roots[i]).ex_to_number();
     if (temp == 0)
       integer_roots.push_back(potential_roots[i]);
   }
@@ -122,13 +121,13 @@ compute_resultant_and_its_roots(const GExpr& f, const GExpr& g,
   in the list \p n_d.
 */
 static void
-gosper_step_two(const GExpr& r_n, const GSymbol& n,
-		GExpr& a_n, GExpr& b_n, GExpr& c_n) {
+gosper_step_two(const Expr& r_n, const Symbol& n,
+		Expr& a_n, Expr& b_n, Expr& c_n) {
   // Gosper's algorithm, step 2.1.
-  GExpr f = r_n.op(0).expand(); // the numerator
-  GExpr g = r_n.op(1).expand(); // the denominator
+  Expr f = r_n.op(0).expand(); // the numerator
+  Expr g = r_n.op(1).expand(); // the denominator
 
-  std::vector<GNumber> integer_roots;
+  std::vector<Number> integer_roots;
   compute_resultant_and_its_roots(f, g, n, integer_roots);
 
   // Gosper's algorithm, step 2.2.
@@ -136,22 +135,22 @@ gosper_step_two(const GExpr& r_n, const GSymbol& n,
   // of polynomials.
 
   // normalize f and g, and store conversion factor in Z
-  GExpr lead_f = f.lcoeff(n);
-  GExpr lead_g = g.lcoeff(n);
-  GExpr Z = lead_f * power(lead_g, -1);
-  a_n = f * power(lead_f, -1);
-  b_n = g * power(lead_g, -1);
+  Expr lead_f = f.lcoeff(n);
+  Expr lead_g = g.lcoeff(n);
+  Expr Z = lead_f * Parma_Recurrence_Relation_Solver::power(lead_g, -1);
+  a_n = f * Parma_Recurrence_Relation_Solver::power(lead_f, -1);
+  b_n = g * Parma_Recurrence_Relation_Solver::power(lead_g, -1);
 
   // Computation of the output polynomials.
   c_n = 1;
   unsigned integer_roots_size = integer_roots.size();
   for (unsigned i = 0; i < integer_roots_size; ++i) {
-    GExpr temp_b_n = (b_n.subs(n, n + integer_roots[i])).expand();
-    GExpr s = general_gcd(a_n, temp_b_n, n);
+    Expr temp_b_n = (b_n.subs(n, n + integer_roots[i])).expand();
+    Expr s = general_gcd(a_n, temp_b_n, n);
     a_n = quo(a_n, s, n);
-    GExpr temp_s = s.subs(n, n - integer_roots[i]);
+    Expr temp_s = s.subs(n, n - integer_roots[i]);
     b_n = quo(b_n, temp_s, n);
-    for (GNumber j = 1; j <= integer_roots[i]; ++j)
+    for (Number j = 1; j <= integer_roots[i]; ++j)
       c_n *= s.subs(n, n - j);
   }
   a_n *= Z;
@@ -159,11 +158,11 @@ gosper_step_two(const GExpr& r_n, const GSymbol& n,
   // Multiply numerator and denominator of the fraction `a_n/b_n'
   // by suitable integers, so that the output values of `a_n' and `b_n'
   // have integer coefficients. 
-  GNumber a_n_factor;
+  Number a_n_factor;
   a_n = convert_to_integer_polynomial(a_n, n, a_n_factor);
   a_n *= a_n_factor.numerator();
   b_n *= a_n_factor.denominator();
-  GNumber b_n_factor;
+  Number b_n_factor;
   b_n = convert_to_integer_polynomial(b_n, n, b_n_factor);
   a_n *= b_n_factor.numerator();
   b_n *= b_n_factor.denominator();
@@ -175,9 +174,9 @@ gosper_step_two(const GExpr& r_n, const GSymbol& n,
 }
 
 static bool
-find_polynomial_solution(const GSymbol& n, const GNumber& deg_x,
-			 const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
-			 GExpr& x_n) {
+find_polynomial_solution(const Symbol& n, const Number& deg_x,
+			 const Expr& a_n, const Expr& b_n, const Expr& c_n,
+			 Expr& x_n) {
   unsigned deg_a = a_n.degree(n);
   unsigned deg_b = b_n.degree(n);
   unsigned deg_c = c_n.degree(n);
@@ -197,30 +196,30 @@ find_polynomial_solution(const GSymbol& n, const GNumber& deg_x,
   number_of_unknowns += deg_a > deg_b ? deg_a : deg_b;
   number_of_unknowns = number_of_unknowns > deg_c ? number_of_unknowns : deg_c;
 
-  GList unknowns;
+  Expr_List unknowns;
   for (unsigned i = 0; i < number_of_unknowns; ++i)
-    unknowns.append(GSymbol());
+    unknowns.append(Symbol());
 
   // Builds the generic polynomial `p' of degree `deg_x'.
   x_n = 0;
   for (unsigned i = 0; i < number_of_coeffs; ++i)
-    x_n += power(n, i) * unknowns.op(i);
+    x_n += Parma_Recurrence_Relation_Solver::power(n, i) * unknowns.op(i);
 
-  GExpr x_n_shift = x_n.subs(n, n+1);
-  GExpr b_shift = b_n.subs(n, n-1);
+  Expr x_n_shift = x_n.subs(n, n+1);
+  Expr b_shift = b_n.subs(n, n-1);
 
   // Considers the recurrence relation to solve.
-  GExpr rr = a_n * x_n_shift - b_shift * x_n - c_n;
+  Expr rr = a_n * x_n_shift - b_shift * x_n - c_n;
   rr = rr.expand();
 
   // Builds the lists to put in the matrix `rr_coefficients' and `rhs'.
-  GList equations;
+  Expr_List equations;
   for (unsigned i = 0; i < number_of_unknowns; ++i) {
-    GExpr lhs = rr.coeff(n, i);
+    Expr lhs = rr.coeff(n, i);
     equations.prepend(Expr(lhs, 0));
   }
     
-  GExpr solution = lsolve(equations, unknowns);  
+  Expr solution = lsolve(equations, unknowns);  
   if (solution.nops() == 0)
     return false;
 
@@ -246,16 +245,16 @@ find_polynomial_solution(const GSymbol& n, const GNumber& deg_x,
   polynomial solution \f$ x(n) \f$.
 */
 static bool
-gosper_step_three(const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
-		  const GSymbol& n, GExpr& x_n) {
+gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
+		  const Symbol& n, Expr& x_n) {
   // Gosper's algorithm, step 3.1.
   // Finds the degree of `x(n)'.
   unsigned deg_a = a_n.degree(n);
   unsigned deg_b = b_n.degree(n);
   unsigned deg_c = c_n.degree(n);
-  GExpr lead_a = a_n.lcoeff(n);
-  GExpr lead_b = b_n.lcoeff(n);
-  GNumber deg_x = -1;
+  Expr lead_a = a_n.lcoeff(n);
+  Expr lead_b = b_n.lcoeff(n);
+  Number deg_x = -1;
   // On output, if a possible degree exists,
   // `deg_x' will contain a non-negative number.
   if (deg_a != deg_b || !lead_a.is_equal(lead_b)) {
@@ -266,13 +265,13 @@ gosper_step_three(const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
   }
   else {
     // `deg_a = deg_b' and `lead_a = lead_b'.
-    GExpr shift_b = b_n.subs(n, n - 1);
-    GExpr A = a_n.coeff(n, deg_a - 1);
-    GExpr B = shift_b.coeff(n, deg_a - 1);
-    GExpr B_A_e = (B - A) * power(lead_a, -1);
+    Expr shift_b = b_n.subs(n, n - 1);
+    Expr A = a_n.coeff(n, deg_a - 1);
+    Expr B = shift_b.coeff(n, deg_a - 1);
+    Expr B_A_e = (B - A) * Parma_Recurrence_Relation_Solver::power(lead_a, -1);
     assert(B_A_e.is_a_number());
-    GNumber B_A = B_A_e.ex_to_number();
-    GNumber possible_deg = deg_c - deg_a + 1;
+    Number B_A = B_A_e.ex_to_number();
+    Number possible_deg = deg_c - deg_a + 1;
     if (B_A.is_nonnegative_integer())
       if (B_A > possible_deg)
 	possible_deg = B_A;
@@ -292,13 +291,13 @@ gosper_step_three(const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
   Gosper's algorithm, step 4: see Chapter 5 of \f$ A = B \f$, by 
   M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
 */
-static GExpr
-gosper_step_four(const GExpr& t, const GExpr& b_n, const GExpr& c_n,
-		 const GExpr& x_n, const GSymbol& n,
-		 const int lower_bound, const GExpr& upper_bound,
-		 GExpr solution) {
-  GExpr shift_b = b_n.subs(n, n-1);
-  GExpr z_n = shift_b * x_n * t * power(c_n, -1);
+static Expr
+gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
+		 const Expr& x_n, const Symbol& n,
+		 const int lower_bound, const Expr& upper_bound,
+		 Expr solution) {
+  Expr shift_b = b_n.subs(n, n-1);
+  Expr z_n = shift_b * x_n * t * Parma_Recurrence_Relation_Solver::power(c_n, -1);
   z_n = simplify_numer_denom(z_n);
   // The Gosper's algorithm computes summation with the lower bound `0'
   // and the upper bound `n - 1': in this case, once we have `z_n',
@@ -310,11 +309,11 @@ gosper_step_four(const GExpr& t, const GExpr& b_n, const GExpr& c_n,
     if (upper_bound.is_equal(n))
       solution = solution.subs(n, n + 1);
     else {
-      GExpr n_plus_i = n + wild(0);
+      Expr n_plus_i = n + wild(0);
       assert(upper_bound.is_equal(n_plus_i));
-      GList substitution;
+      Expr_List substitution;
       upper_bound.match(n_plus_i, substitution);
-      GExpr i = get_binding(substitution, 0);
+      Expr i = get_binding(substitution, 0);
       solution = solution.subs(n, n + i + 1);
     }
   solution = simplify_numer_denom(solution);
@@ -346,16 +345,16 @@ gosper_step_four(const GExpr& t, const GExpr& b_n, const GExpr& c_n,
 // FIXME: `r_n' is temporary until the implementation of step one that
 // will build `r_n' starting from `t'.
 bool
-gosper(const GExpr& t, GExpr& r_n, const GSymbol& n,
-       const int lower_bound, const GExpr& upper_bound, GExpr& solution) {
+gosper(const Expr& t, Expr& r_n, const Symbol& n,
+       const int lower_bound, const Expr& upper_bound, Expr& solution) {
   if (!gosper_step_one(t, n, r_n))
     // `t' is not hypergeometric: no chance of using Gosper's algorithm.
     return false;
-  GExpr a_n;
-  GExpr b_n;
-  GExpr c_n;
+  Expr a_n;
+  Expr b_n;
+  Expr c_n;
   gosper_step_two(r_n, n, a_n, b_n, c_n);
-  GExpr x_n;
+  Expr x_n;
   // FIXME: once we have decided the notation for the sum the print
   // will be substitute with the appropriate notation 
   if (!gosper_step_three(a_n, b_n, c_n, n, x_n)) {
@@ -369,3 +368,5 @@ gosper(const GExpr& t, GExpr& r_n, const GSymbol& n,
 #endif
   return true;
 }
+
+} // namespace Parma_Recurrence_Relation_Solver

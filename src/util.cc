@@ -24,7 +24,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "util.hh"
 
-using namespace Parma_Recurrence_Relation_Solver;
+namespace Parma_Recurrence_Relation_Solver {
 
 /*!
   Computes the gcd between the integers \p n and \p m.
@@ -44,32 +44,32 @@ gcd(int n, int m) {
   Accept rational polynomial as input, and normalize them 
   before calling GiNaC's <CODE>gcd()</CODE>.
 */
-GExpr
-general_gcd(const GExpr& p, const GExpr& q, const GSymbol& x) {
-  GExpr f = convert_to_integer_polynomial(p, x);
-  GExpr g = convert_to_integer_polynomial(q, x);
+Expr
+general_gcd(const Expr& p, const Expr& q, const Symbol& x) {
+  Expr f = convert_to_integer_polynomial(p, x);
+  Expr g = convert_to_integer_polynomial(q, x);
   return gcd(f,g);
 }
 
 /*!
   Computes the LCM among the numbers in the vector \p v.
 */
-GNumber
-lcm(const std::vector<GNumber>& v) {
-  GNumber n = 1;
+Number
+lcm(const std::vector<Number>& v) {
+  Number n = 1;
   for (unsigned i = v.size(); i-- > 0; )
     n = lcm(n, v[i]);
   return n;
 }
 
-GExpr
-cubic_root(const GExpr& e) {
-  static GExpr one_third = GExpr(1)/3;
-  return power(e, one_third);
+Expr
+cubic_root(const Expr& e) {
+  static Expr one_third = Expr(1)/3;
+  return Parma_Recurrence_Relation_Solver::power(e, one_third);
 }
 
 void
-clear(GList& l) {
+clear(Expr_List& l) {
   for (unsigned n = l.nops(); n-- > 0; )
     l.remove_first();
   assert(l.nops() == 0);
@@ -80,8 +80,8 @@ clear(GList& l) {
   <CODE>GiNaC::match()</CODE> and that the binding for the wildcard of
   index \p wild_index is in the position \p wild_index of \p substitution.
 */
-GExpr
-get_binding(const GList& substitution, unsigned wild_index) {
+Expr
+get_binding(const Expr_List& substitution, unsigned wild_index) {
   assert(wild_index < substitution.nops());
   assert(substitution.op(wild_index).is_relation_equal());
   //assert(substitution.op(wild_index).lhs() == wild(wild_index));
@@ -105,7 +105,7 @@ get_binding(const GList& substitution, unsigned wild_index) {
     \f$ a+b \f$, \f$ a*b \f$, and \f$ a^b \f$ are scalars.
 */
 bool
-is_scalar_representation(const GExpr& e, const GSymbol& x) {
+is_scalar_representation(const Expr& e, const Symbol& x) {
   if (e.is_a_number())
     return true;
   else if (e.is_a_constant())
@@ -142,7 +142,7 @@ is_scalar_representation(const GExpr& e, const GSymbol& x) {
     \f$ a + b \f$ and \f$ a * b \f$ are polynomials.
 */
 static bool
-is_polynomial(const GExpr& e, const GSymbol& x) {
+is_polynomial(const Expr& e, const Symbol& x) {
   if (is_scalar_representation(e, x))
     return true;
   else if (e.is_equal(x))
@@ -150,7 +150,7 @@ is_polynomial(const GExpr& e, const GSymbol& x) {
   else if (e.is_a_power()) {
     if (is_polynomial(e.op(0), x))
       if (e.op(1).is_a_number()) {
-	GNumber exponent = e.op(1).ex_to_number();
+	Number exponent = e.op(1).ex_to_number();
 	if (exponent.is_positive_integer())
 	  return true;
       }
@@ -175,8 +175,8 @@ is_polynomial(const GExpr& e, const GSymbol& x) {
   \f$ e = p + r \f$.
 */
 void
-isolate_polynomial_part(const GExpr& e, const GSymbol& x,
-			GExpr& polynomial, GExpr& rest) {
+isolate_polynomial_part(const Expr& e, const Symbol& x,
+			Expr& polynomial, Expr& rest) {
   if (e.is_a_add()) {
     polynomial = 0;
     rest = 0;
@@ -203,16 +203,16 @@ isolate_polynomial_part(const GExpr& e, const GSymbol& x,
   This function converts a polynomial with rational coefficients into the
   associate primitive polynomial divides the input polynomial.
 */
-GExpr
-convert_to_integer_polynomial(const GExpr& p, const GSymbol& x) {
+Expr
+convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
   assert(p.is_rational_polynomial());
   unsigned deg_p = p.degree(x);
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
-  GNumber t_lcm = p.coeff(x, deg_p).ex_to_number().denominator();
+  Number t_lcm = p.coeff(x, deg_p).ex_to_number().denominator();
   for (unsigned i = 0; i <= deg_p; ++i) {
-    GExpr t_coeff = p.coeff(x, i);
+    Expr t_coeff = p.coeff(x, i);
     assert(t_coeff.is_a_number());
     t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denominator());
   }
@@ -222,27 +222,27 @@ convert_to_integer_polynomial(const GExpr& p, const GSymbol& x) {
 /*!
   Converts a polynomial with rational coefficients into the 
   associate primitive polynomial with integer coefficients.
-  This version also returns a GNumber containing the factor used to 
+  This version also returns a Number containing the factor used to 
   convert.
 */
-GExpr
-convert_to_integer_polynomial(const GExpr& p, const GSymbol& x,
-                              GNumber& factor) {
+Expr
+convert_to_integer_polynomial(const Expr& p, const Symbol& x,
+                              Number& factor) {
   assert(p.is_rational_polynomial());
   unsigned deg_p = p.degree(x);
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
-  GNumber t_lcm = p.coeff(x, deg_p).denominator().ex_to_number();
+  Number t_lcm = p.coeff(x, deg_p).denominator().ex_to_number();
   for (unsigned i = 0; i <= deg_p; ++i) {
-    GExpr t_coeff = p.coeff(x, i);
+    Expr t_coeff = p.coeff(x, i);
     assert(t_coeff.is_a_number());
     t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denominator());
   }
 
-  GExpr q = (p * t_lcm).primpart(x);
+  Expr q = (p * t_lcm).primpart(x);
   factor  = p.lcoeff(x).ex_to_number();
-  factor *= power(q.lcoeff(x), -1).ex_to_number();
+  factor *= Parma_Recurrence_Relation_Solver::power(q.lcoeff(x), -1).ex_to_number();
   return q;
 }
 
@@ -258,20 +258,20 @@ convert_to_integer_polynomial(const GExpr& p, const GSymbol& x,
     Here \f$ a \f$ is the leading coefficient of the polynomial \f$ f \f$.
   - \f$ R(f, b) = b^{\deg(f)} \f$ if \f$ b \f$ is a scalar.
 */
-GExpr
-resultant(const GExpr& p, const GExpr& q, const GSymbol& x) {
+Expr
+resultant(const Expr& p, const Expr& q, const Symbol& x) {
   assert(p.is_rational_polynomial());
   assert(q.is_rational_polynomial());
-  GExpr f = p.expand();
-  GExpr g = q.expand();
-  GExpr res = 1;
+  Expr f = p.expand();
+  Expr g = q.expand();
+  Expr res = 1;
   unsigned deg_f = f.degree(x);
   unsigned deg_g = g.degree(x);
 
   // Special case: `f' or `g' is a constant polynomial. By definition
   // `Res(f, g) = f.lcoeff(n)^g.degree(n) * g.lcoeff(n)^f.degree(n)'. 
   if (deg_f == 0 || deg_g == 0)
-    res = power(f.lcoeff(x), deg_g) * power(g.lcoeff(x), deg_f);
+    res = Parma_Recurrence_Relation_Solver::power(f.lcoeff(x), deg_g) * Parma_Recurrence_Relation_Solver::power(g.lcoeff(x), deg_f);
   else {
     // Modified Euclid's algorithm starts here.
     while (deg_f > 0) {
@@ -279,15 +279,15 @@ resultant(const GExpr& p, const GExpr& q, const GSymbol& x) {
       // `factor * g = factor * f * q + prem(g, f, x)' where `q' is the
       // quozient of `g' and `f' and
       // `factor = f.lcoeff(x)^(g.degree(x) - f.degree(x) + 1)'.
-      GExpr r = prem(g, f, x);
-      GExpr factor = power(f.lcoeff(x), g.degree(x) - f.degree(x) + 1);
+      Expr r = prem(g, f, x);
+      Expr factor = Parma_Recurrence_Relation_Solver::power(f.lcoeff(x), g.degree(x) - f.degree(x) + 1);
       // The rest of euclidean's division is given by the ratio
       // `pseudo-remainder / factor'.
-      r *= power(factor, -1);
+      r *= Parma_Recurrence_Relation_Solver::power(factor, -1);
       unsigned deg_r = r.degree(x);
-      GExpr a = f.lcoeff(x);
+      Expr a = f.lcoeff(x);
       // Using rule two.
-      res *= power(a, deg_g - deg_r);
+      res *= Parma_Recurrence_Relation_Solver::power(a, deg_g - deg_r);
       // Using rule one.
       if ((deg_f * deg_r) & 1 != 0)
 	// `deg_f * deg_r' is odd.
@@ -298,10 +298,12 @@ resultant(const GExpr& p, const GExpr& q, const GSymbol& x) {
       deg_g = g.degree(x);
     }
     // Here `f' is a constant: use rule three.
-    res *= power(f, deg_g);
+    res *= Parma_Recurrence_Relation_Solver::power(f, deg_g);
   }
 #if NOISY
   std::cout << "Resultant(f(x), g(x)) = " << res << std::endl;
 #endif
   return res;
 }
+
+} // namespace Parma_Recurrence_Relation_Solver

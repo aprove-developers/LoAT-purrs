@@ -24,12 +24,15 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
-#include "globals.hh"
 #include "poly_factor.hh"
 #include <NTL/ZZXFactoring.h>
+#include "Expr.defs.hh"
+#include "Symbol.defs.hh"
+#include "Number.defs.hh"
 
 using namespace NTL;
-using namespace Parma_Recurrence_Relation_Solver;
+
+namespace Parma_Recurrence_Relation_Solver {
 
 static long
 ZZ_to_long(const ZZ& zz) {
@@ -44,13 +47,13 @@ ZZ_to_long(const ZZ& zz) {
 }
 
 int
-poly_factor(const GExpr& p, const GSymbol& x, std::vector<GExpr>& factors) {
+poly_factor(const Expr& p, const Symbol& x, std::vector<Expr>& factors) {
   assert(p.is_integer_polynomial());
   ZZX ntl_p;
   for (int i = p.ldegree(x), d = p.degree(x); i<= d; ++i) {
-    GExpr e_i = p.coeff(x, i);
+    Expr e_i = p.coeff(x, i);
     assert(e_i.is_a_number());
-    GNumber a_i = e_i.ex_to_number();
+    Number a_i = e_i.ex_to_number();
     if (a_i < LONG_MIN || a_i > LONG_MAX)
       return 1;
     SetCoeff(ntl_p, i, a_i.to_long());
@@ -66,7 +69,7 @@ poly_factor(const GExpr& p, const GSymbol& x, std::vector<GExpr>& factors) {
     // We assume the input polynomial has no repeated factors.
     assert(ntl_factors[k].b == 1);
     const ZZX& ntl_factor = ntl_factors[k].a;
-    GExpr factor = 0;
+    Expr factor = 0;
     long d = deg(ntl_factor);
     // We assume that zero is not a factor of the input polynomial,
     // thus d != -1.  Moreover, the NTL function factor() confines
@@ -80,3 +83,5 @@ poly_factor(const GExpr& p, const GSymbol& x, std::vector<GExpr>& factors) {
   }
   return num_factors;
 }
+
+} // namespace Parma_Recurrence_Relation_Solver

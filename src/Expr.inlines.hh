@@ -32,6 +32,16 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <stdexcept>
 
+namespace GiNaC {
+
+ex x_eval(const ex& e);
+ex x_evalf(const ex& e);
+ex x_deriv(const ex&, unsigned int);
+
+DECLARE_FUNCTION_1P(x);
+
+} // namespace GiNaC
+
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
@@ -40,55 +50,55 @@ Expr::Expr() {
 
 inline
 Expr::Expr(int i)
-  : e(i) {
+  : Base(i) {
 }
 
 inline
 Expr::Expr(const Number& n)
-  : e(n.n) {
+  : Base(n.n) {
 }
 
 inline
 Expr::Expr(const Symbol& s)
-  : e(s.s) {
+  : Base(s.s) {
 }
 
 inline
 Expr::Expr(const Constant& k)
-  : e(k.c) {
+  : Base(k.c) {
 }
 
 inline
 Expr::Expr(const std::string& st, const Expr_List& lst)
-  : e(st, lst.l) {
+  : Base(st, lst.l) {
 }
 
 // FIXME: temporary
 inline
-Expr::Expr(const Expr& lh, const Expr& rh) {  
-  GiNaC::relational r(lh.e, rh.e);
-  e = r;
-};
+Expr::Expr(const Expr& lh, const Expr& rh)
+  :  Base(GiNaC::relational(static_cast<const Base&>(lh),
+			    static_cast<const Base&>(rh))) {
+}
 
 inline
-Expr::Expr(const Expr& exp)
-  : e(exp.e) {
+Expr::Expr(const Expr& y)
+  : Base(y) {
 };
 
 inline Expr&
-Expr::operator=(const Expr& exp) {
-  e = exp.e;
+Expr::operator=(const Expr& y) {
+  Base::operator=(y);
   return *this;
 };
 
 inline
-Expr::Expr(const GiNaC::ex& ge)
-  : e(ge) {
+Expr::Expr(const Base& ge)
+  : Base(ge) {
 }
 
 inline
 Expr::Expr(const GiNaC::function& gf)
-  : e(gf) {
+  : Base(gf) {
 }
 
 inline
@@ -96,9 +106,9 @@ Expr::~Expr() {
 }
 
 inline std::ostream&
-operator<<(std::ostream& os, const Expr& exp) {
-  os << exp.e;
-  return os;  
+operator<<(std::ostream& s, const Expr& e) {
+  s << static_cast<const Expr::Base&>(e);
+  return s;
 };
 
 inline Expr
@@ -108,261 +118,262 @@ operator+(const Expr& x) {
 
 inline Expr
 operator-(const Expr& x) {
-  return -x.e;
+  return -static_cast<const Expr::Base&>(x);
 }
+
 inline Expr
 operator+(const Expr& x, const Expr& y) {
-  return x.e + y.e;
+  return static_cast<const Expr::Base&>(x) + static_cast<const Expr::Base&>(y);
 }
 
 inline Expr
 operator-(const Expr& x, const Expr& y) {
-  return x.e - y.e;
+  return static_cast<const Expr::Base&>(x) - static_cast<const Expr::Base&>(y);
 }
 
 inline Expr
 operator*(const Expr& x, const Expr& y) {
-  return x.e * y.e;
+  return static_cast<const Expr::Base&>(x) * static_cast<const Expr::Base&>(y);
 }
 
 inline Expr
 operator/(const Expr& x, const Expr& y) {
-  return x.e / y.e;
+  return static_cast<const Expr::Base&>(x) / static_cast<const Expr::Base&>(y);
 }
 
 inline Expr&
 operator+=(Expr& x, const Expr& y) {
-  x.e += y.e;
+  static_cast<Expr::Base&>(x) += static_cast<const Expr::Base&>(y);
   return x;
 }
 
 inline Expr&
 operator-=(Expr& x, const Expr& y) {
-  x.e -= y.e;
+  static_cast<Expr::Base&>(x) -= static_cast<const Expr::Base&>(y);
   return x;
 }
 
 inline Expr&
 operator*=(Expr& x, const Expr& y) {
-  x.e *= y.e;
+  static_cast<Expr::Base&>(x) *= static_cast<const Expr::Base&>(y);
   return x;
 }
 
 inline Expr&
 operator/=(Expr& x, const Expr& y) {
-  x.e /= y.e;
+  static_cast<Expr::Base&>(x) /= static_cast<const Expr::Base&>(y);
   return x;
 }
 
 #if 0
 inline bool
 operator==(const Expr& x, const Expr& y) {
-  return x.e == y.e;
+  return static_cast<const Expr::Base&>(x) == static_cast<const Expr::Base&>(y);
 }
 
 inline bool
 operator!=(const Expr& x, const Expr& y) {
-  return x.e != y.e;
+  return static_cast<const Expr::Base&>(x) != static_cast<const Expr::Base&>(y);
 }
 #endif
 
 inline Expr
 Expr::operator[](int i) const {
-  return e[i];
+  return Base::operator[](i);
 }
 
 inline bool
 Expr::is_a_symbol() const {
-  return GiNaC::is_a<GiNaC::symbol>(e);
+  return GiNaC::is_a<GiNaC::symbol>(*this);
 }
 
 inline bool
 Expr::is_a_number() const {
-  return GiNaC::is_a<GiNaC::numeric>(e);
+  return GiNaC::is_a<GiNaC::numeric>(*this);
 }
 
 inline bool
 Expr::is_a_constant() const {
-  return GiNaC::is_a<GiNaC::constant>(e);
+  return GiNaC::is_a<GiNaC::constant>(*this);
 }
 
 inline bool
 Expr::is_a_add() const {
-  return GiNaC::is_a<GiNaC::add>(e);
+  return GiNaC::is_a<GiNaC::add>(*this);
 }
 
 inline bool
 Expr::is_a_mul() const {
-  return GiNaC::is_a<GiNaC::mul>(e);
+  return GiNaC::is_a<GiNaC::mul>(*this);
 }
 
 inline bool
 Expr::is_a_power() const {
-  return GiNaC::is_a<GiNaC::power>(e);
+  return GiNaC::is_a<GiNaC::power>(*this);
 }
 
 inline bool
 Expr::is_a_function() const {
-  return GiNaC::is_a<GiNaC::function>(e);
+  return GiNaC::is_a<GiNaC::function>(*this);
 }
 
 inline bool
 Expr::is_a_matrix() const {
-  return GiNaC::is_a<GiNaC::matrix>(e);
+  return GiNaC::is_a<GiNaC::matrix>(*this);
 }
 
 inline bool
 Expr::is_a_Expr_List() const {
-  return GiNaC::is_a<GiNaC::lst>(e);
+  return GiNaC::is_a<GiNaC::lst>(*this);
 }
 
 inline bool
 Expr::is_a_relational() const {
-  return GiNaC::is_a<GiNaC::relational>(e);
+  return GiNaC::is_a<GiNaC::relational>(*this);
 }
 
 inline Number
 Expr::ex_to_number() const {
-  assert(GiNaC::is_a<GiNaC::numeric>(e));
-  return GiNaC::ex_to<GiNaC::numeric>(e);
+  assert(GiNaC::is_a<GiNaC::numeric>(*this));
+  return GiNaC::ex_to<GiNaC::numeric>(*this);
 }
 
 // FIXME: info, temporary
 inline bool
 Expr::is_integer_polynomial() const {
-  return e.info(GiNaC::info_flags::integer_polynomial);
+  return info(GiNaC::info_flags::integer_polynomial);
 }
 // FIXME: info, temporary
 inline bool
 Expr::is_rational_polynomial() const {
-  return e.info(GiNaC::info_flags::rational_polynomial);
+  return info(GiNaC::info_flags::rational_polynomial);
 }
 // FIXME: info, temporary
 inline bool
 Expr::is_relation_equal() const {
-  return e.info(GiNaC::info_flags::relation_equal);
+  return info(GiNaC::info_flags::relation_equal);
 }
 
 inline unsigned
 Expr::nops() const {
-  return e.nops();
+  return Base::nops();
 }
 
 inline Expr
 Expr::op(unsigned i) const {
-  return e.op(i);
+  return Base::op(i);
 }
 
 inline bool
 Expr::is_equal(const Expr& exp) const {
-  return e.is_equal(exp.e);
+  return Base::is_equal(exp);
 }
 
 inline bool
 Expr::is_zero() const {
-  return e.is_zero();
+  return Base::is_zero();
 }
 
 inline Expr
 Expr::subs(const Expr& exp1, const Expr& exp2) const {
-  return e.subs(exp1.e == exp2.e);
+  return Base::subs(exp1 == exp2);
 }
 
 inline Expr
 Expr::subs(const Expr_List& to_replace,
 	   const Expr_List& replacements) const {
-  return e.subs(to_replace.l, replacements.l);
+  return Base::subs(to_replace.l, replacements.l);
 }
 
 inline bool
 Expr::match(const Expr& pattern) const {
-  return e.match(pattern.e);
+  return Base::match(pattern);
 }
 
 inline bool
 Expr::match(const Expr& pattern, Expr_List& replacements) const {
-  return e.match(pattern.e, replacements.l);
+  return Base::match(pattern, replacements.l);
 }
 
 inline bool
 Expr::has(const Expr& pattern) const {
-  return e.has(pattern.e);
+  return Base::has(pattern);
 }
 
 inline Expr
 Expr::expand() const {
-  return e.expand();
+  return Base::expand();
 }
 
 inline Expr
 Expr::collect(const Expr_List& lst) const {
-  return e.collect(lst.l);
+  return Base::collect(lst.l);
 }
 
 inline int
 Expr::degree(const Symbol& symb) const {
-  return e.degree(symb.s);
+  return Base::degree(symb.s);
 }
 
 inline int
 Expr::ldegree(const Symbol& symb) const {
-  return e.ldegree(symb.s);
+  return Base::ldegree(symb.s);
 }
 
 inline Expr
 Expr::coeff(const Symbol& symb, int k) const {
-  return e.coeff(symb.s, k);
+  return Base::coeff(symb.s, k);
 }
 
 inline Expr
 Expr::lcoeff(const Symbol& symb) const {
-  return e.lcoeff(symb.s);
+  return Base::lcoeff(symb.s);
 }
 
 inline Expr
 Expr::tcoeff(const Symbol& symb) const {
-  return e.tcoeff(symb.s);
+  return Base::tcoeff(symb.s);
 }
 
 inline Expr
 Expr::primpart(const Symbol& symb) const {
-  return e.primpart(symb.s);
+  return Base::primpart(symb.s);
 }
 
 inline Expr
 Expr::numerator() const {
-  return e.numer();
+  return Base::numer();
 }
 
 inline Expr
 Expr::denominator() const {
-  return e.denom();
+  return Base::denom();
 }
 
 inline void
 Expr::numerator_denominator(Expr& numer, Expr& denom) const {
-  numer =  e.numer_denom().op(0);
-  denom =  e.numer_denom().op(1);
+  numer =  Base::numer_denom().op(0);
+  denom =  Base::numer_denom().op(1);
 }
 
 inline Expr
 Expr::lhs() const {
-  return e.lhs();
+  return Base::lhs();
 }
 
 inline Expr
 Expr::rhs() const {
-  return e.rhs();
+  return Base::rhs();
 }
 
 inline Expr
 Expr::to_rational(Expr_List& lst) {
-  return e.to_rational(lst.l);
+  return Base::to_rational(lst.l);
 }
 
 inline Expr
 Expr::diff(const Symbol& symb, unsigned nth) {
-  return e.diff(symb.s, nth);
+  return Base::diff(symb.s, nth);
 }
 
 inline Expr
@@ -371,73 +382,74 @@ wild(unsigned label) {
 }
 
 inline Expr
-power(const Expr& b, const Expr& e) {
-  return GiNaC::pow(b.e, e.e);
+power(const Expr& x, const Expr& y) {
+  return GiNaC::pow(static_cast<const Expr::Base>(x),
+		    static_cast<const Expr::Base>(y));
 }
 
 inline Expr
-sqrt(const Expr& e) {
-  return GiNaC::sqrt(e.e);
+sqrt(const Expr& x) {
+  return GiNaC::sqrt(static_cast<const Expr::Base>(x));
 };
 
 inline Expr
-sin(const Expr& e) {
-  return GiNaC::sin(e.e);
+sin(const Expr& x) {
+  return GiNaC::sin(static_cast<const Expr::Base>(x));
 };
 
 inline Expr
-cos(const Expr& e) {
-  return GiNaC::cos(e.e);
+cos(const Expr& x) {
+  return GiNaC::cos(static_cast<const Expr::Base>(x));
 };
 
 inline Expr
-acos(const Expr& e) {
-  return GiNaC::acos(e.e);
+acos(const Expr& x) {
+  return GiNaC::acos(static_cast<const Expr::Base>(x));
 };
 
 inline Expr
-tan(const Expr& e) {
-  return GiNaC::tan(e.e);
+tan(const Expr& x) {
+  return GiNaC::tan(static_cast<const Expr::Base>(x));
 };
 
 inline Expr
-exp(const Expr& e) {
-  return GiNaC::exp(e.e);
+exp(const Expr& x) {
+  return GiNaC::exp(static_cast<const Expr::Base>(x));
 };
 
 inline Expr
-log(const Expr& e) {
-  return GiNaC::log(e.e);
+log(const Expr& x) {
+  return GiNaC::log(static_cast<const Expr::Base>(x));
 };
 
 inline Expr
 quo(const Expr& a, const Expr& b, const Symbol& x) {
-  return GiNaC::quo(a.e, b.e, x.s);
+  return GiNaC::quo(a, b, x.s);
 }
 
 inline Expr
 rem(const Expr& a, const Expr& b, const Symbol& x) {
-  return GiNaC::rem(a.e, b.e, x.s);
+  return GiNaC::rem(a, b, x.s);
 }
 
 inline Expr
 prem(const Expr& a, const Expr& b, const Symbol& x) {
-  return GiNaC::prem(a.e, b.e, x.s);
+  return GiNaC::prem(a, b, x.s);
 }
 
 inline Expr
 gcd(const Expr& a, const Expr& b) {
-  return GiNaC::gcd(a.e, b.e);
+  return GiNaC::gcd(a, b);
 }
 
 inline Expr
 lcm(const Expr& a, const Expr& b) {
-  return GiNaC::lcm(a.e, b.e);
+  return GiNaC::lcm(a, b);
 }
 
 inline Expr
-sqrfree(const Expr& exp, const Expr_List& lst) {
-  return GiNaC::sqrfree(exp.e, lst.l);
+sqrfree(const Expr& x, const Expr_List& lst) {
+  return GiNaC::sqrfree(x, lst.l);
 }
 
 inline Expr
@@ -446,43 +458,43 @@ lsolve(const Expr_List& lst1, const Expr_List& lst2) {
 }
 
 inline Expr
-x(const Expr& e) {
-  return x(e);
+x(const Expr& y) {
+  return x(static_cast<const Expr::Base>(y));
 };
 
 inline bool
 Expr::is_the_abs_function() const {
-  return is_ex_the_function(e, abs);
+  return is_ex_the_function(*this, abs);
 }
 
 inline bool
 Expr::is_the_exp_function() const {
-  return is_ex_the_function(e, exp);
+  return is_ex_the_function(*this, exp);
 }
 
 inline bool
 Expr::is_the_log_function() const {
-  return is_ex_the_function(e, log);
+  return is_ex_the_function(*this, log);
 }
 
 inline bool
 Expr::is_the_sin_function() const {
-  return is_ex_the_function(e, sin);
+  return is_ex_the_function(*this, sin);
 }
 
 inline bool
 Expr::is_the_cos_function() const {
-  return is_ex_the_function(e, cos);
+  return is_ex_the_function(*this, cos);
 }
 
 inline bool
 Expr::is_the_tan_function() const {
-  return is_ex_the_function(e, tan);
+  return is_ex_the_function(*this, tan);
 }
 
 inline bool
 Expr::is_the_acos_function() const {
-  return is_ex_the_function(e, acos);
+  return is_ex_the_function(*this, acos);
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

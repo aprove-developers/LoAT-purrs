@@ -25,53 +25,59 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_util_hh
 #define PURRS_util_hh 1
 
-#include "globals.hh"
+#include "Number.defs.hh"
+#include "Symbol.types.hh"
+#include "Expr.defs.hh"
+#include "Expr_List.types.hh"
+#include <vector>
 #include <iostream>
+
+namespace Parma_Recurrence_Relation_Solver {
 
 //! Computes the gcd between \f$n\f$ and \f$m\f$.
 int
 gcd(int n, int m);
 
 //! Computes the gcd between polynomials with possibly rational coefficients.
-GExpr
-general_gcd(const GExpr& p, const GExpr& q, const GSymbol& x);
+Expr
+general_gcd(const Expr& p, const Expr& q, const Symbol& x);
 
 //! Computes the lcm among the integers in the vector \f$numbers\f$.
-GNumber
-lcm(const std::vector<GNumber>& numbers);
+Number
+lcm(const std::vector<Number>& numbers);
 
 //! Computes the cubic root of \f$e\f$.
-GExpr
-cubic_root(const GExpr& e);
+Expr
+cubic_root(const Expr& e);
 
 //! Removes all the elements from \p l.
 void
-clear(GList& l);
+clear(Expr_List& l);
 
 //! Returns the expression that \p substitution binds
 //! to the wildcard of index \p wild_index.
-GExpr
-get_binding(const GList& substitution, unsigned wild_index);
+Expr
+get_binding(const Expr_List& substitution, unsigned wild_index);
 
 bool
-is_scalar_representation(const GExpr& e, const GSymbol& x);
+is_scalar_representation(const Expr& e, const Symbol& x);
 
 void
-isolate_polynomial_part(const GExpr& p, const GSymbol& var,
-			GExpr& poly, GExpr& no_poly);
+isolate_polynomial_part(const Expr& p, const Symbol& var,
+			Expr& poly, Expr& no_poly);
 
 //! Finds associate primitive polynomial with integer coefficients.
-GExpr
-convert_to_integer_polynomial(const GExpr& p, const GSymbol& x);
+Expr
+convert_to_integer_polynomial(const Expr& p, const Symbol& x);
 
 //! Finds associate primitive polynomial with integer coefficients.
-GExpr
-convert_to_integer_polynomial(const GExpr& p, const GSymbol& x,
-			      GNumber& factor);
+Expr
+convert_to_integer_polynomial(const Expr& p, const Symbol& x,
+			      Number& factor);
 
 //! Computes the resultant between the polynomials \p p and \p q.
-GExpr
-resultant(const GExpr& p, const GExpr& q, const GSymbol& x);
+Expr
+resultant(const Expr& p, const Expr& q, const Symbol& x);
 
 #ifdef NOISY
 #define D_MSG(s) std::cout << s << std::endl
@@ -89,4 +95,6 @@ do { \
 #define D_VEC(vec, first, last)
 #endif
 
-#endif // _util_hh
+} // namespace Parma_Recurrence_Relation_Solver
+
+#endif // !defined(PURRS_util_hh)

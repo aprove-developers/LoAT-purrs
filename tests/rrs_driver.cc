@@ -35,7 +35,7 @@ http://www.cs.unipr.it/purrs/ . */
 #endif
 
 using namespace std;
-using namespace GiNaC;
+using namespace Parma_Recurrence_Relation_Solver;
 
 #define NOISY 1
 
@@ -52,13 +52,13 @@ main() try {
   istream rdl(rdlb.get());
 #endif
 
-  GSymbol n("n");
-  GSymbol a("a");
-  GSymbol b("b");
-  GSymbol c("c");
-  GSymbol d("d");
-  GList symbols(n, a, b, c, d);
-  GExpr rhs;
+  Symbol n("n");
+  Symbol a("a");
+  Symbol b("b");
+  Symbol c("c");
+  Symbol d("d");
+  Expr_List symbols(n, a, b, c, d);
+  Expr rhs;
   while (INPUT_STREAM) {
     string s;
     getline(INPUT_STREAM, s);
@@ -70,13 +70,13 @@ main() try {
     if (s.find("%") == 0)
       continue;
 
-    rhs = GExpr(s, symbols);
+    rhs = Expr(s, symbols);
 
 #if NOISY
     cout << "Trying to solve x(n) = " << rhs << endl;
 #endif
 
-    GExpr solution;
+    Expr solution;
     if (solve_try_hard(rhs, n, solution) != OK) {
 #if NOISY
       cout << "Sorry, this is too difficult." << endl;

@@ -105,7 +105,10 @@ Expr lsolve(const Expr_List& lst1, const Expr_List& lst2);
 
 Expr x(const Expr& e);
 
-class Expr {
+class Expr : private GiNaC::ex {
+private:
+  typedef GiNaC::ex Base;
+
 public:
   //! Default constructor.
   Expr();
@@ -262,10 +265,8 @@ public:
   Expr diff(const Symbol& symb, unsigned nth = 1);
 
   Expr to_rational(Expr_List& lst);
-  
-private:
-  GiNaC::ex e;
 
+private:
   friend std::ostream& operator<<(std::ostream& os, const Expr& exp);
 
   friend Expr operator+(const Expr& x);

@@ -25,7 +25,10 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_rr_solver_hh
 #define PURR_rr_solver_hh 1
 
-#include "globals.hh"
+#include "Expr.types.hh"
+#include "Symbol.types.hh"
+
+namespace Parma_Recurrence_Relation_Solver {
 
 enum Solver_Status {
   /*!
@@ -60,9 +63,11 @@ enum Solver_Status {
 };
 
 Solver_Status
-solve(const GExpr& rhs, const GSymbol& n, GExpr& solution);
+solve(const Expr& rhs, const Symbol& n, Expr& solution);
 
 Solver_Status
-solve_try_hard(const GExpr& rhs, const GSymbol& n, GExpr& solution);
+solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution);
+
+} // namespace Parma_Recurrence_Relation_Solver
 
 #endif

@@ -235,7 +235,7 @@ main() try {
     error("you did not type anything!!!");
 
   Symbol x;
-  GExpr p = GExpr(**expr, Expr_List(x));
+  Expr p = Expr(**expr, Expr_List(x));
   if (p.is_zero()
       || !p.is_integer_polynomial()
       || p.is_a_number()) {

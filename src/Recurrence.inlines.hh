@@ -50,14 +50,14 @@ Recurrence::operator=(const Recurrence& y) {
 }
 
 inline void
-Recurrence::replace_recurrence(const GExpr& e) {
+Recurrence::replace_recurrence(const Expr& e) {
   recurrence_rhs = e;
 }
 
 void
-Recurrence::replace_recurrence(unsigned k, const GExpr& e) {
-  std::pair<std::map<unsigned, GExpr>::iterator, bool> stat
-    = system_rhs.insert(std::map<unsigned, GExpr>::value_type(k, e));
+Recurrence::replace_recurrence(unsigned k, const Expr& e) {
+  std::pair<std::map<unsigned, Expr>::iterator, bool> stat
+    = system_rhs.insert(std::map<unsigned, Expr>::value_type(k, e));
   if (!stat.second)
     // There was already something associated to `k': overwrite it.
     stat.first->second = e;

@@ -26,7 +26,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 #define NOISY 0
  
-#include "globals.hh"
 #include "alg_eq_solver.hh"
 #include "poly_factor.hh"
 #include "simplify.hh"
@@ -34,7 +33,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <cassert>
 #include <iostream>
 
-using namespace Parma_Recurrence_Relation_Solver;
+namespace Parma_Recurrence_Relation_Solver {
 
 /*!
    We look for possible rational solutions of a polynomial with 
@@ -56,7 +55,7 @@ static const unsigned FIND_DIVISORS_MAX = 11;
 static const unsigned
 FIND_DIVISORS_THRESHOLD = FIND_DIVISORS_MAX*FIND_DIVISORS_MAX;
 
-static GExpr zero = 0;
+static Expr zero = 0;
 
 /*!
   This routine inserts into \p divisors all the positive divisors of
@@ -64,7 +63,7 @@ static GExpr zero = 0;
   <CODE>FIND_DIVISORS_THRESHOLD</CODE>.
 */
 void
-find_divisors(GNumber n, std::vector<GNumber>& divisors) {
+find_divisors(Number n, std::vector<Number>& divisors) {
   assert(n.is_positive_integer());
   assert(n > 0 && n < FIND_DIVISORS_THRESHOLD);
   unsigned m = n.to_int();
@@ -90,7 +89,7 @@ find_divisors(GNumber n, std::vector<GNumber>& divisors) {
   such that \f$p(x) = q(x^n)\f$ and the polynomial \f$q\f$ itself.
 */
 static unsigned
-is_nested_polynomial(const GExpr& p, const GSymbol& x, GExpr& q) {
+is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
   unsigned degree = p.degree(x);  
   if (degree == 0) {
     // The constant polynomial.
@@ -140,25 +139,25 @@ is_nested_polynomial(const GExpr& p, const GSymbol& x, GExpr& q) {
 }
 
 static bool
-find_roots(const GExpr& p, const GSymbol& x,
-	   std::vector<Polynomial_Root>& roots, GNumber multiplicity);
+find_roots(const Expr& p, const Symbol& x,
+	   std::vector<Polynomial_Root>& roots, Number multiplicity);
 
 static bool
-find_power_roots(const GExpr& p, const GSymbol& x,
+find_power_roots(const Expr& p, const Symbol& x,
 		 std::vector<Polynomial_Root>& roots);
 
 static void
-solve_equation_2(const GExpr& b, const GExpr& c,
-		 GExpr& x1, GExpr& x2);
+solve_equation_2(const Expr& b, const Expr& c,
+		 Expr& x1, Expr& x2);
 
 bool
-solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
-		 GExpr& x1, GExpr& x2, GExpr& x3);
+solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
+		 Expr& x1, Expr& x2, Expr& x3);
 
 void
-solve_equation_4(const GNumber& a1, const GNumber& a2,
-		 const GNumber& a3, const GNumber& a4,
-		 GExpr& x1, GExpr& x2, GExpr& x3, GExpr& x4);
+solve_equation_4(const Number& a1, const Number& a2,
+		 const Number& a3, const Number& a4,
+		 Expr& x1, Expr& x2, Expr& x3, Expr& x4);
 
 /*!
   Let \p p be a polynomial with integer coefficients in \p x and
@@ -181,7 +180,7 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   \p all_distinct is set to <CODE>false</CODE> otherwise.
 */
 bool
-find_roots(const GExpr& p, const GSymbol& x,
+find_roots(const Expr& p, const Symbol& x,
 	   std::vector<Polynomial_Root>& roots,
 	   bool& all_distinct) {
   assert(p.is_integer_polynomial());
@@ -190,7 +189,7 @@ find_roots(const GExpr& p, const GSymbol& x,
   Expr_List a;
   /////
   // Compute a square-free decomposition for p.
-  GExpr q = sqrfree(p.expand(), Expr_List(x));
+  Expr q = sqrfree(p.expand(), Expr_List(x));
   // There are now 4 cases depending on the principal functor of `q':
   //
   // 1) q is a product of two or more factors: e.g., (1+x)^2*(2+x);
@@ -208,7 +207,7 @@ find_roots(const GExpr& p, const GSymbol& x,
   else if (q.is_a_mul()) {
     all_distinct = false;
     for (unsigned i = 0, n = q.nops(); i < n; ++i) {
-      GExpr factor = q.op(i);
+      Expr factor = q.op(i);
       if (factor.is_a_power()) {
 	if (!find_power_roots(factor, x, roots))
 	  return false;
@@ -232,12 +231,12 @@ find_roots(const GExpr& p, const GSymbol& x,
 }
 
 static bool
-find_power_roots(const GExpr& p, const GSymbol& x,
+find_power_roots(const Expr& p, const Symbol& x,
 		 std::vector<Polynomial_Root>& roots) {
   assert(p.is_a_power());
-  GExpr base = p.op(0);
+  Expr base = p.op(0);
   assert(p.op(1).is_a_number());
-  GNumber exponent = p.op(1).ex_to_number();
+  Number exponent = p.op(1).ex_to_number();
   assert(exponent.is_positive_integer() && exponent >= 2);
   if (!find_roots(base, x, roots, exponent))
     // No way: we were unable to solve the base.
@@ -246,12 +245,12 @@ find_power_roots(const GExpr& p, const GSymbol& x,
 }
 
 static bool
-find_roots(const GExpr& p, const GSymbol& x,
+find_roots(const Expr& p, const Symbol& x,
 	   std::vector<Polynomial_Root>& roots,
-	   GNumber multiplicity) {
+	   Number multiplicity) {
   int ldegree = p.ldegree(x);
   assert(ldegree <= 1);
-  GExpr q;
+  Expr q;
   if (ldegree == 1) {
     roots.push_back(Polynomial_Root(zero, multiplicity));
     q = quo(p, x, x);
@@ -261,8 +260,8 @@ find_roots(const GExpr& p, const GSymbol& x,
 
   assert(q.lcoeff(x).is_a_number());
   assert(q.tcoeff(x).is_a_number());
-  GNumber lc = q.lcoeff(x).ex_to_number();
-  GNumber tc = q.tcoeff(x).ex_to_number();
+  Number lc = q.lcoeff(x).ex_to_number();
+  Number tc = q.tcoeff(x).ex_to_number();
   int degree = q.degree(x);
   if (degree == 1) {
     roots.push_back(Polynomial_Root(-tc/lc, multiplicity));
@@ -270,17 +269,17 @@ find_roots(const GExpr& p, const GSymbol& x,
   }
 
   // Here `q' has degree at least 2 and the least coefficient is non-zero.
-  GNumber abs_lc = abs(lc);
-  GNumber abs_tc = abs(tc);
+  Number abs_lc = abs(lc);
+  Number abs_tc = abs(tc);
   if (abs_lc < FIND_DIVISORS_THRESHOLD && abs_tc < FIND_DIVISORS_THRESHOLD) {
     bool coefficients_changed = false;
-    std::vector<GNumber> abs_lc_divisors;
-    std::vector<GNumber> abs_tc_divisors;
+    std::vector<Number> abs_lc_divisors;
+    std::vector<Number> abs_tc_divisors;
     find_divisors(abs_lc, abs_lc_divisors);
     find_divisors(abs_tc, abs_tc_divisors);
     for (unsigned l = 0, ml = abs_lc_divisors.size(); l < ml; ++l) 
       for (unsigned t = 0, mt = abs_tc_divisors.size(); t < mt; ++t) {
-	GNumber r = abs_tc_divisors[t] / abs_lc_divisors[l];
+	Number r = abs_tc_divisors[t] / abs_lc_divisors[l];
 	if (q.subs(x, r).is_zero()) {
 	  q = quo(q, x-r, x);
 	  --degree;
@@ -327,8 +326,8 @@ find_roots(const GExpr& p, const GSymbol& x,
     case 2:
       {
 	assert(q.coeff(x, 1).is_a_number());
-	GNumber b = q.coeff(x, 1).ex_to_number() / lc;
-	GNumber c = tc / lc;
+	Number b = q.coeff(x, 1).ex_to_number() / lc;
+	Number c = tc / lc;
 	solve_equation_2(b, c,
 			 roots[position].value(),
 			 roots[position+1].value());
@@ -338,9 +337,9 @@ find_roots(const GExpr& p, const GSymbol& x,
       {
 	assert(q.coeff(x, 1).is_a_number());
 	assert(q.coeff(x, 2).is_a_number());
-	GNumber a1 = q.coeff(x, 2).ex_to_number() / lc;
-	GNumber a2 = q.coeff(x, 1).ex_to_number() / lc;
-	GNumber a3 = tc / lc;
+	Number a1 = q.coeff(x, 2).ex_to_number() / lc;
+	Number a2 = q.coeff(x, 1).ex_to_number() / lc;
+	Number a3 = tc / lc;
 	solve_equation_3(a1, a2, a3,
 			 roots[position].value(),
 			 roots[position+1].value(),
@@ -354,10 +353,10 @@ find_roots(const GExpr& p, const GSymbol& x,
 	assert(q.coeff(x, 1).is_a_number());
 	assert(q.coeff(x, 2).is_a_number());
 	assert(q.coeff(x, 3).is_a_number());
-	GNumber a1 = q.coeff(x, 3).ex_to_number() / lc;
-	GNumber a2 = q.coeff(x, 2).ex_to_number() / lc;
-	GNumber a3 = q.coeff(x, 1).ex_to_number() / lc;
-	GNumber a4 = tc / lc;
+	Number a1 = q.coeff(x, 3).ex_to_number() / lc;
+	Number a2 = q.coeff(x, 2).ex_to_number() / lc;
+	Number a3 = q.coeff(x, 1).ex_to_number() / lc;
+	Number a4 = tc / lc;
 	solve_equation_4(a1, a2, a3, a4,
 			 roots[position].value(),
 			 roots[position+1].value(),
@@ -377,7 +376,7 @@ find_roots(const GExpr& p, const GSymbol& x,
   // that z^n = 1.
   // We note that the set of roots found in this way does not depend
   // on the particular root x_1 that we have chosen.
-  GExpr r;
+  Expr r;
   int nested_degree = is_nested_polynomial(q, x, r);
   if (nested_degree > 1) {
     // We need a vector to hold the roots of `r'.
@@ -386,11 +385,11 @@ find_roots(const GExpr& p, const GSymbol& x,
     roots_r.reserve(r.degree(x));
     if (find_roots(r, x, roots_r, 1)) {
       size_t num_r_roots = roots_r.size();
-      GExpr theta = 2*Pi/nested_degree;
+      Expr theta = 2*Pi/nested_degree;
       for (int j = 0; j < nested_degree; ++j) {
-	GExpr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
+	Expr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
 	for (size_t i = 0; i < num_r_roots; ++i)
-	  roots.push_back(Polynomial_Root(power(roots_r[i].value(),
+	  roots.push_back(Polynomial_Root(Parma_Recurrence_Relation_Solver::power(roots_r[i].value(),
 						1/nested_degree)
 					  * root_of_unity, multiplicity));
       }
@@ -399,7 +398,7 @@ find_roots(const GExpr& p, const GSymbol& x,
   }
 
   // Try to factorize the polynomial.
-  std::vector<GExpr> factors;
+  std::vector<Expr> factors;
   int num_factors = poly_factor(q, x, factors);
   if (num_factors > 1) {
     for (int i = num_factors-1; i >= 0; --i)
@@ -413,10 +412,10 @@ find_roots(const GExpr& p, const GSymbol& x,
 
 //! Solve the equation \f$x^2 + b x + c = 0\f$.
 static void
-solve_equation_2(const GExpr& b, const GExpr& c,
-		 GExpr& x1, GExpr& x2) {
+solve_equation_2(const Expr& b, const Expr& c,
+		 Expr& x1, Expr& x2) {
   Symbol n("n");
-  GExpr sqrt_d = sqrt(b*b - 4*c);
+  Expr sqrt_d = sqrt(b*b - 4*c);
 
   D_MSGVAR("Before: ", sqrt_d);
 
@@ -445,16 +444,16 @@ solve_equation_2(const GExpr& b, const GExpr& c,
   rational numbers themselves, and we can safely compare them with 0.
 */
 bool
-solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
-		 GExpr& x1, GExpr& x2, GExpr& x3) {
+solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
+		 Expr& x1, Expr& x2, Expr& x3) {
   Symbol n("n");
-  GNumber Q = (3*a2 - a1*a1) / 9;
-  GNumber R = (9*a1*a2 - 27*a3 -2*a1*a1*a1) / 54;
-  GNumber d = Q*Q*Q + R*R;
-  GNumber a1_div_3 = a1/3;
+  Number Q = (3*a2 - a1*a1) / 9;
+  Number R = (9*a1*a2 - 27*a3 -2*a1*a1*a1) / 54;
+  Number d = Q*Q*Q + R*R;
+  Number a1_div_3 = a1/3;
   if (d < 0) { // This implies that Q < 0 
-    GExpr sqrt_minus_Q = sqrt(-Q);
-    GExpr theta = acos(-R/(Q*sqrt_minus_Q));
+    Expr sqrt_minus_Q = sqrt(-Q);
+    Expr theta = acos(-R/(Q*sqrt_minus_Q));
     x1 = -a1_div_3 + 2*sqrt_minus_Q*cos(theta/3);
     x2 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+2*Pi)/3);
     x3 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+4*Pi)/3);
@@ -469,11 +468,11 @@ solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
     // - if Q < 0 and R < 0 then a similar argument shows that 
     //   A < 0 and B < 0; 
     // - if Q < 0 and R >= 0 then A > 0 and B > 0.
-    GExpr sqrt_d = sqrt(d);
-    GExpr A = R + sqrt_d;
-    GExpr B = R - sqrt_d;
-    GExpr S;
-    GExpr T;
+    Expr sqrt_d = sqrt(d);
+    Expr A = R + sqrt_d;
+    Expr B = R - sqrt_d;
+    Expr S;
+    Expr T;
     if (Q >= 0) {
       S = cubic_root(A);
       T = -cubic_root(-B);
@@ -500,13 +499,13 @@ solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
     D_VAR(S); 
     D_VAR(T);
 
-    GExpr S_plus_T = S + T;
+    Expr S_plus_T = S + T;
 
     // FIXME: S+T are of the form (a+b)^(1/3) + (a-b)^(1/3).
     // Is there a way to simplify this?
 
-    GExpr t1 = -S_plus_T/2 - a1_div_3;
-    GExpr t2 = (S - T) * Number::I * sqrt(GExpr(3))/2;
+    Expr t1 = -S_plus_T/2 - a1_div_3;
+    Expr t2 = (S - T) * Number::I * sqrt(Expr(3))/2;
     x1 = S_plus_T - a1_div_3;
     x2 = t1 + t2;
     x3 = t1 - t2;
@@ -522,20 +521,20 @@ solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
 
 //! Solve the equation \f$x^4 + a_1 x^3 + a_2 x^2 + a_3 x + a_4 = 0\f$.
 void
-solve_equation_4(const GNumber& a1, const GNumber& a2,
-		 const GNumber& a3, const GNumber& a4,
-		 GExpr& x1, GExpr& x2, GExpr& x3, GExpr& x4) {
-  GNumber f = a2 - 3*a1*a1*1/8;
-  GNumber g = a3 + a1*a1*a1/8 - a1*a2/2;
-  GNumber h = a4 - 3*a1*a1*a1*a1/256 + a1*a1*a2/16 - a1*a3/4;
+solve_equation_4(const Number& a1, const Number& a2,
+		 const Number& a3, const Number& a4,
+		 Expr& x1, Expr& x2, Expr& x3, Expr& x4) {
+  Number f = a2 - 3*a1*a1*1/8;
+  Number g = a3 + a1*a1*a1/8 - a1*a2/2;
+  Number h = a4 - 3*a1*a1*a1*a1/256 + a1*a1*a2/16 - a1*a3/4;
 
   D_VAR(f); 
   D_VAR(g); 
   D_VAR(h);
 
-  GExpr y1;
-  GExpr y2;
-  GExpr y3;
+  Expr y1;
+  Expr y2;
+  Expr y3;
   // If 'g' is zero then the auxiliary equation
   // y^3 +  f/2*y^2 + (f*f - 4*h)/16*y - g*g/64 = 0
   // has the root 0, in this case we solve the simpler auxiliary equation
@@ -549,7 +548,7 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
     // We are deliberately ignoring the return value.
     (void) solve_equation_3(f/2, (f*f - 4*h)/16, -g*g/64, y1, y2, y3);
 
-  GExpr p, q;
+  Expr p, q;
   p = sqrt(y1);
   q = sqrt(y2);
 
@@ -565,12 +564,12 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   D_VAR(p); 
   D_VAR(q);
 
-  GExpr r = -g/(8*p*q);
+  Expr r = -g/(8*p*q);
 
   D_MSGVAR("Before: ", r); 
 
   r = simplify_on_output_ex(r, n, false);
-  GExpr s = a1/4;
+  Expr s = a1/4;
 
   D_VAR(r); 
   D_VAR(s); 
@@ -595,9 +594,11 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
 
 std::ostream&
 operator<<(std::ostream& s, const Polynomial_Root& r) {
-  GNumber multiplicity = r.multiplicity();
+  Number multiplicity = r.multiplicity();
   if (multiplicity != 1)
     s << "mult: " << multiplicity << ", val: ";
   s << r.value();
   return s;
 }
+
+} // namespace Parma_Recurrence_Relation_Solver

@@ -66,12 +66,12 @@ Matrix::~Matrix() {
 
 inline const Expr&
 Matrix::operator()(unsigned r, unsigned c) const {
-  return m(r, c);
+  return static_cast<const Expr&>(m(r, c));
 };
 
 inline Expr&
 Matrix::operator()(unsigned r, unsigned c) {
-  return m(r, c);
+  return static_cast<Expr&>(m(r, c));
 };
 
 inline Matrix

@@ -25,20 +25,25 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_sum_poly_hh
 #define PURRS_sum_poly_hh 1
 
-#include "globals.hh"
+#include "Expr.types.hh"
+#include "Symbol.types.hh"
 
-GExpr
-sum_poly_times_exponentials(const GExpr&, const GSymbol&, 
-			    const GSymbol&, const GExpr&);
+namespace Parma_Recurrence_Relation_Solver {
 
-GExpr
-sum_poly_times_exponentials_times_cos(const GExpr&, const GSymbol&, 
-				      const GSymbol&, const GExpr&, 
-				      const GExpr&);
+Expr
+sum_poly_times_exponentials(const Expr&, const Symbol&, 
+			    const Symbol&, const Expr&);
 
-GExpr
-sum_poly_times_exponentials_times_sin(const GExpr&, const GSymbol&, 
-				      const GSymbol&, const GExpr&, 
-				      const GExpr&);
+Expr
+sum_poly_times_exponentials_times_cos(const Expr&, const Symbol&, 
+				      const Symbol&, const Expr&, 
+				      const Expr&);
+
+Expr
+sum_poly_times_exponentials_times_sin(const Expr&, const Symbol&, 
+				      const Symbol&, const Expr&, 
+				      const Expr&);
+
+} // namespace Parma_Recurrence_Relation_Solver
 
 #endif

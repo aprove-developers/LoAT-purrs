@@ -36,13 +36,7 @@ http://www.cs.unipr.it/purrs/ . */
 #endif
 
 using namespace std;
-using namespace GiNaC;
-
-
-#if 1
-CInterval
-approximate(const GExpr& e);
-#endif
+using namespace Parma_Recurrence_Relation_Solver;
 
 #define NOISY 1
 
@@ -59,9 +53,9 @@ main() try {
   istream rdl(rdlb.get());
 #endif
 
-  GSymbol x("x");
-  GList symbols(x);
-  GExpr p;
+  Symbol x("x");
+  Expr_List symbols(x);
+  Expr p;
   while (INPUT_STREAM) {
     string s;
     getline(INPUT_STREAM, s);
@@ -80,15 +74,15 @@ main() try {
 	  char name[2];
 	  name[0] = c;
 	  name[1] = '\0';
-	  GSymbol new_symbol(name);
+	  Symbol new_symbol(name);
 	  symbols.append(new_symbol);
 	}
       }
       continue;
     }
 
-    p = GExpr(s, symbols);
-    if (p == GExpr(0))
+    p = Expr(s, symbols);
+    if (p.is_zero())
       continue;
 
 #if NOISY
@@ -106,13 +100,13 @@ main() try {
     else {
       size_t n = roots.size();
       for (size_t i = 0; i < n; ++i) {
-	GExpr value = roots[i].value();
-	GNumber multiplicity = roots[i].multiplicity();
+	Expr value = roots[i].value();
+	Number multiplicity = roots[i].multiplicity();
 	cout << "x_" << i+1 << " = " << value;
 	if (multiplicity > 1)
 	  cout << " (multiplicity " << multiplicity << ")";
 	cout << endl;
-	if (!is_a<numeric>(value))
+	if (!value.is_a_number())
 #if 0
 	  cout << "****  x_" << i+1 << " ~= " << value.evalf() << endl;
 #else

@@ -1,4 +1,4 @@
-/* Definitions of global objects.
+/* To be written.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -22,26 +22,21 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#include "globals.hh"
+#ifndef PURRS_approx_expr_hh
+#define PURRS_approx_expr_hh 1
 
-namespace GiNaC {
-ex
-x_eval(const ex& e) {
-  return x(e).hold();
-}
+#include "Expr.types.hh"
 
-ex
-x_evalf(const ex& e) {
-  return x(e).hold();
-}
+#include <Interval.h>
+#include <cinterval.h>
+typedef filib::Interval Interval;
+typedef cinterval CInterval;
 
-ex
-x_deriv(const ex&, unsigned int) {
-  abort();
-}
+namespace Parma_Recurrence_Relation_Solver {
 
-REGISTER_FUNCTION(x,
-		  eval_func(x_eval).
-		  evalf_func(x_evalf).
-		  derivative_func(x_deriv));
-}
+CInterval
+approximate(const Expr& e);
+
+} // namespace Parma_Recurrence_Relation_Solver
+
+#endif // !defined(PURRS_approx_expr_hh)

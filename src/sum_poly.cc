@@ -23,8 +23,6 @@ For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
 
-
-
 /*!
   This file contains the routines that sum formally expressions of the 
   form \f$ p(n) x^n \f$, where \f$ p \f$ is a polynomial (possibly 
@@ -33,11 +31,11 @@ http://www.cs.unipr.it/purrs/ . */
   The sum is always over the range \f$ [0, N ]\f$. 
 */
 
-#include "globals.hh"
 #include "sum_poly.hh"
+#include "Expr.defs.hh"
 #include <vector>
 
-using namespace Parma_Recurrence_Relation_Solver;
+namespace Parma_Recurrence_Relation_Solver {
 
 /*!
   This routine computes the falling product 
@@ -48,7 +46,7 @@ using namespace Parma_Recurrence_Relation_Solver;
 */
 
 static void
-falling_product(const GExpr& x, unsigned k, GExpr& q) {
+falling_product(const Expr& x, unsigned k, Expr& q) {
   q = 1;
   for (unsigned i = 0; i < k; ++i) 
     q *= (x-i);
@@ -61,16 +59,16 @@ falling_product(const GExpr& x, unsigned k, GExpr& q) {
 */
 
 static void 
-sum_falling_prod_times_exp(const GSymbol& n, GNumber k, 
-			   const GSymbol& x, GExpr& q) {
+sum_falling_prod_times_exp(const Symbol& n, Number k, 
+			   const Symbol& x, Expr& q) {
   
-  q = power(1-x, -k-1);
-  GExpr r;
+  q = Parma_Recurrence_Relation_Solver::power(1-x, -k-1);
+  Expr r;
   for (unsigned i = 0; i < k + 1; ++i) {
     falling_product(n + 1, i, r);
-    q -= r / factorial(i) * power(x, n+1-i) * power(1-x, i-k-1);
+    q -= r / factorial(i) * Parma_Recurrence_Relation_Solver::power(x, n+1-i) * Parma_Recurrence_Relation_Solver::power(1-x, i-k-1);
   }
-  q *= factorial(k) * power(x, k);
+  q *= factorial(k) * Parma_Recurrence_Relation_Solver::power(x, k);
 }
 
 /*!
@@ -82,11 +80,11 @@ sum_falling_prod_times_exp(const GSymbol& n, GNumber k,
 */
 
 static void 
-poly_dec(const GExpr& p, const GSymbol& x, std::vector<GExpr>& summands) {
+poly_dec(const Expr& p, const Symbol& x, std::vector<Expr>& summands) {
 
   unsigned d = p.degree(x);
-  GExpr q = p;
-  GExpr r = p.coeff(x,0);
+  Expr q = p;
+  Expr r = p.coeff(x,0);
   summands[0] = r;
   for (unsigned i = 0; i < d; ) {
     q -= r;
@@ -105,16 +103,16 @@ poly_dec(const GExpr& p, const GSymbol& x, std::vector<GExpr>& summands) {
 */
 
 static void 
-sum_poly(const GExpr& p, const GSymbol& x, const GSymbol& n, GExpr& q) {
+sum_poly(const Expr& p, const Symbol& x, const Symbol& n, Expr& q) {
   
   unsigned d = p.degree(x);
-  std::vector<GExpr> summands(d+1);
+  std::vector<Expr> summands(d+1);
   poly_dec(p, x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
-    GExpr r;
+    Expr r;
     falling_product(n+1, i+1, r);
-    q += GNumber(1, i+1) * summands[i] * r;
+    q += Number(1, i+1) * summands[i] * r;
   }
 }
 
@@ -128,22 +126,22 @@ sum_poly(const GExpr& p, const GSymbol& x, const GSymbol& n, GExpr& q) {
   This routine computes the closed formula for 
   \f$\sum_{j=0}^n p(j) \alpha^j \f$, 
   where \f$ p \f$ is a polynomial (possibly constant) and 
-  \f$ \alpha \f$ is a GNumber (possibly 1). 
+  \f$ \alpha \f$ is a Number (possibly 1). 
   The closed formula is returned in the expression <CODE> q </CODE>. 
 */
 
-GExpr 
-sum_poly_times_exponentials(const GExpr& p, const GSymbol& x, 
-			    const GSymbol& n, const GExpr& alpha) {
+Expr 
+sum_poly_times_exponentials(const Expr& p, const Symbol& x, 
+			    const Symbol& n, const Expr& alpha) {
 
-  GExpr q;
+  Expr q;
   if (alpha.is_equal(1)) 
     sum_poly(p, x, n, q);
   // we just have to compute the sum of the values of the polynomial 
   else {
-    GExpr r;
+    Expr r;
     unsigned d = p.degree(x);
-    std::vector<GExpr> summands(d+1);
+    std::vector<Expr> summands(d+1);
     poly_dec(p, x, summands);
     q = 0;
     for (unsigned i = 0; i <= d; ++i) {
@@ -160,27 +158,27 @@ sum_poly_times_exponentials(const GExpr& p, const GSymbol& x,
   This routine computes the closed formula for 
   \f$\sum_{j=0}^n p(j) \alpha^j \cos(j\theta) \f$, 
   where \f$ p \f$ is a polynomial (possibly constant),  
-  \f$ \alpha \f$ and \f$ \theta \f$ are GExpr.
+  \f$ \alpha \f$ and \f$ \theta \f$ are Expr.
 */
 
-GExpr
-sum_poly_times_exponentials_times_cos(const GExpr& p, const GSymbol& x, 
-				      const GSymbol& n, const GExpr& alpha, 
-				      const GExpr& theta) {
-  GExpr q = 0;
+Expr
+sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x, 
+				      const Symbol& n, const Expr& alpha, 
+				      const Expr& theta) {
+  Expr q = 0;
   if (theta.is_zero()) {
     q = sum_poly_times_exponentials(p, x, n, alpha);
     return q;
   } 
   unsigned d = p.degree(x);
-  std::vector<GExpr> summands(d+1);
+  std::vector<Expr> summands(d+1);
   poly_dec(p, x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
-    GExpr r = power(x, n+2) * cos(n*theta) - power(x, n+1) * cos((n+1)*theta);
+    Expr r = Parma_Recurrence_Relation_Solver::power(x, n+2) * cos(n*theta) - Parma_Recurrence_Relation_Solver::power(x, n+1) * cos((n+1)*theta);
     r += 1 - x * cos(theta);
-    r /= power(x,2) - 2* x * cos(theta) + 1;
-    r = power(x,i) * r.diff(x,i);
+    r /= Parma_Recurrence_Relation_Solver::power(x,2) - 2* x * cos(theta) + 1;
+    r = Parma_Recurrence_Relation_Solver::power(x,i) * r.diff(x,i);
     r = r.expand();
     q += r * summands[i];
   }
@@ -192,29 +190,31 @@ sum_poly_times_exponentials_times_cos(const GExpr& p, const GSymbol& x,
   This routine computes the closed formula for 
   \f$\sum_{j=0}^n p(j) \alpha^j \sin(j\theta) \f$, 
   where \f$ p \f$ is a polynomial (possibly constant),  
-  \f$ \alpha \f$ and \f$ \theta \f$ are GExpr.
+  \f$ \alpha \f$ and \f$ \theta \f$ are Expr.
 */
 
-GExpr
-sum_poly_times_exponentials_times_sin(const GExpr& p, const GSymbol& x, 
-				      const GSymbol& n, const GExpr& alpha, 
-				      const GExpr& theta) {
-  GExpr q = 0;
+Expr
+sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x, 
+				      const Symbol& n, const Expr& alpha, 
+				      const Expr& theta) {
+  Expr q = 0;
   if (theta.is_zero()) {
     return q;
   } 
   unsigned d = p.degree(x);
-  std::vector<GExpr> summands(d+1);
+  std::vector<Expr> summands(d+1);
   poly_dec(p, x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
-    GExpr r = power(x, n+2) * sin(n*theta) - power(x, n+1) * sin((n+1)*theta);
+    Expr r = Parma_Recurrence_Relation_Solver::power(x, n+2) * sin(n*theta) - Parma_Recurrence_Relation_Solver::power(x, n+1) * sin((n+1)*theta);
     r -= x * sin(theta);
-    r /= power(x,2) - 2* x * cos(theta) + 1;
-    r = power(x,i) * r.diff(x,i);
+    r /= Parma_Recurrence_Relation_Solver::power(x,2) - 2* x * cos(theta) + 1;
+    r = Parma_Recurrence_Relation_Solver::power(x,i) * r.diff(x,i);
     r = r.expand();
     q += r * summands[i];
   }
   q = q.subs(x, alpha).expand();
   return q;
 }
+
+} // namespace Parma_Recurrence_Relation_Solver

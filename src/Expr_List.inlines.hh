@@ -41,13 +41,17 @@ Expr_List::Expr_List(const Symbol& x)
 
 inline
 Expr_List::Expr_List(const Expr& e1, const Expr& e2)
-  : l(e1.e, e2.e) {
+  : l(static_cast<const GiNaC::ex>(e1), static_cast<const GiNaC::ex>(e1)) {
 };
 
 inline
 Expr_List::Expr_List(const Expr& e1, const Expr& e2, const Expr& e3,
 		     const Expr& e4, const Expr& e5)
-  : l(e1.e, e2.e, e3.e, e4.e, e5.e) {
+  : l(static_cast<const GiNaC::ex>(e1),
+      static_cast<const GiNaC::ex>(e2),
+      static_cast<const GiNaC::ex>(e3),
+      static_cast<const GiNaC::ex>(e4),
+      static_cast<const GiNaC::ex>(e5)) {
 };
 
 inline
@@ -82,13 +86,13 @@ Expr_List::op(unsigned i) const {
 
 inline Expr_List&
 Expr_List::append(const Expr& x) {
-  l.append(x.e);
+  l.append(static_cast<const GiNaC::ex>(x));
   return *this;
 }
 
 inline Expr_List&
 Expr_List::prepend(const Expr& x) {
-  l.prepend(x.e);
+  l.prepend(static_cast<const GiNaC::ex>(x));
   return *this;
 }
 

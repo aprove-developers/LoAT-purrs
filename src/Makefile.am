@@ -42,9 +42,9 @@ Expr.inlines.hh \
 Expr_List.inlines.hh \
 Matrix.defs.hh \
 Matrix.inlines.hh \
-globals.hh \
 Recurrence.defs.hh \
 Recurrence.inlines.hh \
+approx_expr.hh \
 alg_eq_solver.hh \
 poly_factor.hh \
 rr_solver.hh \
@@ -66,7 +66,6 @@ alg_eq_solver.cc \
 approx_expr.cc \
 poly_factor.cc \
 rr_solver.cc \
-globals.cc \
 gosper.cc \
 simplify.cc \
 sum_poly.cc \

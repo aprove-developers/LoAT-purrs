@@ -14,7 +14,7 @@ PURPOSE. */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-  class Expr;
+class Expr;
 
 }
 

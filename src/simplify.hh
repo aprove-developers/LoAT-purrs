@@ -25,14 +25,20 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_simplify_hh
 #define PURRS_simplify_hh 1
 
-#include "globals.hh"
+#include "Expr.types.hh"
+#include "Symbol.types.hh"
 
-GExpr
-simplify_on_input_ex(const GExpr& e, const GSymbol& n, const bool& input);
+namespace Parma_Recurrence_Relation_Solver {
 
-GExpr
-simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input);
+Expr
+simplify_on_input_ex(const Expr& e, const Symbol& n, const bool& input);
 
-GExpr
-simplify_numer_denom(const GExpr& e);
+Expr
+simplify_on_output_ex(const Expr& e, const Symbol& n, const bool& input);
+
+Expr
+simplify_numer_denom(const Expr& e);
+
+} // namespace Parma_Recurrence_Relation_Solver
+
 #endif
