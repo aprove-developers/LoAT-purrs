@@ -187,6 +187,13 @@ solve_wrapper(const Recurrence& rec, const Symbol& n) {
   return false;
 }
 
+bool all_space(const string& s) {
+  for (unsigned i = s.length(); i-- > 0; )
+    if (!isspace(s[i]))
+      return false;
+  return true;
+}
+
 int
 main(int argc, char *argv[]) try {
   program_name = argv[0];
@@ -255,9 +262,22 @@ main(int argc, char *argv[]) try {
     else
       getline(line, rhs_string);
 
+    // The string may be constituted by white space only.
+    if (all_space(rhs_string))
+      continue;
+
     Expr rhs;
     try {
-      rhs = Expr(rhs_string, symbols);
+      // Dirty trick here: GiNaC's parser sucks!
+      static string dummy_string = "0";
+      Expr dummy_expr(dummy_string, symbols);
+      // We sandwich the string to be parsed within
+      // "x(" and ")" to force its complete parsing.
+      Expr tmp("x(" + rhs_string + ")", symbols);
+      if (tmp == dummy_expr)
+	throw std::runtime_error("not detected by GiNaC's parser");
+      // Get the mortadella.
+      rhs = tmp.op(0);
     }
     catch (exception& e) {
       ostringstream m;
