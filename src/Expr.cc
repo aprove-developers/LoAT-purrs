@@ -129,7 +129,7 @@ sum_eval(const ex& index, const ex& lower, const ex& upper,
   if (is_a<numeric>(upper)) {
     numeric num_upper = ex_to<numeric>(upper);
     if (!num_upper.is_integer())
-      throw std::invalid_argument("If the upper limit of a sum is a number,"
+      throw std::invalid_argument("If the upper limit of a sum is a number, "
 				  "it must be an integer");
     if (num_lower > num_upper)
       return 0;
@@ -185,7 +185,8 @@ REGISTER_FUNCTION(sum,
   const ex& factor)
 
   \param index    The symbol we are multiplying over.
-  \param lower    The lower limit of the prod (we want integer lower limit).
+  \param lower    The lower limit of the prod (we consider only rational
+                  number like lower limit).
   \param upper    The upper limit of the prod.
   \param factor   The argument of the product.
 
@@ -195,10 +196,10 @@ REGISTER_FUNCTION(sum,
   We apply the following properties:
   \f[
     \begin{cases}
-      \prod_{k = a}^b f(k) = 0, \quad \text{if } a > b; \\
+      \prod_{k = a}^b f(k) = 1, \quad \text{if } a > b; \\
       \prod_{k = a}^b f(k) = f(a), \quad \text{if } a = b; \\
-      \prod_{k = a}^b f(k) = f(a) \cdot f(a+1) \cdots f(b),
-        \quad \text{if } a < b; \\
+      \prod_{k = a}^b f(k) = f(a) \cdot f(a+1) \cdots f(c),
+        \quad \text{where } 0 \leq b - c \le 1, \text{if } a < b; \\
       \prod_{k = a}^b f(k)
         = \prod_{k = a}^n f(k) \cdot f(n)^(-1) \cdot f(n-1)^(-1)
 	  \cdots f(n-j+1)^(-1),
@@ -211,28 +212,28 @@ REGISTER_FUNCTION(sum,
     \end{cases}
   \f]
 
-  \exception std::invalid_argument thrown if \f$ lower \f$ in not an
-                                   integer number.
+  \exception std::invalid_argument thrown if \f$ lower \f$ in not a
+                                   rational number.
   \exception std::invalid_argument thrown if \f$ upper \f$ is a number but
-                                   not integer.
+                                   not rational.
 */
 ex
 prod_eval(const ex& index, const ex& lower, const ex& upper,
 	  const ex& factor) {
   if (!is_a<numeric>(lower))
-    throw std::invalid_argument("The lower limit of a product"
+    throw std::invalid_argument("The lower limit of a product "
 				"must be a number");
   numeric num_lower = ex_to<numeric>(lower);
-  if (!num_lower.is_integer())
-    throw std::invalid_argument("The lower limit of a product"
-				"must be an integer");
+  if (!num_lower.is_rational())
+    throw std::invalid_argument("The lower limit of a product "
+				"must be a rational number");
   ex p = 1;
   // `upper' is a number.
   if (is_a<numeric>(upper)) {
     numeric num_upper = ex_to<numeric>(upper);
-    if (!num_upper.is_integer())
-      throw std::invalid_argument("If the upper limit of a product is a"
-				  "number, it must be an integer");
+    if (!num_upper.is_rational())
+      throw std::invalid_argument("If the upper limit of a product is a "
+				  "number, it must be rational");
     if (num_lower > num_upper)
       return 1;
     else if (num_lower == num_upper)
