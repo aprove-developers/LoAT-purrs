@@ -42,11 +42,21 @@ http://www.cs.unipr.it/purrs/ . */
 #include <algorithm>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 const PURRS::Symbol&
 PURRS::Recurrence::n = Symbol("n");
+
+void
+PURRS::Recurrence::throw_invalid_argument(const char* method,
+					  const char* reason) const {
+  std::ostringstream s;
+  s << method << ":" << std::endl
+    << reason;
+  throw std::invalid_argument(s.str());
+}
 
 namespace {
 using namespace PURRS;
@@ -527,7 +537,8 @@ PURRS::Recurrence::verify_finite_order() const {
 				      coefficients(), new_coefficients,
 				      inhomogeneous));
     rec_rewritten.finite_order_p
-      = new Finite_Order_Info(dim - 1, new_coefficients, 1);
+      = new Finite_Order_Info(dim - 1, new_coefficients,
+			      first_valid_index(), 1);
     rec_rewritten.set_type(type());
     rec_rewritten.set_inhomogeneous_term(inhomogeneous);
     rec_rewritten.solve_linear_finite_order();
@@ -595,7 +606,7 @@ PURRS::Recurrence::verify_weighted_average() const {
   // Step 1: validation of the initial condition.
   Expr e = exact_solution_.expression().substitute(n, 1);
   e = simplify_all(e);
-  if (e != weight_rec.substitute(n, 1) * x(0)
+  if (e != weight_rec.substitute(n, 1) * get_initial_condition(0)
       + inhomogeneous_term.substitute(n, 1))
     // FIXME: provably_incorrect...
     return INCONCLUSIVE_VERIFICATION;
@@ -611,7 +622,8 @@ PURRS::Recurrence::verify_weighted_average() const {
   // `x(n) - (f(n) x(0) + f(n) sum(k, 1, n - 1, x(k)) + g(n))'
   // and tries to simplify it.
   diff = exact_solution_.expression()
-    - diff * weight_rec - x(0) * weight_rec - inhomogeneous_term;
+    - diff * weight_rec
+    - get_initial_condition(0) * weight_rec - inhomogeneous_term;
   diff = simplify_all(diff);
   if (diff == 0)
     return PROVABLY_CORRECT;
@@ -856,6 +868,85 @@ PURRS::Recurrence::replace_initial_condition(unsigned int k, const Expr& e) {
       (substitute_i_c_shifting(upper_bound_.expression()));
 }
 
+void
+PURRS::Recurrence::set_initial_conditions(const std::map<index_type, Expr>&
+					  map_initial_conditions) {
+  if (classifier_status_ == NOT_CLASSIFIED_YET)
+    classify_and_catch_special_cases();
+
+  // FIXME: exception?
+  if (classifier_status_ != CL_SUCCESS)
+    throw std::logic_error("PURRS::Recurrence::set_initial_conditions() "
+			   "useless to set initial conditions because "
+			   "the system can not to solve the recurrence");
+
+  const char* method = "PURRS::Recurrence::set_initial_conditions()";
+  std::ostringstream s;
+  switch (type_) {
+  case ORDER_ZERO:
+    // If the recurrence has order zero, the solution is simply the
+    // right-hand side.
+    break;
+  case LINEAR_FINITE_ORDER_CONST_COEFF:
+  case LINEAR_FINITE_ORDER_VAR_COEFF:
+    {
+      // Check the number of initial conditions.
+      if (map_initial_conditions.size() < order()) {
+	s << "*this is a recurrence of order " << order()
+	  << " and are necessary at least \n" << order()
+	  << " initial conditions to uniquely identify it";
+	throw_invalid_argument(method, s.str().c_str());
+      }
+      // Check that the lowest index among the indexes of the
+      // initial conditions are bigger than
+      // `first_valid_index() - order() + 1'.
+      index_type lowest = map_initial_conditions.begin()->first;
+      unsigned int min_index = first_valid_index() + 1 >= order()
+	? first_valid_index() - order() + 1 : 0;
+      if (lowest < min_index) {
+	s << "*this is a recurrence of order " << order() << ";\n"
+	  << "the least non-negative integer `j' such that the\n"
+	  << "recurrence is well-defined for `n >= j' is "
+	  << first_valid_index()
+	  << ". Hence, the smallest index of the initial conditions\n"
+	  << " does not have to be smaller than " << min_index;
+	throw_invalid_argument(method, s.str().c_str());
+      }
+      // Check if the indexes are all consequent.
+      unsigned j = 0;
+      for (std::map<index_type, Expr>::const_iterator i
+	     = map_initial_conditions.begin(),
+	     iend = map_initial_conditions.end(); i != iend; ++i, ++j)
+	if (i->first != lowest + j)
+	  throw_invalid_argument(method,
+				 "the indexes of the initial conditions "
+				 "must be consequent");
+      break;
+    }
+  case WEIGHTED_AVERAGE:
+    {
+      if (map_initial_conditions.size() != 1
+	  || map_initial_conditions.begin()->first != 0)
+	throw_invalid_argument(method,
+			       "*this is a weighted-average recurrence and,\n"
+			       "by definition, there is only the\n"
+			       "initial condition `x(0)'");
+    }
+    break;
+  case NON_LINEAR_FINITE_ORDER:
+  case FUNCTIONAL_EQUATION:
+    throw
+      "PURRS error: today the susbtitution of the initial conditions\n"  
+      "is allowed only for linear finite order recurrences and\n"  
+      "weighted-average recurrences.";
+    break;
+  default:
+    throw std::runtime_error("PURRS internal error: "
+			     "set_initial_conditions().");
+  }
+  initial_conditions = map_initial_conditions;
+}
+
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::apply_order_reduction() const {
   set_order_reduction();
@@ -871,7 +962,7 @@ PURRS::Recurrence::apply_order_reduction() const {
 				    coefficients(), new_coefficients,
 				    inhomogeneous));
   rec_rewritten.finite_order_p
-    = new Finite_Order_Info(dim - 1, new_coefficients, 1);
+    = new Finite_Order_Info(dim - 1, new_coefficients, first_valid_index(), 1);
   rec_rewritten.set_type(type());
   rec_rewritten.set_inhomogeneous_term(inhomogeneous);
   Solver_Status status;
@@ -1070,39 +1161,6 @@ compute_non_linear_recurrence(Expr& solution_or_bound,
     return map_status(classifier_status);
 }
 
-/*!
-  Builds the weighted-average recurrence
-  \f$ x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n) \f$, where
-  \f$ f(n) \f$ is stored in \p weight; \f$ g(n) \f$ is stored
-  in \p inhomogeneous and \p first_valid_index contains the least
-  non-negative integer \f$ j \f$ such that the recurrence is
-  well-defined for \f$ n \geq j \f$.
-  If the system is able to solve the recurrence, then this function
-  returns <CODE>SUCCESS</CODE> and the solution is stored in \p solution.
-*/
-PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::solve_new_weighted_average_rec(const Expr& weight,
-						  const Expr& inhomogeneous,
-						  index_type first_valid_index,
-						  Expr& solution) const {
-  Symbol h;
-  Recurrence rec_rewritten(weight * PURRS::sum(h, 0, n-1, x(h))
-			   + inhomogeneous);
-  const Expr& coeff_first_order
-    = simplify_all(weight / weight.substitute(n, n-1)
-		   * (1 + weight.substitute(n, n-1)));
-  const Expr& inhomog_first_order
-    = simplify_all(weight * (inhomogeneous / weight
-			     - (inhomogeneous / weight).substitute(n, n-1)));
-  rec_rewritten.weighted_average_p
-    = new Weighted_Average_Info(Recurrence(coeff_first_order*x(n-1)
-					   +inhomog_first_order), weight);
-  rec_rewritten.set_weighted_average();
-  associated_first_order_rec().set_first_valid_index(first_valid_index);
-  rec_rewritten.set_inhomogeneous_term(inhomogeneous);
-  return rec_rewritten.compute_weighted_average_recurrence(solution);
-}
-
 namespace {
 using namespace PURRS;
 
@@ -1188,17 +1246,9 @@ compute_weighted_average_recurrence(Expr& solution) const {
       solution = solution
 	.substitute(x(associated_first_order_rec().first_valid_index()),
 		    x(associated_first_order_rec().first_valid_index()+1));
-      // If there is the initial condition `x(1)' specified then
-      // the system substitute it with the respective value; otherwise
-      // the system performs the substitution `x(1) = 2*x(0)+1'.
-      std::map<index_type, Expr>::const_iterator i
-	= initial_conditions.find(1);
-      if (i != initial_conditions.end())
-	solution = solution.substitute(x(1), get_initial_condition(1));
-      else
-	solution = solution
-	  .substitute(x(associated_first_order_rec().first_valid_index()+1),
-		      (weight()*x(0)+inhomogeneous_term).substitute(n, 1));
+      solution = solution
+	.substitute(x(associated_first_order_rec().first_valid_index()+1),
+		    (weight()*x(0)+inhomogeneous_term).substitute(n, 1));
       //	solution = simplify_ex_for_output(solution, false);
       return SUCCESS;
     }
@@ -1262,6 +1312,9 @@ PURRS::Recurrence::
 substitute_i_c_shifting(const Expr& solution_or_bound) const {
   assert(!initial_conditions.empty());
   assert(has_at_least_a_symbolic_ic(solution_or_bound));
+  assert(is_linear_finite_order()
+	 || is_functional_equation()
+	 || is_non_linear_finite_order());
 
   Expr sol_or_bound = solution_or_bound;
   index_type first_valid_index_rhs;
@@ -1275,7 +1328,7 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
     order_or_rank = rank();
   }
   else {
-    assert(is_non_linear_finite_order() || is_weighted_average());
+    assert(is_non_linear_finite_order());
     // FIXME: we must again understand how to work in these cases.
     return sol_or_bound;
   }
@@ -1426,9 +1479,25 @@ PURRS::Recurrence::compute_exact_solution_non_linear() const {
   if (status != SUCCESS)
     return status;  
 
+#if 0
+  // FIXME: before to substitute the initial conditions in the
+  // non-linear recurrences we must be sure to have sufficiently
+  // simplified the solution.
+
+  // Check if there are specified initial conditions and in this case
+  // eventually shift the solution in according with them before to
+  // substitute the values of the initial conditions to the
+  // symbolic initial condition `x(i)'.
+  if (!initial_conditions.empty())
+    exact_solution_.set_expression
+      (substitute_i_c_shifting(solution));
+  lower_bound_.set_expression(exact_solution_.expression());
+  upper_bound_.set_expression(exact_solution_.expression());
+#else
   exact_solution_.set_expression(solution);
   lower_bound_.set_expression(solution);
   upper_bound_.set_expression(solution);
+#endif
   return SUCCESS;
 }
 
@@ -1439,29 +1508,12 @@ PURRS::Recurrence::compute_exact_solution_weighted_average() const {
   if (status != SUCCESS)
     return status;
 
-#if 0
-  // FIXME: to improve the function `substitute_i_c_shifting()'
-  // so that to accept also weighted-average recurrences.
-  // Check if there are specified initial conditions and in this case
-  // eventually shift the solution in according with them before to
-  // substitute the values of the initial conditions to the
-  // symbolic initial condition `x(i)'.
   if (!initial_conditions.empty())
-    exact_solution_.set_expression
-      (substitute_i_c_shifting(exact_solution_.expression()));
-  lower_bound_.set_expression(exact_solution_.expression());
-  upper_bound_.set_expression(exact_solution_.expression());
-#else
-  // FIXME: At the moment we substitute here only the initial
-  // condition `x(0)'.
-  std::map<index_type, Expr>::const_iterator i
-    = initial_conditions.find(0);
-  if (i != initial_conditions.end())
     solution = solution.substitute(x(0), get_initial_condition(0));
   exact_solution_.set_expression(solution);
   lower_bound_.set_expression(solution);
   upper_bound_.set_expression(solution);
-#endif
+  
   return SUCCESS;
 }
 

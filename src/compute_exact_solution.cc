@@ -194,22 +194,6 @@ PURRS::Recurrence::
 solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
   assert(is_linear_finite_order_var_coeff());
   assert(order() == 1);
-  if (has_parameters(coefficients[1]))
-    return TOO_COMPLEX;
-  // `z' will contain the largest positive or null integer, if it exists,
-  // that cancel the denominator of the coefficient.
-  // If this integer does not exist then `z' is left to 0.
-  Number z = 0;
-  if (!find_domain_in_N(coefficients[1], n, z))
-    return TOO_COMPLEX;
-  // Find the largest positive or null integer that cancel the denominator of
-  // `inhomogeneous_term' and store it in `z' if it is bigger than the
-  // current `z'.
-  if (!inhomogeneous_term.is_zero())
-    if (!find_domain_in_N(inhomogeneous_term.denominator(), n, z))
-      return TOO_COMPLEX;
-  // The initial conditions will start from `z'.
-  set_first_valid_index(z.to_unsigned_int());
   // `product_factor' is `alpha!(n)'.
   Expr numerator;
   Expr denominator;
@@ -218,7 +202,7 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
 							     denominator);
   const Expr& product_factor
     = simplify_binomials_factorials_exponentials
-    (compute_product(index, z + 1, numerator/denominator));
+    (compute_product(index, first_valid_index() + 1, numerator/denominator));
   set_product_factor(product_factor);
 
   // Build the recurrence with constant coefficient of the first order
@@ -227,15 +211,14 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
   std::vector<Polynomial_Root> new_roots;
   new_roots.push_back(Polynomial_Root(Expr(1), RATIONAL));
   rec_const_coeff.finite_order_p
-    = new Finite_Order_Info(1, coefficients, 1);
+    = new Finite_Order_Info(1, coefficients, first_valid_index(), 1);
   rec_const_coeff.set_type(LINEAR_FINITE_ORDER_CONST_COEFF);
-  rec_const_coeff.set_first_valid_index(z.to_unsigned_int());
   rec_const_coeff.set_inhomogeneous_term(inhomogeneous_term/product_factor);
 
   exact_solution_
     .set_expression(product_factor
 		    * (rec_const_coeff.solve_constant_coeff_order_1(new_roots)
-		       + x(z)));
+		       + x(first_valid_index())));
   return SUCCESS;
 }
 
@@ -536,22 +519,6 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     exact_solution_.set_expression(solution);
     return SUCCESS;
   }
-
-  Number z = 0;
-  if (!inhomogeneous_term.is_zero()) {
-    const Expr& denom_inhomogeneous_term = inhomogeneous_term.denominator();
-    if (has_parameters(denom_inhomogeneous_term))
-      return TOO_COMPLEX;
-    // Find the largest non-negative integer that cancel the
-    // denominator of `inhomogeneous_term' or starting from which
-    // `inhomogeneous_term' is well-defined and store it in `z' if
-    // it is bigger than `0'.
-    if (!find_domain_in_N(denom_inhomogeneous_term, n, z))
-      return TOO_COMPLEX;
-  }
-  // The initial conditions will start from `z'.
-  set_first_valid_index(z.to_unsigned_int());
-  D_VAR(first_valid_index());
 
   // FIXME: usare i vettori solo dall'ordine 2 in su.
   // L'ordine 1 gestirlo a parte senza equazione caratteristica.

@@ -1290,14 +1290,44 @@ PURRS::Recurrence::classify() const {
       return status;
 
   set_inhomogeneous_term(inhomogeneous);
-  D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
 
+  // Find the least non-negative integer `z' such that the
+  // recurrence is well-defined for `n >= z'.
+  // The function used in order to find `z' works like the
+  // computation of a maximum: if the system is able to find
+  // `z' and its value is bigger than the previous, updates `z';
+  // otherwise `z' is left unchanged.
+  Number z = 0;
+  // In the case of order equal to `0' we do not perform any
+  // check because the solution is simply the right-hand side
+  // of the recurrence.
+  if (is_linear_finite_order() && order > 0) {
+    // FIXME: check also the numerator (ex. log(n-2))!!!
+    // Check the denominator of the inhomogeneous term.
+    if (!inhomogeneous.is_zero()) {
+      const Expr& denom_inhomogeneous = inhomogeneous.denominator();
+      if (has_parameters(denom_inhomogeneous))
+	return CL_TOO_COMPLEX;
+      if (!find_domain_in_N(denom_inhomogeneous, n, z))
+	return CL_TOO_COMPLEX;
+    }
+    if (is_linear_finite_order_var_coeff() && order == 1) {
+      // Check the coefficient.
+      const Expr& coefficient = coefficients[1];
+      if (has_parameters(coefficient))
+	return CL_TOO_COMPLEX;
+      if (!find_domain_in_N(coefficient, n, z))
+	return CL_TOO_COMPLEX;
+    }
+  }
+  
   // In the case of non linear recurrence or weighted-average recurrence
   // we have already done the operation `new ...'.
   if (is_functional_equation())
     functional_eq_p = new Functional_Equation_Info(homogeneous_terms);
   else if (is_linear_finite_order())
     finite_order_p = new Finite_Order_Info(order, coefficients,
+					   z.to_unsigned_int(),
 					   gcd_among_decrements);
 
   assert(is_linear_finite_order() || is_functional_equation()

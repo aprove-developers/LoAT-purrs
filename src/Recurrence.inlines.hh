@@ -454,20 +454,6 @@ Recurrence::weight() {
   return weighted_average_p->weight();
 }
 
-inline index_type
-Recurrence::first_valid_index_inf_order() const {
-  assert(is_weighted_average());
-  assert(weighted_average_p);
-  return weighted_average_p->first_valid_index_inf_order();
-}
-
-inline void
-Recurrence::set_first_valid_index_inf_order(index_type i_c) const {
-  assert(is_weighted_average());
-  assert(weighted_average_p);
-  weighted_average_p->set_first_valid_index_inf_order(i_c);
-}
-
 inline void
 Recurrence::exact_solution(Expr& e) const {
   if (!exact_solution_.has_expression())

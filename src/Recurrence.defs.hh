@@ -284,6 +284,53 @@ public:
   */
   void replace_initial_condition(unsigned int k, const Expr& e);
 
+  //! Stores the initial conditions specified in \p map_initial_conditions.
+  /*!
+    The \p map_initial_conditions contains a set of initial
+    conditions \f$ x(k) = e \f$, where \f$ k \f$ is of the type
+    <CODE>index_type</CODE> and \f$ e \f$ is a generic expression.
+    This set of initial conditions must be sufficient to uniquely
+    identify the recurrence \p *this and must be in agreement
+    with the type of the recurrence.
+    
+    If \p *this is
+    - a \ref linear_finite_order "linear finite order recurrence"
+      or a \ref non_linear "non linear finite order recurrences":
+                                     the initial conditions in the map must
+                                     be at least as many as the order of the
+				     recurrence.
+				     The indexes of the initial conditions
+				     must be consequent and in agreement
+				     with <CODE>first_valid_index</CODE>
+				     (the least non-negative integer \f$ j \f$
+				     such that the recurrence is well-defined
+				     for \f$ n \geq j \f$).
+
+    - a \ref weighted_average "weighted-average recurrence":
+                                     by definition and since the recurrence is
+				     rewritten so that the lower limit of
+				     the sum is equal to \f$ 0 \f$ and
+				     upper limit is equal to \f$ n-1 \f$,
+				     there is only the initial condition
+				     \f$ x_0 \f$.
+
+    - a \ref generalized_recurrence "functional equation":         
+                                     to be written.
+    
+    \exception std::logic_error      thrown if \p *this is not classified yet
+                                     and the classification's process
+				     called by this method fails.
+
+    \exception std::invalid_argument thrown if the initial conditions
+                                     in the map \p map_initial_conditions
+				     are not a sufficient set to uniquely
+				     identify the recurrence or these initial
+				     conditions are not in agreement with
+				     the type of the recurrence.
+  */
+  void set_initial_conditions(const std::map<index_type, Expr>&
+			      map_initial_conditions);
+
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Checks if all the invariants are satisfied.
   /*!
@@ -324,6 +371,12 @@ private:
   //! the maximum integer among the first elements of it;
   //! returns \f$ 0 \f$ if the map is empty.
   unsigned int get_max_index_initial_condition() const;
+
+  //! \brief
+  //! Throw a <CODE>std::invalid_argument</CODE> exception
+  //! containing the appropriate error message.
+  void
+  throw_invalid_argument(const char* method, const char* reason) const;
 
 public:
   //! The possible states of the recurrence.
@@ -432,7 +485,7 @@ public:
     We remark that in the exact solution will appear symbolically
     the initial conditions until the user will not define it: this
     can be performed with the method
-    <CODE>replace_initial_condition()</CODE>.
+    <CODE>set_initial_conditions()</CODE>.
 
     \exception std::logic_error thrown if this method is called
                                 but no exact solution was computed.
@@ -484,7 +537,7 @@ public:
     We remark that in the lower bound will appear symbolically
     the initial conditions until the user will not define it: this
     can be performed with the method
-    <CODE>replace_initial_condition()</CODE>.
+    <CODE>set_initial_conditions()</CODE>.
 
     \exception std::logic_error thrown if this method is called
                                 but no lower bounds was computed.
@@ -536,7 +589,7 @@ public:
     We remark that in the upper bound will appear symbolically
     the initial conditions until the user will not define it: this
     can be performed with the method
-    <CODE>replace_initial_condition()</CODE>.
+    <CODE>set_initial_conditions()</CODE>.
 
     \exception std::logic_error thrown if this method is called
                                 but no upper bounds was computed.
@@ -772,18 +825,6 @@ private:
   //! recurrence finds the solution of the original recurrence \p *this.
   Solver_Status compute_non_linear_recurrence(Expr& solution_or_bound,
 					      unsigned int type) const;
-
-  //! \brief
-  //! Returns <CODE>SUCCESS</CODE> if the system is able to solve the
-  //! weighted-average recurrence
-  //! \f$ x(n) = f(n) \sum_{k=n_0}^n-1 x(k) + g(n) \f$, where
-  //! \f$ f(n) \f$ is stored in \p weight and  \f$ g(n) \f$ is stored
-  //! in \p inhomogeneous: in this case the solution is returned in
-  //! \p solution.
-  Solver_Status
-  solve_new_weighted_average_rec(const Expr& weight, const Expr& inhomogeneous,
-				 index_type first_valid_index,
-				 Expr& solution) const;
 
   //! \brief
   //! Solves the weighted-average recurrence \p *this transforming it
@@ -1184,16 +1225,6 @@ private:
   //!   T(n) = f(n) \sum_{k=0}^n T(k) + g(n).
   //! \f]
   Expr& weight();
-
-  //! \brief
-  //! Stores the least non-negative integer \f$ j \f$ such that
-  //! the recurrence is well-defined for \f$ n \geq j \f$.
-  index_type first_valid_index_inf_order() const;
-
-  //! \brief
-  //! Sets to \p i_c the least non-negative integer \f$ j \f$ such that
-  //! the recurrence is well-defined for \f$ n \geq j \f$.
-  void set_first_valid_index_inf_order(index_type i_c) const;
 
   mutable Cached_Expr exact_solution_;
   mutable Cached_Expr lower_bound_;

@@ -39,10 +39,11 @@ public:
   //! \brief
   //! Constructor: sets \f$ order{\_} = k \f$,
   //! \f$ coefficients{\_} = coeffs \f$,
+  //! \f$ first_valid_index{\_} = first_valid_index \f$,
   //! \f$ gcd{\_}among{\_}decrements{\_} = gcd \f$,
   Finite_Order_Info(index_type k, const std::vector<Expr>& coeffs,
-		    unsigned int gcd);
-
+		    index_type first_valid_index, unsigned int gcd);
+  
   //! Copy-constructor.
   Finite_Order_Info(const Finite_Order_Info& y);
 
@@ -96,16 +97,16 @@ private:
   std::vector<Expr> coefficients_;
 
   //! \brief
+  //! The least non-negative integer \f$ j \f$ such that the recurrence
+  //! is well-defined for \f$ n \geq j \f$.
+  index_type first_valid_index_;
+
+  //! \brief
   //! Stores the greatest common divisor among the positive integer \f$ k \f$
   //! of the terms of the form \f$ x(n-k) \f$ contained in the right
   //! hand side of the recurrence. If the order is zero then
   //! \p gcd_among_decrements_ stores \f$ 0 \f$.
   unsigned int gcd_among_decrements_;
-
-  //! \brief
-  //! The least non-negative integer \f$ j \f$ such that the recurrence
-  //! is well-defined for \f$ n \geq j \f$.
-  index_type first_valid_index_;
 
   //! \brief
   //! In the recurrences of the first order with variable coefficient
