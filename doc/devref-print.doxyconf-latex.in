@@ -311,7 +311,8 @@ WARN_LOGFILE           =
 # files or directories with spaces.
 
 INPUT		     =	@srcdir@/../src/alg_eq_solver.hh \
-			@srcdir@/../src/alg_eq_solver.cc
+			@srcdir@/../src/alg_eq_solver.cc \
+			@srcdir@/../src/rr_solver.cc
 #                         @srcdir@/gpl.dox
 #                         @srcdir@/fdl.dox
 
