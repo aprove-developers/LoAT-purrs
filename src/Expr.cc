@@ -287,15 +287,15 @@ REGISTER_FUNCTION(prod,
 //! ...
 ex
 mod_eval(const ex& x, const ex& y) {
-  return mod(x, y).hold();
-}
-
-ex
-mod_evalf(const ex& x, const ex& y) {
   if (is_a<numeric>(x) && is_a<numeric>(y))
     return mod(ex_to<numeric>(x), ex_to<numeric>(y));
   else
     return mod(x, y).hold();
+}
+
+ex
+mod_evalf(const ex& x, const ex& y) {
+  return mod(x, y).hold();
 }
 
 ex
