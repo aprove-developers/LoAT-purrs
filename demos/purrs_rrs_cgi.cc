@@ -274,6 +274,14 @@ main() try {
     case Recurrence::UNSOLVABLE_RECURRENCE:
       error("this recurrence is unsolvable");
       break;
+    case Recurrence::INDETERMINATE_RECURRENCE:
+      error("this recurrence has infinitely many solutions");
+      break;
+    case Recurrence::MALFORMED_RECURRENCE:
+      error("this recurrence is malformed");
+      break;
+    case Recurrence::HAS_NON_INTEGER_DECREMENT:
+    case Recurrence::HAS_HUGE_DECREMENT:
     case Recurrence::TOO_COMPLEX:
     default:
       ;
@@ -292,6 +300,14 @@ main() try {
     case Recurrence::UNSOLVABLE_RECURRENCE:
       error("this recurrence is unsolvable");
       break;
+    case Recurrence::INDETERMINATE_RECURRENCE:
+      error("this recurrence has infinitely many solutions");
+      break;
+    case Recurrence::MALFORMED_RECURRENCE:
+      error("this recurrence is malformed");
+      break;
+    case Recurrence::HAS_NON_INTEGER_DECREMENT:
+    case Recurrence::HAS_HUGE_DECREMENT:
     case Recurrence::TOO_COMPLEX:
     default:
       ;
@@ -310,6 +326,14 @@ main() try {
     case Recurrence::UNSOLVABLE_RECURRENCE:
       error("this recurrence is unsolvable");
       break;
+    case Recurrence::INDETERMINATE_RECURRENCE:
+      error("this recurrence has infinitely many solutions");
+      break;
+    case Recurrence::MALFORMED_RECURRENCE:
+      error("this recurrence is malformed");
+      break;
+    case Recurrence::HAS_NON_INTEGER_DECREMENT:
+    case Recurrence::HAS_HUGE_DECREMENT:
     case Recurrence::TOO_COMPLEX:
     default:
       ;
