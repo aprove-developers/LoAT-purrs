@@ -792,16 +792,33 @@ bool find_terms_with_x(const Expr& this_term, vector<Expr>& terms_with_x) {
 Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const int num_param, const vector<Expr>& terms_with_x, 
 		    const Symbol& n_replacement, Expr& real_var_symbol, Expr& solution) {
   vector<int> dummy(num_param);
+
+  // We need a symbol different from any used symbol.
+  Symbol different_symbol;
+
   for (int i = num_param - 1 ; i >= 0; --i) {
     dummy[i] = true;
     for (vector<Expr>::const_iterator j = terms_with_x.begin(); j != terms_with_x.end(); ++j) {
-      if (j->arg(1).op(i).is_a_symbol() || j->arg(1).op(i).is_a_number()) {
-	// FIXME: This is not enough now. Check that symbols in the rhs match corresponding
-	// symbols in the lhs.
-      }
-      else {
-	dummy[i] = false;
+      if (!dummy[i])
 	break;
+      for (int k = j->arg(1).nops() - 1; k >= 0; --k) {
+	const Expr& examined_arg = lhs.arg(1).op(i);
+	const Expr& this_arg = j->arg(1).op(k);
+	// An argument can be neglected if it always occurs as itself or as a number...
+	if (k==i) {
+	  // FIXME: Can we afford to have greater flexibility here?
+	  if (!this_arg.is_a_number() && this_arg != examined_arg) {
+	    dummy[i] = false;
+	    break;
+	  }
+	}
+	else {
+	// ... but it mustn't appear anywhere else as well.
+	  if (this_arg != this_arg.substitute(examined_arg, different_symbol)) {
+	    dummy[i] = false;
+	    break;
+	  }
+	}	
       }
     }
   }
@@ -811,10 +828,8 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const int num_par
   for (int i = num_param - 1; i >= 0; --i) {
     if (!dummy[i]) {
       if (real_var_index != real_var_index_unassigned) {
-	std::cerr << "Too many true parameters. Resolution can succeed only if" << std::endl
-		  << "all the parameters of x() but one are useless." << std::endl;
-	// FIXME: Die gracefully.
-	abort();
+	error_message("Too many true parameters. Resolution can succeed only if\n"
+		      "all the arguments of `x()' but one are useless.");
       }
       else
 	real_var_index = i;
@@ -847,7 +862,6 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const int num_par
 
   Recurrence rec(rhs);
   
-  // FIXME: Replace back the original x() index and arguments list.
   Recurrence::Solver_Status outcome;
   outcome = compute_exact_solution_wrapper(rec);
 
@@ -890,6 +904,7 @@ main(int argc, char *argv[]) try {
 
   Expr this_rec = recs[0];
 
+  // FIXME: Check that it is an equality and not an inequality.
   if (!this_rec.is_a_relational())
     error_message("Invalid equation: must be in the form `lhs == rhs'");
 
@@ -903,10 +918,10 @@ main(int argc, char *argv[]) try {
   const Expr& param_list = lhs.arg(1);
 
   if (!index_expr.is_a_number())
-    error_message("Invalid lhs: must be in the form x(index, {arg_list})");
+    error_message("Invalid lhs: must be in the form `x(index, {arg_list})'");
 
   if (!param_list.is_a_Expr_List())
-    error_message("Invalid lhs: must be in the form x(index, {arg_list})");
+    error_message("Invalid lhs: must be in the form `x(index, {arg_list})'");
 
   unsigned int index=index_expr.ex_to_number().to_unsigned_int();
 
