@@ -33,6 +33,14 @@ http://www.cs.unipr.it/purrs/ . */
 using namespace std;
 using namespace GiNaC;
 
+#include "Interval.h"
+#include <complex>
+typedef filib::Interval Interval;
+typedef std::complex<Interval> CInterval;
+
+CInterval
+approximate(const GExpr& e);
+
 #define NOISY 1
 
 int
@@ -91,7 +99,7 @@ main() try {
 	  cout << " (multiplicity " << multiplicity << ")";
 	cout << endl;
 	if (!is_a<numeric>(value))
-	  cout << "****  x_" << i+1 << " ~= " << value.evalf() << endl;
+	  cout << "****  x_" << i+1 << " ~= " << approximate(value) << endl;
       }
     }
 #endif

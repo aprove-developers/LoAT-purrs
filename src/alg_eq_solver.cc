@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "globals.hh"
 #include "alg_eq_solver.hh"
 #include <cassert>
+#include <iostream>
 
 using namespace GiNaC;
 
@@ -299,6 +300,12 @@ solve_equation_2(const GExpr& b, const GExpr& c,
 static GExpr
 cubic_root(const GExpr& e) {
   static GExpr one_third = GExpr(1)/3;
+  if (is_a<numeric>(e)) {
+    GNumber n = ex_to<numeric>(e); 
+    if (n.is_rational() && n < 0)
+      return (-pow(-n, one_third));
+  }
+  std::cout << "Computing cubic_root(" << e << ")" << std::endl;
   return pow(e, one_third);
 }
 

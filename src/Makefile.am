@@ -15,7 +15,7 @@ VPATH = @srcdir@
 
 SUBDIRS = . Intervals
 
-INCLUDES = -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/src/Intervals @extra_includes@
+INCLUDES = -I$(top_builddir) -I$(top_srcdir)/src -I/usr/local/filib/include @extra_includes@
 
 CPPFLAGS = -DPURRS_INTERNAL=public @extra_cpp_flags@
 

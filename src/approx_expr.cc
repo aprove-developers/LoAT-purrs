@@ -24,33 +24,25 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
+#define FILIB_NAMESPACES 1
+
 #include "globals.hh"
-#include "Interval.defs.hh"
-#include <cmath>
+#include "Interval.h"
+//#include <cmath>
 #include <complex>
 #include <cln/rational.h>
 #include <ginac/ginac.h>
 
-union usi4_double {
-  unsigned short int usi4[4];
-  double d;
-};
-
-#if __BYTE_ORDER == LITTLE_ENDIAN
-static usi4_double PI_lower_bound =  { { 0x2d18, 0x5444, 0x21fb, 0x4009 } };
-static usi4_double PI_upper_bound =  { { 0x2d19, 0x5444, 0x21fb, 0x4009 } };
-
-static usi4_double E_lower_bound = { { 0x5769, 0x8b14, 0xbf0a, 0x4005 } };
-static usi4_double E_upper_bound = { { 0x576a, 0x8b14, 0xbf0a, 0x4005 } };
-#else
-static usi4_double PI_lower_bound =  { { 0x4009, 0x21fb, 0x5444, 0x2d18 } };
-static usi4_double PI_upper_bound =  { { 0x4009, 0x21fb, 0x5444, 0x2d19 } };
-
-static usi4_double E_lower_bound = { { 0x4005, 0xbf0a, 0x8b14, 0x5769 } };
-static usi4_double E_upper_bound = { { 0x4005, 0xbf0a, 0x8b14, 0x576a } };
-#endif
-
+typedef filib::Interval Interval;
 typedef std::complex<Interval> CInterval;
+
+#if 0
+template<typename _Tp>
+inline complex<_Tp>
+tan(const complex<_Tp>& __z) {
+  return sin(__z) / cos(__z);
+}
+#endif
 
 using namespace GiNaC;
 
@@ -95,39 +87,46 @@ approximate(const GExpr& e) {
     for (unsigned i = 0, n = e.nops(); i < n; ++i)
       r *= approximate(e.op(i));
   }
-#if 0
   else if (is_exactly_a<power>(e)) {
     static GExpr one_half = GNumber(1)/2;
     const GExpr& base = e.op(0);
     const GExpr& exponent = e.op(1);
+#if 0
     if (exponent == one_half)
       return sqrt(approximate(base));
     else
-      return pow(approximate(e.op(0)), approximate(e.op(1)));
+#endif
+      return pow(approximate(base), approximate(exponent));
   }
   else if (is_exactly_a<function>(e)) {
     const GExpr& arg = e.op(0);
+#if 0
     if (is_ex_the_function(e, abs))
       return abs(approximate(arg));
-    else if (is_ex_the_function(e, exp))
+    else
+#endif
+    if (is_ex_the_function(e, exp))
       return exp(approximate(arg));
+#if 0
     else if (is_ex_the_function(e, log))
       return log(approximate(arg));
+#endif
     else if (is_ex_the_function(e, sin))
       return sin(approximate(arg));
     else if (is_ex_the_function(e, cos))
       return cos(approximate(arg));
     else if (is_ex_the_function(e, tan))
-      return tan(approximate(arg));
+      return std::tan(approximate(arg));
     else
       abort();
   }
-#endif
   else if (is_exactly_a<constant>(e)) {
     if (e == Pi)
-      return CInterval(Interval(PI_lower_bound.d, PI_upper_bound.d), 0);
+      return Interval::PI();
+#if 0
     else if (e == Euler)
       return CInterval(Interval(E_lower_bound.d, E_upper_bound.d), 0);
+#endif
     else
       abort();
   }
