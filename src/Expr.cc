@@ -337,13 +337,39 @@ REGISTER_FUNCTION(prod,
 		  evalf_func(prod_evalf).
 		  derivative_func(prod_deriv));
 
-//! ...
+//! Evaluation of the <CODE>mod(x, y)</CODE>.
+/*!
+  \fn GiNaC::ex
+  mod_eval(const ex& x, const ex& y)
+
+  \param x    The expression that we want divide.
+  \param y    The expression for which \p x is divided.
+
+  We apply the following properties:
+  \f[
+    \begin{cases}
+      mod(x, y) = Number::mod(x, y),
+        \quad \text{if x and y are both numerics}; \\
+      mod(x - y, y) = mod(x, y),
+          \quad \text{if y is integer}.
+    \end{cases}
+  \f]
+*/
 ex
 mod_eval(const ex& x, const ex& y) {
   if (is_a<numeric>(x) && is_a<numeric>(y))
     return mod(ex_to<numeric>(x), ex_to<numeric>(y));
   else
-    return mod(x, y).hold();
+    if (is_a<numeric>(y)) {
+      numeric k = ex_to<numeric>(y);
+      if (k.is_integer() && is_a<add>(x) && x.nops() == 2) {
+	if (is_a<symbol>(x.op(0)) && (x.op(1) == k || x.op(1) == -k))
+	  return mod(x.op(0), y).hold();
+	if (is_a<symbol>(x.op(1)) && (x.op(0) == k || x.op(0) == -k))
+	  return mod(x.op(1), y).hold();
+      }
+    }
+  return mod(x, y).hold();
 }
 
 ex
@@ -356,6 +382,12 @@ mod_deriv(const ex&, const ex&, unsigned int) {
   abort();
 }
 
+/*!
+  We define the general symbolic function
+  \f[
+    mod(n, k).
+  \f]
+*/
 REGISTER_FUNCTION(mod,
 		  eval_func(mod_eval).
 		  evalf_func(mod_evalf).
