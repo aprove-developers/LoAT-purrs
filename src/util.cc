@@ -78,8 +78,8 @@ get_binding(const GList& substitution, unsigned wild_index) {
 }
 
 /*!
-  Return <CODE>true</CODE> if the <CODE>GiNaC::GExpr</CODE> \p p is an
-  object <EM>scalar_for_poly_in_var</EM>, <CODE>false</CODE> otherwise.
+  Return <CODE>true</CODE> if the <CODE>GiNaC::GExpr</CODE> \p p is a
+  scalar for poly in var, <CODE>false</CODE> otherwise.
 */
 static bool
 is_scalar_for_poly(const GExpr& e, const GSymbol& var) {
@@ -108,8 +108,8 @@ is_scalar_for_poly(const GExpr& e, const GSymbol& var) {
 
 
 /*!
-  Return <CODE>true</CODE> if the <CODE>GiNaC::GExpr</CODE> \p p is an
-  object <EM>polynomial_in_var</EM>, <CODE>false</CODE> otherwise.
+  Return <CODE>true</CODE> if the <CODE>GiNaC::GExpr</CODE> \p p is a
+  polynomial in var, <CODE>false</CODE> otherwise.
 */
 static bool
 is_polynomial(const GExpr& e, const GSymbol& var) {
@@ -142,45 +142,33 @@ is_polynomial(const GExpr& e, const GSymbol& var) {
 }
 
 /*!
-  Give a <CODE>GiNaC::GExpr</CODE> \p p and a <CODE>GiNaC::GSymbol</CODE>
-  \p var, builds two other <CODE>GiNaC::GExpr</CODE> \p poly and \p no_poly
-  that contain the polynomial part and the non-polynomial part of \p p
-  regarding the variable \p var.
+  This function realized the definition of <EM>polynomial_in_var</EM>.
+  Given an expression \p p and a symbol \p var, this function builds two
+  other expression \p poly and \p no_poly that contain the polynomial part
+  and the non-polynomial part of \p p regarding the variable \p var.
   The polynomial part of an expression is the sum of those terms that are
   polynomials in a variable in according to the following definition
   in two steps (when the polynomial part lacks \p poly is zero and so
   also for non polynomial part).
   Step 1
   We consider the variable \p var.
-  Definition the object <EM>scalar_for_poly_in_var</EM> in inductive way:
-  - every <CODE>GiNaC::numeric</CODE> is a
-    <EM>scalar_for_poly_in_var</EM>;
-  - every <CODE>GiNaC::constant</CODE> is a
-    <EM>scalar_for_poly_in_var</EM>;
-  - every <CODE>GiNaC::symbol</CODE> different from \p var is a
-    <EM>scalar_for_poly_in_var</EM>;
-  - given \f$ e \f$ a <CODE>GiNaC::power</CODE>, if \f$ e.op(0) \f$ and
-    \f$ e.op(1) \f$ are <EM>scalar_for_poly_in_var</EM>
-    then \f$ e \f$ is a <EM>scalar_for_poly_in_var</EM>;
-  - given \f$ f \f$ a <CODE>GiNaC::function</CODE>,
-    if \f$ f.op(0) \f$ is <EM>scalar_for_poly_in_var</EM>
-    then \f$ f \f$ is a <EM>scalar_for_poly_in_var</EM>;
-  - given the binary operations sum (\f$ + \f$) and multiplication (\f$ * \f$),
-    if \f$ a \f$ and \f$ b \f$ are <EM>scalar_for_poly_in_var</EM> then
-    \f$ a + b \f$ and \f$ a * b \f$ are <EM>scalar_for_poly_in_var</EM>.
+  Definition of the object <EM>scalar for poly in var</EM> inductively as
+  follows:
+  - every number is a scalar for poly in var;
+  - every symbolic constant is a scalar for poly in var;
+  - every parameter different from \f$ var \f$ is a scalar for poly in var;
+  - if \f$ f \f$ is any unary function and \f$ x \f$ is scalar for poly in var,
+    then \f$ f(x) \f$ is a scalar for poly in var;
+  - if \f$ a \f$ and \f$ b \f$ are scalars for poly in var then
+    \f$ a + b \f$, \f$ a * b \f$ and \f$ a^b \f$ are scalars for poly in var.
   Step 2
-  Definition of <EM>polynomial_in_var</EM> in inductive way
-  - every <EM>scalar_for_poly_in_var</EM> is a
-    <EM>polynomial_in_var</EM>;
-  - \p var is a <EM>polynomial_in_var</EM>;
-  - given \f$ e \f$ a <CODE>GiNaC::power</CODE>,
-    if \f$ e.op(0) \f$ is <EM>polynomial_in_var</EM> and
-    \f$ e.op(1) \f$ is <CODE>GiNaC::numeric</CODE> such that
-    <CODE>e.op(1).GiNaC::is_pos_integer()</CODE>
-    then \f$ e \f$ is a <EM>polynomial_in_var</EM>;
-  - given the binary operations sum (\f$ + \f$) and multiplication (\f$ * \f$),
-    if \f$ a \f$ and \f$ b \f$ are <EM>polynomial_in_var</EM> then
-    \f$ a + b \f$ and \f$ a * b \f$ are <EM>polynomial_in_var</EM>.
+  Definition of <EM>polynomial_in_var</EM> inductively as follows:
+  - every scalar for poly in var is a polynomial in var;
+  - \f$ var \f$ is a polynomial in var;
+  - if \f$ a \f$ is a polynomial in var and \f$ b \f$ is a positive integer,
+    then \f$ a^b \f$ is a polynomial in var;
+  - if \f$ a \f$ and \f$ b \f$ are polynomials in var then
+    \f$ a + b \f$ and \f$ a * b \f$ are polynomials in var.
 */
 void
 assign_polynomial_part(const GExpr& p, const GSymbol& var,
