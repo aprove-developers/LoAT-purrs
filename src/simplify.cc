@@ -1013,35 +1013,10 @@ simplify_expanded_ex_for_output(const Expr& e, bool input) {
   return e_rewritten;
 }
 
-Expr
-rewrite_factorial(const Number& a, const Number& b, const Symbol& k) {
-  Expr prod = factorial(a * k);
-  if (b > 0)
-    for (Number j = 1; j <= b; ++j)
-      prod *= a * k + j; 
-  else
-    for (Number j = 0; j < abs(b); ++j)
-      prod *= pwr(a * k - j, -1);
-  return prod;
-}
-
-bool
-check_form_of_mul(const Expr& e, Symbol& k, Number& a) {
-  assert(e.is_a_mul() && e.nops() == 2);
-  const Expr& first = e.op(0);
-  const Expr& second = e.op(1);
-  if ((first.is_a_symbol(k)
-       && second.is_a_number(a) && a.is_positive_integer())
-      || (second.is_a_symbol(k)
-	  && first.is_a_number(a) && a.is_positive_integer()))
-    return true;
-  else
-    return false;
-}
-
 /*!
-  Given the factorial expression \f$ (a k + b)! \f$, this function 
-  returns a new expression that contains explicitly \f$ (a k)! \f$.
+  Given the factorial expression \f$ (a + b)! \f$, where \f$ a \f$ is
+  a non-numeric expression and \f$ b \f$ an integer, this function 
+  returns a new expression that contains explicitly \f$ a! \f$.
   We use the rewrite rule explained in the comment for
   <CODE>rewrite_factorials()</CODE>
 */
@@ -1049,31 +1024,30 @@ Expr
 decompose_factorial(const Expr& e) {
   assert(e.is_the_factorial_function());
   const Expr& argument = e.arg(0);
-  if (argument.is_a_add() && argument.nops() == 2) {
-    const Expr& first = argument.op(0);
-    const Expr& second = argument.op(1);
-    Number b;
-    Symbol k;
-    if (first.is_a_number(b) && b.is_integer())
-      if (second.is_a_mul() && second.nops() == 2) {
-	Number a;
-	// Checks if `second' has the form `a*k with `a' a positive
-	// integer number'. 
-	if (check_form_of_mul(second, k, a))
-	  return rewrite_factorial(a, b, k);
-      }
-      else if (second.is_a_symbol(k))
-	return rewrite_factorial(1, b, k);
-    if (second.is_a_number(b) && b.is_integer())
-      if (first.is_a_mul() && first.nops() == 2) {
-	Number a;
-	// Checks if `second' has the form `a*k with `a' a positive
-	// integer number'.
-	if (check_form_of_mul(first, k, a))
-	  return rewrite_factorial(a, b, k);
-      }
-      else if (first.is_a_symbol(k))
-	return rewrite_factorial(1, b, k);
+  if (argument.is_a_add()) {
+    Number num = 0;
+    Expr new_arg_fact = 0;
+    for (unsigned i = argument.nops(); i-- > 0; ) {
+      Number tmp_num;
+      if (argument.op(i).is_a_number(tmp_num) && tmp_num.is_integer())
+	// We are sure that `num' is again `0' because automatically
+	// two integer numbers would have been added.
+	num = tmp_num;
+      else
+	new_arg_fact += argument.op(i);
+    }
+    if (num.is_positive()) {
+      Expr new_factors = 1;
+      for (Number i = 1; i <= num; ++i)
+	new_factors *= new_arg_fact + i;
+      return factorial(new_arg_fact) * new_factors;
+    }
+    else {
+      Expr new_factors = 1;
+      for (Number i = 0; i < -num; ++i)
+	new_factors *= pwr(new_arg_fact - i, -1);
+      return factorial(new_arg_fact) * new_factors;
+    }
   }
   return e;
 }
@@ -1083,16 +1057,16 @@ decompose_factorial(const Expr& e) {
   - \f[
       a^{b n + c} = a^{b n} \cdot a^c;
     \f]
-  - let \f$ a \in \Nset \setminus \{0\} \f$ and let \f$ b \in \Zset \f$:
+  - let \f$ a \f$ be a non-numeric expression and let \f$ b \in \Zset \f$:
     \f[
       \begin{cases}
-        (a k + b)!
+        (a + b)!
         =
-        (a k)! \cdot (a k + 1) \cdots (a k + b),
+        a! \cdot (a + 1) \cdots (a + b),
           \quad \text{if } b \in \Nset \setminus \{0\}; \\
-        (a k)!,
+        a!,
           \quad \text{if } b = 0; \\
-        \dfrac{(a k)!}{(a k) \cdot (a k - 1) \cdots (a k + b + 1))},
+        \dfrac{a!}{a \cdot (a - 1) \cdots (a + b + 1))},
           \quad \text{if } b \in \Zset \setminus \Nset.
       \end{cases}
     \f]
