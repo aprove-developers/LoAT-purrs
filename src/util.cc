@@ -672,7 +672,10 @@ PURRS::has_only_symbolic_initial_conditions(const Expr& e) {
 	       && arg.is_positive_integer())
 	  && !(argument.is_a_add() && argument.nops() == 2
 	       && (argument.op(0).is_the_mod_function()
-		   || argument.op(1).is_the_mod_function())))
+		   || argument.op(1).is_the_mod_function()))
+	  && !(argument.is_the_Sc_function()
+	       && argument.arg(1).is_a_number(arg)
+	       && arg.is_positive_integer()))
 	return false;
     }
     else

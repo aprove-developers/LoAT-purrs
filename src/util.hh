@@ -126,7 +126,8 @@ substitute_x_function(const Expr& e, const Expr& k, bool do_power);
   - the argument is a positive integer;
   - the argument is parametric;
   - the argument is equal to \f$ mod(n, k) + h \f$, with
-    \f$ k, h \in \Nset \f$.
+    \f$ k, h \in \Nset \f$;
+  - the argument is equal to \f$ Sc(n, b) \f$, whit \f$ b \in \Zset_+ \f$.
 */
 bool has_only_symbolic_initial_conditions(const Expr& e);
 
@@ -140,7 +141,8 @@ bool has_only_symbolic_initial_conditions(const Expr& e);
   - the argument is a positive integer;
   - the argument is parametric;
   - the argument is equal to \f$ mod(n, k) + h \f$, with
-    \f$ k, h \in \Nset \f$.
+    \f$ k, h \in \Nset \f$;
+  - the argument is equal to \f$ Sc(n, b) \f$, whit \f$ b \in \Zset_+ \f$.
 */
 bool has_at_least_a_symbolic_initial_condition(const Expr& e);
 
