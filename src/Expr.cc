@@ -109,7 +109,8 @@ get_out_factors_from_argument(const ex& e, const ex& x, ex& in, ex& out) {
       \sum_{k = a}^b f(k) = \sum_{k = a}^n f(k) + f(n+1) + \cdots + f(n+j),
         \quad \text{if } b = n + j \text{and j is a negative integer}; \\
       \sum_{k = a}^b \alpha f(k) = \alpha \sum_{k = a}^b f(k),
-        \quad \text{where } \alpha \text{does not depend from } k.  
+        \quad \text{where } \alpha \text{does not depend from } k, \\
+      \sum_{k = a}^b 1 = b - a + 1.
     \end{cases}
   \f]
 
@@ -127,6 +128,8 @@ sum_eval(const ex& index, const ex& lower, const ex& upper,
   if (!num_lower.is_integer())
     throw std::invalid_argument("The lower limit of a sum must be an integer");
   ex s = 0;
+
+  // `upper' is a number.
   if (is_a<numeric>(upper)) {
     numeric num_upper = ex_to<numeric>(upper);
     if (!num_upper.is_integer())
@@ -140,7 +143,12 @@ sum_eval(const ex& index, const ex& lower, const ex& upper,
       for (numeric j = num_lower; j <= num_upper; ++j)
 	s += summand.subs(index == j);
   }
-  else
+  // `upper' is not a number.
+  else {
+    // `summand' is equal to `1'.
+    if (summand == 1)
+      return upper - lower + 1;
+    // `upper' is a sum of two addends.
     if (is_a<add>(upper) && upper.nops() == 2) {
       ex first_term = upper.op(0);
       ex second_term = upper.op(1);
@@ -158,14 +166,20 @@ sum_eval(const ex& index, const ex& lower, const ex& upper,
 	ex factors_in = 1;
 	ex factors_out = 1;
 	get_out_factors_from_argument(summand, index, factors_in, factors_out);
-	return factors_out * sum(index, lower, upper, factors_in).hold();
+	if (factors_in == 1)
+	  return factors_out * (upper - lower + 1);
+	else
+	  return factors_out * sum(index, lower, upper, factors_in).hold();
       }
       if (numeric_term.is_integer()) {
 	ex factors_in = 1;
 	ex factors_out = 1;
 	get_out_factors_from_argument(summand, index, factors_in, factors_out);
-	s += factors_out
-	  * sum(index, lower, ex(symbolic_term), factors_in).hold();
+	if (factors_in == 1)
+	  s += factors_out * (ex(symbolic_term) - lower + 1);
+	else
+	  s += factors_out
+	    * sum(index, lower, ex(symbolic_term), factors_in).hold();
 	if (numeric_term.is_pos_integer())
 	  for (numeric j = 1; j <= numeric_term; ++j)
 	    s += summand.subs(index == symbolic_term + j);
@@ -177,15 +191,23 @@ sum_eval(const ex& index, const ex& lower, const ex& upper,
 	ex factors_in = 1;
 	ex factors_out = 1;
 	get_out_factors_from_argument(summand, index, factors_in, factors_out);
-	return factors_out * sum(index, lower, upper, factors_in).hold();
+	if (factors_in == 1)
+	  return factors_out * (upper - lower + 1);
+	else
+	  return factors_out * sum(index, lower, upper, factors_in).hold();
       }
     }
     else {
+      // `upper' is not a sum of two addends.
       ex factors_in = 1;
       ex factors_out = 1;
       get_out_factors_from_argument(summand, index, factors_in, factors_out);
-      return factors_out * sum(index, lower, upper, factors_in).hold();
+      if (factors_in == 1)
+	return factors_out * (upper - lower + 1);
+      else
+	return factors_out * sum(index, lower, upper, factors_in).hold();
     }
+  }
   return s;
 }
 
