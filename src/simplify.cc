@@ -318,7 +318,7 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 	  // If the base is 'integer' GiNaC automatically transforms for
 	  // instance '2^(3/2)' in '2*sqrt(2)': in this case we do not add
 	  // 1 to the exponent. 
-	  if (!is_a<numeric>(bases[j]))
+	  if (!is_a<numeric>(bases[j]) || !is_a<numeric>(exponents[j]))
 	    exponents[j] = exponents[j] + 1;
 	  else {
 	    GNumber base = GiNaC::ex_to<GiNaC::numeric>(bases[j]);
