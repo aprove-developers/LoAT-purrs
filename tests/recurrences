@@ -281,6 +281,24 @@ x(n-1)+factorial(1+2*n)^(-1)*factorial(n)*(1+4*n)
 x(n-1)+2^n*factorial(1+n)^(-1)*factorial(2+n)^(-1)*(3+n)*n
 % Solution: x(n) = 1 - 2^(n+1) * (factorial(n+2) * factorial(n+1))
 
+% Inhomogeneous term contains factorial and the sum to compute is not
+% Gosper-summable.
+% x(n) =
+x(n-1)+factorial(n)
+% Solution: x(n) = x(0) + sum(h,1,n,factorial(h)) + x(0)
+
+% Inhomogeneous term contains rational function and the sum to compute is not
+% Gosper-summable.
+% x(n) =
+x(n-1)+2^n/(n+1)   
+% Solution: x(n) = x(0) + sum(h,1,n,(1+h)^(-1)*2^h)
+
+% Inhomogeneous term contains factorial and polynomial.
+% The sum to compute containig factorial is not Gosper-summable.
+% x(n) =
+x(n-1)+2*factorial(n)+4*n
+% Solution: x(n) = x(0) + 2*n^2 + 2*n + sum(h,1,n,2*factorial(h))
+
 
 % Order 2
 
