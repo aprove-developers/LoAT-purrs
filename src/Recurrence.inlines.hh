@@ -498,7 +498,7 @@ Recurrence::exact_solution(Expr& e) const {
   exact_solution_
     .set_expression(exact_solution_.replace_system_generated_symbols(*this));
   e = exact_solution_.expression();
-  assert(e.has_x_function_only_ic());
+  assert(e.has_symbolic_initial_conditions());
 }
 
 inline void
@@ -512,7 +512,7 @@ Recurrence::lower_bound(Expr& e) const {
   lower_bound_
     .set_expression(lower_bound_.replace_system_generated_symbols(*this));
   e = lower_bound_.expression();
-  assert(e.has_x_function_only_ic());
+  assert(e.has_symbolic_initial_conditions());
 }
 
 inline void
@@ -526,7 +526,7 @@ Recurrence::upper_bound(Expr& e) const {
   upper_bound_
     .set_expression(upper_bound_.replace_system_generated_symbols(*this));
   e = upper_bound_.expression();
-  assert(e.has_x_function_only_ic());
+  assert(e.has_symbolic_initial_conditions());
 }
 
 inline Expr

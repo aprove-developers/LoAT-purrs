@@ -223,14 +223,13 @@ PURRS::Recurrence::verify_finite_order() const {
   // troppe chiamate di funzione!!
   if (exact_solution_.expression().is_a_add())
     for (unsigned int i = exact_solution_.expression().nops(); i-- > 0; ) {
-      // ---->  has_symbolic_initial_conditions()
-      if (exact_solution_.expression().op(i).has_x_function_only_ic())
+      if (exact_solution_.expression().op(i).has_symbolic_initial_conditions())
 	summands_with_i_c += exact_solution_.expression().op(i);
       else
 	summands_without_i_c += exact_solution_.expression().op(i);
     }
   else
-    if (exact_solution_.expression().has_x_function_only_ic())
+    if (exact_solution_.expression().has_symbolic_initial_conditions())
       summands_with_i_c = exact_solution_.expression();
     else
       summands_without_i_c = exact_solution_.expression();
@@ -690,11 +689,11 @@ PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
   Expr partial_bound = 0;
   if (bound.is_a_add())
     for (unsigned int i = bound.nops(); i-- > 0; ) {
-      if (!bound.op(i).has_x_function_only_ic())
+      if (!bound.op(i).has_symbolic_initial_conditions())
 	partial_bound += bound.op(i);
     }
   else
-    if (!bound.has_x_function_only_ic())
+    if (!bound.has_symbolic_initial_conditions())
       partial_bound = bound;
   D_VAR(partial_bound);
   // The recurrence is homogeneous.

@@ -892,16 +892,16 @@ PURRS::Expr::has_x_function(const Expr& y) const {
 }
 
 bool
-PURRS::Expr::has_x_function_only_ic() const {
+PURRS::Expr::has_symbolic_initial_conditions() const {
   const Expr& e = *this;
   if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned int i = e.nops(); i-- > 0; )
-      if (!e.op(i).has_x_function_only_ic())
+      if (!e.op(i).has_symbolic_initial_conditions())
 	return false;
   }
   else if (e.is_a_power()) {
-    if (!e.arg(0).has_x_function_only_ic()
-	|| !e.arg(1).has_x_function_only_ic())
+    if (!e.arg(0).has_symbolic_initial_conditions()
+	|| !e.arg(1).has_symbolic_initial_conditions())
       return false;
   }
   else if (e.is_a_function())
@@ -920,7 +920,7 @@ PURRS::Expr::has_x_function_only_ic() const {
     }
     else
       for (unsigned int i = e.nops(); i-- > 0; )
-	if (!e.arg(i).has_x_function_only_ic())
+	if (!e.arg(i).has_symbolic_initial_conditions())
 	  return false;
   return true;
 }
