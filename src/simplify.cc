@@ -300,7 +300,12 @@ find_bases_and_exponents(const Expr& e, std::vector<Expr>& bases,
 			 std::vector<Expr>& exponents) {
   for (unsigned int i = e.nops(); i-- > 0; ) {
     const Expr& factor = e.op(i);
-    if (factor.is_a_power()) {
+    // Special case: e = -(...).
+    if (factor == -1) {
+      bases.push_back(factor);
+      exponents.push_back(1);
+    }
+    else if (factor.is_a_power()) {
       bases.push_back(factor.arg(0));
       exponents.push_back(factor.arg(1));
     }
@@ -324,6 +329,7 @@ find_bases_and_exponents(const Expr& e, std::vector<Expr>& bases,
 Expr
 collect_same_exponents(const Expr& e, bool collect_only_n = false) {
   assert(e.is_a_mul());
+  D_MSGVAR("*** inizio collect_same_exponents: ", e);
   // Builds two vectors containing the bases and the exponents of
   // the eventual multiplication's factors which are powers. 
   std::vector<Expr> bases;
@@ -370,13 +376,17 @@ collect_same_exponents(const Expr& e, bool collect_only_n = false) {
     bases[i] = simplify_numer_denom(bases[i]);
     e_rewritten *= pwr(bases[i], exponents[i]);
   }
+  D_VAR(e_rewritten);
+
   // Now adds to `e_rewritten' the factors of `e' not considered in the
-  // previous cycle, i.e., the factors which are not powers.
+  // previous cycle, i.e., the factors which are not powers and the factor
+  // `-1' (if any).
   for (unsigned int i = e.nops(); i-- > 0; ) {
     const Expr& factor = e.op(i);
-    if (!factor.is_a_power())
+    if (!factor.is_a_power() && factor != -1)
       e_rewritten *= factor;
   }
+  D_MSGVAR("*** fine collect_same_exponents: ", e_rewritten);
   return e_rewritten;
 }
 
@@ -393,11 +403,13 @@ collect_same_exponents(const Expr& e, bool collect_only_n = false) {
 Expr
 collect_same_base(const Expr& e) {
   assert(e.is_a_mul());
+  D_MSGVAR("*** inizio collect_same_base: ", e);
   // Builds two vectors containing the bases and the exponents of
   // the eventual multiplication's factors which are powers. 
   std::vector<Expr> bases;
   std::vector<Expr> exponents;
   find_bases_and_exponents(e, bases, exponents);
+
   Expr e_rewritten = 1;
   // At the end of the following cycle, `e_rewritten' will contain all 
   // the powers of `e' with the same bases simplified in only one power
@@ -417,12 +429,15 @@ collect_same_base(const Expr& e) {
       }
     e_rewritten *= pwr(bases[i], exponents[i]);
   }
+  D_VAR(e_rewritten);
+
   // Now adds to `e_rewritten' the factors of `e' not considered in the
   // previous cycle, i.e., the factors which are not powers applying,
   // when possible, the rule `C1'.
   for (unsigned int i = e.nops(); i-- > 0; ) {
     const Expr& factor_e = e.op(i);
-    if (!factor_e.is_a_power()) {
+    ///////
+    if (!factor_e.is_a_power() && factor_e != -1) {
       // We must consider those factors that are not powers but are equal
       // to some base of the vector `bases', in order to apply the rule `C1',
       // i.e., `a * a^e = a^(e + 1)'. In this case, we add `1' to the
@@ -456,6 +471,7 @@ collect_same_base(const Expr& e) {
 	e_rewritten *= factor_e;
     }
   }
+  D_MSGVAR("*** fine collect_same_base: ", e_rewritten);
   return e_rewritten;
 }
 
@@ -774,6 +790,7 @@ reduce_product(const Expr& e) {
 Expr
 manip_factor(const Expr& e, bool input) {
   assert(e.is_a_mul());
+  D_MSGVAR("inizio manip ", e);
   Expr e_rewritten = 1;
   // Simplifies each factor that is a `power'.
   for (unsigned int i = e.nops(); i-- > 0; ) {
@@ -872,6 +889,7 @@ manip_factor(const Expr& e, bool input) {
   else
     if (e_rewritten.is_a_mul())
       e_rewritten = reduce_product(e_rewritten);
+  D_MSGVAR("e_rewritten dopo `reduce_product': ", e_rewritten);
   // Simplifies eventual powers with same base or same exponents applying
   // the rule of the term rewriting system \f$ \mathfrak{R}_o \f$.
   if (e_rewritten.is_a_add()) {
@@ -888,6 +906,7 @@ manip_factor(const Expr& e, bool input) {
   else
     if (e_rewritten.is_a_mul())
       e_rewritten = collect_base_exponent(e_rewritten);
+  D_MSGVAR("fine manip ", e_rewritten);
   return e_rewritten;
 }
 
