@@ -733,7 +733,11 @@ prepare_for_the_output(const Kind& kind,
   s << "n>=" << precp->first_valid_index_for_solution();
   conditions.push_back(s.str());
   
-  if (kind == LOWER || kind == UPPER) {
+  // If there is also the exact solution then this is the case
+  // of "trivial" bound: the necessary informations on the bound are
+  // the informations on the exact solution.
+  if (!compute_exact_solution_wrapper(*precp) == Recurrence::SUCCESS
+      && (kind == LOWER || kind == UPPER)) {
     string Sc_function = precp->definition_Sc();
     std::ostringstream cond_i_c;
     if (initial_conditions.empty()) {
