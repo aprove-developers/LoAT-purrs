@@ -624,7 +624,7 @@ compute_sum(Type_Bound type, const Expr& summand,
     return false;
   else if (vector_not_all_zero(exp_poly_coeff))
     for (unsigned int i = bases_of_exp.size(); i-- > 0; ) {
-      Symbol k("k");
+      Symbol k;
       sum += sum_poly_times_exponentials(exp_poly_coeff[i]
 					 .substitute(Recurrence::n, k), k,
 					 Recurrence::n,

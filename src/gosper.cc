@@ -89,7 +89,7 @@ gosper_step_one(const Symbol& m, const Expr& t_m, Expr& r_m) {
 bool
 compute_resultant_and_its_roots(const Symbol& m, const Expr& f, const Expr& g,
 				std::vector<Number>& integer_roots) {
-  Symbol h("h");
+  Symbol h;
   Expr temp_g = g.substitute(m, m + h);
   Expr R = resultant(f, temp_g, m);
   R = simplify_all(R);

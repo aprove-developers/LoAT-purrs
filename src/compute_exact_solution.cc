@@ -131,8 +131,8 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
   // Computes the sum when `\lambda^{n-k} p(k)' is a polynomial or
   // a product of a polynomial times an exponential.
   if (vector_not_all_zero(exp_poly_coeff)) {
-    Symbol alpha("alpha");
-    Symbol lambda("lambda");
+    Symbol alpha;
+    Symbol lambda;
     std::vector<Expr> symbolic_sum_distinct;
     std::vector<Expr> symbolic_sum_no_distinct;
     compute_symbolic_sum(alpha, lambda, roots, base_of_exps, exp_poly_coeff,
@@ -462,8 +462,8 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
       // Prepare for to compute the symbolic sum.
       std::vector<Expr> poly_coeff_tot;
       prepare_for_symbolic_sum(g_n, roots, exp_poly_coeff, poly_coeff_tot);
-      Symbol alpha("alpha");
-      Symbol lambda("lambda");
+      Symbol alpha;
+      Symbol lambda;
       std::vector<Expr> symbolic_sum_distinct;
       std::vector<Expr> symbolic_sum_no_distinct;
       compute_symbolic_sum(alpha, lambda, roots,

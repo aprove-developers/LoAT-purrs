@@ -101,8 +101,8 @@ build_characteristic_equation(const Symbol& x,
 Expr
 return_sum(bool distinct, unsigned int lower_bound_sum, const Expr& coeff,
 	   const Symbol& alpha, const Symbol& lambda) {
-  Symbol k("k");
-  Symbol x("x");
+  Symbol k;
+  Symbol x;
   Expr q_k = coeff.substitute(Recurrence::n, k);
   Expr symbolic_sum;  
   if (distinct)
@@ -508,7 +508,7 @@ PURRS::compute_non_homogeneous_part(const Expr& g_n, index_type order,
   for (unsigned int i = bases_exp_g_n.size(); i-- > 0; )
     for (unsigned int j = base_of_exps.size(); j-- > 0; ) {
       Expr solution = 0;
-      Symbol k("k");
+      Symbol k;
       Expr g_n_coeff_k = g_n_poly_coeff[i].substitute(Recurrence::n,
 						      Recurrence::n - k);
       Expr exp_poly_coeff_k = exp_poly_coeff[j].substitute(Recurrence::n, k);

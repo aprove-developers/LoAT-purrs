@@ -154,7 +154,7 @@ compute_product_on_power(const Symbol& index, const Number& lower,
     // exponential.
     if (vector_not_all_zero(exp_poly_coeff)) {
       for (unsigned int i = base_of_exps.size(); i-- > 0; ) {
-	Symbol k("k");
+	Symbol k;
 	Expr coeff_k = exp_poly_coeff[i].substitute(index, k);
 	new_exponent += sum_poly_times_exponentials(coeff_k, k, Recurrence::n,
 						    base_of_exps[i]);

@@ -1730,7 +1730,7 @@ compute_sum(const Expr& e) {
   Expr e_rewritten = 0;
   if (vector_not_all_zero(exp_poly_coeff)) {
     for (unsigned int i = exp_poly_coeff.size(); i-- > 0; ) {
-      Symbol k("k");
+      Symbol k;
       Expr coeff_k = exp_poly_coeff[i].substitute(e.arg(0), k);
       Expr solution = sum_poly_times_exponentials(coeff_k, k,
 						  symb_part_of_upper,
