@@ -473,6 +473,10 @@ Expr sum(const Expr& index, const Expr& lower, const Expr& upper,
 Expr prod(const Expr& index, const Expr& lower, const Expr& upper,
 	  const Expr& factor);
 
+//! Returns the function \f$ max(first,second) \f$.
+/*! \relates Expr */
+Expr max(const Expr& first, const Expr& second);
+
 //! The base class for mathematical object.
 /*!
   ...
@@ -677,6 +681,11 @@ public:
   //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
   //! function <CODE>prod()</CODE>.
   bool is_the_prod_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>max()</CODE>.
+  bool is_the_max_function() const;
 
   //! If \p *this is a number, returns the corresponding value.
   Number ex_to_number() const;

@@ -42,6 +42,7 @@ DECLARE_FUNCTION_2P(mod);
 DECLARE_FUNCTION_2P(binom);
 DECLARE_FUNCTION_4P(sum);
 DECLARE_FUNCTION_4P(prod);
+DECLARE_FUNCTION_2P(max);
 
 } // namespace GiNaC
 
@@ -805,6 +806,12 @@ inline bool
 Expr::is_the_prod_function() const {
   using namespace GiNaC;
   return is_ex_the_function(*this, prod);
+}
+
+inline bool
+Expr::is_the_max_function() const {
+  using namespace GiNaC;
+  return is_ex_the_function(*this, max);
 }
 
 inline void

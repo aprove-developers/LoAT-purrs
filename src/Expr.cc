@@ -511,7 +511,7 @@ prod_deriv(const ex&, const ex&, const ex&, const ex&, unsigned int) {
 }
 
 /*!
-  We define the general symbolic function summation
+  We define the general symbolic function product
   \f[
     \prod_{k = a}^b f(k).
   \f]
@@ -520,6 +520,53 @@ REGISTER_FUNCTION(prod,
 		  eval_func(prod_eval).
 		  evalf_func(prod_evalf).
 		  derivative_func(prod_deriv));
+
+/* max() function */
+
+//! Evaluation of the <CODE>max(a, b)</CODE>.
+/*!
+  max_eval(const ex& first, const ex& second)
+
+  \param first    The first quantity to compare.
+  \param lower    The second quantity to compare.
+
+  // FIXME: add the right exceptions (this were taken from prod).
+  \exception std::invalid_argument thrown if \f$ lower \f$ in not a
+                                   rational number.
+  \exception std::invalid_argument thrown if \f$ upper \f$ is a number but
+                                   not rational.
+*/
+ex
+max_eval(const ex& first, const ex& second) {
+  if (is_a<numeric>(first) && is_a<numeric>(second)) {
+    return (first >= second)?first:second;
+  }
+  else
+    // FIXME: Parameters are assumed to be non-negative. Keep this into account.
+    // throw std::invalid_argument("Cannot evaluate max if the arguments are not numeric");
+  return max(first, second).hold();
+}
+
+ex
+max_evalf(const ex& first, const ex& second) {
+  return max(first, second).hold();
+}
+
+ex
+max_deriv(const ex&, const ex&, unsigned int) {
+  abort();
+}
+
+/*!
+  We define the max function.
+  \f[
+    \max(a,b).
+  \f]
+*/
+REGISTER_FUNCTION(max,
+		  eval_func(max_eval).
+		  evalf_func(max_evalf).
+		  derivative_func(max_deriv));
 
 } // namespace GiNaC
 
@@ -533,7 +580,7 @@ using namespace PURRS;
   A <EM>critical expression</EM> is a polynomial expression that
   for GiNaC is not a polynomial. More rigorously: 
   -  every constant function with respect to the symbol contained
-     in \p y, is a critical expression;
+  in \p y, is a critical expression;
   -  every power with not numeric exponent or numeric not integer
      exponent, is a critical expression.
 */
