@@ -53,7 +53,7 @@ poly_factor(const GExpr& p, const GSymbol& x, std::vector<GExpr>& factors) {
     GNumber a_i = e_i.ex_to_number();
     if (a_i < LONG_MIN || a_i > LONG_MAX)
       return 1;
-    SetCoeff(ntl_p, i, to_long(a_i));
+    SetCoeff(ntl_p, i, a_i.to_long());
   }
   vec_pair_ZZX_long ntl_factors;
   ZZ c;

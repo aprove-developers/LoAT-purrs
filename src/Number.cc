@@ -29,16 +29,6 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 const PURRS::Number PURRS::I = GiNaC::I;
 
-int
-PURRS::to_int(const Number& n) {
-  return to_int(n);
-}
-
-long
-PURRS::to_long(const Number& n) {
-  return to_long(n);
-}
-
 
 bool
 PURRS::Number::is_positive() const {

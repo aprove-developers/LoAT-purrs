@@ -33,6 +33,7 @@ http://www.cs.unipr.it/purrs/ . */
   The sum is always over the range \f$ [0, N ]\f$. 
 */
 
+#include "globals.hh"
 #include "sum_poly.hh"
 #include <vector>
 
@@ -65,7 +66,7 @@ sum_falling_prod_times_exp(const GSymbol& n, GNumber k,
   GExpr r;
   for (unsigned i = 0; i < k + 1; ++i) {
     falling_product(n + 1, i, r);
-    q -= r / GiNaC::factorial(i) * pow(x, n+1-i) * pow(1-x, i-k-1);
+    q -= r / factorial(i) * pow(x, n+1-i) * pow(1-x, i-k-1);
   }
   q *= factorial(k) * pow(x, k);
 }
@@ -181,7 +182,7 @@ sum_poly_times_exponentials_times_cos(const GExpr& p, const GSymbol& x,
     r = r.expand();
     q += r * summands[i];
   }
-  q = expand(q.subs(x, alpha));
+  q = q.subs(x, alpha).expand();
   return q;
 }
 
@@ -212,6 +213,6 @@ sum_poly_times_exponentials_times_sin(const GExpr& p, const GSymbol& x,
     r = r.expand();
     q += r * summands[i];
   }
-  q = expand(q.subs(x, alpha));
+  q = q.subs(x, alpha).expand();
   return q;
 }

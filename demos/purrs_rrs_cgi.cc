@@ -24,8 +24,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
-#include "globals.hh"
-
 #include <csignal>
 #include <cstdlib>
 #include <iostream>

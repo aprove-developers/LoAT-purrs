@@ -70,12 +70,12 @@ operator--(Number& rh) {
 }
 
 Number
-operator++(Number& lh, int i) {
+operator++(Number& lh, int) {
   return lh++;
 }
 
 Number
-operator--(Number& lh, int i) {
+operator--(Number& lh, int) {
   return lh--;
 }
 
@@ -108,11 +108,6 @@ inline bool
 Number::operator<=(const Number& num) const {
   return n <= num.n;
 }
-
-// inline relational
-// Number::operator==(const Symbol& lh, const Number& rh) const {
-//   return lh == rh;
-// }
 
 inline
 Number::Number() {
@@ -148,10 +143,15 @@ inline
 Number::~Number() {
 }
 
-//  inline Number
-//  Number::numer_denom() const {
-//    return n.numer_denom();
-//  }
+int
+Number::to_int() const {
+  return n.to_int();
+}
+
+long
+Number::to_long() const {
+  return n.to_long();
+}
 
 inline Number
 Number::real() const {
@@ -171,6 +171,11 @@ Number::numer() const {
 inline Number
 Number::denom() const {
   return n.denom();
+}
+
+inline Number
+gcd(const Number& a, const Number& b) {
+  return gcd(a, b);
 }
 
 inline Number

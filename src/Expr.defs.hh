@@ -53,10 +53,6 @@ Expr& operator/=(Expr& lh, const Expr& rh);
 Expr operator+(const Expr &lh);
 Expr operator-(const Expr &lh);
 
-// binary relational operators Expr with Expr
-// bool operator==(const Expr& lh, const Expr& rh);
-// bool operator!=(const Expr& lh, const Expr& rh);
-
 class Parma_Recurrence_Relation_Solver::Expr {
 public:
   //! Default constructor.
@@ -76,6 +72,9 @@ public:
 
   //! Builds the list expression \p lst.
   Expr(const Expr_List& lst);
+
+  //! Builds the list expression \p lst.
+  Expr(const std::string& st, const Expr_List& lst);
 
   //! Copy-constructor.
   Expr(const Expr& exp);
@@ -117,7 +116,6 @@ public:
   Expr op(unsigned i) const;
   bool is_equal(const Expr& e) const;
   bool is_zero() const;
-  //  Expr subs(const Symbol& s, const Expr& e) const;
   Expr subs(const Expr& exp1, const Expr& exp2) const;
   Expr subs(const Expr_List& to_replace, const Expr_List& replacements) const;
   bool match(const Expr& pattern) const;
@@ -138,7 +136,7 @@ public:
   Expr lhs() const;
   Expr rhs() const;
 
-  Expr diff(const Symbol& symb);
+  Expr diff(const Symbol& symb, unsigned nth = 1);
 
   Expr to_rational(Expr_List& lst);
 
@@ -168,6 +166,8 @@ Expr tan(const Expr& e);
 Expr exp(const Expr& e);
 Expr ln(const Expr& e);
 Expr factorial(const Expr& e);
+// FIXME: ??
+Expr factorial(const unsigned i);
 
 Expr quo(const Expr& a, const Expr& b, const Symbol& x);
 Expr quo(const Expr& a, const Symbol& x, const Symbol& y);

@@ -72,7 +72,7 @@ void
 clear(GList& l) {
   for (unsigned n = l.nops(); n-- > 0; )
     l.remove_first();
-  assert(l.nops().is_zero());
+  assert(l.nops() == 0);
 }
 
 /*!
@@ -84,7 +84,7 @@ GExpr
 get_binding(const GList& substitution, unsigned wild_index) {
   assert(wild_index < substitution.nops());
   assert(substitution.op(wild_index).is_relation_equal());
-  assert(substitution.op(wild_index).lhs() == GiNaC::wild(wild_index));
+  assert(substitution.op(wild_index).lhs() == wild(wild_index));
   return substitution.op(wild_index).rhs();
 }
 
@@ -207,11 +207,11 @@ convert_to_integer_polynomial(const GExpr& p, const GSymbol& x) {
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
-  GNumber t_lcm = denom(p.coeff(x, deg_p).ex_to_number());
+  GNumber t_lcm = p.coeff(x, deg_p).ex_to_number().denom();
   for (unsigned i = 0; i <= deg_p; ++i) {
     GExpr t_coeff = p.coeff(x, i);
     assert(t_coeff.is_a_number());
-    t_lcm = lcm(t_lcm, denom(t_coeff.ex_to_number()));
+    t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denom());
   }
   return (p * t_lcm).primpart(x);
 }
@@ -230,11 +230,11 @@ convert_to_integer_polynomial(const GExpr& p, const GSymbol& x,
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
-  GNumber t_lcm = denom(p.coeff(x, deg_p).ex_to_number());
+  GNumber t_lcm = p.coeff(x, deg_p).denom().ex_to_number();
   for (unsigned i = 0; i <= deg_p; ++i) {
     GExpr t_coeff = p.coeff(x, i);
     assert(t_coeff.is_a_number());
-    t_lcm = lcm(t_lcm, denom(t_coeff.ex_to_number()));
+    t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denom());
   }
 
   GExpr q = (p * t_lcm).primpart(x);

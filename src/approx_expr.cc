@@ -34,7 +34,7 @@ using namespace Parma_Recurrence_Relation_Solver;
 Interval
 approximate_integer(const GNumber& n) {
   // Kludge!!!
-  return Interval(to_int(n));
+  return Interval(n.to_int());
 }
 
 Interval

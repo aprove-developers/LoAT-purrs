@@ -24,8 +24,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
-#include "globals.hh"
-
 #include <csignal>
 #include <cstdlib>
 #include <iostream>
@@ -239,8 +237,8 @@ main() try {
   Symbol x;
   GExpr p = GExpr(**expr, Expr_List(x));
   if (p == GExpr(0)
-      || !p.info(info_flags::integer_polynomial)
-      || p.info(info_flags::numeric)) {
+      || !p.is_integer_polynomial()
+      || p.is_a_number()) {
     std::ostringstream s;
     s << "you call '<TT>" << p << "</TT>' a polynomial in <TT>x</TT> "
       << "with integer coefficients?";

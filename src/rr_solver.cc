@@ -431,7 +431,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       has_non_constant_coefficients = true;
 
     // The `order' is defined as the maximum value of `index'.
-    unsigned long index = to_long(decrement);
+    unsigned long index = decrement.to_long();
     if (order < 0 || index > unsigned(order))
       order = index;
 

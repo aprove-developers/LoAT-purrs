@@ -88,16 +88,6 @@ operator/=(const Expr& lh, const Expr& rh) {
   return lh /= rh;
 }
 
-// bool
-// operator==(const Expr& lh, const Expr& rh) {
-//   lh == rh;
-// };
-
-// bool
-// operator!=(const Expr& lh, const Expr& rh) {
-//   lh == rh;
-// };
-
 inline
 Expr::Expr() {
 }
@@ -125,6 +115,11 @@ Expr::Expr(const Constant& k)
 inline
 Expr::Expr(const Expr_List& lst)
   : e(lst.l) {
+}
+
+inline
+Expr::Expr(const std::string& st, const Expr_List& lst)
+  : e(st, lst.l) {
 }
 
 inline
@@ -273,12 +268,6 @@ inline bool
 Expr::is_zero() const {
   return e.is_zero();
 }
-  /*
-inline Expr
-Expr::subs(const Symbol& s, const Expr& exp) const {
-  return e.subs(s.s == exp.e);
-}
-  */
 
 inline Expr
 Expr::subs(const Expr& exp1, const Expr& exp2) const {
@@ -377,8 +366,8 @@ Expr::to_rational(Expr_List& lst) {
 }
 
 inline Expr
-Expr::diff(const Symbol& symb) {
-  e.diff(symb.s);
+Expr::diff(const Symbol& symb, unsigned nth = 1) {
+  return e.diff(symb.s, nth);
 }
 
 inline Expr
@@ -431,10 +420,15 @@ ln(const Expr& e) {
   return ln(e);
 };
 
-
 inline Expr
 factorial(const Expr& e) {
   return factorial(e);
+};
+
+// FIXME: ??
+inline Expr
+factorial(const unsigned i) {
+  return factorial(i);
 };
 
 inline Expr

@@ -631,18 +631,18 @@ red_prod(const GNumber& base1, const GNumber& exp1,
   assert(exp1 != 0);
   assert(exp2 != 0);
   
-  GExpr   n_d_1  = numer_denom(exp1);
+  GExpr n_d_1 = exp1.numer_denom();
   GNumber k1_num = n_d_1.op(0).ex_to_number();
   GNumber k1_den = n_d_1.op(1).ex_to_number();
-  GExpr   n_d_2  = numer_denom(exp2);
+  GExpr n_d_2 = exp2.numer_denom();
   GNumber k2_num = n_d_2.op(0).ex_to_number();
   GNumber k2_den = n_d_2.op(1).ex_to_number();
   
   base_1 = pow(base_1, k1_num);
   base_2 = pow(base_2, k2_num);
   
-  GNumber g  = gcd(k1_den, k2_den);
-  GNumber k  = k1_den * k2_den / g;
+  GNumber g = gcd(k1_den, k2_den);
+  GNumber k = k1_den * k2_den / g;
   GNumber b1 = pow(base_1, k2_den / g).ex_to_number();
   GNumber b2 = pow(base_2, k1_den / g).ex_to_number();
   GNumber b = b1 * b2;
@@ -774,7 +774,7 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
     GExpr rem = 1;
     for (unsigned i = tmp.nops(); i-- > 0; ) {
       GList l;
-      if (tmp.op(i).match(exp(wild()), l))
+      if (tmp.op(i).match(exp(wild(0)), l))
 	argument += l.op(0).rhs();
       else
 	rem *= tmp.op(i);
@@ -900,7 +900,7 @@ GExpr
 simplify_numer_denom(const GExpr& e) {
   // Since we need both numerator and denominator, to call 'numer_denom'
   // is faster than to use 'numer()' and 'denom()' separately.
-  GExpr num_den = numer_denom(e);
+  GExpr num_den = e.numer_denom();
   GExpr num = num_den.op(0).expand();
   GExpr den = num_den.op(1).expand();
   GExpr ris = num * pow(den, -1);

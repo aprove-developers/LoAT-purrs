@@ -45,9 +45,8 @@ Number operator-(const Number &lh);
 // increment / decrement operators
 Number& operator++(Number& rh);
 Number& operator--(Number& rh);
-// FIXME: int i e' superflua? Ma se la tolgo c'e' ambiguita' con quella sopra
-Number operator++(Number& lh, int i);
-Number operator--(Number& lh, int i);
+Number operator++(Number& lh, int);
+Number operator--(Number& lh, int);
 
 class Parma_Recurrence_Relation_Solver::Number {
 public:
@@ -76,8 +75,6 @@ public:
   bool operator>=(const Number& num) const;
   bool operator<=(const Number& num) const;
 
-  //  relational operator==(const Symbol& lh, const Number& rh);
-
   bool is_positive() const;
   bool is_integer() const;
   bool is_pos_integer() const;
@@ -92,6 +89,8 @@ public:
 
   Number numer_denom() const;
 
+  int to_int() const;
+  long to_long() const;
   Number real() const;
   Number imag() const;
   Number numer() const;
@@ -109,9 +108,7 @@ public:
 
 extern const Number I;
 
-int to_int(const Number& n);
-long to_long(const Number& n);
-
+Number gcd(const Number& a, const Number& b);
 Number abs(const Number& n);
 Number irem(const Number& a, const Number& b);
 
