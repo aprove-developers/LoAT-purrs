@@ -147,3 +147,39 @@ x(n) = 5 * x(n-1) - 6 * x(n-2) + 4
 % from Kelley & Peterson 
 
 
+
+
+% Some more test recurrences 
+% Order 1 
+
+x(n) = x(n-1)
+% Solution: x(n) = x(0)
+
+x(n) = x(n-1) + a
+% Solution: x(n) = x(0) + a * n
+
+x(n) = a * x(n-1)
+% Solution: x(n) = a^n * x(0)
+
+x(n) = 3 * x(n-1) + 2^n
+% Solution: x(n) = 3^n * x(0) + 3^n - 1
+
+x(n) = x(n-1) + n
+% Solution: x(n) = numeric(1,2) * n^2 + numeric(1,2) * n + x(0)
+
+x(n) = x(n-1) + n + 1
+% Solution: x(n) = numeric(1,2) * n^2 + numeric(3,2) * n + x(0)
+
+% Canonical decomposition of the "Spanish" recurrence n. 1, part 1
+x(n) = 2 * x(n-1) + n + 1
+% Solution: x(n) = x(0) * 2^n + 3 * 2^n - n - 3
+
+% Part 2
+x(n) = 2 * x(n-1) + 2^(n-1)
+% Solution: x(n) = x(0) * 2^n + n * 2^(n-1)
+
+
+% Solution: x(n) = 
+
+
+% Solution: x(n) = 
