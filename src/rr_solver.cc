@@ -718,7 +718,6 @@ Recurrence::solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   std::vector<Expr> base_of_exps;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
-  D_MSGVAR("Inhomogeneous term2: ", e);
   exp_poly_decomposition(e, n,
 			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
   D_VEC(base_of_exps, 0, base_of_exps.size()-1);
@@ -1944,6 +1943,36 @@ compute_alpha_factorial(const Expr& alpha, const Symbol& n,
   return alpha_factorial;
 }
 
+//! Returns <CODE>true</CODE> if \p e contains parameters;
+//! returns <CODE>false</CODE> otherwise.
+/*!
+  The parameters are all symbols different from \p n and the initial
+  conditions \f$ x(k) \f$ with \f$ k \f$ a positive integer.
+*/
+static bool
+find_parameters(const Expr& e, const Symbol& n) {
+  if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (find_parameters(e.op(i), n))
+	return true;
+  }
+  else if (e.is_a_power()) {
+    if (find_parameters(e.op(0), n) || find_parameters(e.op(1), n))
+      return true;
+  }
+  else if (e.is_a_function()) {
+    if (e.is_the_x_function())
+      return true;
+    else
+      if (find_parameters(e.op(0), n))
+	return true;
+  }
+  else
+    if (e.is_a_symbol() && e != n)
+      return true;
+  return false;
+}
+
 /*!
   Consider the linear recurrence relation of first order with
   constant coefficients
@@ -1976,6 +2005,10 @@ Recurrence::Solver_Status
 Recurrence::
 solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
 			     const Expr& coefficient, Expr& solution) {
+  if (find_parameters(coefficient.denominator(), n)) {
+    D_MSG("Variable coefficient with parameters in the denominator");
+    return TOO_COMPLEX;
+  }
   Expr tmp;
   if (p_n == 0)
     tmp = coefficient;
