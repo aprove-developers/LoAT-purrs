@@ -33,10 +33,15 @@ inline
 Init::Init() {
   // Only when the first Init object is constructed...
   if (count++ == 0) {
-    // ... do nothing for the time being.
+    // ... create and immediately destroy an instance
+    // of each user-defined function.
     Symbol a;
     Expr* dummy;
+    dummy = new Expr(x(a));
+    delete dummy;
     dummy = new Expr(sum(a, 1, 2, a));
+    delete dummy;
+    dummy = new Expr(prod(a, 1, 2, a));
     delete dummy;
   }
 }
