@@ -327,10 +327,6 @@ private:
 
 public:
   //! The possible states of the recurrence.
-  /*!
-    It is possible to print the label associated to each states
-    invoking the method <CODE>print_status()</CODE>.
-  */
   enum Solver_Status {
     /*!
       Solution, or approximation, was successful.
@@ -426,28 +422,12 @@ public:
 	  rec.exact_solution(exact_solution);
 	}
     \endcode
-    The solution of the recurrence \f$ x(n) = 2 x(n-1)+1 \f$ is
+    The solution of the recurrence \f$ x_n = 2 x_{n-1} + 1 \f$ is
     \f[
       x(n) = x_0 2^n + 2^n - 1
     \f]
     and its right-hand side is contained in the variable
     <CODE>exact_solution</CODE>.
-
-    \par Example 2
-    We consider here a recurrence not successfully solved by the solver:
-    \f$ x(n) = 3 x(x(n-1)) + 2 \f$.
-    In order to know the motivation of the failure it is possible
-    to invoke the method <CODE>print_status()</CODE>:
-    \code
-      Recurrence rec(3*x(x(n-1))+2);
-      Recurrence::Solver_Status status = rec.compute_exact_solution();
-      if (status == Recurrence::SUCCESS) {
-        Expr exact_solution;
-	rec.exact_solution(exact_solution);
-      }
-      else
-        rec.print_status(cout, status);
-    \endcode
 
     We remark that in the exact solution will appear symbolically
     the initial conditions until the user will not define it: this
@@ -652,11 +632,6 @@ public:
   //! Dumps all the data members of \p *this onto \p s.
   void dump(std::ostream& s) const;
   
-  //! \brief
-  //! Dumps the label correspondent to the enumerate variable
-  //! <CODE>Solver_Status</CODE> \p status onto \p s. 
-  void print_status(std::ostream& s, const Solver_Status& status) const;
-
 private:
   //! The possible classification of the recurrence.
   enum Classifier_Status {
