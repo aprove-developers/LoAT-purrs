@@ -900,8 +900,7 @@ public:
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this contains non rational numbers;
   //! returns <CODE>false</CODE> otherwise.
-  bool
-  has_non_rational_numbers() const;
+  bool has_non_rational_numbers() const;
 
   //! \brief
   //! If \p any_x_function is <CODE>true</CODE> then returns
@@ -910,8 +909,20 @@ public:
   //! If \p any_x_function is false then returns <CODE>true</CODE> if
   //! \p *this contains the \f$ x \f$ function with its argument containing
   //! the expression \p x; returns <CODE>false</CODE> otherwise.
-  bool
-  has_x_function(bool any_x_function, const Expr& x = 0) const;
+  bool has_x_function(bool any_x_function, const Expr& x = 0) const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if the functions \f$ x() \f$
+  //! of \p *this are all initial conditions; returns <CODE>false</CODE>
+  //! otherwise, i.e., if there is at least one function \f$ x() \f$
+  //! that is not an initial condition.
+  /*!
+    A function \f$ x() \f$ is an initial condition in two cases:
+    - the argument is a positive integer;
+    - the argument is equal to \f$ mod(n, k) + h \f$, with
+      \f$ k, h \in \Nset \f$.
+  */
+  bool has_x_function_only_ic() const;
 
   //! Returns \p *this evaluated numerically. 
   Expr unsafe_fp_approximation() const;

@@ -31,6 +31,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "util.hh"
 #include "Blackboard.defs.hh"
 #include "Expr.defs.hh"
+#include "Recurrence.defs.hh"
 #include "numerator_denominator.hh"
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
@@ -849,6 +850,36 @@ PURRS::Expr::has_x_function(bool any_x_function, const Expr& x) const {
   }
   else
     return false;
+}
+
+bool
+PURRS::Expr::has_x_function_only_ic() const {
+  const Expr& e = *this;
+  if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!e.op(i).has_x_function_only_ic())
+	return false;
+  }
+  else if (e.is_a_power()) {
+    if (!e.arg(0).has_x_function_only_ic()
+	|| !e.arg(1).has_x_function_only_ic())
+      return false;
+  }
+  else if (e.is_a_function())
+    if (e.is_the_x_function()) {
+      const Expr& argument = e.arg(0);
+      Number arg;
+      if (!(argument.is_a_number(arg) && arg.is_nonnegative_integer())
+	  && !(argument.is_the_mod_function()
+	       && argument.arg(0) == Recurrence::n
+	       && argument.arg(1).is_a_number(arg)
+	       && arg.is_positive_integer())
+	  && !(argument.is_a_add() && argument.nops() == 2
+	       && (argument.op(0).is_the_mod_function()
+		   || argument.op(1).is_the_mod_function())))
+	return false;
+    }
+  return true;
 }
 
 void
