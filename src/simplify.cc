@@ -1119,19 +1119,46 @@ change_base_logarithm(const Expr& base, const Expr exponent,
 Expr
 prepare_change_base_logarithm(const Expr& base, const Expr& exponent) {
   Number base_num;
-  // The baes is a positive number.
+  // The base is a positive number.
   if (base.is_a_number(base_num) && base_num.is_positive()) {
     std::vector<Number> bases;
     std::vector<int> exponents;
     // The base is integer.
     if (base_num.is_integer()) {
-      partial_factor(base_num, bases, exponents);
-      if (bases.size() == 1) {
-	Number new_base = bases[0];
-	return change_base_logarithm(base, exponent, new_base, exponents[0]);
+      // The exponent is a `mul'.
+      if (exponent.is_a_mul()) {
+	Expr log_factors_exp = 1;
+	Expr rem_factors_exp = 1;
+	for (unsigned i = exponent.nops(); i-- > 0; ) {
+	  const Expr& factor = exponent.op(i);
+	  if ((factor.is_a_power() && factor.arg(0).is_the_log_function()
+	      && factor.arg(1) == -1)
+	      || factor.is_the_log_function())
+	    log_factors_exp *= factor;
+	  else
+	    rem_factors_exp *= factor;
+	}
+	partial_factor(base_num, bases, exponents);
+	if (bases.size() == 1) {
+	  Number new_base = bases[0];
+	  return pwr(change_base_logarithm(base, log_factors_exp, new_base,
+					   exponents[0]),
+		     rem_factors_exp);
+	}
+	else
+	  return pwr(change_base_logarithm(base, log_factors_exp, base_num),
+		     rem_factors_exp);
       }
-      else
-	return change_base_logarithm(base, exponent, base_num);
+      // The exponent is not a `mul'.
+      else {
+	partial_factor(base_num, bases, exponents);
+	if (bases.size() == 1) {
+	  Number new_base = bases[0];
+	  return change_base_logarithm(base, exponent, new_base, exponents[0]);
+	}
+	else
+	  return change_base_logarithm(base, exponent, base_num);
+      }
     }
     // The base is rational with the numerator equal to `1'.
     if (base_num.is_rational() && base_num.numerator() == 1) {
@@ -1147,7 +1174,7 @@ prepare_change_base_logarithm(const Expr& base, const Expr& exponent) {
     }
     return change_base_logarithm(base, exponent, base_num);
   }
-  // The baes is not a positive number.
+  // The base is not a positive number.
   else
     return pwr(simplify_logarithm_in_expanded_ex(base),
 	       simplify_logarithm_in_expanded_ex(exponent));
