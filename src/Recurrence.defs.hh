@@ -163,15 +163,14 @@ private:
 
 private:
   static Solver_Status
-  check_powers_and_functions(const Expr& e, const Symbol& n);
+  check_powers_and_functions(const Expr& e);
   static Solver_Status
-  find_non_linear_recurrence(const Expr& e, const Symbol& n);
+  find_non_linear_recurrence(const Expr& e);
   static Solver_Status
-  compute_order(const Expr& argument, const Symbol& n, 
-		int& order, unsigned long& index, unsigned long max_size);
+  compute_order(const Expr& argument, int& order, unsigned long& index,
+		unsigned long max_size);
   static Solver_Status
-  classification_summand(const Expr& r, const Symbol& n, Expr& e,
-			 std::vector<Expr>& coefficients,
+  classification_summand(const Expr& r, Expr& e, std::vector<Expr>& coefficients,
 			 bool& has_non_constant_coefficients,
 			 int& order, int& gcd_among_decrements,
 			 int num_term);
