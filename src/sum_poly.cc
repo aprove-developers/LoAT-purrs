@@ -68,7 +68,6 @@ sum_falling_prod_times_exp(const GSymbol& n, GNumber k,
     q -= r / GiNaC::factorial(i) * pow(x, n+1-i) * pow(1-x, i-k-1);
   }
   q *= factorial(k) * pow(x, k);
-  q.expand();
 }
 
 /*!
@@ -114,7 +113,6 @@ sum_poly(const GExpr& p, const GSymbol& x, const GSymbol& n, GExpr& q) {
     falling_product(n+1, i+1, r);
     q += GNumber(1, i+1) * summands[i] * r;
   }
-  q.expand();
 }
 
 /*!
@@ -145,7 +143,7 @@ sum_poly_times_exponentials(const GExpr& p, const GSymbol& x,
     q = 0;
     for (unsigned i = 0; i <= d; ++i) {
       sum_falling_prod_times_exp(n, i, x, r);
-      r.expand();
+      r = r.expand();
       q += r * summands[i];
     }
   }
