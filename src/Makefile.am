@@ -25,14 +25,16 @@ lib_LIBRARIES = libpurrs.a
 INCLUDE_FILES = \
 globals.hh \
 alg_eq_solver.hh \
-rr_solver.hh
+poly_factor.hh \
+rr_solver.hh \
+util.hh
 
 libpurrs_a_SOURCES = \
 alg_eq_solver.cc \
+poly_factor.cc \
 rr_solver.cc \
 globals.cc \
 util.cc \
-util.hh \
 $(INCLUDE_FILES)
 
 # The ordering of the following list *matters*!

@@ -26,6 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "globals.hh"
 #include "alg_eq_solver.hh"
+#include "poly_factor.hh"
 #include <cassert>
 #include <iostream>
 
@@ -237,6 +238,7 @@ find_roots(const GExpr& p, const GSymbol& x,
     }
   }
 
+  // Direct solution for polynomials of degree between 1 and 4.
   if (degree <= 4) {
     unsigned position = roots.size();
     // Insert `degree' elements at the end of roots.
@@ -291,6 +293,16 @@ find_roots(const GExpr& p, const GSymbol& x,
       abort();
       break;
     }
+  }
+
+  // Try to factorize the polynomial.
+  std::vector<GExpr> factors;
+  int num_factors = poly_factor(q, x, factors);
+  if (num_factors > 1) {
+    for (int i = num_factors-1; i >= 0; --i)
+      if (!find_roots(factors[i], x, roots))
+	return false;
+    return true;
   }
   return false;
 }
