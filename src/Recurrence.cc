@@ -450,7 +450,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
   // Build a new object recurrence with a linear recurrence.
   Recurrence rec_rewritten(rhs_transformed_in_linear());
   rec_rewritten.come_from_non_linear_rec = true;
-  D_MSG(rec_rewritten.recurrence_rhs);
+  D_VAR(rec_rewritten.recurrence_rhs);
 
   Solver_Status status;
   // Classify the linear recurrence `rec_rewritten'.
