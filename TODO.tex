@@ -113,6 +113,120 @@ simplified to $0$ on a further call to \texttt{simplify\_on\_output\_ex()}.
 Write a message to ginac list about the problem of initialization mechanism
 of the symbolic functions (x(n), sum(), ...). 
 
+\item (Added on 6.1.2003)
+It is necessary for several reasons (efficiency, approximation,
+readability, \dots) to simplify as much as possible the solution.
+I collect some remarks on one particular case (Fibonacci strikes
+again), but they apply generally to linear recurrences with constant
+coefficients.
+I tried $x(n) = x(n-1) + x(n-2) + 2n$ and the (correct) answer is
+%
+\begin{multline*}
+  2 (\psi-\phi)^{-1} \phi^n
+  -
+  2 \psi^n (\psi-\phi)^{-1} \\
+  +
+  2 (-1+\phi)^{-2} (\psi-\phi)^{-1} \phi 
+  -
+  2 (-\psi \phi+\psi^2
+  -
+  \psi+\phi)^{-1} \psi n \\
+  +
+  (-(\psi-\phi)^{-1} \phi^n
+  +
+  \psi^n (\psi-\phi)^{-1}) x(1) \\
+  +
+  2 (-\phi^2+\psi \phi-\psi+\phi)^{-1} n \phi
+  -
+  2 (-1+\phi)^{-2} (\psi-\phi)^{-1} \phi^{2+n} \\
+  +
+  2 (-1+\psi)^{-2} \psi^{2+n} (\psi-\phi)^{-1}
+  -
+  2 (-\psi \phi+\psi^2-\psi+\phi)^{-1} \psi \\
+  +
+  (-(\psi-\phi)^{-1} \phi^{1+n}
+  +
+  (\psi-\phi)^{-1} \phi^n \\
+  -
+  \psi^n (\psi-\phi)^{-1}
+  +
+  \psi^{1+n} (\psi-\phi)^{-1}) x(0) \\
+  +
+  2 (-\phi^2+\psi \phi-\psi+\phi)^{-1} \phi
+  -
+  2 (-1+\psi)^{-2} (\psi-\phi)^{-1} \psi,
+\end{multline*}
+where $\phi$ and $\psi$ stand for the two roots of the characteristic
+equation $\lambda^2 = \lambda + 1$.
+We see a proliferation of \emph{constant} coefficients (coefficients
+that depend only on $\phi$ and $\psi$, not on $n$), some repeated many
+times.
+
+If we collect the term $A := (\psi-\phi)^{-1}$, we can simplify the answer 
+a little bit:
+\begin{multline*}
+  2 A (\phi^n - \psi^n) + 2 (-1+\phi)^{-2} A \phi
+  -
+  2 (-\psi \phi+\psi^2 - \psi+\phi)^{-1} \psi n \\
+  +
+  A (-\phi^n + \psi^n) x(1) \\
+  +
+  2 (-\phi^2+\psi \phi-\psi+\phi)^{-1} n \phi
+  -
+  2 (-1+\phi)^{-2} A \phi^{2+n} \\
+  +
+  2 (-1+\psi)^{-2} \psi^{2+n} A
+  -
+  2 (-\psi \phi+\psi^2-\psi+\phi)^{-1} \psi \\
+  +
+  A (- \phi^{1+n} + \phi^n - \psi^n + \psi^{1+n}) x(0) \\
+  +
+  2 (-\phi^2+\psi \phi-\psi+\phi)^{-1} \phi
+  -
+  2 (-1+\psi)^{-2} A \psi
+\end{multline*}
+The following table collects some identities satisfied by $\phi$ and
+$\psi$: in particular, since they satisfy a polynomial of degree 2, it
+is \emph{always possible} to replace $\phi^2$, say, by an expression
+containing only $\phi$ (in this particular case $\phi^2 = \phi + 1$).
+\begin{align*}
+  (\psi-\phi)^{-1} &= A      \\
+  \phi \psi        &= - 1    \\
+  \phi^2 - \phi    &= 1      \\
+  \psi^2 - \psi    &= 1      \\
+  (\psi - 1)^{-1}  &= \psi   \\
+  (\phi - 1)^{-1}  &= \phi   \\
+  (\psi - 1)^{-2}  &= \psi^2 \\
+  (\phi - 1)^{-2}  &= \phi^2 \\
+\end{align*}
+Using these identities repeatedly, we obtain the simpler form
+\begin{multline*}
+  2 A (\phi^n - \psi^n) + 2 \phi^3 A
+  -
+  2 (2 + \phi)^{-1} \psi n
+  +
+  A (-\phi^n + \psi^n) x(1) \\
+  +
+  2 (- 2 - \psi)^{-1} n \phi
+  -
+  2 A \phi^{4+n}
+  +
+  2 A \psi^{4+n} \\
+  -
+  2 (2 + \phi)^{-1} \psi
+  +
+  A (- \phi^{1+n} + \phi^n - \psi^n + \psi^{1+n}) x(0)
+  +
+  2 (- 2 - \psi)^{-1} \phi
+  -
+  2 \psi^3 A
+\end{multline*}
+Now one should compute the actual values of $A$, $\psi^3$, $\phi^3$,
+$(2 + \phi)^{-1}$ and $(- 2 -\psi)^{-1}$, and this will yield an even
+simpler form.
+Probably, the best place for these simplification is at the earliest
+possible moment when the expressions involving $\phi^2$, \dots, arise.
+
 \end{enumerate}
 
 \end{document}
