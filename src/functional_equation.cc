@@ -32,6 +32,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "util.hh"
 #include "numerator_denominator.hh"
+#include "simplify.hh"
 #include "ep_decomp.hh"
 #include "Expr.defs.hh"
 #include "Symbol.defs.hh"
@@ -48,8 +49,8 @@ using namespace PURRS;
 //! non-negative number; returns <CODE>false</CODE> otherwise.
 bool
 is_non_negative(const Expr& e, const Symbol& x, Number& i) {
-  largest_positive_int_zero(numerator(e), i);
-  largest_positive_int_zero(denominator(e), i);
+  if (!largest_positive_int_zero(e, i))
+    return false;
   D_VAR(i);
   if (i == -1)
     ++i;
@@ -62,16 +63,19 @@ is_non_negative(const Expr& e, const Symbol& x, Number& i) {
     else
       return false;
   else
+    // In the case of `log' function we already know the positive integer
+    // necessary because the `log' function is well-defined.
     if (tmp.is_a_mul()) {
-      for (unsigned i = tmp.nops(); i-- > 0; )
-	if (tmp.is_the_log_function() && i == 0)
+      for (unsigned j = tmp.nops(); j-- > 0; ) {
+	if (tmp.op(j).is_a_number(num) && num.is_negative())
 	  return false;
+      }
       return true;
     }
-    else if (tmp.is_the_log_function() && i == 0)
-      return false;
-    else
+    else if (tmp.is_the_log_function())
       return true;
+    else
+      return false;
 }
 
 //! \brief
@@ -127,7 +131,10 @@ is_non_decreasing_poly(const Expr& e, const Symbol& x) {
 /*!
   We consider separately the mathematical functions:
   - a logarithm with a base grater or equal than \f$ 1 \f$
-    is a non-decreasing function in \f$ x \f$.
+    is a non-decreasing function in \f$ x \f$;
+  - the function \f$ p(x)^q(x) = e^{q(x) log(p(x))} \f$ is a
+    non-decreasing function in \f$ x \f$ if \f$ p(x) \f$ and
+    \f$ q(x) \f$ are non-decreasing functions in \f$ x \f$.
 */
 bool
 is_non_decreasing_no_poly(const Expr& e, const Symbol& x) {
@@ -148,28 +155,42 @@ is_non_decreasing_no_poly(const Expr& e, const Symbol& x) {
 	  || !is_non_decreasing_no_poly(e.op(i), x))
 	return false;
     }
-    return true;;
+    return true;
   }
   else if (e.is_the_log_function())
     return true;
+  else if (e.is_a_power()) {
+    const Expr& base = e.arg(0);
+    const Expr& exp = e.arg(1);
+    if (base.is_polynomial(x) && exp.is_polynomial(x)) {
+      Number num;
+      if (exp.is_a_number(num)) {
+	if (num.is_positive_integer())
+	  return true;
+      }
+      else
+	if (is_non_decreasing_poly(base, x)
+	    && is_non_decreasing_poly(exp, x))
+	  return true;
+    }
+  }
   return false;
 }
 
 } // anonymous namespace
 
 //! \brief
-//! Returns <CODE>true</CODE> if \p f is a non-negative, non-decreasing
-//! function in \p x; returns <CODE>false</CODE> otherwise.
+//! Returns <CODE>true</CODE> if \f$ f = base^n coefficient \f$ is a
+//! non-negative, non-decreasing function in \p x;
+//! returns <CODE>false</CODE> otherwise.
 bool
 PURRS::
-is_non_negative_non_decreasing(const Expr& f, const Number& base,
-			       const Expr& coefficient, bool poly,
-			       const Symbol& x,
+is_non_negative_non_decreasing(const Number& base, const Expr& coefficient,
+			       bool poly, const Symbol& x, bool first_time,
 			       Number& condition) {
-  D_VAR(f);
   D_VAR(base);
   D_VAR(coefficient);
-  // First step: checks that all exponentials'bases are greater or equal
+  // First step: checks that exponential's base is greater or equal
   // than `1'.
   if (!base.is_positive())
     return false;
@@ -177,13 +198,19 @@ is_non_negative_non_decreasing(const Expr& f, const Number& base,
   // coefficient.
   if (poly) {
     if (!is_non_negative(coefficient, x, condition))
-      if (!is_non_decreasing_poly(coefficient, x)) {
-	Expr tmp = f.substitute(Recurrence::n, Recurrence::n+1)-f;
-	if (!f.is_zero()
-	    && !is_non_negative_non_decreasing(tmp, base, coefficient,
-					       poly, x, condition))
+      return false;
+    if (!is_non_decreasing_poly(coefficient, x)) {
+      Expr tmp = simplify_ex_for_input
+	(coefficient.substitute(Recurrence::n, Recurrence::n+1) - coefficient,
+	 true);
+      if (first_time) {
+	if (!is_non_negative_non_decreasing(base, tmp, poly, x, false,
+					    condition))
 	  return false;
       }
+      else
+	return false;
+    }
   }
   else {
     // Third step: checks the possibly non polynomial part of the

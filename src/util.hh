@@ -86,10 +86,7 @@ convert_to_integer_polynomial(const Expr& p, const Symbol& x,
 Expr
 resultant(const Expr& p, const Expr& q, const Symbol& x);
 
-//! \brief
-//! Finds the largest positive integer that cancel \p e: if it exists and
-//! it is bigger than \p z, store it in \p z; otherwise \p z is left unchanged.
-void
+bool
 largest_positive_int_zero(const Expr& e, Number& z);
 
 bool

@@ -644,9 +644,8 @@ PURRS::Recurrence::approximate_functional_equation() const {
 	    // Check if the polynomial part is a non-negative,
 	    // non-decreasing function.
 	    Number condition = -1;
-	    if (!is_non_negative_non_decreasing(poly_coeff, 1,
-						poly_coeff, true,
-						n, condition))
+	    if (!is_non_negative_non_decreasing(1, poly_coeff, true,
+						n, true, condition))
 	      return TOO_COMPLEX ;
 	    if (condition > 1)
 	      set_applicability_condition(condition.to_unsigned());
@@ -668,9 +667,8 @@ PURRS::Recurrence::approximate_functional_equation() const {
 	    // Check if the non-polynomial part is a non-negative,
 	    // non-decreasing function.
 	    Number condition = -1;
-	    if (!is_non_negative_non_decreasing(no_poly_coeff, 1,
-						no_poly_coeff, false,
-						n, condition))
+	    if (!is_non_negative_non_decreasing(1, no_poly_coeff, false,
+						n, true, condition))
 	      return TOO_COMPLEX ;
 	    if (condition > 1)
 	      set_applicability_condition(condition.to_unsigned());
@@ -692,9 +690,8 @@ PURRS::Recurrence::approximate_functional_equation() const {
 	      // Check if the polynomial part times esponential is a
 	      // non-negative, non-decreasing function.
 	      Number condition = -1;
-	      if (!is_non_negative_non_decreasing(pwr(base, n) * poly_coeff,
-						  num_base, poly_coeff, true,
-						  n, condition))
+	      if (!is_non_negative_non_decreasing(num_base, poly_coeff, true,
+						  n, true, condition))
 		return TOO_COMPLEX ;
 	      if (condition > 1)
 		set_applicability_condition(condition.to_unsigned());
@@ -712,9 +709,8 @@ PURRS::Recurrence::approximate_functional_equation() const {
 	    // Check if the polynomial part times esponential is a
 	    // non-negative, non-decreasing function.
 	    Number condition = -1;
-	    if (!is_non_negative_non_decreasing(pwr(base, n) * no_poly_coeff,
-						num_base, no_poly_coeff, false,
-						n, condition))
+	    if (!is_non_negative_non_decreasing(num_base, no_poly_coeff, false,
+						n, true, condition))
 	      return TOO_COMPLEX ;
 	    if (condition > 1)
 	      set_applicability_condition(condition.to_unsigned());

@@ -26,12 +26,13 @@ http://www.cs.unipr.it/purrs/ . */
 #define NOISY 0
 #endif
 
+#include "util.hh"
+#include "alg_eq_solver.hh"
 #include "numerator_denominator.hh"
 #include "Expr.defs.hh"
 #include "Number.defs.hh"
 #include "Symbol.defs.hh"
 #include "Recurrence.defs.hh"
-#include "util.hh"
 #include <algorithm>
 #include <iterator>
 
@@ -349,6 +350,7 @@ using namespace PURRS;
 bool
 ok_argument_factorial(const Expr& argument, const Symbol& n) {
   D_VAR(argument);
+  // `a != 1' and `b != 0'.
   if (argument.is_a_add() && argument.nops() == 2) {
     const Expr& first = argument.op(0);
     const Expr& second = argument.op(1);
@@ -370,74 +372,113 @@ ok_argument_factorial(const Expr& argument, const Symbol& n) {
       if (b.is_integer())
 	return true;
   }
+  // `a != 1' and `b == 0'.
+  else if (argument.is_a_mul() && argument.nops() == 2) {
+    const Expr& first = argument.op(0);
+    const Expr& second = argument.op(1);
+    Number a;
+    if ((first == n && second.is_a_number(a))
+	|| (second == n && first.is_a_number(a)))
+      if (a.is_positive_integer())
+	return true;
+  }
+  // `a == 1' and `b == 0'.
+  else if (argument == n)
+    return true;
   return false;
 }
 
 /*!
   Let \f$ e(n) \f$ be the expression in \p n contained in \p e,
   which is assumed to be already expanded and with denominator equal to 1.
-  This function find the largest positive integer that cancel \f$ e(n) \f$
-  and, if it is bigger than \p z, store it in \p z; if do not exist a
-  positive integer that cancel \f$ e(n) \f$ or exist but smaller than \p z,
-  then \p z is left unchanged.
+  This function returns <CODE>true</CODE> if it finds an integer that cancel
+  \f$ e(n) \f$ or starting from which \f$ e(n) \f$ is well-defined
+  (polynomials are always well-defined); if this integer is bigger than \p z,
+  stores it in \p z, otherwise \p z is left unchanged.
+  Returns <CODE>false</CODE> if it does not find the integer looked for.
 */
-void
+bool
 largest_positive_int_zero_on_expanded_ex(const Expr& e, Number& z) {
+  bool ok = false;
   // FIXME: `if (e.has(Recurrence::n))' is necessary because here there is
-  // the method `PURRS::is_polynomial()' and the methods
-  // `GiNaC::ldegree()', `GiNaC::tcoeff()' for which for example
-  // `log(2)' is not a polynomial.
-  if (e.has(Recurrence::n))
+  // the method `PURRS::is_polynomial()' and there are the methods
+  // `GiNaC::ldegree()', `GiNaC::tcoeff()': for example `log(2)' is a
+  // PURRS::polynomial but it is not a GiNaC::polynomial.
+  if (e.has(Recurrence::n)) {
+    // `e' is a polynomial in `n'.
     if (e.is_polynomial(Recurrence::n)) {
-      Expr partial_e = e;
-      unsigned lower_degree = partial_e.ldegree(Recurrence::n);
-      while (lower_degree > 0) {
-	partial_e = quo(partial_e, Recurrence::n, Recurrence::n);
-	lower_degree = partial_e.ldegree(Recurrence::n);
-	if (z < 0)
-	  z = 0;
-      }
-      std::vector<Number> potential_roots;
-      Number constant_term
-	= abs(partial_e.tcoeff(Recurrence::n).ex_to_number());
-      // Find the divisors of the constant term.
-      if (constant_term.is_positive_integer())
-	find_divisors(constant_term, potential_roots);
-      // Find non-negative integral roots of the denominator.
-      for(unsigned i = potential_roots.size(); i-- > 0; ) {
-	Number temp = partial_e.substitute(Recurrence::n,
-					   potential_roots[i]).ex_to_number();
-	if (temp == 0 &&  potential_roots[i] > z)
-	  z = potential_roots[i];
-      }
+      // Polynomials are always well-defined.
+      ok = true;
+      std::vector<Polynomial_Root> roots;
+      bool all_distinct;
+      if (find_roots(e, Recurrence::n, roots, all_distinct))
+	for (unsigned i = roots.size(); i-- > 0; ) {
+	  Number num_root;
+	  if (roots[i].value().is_a_number(num_root))
+	    while (z < num_root)
+	      ++z;
+	}
     }
     else {
-      if (e.is_a_add() || e.is_a_mul())
+      // `e' is not a polynomial in `n'.
+      if (e.is_a_add() || e.is_a_mul()) {
 	for (unsigned i = e.nops(); i-- > 0; )
-	  largest_positive_int_zero_on_expanded_ex(e.op(i), z);
+	  if (!largest_positive_int_zero_on_expanded_ex(e.op(i), z))
+	    return false;
+	ok = true;
+      }
       else if (e.is_a_function()) {
-	if (e.is_the_log_function())
-	  if (e.arg(0).is_polynomial(Recurrence::n))
-	    largest_positive_int_zero_on_expanded_ex(e.arg(0) - 1, z);
-	  else if (e.arg(0).is_the_log_function()) {
+	if (e.is_the_log_function()) {
+	  if (e.arg(0).is_polynomial(Recurrence::n)) {
+	    ok = true;
 	    largest_positive_int_zero_on_expanded_ex(e.arg(0), z);
 	    ++z;
-	  }  
-	  else if (e.is_the_factorial_function())
-	    // If it is in the form `(a n + b)!' with `a' positive integer
-	    // then we find the minimum `n' such that `a n + b >= 0'.
-	    if (ok_argument_factorial(e.arg(0), Recurrence::n))
-	      largest_positive_int_zero_on_expanded_ex(e.arg(0), z);
+	  }
+	  else if (e.arg(0).is_the_log_function()) {
+	    ok = true;
+	    largest_positive_int_zero_on_expanded_ex(e.arg(0), z);
+	    // Consider an approximation of the Napier's number.
+	    Number tmp = pwr(Number(2718, 1000), z);
+	    while (z < tmp)
+	      ++z;
+	  }
+	}
+	else if (e.is_the_factorial_function())
+	  // If it is in the form `(a n + b)!' with `a' positive integer
+	  // then we find the minimum `n' such that `a n + b >= 0'.
+	  if (ok_argument_factorial(e.arg(0), Recurrence::n))
+	    if (largest_positive_int_zero_on_expanded_ex(e.arg(0), z))
+	      ok = true;
+      }
+      else if (e.is_a_power()) {
+	Number base;
+	// `if' necessary for the problem of the GiNaC::polynomial:
+	// ex. `2^n = e^(n log(2))' and `log(2)' is not a GiNaC::polynomial.
+	if (e.arg(0).is_a_number(base) && base.is_positive()
+	    && e.arg(1).has(Recurrence::n))
+	  ok = true;
+	// `p(n)^q(n) = e^(q(n)*log(p(n)))'.
+	else if (largest_positive_int_zero(e.arg(1) * log(e.arg(0)), z))
+	  ok = true;
       }
     }
+  }
+  else
+    // Consider constant polynomials.
+    if (e.is_polynomial(Recurrence::n))
+      ok = true;
+  return ok;
 }
 
 } // anonymous namespace
 
-void
+bool
 PURRS::largest_positive_int_zero(const Expr& e, Number& z) {
-  assert(denominator(e) == 1);
-  largest_positive_int_zero_on_expanded_ex(e.expand(), z);
+  if (largest_positive_int_zero_on_expanded_ex(numerator(e).expand(), z)
+      && largest_positive_int_zero_on_expanded_ex(denominator(e).expand(), z))
+    return true;
+  else
+    return false;
 }
 
 //! Returns <CODE>true</CODE> if \p e contains parameters;

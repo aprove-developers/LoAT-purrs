@@ -33,9 +33,8 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 bool
-is_non_negative_non_decreasing(const Expr& f, const Number& base,
-			       const Expr& coefficient, bool poly,
-			       const Symbol& x,
+is_non_negative_non_decreasing(const Number& base, const Expr& coefficient,
+			       bool poly, const Symbol& x, bool first_time,
 			       Number& condition);
   
 } // namespace Parma_Recurrence_Relation_Solver
