@@ -36,7 +36,6 @@ inline
 Recurrence::Recurrence()
   : recurrence_rhs(0),
     recurrence_rewritten(false),
-    applied_order_reduction(false),
     come_from_non_linear_rec(false),
     inhomogeneous_term(0),
     type_(ORDER_ZERO),
@@ -52,7 +51,6 @@ inline
 Recurrence::Recurrence(const Expr& e)
   : recurrence_rhs(e),
     recurrence_rewritten(false),
-    applied_order_reduction(false),
     come_from_non_linear_rec(false),
     inhomogeneous_term(0),
     type_(ORDER_ZERO),
@@ -68,7 +66,6 @@ inline
 Recurrence::Recurrence(const Recurrence& y)
   : recurrence_rhs(y.recurrence_rhs),
     recurrence_rewritten(y.recurrence_rewritten),
-    applied_order_reduction(y.applied_order_reduction),
     come_from_non_linear_rec(y.come_from_non_linear_rec),
     inhomogeneous_term(y.inhomogeneous_term),
     system_rhs(y.system_rhs),
@@ -96,7 +93,6 @@ inline Recurrence&
 Recurrence::operator=(const Recurrence& y) {
   recurrence_rhs = y.recurrence_rhs;
   recurrence_rewritten = y.recurrence_rewritten;
-  applied_order_reduction = y.applied_order_reduction;
   come_from_non_linear_rec = y.come_from_non_linear_rec;
   inhomogeneous_term = y.inhomogeneous_term;
   system_rhs = y.system_rhs;
@@ -327,6 +323,27 @@ Recurrence::set_product_factor(const Expr& x) const {
   assert(is_linear_finite_order_var_coeff());
   assert(finite_order_p);
   return finite_order_p -> set_product_factor(x);
+}
+
+inline bool 
+Recurrence::applied_order_reduction() const {
+  assert(is_linear_finite_order());
+  assert(finite_order_p);
+  return finite_order_p -> applied_order_reduction();
+}
+
+inline void 
+Recurrence::set_order_reduction() const {
+  assert(is_linear_finite_order());
+  assert(finite_order_p);
+  return finite_order_p -> set_order_reduction();
+}
+
+inline void 
+Recurrence::unset_order_reduction() const {
+  assert(is_linear_finite_order());
+  assert(finite_order_p);
+  return finite_order_p -> unset_order_reduction();
 }
 
 inline unsigned

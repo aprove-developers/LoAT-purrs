@@ -39,11 +39,8 @@ public:
   //! Constructor: sets \f$ order{\_} = k \f$,
   //! \f$ coefficients{\_} = coeffs \f$,
   //! \f$ gcd{\_}among{\_}decrements{\_} = gcd \f$,
-  //! \f$ first{\_}i{\_}c{\_}for{\_}linear{\_} = i{\_}c \f$,
-  //! \f$ product{\_}factor{\_} = prod{\_}factor\f$.
   Finite_Order_Info(int k, const std::vector<Expr>& coeffs,
-		    unsigned gcd, unsigned i_c = 0,
-		    const Expr prod_factor = 0);
+		    unsigned gcd);
 
   //! Copy-constructor.
   Finite_Order_Info(const Finite_Order_Info& y);
@@ -90,6 +87,15 @@ public:
   //! Sets <CODE>product_factor_</CODE> with \p x.
   void set_product_factor(const Expr& x);
 
+  //! Returns <CODE>applied_order_reduction_</CODE>.
+  bool applied_order_reduction() const;
+
+  //! Sets <CODE>applied_order_reduction_</CODE> to <CODE>true</CODE>.
+  void set_order_reduction();
+
+  //! Sets <CODE>applied_order_reduction_</CODE> to <CODE>false</CODE>.
+  void unset_order_reduction();
+
 private:
   //! The order of the recurrence. 
   unsigned int order_;
@@ -113,8 +119,14 @@ private:
   //! In the recurrences of the first order with variable coefficient
   //! \f$ a(n) \f$, stores the factor \f$ \prod_{i}^n a(k)\f$,
   //! where \f$ i \f$ is the non-negative integer
-  //! \p first_well_defined_rhs_linear_.
+  //! \p first_well_defined_rhs_linear_. In the case of constant
+  //! coefficients it is \f$ 0 \f$.
   Expr product_factor_;
+
+  //! \brief
+  //! It is <CODE>true</CODE> if the order reduction method has been
+  //! applied; it is <CODE>false</CODE> otherwise.
+  bool applied_order_reduction_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

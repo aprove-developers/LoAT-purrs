@@ -448,8 +448,8 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
     Expr diff = rec.blackboard.rewrite(non_homogeneous_part - substituted_rhs);
     diff = simplify_all(diff);
     if (!diff.is_zero())
-      if (rec.applied_order_reduction) {
-	rec.applied_order_reduction = false;
+      if (rec.applied_order_reduction()) {
+	rec.unset_order_reduction();
 	// If we have applied the order reduction and we do not have
 	// success in the verification of the original recurrence, then
 	// we please ourselves if is verified the reduced recurrence.
@@ -577,7 +577,7 @@ PURRS::Recurrence::verify_bound(const Recurrence& rec, bool upper) {
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::apply_order_reduction() const {
-  applied_order_reduction = true;
+  set_order_reduction();
   // Build the new recurrence substituting `n' not contained in the
   // `x' functions with `gcd_among_decrements * n + r' and `x(n-k)' with
   // `x(n - k / gcd_among_decrements)'.

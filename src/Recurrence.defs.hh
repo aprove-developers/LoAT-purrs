@@ -377,12 +377,6 @@ private:
   mutable bool recurrence_rewritten;
 
   //! \brief
-  //! It is <CODE>true</CODE> when is applied the order reduction method
-  //! to a linear finite order recurrence; it is <CODE>false</CODE> in
-  //! all the other cases.
-  mutable bool applied_order_reduction;
-
-  //! \brief
   //! It is <CODE>true</CODE> when the recurrence has been deduced from
   //! a non-linear recurence; it is <CODE>false</CODE> in all the other cases.
   mutable bool come_from_non_linear_rec;
@@ -575,6 +569,21 @@ private:
   //! coefficient.
   void set_product_factor(const Expr& x) const;
 
+  //! \brief
+  //! Returns <CODE>true</CODE> if the order reduction method has been
+  //! applied; returns <CODE>false</CODE> otherwise.
+  bool applied_order_reduction() const;
+
+  //! \brief
+  //! Sets the flag that indicates if the order reduction method has been
+  //! applied to <CODE>true</CODE>.
+  void set_order_reduction() const;
+
+  //! \brief
+  //! Sets the flag that indicates if the order reduction method has been
+  //! applied to <CODE>false</CODE>.
+  void unset_order_reduction() const;
+  
 
   // Methods to access to private data of `Functional_Equation_Info'.
 
