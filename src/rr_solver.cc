@@ -587,14 +587,14 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	  "or not enough simplified.");
   
   return true;
-  }
+}
 
 static void
 exp_poly_decomposition_factor(const GExpr& base,
 			      const GExpr& e, const GSymbol& n,
-			       std::vector<GExpr>& alpha,
-			       std::vector<GExpr>& p,
-			       std::vector<GExpr>& q) {
+			      std::vector<GExpr>& alpha,
+			      std::vector<GExpr>& p,
+			      std::vector<GExpr>& q) {
   unsigned alpha_size = alpha.size();
   unsigned position;
   bool found = false;
@@ -621,43 +621,36 @@ exp_poly_decomposition_factor(const GExpr& base,
 }
 
 /*!
-  Definition of a <EM>valid_base</EM> for an exponential in inductive way:
-  - every <CODE>GiNaC::numeric</CODE> is a <EM>valid_base</EM>;
-  - every <CODE>GiNaC::constant</CODE> is a <EM>valid_base</EM>;
-  - every <CODE>GiNaC::symbol</CODE> different from \p n is a
-    <EM>valid_base</EM>;
-  - given \f$ e \f$ a <CODE>GiNaC::power</CODE>,
-    if \f$ e.op(0) \f$ and \f$ e.op(1) \f$ are <EM>valid_base</EM>
-    then \f$ e \f$ is a <EM>valid_base</EM>;
-  - given \f$ f \f$ a <CODE>GiNaC::function</CODE>,
-    if \f$ f.op(0) \f$ is <EM>valid_base</EM>
-    then \f$ f \f$ is a <EM>valid_base</EM>;
-  - given the binary operations sum (\f$ + \f$) and multiplication (\f$ * \f$),
-    if \f$ a \f$ and \f$ b \f$ are <EM>valid_base</EM> then
-    \f$ a + b \f$ and \f$ a * b \f$ are <EM>valid_base</EM>.
+  This function realized the definition of <EM>valid base</EM>.
+  This is defined inductively as follows:
+  - every number is a valid base;
+  - every symbolic constant is a valid base;
+  - every parameter different from \f$ n \f$ is a
+    valid base;
+  - if \f$ f \f$ is any unary function and \f$ x \f$
+    is a valid base, then \f$ f(x) \f$ is a valid base;
+  - if \f$ a \f$ and \f$ b \f$ are valid bases then
+    \f$ a+b \f$, \f$ a*b \f$, and \f$ a^b \f$ are valid bases.
 */
 static bool
 valid_base(const GExpr& e, const GSymbol& n) {
-  bool ok;
   if (is_a<numeric>(e))
-    ok = true;
+    return true;
   else if (is_a<constant>(e))
-    ok = true;
+    return true;
   else if (is_a<symbol>(e) && !e.is_equal(n))
-    ok = true;
+    return true;
   else if (is_a<power>(e))
-    ok = valid_base(e.op(0), n) && valid_base(e.op(1), n);
+    return valid_base(e.op(0), n) && valid_base(e.op(1), n);
   else if (is_a<function>(e))
-    ok = valid_base(e.op(0), n);
+    return valid_base(e.op(0), n);
   else if (is_a<add>(e) || is_a<mul>(e)) {
-    ok = true;
     for (unsigned i = e.nops(); i-- > 0; )
-      ok = ok && valid_base(e.op(i), n);
+      if (!valid_base(e.op(i), n))
+	return false;
+    return true;
   }
-  else
-    ok = false;
-  
-  return ok;
+  return false;
 }
 
 static void
