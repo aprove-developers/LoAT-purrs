@@ -127,21 +127,25 @@ check_poly_times_exponential(const std::vector<GExpr>& exp_no_poly_coeff) {
 }
 
 /*!
-  We consider the recurrence relation's inhomogeneous term 
-  \f$ p(n) = \sum_{i=0}^{base_of_exps.size()} q_i(n) \alpha_i^{n} \f$
-  and the vector \p roots of the characteristic equation's roots 
-  and we call \f$ \lambda \f$ the generic root.
-  This function fills the two <CODE>vector<GExpr></CODE>
+  We consider
+  - the recurrence relation's inhomogeneous term when is in the form
+    polynomials times exponentials:
+    \f$ e(n) = \sum_{i=0}^k \alpha_i^{n} p_i(n) \f$ (where \f$ k \f$ is
+    the number of exponentials);
+  - the vector \p roots of the characteristic equation's roots. 
+  We call \f$ \lambda \f$ the generic root.
+
+  This function fills the two vectors of <CODE>GExpr</CODE>
   \p symbolic_sum_distinct and \p symbolic_sum_no_distinct, with dimension
   equal to \p base_of_exps.size(), with two different sums:
   for \f$ j = 0, \dotsc, roots.size() \f$ and for
   \f$ i = 0, \dotsc, base_of_exps.size() \f$
   -  if \f$ \alpha_i \neq \lambda_j \f$ then
-     \p symbolic_sum_distinct \f$[i] = f_i(\alpha / \lambda)
-          = \lambda^n * \sum_{k=order}^n (\alpha / \lambda)^k \cdot q_i(k) \f$;
+     \p symbolic_sum_distinct[i] = \f$ f_i(\alpha_i / \lambda)
+        = \lambda^n * \sum_{k=order}^n (\alpha_i / \lambda)^k \cdot q_i(k) \f$;
   -  if \f$ \alpha_i = \lambda_j \f$ then
-     \p symbolic_sum_no_distinct \f$[i] = f_i(\lambda)
-          = \lambda^n * \sum_{k=order}^n q_i(k) \f$.
+     \p symbolic_sum_no_distinct[i] = \f$ f_i(\lambda)
+        = \lambda^n * \sum_{k=order}^n q_i(k) \f$.
 */
 static void
 compute_symbolic_sum(const int order, const GSymbol& n,
@@ -151,8 +155,7 @@ compute_symbolic_sum(const int order, const GSymbol& n,
 		     std::vector<GExpr>& exp_poly_coeff,
 		     std::vector<GExpr>& symbolic_sum_distinct,
 		     std::vector<GExpr>& symbolic_sum_no_distinct) {
-  unsigned num_columns = base_of_exps.size();
-  for (size_t i = num_columns; i-- > 0; ) {
+  for (size_t i = base_of_exps.size(); i-- > 0; ) {
     bool distinct = true;
     for (size_t j = roots.size(); j-- > 0; ) {
       if (roots[j].value().is_equal(base_of_exps[i]))
@@ -705,14 +708,14 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
 			      const std::vector<Polynomial_Root>& roots) {
   GExpr solution_tot;
 
-  unsigned num_columns = base_of_exps.size();
+  unsigned num_exponentials = base_of_exps.size();
 
   GSymbol a("a"), b("b");
   GExpr root = roots[0].value();
 
   D_VAR(root);
 
-  if (base_of_exps.size() == 0) {
+  if (num_exponentials == 0) {
     // The binary recurrence is homogeneous.
     // The solution of the homogeneous recurrence is of the form
     // x_n = (a + b * n) \lambda^n where
@@ -755,7 +758,7 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
     solution_tot = initial_conditions[1]*g_n_1 + 
                    initial_conditions[0]*g_n_2*coefficients[2];
 
-    for (size_t i = 0; i < num_columns; ++i) {
+    for (size_t i = 0; i < num_exponentials; ++i) {
       GExpr solution = 0;
       GExpr base_of_exp = base_of_exps[i];
       GExpr coeff_of_exp = exp_poly_coeff[i];
