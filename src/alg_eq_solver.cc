@@ -32,6 +32,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 using namespace GiNaC;
 
+#define NOISY 1
+ 
 /*!
   ...
 */
@@ -488,16 +490,68 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   GExpr y2;
   GExpr y3;
 #if 0
-  bool all_real =
+  bool all_real =;
 #endif
-    solve_equation_3(-a2,
-		     a1*a3 - 4*a4,
-		     4*a2*a4 - a3*a3 - a1*a1*a4,
-		     y1, y2, y3);
-  GExpr d1 = pow(a1, 2) - 4*a2  + 4*y1;
-  GExpr d2 = pow(y1, 2) - 4*a4;
-  GExpr sqrt_d1 = sqrt(d1);
-  GExpr sqrt_d2 = sqrt(d2);
-  solve_equation_2((a1 + sqrt_d1)/2, (y1 - sqrt_d2)/2, x1, x2);
-  solve_equation_2((a1 - sqrt_d1)/2, (y1 + sqrt_d2)/2, x3, x4);
+  GNumber f = a2-3*a1*a1*numeric(1)/8;
+  GNumber g = a3+a1*a1*a1/8-a1*a2*numeric(1)/2;
+  GNumber h = a4-3*a1*a1*a1*a1*numeric(1)/256
+    +a1*a1*a2*numeric(1)/16-a1*a3*numeric(1)/4;
+#if NOISY
+  std::cout << "f = " << f << std::endl; 
+  std::cout << "g = " << g << std::endl; 
+  std::cout << "h = " << h << std::endl;
+#endif 
+  solve_equation_3(f*numeric(1)/2,
+		   (f*f - 4*h)*numeric(1)/16,
+		   -g*g*numeric(1)/64,
+		   y1, y2, y3);
+  GExpr p, q;
+  if (!y1.is_zero() && !y2.is_zero()) {
+    p = sqrt(y1);
+    q = sqrt(y2);
+  }
+  else if (!y1.is_zero() && !y3.is_zero()) {
+    p = sqrt(y1);
+    q = sqrt(y3);
+  }
+  else {
+    p = sqrt(y2);
+    q = sqrt(y3);
+  }
+  // FIXME: simplify p and q if possible 
+#if NOISY
+  std::cout << "p = " << p << std::endl; 
+  std::cout << "q = " << q << std::endl;
+#endif
+  GExpr r = numeric(-g)/(8*p*q);
+  // FIXME: simplify r as well 
+  GExpr s = numeric(a1)/4;
+#if NOISY
+  std::cout << "r = " << r << std::endl; 
+  std::cout << "s = " << s << std::endl; 
+#endif
+  x1 = p + q + r - s;
+  x2 = p - q - r - s;
+  x3 = -p + q - r - s;
+  x4 = -p - q + r - s;
+
+//  old routine
+//
+//     std::cout << " ---- " << a1.evalf() << "   " << a2.evalf() << "  ";
+//   std::cout << a3.evalf() <<"   " << a4.evalf() << std::endl; 
+//     solve_equation_3(-a2,
+// 		     a1*a3 - 4*a4,
+// 		     4*a2*a4 - a3*a3 - a1*a1*a4,
+// 		     y1, y2, y3);
+//   GExpr d1 = pow(a1, 2) - 4*a2 + 4*y1;
+//   GExpr d2 = pow(y1, 2) - 4*a4;
+//   GExpr sqrt_d1 = sqrt(d1);
+//   GExpr sqrt_d2 = sqrt(d2);
+//   //
+//   std::cout << " ----a1= " << a1.evalf() << "  sqrt_d1= " << sqrt_d1.evalf() << "  sqrt_d2= ";
+//   std::cout << sqrt_d2.evalf() <<"  y1= " << y1.evalf() << std::endl;
+//   std::cout << " ---- " << (a1/2 +sqrt_d1/2).evalf() << "   " << (y1/2-sqrt_d2/2).evalf() << "   ";
+//   //std::cout << sqrt_d2.evalf() <<"   " << y1.evalf() << std::endl;
+//   solve_equation_2((a1 + sqrt_d1)/2, (y1 - sqrt_d2)/2, x1, x2);
+//   solve_equation_2((a1 - sqrt_d1)/2, (y1 + sqrt_d2)/2, x3, x4);
 }
