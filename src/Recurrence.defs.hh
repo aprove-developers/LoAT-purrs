@@ -374,7 +374,7 @@ private:
   //! the order reduction or the recurrence is non-linear (and then, in
   //! order to solve it we have rewritten the recurrence in linear);
   //! it is <CODE>false</CODE> in all the other cases.
-  mutable bool recurrence_rewritten;
+  bool recurrence_rewritten;
 
   //! \brief
   //! It is <CODE>true</CODE> when the recurrence has been deduced from
@@ -434,7 +434,7 @@ private:
   //! \brief
   //! It is <CODE>true</CODE> if the recurrence already it has been
   //! classified; it is <CODE>false</CODE> otherwise.
-  mutable bool is_classified;
+  bool is_classified;
 
   mutable Finite_Order_Info* finite_order_p;
   mutable Functional_Equation_Info* functional_eq_p;
@@ -723,7 +723,7 @@ private:
   //! \brief
   //! If \p tested_exact_solution is true then the system have already
   //! try to compute the exact solution.
-  mutable bool tested_exact_solution;
+  bool tested_exact_solution;
 
   mutable Blackboard blackboard;
 

@@ -684,7 +684,8 @@ PURRS::Recurrence::apply_order_reduction() const {
     }
     exact_solution_.set_expression
       (simplify_ex_for_output(exact_solution_.expression(), false));
-    recurrence_rewritten = true;
+    bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
+    rec_rewritten = true;
     return SUCCESS;
   }
   else
@@ -742,7 +743,8 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 	// in the blackboard of the original recurrences: they could be
 	// necessary in the validation's process of the non-linear recurrence.
 	blackboard = rec_rewritten.blackboard;
-	recurrence_rewritten = true;
+	bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
+	rec_rewritten = true;
 	return SUCCESS;
       }
       else
@@ -785,8 +787,8 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 	  = solution_or_bound.substitute(auxiliary_symbols()[i],
 					 get_auxiliary_definition
 					 (auxiliary_symbols()[i]));
-      D_VAR(solution_or_bound);
-      recurrence_rewritten = true;
+      bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
+      rec_rewritten = true;
       return SUCCESS;
     }
   }
@@ -974,8 +976,9 @@ substitute_i_c_shifting(bool linear, const Expr& solution_or_bound) const {
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_exact_solution() const {
-  D_MSG("compute_exact_solution");
-  tested_exact_solution = true;
+  bool& tried_to_compute_exact_solution
+    = const_cast<bool&>(tested_exact_solution);
+  tried_to_compute_exact_solution = true;
   // See if we have the exact solution already.
   if (exact_solution_.has_expression())
     return SUCCESS;

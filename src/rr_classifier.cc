@@ -1105,7 +1105,8 @@ PURRS::Recurrence::classify() const {
   assert(is_linear_finite_order() || is_functional_equation()
 	 || is_non_linear_finite_order() || is_linear_infinite_order());
 
-  is_classified = true;
+  bool& classified = const_cast<bool&>(is_classified);
+  classified = true;
   return SUCCESS;
 }
 
@@ -1168,7 +1169,8 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
       {
 	Expr new_rhs;
 	eliminate_negative_decrements(recurrence_rhs, new_rhs);
-	recurrence_rewritten = true;
+	bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
+	rec_rewritten = true;
 	recurrence_rhs = new_rhs;
 	status = classify_and_catch_special_cases();
       }
@@ -1178,7 +1180,8 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	Expr new_rhs;
 	unsigned result = eliminate_null_decrements(recurrence_rhs, new_rhs);
 	if (result == 0) {
-	  recurrence_rewritten = true;
+	  bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
+	  rec_rewritten = true;
 	  recurrence_rhs = new_rhs;
 	  status = classify_and_catch_special_cases();
 	}
