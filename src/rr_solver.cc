@@ -56,6 +56,151 @@ get_linear_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
   return false;
 }
 
+/*!
+  Transforms experssions of the form \f$a^(b*x)\f$ in the expression \p p
+  into \f$(a^b)^x\f$.
+*/
+GExpr
+split_exp(GExpr& p, const GSymbol& x, const GList powers) {
+  GExpr q = 0;
+
+  for (size_t i = powers.nops(); i-- > 0; ) {
+    // Finds coefficient of exponential 'powers.op(i)'.
+    GList l;
+    GExpr coeff;
+    if (p.find(powers.op(i) * wild(), l)) {
+      coeff = l.op(0);
+      coeff = coeff.subs(wild(0)*pow(wild(1), wild(2)*x) == wild(0));
+    }
+    GExpr tmp = powers.op(i);
+    tmp = tmp.subs(pow(wild(0),x*wild(1)) == pow(pow(wild(0),wild(1)),x));
+    q += tmp*coeff;
+    p -= coeff*powers.op(i);
+  }
+  // Now p does not contain other exponential of the form a^(b*x). 
+  q += p;
+
+  return q;
+}
+
+/*!
+  Transforms expressions of the form \f$a^x*b^x\f$ in the expression \p p
+  into \f$(a^b)^x\f$.
+*/
+GExpr 
+union_exp(GExpr& p, const GSymbol& x, const GList powers, const unsigned n) {
+  GExpr q = 0;
+
+  for (size_t i = powers.nops(); i-- > 0; ) {
+    GExpr tmp = powers.op(i);
+    if (n == 1) {
+      tmp = tmp.subs(pow(wild(0),x)*pow(wild(1),x) == pow(wild(0)*wild(1),x));
+      q += tmp;
+    } 
+    else {
+      tmp = tmp.subs(pow(wild(0),x)*pow(wild(1),x)*wild(2) == 
+		     pow(wild(0)*wild(1),x));
+      // Finds coefficient of exponential 'powers.op(i)'.  
+      GList l;
+      GExpr coeff;
+      if (p.find(powers.op(i) * wild(), l)) {
+	coeff = l.op(0);
+	coeff = coeff.subs(wild(0)*pow(wild(1), x)*pow(wild(2), x) == wild(0));
+      }
+      q += tmp*coeff;
+    }
+    p -= powers.op(i);
+  }
+  // Now p does not contain other exponential of the form a^x*b^x.
+  q += p;
+
+  return q;
+}
+
+void
+check_exp_inhomogeneous_term(GExpr& e, const GSymbol& n) {
+  GList powers;
+
+  // Transforms a^(bn+c) into (a^b)^n*a^c.
+  static GExpr a_bn = pow(wild(0), n*wild(1));
+  static GExpr a_n_c = pow(wild(0), n+wild(1));
+  static GExpr a_bn_c = pow(wild(0), n*wild(1)+wild(2));
+  if (e.find(a_bn_c, powers) || e.find(a_n_c, powers)) 
+    e = e.expand();
+  if (e.find(a_bn, powers))
+    e = split_exp(e, n, powers);
+
+  // Transforms a^n*b^n into (a*b)^n.
+  static GExpr a_n_b_n = pow(wild(0), n)*pow(wild(1), n);
+  static GExpr c_a_n_b_n = pow(wild(0), n)*pow(wild(1), n)*wild(2);
+  while (e.find(a_n_b_n, powers) || e.find(c_a_n_b_n, powers)) { 
+    if (e.find(a_n_b_n, powers))
+	e = union_exp(e, n, powers, 1);
+    else
+      e = union_exp(e, n, powers, 2);
+    clear(powers);
+  }
+}
+
+/*!
+  This function makes a matrix with two rows and a number of columns
+  does not exceed the number of exponentials in the inhomogeneous term
+  plus one.
+  The function gives the decomposition 
+  \f$ e(n) = sum_{i=0}^k \alpha_i^j \cdot p(n)_i \f$ with
+  - \f$ \alpha_i \ne \alpha_j \f$ if \f$ i \ne j \f$
+  - \p p does not contains exponentials.
+  It returns the matrix whose \f$ i\f$-th column contains 
+  \f$ \alpha_i^n \f$ and \f$ p(n)_i \f$
+  for \f$ i = 1, \ldots, k \f$.
+*/
+GMatrix
+decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
+  GExpr p,q;
+  GList(powers);
+
+  p = e;
+  GExpr pattern = pow(wild(), n);
+  p.find(pattern, powers);
+  p = p.collect(powers);
+
+  if (powers.nops() == 0) {
+    // In this case there are no axponentials.
+    return GMatrix(2, 1, lst(1, p));
+  }
+  else {
+    GMatrix terms_divided(2, powers.nops()+1, powers);
+    // Impose that the last element of the first row is the constant
+    // exponential 1.
+    terms_divided(0, powers.nops()) = 1;
+    GList part;
+    q = p;
+    for (size_t i = powers.nops(); i-- > 0; ) {
+      clear(part);
+      // 'part' has always only one elements because we have collected
+      // 'p' with respect to the exponentials.
+      p.find(powers.op(i) * wild(), part);
+      if (part.nops() != 0) {
+	GExpr coeff = part.op(0);
+	coeff = coeff.subs(wild(1)*pow(wild(2), n) == wild(1));
+	terms_divided(1, i) = coeff;
+	q -= part.op(0);
+      }
+      else {
+	// In this case 'p' does not contain the constant exponential.
+	terms_divided(1, i) = 1;
+	q -= powers.op(i);
+      }
+    }
+    // Now 'q' does not contains any exponentials or product of exponential 
+    // times other expressions.
+    if (!q.is_zero())
+      terms_divided(1, powers.nops()) = q;
+  
+    return terms_divided;
+  }
+}
+
 bool
 solve(const GExpr& rhs, const GSymbol& n) {
   static GExpr x_i = x(GiNaC::wild(0));
@@ -151,6 +296,24 @@ solve(const GExpr& rhs, const GSymbol& n) {
   std::cout << std::endl;
   std::cout << "Inhomogeneous term = " << e << std::endl;
 
+  // The factors of the form a^(bx+c) (a,b,c numeric) must be transformed
+  // into (a^b)^x*a^c. GiNaC tranforms only a^(bx+c) in a^c*a^(bx) but not
+  // a^(bx) into (a^b)^x.
+  check_exp_inhomogeneous_term(e, n);
+
+  // Now certainly the inhomogeneous term contains only exponential
+  // with exponent x.
+  // 'decomposition' is a matrix with two rows and a number of columns
+  // which is at most the number of exponentials in the inhomogeneous term
+  // plus one.
+  // In every column there is a exponential in the first row and its
+  // coefficient in the second row. In the last column there is the
+  // constant exponential with its coefficients. 
+  GMatrix decomposition = decomposition_inhomogeneous_term(e, n);
+  std::cout << "Inhomogeneous term's decomposition"
+	    << decomposition << std::endl; 
+
+  /*
   // Build the expression here.
   static GSymbol x("x");
   GExpr p = 0;
@@ -163,5 +326,6 @@ solve(const GExpr& rhs, const GSymbol& n) {
     return false;
 
   std::cout << degree << " " << roots.size() << " " << all_distinct << std::endl;
+  */
   return true;
 }

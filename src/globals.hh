@@ -9,6 +9,7 @@ typedef GiNaC::ex GExpr;
 typedef GiNaC::symbol GSymbol;
 typedef GiNaC::lst GList;
 typedef GiNaC::numeric GNumber;
+typedef GiNaC::matrix GMatrix;
 
 GExpr x_eval(const GExpr& e);
 GExpr x_evalf(const GExpr& e);
