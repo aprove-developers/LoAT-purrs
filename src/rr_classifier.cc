@@ -984,8 +984,8 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 					      first_valid_index, rewritten)) { 
 	  if (first_valid_index > 0)
 	    return CL_DOMAIN_ERROR;
-	  infinite_order_p
-	    = new Infinite_Order_Info(Recurrence(rhs_first_order), weight);
+	  weighted_average_p
+	    = new Weighted_Average_Info(Recurrence(rhs_first_order), weight);
 	  set_linear_infinite_order();
 	  if (rewritten) {
 	    bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
@@ -1089,8 +1089,8 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 						rewritten)) { 
 	    if (first_valid_index > 0)
 	      return CL_DOMAIN_ERROR;
-	    infinite_order_p
-	      = new Infinite_Order_Info(Recurrence(rhs_first_order), weight);
+	    weighted_average_p
+	      = new Weighted_Average_Info(Recurrence(rhs_first_order), weight);
 	    set_linear_infinite_order();
 	    if (rewritten) {
 	      bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
@@ -1199,7 +1199,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
     T(n) = \frac{f(n)}{f(n-1)} (1+f(n-1)) T(n-1)
       + f(n) \left( \frac{g(n)}{f(n)} - \frac{g(n-1)}{f(n-1)} \right).
   \f].
-  In the structure <CODE>Infinite_Order_Info</CODE> are stored the right
+  In the structure <CODE>Weighted_Average_Info</CODE> are stored the right
   hand side, the coefficient and the inhomogeneous term of the finite order
   recurrence in which \p *this is transformed, the weight \f$ f(n) \f$.
 

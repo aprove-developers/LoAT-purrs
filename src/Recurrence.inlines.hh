@@ -46,7 +46,7 @@ Recurrence::Recurrence()
     finite_order_p(0),
     functional_eq_p(0),
     non_linear_p(0),
-    infinite_order_p(0),
+    weighted_average_p(0),
     tried_to_compute_exact_solution(false) {
 }
 
@@ -60,7 +60,7 @@ Recurrence::Recurrence(const Expr& e)
     finite_order_p(0),
     functional_eq_p(0),
     non_linear_p(0),
-    infinite_order_p(0),
+    weighted_average_p(0),
     tried_to_compute_exact_solution(false) {
 }
 
@@ -75,7 +75,7 @@ Recurrence::Recurrence(const Recurrence& y)
     finite_order_p(y.finite_order_p),
     functional_eq_p(y.functional_eq_p),    
     non_linear_p(y.non_linear_p),
-    infinite_order_p(y.infinite_order_p),
+    weighted_average_p(y.weighted_average_p),
     exact_solution_(y.exact_solution_),
     lower_bound_(y.lower_bound_),
     upper_bound_(y.upper_bound_),
@@ -95,7 +95,7 @@ Recurrence::operator=(const Recurrence& y) {
   finite_order_p = y.finite_order_p;
   functional_eq_p = y.functional_eq_p;
   non_linear_p = y.non_linear_p;
-  infinite_order_p = y.infinite_order_p;
+  weighted_average_p = y.weighted_average_p;
   exact_solution_ = y.exact_solution_;
   lower_bound_ = y.lower_bound_;
   upper_bound_ = y.upper_bound_;
@@ -110,7 +110,7 @@ Recurrence::~Recurrence() {
   delete finite_order_p;
   delete functional_eq_p;
   delete non_linear_p;
-  delete infinite_order_p;
+  delete weighted_average_p;
 }
 
 inline void
@@ -249,12 +249,12 @@ Recurrence::set_functional_equation() const {
 inline bool
 Recurrence::is_linear_infinite_order() const {
   assert(classifier_status_ != NOT_CLASSIFIED_YET);
-  return type_ == LINEAR_INFINITE_ORDER;
+  return type_ == WEIGHTED_AVERAGE;
 }
 
 inline void
 Recurrence::set_linear_infinite_order() const {
-  type_ = LINEAR_INFINITE_ORDER;
+  type_ = WEIGHTED_AVERAGE;
   classifier_status_ = CL_SUCCESS;
 }
 
@@ -422,47 +422,47 @@ Recurrence::auxiliary_symbols() {
 inline const Recurrence&
 Recurrence::associated_first_order_rec() const {
   assert(is_linear_infinite_order());
-  return infinite_order_p -> associated_first_order_rec();
+  return weighted_average_p -> associated_first_order_rec();
 }
 
 inline Recurrence&
 Recurrence::associated_first_order_rec() {
   assert(is_linear_infinite_order());
-  return infinite_order_p -> associated_first_order_rec();
+  return weighted_average_p -> associated_first_order_rec();
 }
 
 inline void
 Recurrence::set_original_rhs(const Expr& original_rhs) const {
   assert(is_linear_infinite_order());
-  infinite_order_p -> set_original_rhs(original_rhs);
+  weighted_average_p -> set_original_rhs(original_rhs);
 }
 
 inline const Expr&
 Recurrence::infinite_order_weight() const {
   assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  return infinite_order_p -> infinite_order_weight();
+  assert(weighted_average_p);
+  return weighted_average_p -> infinite_order_weight();
 }
 
 inline Expr&
 Recurrence::infinite_order_weight() {
   assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  return infinite_order_p -> infinite_order_weight();
+  assert(weighted_average_p);
+  return weighted_average_p -> infinite_order_weight();
 }
 
 inline index_type
 Recurrence::first_valid_index_inf_order() const {
   assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  return infinite_order_p -> first_valid_index_inf_order();
+  assert(weighted_average_p);
+  return weighted_average_p -> first_valid_index_inf_order();
 }
 
 inline void
 Recurrence::set_first_valid_index_inf_order(index_type i_c) const {
   assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  infinite_order_p -> set_first_valid_index_inf_order(i_c);
+  assert(weighted_average_p);
+  weighted_average_p -> set_first_valid_index_inf_order(i_c);
 }
 
 inline void

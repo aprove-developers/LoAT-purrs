@@ -14,7 +14,7 @@ PURPOSE. */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-class Infinite_Order_Info;
+class Weighted_Average_Info;
 
 }
 

@@ -147,11 +147,11 @@ bool less_than(const Recurrence& x, const Recurrence& y);
 
   \par Example 5
   The weighted-average recurrence
-  \f$ x(n) = 2 sum(k,3,n,x(k))-2 n \f$
+  \f$ x(n) = 2 \sum_{k=3}^n x(k) -2 n \f$
   will be transformed in the normal form and, moreover,
   the recurrence is rewritten, if possible, so that the lower limit of
   the sum is \f$ 0 \f$ and the upper limit is \f$ n-1 \f$:
-  \f$ x(n) = -2 sum(k,0,n-1,x(k)) + 2 n + 6 \f$.
+  \f$ x(n) = -2 \sum_{k=0}^n x(k) + 2 n + 6 \f$.
 */
 class Recurrence {
 public:
@@ -303,10 +303,10 @@ public:
   //! if the system finds the exact solution.
   /*!
     The system tries to compute the exact solution with every type
-    of recurrence, linear and non-linear of finite order, linear of
-    infinite order and also with functional equations, eventually
-    calling the methods that compute lower bound and upper bound and
-    verifying if they are coinciding.
+    of recurrence, linear and non-linear of finite order, weighted-average
+    and also with functional equations, eventually calling the methods
+    that compute lower bound and upper bound and verifying if they are
+    coinciding.
 
     If the method returns <CODE>SUCCESS</CODE> you can get the
     exact solution calling the method <CODE>exact_solution()</CODE>;
@@ -345,7 +345,7 @@ public:
     The system tries to compute the lower bound for the solution with
     every type of recurrence, not only with functional equations.
     In the case of linear and non-linear recurrences of finite order
-    and linear recurrences of infinite order, it tries to compute the
+    and weighted-average recurrences, it tries to compute the
     exact solution and, if it had success, the solution found obviously
     represent also a lower bound for the solution.
 
@@ -387,7 +387,7 @@ public:
     The system tries to compute the upper bound for the solution with
     every type of recurrence, not only with functional equations.
     In the case of linear and non-linear recurrences of finite order
-    and linear recurrences of infinite order, it tries to compute the
+    and weighted-average recurrences, it tries to compute the
     exact solution and, if it had success, the solution found obviously
     represent also an upper bound for the solution.
 
@@ -616,8 +616,8 @@ private:
   
   //! \brief
   //! Computes the exact solution of \p *this, where \p *this is a
-  //! linear recurrence of infinite order.
-  Solver_Status compute_exact_solution_infinite_order() const;
+  //! weighted-average recurrences.
+  Solver_Status compute_exact_solution_weighted_average() const;
 
   //! \brief
   //! Computes the requested bound (lower or upper, specified by
@@ -648,21 +648,21 @@ private:
 
   //! \brief
   //! Returns <CODE>SUCCESS</CODE> if the system is able to solve the
-  //! recurrence of infinite order
+  //! weighted-average recurrence
   //! \f$ x(n) = f(n) \sum_{k=n_0}^n-1 x(k) + g(n) \f$, where
   //! \f$ f(n) \f$ is stored in \p weight and  \f$ g(n) \f$ is stored
   //! in \p inhomogeneous: in this case the solution is returned in
   //! \p solution.
   Solver_Status
-  solve_new_infinite_order_rec(const Expr& weight, const Expr& inhomogeneous,
-			       index_type first_valid_index,
-			       Expr& solution) const;
+  solve_new_weighted_average_rec(const Expr& weight, const Expr& inhomogeneous,
+				 index_type first_valid_index,
+				 Expr& solution) const;
 
   //! \brief
-  //! Solves the recurrence of infinite order \p *this transforming it
+  //! Solves the weighted-average recurrence \p *this transforming it
   //! in a linear recurrence of finite order stored in a new object
   //! <CODE>Recurrence</CODE>.
-  Solver_Status compute_infinite_order_recurrence(Expr& solution) const;
+  Solver_Status compute_weighted_average_recurrence(Expr& solution) const;
 
   //! \brief
   //! Let \p solution_or_bound be the expression that represent the
@@ -718,10 +718,10 @@ private:
   Verify_Status verify_finite_order() const;
 
   //! \brief
-  //! Verifies the exact solution of the infinite order recurrence \p *this.
+  //! Verifies the exact solution of the weighted-average recurrence \p *this.
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
   //! the verification.
-  Verify_Status verify_infinite_order() const;
+  Verify_Status verify_weighted_average() const;
 
   //! \brief
   //! Performs the first step of the validation's process of the lower or
@@ -801,9 +801,9 @@ private:
     NON_LINEAR_FINITE_ORDER,
     
     /*!
-      Linear recurrence of infinite order. 
+      Weighted-average recurrence. 
     */
-    LINEAR_INFINITE_ORDER,
+    WEIGHTED_AVERAGE,
     
     /*!
       Special recurrence of the form \f$ x(n) = a x(n / b) + d n^e \f$ . 
@@ -822,7 +822,7 @@ private:
   mutable Finite_Order_Info* finite_order_p;
   mutable Functional_Equation_Info* functional_eq_p;
   mutable Non_Linear_Info* non_linear_p;
-  mutable Infinite_Order_Info* infinite_order_p;
+  mutable Weighted_Average_Info* weighted_average_p;
 
   //! Returns <CODE>type_</CODE>.
   const Type& type() const;
@@ -876,11 +876,11 @@ private:
   void set_functional_equation() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if the recurrence is linear
-  //! of infinite order; returns <CODE>false</CODE> otherwise.
+  //! Returns <CODE>true</CODE> if \p *this is a weighted-average
+  //! recurrence; returns <CODE>false</CODE> otherwise.
   bool is_linear_infinite_order() const;
 
-  //! Sets <CODE>type_recurrence =  LINEAR_INFINITE_ORDER</CODE>.
+  //! Sets <CODE>type_recurrence = WEIGHTED_AVERAGE</CODE>.
   void set_linear_infinite_order() const;
 
 
@@ -1020,39 +1020,39 @@ private:
   std::vector<Symbol>& auxiliary_symbols();
 
 
-  // Method to access to private data of `Infinite_Order_Info'.
+  // Method to access to private data of `Weighted_Average_Info'.
 
   //! \brief
-  //! In the case which the system is able to rewrite the infinite order
+  //! In the case which the system is able to rewrite the weighted-average
   //! recurrence \p *this in first order recurrence, this method returns
   //! the first order recurrence computed (in order to know the cases of
-  //! rewritable infinite order recurrences see the function
+  //! rewritable weighted-average recurrences see the function
   //! <CODE>rewrite_infinite_order_recurrence()</CODE>).
   const Recurrence& associated_first_order_rec() const;
 
   //! \brief
-  //! In the case which the system is able to rewrite the infinite order
+  //! In the case which the system is able to rewrite the weighted-average
   //! recurrence \p *this in first order recurrence, this method returns
   //! the first order recurrence computed (in order to know the cases of
-  //! rewritable infinite order recurrences see the function
+  //! rewritable weighted-average recurrence see the function
   //! <CODE>rewrite_infinite_order_recurrence()</CODE>).
   Recurrence& associated_first_order_rec();
 
   //! \brief
-  //! When the infinite order recurrence is not in normal form,
+  //! When the weighted-average recurrence is not in normal form,
   //! this data contains its right hand side before the transformation
   //! in normal form.
   void set_original_rhs(const Expr& original_rhs) const;
 
   //! \brief
-  //! Returns the factor \f$ f(n) \f$ of the infinite order recurrence
+  //! Returns the factor \f$ f(n) \f$ of the weighted-average recurrence
   //! \f[
   //!   T(n) = f(n) \sum_{k=0}^n T(k) + g(n).
   //! \f]
   const Expr& infinite_order_weight() const;
 
   //! \brief
-  //! Returns the factor \f$ f(n) \f$ of the infinite order recurrence
+  //! Returns the factor \f$ f(n) \f$ of the weighted-average recurrence
   //! \f[
   //!   T(n) = f(n) \sum_{k=0}^n T(k) + g(n).
   //! \f]

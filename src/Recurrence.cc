@@ -570,7 +570,7 @@ PURRS::Recurrence::verify_finite_order() const {
      FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
 */
 PURRS::Recurrence::Verify_Status
-PURRS::Recurrence::verify_infinite_order() const {
+PURRS::Recurrence::verify_weighted_average() const {
   Expr weight = infinite_order_weight();
   
   // The case `f(n) = -1', i.e. the recurrence has the form
@@ -602,7 +602,7 @@ PURRS::Recurrence::verify_infinite_order() const {
   // Consider the difference
   // `x(n) - (f(n) x(0) + f(n) sum(k, 1, n - 1, x(k)) + g(n))'
   // and tries to simplify it.
-  Expr diff = exact_solution_.expression()
+  diff = exact_solution_.expression()
     - diff * weight - x(0) * weight - inhomogeneous_term;
   diff = simplify_all(diff);
   if (diff == 0)
@@ -780,7 +780,7 @@ PURRS::Recurrence::verify_exact_solution() const {
     return verify_finite_order();
   // Case 3: linear recurrence of infinite order.
   else if (is_linear_infinite_order())
-    return verify_infinite_order();
+    return verify_weighted_average();
   else {
     assert(is_functional_equation());
     // Case 4 (special case): functional equation of the form
@@ -1044,10 +1044,10 @@ compute_non_linear_recurrence(Expr& solution_or_bound,
   returns <CODE>SUCCESS</CODE> and the solution is stored in \p solution.
 */
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::solve_new_infinite_order_rec(const Expr& weight,
-						const Expr& inhomogeneous,
-						index_type first_valid_index,
-						Expr& solution) const {
+PURRS::Recurrence::solve_new_weighted_average_rec(const Expr& weight,
+						  const Expr& inhomogeneous,
+						  index_type first_valid_index,
+						  Expr& solution) const {
   Symbol h;
   Recurrence rec_rewritten(weight * PURRS::sum(h, 0, n-1, x(h))
 			   + inhomogeneous);
@@ -1057,13 +1057,13 @@ PURRS::Recurrence::solve_new_infinite_order_rec(const Expr& weight,
   const Expr& inhomog_first_order
     = simplify_all(weight * (inhomogeneous / weight
 			     - (inhomogeneous / weight).substitute(n, n-1)));
-  rec_rewritten.infinite_order_p
-    = new Infinite_Order_Info(Recurrence(coeff_first_order*x(n-1)
-					 +inhomog_first_order), weight);
+  rec_rewritten.weighted_average_p
+    = new Weighted_Average_Info(Recurrence(coeff_first_order*x(n-1)
+					   +inhomog_first_order), weight);
   rec_rewritten.set_linear_infinite_order();
   associated_first_order_rec().set_first_valid_index(first_valid_index);
   rec_rewritten.set_inhomogeneous_term(inhomogeneous);
-  return rec_rewritten.compute_infinite_order_recurrence(solution);
+  return rec_rewritten.compute_weighted_average_recurrence(solution);
 }
 
 namespace {
@@ -1129,7 +1129,7 @@ increase_argument_x_function(const Expr& e, unsigned int num) {
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
-compute_infinite_order_recurrence(Expr& solution) const {
+compute_weighted_average_recurrence(Expr& solution) const {
   if (infinite_order_weight() == -1) {
     // Special case: `f(n) = -1'.
     // In this case the solution of the recurrence is simply
@@ -1355,10 +1355,10 @@ PURRS::Recurrence::compute_exact_solution_non_linear() const {
 }
 
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::compute_exact_solution_infinite_order() const {
+PURRS::Recurrence::compute_exact_solution_weighted_average() const {
   Solver_Status status;
   Expr solution;
-  if ((status = compute_infinite_order_recurrence(solution)) == SUCCESS) {
+  if ((status = compute_weighted_average_recurrence(solution)) == SUCCESS) {
     // FIXME: At the moment we substitute here only the initial
     // condition `x(0)'.
     std::map<unsigned int, Expr>::const_iterator i
@@ -1408,8 +1408,8 @@ PURRS::Recurrence::compute_exact_solution() const {
       return compute_exact_solution_functional_equation();
     case NON_LINEAR_FINITE_ORDER:
       return compute_exact_solution_non_linear();
-    case LINEAR_INFINITE_ORDER:
-      return compute_exact_solution_infinite_order();
+    case WEIGHTED_AVERAGE:
+      return compute_exact_solution_weighted_average();
     default:
       throw std::runtime_error("PURRS internal error: "
 			       "compute_exact_solution().");
@@ -1477,7 +1477,7 @@ PURRS::Recurrence::compute_lower_bound() const {
     case ORDER_ZERO:
     case LINEAR_FINITE_ORDER_CONST_COEFF:
     case LINEAR_FINITE_ORDER_VAR_COEFF:
-    case LINEAR_INFINITE_ORDER:
+    case WEIGHTED_AVERAGE:
       if (!tried_to_compute_exact_solution)
 	return compute_exact_solution();
       else
@@ -1517,7 +1517,7 @@ PURRS::Recurrence::compute_upper_bound() const {
     case ORDER_ZERO:
     case LINEAR_FINITE_ORDER_CONST_COEFF:
     case LINEAR_FINITE_ORDER_VAR_COEFF:
-    case LINEAR_INFINITE_ORDER:
+    case WEIGHTED_AVERAGE:
       if (!tried_to_compute_exact_solution)
 	return compute_exact_solution();
       else

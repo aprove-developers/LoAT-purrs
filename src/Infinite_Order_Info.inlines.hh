@@ -1,4 +1,4 @@
-/* Infinite_Order_Info class implementation: inline functions.
+/* Weighted_Average_Info class implementation: inline functions.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -29,15 +29,15 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-inline Infinite_Order_Info::
-Infinite_Order_Info(const Recurrence& associated_first_order_rec,
-		    const Expr& infinite_order_weight)
+inline Weighted_Average_Info::
+Weighted_Average_Info(const Recurrence& associated_first_order_rec,
+		      const Expr& infinite_order_weight)
   : associated_first_order_rec_(associated_first_order_rec),
     infinite_order_weight_(infinite_order_weight) {
 }
 
 inline
-Infinite_Order_Info::Infinite_Order_Info(const Infinite_Order_Info& y)
+Weighted_Average_Info::Weighted_Average_Info(const Weighted_Average_Info& y)
   : associated_first_order_rec_(y.associated_first_order_rec_),
     original_rhs_(y.original_rhs_),
     infinite_order_weight_(y.infinite_order_weight_),
@@ -45,11 +45,11 @@ Infinite_Order_Info::Infinite_Order_Info(const Infinite_Order_Info& y)
 }
 
 inline
-Infinite_Order_Info::~Infinite_Order_Info() {
+Weighted_Average_Info::~Weighted_Average_Info() {
 }
 
-inline Infinite_Order_Info&
-Infinite_Order_Info::operator=(const Infinite_Order_Info& y) {
+inline Weighted_Average_Info&
+Weighted_Average_Info::operator=(const Weighted_Average_Info& y) {
   associated_first_order_rec_ = y.associated_first_order_rec_;
   original_rhs_ = y.original_rhs_;
   infinite_order_weight_ = y.infinite_order_weight_;
@@ -58,37 +58,37 @@ Infinite_Order_Info::operator=(const Infinite_Order_Info& y) {
 }
 
 inline const Recurrence&
-Infinite_Order_Info::associated_first_order_rec() const {
+Weighted_Average_Info::associated_first_order_rec() const {
   return associated_first_order_rec_;
 }
 
 inline Recurrence&
-Infinite_Order_Info::associated_first_order_rec() {
+Weighted_Average_Info::associated_first_order_rec() {
   return associated_first_order_rec_;
 }
 
 inline void
-Infinite_Order_Info::set_original_rhs(const Expr& original_rhs) {
+Weighted_Average_Info::set_original_rhs(const Expr& original_rhs) {
   original_rhs_ = original_rhs;
 }
 
 inline const Expr&
-Infinite_Order_Info::infinite_order_weight() const {
+Weighted_Average_Info::infinite_order_weight() const {
   return infinite_order_weight_;
 }
 
 inline Expr&
-Infinite_Order_Info::infinite_order_weight() {
+Weighted_Average_Info::infinite_order_weight() {
   return infinite_order_weight_;
 }
 
 inline index_type
-Infinite_Order_Info::first_valid_index_inf_order() const {
+Weighted_Average_Info::first_valid_index_inf_order() const {
   return first_valid_index_inf_order_;
 }
 
 inline void
-Infinite_Order_Info::set_first_valid_index_inf_order(index_type i_c) {
+Weighted_Average_Info::set_first_valid_index_inf_order(index_type i_c) {
   first_valid_index_inf_order_ = i_c;
 }
 

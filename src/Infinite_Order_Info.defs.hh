@@ -33,23 +33,23 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-class Infinite_Order_Info {
+class Weighted_Average_Info {
 public:
   //! \brief
   //! Constructor: sets
   //! \f$ associated_first_order_rec_ = associated_first_order_rec \f$,
   //! \f$ infinite_order_weight_ = infinite_order_weight \f$.
-  Infinite_Order_Info(const Recurrence& associated_first_order_rec,
-		      const Expr& infinite_order_weight);
+  Weighted_Average_Info(const Recurrence& associated_first_order_rec,
+			const Expr& infinite_order_weight);
 
   //! Copy-constructor.
-  Infinite_Order_Info(const Infinite_Order_Info& y);
+  Weighted_Average_Info(const Weighted_Average_Info& y);
 
   //! Destructor.
-  ~Infinite_Order_Info();
+  ~Weighted_Average_Info();
 
   //! Assignment operator.
-  Infinite_Order_Info& operator=(const Infinite_Order_Info& y);
+  Weighted_Average_Info& operator=(const Weighted_Average_Info& y);
 
   //! Returns <CODE>associated_first_order_rec_</CODE>.
   const Recurrence& associated_first_order_rec() const;

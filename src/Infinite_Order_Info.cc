@@ -1,4 +1,4 @@
-/* Infinite_Order_Info class implementation (non-inline functions).
+/* Weighted_Average_Info class implementation (non-inline functions).
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
