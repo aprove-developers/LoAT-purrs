@@ -1,0 +1,31 @@
+% Each recurrence is marked with one or more characters
+% whose meaning is as follows:
+%
+% y expected to be solved
+%   v with a provably correct result
+%   p with a provably correct result for another recurrence used to
+%     solve *this.
+%   w with a provably wrong result
+%   d with a result whose correctness can neither be proved nor be disproved
+% n expected not to be solved
+% K unsolvable: expect the system to diagnose this
+% k unsolvable: expect the system not to diagnose this
+% I indeterminate: the recurrence has infinitely many solutions
+% M malformed: expect the system to gracefully deal with it
+% D domain error: the recurrence is not well-defined
+% m malformed: expect the system to die badly
+% u expected to find upper bound 
+%   v with a provably correct result
+%   w with a provably wrong result
+%   d with a result whose correctness can neither be proved nor be disproved
+% l expected to find lower bound
+%   v with a provably correct result
+%   w with a provably wrong result
+%   d with a result whose correctness can neither be proved nor be disproved
+% E explodes
+% b triggers a bug in the solver
+% X of mixed type
+% B bizarre: even assuming it makes sense, we have no plans to deal with it
+% * no expectations
+
+y max(2*x({m,p-1,q})+q, k)

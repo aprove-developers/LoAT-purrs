@@ -32,11 +32,12 @@ EXTRA_DIST = ehandlers.cc simpl_tests polynomials recurrences heap
 
 BUGS =
 
-noinst_PROGRAMS = simplify_driver eqs_driver rrs_driver gosper_driver rr_filter zeilberger_driver
+noinst_PROGRAMS = simplify_driver eqs_driver rrs_driver multivar_driver gosper_driver rr_filter zeilberger_driver
 
 simplify_driver_SOURCES = simplify_driver.cc
 eqs_driver_SOURCES = eqs_driver.cc
 rrs_driver_SOURCES = rrs_driver.cc
+multivar_driver_SOURCES = multivar_driver.cc
 gosper_driver_SOURCES = gosper_driver.cc
 rr_filter_SOURCES = rr_filter.cc
 zeilberger_driver_SOURCES = zeilberger_driver.cc
