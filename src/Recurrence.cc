@@ -211,15 +211,13 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
   else {
     // Step 1: validation of initial conditions.
     for (unsigned i = order_rec; i-- > 0; ) {
-      Expr solution_valuated = rec.exact_solution_.expression()
+      Expr solution_evaluated = rec.exact_solution_.expression()
 	.substitute(n, first_i_c + i);
-      solution_valuated = rec.blackboard.rewrite(solution_valuated);
-      solution_valuated = simplify_all(solution_valuated);
-      D_VAR(solution_valuated);
-      unsigned i_c = first_i_c + i;
-      if (rec.applied_order_reduction)
-	i_c = i_c % rec.gcd_among_decrements();
-      if (solution_valuated != x(i_c))
+      solution_evaluated = rec.blackboard.rewrite(solution_evaluated);
+      solution_evaluated = simplify_all(solution_evaluated);
+      D_VAR(solution_evaluated);
+      D_VAR(x(first_i_c + i));
+      if (solution_evaluated != x(first_i_c + i))
 	return INCONCLUSIVE_VERIFICATION;
     }
     // Step 2: find `partial_solution'.
@@ -411,12 +409,16 @@ PURRS::Recurrence::apply_order_reduction() const {
     // - r                      -> mod(n, gcd_among_decrements);
     // - n                      -> 1 / gcd_among_decrements
     //                             * (n - mod(n, gcd_among_decrements));
-    // - x(k), k non-negative integer -> x(mod(n, gcd_among_decrements)).
+    // - x(k), k non-negative integer -> x(mod(n, gcd_among_decrements))
+    //                                   + k * gcd_among_decrements.
     exact_solution_.set_expression(come_back_to_original_variable
 				   (rec_rewritten
 				    .exact_solution_.expression(), r,
 				    get_auxiliary_definition(r),
 				    gcd_among_decrements()));
+    // We must copy the values in the blackboard of the reduced recurrence
+    // in the blackboard of the original recurrences.
+    blackboard = rec_rewritten.blackboard;
     // If there are defined initial conditions in the map
     // `initial_conditions' then we must to deduce the exact form
     // of the solution and substitute to it the defined initial
