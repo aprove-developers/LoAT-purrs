@@ -267,7 +267,7 @@ resultant(const GExpr& p, const GExpr& q, const GSymbol& x) {
   // Special case: `f' or `g' is a constant polynomial. By definition
   // `Res(f, g) = f.lcoeff(n)^g.degree(n) * g.lcoeff(n)^f.degree(n)'. 
   if (deg_f == 0 || deg_g == 0)
-    res = pow(f.lcoeff(n), deg_g) * pow(g.lcoeff(n), deg_f);
+    res = pow(f.lcoeff(x), deg_g) * pow(g.lcoeff(x), deg_f);
   else {
     // Modified Euclid's algorithm starts here.
     while (deg_f > 0) {
