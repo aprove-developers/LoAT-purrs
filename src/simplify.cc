@@ -39,9 +39,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Recurrence.defs.hh"
 #include <vector>
 
-// TEMPORARY
-#include <iostream>
-
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 #define Napier exp(Expr(1))
@@ -918,8 +915,9 @@ simplify_expanded_ex_for_input(const Expr& e, bool input) {
     for (unsigned i = e.nops(); i-- > 0; )
       e_rewritten *= simplify_expanded_ex_for_input(e.op(i), input);
     // In the case of expressions for input we are interesting to collect
-    // powers with the same exponents when this is equal to `Recurrence::n'. 
-    e_rewritten = collect_same_exponents(e_rewritten, true);
+    // powers with the same exponents when this is equal to `Recurrence::n'.
+    if (e_rewritten.is_a_mul())
+      e_rewritten = collect_same_exponents(e_rewritten, true);
   }
   else if (e.is_a_power())
     return simplify_powers(e, input);
