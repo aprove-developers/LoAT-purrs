@@ -271,7 +271,7 @@ find_factor_for_numerator(const Expr& d, const Expr& f) {
 }
 
 /*!
-  Let \f$ e(n) = \frac{n_1}{d_1} + \dots + \frac{n_k}{d_k} \f$.
+  Let \f$ e = \frac{n_1}{d_1} + \dots + \frac{n_k}{d_k} \f$.
   The vectors \p numerators and \p denominators contain
   \f$ n_1, \dots, n_k \f$ and \f$ d_1, \dots, d_k \f$, respectively;
   \p denominator contain the common denominator of \f$ d_1, \dots, d_k \f$
@@ -367,6 +367,14 @@ numerator_denominator_term(const Expr& e,
 
 } // anonymous namespace
 
+/*!
+  Let \f$ e = \frac{n_1}{d_1} + \dots + \frac{n_k}{d_k} \f$.
+  This function returns two expressions:
+  in \p denominator puts the product \f$ d \f$ of common and not common
+  factors of \f$ d_1, \cdots, d_k \f$ with maximum exponent;
+  in \p numerator puts the \f$ \sum_{i = 1}^k \frac{d}{d_i} n_i \f$.
+  The expression \f$ n / d \f$ is equivalent to \f$ e \f$.
+*/
 void
 PURRS::numerator_denominator_purrs(const Expr& e,
 				   Expr& numerator, Expr& denominator) {
@@ -374,29 +382,29 @@ PURRS::numerator_denominator_purrs(const Expr& e,
   // and will contain the numerator and the denominator of each term of `e'.  
   std::vector<Expr> numerators;
   std::vector<Expr> denominators;
-  numerator = 1;
   denominator = 1;
   if (e.is_a_add()) {
     numerators.insert(numerators.begin(), e.nops(), Number(1));
     denominators.insert(denominators.begin(), e.nops(), Number(1));
     for (unsigned i = e.nops(); i-- > 0; ) {
-      Expr tmp_denominator;
-      numerator_denominator_term(e.op(i), numerator, tmp_denominator);
-      numerators[i] = numerator;
-      denominators[i] = tmp_denominator;
-      Expr& old_denominator = denominator;
-      denominator = take_common_and_not_factors(old_denominator,
-						tmp_denominator);
+      // Find numerator and denominator of i-th term of `e'.
+      numerator_denominator_term(e.op(i), numerators[i], denominators[i]);
+      // Find common denominator, i.e., the product of common and not common
+      // factors with maximum exponent, between `denominator' and the
+      // denominator of the i-th term.
+      denominator = take_common_and_not_factors(denominator, denominators[i]);
     }
+    // Now we have numerator and denominator of each term and also the common
+    // denominator, so we can find the numerator.
     numerator = find_numerator(numerators, denominators, denominator);
   }
-  else {
+  else
+    // Find numerator and denominator of `e'.
     numerator_denominator_term(e, numerator, denominator);
-  }
 }
 
 /*!
-  Let \f$ e(n) = \frac{n_1}{d_1} + \dots + \frac{n_k}{d_k} \f$.
+  Let \f$ e = \frac{n_1}{d_1} + \dots + \frac{n_k}{d_k} \f$.
   This function returns \f$ n = \sum_{i = 1}^k \frac{d}{d_i} n_i \f$
   where \f$ d \f$ is the product of common and not common factors of
   \f$ d_1, \cdots, d_k \f$ with maximum exponent.
@@ -411,7 +419,7 @@ PURRS::numerator(const Expr& e) {
 }
 
 /*!
-  Let \f$ e(n) = \frac{n_1}{d_1} + \dots + \frac{n_k}{d_k} \f$.
+  Let \f$ e = \frac{n_1}{d_1} + \dots + \frac{n_k}{d_k} \f$.
   This function returns the product of common and not common factors of
   \f$ d_1, \cdots, d_k \f$ with maximum exponent.
 */
