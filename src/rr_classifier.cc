@@ -249,6 +249,7 @@ find_max_decrement_and_coeff(const Expr& e,
 */
 void
 eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs) {
+  D_MSG("*** eliminate negative decrements");
   // Seeks `max_decrement', i.e., the largest positive integer `j' such that
   // `x(n+j)' occurs in `rhs' with a coefficient `coefficient' which is not
   // syntactically 0.
@@ -490,71 +491,42 @@ x_function_in_powers_or_functions(const Expr& e) {
 //! returns \f$ 2 \f$ otherwise.
 unsigned
 find_non_linear_term(const Expr& e) {
+  assert(!e.is_a_add());
   // Even if we find a `legal' (i.e. not containing two nested `x' function)
   // non-linear term we do not exit from this function because we must be
   // sure that there are not non-linear term not legal.
   // If `non_linera_term' at the end of this function is again `2' means
   // that we are not find non-linear terms.
   unsigned non_linear_term = 2;
-  unsigned num_summands = e.is_a_add() ? e.nops() : 1;
-  if (num_summands > 1)
-    for (unsigned i = num_summands; i-- > 0; ) {
-      const Expr& term = e.op(i);
-      unsigned num_factors = term.is_a_mul() ? term.nops() : 1;
-      if (num_factors == 1) {
-	unsigned tmp = x_function_in_powers_or_functions(term);
-	// Nested `x' function.
-	if (tmp == 1)
-	  return 1;
-	else if (tmp == 0)
-	  non_linear_term = 0;
-      }
-      else {
-	bool found_function_x = false;
-	for (unsigned j = num_factors; j-- > 0; ) {
-	  const Expr& factor = term.op(j);
-	  unsigned tmp = x_function_in_powers_or_functions(factor);
-	  // Nested `x' function.
-	  if (tmp == 1)
-	    return 1;
-	  else if (tmp == 0)
-	    non_linear_term = 0;
-	  if (factor.is_the_x_function())
-	    if (found_function_x)
-	      non_linear_term = 0;
-	    else
-	      if (factor.arg(0).has(Recurrence::n))
-		found_function_x = true;
-	}
-      }
-    }
+  unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
+  if (num_factors == 1) {
+    unsigned tmp = x_function_in_powers_or_functions(e);
+    // Nested `x' function: not legal non-linear term.
+    if (tmp == 1)
+      return 1;
+    // We have found legal non-linear term.
+    else if (tmp == 0)
+      non_linear_term = 0;
+  }
   else {
-    unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
-    if (num_factors == 1) {
-      unsigned tmp = x_function_in_powers_or_functions(e);
-      // Nested `x' function.
+    bool found_function_x = false;
+    for (unsigned j = num_factors; j-- > 0; ) {
+      const Expr& factor = e.op(j);
+      unsigned tmp = x_function_in_powers_or_functions(factor);
+      // Nested `x' function: not legal non-linear term.
       if (tmp == 1)
 	return 1;
+      // We have found legal non-linear term.
       else if (tmp == 0)
 	non_linear_term = 0;
-    }
-    else {
-      bool found_function_x = false;
-      for (unsigned j = num_factors; j-- > 0; ) {
-	const Expr& factor = e.op(j);
-	unsigned tmp = x_function_in_powers_or_functions(factor);
-	// Nested `x' function.
-	if (tmp == 1)
-	  return 1;
-	else if (tmp == 0)
+      if (factor.is_the_x_function())
+	// We have found legal non-linear term product of two ore more
+	// `x' functions.
+	if (found_function_x)
 	  non_linear_term = 0;
-	if (factor.is_the_x_function())
-	  if (found_function_x)
-	    non_linear_term = 0;
-	  else
-	    if (factor.arg(0).has(Recurrence::n))
-	      found_function_x = true;
-      }
+	else
+	  if (factor.arg(0).has(Recurrence::n))
+	    found_function_x = true;
     }
   }
   return non_linear_term;
@@ -700,6 +672,27 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 					  int num_term,
 					  std::map<Number, Expr>&
 					  homogeneous_terms) const {
+  // `non_linear_term == 0' or `non_linear_term == 1' indicate
+  // two different cases of non-linearity.
+  unsigned non_linear_term = find_non_linear_term(addend);
+  if (non_linear_term == 0) {
+    Expr new_rhs;
+    Expr base;
+    std::vector<Symbol> auxiliary_symbols;
+    if (rewrite_non_linear_recurrence(*this, recurrence_rhs, new_rhs, base,
+				      auxiliary_symbols)) {
+      set_non_linear_finite_order();
+      non_linear_p = new Non_Linear_Info(recurrence_rhs, new_rhs, base,
+					 auxiliary_symbols);
+      return SUCCESS;
+    }
+    else
+      return TOO_COMPLEX;
+  }
+  // This is the case of nested `x' function with argument containing `n'.
+  else if (non_linear_term == 1)
+    return MALFORMED_RECURRENCE;
+
   unsigned num_factors = addend.is_a_mul() ? addend.nops() : 1;
   Number num;
   if (num_factors == 1)
@@ -761,6 +754,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
     else if (addend.is_the_sum_function() && addend.arg(2).has(n)
 	     && addend.arg(3).has_x_function(false, addend.arg(0))) {
       D_MSG("infinite order");
+      
       return TOO_COMPLEX;
     }
     else
@@ -876,26 +870,7 @@ PURRS::Recurrence::classify() const {
   // Simplifies expanded expressions, in particular rewrites nested powers.
   recurrence_rhs = simplify_ex_for_input(recurrence_rhs, true);
 
-  // `non_linear_term == 0' or `non_linear_term == 1' indicate
-  // two different cases of non-linearity.
-  unsigned non_linear_term = find_non_linear_term(recurrence_rhs);
-  if (non_linear_term == 0) {
-    Expr new_rhs;
-    Expr base;
-    std::vector<Symbol> auxiliary_symbols;
-    if (rewrite_non_linear_recurrence(*this, recurrence_rhs, new_rhs, base,
-				      auxiliary_symbols)) {
-      set_non_linear_finite_order();
-      non_linear_p = new Non_Linear_Info(recurrence_rhs, new_rhs, base,
-					 auxiliary_symbols);
-      return SUCCESS;
-    }
-    else
-      return TOO_COMPLEX;
-  }
-  // This is the case of nested `x' function with argument containing `n'.
-  else if (non_linear_term == 1)
-    return MALFORMED_RECURRENCE;
+  // Date for linear finite order recurrences.
 
   // Initialize the computation of the order of the linear part of the
   // recurrence.  This works like the computation of a maximum: it is
@@ -911,7 +886,10 @@ PURRS::Recurrence::classify() const {
   // recurrence.
   int gcd_among_decrements = 0;
 
+  // Date for functional equations.
+
   std::map<Number, Expr> homogeneous_terms;
+
 
   Expr inhomogeneous = 0;
 
@@ -945,7 +923,8 @@ PURRS::Recurrence::classify() const {
   else
     finite_order_p = new Finite_Order_Info(order, coefficients,
 					   gcd_among_decrements);
-  assert(is_linear_finite_order() || is_functional_equation());
+  assert(is_linear_finite_order() || is_functional_equation()
+	 || is_non_linear_finite_order());
   return SUCCESS;
 }
 
