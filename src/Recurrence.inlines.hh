@@ -272,17 +272,17 @@ Recurrence::set_first_i_c_for_linear(unsigned i_c) const {
 }
 
 inline const std::vector<Expr>&
-Recurrence::coefficients_lfo() const {
+Recurrence::coefficients() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> coefficients_lfo();
+  return finite_order_p -> coefficients();
 }
 
 inline std::vector<Expr>&
-Recurrence::coefficients_lfo() {
+Recurrence::coefficients() {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> coefficients_lfo();
+  return finite_order_p -> coefficients();
 }
 
 inline unsigned

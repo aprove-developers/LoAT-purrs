@@ -427,8 +427,8 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
 }
   
 void
-insert_coefficients_lfo(const Expr& coeff, unsigned long index,
-			std::vector<Expr>& coefficients) {
+insert_coefficients(const Expr& coeff, unsigned long index,
+		    std::vector<Expr>& coefficients) {
   // The vector `coefficients' contains in the `i'-th position the
   // coefficient of `x(n-i)'.  The first position always contains 0.
   if (index > coefficients.size())
@@ -689,7 +689,7 @@ PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classification_summand(const Expr& addend,
 					  Expr& inhomogeneous,
 					  unsigned int& order,
-					  std::vector<Expr>& coefficients_lfo,
+					  std::vector<Expr>& coefficients,
 					  int& gcd_among_decrements,
 					  int num_term,
 					  std::map<Number, Expr>&
@@ -709,7 +709,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	  unsigned long index;
 	  Solver_Status status
 	    = compute_order(decrement, order, index,
-			    coefficients_lfo.max_size());
+			    coefficients.max_size());
 	  if (status != SUCCESS)
 	    return status;
 	  if (is_order_zero() || is_unknown())
@@ -723,7 +723,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	    gcd_among_decrements = index;
 	  else
 	    gcd_among_decrements = gcd(gcd_among_decrements, index);
-	  insert_coefficients_lfo(1, index, coefficients_lfo);
+	  insert_coefficients(1, index, coefficients);
 	}
 	else
 	  return HAS_NON_INTEGER_DECREMENT;
@@ -777,7 +777,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	    assert(!found_function_x);
 	    Solver_Status status
 	      = compute_order(decrement, order, index,
-			      coefficients_lfo.max_size());
+			      coefficients.max_size());
 	    if (status != SUCCESS)
 	      return status;
 	    if (is_functional_equation())
@@ -827,7 +827,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	homogeneous_terms
 	  .insert(std::map<Number, Expr>::value_type(divisor, possibly_coeff));
       else {
-	insert_coefficients_lfo(possibly_coeff, index, coefficients_lfo);
+	insert_coefficients(possibly_coeff, index, coefficients);
 	if (!is_linear_finite_order_var_coeff())
 	  if (found_n)
 	    set_linear_finite_order_var_coeff();
@@ -897,7 +897,7 @@ PURRS::Recurrence::classify() const {
   // then `order' is left to `0'.
   unsigned int order = 0;
   // We will store here the coefficients of linear part of the recurrence.
-  std::vector<Expr> coefficients_lfo;
+  std::vector<Expr> coefficients;
 
   // We will store here the greatest common denominator among the decrements
   // `d' of the terms `x(n-d)' contained in the linear part of the
@@ -916,7 +916,7 @@ PURRS::Recurrence::classify() const {
     // It is necessary that the following loop starts from `0'.
     for (unsigned i = 0; i < num_summands; ++i) {
       if ((status = classification_summand(recurrence_rhs.op(i), inhomogeneous,
-					   order, coefficients_lfo,
+					   order, coefficients,
 					   gcd_among_decrements, i,
 					   homogeneous_terms))
 	  != SUCCESS)
@@ -924,7 +924,7 @@ PURRS::Recurrence::classify() const {
     }
   else
     if ((status = classification_summand(recurrence_rhs, inhomogeneous,
-					 order, coefficients_lfo,
+					 order, coefficients,
 					 gcd_among_decrements, 0,
 					 homogeneous_terms))
 	!= SUCCESS)
@@ -941,7 +941,7 @@ PURRS::Recurrence::classify() const {
     //  non-negative integers.
     if (order == 0)
       set_order_zero();
-    finite_order_p = new Finite_Order_Info(order, 0, coefficients_lfo,
+    finite_order_p = new Finite_Order_Info(order, 0, coefficients,
 					   gcd_among_decrements);
   }
   assert(is_linear_finite_order() || is_functional_equation());

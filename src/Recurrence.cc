@@ -267,14 +267,14 @@ PURRS::Recurrence::verify_solution() const {
 	  // ourselves if is verified the reduced recurrence.
 	  Symbol r = insert_auxiliary_definition(mod(n,
 						     gcd_among_decrements()));
-	  unsigned dim = coefficients_lfo().size()
+	  unsigned dim = coefficients().size()
 	    / gcd_among_decrements() + 1;
 	  std::vector<Expr> new_coefficients(dim);
 	  Expr inhomogeneous = 0;
 	  Recurrence rec_rewritten
 	    (rewrite_reduced_order_recurrence(recurrence_rhs, r,
 					      gcd_among_decrements(),
-					      coefficients_lfo(),
+					      coefficients(),
 					      new_coefficients,
 					      inhomogeneous));
 	  rec_rewritten.finite_order_p
@@ -396,13 +396,13 @@ PURRS::Recurrence::apply_order_reduction() const {
   // `x' functions with `gcd_among_decrements * n + r' and `x(n-k)' with
   // `x(n - k / gcd_among_decrements)'.
   Symbol r = insert_auxiliary_definition(mod(n, gcd_among_decrements()));
-  unsigned dim = coefficients_lfo().size() / gcd_among_decrements() + 1;
+  unsigned dim = coefficients().size() / gcd_among_decrements() + 1;
   std::vector<Expr> new_coefficients(dim);
   Expr inhomogeneous = 0;
   Recurrence rec_rewritten
     (rewrite_reduced_order_recurrence(recurrence_rhs, r,
 				      gcd_among_decrements(),
-				      coefficients_lfo(), new_coefficients,
+				      coefficients(), new_coefficients,
 				      inhomogeneous));
   rec_rewritten.finite_order_p
     = new Finite_Order_Info(dim - 1, 0, new_coefficients, 1);

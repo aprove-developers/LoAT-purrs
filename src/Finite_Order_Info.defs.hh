@@ -67,11 +67,11 @@ public:
   //! Sets <CODE>first_i_c_for_linear_</CODE> with \p i_c
   void set_first_i_c_for_linear(unsigned i_c);
 
-  //! Returns <CODE>coefficients_lfo_</CODE>.
-  const std::vector<Expr>& coefficients_lfo() const;
+  //! Returns <CODE>coefficients_</CODE>.
+  const std::vector<Expr>& coefficients() const;
 
-  //! Returns <CODE>coefficients_lfo_</CODE>.
-  std::vector<Expr>& coefficients_lfo();
+  //! Returns <CODE>coefficients_</CODE>.
+  std::vector<Expr>& coefficients();
 
   //! Returns <CODE>gcd_among_decrements_</CODE>.
   unsigned gcd_among_decrements() const;
@@ -89,7 +89,7 @@ private:
   unsigned first_i_c_for_linear_;
 
   //! Stores the coefficients of the recurrence.
-  std::vector<Expr> coefficients_lfo_;
+  std::vector<Expr> coefficients_;
 
   //! \brief
   //! Stores the greatest common divisor among the positive integer \f$ k \f$

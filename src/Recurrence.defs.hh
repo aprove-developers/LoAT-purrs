@@ -273,7 +273,7 @@ private:
   Solver_Status classify_and_catch_special_cases() const;
   Solver_Status classification_summand(const Expr& r, Expr& e,
 				       unsigned int& order,
-				       std::vector<Expr>& coefficients_lfo,
+				       std::vector<Expr>& coefficients,
 				       int& gcd_among_decrements,
 				       int num_term,
 				       std::map<Number, Expr>&
@@ -472,10 +472,10 @@ private:
   void set_first_i_c_for_linear(unsigned i_c) const;
 
   //! Returns the coefficients of the linear finite order recurrence.
-  const std::vector<Expr>& coefficients_lfo() const;
+  const std::vector<Expr>& coefficients() const;
 
   //! Returns the coefficients of the linear finite order recurrence.
-  std::vector<Expr>& coefficients_lfo();
+  std::vector<Expr>& coefficients();
 
   //! \brief
   //! Returns the greatest common divisor among the decrements \f$ k \f$
