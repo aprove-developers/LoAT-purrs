@@ -154,7 +154,6 @@ y	5*x(n-4)+n*log(log(n))
 y	8*x(n-1)-21*x(n-2)
 y	8*x(n-1)-21*x(n-2)+18*x(n-3)
 y	a*x(n-2)+mod(n,b)
-y	n*x(n-1)+n^n
 y	x(n+-1)+x(n+-2)
 y	x(n+1)-x(n-1)
 y	x(n-1)+2*x(n-2)-2*x(n-3)
@@ -345,6 +344,7 @@ yv	n*x(n-1)+a
 yv	n*x(n-1)+log(n)
 yv	n*x(n-1)+n
 yv	n*x(n-1)+n!
+yv	n*x(n-1)+n^n
 yv	n*x(n-1)-1/(n+1)
 yv	n+1
 yv	n+x(n-1)
