@@ -176,12 +176,12 @@ private:
 			 int& order, int& gcd_among_decrements,
 			 int num_term);
   static Solver_Status
-  solve_constant_coeff_order_1(const Symbol& n, const Expr& inhomogeneous_term,
+  solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
 			       const std::vector<Polynomial_Root>& roots,
 			       const std::vector<Expr>& initial_conditions,
 			       Expr& solution);
   static Solver_Status
-  solve_variable_coeff_order_1(const Symbol& n, const Expr& inhomogeneous_term,
+  solve_variable_coeff_order_1(const Expr& inhomogeneous_term,
 			       const Expr& coefficient, Expr& solution);
 
 #if 0
