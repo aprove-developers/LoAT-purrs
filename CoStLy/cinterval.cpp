@@ -26,6 +26,8 @@
 #include "cinterval.h"
 #include "error.h"
 
+using std::ostream;
+
 cinterval operator - (const cinterval& z)
 {
   return cinterval( -z.re(), -z.im() );
@@ -349,6 +351,7 @@ Interval abs(const cinterval& z)
   return sqrt(sqr(z.re())+sqr(z.im())); 
 } 
 
+#ifdef HAS_Complex
 Complex  mid (const cinterval& z)
 {
   return Complex( mid(z.re()), mid(z.im()) );
@@ -358,6 +361,7 @@ Complex  diam(const cinterval& z)
 {
   return Complex( diam(z.re()), diam(z.im()) );
 }
+#endif
 
 //Binary operators
 

@@ -77,6 +77,9 @@
 
 typedef Interval interval;
 
+using std::abs;
+using std::max;
+
 inline const interval& HALFPI()
 { 
   static const interval hp( interval::PI() / 2.0 );

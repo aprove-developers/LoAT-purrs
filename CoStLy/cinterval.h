@@ -28,7 +28,13 @@
 
 #include "Interval.h" //filib++ Header: Macro Version
 #include <iostream>
+#ifdef HAS_Complex
 #include <Complex.h>
+#endif
+
+#ifdef FILIB_NAMESPACES
+typedef filib::Interval Interval;
+#endif
 
 class cinterval
 {
@@ -44,7 +50,9 @@ public:
 
   explicit cinterval(const Interval& x) : real_part(x), imag_part(0.0) {}
   explicit cinterval(const double& d) : real_part(d), imag_part(0.0) {}
+#ifdef HAS_Complex
   explicit cinterval(const Complex& c) : real_part(c.real()), imag_part(c.imag()) {}
+#endif
 
   cinterval& operator = (const cinterval& z)
   {
@@ -92,9 +100,10 @@ inline const Interval& Re(const cinterval& z) { return z.re(); }
 inline const Interval& Im(const cinterval& z) { return z.im(); }
 
 Interval abs (const cinterval&);
+#ifdef HAS_Complex
 Complex  mid (const cinterval&);
 Complex  diam(const cinterval&);
-
+#endif
 cinterval operator - (const cinterval&);
 
 // cinterval o cinterval, o \in { +,-,* }.
@@ -134,7 +143,7 @@ cinterval operator / (const cinterval&, const double&);
 
 // output
 
-ostream& operator << (ostream&, const cinterval&);
+std::ostream& operator << (std::ostream&, const cinterval&);
 
 //
 

@@ -26,7 +26,7 @@
 #ifndef _CIMATH_H_INCLUDED
 #define _CIMATH_H_INCLUDED
 
-#include "cinterval.hpp"
+#include "cinterval.h"
 
 cinterval exp(const cinterval&);
 cinterval cos(const cinterval&);

@@ -28,25 +28,25 @@
 
 #include <stdexcept>
 
-class syntax_error : public logic_error 
+class syntax_error : public std::logic_error 
 {
  public:
-  syntax_error(const string& what_arg) : logic_error(what_arg) {}
+  syntax_error(const std::string& what_arg) : logic_error(what_arg) {}
 };
 
-class division_by_zero : public logic_error  
+class division_by_zero : public std::logic_error  
 {
  public:
   division_by_zero() : logic_error("") {}
 };
 
-class function_not_defined : public invalid_argument
+class function_not_defined : public std::invalid_argument
 {
  public:
   function_not_defined() : invalid_argument("") {}
 };
 
-class wrong_dimensions : public length_error
+class wrong_dimensions : public std::length_error
 {
  public:
   wrong_dimensions() : length_error("") {}
