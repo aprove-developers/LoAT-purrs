@@ -112,6 +112,33 @@ Recurrence::set_non_linear_finite_order() {
   type = NON_LINEAR_FINITE_ORDER;
 }
 
+inline int
+Recurrence::get_order() {
+  assert(is_linear_finite_order_const_coeff()
+	 || is_linear_finite_order_var_coeff()
+	 || is_non_linear_finite_order());
+  assert(tdip);
+  return tdip -> order;
+}
+
+inline std::vector<unsigned>
+Recurrence::get_decrements() {
+  assert(is_linear_finite_order_const_coeff()
+	 || is_linear_finite_order_var_coeff()
+	 || is_non_linear_finite_order());
+  assert(tdip);
+  return tdip -> decrements;
+}
+
+inline std::vector<unsigned>
+Recurrence::get_initial_conditions() {
+  assert(is_linear_finite_order_const_coeff()
+	 || is_linear_finite_order_var_coeff()
+	 || is_non_linear_finite_order());
+  assert(tdip);
+  return tdip -> initial_conditions;
+}
+
 inline Recurrence::Solver_Status
 Recurrence::solve() const {
   Solver_Status status = OK;

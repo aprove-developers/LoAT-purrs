@@ -44,7 +44,7 @@ public:
   //! Assignment operator.
   Finite_Order_Info& operator=(const Finite_Order_Info& y);
 
-  // Return the order of the recurrence.
+  // Returns the order of the recurrence.
   int get_order();
 
   //! Sets the vector <CODE>decrements</CODE> from \p dec.
@@ -60,6 +60,8 @@ public:
   void add_initial_conditions(unsigned i);
 
 private:
+  friend class Recurrence;
+
   //! The order of the recurrence. 
   int order;
 

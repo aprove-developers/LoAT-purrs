@@ -210,6 +210,17 @@ private:
   //! Sets <CODE>type_recurrence = NON_LINEAR_FINITE_ORDER</CODE>.
   void set_non_linear_finite_order();
 
+  //! Returns the order of the finite order recurrence.
+  int get_order();
+
+  //! Returns the positive integers \f$ d \f$ of the \f$ x(n - d) \f$
+  //! contained in the right hand side of the finite order recurrence.  
+  std::vector<unsigned> get_decrements();
+
+  //! Returns the initial conditions associated to the finite order
+  //! recurrence.
+  std::vector<unsigned> get_initial_conditions();
+
   mutable bool solved;
 
   mutable Expr solution;
@@ -225,7 +236,8 @@ private:
   compute_order(const Number& decrement, int& order, unsigned long& index,
 		unsigned long max_size);
   static Solver_Status
-  classification_summand(const Expr& r, Expr& e, std::vector<Expr>& coefficients,
+  classification_summand(const Expr& r, Expr& e,
+			 std::vector<Expr>& coefficients,
 			 bool& has_non_constant_coefficients,
 			 int& order, int& gcd_among_decrements,
 			 int num_term);
