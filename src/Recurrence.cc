@@ -1524,7 +1524,10 @@ PURRS::Recurrence::lower_bound(Expr& e) const {
     e = evaluated_lower_bound_.replace_system_generated_symbols(*this);
   }
   set_first_valid_index_for_solution();
-  set_definition_Sc();
+  if (is_functional_equation()
+      || (is_non_linear_finite_order()
+	  && associated_linear_rec().is_functional_equation()))
+    set_definition_Sc();
   assert(has_only_symbolic_initial_conditions(e));
 }
 
@@ -1553,7 +1556,10 @@ PURRS::Recurrence::upper_bound(Expr& e) const {
     e = evaluated_upper_bound_.replace_system_generated_symbols(*this);
   }
   set_first_valid_index_for_solution();
-  set_definition_Sc();
+  if (is_functional_equation()
+      || (is_non_linear_finite_order()
+	  && associated_linear_rec().is_functional_equation()))
+    set_definition_Sc();
   assert(has_only_symbolic_initial_conditions(e));
 }
 
