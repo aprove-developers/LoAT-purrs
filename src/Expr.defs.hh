@@ -183,6 +183,7 @@ Expr tan(const Expr& x);
 Expr exp(const Expr& x);
 Expr log(const Expr& x);
 Expr factorial(const Expr& x);
+Expr gamma(const Expr& x);
 
 // FIXME: what is a polynomial in a variable `x'?
 // The answer is necessary for the function quo(), rem(), prem(), gcd(),
@@ -469,6 +470,11 @@ public:
   //! Returns <CODE>true</CODE> if and only if \p *this is the function
   //! <CODE>factorial()</CODE>.
   bool is_the_factorial_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>gamma()</CODE>.
+  bool is_the_gamma_function() const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is the function
@@ -850,6 +856,7 @@ private:
   friend Expr exp(const Expr& x);
   friend Expr log(const Expr& x);
   friend Expr factorial(const Expr& x);
+  friend Expr gamma(const Expr& x);
   friend Expr quo(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr rem(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr prem(const Expr& a, const Expr& b, const Symbol& x);

@@ -238,6 +238,11 @@ factorial(const Number& n) {
 }
 
 inline Number
+gamma(const Number& n) {
+  return GiNaC::tgamma(n.n);
+}
+
+inline Number
 gcd(const Number& x, const Number& y) {
   return GiNaC::gcd(x.n, y.n);
 }

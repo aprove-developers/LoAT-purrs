@@ -601,6 +601,11 @@ factorial(const Expr& x) {
 }
 
 inline Expr
+gamma(const Expr& x) {
+  return GiNaC::tgamma(static_cast<const Expr::Base>(x));
+}
+
+inline Expr
 quo(const Expr& a, const Expr& b, const Symbol& x) {
   assert(a.is_polynomial(x.s));
   assert(b.is_polynomial(x.s));

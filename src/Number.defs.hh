@@ -100,6 +100,15 @@ Number abs(const Number& x);
 */
 Number factorial(const Number& x);
 
+//! \brief
+//! If \f$ x \f$ is a natural positive number, returns the value of
+//! the function <CODE>gamma</CODE> evalueted in \f$ x \f$.
+/*!
+  \exception std:: FIXME!!
+*/
+Number gamma(const Number& x);
+
+//! \brief
 //! If \f$ x \f$ and \f$ y \f$ are integer, returns the greatest common
 //! divisor of \f$ x \f$ and \f$ y \f$.
 //! Returns 1 otherwise.
@@ -303,6 +312,7 @@ private:
 
   friend Number abs(const Number& x);
   friend Number factorial(const Number& x);
+  friend Number gamma(const Number& x);
   friend Number gcd(const Number& x, const Number& y);
   friend Number lcm(const Number& x, const Number& y);
   friend Number pwr(const Number& x, const Number& y);
