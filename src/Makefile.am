@@ -134,11 +134,16 @@ $(INCLUDE_FILES)
 
 # The ordering of the following list *matters*!
 DOC_FILES = \
+Expr.types.hh \
+Symbol.types.hh \
+Number.types.hh \
+Constant.types.hh \
 Recurrence.types.hh \
-Bool3.types.hh \
-Recurrence.defs.hh \
-Bool3.defs.hh \
-alg_eq_solver.hh
+Expr.defs.hh \
+Symbol.defs.hh \
+Number.defs.hh \
+Constant.defs.hh \
+Recurrence.defs.hh
 
 libpurrs_a_LIBADD =
 

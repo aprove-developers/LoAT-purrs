@@ -45,6 +45,7 @@ namespace Parma_Recurrence_Relation_Solver {
 //! the recurrences represented by \p x are less than all
 //! the recurrences represented by \p y.
 /*!
+  \relates Recurrence
   Let \f$ S_x, S_y \in \wp(\Nset \to \Rset) \f$ be the sets of sequences
   represented by \p x and \p y, respectively.  If the system can prove that
   \f[
@@ -56,7 +57,7 @@ namespace Parma_Recurrence_Relation_Solver {
 */
 bool less_than(const Recurrence& x, const Recurrence& y);
 
-
+//! The base class for recurrence relations.
 /*!
   An object of this class abstracts a (possibly infinite) set of
   sequences of real numbers.  Formally, an object of class
@@ -140,6 +141,7 @@ private:
   Expr get_initial_condition(unsigned k) const;
 
 public:
+  //! The possible states of the recurrence.
   enum Solver_Status {
     /*!
       Solution was successful.
@@ -197,6 +199,9 @@ public:
     TOO_COMPLEX
   };
 
+  //! \brief
+  //! Kinds of responses of validation's process of the solution or
+  //! the bound of the recurrence.
   enum Verify_Status {
     /*!
       The system can prove that the recurrence has been successfully
@@ -244,6 +249,7 @@ public:
 
   Expr approximated_solution() const;
 
+  // @@@
   //! \brief
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the solution is certainly right.
   //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> if the solution
@@ -411,6 +417,7 @@ private:
   //! is one of the equations of the system.
   std::map<unsigned, Expr> system_rhs;
 
+  //! The recurrence type.
   enum Type {
     /*!
       Special recurrence of the form \f$ x(n) = rhs \f$, where \f$ rhs \f$

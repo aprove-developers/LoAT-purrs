@@ -33,83 +33,104 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 //! Returns \f$ x \f$.
+/*! \relates Number */
 Number operator+(const Number& x);
 
 //! Returns \f$ -x \f$.
+/*! \relates Number */
 Number operator-(const Number& x);
 
 //! Returns \f$ x + y \f$.
+/*! \relates Number */
 Number operator+(const Number& x, const Number& y);
 
 //! Returns \f$ x - y \f$.
+/*! \relates Number */
 Number operator-(const Number& x, const Number& y);
 
 //! Returns \f$ x \cdot y \f$.
+/*! \relates Number */
 Number operator*(const Number& x, const Number& y);
 
 //! If \f$ y \neq 0 \f$, returns \f$ x / y \f$.
 /*!
+  \relates Number
   \exception std::runtime_error thrown if \f$ y = 0 \f$.
 */
 Number operator/(const Number& x, const Number& y);
 
 //! Assigns \f$ x + y \f$ to \f$ x \f$ and returns the result.
+/*! \relates Number */
 Number& operator+=(Number& x, const Number& y);
 
 //! Assigns \f$ x - y \f$ to \f$ x \f$ and returns the result.
+/*! \relates Number */
 Number& operator-=(Number& x, const Number& y);
 
 //! Assigns \f$ x \cdot y \f$ to \f$ x \f$ and returns the result.
+/*! \relates Number */
 Number& operator*=(Number& x, const Number& y);
 
 //! \brief
 //! If \f$ y \neq 0 \f$, assigns \f$ x / y \f$ to \f$ x \f$
 //! and returns the result.
 /*!
+  \relates Number
   \exception std::runtime_error thrown if \f$ y = 0 \f$.
 */
 Number& operator/=(Number& x, const Number& y);
 
 //! Returns <CODE>true</CODE> if and only if \f$ x = y \f$.
+/*! \relates Number */
 bool operator==(const Number& x, const Number& y);
 
 //! Returns <CODE>true</CODE> if and only if \f$ x \neq y \f$.
+/*! \relates Number */
 bool operator!=(const Number& x, const Number& y);
 
 //! Returns <CODE>true</CODE> if and only if \f$ x = i \f$.
+/*! \relates Number */
 bool operator==(const Number& x, long i);
 
 //! Returns <CODE>true</CODE> if and only if \f$ x > y \f$.
+/*! \relates Number */
 bool operator>(const Number& x, const Number& y);
 
 //! Returns <CODE>true</CODE> if and only if \f$ x < y \f$.
+/*! \relates Number */
 bool operator<(const Number& x, const Number& y);
 
 //! Returns <CODE>true</CODE> if and only if \f$ x \geq y \f$.
+/*! \relates Number */
 bool operator>=(const Number& x, const Number& y);
 
 //! Returns <CODE>true</CODE> if and only if \f$ x \leq y \f$.
+/*! \relates Number */
 bool operator<=(const Number& x, const Number& y);
 
 //! Returns the absolute value of \f$ x \f$.
+/*! \relates Number */
 Number abs(const Number& x);
 
 //! \brief
 //! If \f$ x \f$ and \f$ y \f$ are integer, returns the greatest common
 //! divisor of \f$ x \f$ and \f$ y \f$.
 //! Returns 1 otherwise.
+/*! \relates Number */
 Number gcd(const Number& x, const Number& y);
 
 //! \brief;
 //! If \f$ x \f$ and \f$ y \f$ are integer, returns the least common
 //! multiple of \f$ x \f$ and \f$ y \f$.
 //! Returns \f$ x \cdot y \f$ otherwise.
+/*! \relates Number */
 Number lcm(const Number& x, const Number& y);
 
 //! \brief;
 //! Computes \f$ x^y \f$ assuming that the numerical computation
 //! will not introduce approximation errors.
 /*!
+  \relates Number
   If \f$ x \f$ is a rational complex number and \f$ y \f$ is an
   integer, then this method computes \f$ x^y \f$ because in this
   case are not introduced approximation errors.
@@ -127,10 +148,17 @@ Number exact_pwr(const Number& x, const Number& y);
 //! Returns zero otherwise.
 //! If the result is not zero, its sign is the sign of \f$ y \f$.
 /*!
+  \relates Number
   \exception std::runtime_error thrown if \f$ y = 0 \f$.
 */
 Number mod(const Number& x, const Number& y);
 
+//! \brief
+//! The numeric object (integer, floating point, complex numbers,
+//! \f$ \dots \f$).
+/*!
+  ...
+*/
 class Number {
 public:
   //! Default constructor.
@@ -178,6 +206,7 @@ public:
   //! Assigns \p i to \p *this.
   Number& operator=(unsigned long i);
 
+  //! \brief
   //! Assignes to \p *this the integer corresponding
   //! to the decimal integer numeral in \p s.
   Number& operator=(const char* s);
@@ -209,6 +238,7 @@ public:
   //! Returns <CODE>true</CODE> if and only if \p *this is a positive integer.
   bool is_positive_integer() const;
 
+  //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this
   //! is a nonnegative integer.
   bool is_nonnegative_integer() const;
@@ -228,10 +258,12 @@ public:
   //! Returns <CODE>true</CODE> if and only if \p *this is a real number.
   bool is_real() const;
 
+  //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is a complex number
   //! with integral real and imaginary parts.
   bool is_complex_integer() const;
 
+  //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is a complex number
   //! with rational real and imaginary parts.
   bool is_complex_rational() const;
@@ -276,6 +308,7 @@ public:
   //! Returns the denominator of \p *this, seen as a fraction.
   Number denominator() const;
 
+  //! The imaginary unit.
   static const Number I;
 
 private:

@@ -219,10 +219,14 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
   assert(rec.is_linear_finite_order() || rec.is_non_linear_finite_order()
 	 || rec.is_linear_infinite_order());
   if (rec.is_linear_finite_order() || rec.is_non_linear_finite_order()) {
+    // ...
     unsigned int order_rec;
+    // ...
     unsigned int first_i_c;
     if (rec.is_non_linear_finite_order()) {
+      // order_rec = rec.associated_linear_rec().order();
       order_rec = rec.order_if_linear();
+      // first_i_c = rec.associated_linear_rec().first_well_defined_rhs_linear();
       first_i_c = rec.non_linear_to_linear_fwdr();
     }
     else {

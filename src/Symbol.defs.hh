@@ -33,6 +33,10 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+//! The symbol of parameters.
+/*!
+  ...
+*/
 class Symbol {
 public:
   //! Builds a symbol with a unique name.

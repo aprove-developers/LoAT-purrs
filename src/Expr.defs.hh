@@ -48,39 +48,49 @@ typedef unsigned Functor;
 std::ostream& operator<<(std::ostream& s, const Expr& x);
 
 //! Returns \f$ x \f$.
+/*! \relates Expr */
 Expr operator+(const Expr& x);
 
 //! Returns \f$ - x \f$.
+/*! \relates Expr */
 Expr operator-(const Expr& x);
 
 //! Returns \f$ x + y \f$.
+/*! \relates Expr */
 Expr operator+(const Expr& x, const Expr& y);
 
 //! Returns \f$ x - y \f$.
+/*! \relates Expr */
 Expr operator-(const Expr& x, const Expr& y);
 
 //! Returns \f$ x \cdot y \f$.
+/*! \relates Expr */
 Expr operator*(const Expr& x, const Expr& y);
 
 //! If \f$ y \neq 0 \f$, returns \f$ x / y \f$.
 /*!
+  \relates Expr
   \exception std::logic_error thrown if \f$ y = 0 \f$.
 */
 Expr operator/(const Expr& x, const Expr& y);
 
 //! Assigns \f$ x + y \f$ to \f$ x \f$ and returns the result.
+/*! \relates Expr */
 Expr& operator+=(Expr& x, const Expr& y);
 
 //! Assigns \f$ x - y \f$ to \f$ x \f$ and returns the result.
+/*! \relates Expr */
 Expr& operator-=(Expr& x, const Expr& y);
 
 //! Assigns \f$ x \cdot y \f$ to \f$ x \f$ and returns the result.
+/*! \relates Expr */
 Expr& operator*=(Expr& x, const Expr& y);
 
 //! \brief
 //! If \f$ y \neq 0 \f$, assigns \f$ x / y \f$ to \f$ x \f$
 //! and returns the result.
 /*!
+  \relates Expr
   \exception std::logic_error thrown if \f$ y = 0 \f$.
 */
 Expr& operator/=(Expr& x, const Expr& y);
@@ -88,60 +98,73 @@ Expr& operator/=(Expr& x, const Expr& y);
 //! \brief
 //! Returns <CODE>true</CODE> if and only if \p e is syntactically
 //! equal to \p s.
+/*! \relates Expr */
 bool operator==(const Expr& e, const Symbol& s);
 
 //! \brief
 //! Returns <CODE>true</CODE> if and only if \p e is syntactically
 //! different from \p s.
+/*! \relates Expr */
 bool operator!=(const Expr& e, const Symbol& s);
 
 //! \brief
 //! Returns <CODE>true</CODE> if and only if \p e is syntactically
 //! equal to \p s.
+/*! \relates Expr */
 bool operator==(const Symbol& s, const Expr& e);
 
 //! \brief
 //! Returns <CODE>true</CODE> if and only if \p e is syntactically
 //! different from \p s.
+/*! \relates Expr */
 bool operator!=(const Symbol& s, const Expr& e);
 
 //! \brief
 //! Returns <CODE>true</CODE> if and only if \p e is syntactically
 //! equal to \p c.
+/*! \relates Expr */
 bool operator==(const Expr& e, const Constant& c);
 
 //! \brief
 //! Returns <CODE>true</CODE> if and only if \p e is syntactically
 //! different from \p c.
+/*! \relates Expr */
 bool operator!=(const Expr& e, const Constant& c);
 
 //! \brief
 //! Returns <CODE>true</CODE> if and only if \p e is syntactically
 //! equal to \p c.
+/*! \relates Expr */
 bool operator==(const Constant& c, const Expr& e);
 
 //! \brief
 //! Returns <CODE>true</CODE> if and only if \p e is syntactically
 //! different from \p c.
+/*! \relates Expr */
 bool operator!=(const Constant& c, const Expr& e);
 
 //! Returns <CODE>true</CODE> if and only if \p e is syntactically \p n.
+/*! \relates Expr */
 bool operator==(const Expr& e, const Number& n);
 
 //! Returns <CODE>true</CODE> if and only if \p e is syntactically \p n.
+/*! \relates Expr */
 bool operator==(const Number& n, const Expr& e);
 
 //! Returns <CODE>true</CODE> if and only if \p e is syntactically \p i.
+/*! \relates Expr */
 bool operator==(const Expr& e, long i);
 
 //! \brief
 //! Returns <CODE>true</CODE> if and only if \p x and \p y are
 //! syntactically equal.
+/*! \relates Expr */
 bool operator==(const Expr& x, const Expr& y);
 
 //! \brief
 //! Returns <CODE>true</CODE> if and only if \p x and \p y are
 //! syntactically different.
+/*! \relates Expr */
 bool operator!=(const Expr& x, const Expr& y);
 
 //! Compares two numeric expressions.
@@ -156,39 +179,46 @@ bool operator!=(const Expr& x, const Expr& y);
 int compare(const Expr& x, const Expr& y);
 
 //! Returns the functor of the function named \p name.
+/*! \relates Expr */
 Functor find_functor(const std::string& name, unsigned num_args = 1);
 
 //! \brief
 //! Returns the application of functor \f$ f \f$ to operand \f$ x \f$,
 //! i.e., the expression \f$ f(x) \f$.
+/*! \relates Expr */
 Expr apply(Functor f, const Expr& x);
 
 //! \brief
 //! Returns the application of functor \f$ f \f$ to operands \f$ x_1 \f$
 //! and \f$ x_2 \f$, i.e., the expression \f$ f(x_1, x_2) \f$.
+/*! \relates Expr */
 Expr apply(Functor f, const Expr& x1, const Expr& x2);
 
 //! \brief
 //! Returns the application of functor \f$ f \f$ to operands \f$ x_1, x_2 \f$
 //! and \f$ x_3 \f$, i.e., the expression \f$ f(x_1, x_2, x_3) \f$.
+/*! \relates Expr */
 Expr apply(Functor f, const Expr& x1, const Expr& x2, const Expr& x3);
 
 //! \brief
 //! Returns the application of functor \f$ f \f$ to operands
 //! \f$ x_1, x_2, x_3 \f$ and \f$ x_4 \f$, i.e., the expression
 //! \f$ f(x_1, x_2, x_3, x_4) \f$.
+/*! \relates Expr */
 Expr apply(Functor f,
 	   const Expr& x1, const Expr& x2, const Expr& x3, const Expr& x4);
 
 //! \brief
 //! Returns the application of functor \f$ f \f$ to operands
 //! \f$ x_1, \dots, x_k \f$, i.e., the expression \f$ f(x_1, \dots, x_k) \f$.
+/*! \relates Expr */
 Expr apply(Functor f, const std::vector<Expr>& x);
 
 //! \brief
 //! If \f$ x \f$ and \f$ y \f$ are not zero or \f$ x = 0 \f$ and \f$ y \f$
 //! is a positive rational number, returns \f$ x^y \f$.
 /*!
+  \relates Expr
   \exception std::logic_error thrown if \f$ x = y = 0 \f$.
   \exception std::logic_error thrown if \f$ x = 0 \f$ and \f$ y \f$
                               is not a positive rational number.
@@ -199,28 +229,33 @@ Expr pwr(const Expr& x, const Expr& y);
 //! If \f$ x \f$ is an exact number, returns the number \f$ y \f$ such that
 //! \f$ y^2 = x \f$; otherwise, only for the output, returns the expression
 //! \f$ sqrt(x) \f$ not valued.
+/*! \relates Expr */
 Expr sqrt(const Expr& x);
 
 //! \brief
 //! Returns \f$ \sin(x) \f$ if the numerical computation not introduce
 //! approximation errors; returns \f$ sin(x) \f$ not valued otherwise.
+/*! \relates Expr */
 Expr sin(const Expr& x);
 
 //! \brief
 //! Returns \f$ \cos(x) \f$ if the numerical computation not introduce
 //! approximation errors; returns \f$ cos(x) \f$ not valued otherwise.
+/*! \relates Expr */
 Expr cos(const Expr& x);
 
 //! \brief
 //! Returns \f$ \arccos(x) \f$, the inverse cosine, if the numerical
 //! computation not introduce approximation errors; returns \f$ acos(x) \f$
 //! not valued otherwise.
+/*! \relates Expr */
 Expr acos(const Expr& x);
 
 //! \brief
 //! Returns \f$ \tan(x) \f$ if the numerical computation not introduce
 //! approximation errors; returns \f$ tan(x) \f$ not valued otherwise.
 /*!
+  \relates Expr
   \exception std::pole_error thrown if \f$ x = \pi / 2 + k \pi \f$,
                              \f$ k \in \Zset \f$.
 */
@@ -229,6 +264,7 @@ Expr tan(const Expr& x);
 //! \brief
 //! Returns \f$ \exp(x) \f$ if the numerical computation not introduce
 //! approximation errors; returns \f$ exp(x) \f$ not valued otherwise.
+/*! \relates Expr */
 Expr exp(const Expr& x);
 
 //! \brief
@@ -236,6 +272,7 @@ Expr exp(const Expr& x);
 //! computation not introduce approximation errors; returns \f$ log(x) \f$
 //! not valued otherwise.
 /*!
+  \relates Expr
   If \f$ x \f$ is a negative rational number, then
   \f$ \log(x) = \log(-x) + i \pi \f$.
 
@@ -247,6 +284,7 @@ Expr log(const Expr& x);
 //! If \f$ x \f$ is a natural number number, returns \f$ x! \f$;
 //! if \f$ x \f$ is a not a numeric expression, return \f$ x! \f$ not valued.
 /*!
+  \relates Expr
   \exception std::range_error thrown if \f$ x \f$ is not a natural number.
 */
 Expr factorial(const Expr& x);
@@ -256,6 +294,7 @@ Expr factorial(const Expr& x);
 //! if \f$ x \f$ is a not a numeric expression, return \f$ \Gamma(x) \f$
 //! not valued.
 /*!
+  \relates Expr
   \exception std::pole_error thrown if \f$ x \f$ is non-positive integer
                              number.
 */
@@ -273,6 +312,7 @@ Expr gamma(const Expr& x);
     \end{cases}
   \f]
 
+  \relates Expr
   \exception std::range_error thrown if \f$ k \f$ is not a non-negative
                               integer number.
 */
@@ -287,6 +327,7 @@ Expr binom(const Expr& m, const Expr& k);
 //! Computes the quotient \f$ q(x) \f$ of polynomials \f$ a(x) \f$ and
 //! \f$ b(x) \f$ in \f$ Q[x] \f$.
 /*!
+  \relates Expr
   The quozient \f$ q(x) \f$ satisfies \f$ a(x) = b(x) * q(x) + r(x) \f$,
   where \f$ r(x) \f$ is the remainder.
 
@@ -299,7 +340,8 @@ Expr quo(const Expr& a, const Expr& b, const Symbol& x);
 //! \brief
 //! Computes the remainder \f$ r(x) \f$ of polynomials \f$ a(x) \f$ and
 //! \f$ b(x) \f$ in \f$ Q[x] \f$.
-/*
+/*!
+  \relates Expr
   The remainder \f$ r(x) \f$ satisfies \f$ a(x) = b(x) * q(x) + r(x) \f$,
   where \f$ q(x) \f$ is the quozient.
 
@@ -313,6 +355,7 @@ Expr rem(const Expr& a, const Expr& b, const Symbol& x);
 //! Computes the pseudo-remainder \f$ pseudo\_r(x) \f$ of polynomials
 //! \f$ a(x) \f$ and \f$ b(x) \f$ in \f$ Z[x] \f$.
 /*!
+  \relates Expr
   The pseudo-remainder satisfies
   \f$ c * a(x) = b(x) * pseudo\_q(x) + pseudo\_r(x) \f$, where
   \f$ c = b\_lcoeff^(deg\_a - deg\_b + 1) \f$ with \f$ b\_lcoeff \f$ the
@@ -330,6 +373,7 @@ Expr prem(const Expr& a, const Expr& b, const Symbol& x);
 //! Computes the GCD (greatest common divisor) of multivariate polynomials
 //! \f$ a(X) \f$ and \f$ b(X) \f$ in \f$ Z[X] \f$.
 /*!
+  \relates Expr
   \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
                                    rational polynomials.
 */
@@ -340,6 +384,7 @@ Expr gcd(const Expr& a, const Expr& b);
 //! Computes the LCM (least common multiple) of multivariate polynomials
 //! \f$ a(X) \f$ and \f$ b(X) \f$ in \f$ Z[X] \f$.
 /*!
+  \relates Expr
   \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
                                    rational polynomials.
 */
@@ -349,7 +394,8 @@ Expr lcm(const Expr& a, const Expr& b);
 //! \brief
 //! Computes a square-free factorization for the polynomial \p x with respect
 //! to the variable in the list \p y.
-/*
+/*!
+  \relates Expr
   A polynomial \f$ p(X) \in C[X] \f$ is said <EM>square-free</EM>
   if, whenever any two polynomials \f$ q(X) \f$ and \f$ r(X) \f$
   are such that
@@ -382,6 +428,7 @@ Expr sqrfree(const Expr& x, const Expr_List& y);
 
 //! Solves a linear system of equations.
 /*!
+  \relates Expr
   \p x is a list of of equations in the form of relational expressions and
   \p y is a list of symbols.
 
@@ -393,19 +440,27 @@ Expr sqrfree(const Expr& x, const Expr_List& y);
 Expr lsolve(const Expr_List& x, const Expr_List& y);
 
 //! Returns the function \f$ x(y) \f$.
+/*! \relates Expr */
 Expr x(const Expr& y);
 
 //! Returns the function \f$ sum(index,lower,upper,summand) \f$.
+/*! \relates Expr */
 Expr sum(const Expr& index, const Expr& lower, const Expr& upper,
 	 const Expr& summand);
 
 //! Returns the function \f$ prod(index,lower,upper,factor) \f$.
+/*! \relates Expr */
 Expr prod(const Expr& index, const Expr& lower, const Expr& upper,
 	  const Expr& factor);
 
 //! Returns the function \f$ mod(x, y) \f$.
+/*! \relates Expr */
 Expr mod(const Expr& x, const Expr& y);
 
+//! The base class for mathematical object.
+/*!
+  ...
+*/
 class Expr : private GiNaC::ex {
 private:
   typedef GiNaC::ex Base;
@@ -435,7 +490,9 @@ public:
   //! Builds the constant expression \p y.
   Expr(const Constant& y);
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Builds the complex interval expression \p y.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   Expr(const Complex_Interval& y);
 
   //! Builds the expression from a string \p s and a list of symbol \p y.
@@ -611,9 +668,11 @@ public:
   //! If \p *this is symbolic, returns the corresponding symbol.
   Symbol ex_to_symbol() const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! If \p *this is an interval expression,
   //! returns the corresponding complex interval.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   Complex_Interval ex_to_complex_interval() const;
 
   // FIXME: info, temporary
@@ -1104,6 +1163,7 @@ private:
 };
 
 /*!
+  \relates Expr
   Assuming <CODE>sh.size_norm(const Symbol& s)</CODE> computes
   the norm of <CODE>s</CODE>, returns the size-norm of \p e.
 */

@@ -32,6 +32,10 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+//! The symbolic constant (e.g. \f$ \pi \f$).
+/*!
+  ...
+*/
 class Constant {
 public:
   //! Default constructor.
@@ -46,6 +50,7 @@ public:
   //! Assignment operator.
   Constant& operator=(const Constant& k);
 
+  //! The Archimedes'constant \f$ \pi = 3.14159\dots \f$.
   static const Constant Pi;
 
 private:
