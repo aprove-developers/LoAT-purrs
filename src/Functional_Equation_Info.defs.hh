@@ -50,10 +50,10 @@ public:
   Functional_Equation_Info& operator=(const Functional_Equation_Info& y);
 
   //! Returns <CODE>coefficient_</CODE>.
-  Expr coefficients() const;
+  Expr coefficient() const;
 
   //! Returns <CODE>coefficient_</CODE>.
-  Expr& coefficients();
+  Expr& coefficient();
 
   //! Returns <CODE>divisor_arg_</CODE>.
   unsigned divisor_arg() const;

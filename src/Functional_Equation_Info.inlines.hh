@@ -54,12 +54,12 @@ Functional_Equation_Info::operator=(const Functional_Equation_Info& y) {
 }
 
 inline Expr
-Functional_Equation_Info::coefficients() const {
+Functional_Equation_Info::coefficient() const {
   return coefficient_;
 }
 
 inline Expr&
-Functional_Equation_Info::coefficients() {
+Functional_Equation_Info::coefficient() {
   return coefficient_;
 }
 
