@@ -53,6 +53,7 @@ static struct option long_options[] = {
   {"non_linear_finite_order",         no_argument,       0, 'D'},
   {"weighted_average",                no_argument,       0, 'E'},
   {"functional_equation",             no_argument,       0, 'F'},
+  {"recurrence_to_exactly_solve",     no_argument,       0, 'Y'},
   {"recurrence_to_verify",            no_argument,       0, 'V'},
   {0, 0, 0, 0}
 };
@@ -81,12 +82,14 @@ print_usage() {
     "  -E, --weighted_average                select weighted-average "
                                              "recurrences\n"
     "  -F, --functional_equation             select functional equations\n"
+    "  -Y, --recurrence_to_exactly_solve     select recurrences marked "
+                                             "with `y'\n" 
     "  -V, --recurrence_to_verify            select recurrences marked "
                                              "with `v'\n" 
        << endl;
 }
 
-#define OPTION_LETTERS "hirvABCDEFV"
+#define OPTION_LETTERS "hirvABCDEFYV"
 
 // Interactive mode is on when true.
 static bool interactive = false;
@@ -114,6 +117,9 @@ static bool weighted_average = false;
 
 // Functional equation filter mode is on when true.
 static bool functional_equation = false;
+
+// Recurrences marked with `y' filter mode is on when true.
+static bool recurrence_to_exactly_solve = false;
 
 // Recurrences marked with `v' filter mode is on when true.
 static bool recurrence_to_verify = false;
@@ -216,6 +222,10 @@ process_options(int argc, char* argv[]) {
       functional_equation = true;
       break;
 
+    case 'Y':
+      recurrence_to_exactly_solve = true;
+      break;
+
     case 'V':
       recurrence_to_verify = true;
       break;
@@ -308,6 +318,11 @@ main(int argc, char *argv[]) try {
 	cout << the_line << endl;
 	continue;
       }
+
+      // Skip recurrences not marked with `y'.
+      if (recurrence_to_exactly_solve)
+	if (expectations.find("y") == string::npos)
+	  continue;
 
       // Skip recurrences not marked with `v'.
       if (recurrence_to_verify)
