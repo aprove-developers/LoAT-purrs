@@ -13,7 +13,7 @@ VPATH = @srcdir@
 
 @SET_MAKE@
 
-SUBDIRS = .
+SUBDIRS = . Intervals
 
 INCLUDES = -I$(top_builddir) -I$(top_srcdir)/src @extra_includes@
 
