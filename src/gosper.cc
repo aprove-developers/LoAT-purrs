@@ -46,14 +46,14 @@ FACTOR_THRESHOLD = 100;
 
 /*!
   By definition, an expression \p p is a <EM>hypergeometric term</EM>
-  if \f$ p(x+1) / p(x) \f$ is a rational function of \f$ x \f$.
+  if \f$ p(n+1) / p(n) \f$ is a rational function of \f$ n \f$.
   If this is the case, return also numerator and denominator.
 */
 // static bool
-// is_hypergeometric_term(const GExpr& p, const GSymbol& x,
+// is_hypergeometric_term(const GExpr& p, const GSymbol& n,
 // 		       GExpr& num_den) {
 
-//   GExpr q = (p.subs(x == x+1)) / p;
+//   GExpr q = (p.subs(n == n+1)) / p;
 
 //   q.expand(); // FIXME: simplify factorials here!
 //   if (!q.info(info_flags::rational_function))
@@ -79,11 +79,11 @@ gosper_step_one(const GExpr& t, const GSymbol& /* n */, GExpr& num_den_t) {
 */
 static void
 compute_resultant_and_its_roots(const GExpr& f, const GExpr& g, 
-				const GSymbol& x,
+				const GSymbol& n,
 				std::vector<GNumber>& integer_roots) {
   GSymbol h("h");
-  GExpr temp_g = g.subs(x == x + h);
-  GExpr R = resultant(f, temp_g, x);
+  GExpr temp_g = g.subs(n == n + h);
+  GExpr R = resultant(f, temp_g, n);
   R = R.primpart(h);
   if (!R.info(info_flags::integer_polynomial))
     R = convert_to_integer_polynomial(R, h);
@@ -119,22 +119,22 @@ compute_resultant_and_its_roots(const GExpr& f, const GExpr& g,
   in the list \p n_d.
 */
 static void
-gosper_step_two(const GExpr& n_d, const GSymbol& x,
+gosper_step_two(const GExpr& n_d, const GSymbol& n,
 		GExpr& p, GExpr& q, GExpr& r) {
   // Gosper's algorithm, step 2.1.
   GExpr f = expand(n_d.op(0)); // the numerator
   GExpr g = expand(n_d.op(1)); // the denominator
 
   std::vector<GNumber> integer_roots;
-  compute_resultant_and_its_roots(f, g, x, integer_roots);
+  compute_resultant_and_its_roots(f, g, n, integer_roots);
 
   // Gosper's algorithm, step 2.2.
   // `p' and `q' are used below as starting values for a sequence
   // of polynomials.
 
   // normalize f and g, and store conversion factor in Z
-  GExpr lead_f = f.lcoeff(x);
-  GExpr lead_g = g.lcoeff(x);
+  GExpr lead_f = f.lcoeff(n);
+  GExpr lead_g = g.lcoeff(n);
   GExpr Z = lead_f * pow(lead_g, -1);
   p = f * pow(lead_f, -1);
   q = g * pow(lead_g, -1);
@@ -143,13 +143,13 @@ gosper_step_two(const GExpr& n_d, const GSymbol& x,
   r = 1;
   unsigned integer_roots_size = integer_roots.size();
   for (unsigned i = 0; i < integer_roots_size; ++i) {
-    GExpr temp_q = (q.subs(x == x + integer_roots[i])).expand();
-    GExpr s = general_gcd(p, temp_q, x);
-    p = quo(p, s, x);
-    GExpr temp_s = s.subs(x == x - integer_roots[i]);
-    q = quo(q, temp_s, x);
+    GExpr temp_q = (q.subs(n == n + integer_roots[i])).expand();
+    GExpr s = general_gcd(p, temp_q, n);
+    p = quo(p, s, n);
+    GExpr temp_s = s.subs(n == n - integer_roots[i]);
+    q = quo(q, temp_s, n);
     for (GNumber j = 1; j <= integer_roots[i]; ++j)
-      r *= s.subs(x == x - j);
+      r *= s.subs(n == n - j);
   }
   p *= Z;
   // The polynomials `p' and `q' may have rational coefficients.
@@ -157,29 +157,29 @@ gosper_step_two(const GExpr& n_d, const GSymbol& x,
   // by suitable integers, so that the output values of `p' and `q'
   // have integer coefficients. 
   GNumber p_factor;
-  p = convert_to_integer_polynomial(p, x, p_factor);
+  p = convert_to_integer_polynomial(p, n, p_factor);
   GExpr p_n_d = numer_denom(p_factor);
   p *= p_n_d.op(0);
   q *= p_n_d.op(1);
   GNumber q_factor;
-  q = convert_to_integer_polynomial(q, x, q_factor);
+  q = convert_to_integer_polynomial(q, n, q_factor);
   GExpr q_n_d = numer_denom(q_factor);
   p *= q_n_d.op(1);
   q *= q_n_d.op(0);
 #if NOISY
-  std::cout << "a(x) = " << p << std::endl;
-  std::cout << "b(x) = " << q << std::endl;
-  std::cout << "c(x) = " << r << std::endl;
+  std::cout << "a(n) = " << p << std::endl;
+  std::cout << "b(n) = " << q << std::endl;
+  std::cout << "c(n) = " << r << std::endl;
 #endif
 }
 
 static bool
-find_polynomial_solution(const GSymbol& x, const GNumber& deg_x,
-			 const GExpr& a_x, const GExpr& b_x, const GExpr& c_x,
+find_polynomial_solution(const GSymbol& n, const GNumber& deg_x,
+			 const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
 			 GExpr& x_n) {
-  unsigned deg_a = a_x.degree(x);
-  unsigned deg_b = b_x.degree(x);
-  unsigned deg_c = c_x.degree(x);
+  unsigned deg_a = a_n.degree(n);
+  unsigned deg_b = b_n.degree(n);
+  unsigned deg_c = c_n.degree(n);
   // `number_of_coeffs' is the number of coefficients of 
   // the polynomial `p', that is, 1 + deg_x.
   // FIXME: is it possible to convert a GiNaC integer to an int or an unsigned?
@@ -189,7 +189,7 @@ find_polynomial_solution(const GSymbol& x, const GNumber& deg_x,
     ++number_of_coeffs;
 
   // Compute the real number of unknowns of the polynomial equation
-  // `a(x) * p(x+1) - b(x-1) * p(x) - c(x) = 0'.
+  // `a(n) * p(n+1) - b(n-1) * p(n) - c(n) = 0'.
   // In general, this is larger than `number_of_coeffs' because 
   // the polynomial equation above may have large degree.
   unsigned number_of_unknowns = number_of_coeffs;
@@ -203,19 +203,19 @@ find_polynomial_solution(const GSymbol& x, const GNumber& deg_x,
   // Builds the generic polynomial `p' of degree `deg_x'.
   x_n = 0;
   for (unsigned i = 0; i < number_of_coeffs; ++i)
-    x_n += pow(x, i) * unknowns.op(i);
+    x_n += pow(n, i) * unknowns.op(i);
 
-  GExpr x_n_shift = x_n.subs(x == x+1);
-  GExpr b_shift = b_x.subs(x == x-1);
+  GExpr x_n_shift = x_n.subs(n == n+1);
+  GExpr b_shift = b_n.subs(n == n-1);
 
   // Considers the recurrence relation to solve.
-  GExpr rr = a_x * x_n_shift - b_shift * x_n - c_x;
+  GExpr rr = a_n * x_n_shift - b_shift * x_n - c_n;
   rr = rr.expand();
 
   // Builds the lists to put in the matrix `rr_coefficients' and `rhs'.
   GList equations;
   for (unsigned i = 0; i < number_of_unknowns; ++i) {
-    GExpr lhs = rr.coeff(x, i);
+    GExpr lhs = rr.coeff(n, i);
     equations.prepend(ex(lhs == 0));
   }
     
@@ -246,15 +246,15 @@ find_polynomial_solution(const GSymbol& x, const GNumber& deg_x,
   /f$ x(n) = \sum_{k=0}^{n-1} t_k /f$.
 */
 static bool
-gosper_step_three(const GExpr& a_x, const GExpr& b_x, const GExpr& c_x,
-		  const GSymbol& x, GExpr& x_n) {
+gosper_step_three(const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
+		  const GSymbol& n, GExpr& x_n) {
   // Gosper's algorithm, step 3.1.
   // Finds the degree of `x(n)'.
-  unsigned deg_a = a_x.degree(x);
-  unsigned deg_b = b_x.degree(x);
-  unsigned deg_c = c_x.degree(x);
-  GExpr lead_a = a_x.lcoeff(x);
-  GExpr lead_b = b_x.lcoeff(x);
+  unsigned deg_a = a_n.degree(n);
+  unsigned deg_b = b_n.degree(n);
+  unsigned deg_c = c_n.degree(n);
+  GExpr lead_a = a_n.lcoeff(n);
+  GExpr lead_b = b_n.lcoeff(n);
   GNumber deg_x = -1;
   // On output, if a possible degree exixts,
   // `deg_x' will contain a non-negative number.
@@ -266,9 +266,9 @@ gosper_step_three(const GExpr& a_x, const GExpr& b_x, const GExpr& c_x,
   }
   else {
     // `deg_a = deg_b' and `lead_a = lead_b'.
-    GExpr shift_b = b_x.subs(x == x - 1);
-    GExpr A = a_x.coeff(x, deg_a - 1);
-    GExpr B = shift_b.coeff(x, deg_a - 1);
+    GExpr shift_b = b_n.subs(n == n - 1);
+    GExpr A = a_n.coeff(n, deg_a - 1);
+    GExpr B = shift_b.coeff(n, deg_a - 1);
     assert(is_a<numeric>((B - A) * pow(lead_a, -1)));
     GNumber B_A = ex_to<numeric>((B - A) * pow(lead_a, -1));
     if (!B_A.is_nonneg_integer())
@@ -288,7 +288,7 @@ gosper_step_three(const GExpr& a_x, const GExpr& b_x, const GExpr& c_x,
 #endif
 
   // Gosper's algorithm, step 3.2.
-  return find_polynomial_solution(x, deg_x, a_x, b_x, c_x, x_n);
+  return find_polynomial_solution(n, deg_x, a_n, b_n, c_n, x_n);
 }
 
 /*!
