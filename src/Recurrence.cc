@@ -529,9 +529,50 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
     return status;
 }
 
-void
-PURRS::Recurrence::shift_exact_solution_with_i_c() const {
+//! \brief
+//! Let \p solution_or_bound be the expression that represent the
+//! solution or the bound computed for the recurrence \p *this.
+//! This function substitutes eventual initial conditions specified
+//! by the user shifting the solution or the bound if necessary.
+/*!
+  \param exact              <CODE>true</CODE> if the system has computed
+                            an exact solution for the recurrence \p *this;
+                            <CODE>false</CODE> if the system has computed
+			    an approximation for the solution of the
+			    recurrence \p *this.
+  \param solution_or_bound  Contains the solution or the bound computed
+                            for the recurrence \p *this in function of
+			    arbitrary initial conditions.
+
+  \return                   The solution or the bounds shifted in agreement
+                            with the initial conditions inserted by the user
+			    and with the arbitrary initial conditions
+			    substituted with the respective values.
+
+  We know the smallest positive integer \f$ s \f$ starting from which the
+  recurrence is well-defined. This function check if in the map
+  \p initial_conditions therea are some initial conditions
+  of the form \f$ x(i) = k \f$ with \f$ k > s \f$: in this case
+  the function shifted the solution or the bounds.
+  Finally substitute to the arbitrary initial conditions in the solution or
+  in the bound the eventual values specified by the user.
+*/
+Expr
+PURRS::Recurrence::
+substitute_i_c_shifting(bool exact, const Expr& solution_or_bound) const {
   assert(!initial_conditions.empty());
+  Expr sol_or_bound = solution_or_bound;
+  unsigned first_well_defined_rhs;
+  unsigned order_or_rank;
+  if (exact) {
+    first_well_defined_rhs = first_well_defined_rhs_linear();
+    order_or_rank = order();
+  }
+  else {
+    first_well_defined_rhs = applicability_condition();
+    order_or_rank = rank();
+  }
+
   // Consider the maximum index of `x' function in the map
   // `initial_conditions'.
   unsigned max_i_c = 0;
@@ -540,28 +581,25 @@ PURRS::Recurrence::shift_exact_solution_with_i_c() const {
     if (i->first > max_i_c)
       max_i_c = i->first;
 
-  if (first_well_defined_rhs_linear() < max_i_c) {
-    unsigned shift_forward = max_i_c - first_well_defined_rhs_linear();
-    // Shift initial conditions and the index of the recurrence `n'.
-    exact_solution_
-      .set_expression(exact_solution_.expression()
-		      .substitute(n, n - (shift_forward - order() + 1)));
-    for (unsigned i = order(); i-- > 0; )
-      exact_solution_
-	.set_expression(exact_solution_.expression()
-			.substitute(x(i+first_well_defined_rhs_linear()),
-				    x(i + first_well_defined_rhs_linear()
-				      + shift_forward - order() + 1)));
+  // Shift initial conditions and the index of the recurrence `n'.
+  if (first_well_defined_rhs < max_i_c) {
+    unsigned shift_forward = max_i_c - first_well_defined_rhs;
+    sol_or_bound
+      = sol_or_bound.substitute(n, n - (shift_forward - order_or_rank + 1));
+    for (unsigned i = order_or_rank; i-- > 0; )
+      sol_or_bound
+	= sol_or_bound.substitute(x(i + first_well_defined_rhs),
+				  x(i + first_well_defined_rhs
+				    + shift_forward - order_or_rank + 1));
   }
-
+  
   // Substitute initial conditions with the values in the map
   // `initial_conditions'.
   for (std::map<unsigned, Expr>::const_iterator i = initial_conditions.begin(),
 	 iend = initial_conditions.end(); i != iend; ++i)
-    exact_solution_
-      .set_expression(exact_solution_.expression()
-		      .substitute(x(i->first),
-				  get_initial_condition(i->first)));
+    sol_or_bound = sol_or_bound.substitute(x(i->first),
+					   get_initial_condition(i->first));
+  return sol_or_bound;
 }
 
 PURRS::Recurrence::Solver_Status
@@ -606,7 +644,8 @@ PURRS::Recurrence::compute_exact_solution() const {
       // substitute the values of the initial conditions to the
       // generic `x(i)'.
       if (!initial_conditions.empty())
-	shift_exact_solution_with_i_c();
+	exact_solution_.set_expression
+	  (substitute_i_c_shifting(true, exact_solution_.expression()));
       lower_bound_.set_expression(exact_solution_.expression());
       upper_bound_.set_expression(exact_solution_.expression());
       return SUCCESS;
@@ -615,6 +654,10 @@ PURRS::Recurrence::compute_exact_solution() const {
     else if (is_functional_equation())
       if ((status = approximate_functional_equation()) == SUCCESS
 	  && lower_bound_.expression() == upper_bound_.expression()) {
+	if (!initial_conditions.empty())
+	  lower_bound_.set_expression
+	    (substitute_i_c_shifting(false, lower_bound_.expression()));
+	upper_bound_.set_expression(lower_bound_.expression());
 	exact_solution_.set_expression(lower_bound_.expression());
 	return SUCCESS;
       }
@@ -669,8 +712,17 @@ PURRS::Recurrence::compute_lower_bound() const {
       else
 	return TOO_COMPLEX;
     // Functional equation.
-    else if (is_functional_equation())
-      return approximate_functional_equation();
+    else if (is_functional_equation()) {
+      if ((status = approximate_functional_equation()) != SUCCESS)
+	return status;
+      if (!initial_conditions.empty()) {
+	lower_bound_.set_expression
+	  (substitute_i_c_shifting(false, lower_bound_.expression()));
+	upper_bound_.set_expression
+	  (substitute_i_c_shifting(false, upper_bound_.expression()));
+      }
+      return SUCCESS;
+    }
     // Non linear finite order.
     else {
       Expr bound;
@@ -717,8 +769,17 @@ PURRS::Recurrence::compute_upper_bound() const {
       else
 	return TOO_COMPLEX;
     // Functional equation.
-    else if (is_functional_equation())
-      return approximate_functional_equation();
+    else if (is_functional_equation()) {
+      if ((status = approximate_functional_equation()) != SUCCESS)
+	return status;
+      if (!initial_conditions.empty()) {
+	upper_bound_.set_expression
+	  (substitute_i_c_shifting(false, upper_bound_.expression()));
+	lower_bound_.set_expression
+	  (substitute_i_c_shifting(false, lower_bound_.expression()));
+      }
+      return SUCCESS;
+    }
     // Non linear finite order.
     else {
       Expr bound;
