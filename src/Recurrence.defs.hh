@@ -1110,8 +1110,7 @@ private:
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
   //! the verification.
   Verify_Status
-  validate_initial_conditions(index_type order,
-			      index_type first_valid_index) const;
+  validate_initial_conditions(index_type order) const;
 
   Verify_Status
   traditional_step_3(index_type order_rec,

@@ -110,8 +110,7 @@ ok_inequalities(const Expr& e, unsigned int condition) {
 
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::
-validate_initial_conditions(index_type order,
-			    index_type first_valid_index) const {
+validate_initial_conditions(index_type order) const {
   Expr exact_solution;
   if (evaluated_exact_solution_.has_expression())
     exact_solution = evaluated_exact_solution_.expression();
@@ -140,9 +139,10 @@ validate_initial_conditions(index_type order,
 }
 
 PURRS::Recurrence::Verify_Status
-PURRS::Recurrence::traditional_step_3(index_type order_rec,
-				      const Expr& summands_with_i_c) const {
-  // Step 3: by substitution, verifies that `summands_with_i_c'
+PURRS::Recurrence::
+traditional_step_3(index_type order_rec, const Expr& e) const {
+#if 0
+  // Step 3: by substitution, verifies that `e'
   // satisfies the homogeneous part of the recurrence.
   // Computes `substituted_homogeneous_rhs' by substituting, in the
   // hoomogeneous part of the recurrence, `n' by `n - d' (where `d' is
@@ -153,12 +153,12 @@ PURRS::Recurrence::traditional_step_3(index_type order_rec,
   //for (index_type d = 1; d <= order_rec; d = d + gcd) {
   for (index_type d = 1; d <= order_rec; ++d) {
     Expr shifted_solution
-      = simplify_all(summands_with_i_c.substitute(n, n - d));
+      = simplify_all(e.substitute(n, n - d));
     shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
     substituted_homogeneous_rhs
       = substituted_homogeneous_rhs.substitute(x(n - d), shifted_solution);
   }
-  Expr diff = summands_with_i_c - substituted_homogeneous_rhs;
+  Expr diff = e - substituted_homogeneous_rhs;
   // Differently from the step 1 (validation of symbolic initial condition)
   // the expression `diff' now contains `n' and is more difficult
   // to simplify it. For this motive we performed simplification also
@@ -171,6 +171,37 @@ PURRS::Recurrence::traditional_step_3(index_type order_rec,
       return INCONCLUSIVE_VERIFICATION;
   }
   return PROVABLY_CORRECT;
+#else
+  // By substitution, verifies that `e' satisfies the homogeneous part
+  // of the recurrence.
+  // Computes `substituted_homogeneous_rhs' by substituting, in the
+  // hoomogeneous part of the recurrence, `n' by `n - d' (where `d' is
+  // the decrement of the i-th term `a_i(n)*x(n - d)').
+  Expr substituted_homogeneous_rhs = recurrence_rhs - inhomogeneous_term;
+  // Substitutes in the homogeneous part of the recurrence the terms
+  // of the form `x(n-i)'.
+  //for (index_type d = 1; d <= order_rec; d = d + gcd) {
+  for (index_type d = 1; d <= order_rec; ++d) {
+    Expr shifted_solution
+      = simplify_all(e.substitute(n, n - d));
+    shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
+    substituted_homogeneous_rhs
+      = substituted_homogeneous_rhs.substitute(x(n - d), shifted_solution);
+  }
+  Expr diff = e - substituted_homogeneous_rhs;
+  // Differently from the step 1 (validation of symbolic initial condition)
+  // the expression `diff' now contains `n' and is more difficult
+  // to simplify it. For this motive we performed simplification also
+  // before to expand blackboard's definitions.
+  diff = blackboard.rewrite(diff);
+  diff = simplify_all(diff);
+  if (!diff.is_zero()) {
+    diff = simplify_all(diff);
+    if (!diff.is_zero())
+      return INCONCLUSIVE_VERIFICATION;
+  }
+  return PROVABLY_CORRECT;
+#endif
 }
 
 bool
@@ -367,6 +398,7 @@ verify_new_method_const_coeff(index_type order_rec, const Expr& e,
   
   D_VEC(coefficients_of_exponentials, 0, max_polynomial_degree);
   Number num_tests = num_of_exponentials + order_rec;
+  // FIXME: ci vuole <=!!!
   for (unsigned int i = 0; i < max_polynomial_degree; ++i) {
     if (!coefficients_of_exponentials[i].is_zero()) {
       // Not syntactically 0: try to prove that is it semantically 0.
@@ -586,15 +618,24 @@ PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_finite_order() const {
   // We will store here the order of the recurrence.
   index_type order_rec;
+  // We will store here the greatest common divisor among the
+  // decrements `d' of the terms `x(n-d)' occurring in the right
+  // hand side of the recurrence.
+  unsigned int gcd;
   // The order of the non-linear recurrence is equal to the order of the
   // associated first_order linear recurrence.
   // In order to compute the solution we need the order of the linear
   // recurrence and so we can use it and to avoid to store in a variable
   // the order of the non-linear recurrence.
-  if (is_non_linear_finite_order())
+  // The same thing holds also for the gcd. 
+  if (is_non_linear_finite_order()) {
     order_rec = associated_linear_rec().order();
-  else
+    gcd = associated_linear_rec().gcd_among_decrements();
+  }
+  else {
     order_rec = order();
+    gcd = gcd_among_decrements();
+  }
   
   if (order_rec == 0)
     // We call recurrence of `order zero' special recurrences of the
@@ -607,8 +648,7 @@ PURRS::Recurrence::verify_finite_order() const {
     return PROVABLY_CORRECT;
   
   // Step 1: validation of symbolic initial conditions.
-  Verify_Status status = validate_initial_conditions(order_rec,
-						     first_valid_index);
+  Verify_Status status = validate_initial_conditions(order_rec);
   if (status != PROVABLY_CORRECT)
     return status;
   
@@ -637,7 +677,16 @@ PURRS::Recurrence::verify_finite_order() const {
       summands_without_i_c = exact_solution;
 
   // Step 3.
+  // Prepare a vector containing the coefficients of the symbolic
+  // initial conditions occurring in `summands_with_i_c'.
+  std::vector<Expr> coefficients_i_c(order_rec/gcd);
+  fill_vector_coefficients_i_c(summands_with_i_c, gcd, first_valid_index,
+			       coefficients_i_c);
 #if NEW_VERIFICATION
+  // In order to apply the method explained in the paper
+  // "Checking and Confining the Solutions of Recurrence Relations"
+  // are necessary the roots of the characteristic equation associated
+  // to linear finite order with constant coefficients.
   std::vector<Polynomial_Root> roots;
   if (is_linear_finite_order_const_coeff()) {
     std::vector<Number> num_coefficients(order_rec + 1);
@@ -650,22 +699,19 @@ PURRS::Recurrence::verify_finite_order() const {
 #if 0
       abort();
 #else
-      Verify_Status verify_status = traditional_step_3(order_rec,
-						       summands_with_i_c);
-      if (verify_status != PROVABLY_CORRECT)
-	return verify_status;
+      for (unsigned int i = 0; i < order_rec/gcd; ++i) {
+	Verify_Status verify_status = traditional_step_3(order_rec,
+							 coefficients_i_c[i]);
+	if (verify_status != PROVABLY_CORRECT)
+	  return verify_status;
+      }
       goto continue_with_step_4;
 #endif
     }
     else {
       // Step 3: new method.
-      // Prepare a vector containing the coefficients of the symbolic
-      // initial conditions occurring in `summands_with_i_c'.
-      std::vector<Expr> coefficients_i_c(order_rec/gcd_among_decrements());
-      fill_vector_coefficients_i_c(summands_with_i_c, gcd_among_decrements(),
-				   first_valid_index, coefficients_i_c);
       bool new_step_3_failed = false;
-      for (unsigned int i = 0; i < order_rec/gcd_among_decrements(); ++i)
+      for (unsigned int i = 0; i < order_rec/gcd; ++i)
 	if (!verify_new_method_const_coeff(order_rec, coefficients_i_c[i],
 					   roots, false)) {
 	  new_step_3_failed = true;
@@ -680,12 +726,15 @@ PURRS::Recurrence::verify_finite_order() const {
 #endif
    
   {
-  // Si applica se non e' lineare a coefficienti costanti o se il nuovo
-  // metodo applicato alla parte omogenea e' fallito.
-  Verify_Status verify_status = traditional_step_3(order_rec,
-						   summands_with_i_c);
-  if (verify_status != PROVABLY_CORRECT)
-    return verify_status;
+    // The traditional step 3 is applied in the case of non-linear recurrence
+    // or if the new method applied on the homogeneous part of the
+    // recurrence is failed.
+    for (unsigned int i = 0; i < order_rec/gcd; ++i) {
+      Verify_Status verify_status = traditional_step_3(order_rec,
+						       coefficients_i_c[i]);
+      if (verify_status != PROVABLY_CORRECT)
+	return verify_status;
+    }
   }
 
  continue_with_step_4:
@@ -750,13 +799,12 @@ PURRS::Recurrence::verify_finite_order() const {
   // from the solution of the reduced recurrence.
   if (applied_order_reduction()) {
     unset_order_reduction();
-    Symbol r = insert_auxiliary_definition(mod(n, gcd_among_decrements()));
-    unsigned int dim = coefficients().size() / gcd_among_decrements() + 1;
+    Symbol r = insert_auxiliary_definition(mod(n, gcd));
+    unsigned int dim = coefficients().size() / gcd + 1;
     std::vector<Expr> new_coefficients(dim);
     Expr inhomogeneous = 0;
     Recurrence rec_rewritten
-      (write_reduced_order_recurrence(recurrence_rhs, r,
-				      gcd_among_decrements(),
+      (write_reduced_order_recurrence(recurrence_rhs, r, gcd, 
 				      coefficients(), new_coefficients,
 				      inhomogeneous));
     rec_rewritten.finite_order_p
