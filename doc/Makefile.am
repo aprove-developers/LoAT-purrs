@@ -77,11 +77,13 @@ fdl.dox
 USER_STUFF = \
 $(DOX_FILES) \
 user.tex \
+purrs.sty \
 $(top_builddir)/src/purrs.hh
 
 DEVREF_STUFF = \
 $(DOX_FILES) \
 devref.tex \
+purrs.sty \
 $(PURRS_SOURCE_FILES)
 
 LATEX_DIRS = \
