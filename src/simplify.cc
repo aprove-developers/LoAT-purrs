@@ -692,85 +692,32 @@ reduce_product(const GExpr& e) {
 }
 
 /*!
-  Give an expression \p e builds, in a recursive way, two other expressions
-  \p numerica and \p symbolic containing the numeric and the symbolic part
-  of \p e, respectively.
-*/
-static void
-split(const GExpr& e, GExpr& numerica, GExpr& symbolic) {
-  if (is_a<add>(e)) {
-    GExpr tmp_num_term = 1;
-    GExpr tmp_symb_term = 1;
-    GExpr tmp_num = 0;
-    GExpr tmp_symb = 0;
-    for (unsigned i = e.nops(); i-- > 0; ) {
-      split(e.op(i), tmp_num_term, tmp_symb_term);
-      if (tmp_symb_term.is_equal(1))
-	tmp_num += e.op(i);
-      else
-	tmp_symb += e.op(i);
-    }
-    if (tmp_symb.is_zero())
-      numerica *= e;
-    else
-      symbolic *= e;
-  }
-  else if (is_a<mul>(e))
-    for (unsigned i = e.nops(); i-- > 0; )
-      split(e.op(i), numerica, symbolic);
-  else if (is_a<function>(e)) {
-    GExpr tmp_num = 1;
-    GExpr tmp_symb = 1;
-    split(e.op(0), tmp_num, tmp_symb);
-    if (tmp_symb.is_equal(1))
-      numerica *= e;
-    else
-      symbolic *= e;
-  }
-  else if (is_a<power>(e)) {
-    GExpr tmp_num_b = 1;
-    GExpr tmp_symb_b = 1;
-    GExpr tmp_num_e = 1;
-    GExpr tmp_symb_e = 1;
-    split(e.op(0), tmp_num_b, tmp_symb_b);
-    split(e.op(1), tmp_num_e, tmp_symb_e);
-    if (tmp_symb_b.is_equal(1) && tmp_symb_e.is_equal(1))
-      numerica *= e;
-    else
-      symbolic *= e;
-  }
-  else {
-    if (is_a<numeric>(e))
-      numerica *= e;
-    else
-      symbolic *= e;
-  }
-}
-
-/*!
   Applies all rules of term rewriting system \f$ \mathfrak{R}_o \f$ which
   are applicable on factors.
-  Returns a new <CODE>GExpr</CODE>, obtained multiplying the
-  <CODE>GExpr</CODE> \p symbolic and \p numerica, containing the modified
-  expression \p e.
+  Returns a <CODE>GExpr</CODE> that contains the modified expression \p e.
 */
 static GExpr
 manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
   assert(is_a<mul>(e));
   GExpr tmp = 1;
+
   // Simplifies each factor that is a 'GiNaC::power'.
   for (unsigned i = e.nops(); i-- > 0; )
     if (is_a<power>(e.op(i))) {
       GExpr base = simplify_on_output_ex(e.op(i).op(0), n, input);
       GExpr exp = simplify_on_output_ex(e.op(i).op(1), n, input);
-      tmp *= pow_simpl(pow(base, exp), n, input);
+      if (is_a<numeric>(base) && is_a<numeric>(exp))
+	tmp *= reduce_product(pow(base, exp));
+      else
+	tmp *= pow_simpl(pow(base, exp), n, input);
     }
     else
       tmp *= e.op(i);
 #if NOISY
   std::cout << "tmp dopo nested... " << tmp << std::endl;
 #endif
-  // From this time forward we do not know if 'tmp' is a 'mul' or not. 
+  // From this time forward we do not know if 'tmp' is a again 'mul'.
+  
   // Simplifies recursively the factors which are functions simplifying
   // their arguments.
   if (is_a<mul>(tmp)) {
@@ -809,53 +756,22 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
     std::cout << "tmp dopo 'exp'... " << tmp << std::endl << std::endl;
 #endif
   }
-  // Divides numeric and symbolic part of the expression 'e'.
-  GExpr numerica = 1;
-  GExpr symbolic = 1;
-  split(tmp, numerica, symbolic);
-#if NOISY
-  std::cout << std::endl << "symbolic " << symbolic << std::endl;
-  std::cout << "numerica " << numerica << std::endl << std::endl;
-#endif
-  // Simplifies eventual powers with same base or same exponent which are in
-  // the symbolic part 'symbolic'.
-  if (is_a<mul>(symbolic))
-    symbolic = collect_base_exponent(symbolic);
-#if NOISY
-  std::cout << std::endl << "symbolic dopo simpl " << symbolic << std::endl;
-#endif
-  // If 'symbolic' has got numerics factors or powers with base
-  // and exponent numerics, then multiplies this factors or this powers
-  // to 'numerica'.
-  if (is_a<mul>(symbolic))
-    for (unsigned i = symbolic.nops(); i-- > 0; ) {
-      if (is_a<power>(symbolic.op(i))) {
-	if (is_a<numeric>(symbolic.op(i).op(0))
-	    && is_a<numeric>(symbolic.op(i).op(1))) {
-	  numerica *= symbolic.op(i);
-	  symbolic = symbolic.subs(symbolic.op(i) == 1);
-	}
-      }
+  
+  // Simplifies eventual powers with same base or same exponents.
+  if (is_a<add>(tmp)) {
+    GExpr terms = 0;
+    for (unsigned i = tmp.nops(); i-- > 0; ) 
+      if (is_a<mul>(tmp.op(i)))
+	terms += collect_base_exponent(tmp.op(i));
       else
-	if (is_a<numeric>(symbolic.op(i))) {
-	  numerica *= symbolic.op(i);
-	  symbolic = symbolic.subs(symbolic.op(i) == 1);
-	}
-    }
-  // Simplifies eventual powers with same base or same exponents which are in
-  // a numeric part 'numeric'.
-  if (is_a<mul>(numerica))
-    numerica = collect_base_exponent(numerica);
-#if NOISY
-  std::cout << std::endl << "numerica dopo simpl " << numerica << std::endl;
-#endif
-  // Simplifies roots.
-  numerica = reduce_product(numerica);
-#if NOISY
-  std::cout << std::endl << "numerica dopo roots " << numerica << std::endl;
-#endif
-
-  return symbolic * numerica;
+	terms += tmp.op(i);
+    tmp = terms;
+  }
+  else
+    if (is_a<mul>(tmp))
+      tmp = collect_base_exponent(tmp);
+  
+  return tmp;
 }
 
 /*!
@@ -920,24 +836,26 @@ simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input) {
     for (unsigned i = e.nops(); i-- > 0; )
       ris += simplify_on_output_ex(e.op(i), n, input);
   }
+  else if (is_a<mul>(e))
+    // We can not call 'simplify_on_output_ex' on every factor because
+    // otherwise it is not possible to transform products.
+    ris = manip_factor(e, n, input);
+  else if (is_a<power>(e)) {
+    GExpr base = simplify_on_output_ex(e.op(0), n, input);
+    GExpr exp = simplify_on_output_ex(e.op(1), n, input);
+    if (is_a<numeric>(base) && is_a<numeric>(exp))
+      ris = reduce_product(pow(base, exp));
+    else
+      ris = pow_simpl(pow(base, exp), n, input);
+    // Necessary for l'output: for example if 'e = sqrt(18)^a' then
+    // 'ris = sqrt(2)^a*3^a'.
+    if (is_a<mul>(ris))
+      ris = collect_base_exponent(ris);
+  }
   else if (is_a<function>(e)) {
     GExpr f = e;
     GExpr tmp = simplify_on_output_ex(e.op(0), n, input);
     ris = f.subs(f.op(0) == tmp);
-  }
-  else if (is_a<power>(e)) {
-    GExpr base = simplify_on_output_ex(e.op(0), n, input);
-    GExpr exp = simplify_on_output_ex(e.op(1), n, input);
-    if (is_a<numeric>(base) && is_a<numeric>(exp)) {
-      GNumber base_1 = GiNaC::ex_to<GiNaC::numeric>(base);
-      GNumber exp_1 = GiNaC::ex_to<GiNaC::numeric>(exp);
-      ris = red_prod(1, 1, base_1, exp_1);
-    }
-    else
-      ris = pow_simpl(pow(base, exp), n, input);
-  }
-  else if (is_a<mul>(e)) {
-    ris = manip_factor(e, n, input);
   }
   else
     ris += e;
