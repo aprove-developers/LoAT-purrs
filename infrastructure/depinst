@@ -28,25 +28,27 @@
 # with the latest GCC snapshot, it can be used to set up the PURRS 
 # infrastructure.
 # Known limitations:
-# * Almost no error check
 # * Some libraries require packaging changes
 # In order to run the script you need:
-# - A GCC snapshot properly configured 
-#   say, --prefix=/usr/local/gcctest --with-local-prefix=/usr/local/gcctest
-# - A package repository with all the PURRS dependencies in bzip2 fornat
-# - Superuser privileges (or sudo access to make, optionally without password)
+# - A GCC compiler, or a properly configured snapshot 
+#   (say, --prefix=/usr/local/gcctest --with-local-prefix=/usr/local/gcctest)
+# - A package repository with all the PURRS dependencies in bzip2/gz format
+# - Superuser privileges
 
 # General Options
 #
 # Directory containing tarballs.
 REPOSITORY="$HOME/purrs-infrastructure"
-# Base path to the GCC you want to use.
+# Base path to the GCC you want to use. Set to /path to use /path/bin/gcc.
 GCC_BASE="/usr"
-# Set to yes if you also want to download/compile/check PURRS.
-export TEST_PURRS="yes"
+# Base path where the libraries will be installed.
+LIB_BASE="/usr/local" 
 
-CONFIGURE_DEFAULT_OPTIONS="--prefix=$GCC_BASE"
-export LD_LIBRARY_PATH=$GCC_BASE:$GCC_BASE/lib:$LD_LIBRARY_PATH
+# Set to yes if you also want to download/compile/check PURRS.
+export TEST_PURRS="no"
+
+CONFIGURE_DEFAULT_OPTIONS="--prefix=$LIB_BASE"
+export LD_LIBRARY_PATH=$LIB_BASE:$LIB_BASE/lib:$LD_LIBRARY_PATH:$GCC_BASE:$GCC_BASE/lib:
 export PATH=$GCC_BASE/bin:$PATH
 
 # Log file.
@@ -54,14 +56,13 @@ TODAY=`date +%Y-%m-%d`
 INST_LOG=/tmp/purrs_dep_inst_$TODAY.log
 
 # Library versions.
-# Assumption: LIB-VER.tar.bz2 expands to LIB-VER/
-# Repackage the few libraries that don't (or are not in .bz2 format).
-# Currently NTL and GIAC need to be repackaged as they are distributed as .tar.gz.
+# Assumption: LIB-VER.tar.[bz2|gz] expands to LIB-VER/
+# Repackage the few libraries that don't.
 GMP=gmp-4.1.4
 CLN=cln-1.1.8
 GINAC=GiNaC-1.2.4
 NTL=ntl-5.3.2
-GIAC=giac-0.4.0-ap
+GIAC=giac-0.4.0-ap3
 CGICC=cgicc-3.2.3
 
 # Some libraries have naive configuration conventions. Insert here
@@ -72,7 +73,7 @@ PRE_CONF_GIAC="cd ../$GIAC"
 
 # Some specific configure options for libraries that don't use defaults.
 OPT_GMP="$CONFIGURE_DEFAULT_OPTIONS --enable-cxx"
-OPT_NTL="NTL_GMP_LIP=on NTL_STD_CXX=on GMP_PREFIX=$GCC_BASE PREFIX=$GCC_BASE"
+OPT_NTL="NTL_GMP_LIP=on NTL_STD_CXX=on GMP_PREFIX=$LIB_BASE PREFIX=$LIB_BASE"
 OPT_CGICC="$CONFIGURE_DEFAULT_OPTIONS --enable-namespaces"
 OPT_GIAC="$CONFIGURE_DEFAULT_OPTIONS --disable-debug --disable-gc --without-x --disable-gui --disable-pari --disable-gsl --disable-fltk"
 
@@ -96,9 +97,9 @@ if [ $( id -u ) -ne 0 ]; then
   ASK_CONTINUE=1
 fi
 
-for DEPENDENCY in flex bison ; do
+for DEPENDENCY in flex bison ldconfig; do
   could_not_find "$DEPENDENCY" || {
-    echo "*** Could not find $DEPENDENCY in your PATH. This is required to install GiNaC.";
+    echo "*** Could not find $DEPENDENCY in your PATH. This is required for installation.";
     ASK_CONTINUE=1
     }
 done
@@ -140,8 +141,26 @@ for LIB_SHORT_NAME in ; do
   fi
   mkdir obj$LIBNAME;
   cd obj$LIBNAME;
-  $PRE_CONF && $CONF_PATH/configure $OPT_PARAM && make && make install && ldconfig && echo "$LIB_SHORT_NAME installed successfully.";
-  echo "`date +%Y-%m-%d_%H:%M:%S` Installed $LIB_SHORT_NAME as $LIBNAME" >> $INST_LOG;
+  SUCCESS=0;
+  $PRE_CONF 
+  && $CONF_PATH/configure $OPT_PARAM 
+  && make 
+  && make install 
+  && ldconfig 
+  && echo "$LIB_SHORT_NAME installed successfully." 
+  && SUCCESS=1;
+  if test $SUCCESS == 1;
+    then
+    echo "`date +%Y-%m-%d_%H:%M:%S` Installed $LIB_SHORT_NAME as $LIBNAME" >> $INST_LOG;
+    else {
+      echo -n "Problems installing $LIB_SHORT_NAME. Are you sure you want to continue? (y/N): "
+      read CONFIRMATION
+      echo ""
+      if [ "$CONFIRMATION" != "y" ] && [ "$CONFIRMATION" != "yes" ] ; then
+        exit 0 ;
+      fi
+    }
+    fi
 done
 
 # Test with a current PURRS snapshot.
@@ -158,5 +177,5 @@ if test $TEST_PURRS == "yes";
   cd ..
   mkdir objpurrs$TODAY
   cd objpurrs$TODAY
-  ../purrs/configure $CONFIGURE_DEFAULT_OPTIONS --with-cln-prefix=$GCC_BASE && make && make check
+  ../purrs/configure $CONFIGURE_DEFAULT_OPTIONS --with-cln-prefix=$LIB_BASE && make && make check
 fi
