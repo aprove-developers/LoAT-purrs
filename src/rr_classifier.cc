@@ -782,13 +782,12 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
       else
 	e += r;
     } // end case of r `x' function.
-    else if (r.is_the_sum_function() && r.arg(2) == n) {
-      // Check if the summand has the `x' function with the argument
-      // dependently from the index of the sum.
-      if (r.arg(3).has_x_function(false, r.arg(0))) {
-	D_MSG("infinite order");
-	return TOO_COMPLEX;
-      }
+  // Check if the summand has the `x' function with the argument
+  // dependently from the index of the sum.
+    else if (r.is_the_sum_function() && r.arg(2) == n
+	     && r.arg(3).has_x_function(false, r.arg(0))) {
+      D_MSG("infinite order");
+      return TOO_COMPLEX;
     }
     else
       e += r;
