@@ -658,6 +658,10 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
     T(n) = \frac{f(n)}{f(n-1)} (1+f(n-1)) T(n-1)
       + f(n) \left( \frac{g(n)}{f(n)} - \frac{g(n-1)}{f(n-1)} \right).
   \f]
+  The recurrence of finite order that we want to solve is the previous
+  shifted forward by \f$ 1 \f$, i.e., \f$ n = n + 1 \f$ because ...
+
+
   If the recurrence stored in \p rhs is of that shape then the function
   returns <CODE>true</CODE> and stores the coefficient of the new recurrence
   in \p coefficient and the non-homogeneous part \f$ g(n) \f$ in
@@ -669,31 +673,32 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 bool
 known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
 			      const Expr& weight,
-			      Expr& coefficient, Expr& inhomogeneous) {
+			      Expr& coefficient, Expr& inhomogeneous,
+			      Expr& first_element) {
   Expr inhom_infinite_order_rec = rhs - weight * term_sum;
 
   // If `f(n)' or `g(n)' contain other `x' function with `n' in the
   // argument then the recurrence is too complex for the system.
-  // The method used is not right when `f(n)' is a constant for
-  // `n' and, consequently, the recurrence that we can obtain with
-  // the transformation is not with variable coefficient.
-  // FIXME: is it true?
   if (weight.has_x_function(false, Recurrence::n)
-      || inhom_infinite_order_rec.has_x_function(false, Recurrence::n)
-      || !weight.has(Recurrence::n))
+      || inhom_infinite_order_rec.has_x_function(false, Recurrence::n))
     return false;
 
   Expr weight_shifted = weight.substitute(Recurrence::n, Recurrence::n-1);
-  coefficient = weight / weight_shifted * (1 + weight_shifted);
+  coefficient = (weight / weight_shifted * (1 + weight_shifted))
+    .substitute(Recurrence::n, Recurrence::n+1);
   coefficient = simplify_all(coefficient);
   
   Expr inhom_infinite_order_rec_shifted
     = inhom_infinite_order_rec.substitute(Recurrence::n, Recurrence::n-1);
   inhomogeneous
-    = weight * (inhom_infinite_order_rec / weight
-		- inhom_infinite_order_rec_shifted / weight_shifted);
+    = (weight * (inhom_infinite_order_rec / weight
+		 - inhom_infinite_order_rec_shifted / weight_shifted))
+    .substitute(Recurrence::n, Recurrence::n+1);
   inhomogeneous = simplify_all(inhomogeneous);
   
+  first_element
+    = (weight * x(0) + inhom_infinite_order_rec).substitute(Recurrence::n, 1);
+
   return true;
 }
 
@@ -810,13 +815,16 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
       if (is_order_zero()) {
 	Expr coeff_variable;
 	Expr inhomog_variable;
+	Expr first_element;
 	if (known_class_of_infinite_order(recurrence_rhs, addend, 1,
-					  coeff_variable, inhomog_variable)) {
+					  coeff_variable, inhomog_variable,
+					  first_element)) {
 	  infinite_order_p = new Infinite_Order_Info(coeff_variable
 						     * x(Recurrence::n - 1)
 						     + inhomog_variable,
 						     coeff_variable,
-						     inhomog_variable);
+						     inhomog_variable,
+						     first_element);
 	  inhomogeneous = recurrence_rhs - addend;
 	  set_linear_infinite_order();
 	  return SUCCESS;
@@ -895,14 +903,16 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	      weight *= addend.op(j);
 	  Expr coeff_variable;
 	  Expr inhomog_variable;
+	  Expr first_element;
 	  if (known_class_of_infinite_order(recurrence_rhs, factor, weight,
-					    coeff_variable,
-					    inhomog_variable)) {
+					    coeff_variable, inhomog_variable,
+					    first_element)) {
 	    infinite_order_p = new Infinite_Order_Info(coeff_variable
 						       * x(Recurrence::n - 1)
 						       + inhomog_variable,
 						       coeff_variable,
-						       inhomog_variable);
+						       inhomog_variable,
+						       first_element);
 	    inhomogeneous = recurrence_rhs - weight * addend;
 	    set_linear_infinite_order();
 	    return SUCCESS;

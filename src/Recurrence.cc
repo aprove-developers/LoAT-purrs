@@ -692,18 +692,25 @@ PURRS::Recurrence::compute_exact_solution() const {
     else {
       D_MSG("compute_linear_infinite_order_recurrence");
       std::vector<Expr> coefficients(2);
-      coefficients[1] = coeff_var_first_order();
-      Recurrence rec_rewritten(rhs_transformed_in_first_order_var_coeffs());
+      coefficients[1] = coeff_first_order();
+      Recurrence rec_rewritten(rhs_transformed_in_first_order());
       rec_rewritten.finite_order_p = new Finite_Order_Info(1, coefficients, 1);
       rec_rewritten.set_type(LINEAR_FINITE_ORDER_VAR_COEFF);
-      rec_rewritten.set_inhomogeneous_term(inhomog_var_first_order());
+      rec_rewritten.set_inhomogeneous_term(inhomog_first_order());
       if ((status = rec_rewritten.solve_linear_finite_order())
 	  == SUCCESS) {
-	D_VAR(rec_rewritten.exact_solution_.expression());
-	exact_solution_.set_expression(rec_rewritten
-				       .exact_solution_.expression());
-	lower_bound_.set_expression(exact_solution_.expression());
-	upper_bound_.set_expression(exact_solution_.expression());
+	Expr solution = rec_rewritten.exact_solution_.expression();
+	// Shift backward: n -> n - 1 and substitution of initial
+	// condition `x(1) = 2*x(0)+1'
+	// (there are 2 steps in 1: x(0) -> x(1) -> value_of_first_element()).
+	solution = solution.substitute(n, n - 1);
+	solution = solution
+	  .substitute(x(rec_rewritten.first_well_defined_rhs_linear()),
+		      value_of_first_element());
+	//	solution = simplify_ex_for_output(solution, false);
+	exact_solution_.set_expression(solution);
+	lower_bound_.set_expression(solution);
+	upper_bound_.set_expression(solution);
 	return SUCCESS;
       }
       else
