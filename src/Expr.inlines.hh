@@ -183,6 +183,12 @@ Expr::ex_to_number() const {
   return GiNaC::ex_to<GiNaC::numeric>(*this);
 }
 
+inline Symbol
+Expr::ex_to_symbol() const {
+  assert(GiNaC::is_a<GiNaC::symbol>(*this));
+  return GiNaC::ex_to<GiNaC::symbol>(*this);
+}
+
 // FIXME: info, temporary
 inline bool
 Expr::is_integer_polynomial() const {

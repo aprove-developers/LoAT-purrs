@@ -432,6 +432,9 @@ public:
   //! Returns the numeric value of \p *this.
   Number ex_to_number() const;
 
+  //! Returns the symbolic value of \p *this.
+  Symbol ex_to_symbol() const;
+
   // FIXME: info, temporary
   bool is_integer_polynomial() const;
   bool is_rational_polynomial() const;
