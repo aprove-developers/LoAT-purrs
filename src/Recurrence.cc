@@ -104,159 +104,8 @@ ok_inequalities(const Expr& e, unsigned int condition) {
   return false;
 }
 
-bool
-validation_initial_conditions_in_bound(Recurrence::Bound kind_of_bound,
-				       const Expr& bound, unsigned int index) {
-  Expr bound_valuated = bound.substitute(Recurrence::n, index);
-  D_VAR(bound_valuated);
-  if (bound_valuated != x(index))
-    if (bound_valuated.is_a_mul()) {
-      Expr coeff_ic = 1;
-      for (unsigned int i = bound_valuated.nops(); i-- > 0; ) {
-	const Expr& factor = bound_valuated.op(i);
-	if (factor != x(index))
-	  coeff_ic *= factor;
-      }
-      D_VAR(coeff_ic);
-      Number num;
-      if (kind_of_bound == Recurrence::UPPER) {
-	if (coeff_ic.is_a_number(num) && num < 1)
-	  return false;
-      }
-      else
-	if (coeff_ic.is_a_number(num) && num > 1)
-	  return false;
-    }
-    else if (bound_valuated.is_a_add()) {
-      Expr term_with_ic = 0;
-      Expr other_terms = 0;
-      split(bound_valuated, x(index),
-	    term_with_ic, other_terms);
-      Expr coeff_ic = 1;
-      if (term_with_ic.is_a_mul()) {
-	for (unsigned int i = term_with_ic.nops(); i-- > 0; ) {
-	  const Expr& factor = term_with_ic.op(i);
-	  if (factor != x(index))
-	    coeff_ic *= factor;
-	}
-      }
-      D_VAR(coeff_ic);
-      D_VAR(other_terms);
-      Number num_coeff;
-      Number num_other;
-      if (coeff_ic.is_a_number(num_coeff)
-	  && other_terms.is_a_number(num_other)) {
-	if (kind_of_bound == Recurrence::UPPER) {
-	  if (!(num_coeff >= 1 && num_other.is_positive()))
-	    return false;
-	}
-	else
-	  if (!(num_coeff <= 1 && num_other.is_negative()))
-	    return false;
-      }
-      else
-	return false;
-    }
-  return true;
-}
-
 } // anonymous namespace
 
-// @@@
-/*!
-  Consider the right hand side \p rhs of the functional equation
-  \f$ a x_{n/b} + p(n) \f$.
-  If \p upper is <CODE>true</CODE> we try to check that the upper bound
-  is correct;
-  If \p upper is <CODE>false</CODE> we try to check that the lower bound
-  is correct.
-*/
-PURRS::Recurrence::Verify_Status
-PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
-  assert(is_functional_equation());
-  assert(kind_of_bound == UPPER || kind_of_bound == LOWER);
-  Expr bound;
-  if (kind_of_bound == UPPER)
-    bound = simplify_sum(upper_bound_.expression(), true);
-  else
-    bound = simplify_sum(lower_bound_.expression(), true);
-  
-  // Step 1: validation of initial conditions.
-  if (!validation_initial_conditions_in_bound(kind_of_bound, bound,
-					      applicability_condition()))
-    return INCONCLUSIVE_VERIFICATION;
-  
-  // Step 2: find `partial_bound'.
-  // We not consider the terms containing the initial conditions:
-  // `partial_bound' will contain all the other terms.
-  Expr partial_bound = 0;
-  if (bound.is_a_add())
-    for (unsigned int i = bound.nops(); i-- > 0; ) {
-      if (!bound.op(i).has_x_function_only_ic())
-	partial_bound += bound.op(i);
-    }
-  else
-    if (!bound.has_x_function_only_ic())
-      partial_bound = bound;
-  D_VAR(partial_bound);
-  // The recurrence is homogeneous.
-  if (partial_bound == 0)
-    return PROVABLY_CORRECT;
-  
-  // Step 3: verification of the inductive base.
-  Number num;
-  if (kind_of_bound == UPPER
-      && partial_bound
-      .substitute(n, applicability_condition()).is_a_number(num)
-      && num.is_negative())
-    return INCONCLUSIVE_VERIFICATION;
-  if (kind_of_bound == LOWER
-      && partial_bound
-      .substitute(n, applicability_condition()).is_a_number(num)
-      && num.is_positive())
-    return INCONCLUSIVE_VERIFICATION;
-  
-  // Step 4: verification of the inductive step.
-  Expr partial_bound_sub
-    = partial_bound.substitute(n, n / functional_eq_p->ht_begin()->first);
-  Expr approx
-    = recurrence_rhs.substitute(x(n / functional_eq_p->ht_begin()->first),
-				partial_bound_sub);
-  D_VAR(approx);
-  approx = simplify_ex_for_input(approx, true);
-  approx = simplify_logarithm(approx);
-  D_VAR(approx);
-  
-  Expr diff;
-  if (kind_of_bound == UPPER)
-    diff = partial_bound - approx;
-  else
-    diff = approx - partial_bound;
-  D_VAR(diff);
-  
-  if (diff.is_a_number(num)) {
-    if (num == 0 || num.is_positive())
-      return PROVABLY_CORRECT;
-  }
-  else if (diff.is_a_mul()) {
-    Expr coeff_n = 1;
-    for (unsigned int i = diff.nops(); i-- > 0; ) {
-      const Expr& factor = diff.op(i);
-      if (!(factor == n || (factor.is_a_power()
-			    && factor.arg(0) == n
-			    && factor.arg(1).is_a_number(num)
-			    && num.is_positive_integer())))
-	coeff_n *= factor;
-    }
-    D_VAR(coeff_n);
-    if (coeff_n.is_a_number(num) && num.is_positive())
-      return PROVABLY_CORRECT;
-  }
-  else if (diff.is_a_add())
-    if (ok_inequalities(diff, applicability_condition()))
-      return PROVABLY_CORRECT;
-  return INCONCLUSIVE_VERIFICATION;
-}
 
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::
@@ -750,6 +599,161 @@ PURRS::Recurrence::verify_infinite_order() const {
     return PROVABLY_CORRECT;
   else
     return INCONCLUSIVE_VERIFICATION;
+}
+
+PURRS::Recurrence::Verify_Status
+PURRS::Recurrence::validation_initial_conditions(Bound kind_of_bound,
+						 const Expr& bound,
+						 unsigned int index) const {
+  Expr bound_valuated = bound.substitute(n, index);
+  D_VAR(bound_valuated);
+  if (bound_valuated != x(index))
+    if (bound_valuated.is_a_mul()) {
+      Expr coeff_ic = 1;
+      for (unsigned int i = bound_valuated.nops(); i-- > 0; ) {
+	const Expr& factor = bound_valuated.op(i);
+	if (factor != x(index))
+	  coeff_ic *= factor;
+      }
+      D_VAR(coeff_ic);
+      Number num;
+      if (kind_of_bound == UPPER) {
+	if (coeff_ic.is_a_number(num) && num < 1)
+	  return INCONCLUSIVE_VERIFICATION;
+      }
+      else
+	if (coeff_ic.is_a_number(num) && num > 1)
+	  return INCONCLUSIVE_VERIFICATION;
+    }
+    else if (bound_valuated.is_a_add()) {
+      Expr term_with_ic = 0;
+      Expr other_terms = 0;
+      split(bound_valuated, x(index),
+	    term_with_ic, other_terms);
+      Expr coeff_ic = 1;
+      if (term_with_ic.is_a_mul()) {
+	for (unsigned int i = term_with_ic.nops(); i-- > 0; ) {
+	  const Expr& factor = term_with_ic.op(i);
+	  if (factor != x(index))
+	    coeff_ic *= factor;
+	}
+      }
+      D_VAR(coeff_ic);
+      D_VAR(other_terms);
+      Number num_coeff;
+      Number num_other;
+      if (coeff_ic.is_a_number(num_coeff)
+	  && other_terms.is_a_number(num_other)) {
+	if (kind_of_bound == UPPER) {
+	  if (!(num_coeff >= 1 && num_other.is_positive()))
+	    return INCONCLUSIVE_VERIFICATION;
+	}
+	else
+	  if (!(num_coeff <= 1 && num_other.is_negative()))
+	    return INCONCLUSIVE_VERIFICATION;
+      }
+      else
+	return INCONCLUSIVE_VERIFICATION;
+    }
+  return PROVABLY_CORRECT;
+}
+
+// @@@
+/*!
+  Consider the right hand side \p rhs of the functional equation
+  \f$ a x_{n/b} + p(n) \f$.
+  If \p upper is <CODE>true</CODE> we try to check that the upper bound
+  is correct;
+  If \p upper is <CODE>false</CODE> we try to check that the lower bound
+  is correct.
+*/
+PURRS::Recurrence::Verify_Status
+PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
+  assert(is_functional_equation());
+  assert(kind_of_bound == UPPER || kind_of_bound == LOWER);
+  Expr bound;
+  if (kind_of_bound == UPPER)
+    bound = simplify_sum(upper_bound_.expression(), true);
+  else
+    bound = simplify_sum(lower_bound_.expression(), true);
+  
+  // Step 1: validation of initial conditions.
+  Verify_Status status
+    = validation_initial_conditions(kind_of_bound, bound,
+				    applicability_condition());
+  if (status == INCONCLUSIVE_VERIFICATION || status == PROVABLY_INCORRECT)
+    return status;
+  
+  // Step 2: find `partial_bound'.
+  // We not consider the terms containing the initial conditions:
+  // `partial_bound' will contain all the other terms.
+  Expr partial_bound = 0;
+  if (bound.is_a_add())
+    for (unsigned int i = bound.nops(); i-- > 0; ) {
+      if (!bound.op(i).has_x_function_only_ic())
+	partial_bound += bound.op(i);
+    }
+  else
+    if (!bound.has_x_function_only_ic())
+      partial_bound = bound;
+  D_VAR(partial_bound);
+  // The recurrence is homogeneous.
+  if (partial_bound == 0)
+    return PROVABLY_CORRECT;
+  
+  // Step 3: verification of the inductive base.
+  Number num;
+  if (kind_of_bound == UPPER
+      && partial_bound
+      .substitute(n, applicability_condition()).is_a_number(num)
+      && num.is_negative())
+    return INCONCLUSIVE_VERIFICATION;
+  if (kind_of_bound == LOWER
+      && partial_bound
+      .substitute(n, applicability_condition()).is_a_number(num)
+      && num.is_positive())
+    return INCONCLUSIVE_VERIFICATION;
+  
+  // Step 4: verification of the inductive step.
+  Expr partial_bound_sub
+    = partial_bound.substitute(n, n / functional_eq_p->ht_begin()->first);
+  Expr approx
+    = recurrence_rhs.substitute(x(n / functional_eq_p->ht_begin()->first),
+				partial_bound_sub);
+  D_VAR(approx);
+  approx = simplify_ex_for_input(approx, true);
+  approx = simplify_logarithm(approx);
+  D_VAR(approx);
+  
+  Expr diff;
+  if (kind_of_bound == UPPER)
+    diff = partial_bound - approx;
+  else
+    diff = approx - partial_bound;
+  D_VAR(diff);
+  
+  if (diff.is_a_number(num)) {
+    if (num == 0 || num.is_positive())
+      return PROVABLY_CORRECT;
+  }
+  else if (diff.is_a_mul()) {
+    Expr coeff_n = 1;
+    for (unsigned int i = diff.nops(); i-- > 0; ) {
+      const Expr& factor = diff.op(i);
+      if (!(factor == n || (factor.is_a_power()
+			    && factor.arg(0) == n
+			    && factor.arg(1).is_a_number(num)
+			    && num.is_positive_integer())))
+	coeff_n *= factor;
+    }
+    D_VAR(coeff_n);
+    if (coeff_n.is_a_number(num) && num.is_positive())
+      return PROVABLY_CORRECT;
+  }
+  else if (diff.is_a_add())
+    if (ok_inequalities(diff, applicability_condition()))
+      return PROVABLY_CORRECT;
+  return INCONCLUSIVE_VERIFICATION;
 }
 
 //! \brief

@@ -130,6 +130,15 @@ public:
   bool OK() const; 
 
 private:
+  //! Kinds of bounds for the solution that is possible to compute.
+  enum Bound {
+    /*! An upper bound. */
+    UPPER,
+    
+    /*! A lower bound. */
+    LOWER
+  };
+
   //! \brief
   //! Returns the right-hand side of the auxiliary equation \f$ z = e \f$,
   //! if such an auxiliary equation exists;
@@ -146,17 +155,6 @@ private:
   Expr get_initial_condition(unsigned int k) const;
 
 public:
-#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
-  //! Kinds of bounds for the solution that is possible to compute.
-#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
-  enum Bound {
-    /*! An upper bound. */
-    UPPER,
-    
-    /*! A lower bound. */
-    LOWER
-  };
-
   //! The possible states of the recurrence.
   enum Solver_Status {
     /*!
@@ -434,6 +432,11 @@ private:
 
   //! @@@
   Verify_Status verify_infinite_order() const;
+
+  //! @@@
+  Verify_Status validation_initial_conditions(Bound kind_of_bound,
+					      const Expr& bound,
+					      unsigned int index) const;
 
   //! @@@
   Verify_Status verify_bound(Bound kind_of_bound) const;
