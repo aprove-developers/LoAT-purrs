@@ -687,68 +687,60 @@ reduce_product(const GExpr& a) {
     }
   }
   return tmp;
-
-  // DIFFERENT VERSION OF reduce_product()
-  //
-//   GExpr tmp = a;
-//   GExpr factors_simpl;
-//   GExpr non_numerica = 1;
-//   GNumber base_1 = 1;
-//   GNumber exp_1 = 1;
-//   for (unsigned i = tmp.nops(); i-- > 0; ) {
-//     std::cout << tmp.op(i) << " <- factor" << std::endl;
-//     if (is_a<power>(tmp.op(i)))
-//       if (GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(0)) &&
-// 	  GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(1))) {
-// 	GNumber base_2 = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(0));
-// 	GNumber exp_2 = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(1));
-// 	std::cout << "base_1  " << base_1 << "    " << "base_2  " << base_2 << std::endl;
-// 	std::cout << "exp_1   " << exp_1 << "    " << "exp_2   " << exp_2 << std::endl;
-// 	std::cout << std::endl;
-// 	factors_simpl = red_prod(base_1, exp_1, base_2, exp_2);
-// 	// red_prod restituisce 
-// 	// numerico            oppure
-// 	// numerico^numerico   oppure
-// 	// numerico * numerico^numerico
-// 	// es. 3^(1/4)*6^(3/4) restituisce 3*8^(1/4)
-// 	// FIXME: giusto?
-// 	if (is_a<mul>(factors_simpl)) {
-// 	  assert(factors_simpl.nops() == 2);
-// 	  for (unsigned j = 2; j-- > 0; )
-// 	    if (is_a<power>(factors_simpl.op(j))) {
-// 	      assert(is_a<numeric>(factors_simpl.op(j).op(0)));
-// 	      assert(is_a<numeric>(factors_simpl.op(j).op(1)));
-// 	      base_1 = GiNaC::ex_to<GiNaC::numeric>(factors_simpl.op(j).op(0));
-// 	      exp_1 = GiNaC::ex_to<GiNaC::numeric>(factors_simpl.op(j).op(1));
-// 	    }
-// 	    else {
-// 	      assert(is_a<numeric>(factors_simpl.op(j)));
-// 	      non_numerica *= tmp.op(j);
-// 	    }
-// 	}
-// 	else if (is_a<power>(factors_simpl)) {
-// 	  assert(is_a<numeric>(factors_simpl.op(0)));
-// 	  assert(is_a<numeric>(factors_simpl.op(1)));
-// 	  base_1 = GiNaC::ex_to<GiNaC::numeric>(factors_simpl.op(0));
-// 	  exp_1 = GiNaC::ex_to<GiNaC::numeric>(factors_simpl.op(1));
-// 	}
-// 	else {
-// 	  assert(is_a<numeric>(factors_simpl));
-// 	  base_1 = GiNaC::ex_to<GiNaC::numeric>(factors_simpl);
-// 	  exp_1 = 1;
-// 	}
-//       }
-//       else
-// 	non_numerica *= tmp.op(i);
-//     else
-//       non_numerica *= tmp.op(i);
-//   }
-//   tmp = factors_simpl * non_numerica;
-//   return factors_simpl * non_numerica;
-// }
-
-
 }
+
+//    // DIFFERENT VERSION OF reduce_product()
+//    //
+//    GExpr tmp = a;
+//    GExpr factor_to_reduce = 1;
+//    GExpr factor_no_to_reduce = 1;
+//    GNumber base_1 = 1;
+//    GNumber exp_1 = 1;
+//    for (unsigned i = tmp.nops(); i-- > 0; )
+//      if (is_a<power>(tmp.op(i)))
+//        // Base and exponent of 'tmp.op(i)' are both numeric.
+//        if (GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(0)) &&
+//  	  GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(1))) {
+//  	GNumber base_2 = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(0));
+//  	GNumber exp_2 = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(1));
+//  	factor_to_reduce = red_prod(base_1, exp_1, base_2, exp_2);
+//  	// red_prod restituisce 
+//  	// numerico            oppure
+//  	// numerico^numerico   oppure
+//  	// numerico * numerico^numerico
+//  	// es. 3^(1/4)*6^(3/4) restituisce 3*8^(1/4)
+//  	// FIXME: giusto?
+//  	if (is_a<mul>(factor_to_reduce)) {
+//  	  assert(factor_to_reduce.nops() == 2);
+//  	  for (unsigned j = 2; j-- > 0; )
+//  	    if (is_a<power>(factor_to_reduce.op(j))) {
+//  	      assert(is_a<numeric>(factor_to_reduce.op(j).op(0)));
+//  	      assert(is_a<numeric>(factor_to_reduce.op(j).op(1)));
+//  	      base_1 = GiNaC::ex_to<GiNaC::numeric>(factor_to_reduce.op(j).op(0));
+//  	      exp_1 = GiNaC::ex_to<GiNaC::numeric>(factor_to_reduce.op(j).op(1));
+//  	    }
+//  	}
+//  	else if (is_a<power>(factor_to_reduce)) {
+//  	  assert(is_a<numeric>(factor_to_reduce.op(0)));
+//  	  assert(is_a<numeric>(factor_to_reduce.op(1)));
+//  	  base_1 = GiNaC::ex_to<GiNaC::numeric>(factor_to_reduce.op(0));
+//  	  exp_1 = GiNaC::ex_to<GiNaC::numeric>(factor_to_reduce.op(1));
+//  	}
+//  	else {
+//  	  assert(is_a<numeric>(factor_to_reduce));
+//  	  base_1 = GiNaC::ex_to<GiNaC::numeric>(factor_to_reduce);
+//  	  exp_1 = 1;
+//  	}
+//        }
+//    // Base and exponent of 'tmp.op(i)' are not both numeric.
+//        else
+//  	factor_no_to_reduce *= tmp.op(i);
+//    // 'tmp.op(i)' is not a 'GiNaC::power'.
+//      else
+//        factor_no_to_reduce *= tmp.op(i);
+//    return factor_to_reduce * factor_no_to_reduce;
+//  }
+
 
 GExpr
 simplify_roots(const GExpr& e) {
@@ -765,6 +757,10 @@ simplify_roots(const GExpr& e) {
     ris *= f.subs(f.op(0) == tmp);
   }
   else if (is_a<mul>(e)) {
+    // Se si usa la nuova reduce_product().
+    //return reduce_product(e);
+
+//      // Se si usa la vecchia reduce_product().
     ris = 1;
     for (unsigned i = e.nops(); i-- > 0; )
       ris *= simplify_roots(reduce_product(e.op(i)));
@@ -773,9 +769,14 @@ simplify_roots(const GExpr& e) {
     //ris = reduce_product(ris);
   }
   else if (is_a<power>(e)) {
-    // FIXME: non e' corretto chiamarlo cosi'!
     ris = 1;
-    ris *= pow(simplify_roots(e.op(0)), simplify_roots(e.op(1)));
+    if (is_a<numeric>(e.op(0)) && is_a<numeric>(e.op(1))) {
+      GNumber base = GiNaC::ex_to<GiNaC::numeric>(e.op(0));
+      GNumber exp = GiNaC::ex_to<GiNaC::numeric>(e.op(1));
+      ris *= red_prod(1, 1, base, exp);
+    }
+    else
+      ris *= pow(simplify_roots(e.op(0)), simplify_roots(e.op(1)));
   }
   else
     ris += e;
