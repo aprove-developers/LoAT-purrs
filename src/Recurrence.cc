@@ -1601,9 +1601,11 @@ PURRS::Recurrence::dump(std::ostream& s) const {
     << (recurrence_rewritten ? "true" : "false") << std::endl;
   s << "recurrence_rhs = " << recurrence_rhs << std::endl;
   s << "first_valid_index = " << first_valid_index << std::endl;
-  s << "first_valid_index_for_solution = "
-    << first_valid_index_for_solution() << std::endl;
-
+  if (exact_solution_.has_expression()
+      || lower_bound_.has_expression() || upper_bound_.has_expression())
+    s << "first_valid_index_for_solution = "
+      << first_valid_index_for_solution() << std::endl;
+  
   s << "auxiliary_definitions:" << std::endl;
   blackboard.dump(s);
   
