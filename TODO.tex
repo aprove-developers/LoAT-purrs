@@ -31,6 +31,7 @@ which \texttt{GiNaC} does not simplify. After calling
 expression, we get the list $\{\, 0$, $1\,\}$.
 This arises from the recurrence $x_n = a*x_{n-1} + n^2$ in the
 file \texttt{recurrences}.
+FIXED.
 
 \item (Added on 4.9.2002)
 \texttt{purrs} fails to check that Binet's formula holds for the Fibonacci
@@ -53,6 +54,44 @@ need to be able to simplify ratios of factorials.
 Of course the same remark holds for binomial coefficients.
 \texttt{GiNaC} shows no ability at that (just try
 \texttt{factorial$(n+1)$/factorial$(n)$}).
+
+\item (Added om 9.10.2002)
+We have the following problem with Gosper's algorithm, in particular when
+we compute the resultant's roots:
+given the recurrence
+\[
+  x_n = 2 \cdot x_{n-1} - x_{n-2} + \frac1{n(n+1)}
+\]
+we use the formula 
+\[
+  x_n = \sum_{i=k}^n g_{n-i} p(i)
+  +
+  \sum_{i=0}^{k-1} g_{n-i} \Bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \Bigr).
+\]
+We consider the first term of the previous formula where, in this case,
+we have $g(n) = n + 1$, then $g(n-k) = n - k + 1$, and
+$p(k) = \frac1{k(k+1)}$, then the sum to compute is
+\[
+  \sum_{k=2}^n \frac{n-k+1}{k(k+1)}.
+\]
+We consider the steps of Gosper's algorithm
+(for clarity we change the variables):
+\begin{align*}
+  t_n &= \frac{a-n+1}{n(n+1)},\\
+  r_n &= \frac{t_{n+1}}{t_n} = \frac{n(a-n)}{(1-n+a)(n+2)}.
+\end{align*}
+In the second step we have $f(n) = an - n^2$ e
+$g(n) = -n^2 + an - n + 2 + 2a$, then
+$g(n+h) = -(h+n)^2 + a(n+h) - n - h + 2 + 2a$.
+The resultant is
+\[
+  R = 4 + 2a^2 + h^4 - 3h^2 + 2h^3 -4h -3ah - ha^2 -3h^2a -h^2a^2 + 6a
+\]
+and the constant term
+\[
+  4 + 2a^2 + 6a.
+\]
+How we compute the roots for the resultant is not right in this case.
 
 \end{enumerate}
 
