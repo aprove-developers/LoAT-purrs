@@ -1,6 +1,6 @@
 
-#ifndef _globals_hh
-#define _globals_hh 1
+#ifndef PURRS_globals_hh
+#define PURRS_globals_hh 1
 
 #include <ginac/ginac.h>
 #include <cln/complex.h>

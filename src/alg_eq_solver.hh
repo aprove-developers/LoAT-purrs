@@ -22,8 +22,8 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#ifndef _alg_eq_solver_hh
-#define _alg_eq_solver_hh 1
+#ifndef PURRS_alg_eq_solver_hh
+#define PURRS_alg_eq_solver_hh 1
 
 #include <vector>
 #include "globals.hh"

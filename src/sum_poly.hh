@@ -22,8 +22,8 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#ifndef _sum_poly_hh
-#define _sum_poly_hh 1
+#ifndef PURRS_sum_poly_hh
+#define PURRS_sum_poly_hh 1
 
 #include "globals.hh"
 

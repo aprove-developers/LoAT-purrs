@@ -22,8 +22,8 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#ifndef _util_hh
-#define _util_hh 1
+#ifndef PURRS_util_hh
+#define PURRS_util_hh 1
 
 #include "globals.hh"
 #include <iostream>
