@@ -79,6 +79,11 @@ Finite_Order_Info::first_initial_condition() {
   return first_initial_condition_;
 }
 
+inline void
+Finite_Order_Info::set_first_initial_condition(unsigned i_c) {
+  first_initial_condition_ = i_c;
+}
+
 inline const std::vector<Expr>&
 Finite_Order_Info::coefficients() const {
   return coefficients_;

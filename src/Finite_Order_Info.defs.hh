@@ -59,6 +59,9 @@ public:
   //! Returns <CODE>first_initial_condition_</CODE>.
   unsigned& first_initial_condition();
 
+  //! Sets <CODE>first_initial_condition_</CODE> with \p i_c
+  void set_first_initial_condition(unsigned i_c);
+
   //! Returns <CODE>coefficients_</CODE>.
   const std::vector<Expr>& coefficients() const;
 
