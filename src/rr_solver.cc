@@ -983,7 +983,7 @@ gosper(const int order, const Symbol& n,
       assert(order == 1);
       Expr t = Parma_Recurrence_Relation_Solver::power(base_of_exps[i], n) * exp_no_poly_coeff[i]
 	* Parma_Recurrence_Relation_Solver::power(roots[0].value(), -n);
-//        std::cout << "t(n) = " << t << std::endl;
+      //std::cout << "t(n) = " << t << std::endl;
       if (!gosper(t, n, order, n, tmp))
 	return false;
     }
@@ -1038,15 +1038,15 @@ solve_constant_coeff_order_1(const Symbol& n, const int order,
   // Computes the sum when `\lambda^{n-k} p(k)' is not a polynomial or
   // a product of a polynomial times an exponential.
   if (vector_not_all_zero(exp_no_poly_coeff)) {
-    // FIXME: for the moment gosper returns the right solution only
-    // if the summand is an hypergeometric term.
     Expr gosper_solution;
     if (gosper(order, n, base_of_exps, exp_no_poly_coeff, roots,
 	       gosper_solution))
       solution += gosper_solution;
-    // The summand is not an hypergeometric term.
-    //        else
-    //  	....
+    else
+      // FIXME: once we have decided how to represent for the sum, the print
+      // in the else will be substitute with the appropriate notation.
+      // solution += ... 
+      std::cout << "No non-zero polynomial solution" << std::endl;
   }
   // FIXME: per ora non si puo' usare la funzione
   // `add_initial_conditions' perche' richiede un vettore di
@@ -1527,8 +1527,13 @@ verify_solution(const Expr& solution, const int& order, const Expr& rhs,
   if (diff.is_zero())
     return true;
   else {
-    print_bad_exp(diff, rhs, false);
-    return false;
+    diff = simplify_factorials_and_exponentials(diff, n).expand();
+    if (diff.is_zero())
+      return true;
+    else {
+      print_bad_exp(diff, rhs, false);
+      return false;
+    }
   }
 }
 
