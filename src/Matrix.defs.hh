@@ -91,7 +91,8 @@ public:
   /*!
     \param vars    n x p matrix, all elements must be symbols.
     \param rhs     m x p matrix.
-    Returns a n x p solution matrix.
+
+    \return        n x p solution matrix.
 
     \exception std::logic_error      thrown if the matrices'dimensions are
                                      incompatible.

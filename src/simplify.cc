@@ -1768,8 +1768,9 @@ PURRS::simplify_sum(const Expr& e,
 /*!
   Executes consecutively all simplifications described in the comment
   of the functions <CODE>simplify_numer_denom()</CODE>,
-  <CODE>simplify_factorials_and_exponentials()</CODE> and
-  <CODE>simplify_expanded_on_output_ex()</CODE>.
+  <CODE>simplify_factorials_and_exponentials()</CODE>,
+  <CODE>simplify_ex_for_output()</CODE> and
+  <CODE>simplify_logarithm()</CODE>.
 */
 PURRS::Expr
 PURRS::simplify_all(const Expr& e) {
