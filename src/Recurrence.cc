@@ -1395,7 +1395,6 @@ compute_weighted_average_recurrence(Expr& solution) const {
       solution = solution.substitute(n, n - 1);
       solution = solution
 	.substitute(x(0), (weight()*x(0)+inhomogeneous_term).substitute(n, 1));
-      // Compute the solution of the original recurrence.
       if (recurrence_rewritten) {
 	unsigned int lower = lower_limit();
 	if (lower != 0) {
@@ -1466,11 +1465,33 @@ PURRS::Recurrence::
 substitute_i_c_shifting(const Expr& solution_or_bound) const {
   assert(!initial_conditions_.empty());
   assert(has_at_least_a_symbolic_ic(solution_or_bound));
-  assert(is_linear_finite_order()
-	 || is_functional_equation()
-	 || is_non_linear_finite_order());
 
   Expr sol_or_bound = solution_or_bound;
+  // Consider the maximum index of `x' function in the map
+  // `initial_conditions', i.e. the largest index of the initial
+  // conditions inserted by the user.
+  unsigned int max_index_user_i_c = get_max_index_initial_condition();
+
+  if (is_weighted_average()) {
+    unsigned int lower = 0;
+    if (recurrence_rewritten)
+      lower = lower_limit();
+    Expr sol_or_bound = solution_or_bound;
+    int diff = max_index_user_i_c - lower;
+    if (diff > 0) {
+      sol_or_bound = sol_or_bound.substitute(n, n - diff);
+      sol_or_bound = sol_or_bound
+	.substitute(x(lower),
+		    get_initial_condition(initial_conditions_.rbegin()->first));
+    }
+    else {
+      assert(diff == 0);
+      sol_or_bound
+	= sol_or_bound.substitute(x(lower), get_initial_condition(lower));
+    }
+    return sol_or_bound;
+  }
+
   index_type first_valid_index_rhs;
   index_type order_or_rank;
   if (is_linear_finite_order()) {
@@ -1491,12 +1512,6 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
   // shifts (the rank of functional equations can not to be zero, it is
   // greater or equal to one).
   if (order_or_rank != 0) {
-
-    // Consider the maximum index of `x' function in the map
-    // `initial_conditions', i.e. the largest index of the initial
-    // conditions inserted by the user.
-    unsigned int max_index_user_i_c = get_max_index_initial_condition();
-
     // `max_index_symb_i_c' represents the largest
     // index among the symbolic initial conditions
     // in the solution or in the bound.
@@ -1682,7 +1697,7 @@ PURRS::Recurrence::compute_exact_solution_weighted_average() const {
   upper_bound_.set_expression(solution);
 
   if (!initial_conditions_.empty()) {
-    solution = solution.substitute(x(0), get_initial_condition(0));
+    solution = substitute_i_c_shifting(solution);
     evaluated_exact_solution_.set_expression(solution);
     evaluated_lower_bound_.set_expression(solution);
     evaluated_upper_bound_.set_expression(solution);
