@@ -239,11 +239,20 @@ public:
   Expr approximated_solution() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if the <CODE>solution</CODE> is right.
-  //! Returns <CODE>false</CODE> if the solution is wrong or the
-  //! simplifications are failed, i.e., the solution is right but
-  //! this function does not realize.
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the solution is certainly right.
+  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> if the solution
+  //! can be wrong or we failed to simplify it.
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system can neither
+  //! be proved nor be disproved the correctness of the solution.
   Verify_Status verify_solution() const;
+
+  //! \brief
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the bound is certainly right.
+  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> if the bound
+  //! can be wrong or we failed to simplify it.
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system can neither
+  //! be proved nor be disproved the correctness of the bound.
+  Verify_Status verify_bound(bool upper) const;
 
   //! \brief
   //! Returns <CODE>false</CODE> if there are not undefined initial conditions;

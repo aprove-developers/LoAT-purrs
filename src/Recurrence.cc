@@ -31,6 +31,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Recurrence.defs.hh"
 #include "util.hh"
 #include "simplify.hh"
+#include "factorize.hh"
 #include "finite_order.hh"
 #include "Expr.defs.hh"
 #include "Cached_Expr.defs.hh"
@@ -42,6 +43,50 @@ http://www.cs.unipr.it/purrs/ . */
 #include <fstream>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
+
+namespace {
+using namespace PURRS;
+
+bool
+ok_inequalities(const Expr& e, unsigned condition) {
+  Expr term_with_n = 0;
+  Expr other_terms = 0;
+  for (unsigned i = e.nops(); i-- > 0; ) {
+    const Expr& factor = e.op(i);
+    if (factor.has(Recurrence::n))
+      term_with_n += factor;
+    else
+      other_terms += factor;
+  }
+  D_VAR(other_terms);
+  if (term_with_n == Recurrence::n || term_with_n.is_a_mul()) {
+    Expr coeff_n = 1;
+    if (term_with_n.is_a_mul()) {
+      for (unsigned i = term_with_n.nops(); i-- > 0; ) {
+	const Expr& factor = term_with_n.op(i);
+	Number num;
+	if (!(factor == Recurrence::n || (factor.is_a_power()
+					  && factor.arg(0) == Recurrence::n
+					  && factor.arg(1).is_a_number(num)
+					  && num.is_positive_integer())))
+	  coeff_n *= factor;
+      }
+      D_VAR(coeff_n); 
+    }
+    Number numer;
+    Number denom;
+    if (coeff_n.is_a_number(denom) && denom.is_positive()
+	&& other_terms.is_a_number(numer) && numer.is_negative())
+      if (-numer/denom <= condition)
+	return true;
+    //       // Devo verificare le altre condizioni iniziali...
+    // 	else if () {
+    // 	}
+  }
+  return false;
+}
+
+} // anonymous namespace
 
 const PURRS::Symbol&
 PURRS::Recurrence::n = Symbol("n");
@@ -124,7 +169,6 @@ PURRS::Recurrence::verify_solution() const {
       else
 	if (!exact_solution_.expression().has_x_function(true))
 	  partial_solution = exact_solution_.expression();
-      partial_solution = simplify_ex_for_output(partial_solution, false);
       D_VAR(partial_solution);
       // The recurrence is homogeneous.
       if (partial_solution == 0)
@@ -181,6 +225,96 @@ PURRS::Recurrence::verify_solution() const {
   }
   // We failed to solve the recurrence.
   // If the client still insists in asking for the verification...
+  return INCONCLUSIVE_VERIFICATION;
+}
+
+/*!
+  Consider the right hand side \p rhs of the functional equation
+  \f$ a x_{n/b} + p(n) \f$.
+  If \p upper is true we try to check that the upper bound is correct;
+  If \p lower is true we try to check that the lower bound is correct.
+*/
+PURRS::Recurrence::Verify_Status
+PURRS::Recurrence::verify_bound(bool upper) const {
+  if (is_functional_equation())
+    if ((upper && upper_bound_.has_expression())
+	|| (!upper && lower_bound_.has_expression())) {
+      D_VAR(applicability_condition()); 
+      Expr bound;
+      if (upper)
+	bound = upper_bound_.expression();
+      else
+	bound = lower_bound_.expression();
+      
+      // Step 1: validation of initial conditions.
+      
+
+      // Step 2: find `partial_bound'.
+      // We not consider the terms containing the initial conditions:
+      // `partial_bound' will contain all the other terms.
+      Expr partial_bound = 0;
+      if (bound.is_a_add())
+	for (unsigned i = bound.nops(); i-- > 0; ) {
+	  if (!bound.op(i).has_x_function(true))
+	    partial_bound += bound.op(i);
+	}
+      else
+	if (!bound.has_x_function(true))
+	  partial_bound = bound;
+      D_VAR(partial_bound);
+      // The recurrence is homogeneous.
+      if (partial_bound == 0)
+	return PROVABLY_CORRECT;
+      
+      // Step 3: verification of the inductive base.
+      Number num;
+      if (upper && partial_bound
+	  .substitute(n, applicability_condition()).is_a_number(num)
+	  && num.is_negative())
+	return INCONCLUSIVE_VERIFICATION;
+      if (!upper && partial_bound
+	  .substitute(n, applicability_condition()).is_a_number(num)
+	  && num.is_positive())
+	return INCONCLUSIVE_VERIFICATION;
+      
+      // Step 4: verification of the inductive step.
+      Expr partial_bound_sub = partial_bound.substitute(n, n / divisor_arg());
+      Expr approx = recurrence_rhs.substitute(x(n / divisor_arg()),
+					      partial_bound_sub);
+      D_VAR(approx);
+      approx = simplify_ex_for_input(approx, true);
+      approx = simplify_logarithm(approx);
+      D_VAR(approx);
+      
+      Expr diff;
+      if (upper)
+	diff = partial_bound - approx;
+      else
+	diff = approx - partial_bound;
+      D_VAR(diff);
+      
+      if (diff.is_a_number(num)) {
+	if (num == 0 || num.is_positive())
+	  return PROVABLY_CORRECT;
+      }
+      else if (diff.is_a_mul()) {
+	Expr coeff_n = 1;
+	for (unsigned i = diff.nops(); i-- > 0; ) {
+	  const Expr& factor = diff.op(i);
+	  if (!(factor == n || (factor.is_a_power()
+				&& factor.arg(0) == n
+				&& factor.arg(1).is_a_number(num)
+				&& num.is_positive_integer())))
+	    coeff_n *= factor;
+	}
+	D_VAR(coeff_n);
+	if (coeff_n.is_a_number(num) && num.is_positive())
+	  return PROVABLY_CORRECT;
+      }
+      else if (diff.is_a_add())
+	if (ok_inequalities(diff, applicability_condition()))
+	  return PROVABLY_CORRECT;
+    }
   return INCONCLUSIVE_VERIFICATION;
 }
 
