@@ -33,6 +33,8 @@ namespace Parma_Recurrence_Relation_Solver {
 inline
 Recurrence::Recurrence()
   : recurrence_rhs(0),
+    old_recurrence_rhs(0),
+    gcd_decrements_old_rhs(0),
     type(ORDER_ZERO),
     tdip(0),
     solved(false) {
@@ -41,6 +43,8 @@ Recurrence::Recurrence()
 inline
 Recurrence::Recurrence(const Expr& e)
   : recurrence_rhs(e),
+    old_recurrence_rhs(0),
+    gcd_decrements_old_rhs(0),
     type(UNKNOWN),
     tdip(0),
     solved(false) {
@@ -49,6 +53,8 @@ Recurrence::Recurrence(const Expr& e)
 inline
 Recurrence::Recurrence(const Recurrence& y)
   : recurrence_rhs(y.recurrence_rhs),
+    old_recurrence_rhs(y.old_recurrence_rhs),
+    gcd_decrements_old_rhs(y.gcd_decrements_old_rhs),
     system_rhs(y.system_rhs),
     type(y.type),
     tdip(y.tdip),    
@@ -64,8 +70,10 @@ Recurrence::~Recurrence() {
 inline Recurrence&
 Recurrence::operator=(const Recurrence& y) {
   recurrence_rhs = y.recurrence_rhs;
+  old_recurrence_rhs = y.old_recurrence_rhs;
+  gcd_decrements_old_rhs = y.gcd_decrements_old_rhs;
   system_rhs = y.system_rhs;
-  type = y.type,
+  type = y.type;
   tdip = y.tdip;
   solved = y.solved;
   solution = y.solution;

@@ -227,6 +227,18 @@ private:
   mutable Expr recurrence_rhs;
 
   //! \brief
+  //! When is applied the order reduction stores the value of
+  //! <CODE>recurrence_rhs</CODE>; 0 otherwise.
+  mutable Expr old_recurrence_rhs;
+
+  //! \brief
+  //! When is applied the order reduction stores the greatest common
+  //! divisor among the decrements <CODE>d</CODE> of the terms
+  //! <CODE>x(n-d)</CODE> present in the right hand side of
+  //! the recurrence; 0 otherwise.
+  mutable unsigned gcd_decrements_old_rhs;
+
+  //! \brief
   //! Holds the right-hand sides of a system of  recurrence equations.
   //! If <CODE>i == system_rhs.find(k)</CODE> then
   //! <CODE>x(k,n) = (*i).second()</CODE>

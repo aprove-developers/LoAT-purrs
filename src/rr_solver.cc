@@ -1526,6 +1526,8 @@ PURRS::Recurrence::solve_easy_cases() const {
   // the order reduction is applicable.
   if (gcd_among_decrements > 1 && is_linear_finite_order_const_coeff()) {
     D_MSG("Order reduction");
+    old_recurrence_rhs = recurrence_rhs;
+    gcd_decrements_old_rhs = gcd_among_decrements;
     Expr m = mod(n, gcd_among_decrements);
     Expr new_rhs = rewrite_reduced_order_recurrence(expanded_rhs, m,
 						    gcd_among_decrements);
