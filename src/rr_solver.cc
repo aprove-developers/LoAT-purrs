@@ -1106,7 +1106,7 @@ exp_poly_decomposition_summand(const Expr& e, const Symbol& n,
       // We have found something of the form `power(base, n)'.
       Expr base = get_binding(substitution, 0);
       assert(!base.is_zero());
-      if (is_scalar_representation(base, n)) {
+      if (base.is_scalar_representation(n)) {
 	// We have found something of the form `power(base, n)'
 	// and `base' is good for the decomposition.
 	exp_poly_decomposition_factor(base, 1, n, alpha, p, q);
@@ -1120,7 +1120,7 @@ exp_poly_decomposition_summand(const Expr& e, const Symbol& n,
 	// We have found something of the form `power(base, n)'.
 	Expr base = get_binding(substitution, 0);
 	assert(!base.is_zero());
-	if (is_scalar_representation(base, n)) {
+	if (base.is_scalar_representation(n)) {
 	  // We have found something of the form `power(base, n)'
 	  // and `base' is good for the decomposition: determine
 	  // `r = e/power(base, n)'.

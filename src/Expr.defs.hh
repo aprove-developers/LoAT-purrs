@@ -662,6 +662,53 @@ public:
 
   void latex_print(std::ostream& s);
 
+  //! \brief
+  //! Returns <CODE>true</CODE> if \p *this is a scalar rapresentation for \p x;
+  //! returns <CODE>false</CODE> otherwise.
+  /*!
+    This function realizes the definition of <EM>scalar representation
+    for \f$ x \f$</EM>, where \f$ x \f$ is any symbol.
+    This is more briefly written <EM>scalar</EM> and defined inductively
+    as follows:
+    - every number is a scalar;
+    - every symbolic constant is a scalar;
+    - every parameter different from \f$ x \f$ is a scalar;
+    - if \f$ f \f$ is any unary function and \f$ x \f$ is a
+      scalar representation, then \f$ f(x) \f$ is a scalar;
+    - if \f$ a \f$ and \f$ b \f$ are scalars then
+      \f$ a+b \f$, \f$ a*b \f$, and \f$ a^b \f$ are scalars.
+  */
+  bool is_scalar_representation(const Symbol& x) const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if \p *this is a polynomial in \p x;
+  //! returns <CODE>false</CODE> otherwise.
+  /*!
+    This function realizes the definition of <EM>polynomial in \f$ x \f$</EM>,
+    where \f$ x \f$ is any symbol.
+    This is more briefly written <EM>polynomial</EM> and defined inductively
+    as follows:
+    - every scalar representation for \f$ x \f$ is a polynomial;
+    - \f$ x \f$ is a polynomial;
+    - if \f$ a \f$ is a polynomial in \f$ x \f$ and \f$ b \f$ is a positive
+      integer, then \f$ a^b \f$ is a polynomial;
+    - if \f$ a \f$ and \f$ b \f$ are polynomials then
+      \f$ a + b \f$ and \f$ a * b \f$ are polynomials.
+  */
+  bool is_polynomial(const Symbol& x) const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if \p *this is a rational function in \p x;
+  //! returns <CODE>false</CODE> otherwise.
+  /*!
+    A quotient of two polynomials \f$ P(x) \f$ and \f$ Q(x) \f$,
+    \f[
+      R(x) = \frac{P(x)}{Q(x)},
+    \f]
+    is called a <EM>rational function</EM>.
+  */
+  bool is_rational_function(const Symbol& x) const;
+
 private:
   friend class Number;
   friend class Symbol;

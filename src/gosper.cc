@@ -72,7 +72,7 @@ gosper_step_one(const Expr& t_n, Expr& r_n, const Symbol& n, bool full) {
   r_n.numerator_denominator(r_n_num, r_n_den);
   r_n = r_n_num * pwr(r_n_den, -1);
   D_VAR(r_n);
-  if (is_rational_function(r_n, n))
+  if (r_n.is_rational_function(n))
     return true;
   else {
     D_MSG("t(n) not hypergeometric term");

@@ -26,6 +26,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Expr.defs.hh"
 
+namespace PURRS = Parma_Recurrence_Relation_Solver;
+
 namespace GiNaC {
 
 //! ...
@@ -281,3 +283,61 @@ REGISTER_FUNCTION(prod,
 		  derivative_func(prod_deriv));
 
 } // namespace GiNaC
+
+bool
+PURRS::Expr::is_scalar_representation(const Symbol& x) const {
+  const Expr& e = *this;
+  if (e.is_a_number())
+    return true;
+  else if (e.is_a_constant())
+    return true;
+  else if (e.is_a_symbol() && e != x)
+    return true;
+  else if (e.is_a_power())
+    return e.op(0).is_scalar_representation(x)
+      && e.op(1).is_scalar_representation(x);
+  else if (e.is_a_function())
+    return e.op(0).is_scalar_representation(x);
+  else if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!e.op(i).is_scalar_representation(x))
+	return false;
+    return true;
+  }
+  return false;
+}
+
+bool
+PURRS::Expr::is_polynomial(const Symbol& x) const {
+  const Expr& e = *this;
+  if (e.is_scalar_representation(x))
+    return true;
+  else if (e == x)
+    return true;
+  else if (e.is_a_power()) {
+    if (e.op(0).is_polynomial(x))
+      if (e.op(1).is_a_number()) {
+	Number exponent = e.op(1).ex_to_number();
+	if (exponent.is_positive_integer())
+	  return true;
+      }
+  }
+  else if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!e.op(i).is_polynomial(x))
+	return false;
+    return true;
+  }
+  return false;
+}
+
+bool
+PURRS::Expr::is_rational_function(const Symbol& x) const {
+  const Expr& e = *this;
+  Expr num;
+  Expr den;
+  e.numerator_denominator(num, den);
+  if (num.is_polynomial(x) && den.is_polynomial(x))
+    return true;
+  return false;
+}

@@ -92,81 +92,6 @@ get_binding(const Expr_List& substitution, unsigned wild_index) {
   return substitution.op(wild_index).rhs();
 }
 
-//! \brief
-//! Returns <CODE>true</CODE> if \p e is a scalar rapresentation for \p x;
-//! returns <CODE>false</CODE> otherwise.
-/*!
-  This function realizes the definition of <EM>scalar representation
-  for \f$ x \f$</EM>, where \f$ x \f$ is any symbol.
-  This is more briefly written <EM>scalar</EM> and defined inductively
-  as follows:
-  - every number is a scalar;
-  - every symbolic constant is a scalar;
-  - every parameter different from \f$ x \f$ is a scalar;
-  - if \f$ f \f$ is any unary function and \f$ x \f$ is a
-    scalar representation, then \f$ f(x) \f$ is a scalar;
-  - if \f$ a \f$ and \f$ b \f$ are scalars then
-    \f$ a+b \f$, \f$ a*b \f$, and \f$ a^b \f$ are scalars.
-*/
-bool
-is_scalar_representation(const Expr& e, const Symbol& x) {
-  if (e.is_a_number())
-    return true;
-  else if (e.is_a_constant())
-    return true;
-  else if (e.is_a_symbol() && e != x)
-    return true;
-  else if (e.is_a_power())
-    return is_scalar_representation(e.op(0), x)
-      && is_scalar_representation(e.op(1), x);
-  else if (e.is_a_function())
-    return is_scalar_representation(e.op(0), x);
-  else if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
-      if (!is_scalar_representation(e.op(i), x))
-	return false;
-    return true;
-  }
-  return false;
-}
-
-//! \brief
-//! Returns <CODE>true</CODE> if \p e is a polynomial in \p x;
-//! returns <CODE>false</CODE> otherwise.
-/*!
-  This function realizes the definition of <EM>polynomial in \f$ x \f$</EM>,
-  where \f$ x \f$ is any symbol.
-  This is more briefly written <EM>polynomial</EM> and defined inductively
-  as follows:
-  - every scalar representation for \f$ x \f$ is a polynomial;
-  - \f$ x \f$ is a polynomial;
-  - if \f$ a \f$ is a polynomial in \f$ x \f$ and \f$ b \f$ is a positive
-    integer, then \f$ a^b \f$ is a polynomial;
-  - if \f$ a \f$ and \f$ b \f$ are polynomials then
-    \f$ a + b \f$ and \f$ a * b \f$ are polynomials.
-*/
-static bool
-is_polynomial(const Expr& e, const Symbol& x) {
-  if (is_scalar_representation(e, x))
-    return true;
-  else if (e == x)
-    return true;
-  else if (e.is_a_power()) {
-    if (is_polynomial(e.op(0), x))
-      if (e.op(1).is_a_number()) {
-	Number exponent = e.op(1).ex_to_number();
-	if (exponent.is_positive_integer())
-	  return true;
-      }
-  }
-  else if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
-      if (!is_polynomial(e.op(i), x))
-	return false;
-    return true;
-  }
-  return false;
-}
 
 //! \brief
 //! Isolates a polynomial part of \p e and assigns it to \p polynomial,
@@ -185,13 +110,13 @@ isolate_polynomial_part(const Expr& e, const Symbol& x,
     polynomial = 0;
     rest = 0;
     for (unsigned i = e.nops(); i-- > 0; ) {
-      if (is_polynomial(e.op(i), x))
+      if (e.op(i).is_polynomial(x))
 	polynomial += e.op(i);
       else
 	rest += e.op(i);
     }
   }
-  else if (is_polynomial(e, x)) {
+  else if (e.is_polynomial(x)) {
     polynomial = e;
     rest = 0;
   }
@@ -201,25 +126,6 @@ isolate_polynomial_part(const Expr& e, const Symbol& x,
   }
 }
 
-//! \brief
-//! Returns <CODE>true</CODE> if \p e is a rational function in \p x;
-//! returns <CODE>false</CODE> otherwise.
-/*!
-  A quotient of two polynomials \f$ P(x) \f$ and \f$ Q(x) \f$,
-  \f[
-    R(x) = \frac{P(x)}{Q(x)},
-  \f]
-  is called a <EM>rational function</EM>.
-*/
-bool
-is_rational_function(const Expr& e, const Symbol& x) {
-  Expr num;
-  Expr den;
-  e.numerator_denominator(num, den);
-  if (is_polynomial(num, x) && is_polynomial(den, x))
-    return true;
-  return false;
-}
 
 /*!
   A polynomial with integer coefficients is <EM>primitive</EM> if its
