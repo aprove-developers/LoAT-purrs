@@ -64,26 +64,22 @@ get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
 }
 
 /*!
-  Given a vector of <CODE>GNumber</CODE> with a number of elements like
-  the order \p order of the recurrence relation, builds the characteristic
-  equation in the variable \p x.
-  Therefore, if we have the recurrence relation
+  Let
   \f$ x_n = a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$
-  of order \f$ k \f$ with the coefficients \f$ a_j \f$ in the vector
-  \p coefficients, this function returns the characteristic equation
+  the recurrence relation of order \f$ k \f$ and the coefficients \f$ a_j \f$
+  (for \f$ i = 1, \dotsc, k \f$) are stored in the vector \p coefficients.
+  This function returns the characteristic equation
   \f$ x^k - ( a_1 * x^{k-1} + \dotsb + a^{k-1} * x + a_k ) \f$.
-
   Since <CODE>find_roots()</CODE> solve equations only with integer
   coefficients the \p coefficients' elements must be rationals and,
-  if they are not integer, builds an other vector, \p int_coefficients,
-  with the element of \p coefficients multiplied for the lcm among their
-  denominators.
+  eventually, if are not integer, builds an other vector,
+  \p int_coefficients, with the element of \p coefficients multiplied for
+  the lcm among their denominators.
 */
 static GExpr
-build_characteristic_equation(const int order, const GSymbol& x,
+build_characteristic_equation(const GSymbol& x,
 			      const std::vector<GNumber>& coefficients) {
-  unsigned coefficients_size = coefficients.size();  
-  for (unsigned i = 1; i < coefficients_size; ++i)
+  for (unsigned i = coefficients.size(); i-- > 0; )
     if (!coefficients[i].is_rational())
       throw
 	"PURRS error: today the algebraic equation solver works\n"
@@ -92,26 +88,29 @@ build_characteristic_equation(const int order, const GSymbol& x,
   std::vector<GNumber> denominators;
   // Find the least common multiple among the denominators of the
   // rational elements of `coefficients'.
-  for (unsigned i = 1; i < coefficients_size; ++i)
+  for (unsigned i = coefficients.size(); i-- > 0; )
     if (!coefficients[i].is_integer())
       denominators.push_back(coefficients[i].denom());
   GExpr p = 0;
   // Build the vector `int_coefficients' with the elements of
   // `coefficients' multiplied for the least common multiple
   // `least_com_mul'.
+  // There is no need to `order' because the order of the recurrence relation
+  // is equal to `coefficients.size() - 1'.
   if (denominators.size() != 0) {
     GNumber least_com_mul = lcm(denominators);
     std::vector<GNumber> int_coefficients(coefficients);
-    for (unsigned i = 1; i < coefficients_size; ++i)
+    // In the first position of `coefficients' there is 0.
+    for (unsigned i = coefficients.size(); i-- > 1; )
       int_coefficients[i] *= least_com_mul;
-    for (int i = 0; i < order; ++i)
-      p += pow(x, i) * (-int_coefficients[order - i]);
-    p += least_com_mul * pow(x, order);
+    for (unsigned i = coefficients.size() - 1; i-- > 0; )
+      p += pow(x, i) * (-int_coefficients[coefficients.size() - 1 - i]);
+    p += least_com_mul * pow(x, coefficients.size() - 1);
   }
   else {
-    for (int i = 0; i < order; ++i)
-      p += pow(x, i) * (-coefficients[order - i]);
-    p += pow(x, order);
+    for (unsigned i = coefficients.size() - 1; i-- > 0; )
+      p += pow(x, i) * (-coefficients[coefficients.size() - 1 - i]);
+    p += pow(x, coefficients.size() - 1);
   }
   return p;
 }
@@ -448,16 +447,14 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   // Simplifies expanded expressions, in particular rewrites nested powers.
   e = simplify_on_input_ex(e, n, true);
 
-  // We search exponentials in the variable `n', so the expression `e'
-  // must be expanded because otherwise the function not recognizes
-  // the the exponentials in the variable `n' (i.e. 2^(n-1) is not
-  // considerated while 1/2*2^n, obtained from previous by `expand()',
-  // yes).  The vector `base_of_exps' contains the exponential's bases
-  // of all exponentials in `e'. In the i-th position of the vectors
+  // We search exponentials in `n' (for this the expression `e'
+  // must be expanded).
+  // The vector `base_of_exps' contains the exponential's bases
+  // of all exponentials in `e'. In the `i'-th position of the vectors
   // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
-  // the polynomial part and non polynomial part of the coefficient of
-  // the exponential with the base in i-th position of `base_of_exp'
-  // so that exp_poly_coeff[i] + exp_no_poly_coeff[i] represents the
+  // the polynomial part and possibly non polynomial part of the coefficient
+  // of the exponential with the base in `i'-th position of `base_of_exp'.
+  // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
   // coefficient of base_of_exps[i]^n.
   std::vector<GExpr> base_of_exps;
   std::vector<GExpr> exp_poly_coeff;
@@ -500,7 +497,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	  "does not support irrationals coefficients.\n"
 	  "Please come back tomorrow.";
     characteristic_eq
-      = build_characteristic_equation(order, y, num_coefficients);
+      = build_characteristic_equation(y, num_coefficients);
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
       return TOO_COMPLEX;
   }
