@@ -440,43 +440,50 @@ insert_coefficients(const Expr& coeff, unsigned long index,
 }
 
 /*!
-  Returns <CODE>true</CODE> in two cases:
-  - there is in \p e an \f$ x \f$ function (with the argument containing
-    \f$ n \f$) inside an other function;
-  - there is in \p e a power with an \f$ x \f$ function in the base
-    or in the exponent of it.
-  Returns <CODE>false</CODE> in all the other cases. 
+  - If there is in \p e an \f$ x \f$ function (with the argument containing
+    \f$ n \f$) inside an other function different from \f$ x \f$ function
+    or if there is in \p e a power with an \f$ x \f$ function in the base
+    or in the exponent of it then returns \f$ 0 \f$;
+  - if there is in \p e an \f$ x \f$ function (with the argument containing
+    \f$ n \f$) inside an other \f$ x \f$ function return \f$ 1 \f$;
+  - in all the other cases returns \f$ 2 \f$.
 */
-bool
+unsigned
 x_function_in_powers_or_functions(const Expr& e) {
-  // First case.
+  // There is an `x' function (with the argument containing `n' inside an
+  // other function.
   if (e.is_a_function()) {
     for (unsigned i = e.nops(); i-- > 0; ) {
       const Expr& operand = e.arg(i);
       if (operand.is_the_x_function())
 	if (operand.arg(0).has(Recurrence::n))
-	  return true;
+	  if (e.is_the_x_function())
+	    return 1;
+	  else
+	    return 0;
     }
   }
-  // Second case.
+  // There is a power with an `x' function in the base or in the exponent.
   else if (e.is_a_power()) {
     const Expr& base = e.arg(0);
     const Expr& exponent = e.arg(1);
     if (base.is_the_x_function())
       if (base.arg(0).has(Recurrence::n))
-	return true;
+	return 0;
     if (exponent.is_the_x_function())
       if (exponent.arg(0).has(Recurrence::n))
-        return true;
+        return 0;
   }
-  return false;
+  return 2;
 }
 
-/*!
-  Returns <CODE>true</CODE> if finds non linear term;
-  returns <CODE>false</CODE> otherwise.
-*/
-bool
+
+//! \brief
+//! Returns \f$ 1 \f$ if finds the non linear term of the form
+//! \f$ x(x(a)) \f$ with \f$ a \f$ containing the special symbol \f$ n \f$;   
+//! returns \f$ 0 \f$ if finds all the other type of non linear term;
+//! returns \f$ 2 \f$ otherwise.
+unsigned
 find_non_linear_recurrence(const Expr& e) {
   unsigned num_summands = e.is_a_add() ? e.nops() : 1;
   if (num_summands > 1)
@@ -484,18 +491,20 @@ find_non_linear_recurrence(const Expr& e) {
       const Expr& term = e.op(i);
       unsigned num_factors = term.is_a_mul() ? term.nops() : 1;
       if (num_factors == 1) {
-	if (x_function_in_powers_or_functions(term))
-	  return true;
+	unsigned non_linear_term = x_function_in_powers_or_functions(term);
+	if (non_linear_term != 2)
+	  return non_linear_term;
       }
       else {
 	bool found_function_x = false;
 	for (unsigned j = num_factors; j-- > 0; ) {
 	  const Expr& factor = term.op(j);
-	  if (x_function_in_powers_or_functions(factor))
-	    return true;
+	  unsigned non_linear_term = x_function_in_powers_or_functions(factor);
+	  if (non_linear_term != 2)
+	    return non_linear_term;
 	  if (factor.is_the_x_function())
 	    if (found_function_x)
-	      return true;
+	      return 0;
 	    else
 	      if (factor.arg(0).has(Recurrence::n))
 		found_function_x = true;
@@ -505,25 +514,27 @@ find_non_linear_recurrence(const Expr& e) {
   else {
     unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
     if (num_factors == 1) {
-      if (x_function_in_powers_or_functions(e))
-	return true;
+      unsigned non_linear_term = x_function_in_powers_or_functions(e);
+      if (non_linear_term != 2)
+	return non_linear_term;
     }
     else {
       bool found_function_x = false;
       for (unsigned j = num_factors; j-- > 0; ) {
 	const Expr& factor = e.op(j);
-	if (x_function_in_powers_or_functions(factor))
-	  return true;
+	unsigned non_linear_term = x_function_in_powers_or_functions(factor);
+	if (non_linear_term != 2)
+	  return non_linear_term;
 	if (factor.is_the_x_function())
 	  if (found_function_x)
-	    return true;
+	    return 0;
 	  else
 	    if (factor.arg(0).has(Recurrence::n))
 	      found_function_x = true;
       }
     }
   }
-  return false;
+  return 2;
 }
 
 //! \brief
@@ -838,7 +849,10 @@ PURRS::Recurrence::classify() const {
   // Simplifies expanded expressions, in particular rewrites nested powers.
   recurrence_rhs = simplify_ex_for_input(recurrence_rhs, true);
 
-  if (find_non_linear_recurrence(recurrence_rhs)) {
+  // `non_linear_term == 0' or `non_linear_term == 1' indicate
+  // two different cases of non-linearity.
+  unsigned non_linear_term = find_non_linear_recurrence(recurrence_rhs);
+  if (non_linear_term == 0) {
     set_non_linear_finite_order();
     Expr new_rhs;
     Expr base;
@@ -852,6 +866,9 @@ PURRS::Recurrence::classify() const {
     else
       return TOO_COMPLEX;
   }
+  // This is the case of nested `x' function with argument containing `n'.
+  else if (non_linear_term == 1)
+    return MALFORMED_RECURRENCE;
 
   // Initialize the computation of the order of the linear part of the
   // recurrence.  This works like the computation of a maximum: it is
