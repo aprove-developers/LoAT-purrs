@@ -97,8 +97,15 @@ compute_resultant_and_its_roots(const Symbol& m, const Expr& f, const Expr& g,
   Expr temp_g = g.substitute(m, m + h);
   Expr R = resultant(f, temp_g, m);
   R = simplify_all(R);
+  assert(R.is_rational_function(h));
+  // We must try the roots of the rational function `R': if it is
+  // a rational function but not a polynomial, we consider only the zeros
+  // of its numerator.
+  if (!R.is_polynomial(h))
+    R = numerator(R);
+  R = R.expand();
   R = R.primpart(h);
-  if (!R.is_integer_polynomial(m))
+  if (!R.is_integer_polynomial(h))
     R = convert_to_integer_polynomial(R, h);
   std::vector<Number> potential_roots;
   if (!R.tcoeff(h).is_a_number())
@@ -123,7 +130,7 @@ compute_resultant_and_its_roots(const Symbol& m, const Expr& f, const Expr& g,
     Number temp = R.substitute(h, potential_roots[i]).ex_to_number();
     if (temp == 0)
       integer_roots.push_back(potential_roots[i]);
-  }
+    }
   // It is more efficient to have the roots sorted. 
   sort(integer_roots.begin(), integer_roots.end());
   return true;
