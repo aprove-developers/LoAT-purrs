@@ -160,9 +160,9 @@ init_symbols() {
     }
 }
 
-string itos(int num)
+string itos(const int num)
 {
-    std::ostringstream buffer;
+    ostringstream buffer;
     buffer << num;
     return buffer.str();
 }
@@ -479,6 +479,16 @@ static void
 error(const string& s) {
   message(s);
   my_exit(1);
+}
+
+void 
+errors_summary(const vector<unsigned>& errors_vec, const string& message, bool& failed) {
+  if (errors_vec.size() > 0) {
+    failed = true;
+      cerr << errors_vec.size() << " " << message
+	   << " at lines " << dump_vector(errors_vec)
+           << endl;
+  }
 }
 
 static bool explodes;
@@ -1617,111 +1627,18 @@ main(int argc, char *argv[]) try {
 
   if (regress_test) {
     bool failed = false;
-    if (unexpected_failures_to_verify.size() > 0) {
-      failed = true;
-      cerr << unexpected_failures_to_verify.size()
-           << " unexpected failures to verify solutions"
-	   << " at lines "
-	   << dump_vector(unexpected_failures_to_verify)
-           << endl;
-    }
-    if (unexpected_failures_to_partially_verify.size() > 0) {
-      failed = true;
-      cerr << unexpected_failures_to_partially_verify.size() 
-           << " unexpected failures to partially verify solutions"
-	   << " at lines "
-	   << dump_vector(unexpected_failures_to_partially_verify)
-           << endl;
-    }
-    if (unexpected_failures_to_disprove.size() > 0) {
-      failed = true;
-      cerr << unexpected_failures_to_disprove.size() 
-           << "unexpected failures to disprove"
-	   << " at lines "
-	   << dump_vector(unexpected_failures_to_disprove)
-           << endl;
-    }
-    if (unexpected_conclusive_verifications.size() > 0) {
-      failed = true;
-      cerr << unexpected_conclusive_verifications.size()
-           << "unexpected conclusive verifications"
-	   << " at lines "
-	   << dump_vector(unexpected_conclusive_verifications)
-           << endl;
-    }
-    if (unexpected_solution_or_bounds_for_it.size() > 0) {
-      failed = true;
-      cerr << unexpected_solution_or_bounds_for_it.size()
-           << " unexpected solution or bounds for it"
-	   << " at lines "
-	   << dump_vector(unexpected_solution_or_bounds_for_it)
-           << endl;
-    }
-    if (unexpected_exact_failures.size() > 0) {
-      failed = true;
-      cerr << unexpected_exact_failures.size()
-           << " unexpected failures to find exact solutions"
-	   << " at lines "
-	   << dump_vector(unexpected_exact_failures)
-           << endl;
-    }
-    if (unexpected_lower_failures.size() > 0) {
-      failed = true;
-      cerr << unexpected_lower_failures.size()
-           << " unexpected failures to find lower bound for solutions"
-	   << " at lines "
-	   << dump_vector(unexpected_lower_failures)
-           << endl;
-    }
-    if (unexpected_upper_failures.size() > 0) {
-      failed = true;
-      cerr << unexpected_upper_failures.size()
-           << " unexpected failures to find upper bound for solutions"
-	   << " at lines "
-	   << dump_vector(unexpected_upper_failures)
-           << endl;
-    }
-    if (unexpected_unsolvability_diagnoses.size() > 0) {
-      failed = true;
-      cerr << unexpected_unsolvability_diagnoses.size()
-           << " unexpected unsolvability diagnoses"
-	   << " at lines "
-	   << dump_vector(unexpected_unsolvability_diagnoses)
-           << endl;
-    }
-    if (unexpected_failures_to_diagnose_unsolvability.size() > 0) {
-      failed = true;
-      cerr << unexpected_failures_to_diagnose_unsolvability.size()
-           << " unexpected failures to diagnose unsolvability"
-	   << " at lines "
-	   << dump_vector(unexpected_failures_to_diagnose_unsolvability)
-           << endl;
-    }
-    if (unexpected_failures_to_diagnose_indeterminably.size() > 0) {
-      failed = true;
-      cerr << unexpected_failures_to_diagnose_indeterminably.size()
-           << " unexpected failures to diagnose indeterminably"
-	   << " at lines "
-	   << dump_vector(unexpected_failures_to_diagnose_indeterminably)
-           << endl;
-    }
-    if (unexpected_failures_to_diagnose_malformation.size() > 0) {
-      failed = true;
-      cerr << unexpected_failures_to_diagnose_malformation.size()
-           << " unexpected failures to diagnose malformation"
-	   << " at lines "
-	   << dump_vector(unexpected_failures_to_diagnose_malformation)
-           << endl;
-    }
-    if (unexpected_failures_to_diagnose_domain_error.size() > 0) {
-      failed = true;
-      cerr << unexpected_failures_to_diagnose_domain_error.size()
-           << " unexpected failures to diagnose a domain error"
-	   << " at lines "
-	   << dump_vector(unexpected_failures_to_diagnose_domain_error)
-           << endl;
-    }
-
+    errors_summary(unexpected_failures_to_partially_verify, "unexpected failures to partially verify solutions", failed);
+    errors_summary(unexpected_failures_to_disprove,  "unexpected failures to disprove", failed);
+    errors_summary(unexpected_conclusive_verifications, "unexpected conclusive verifications", failed);
+    errors_summary(unexpected_solution_or_bounds_for_it, "unexpected solution or bounds for it", failed);
+    errors_summary(unexpected_exact_failures, "unexpected failures to find exact solutions", failed);
+    errors_summary(unexpected_lower_failures, "unexpected failures to find lower bound for solutions", failed);
+    errors_summary(unexpected_upper_failures, "unexpected failures to find upper bound for solutions", failed);
+    errors_summary(unexpected_unsolvability_diagnoses, "unexpected unsolvability diagnoses", failed);
+    errors_summary(unexpected_failures_to_diagnose_unsolvability, "unexpected failures to diagnose unsolvability", failed);
+    errors_summary(unexpected_failures_to_diagnose_indeterminably, "unexpected failures to diagnose indeterminably", failed);
+    errors_summary(unexpected_failures_to_diagnose_malformation, "unexpected failures to diagnose malformation", failed);
+    errors_summary(unexpected_failures_to_diagnose_domain_error, "unexpected failures to diagnose a domain error", failed);
     if (failed)
       my_exit(1);
   }
