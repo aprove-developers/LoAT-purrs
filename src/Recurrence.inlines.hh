@@ -517,10 +517,14 @@ Recurrence::verify_exact_solution() const {
   if (exact_solution_.has_expression()) {
     if (is_linear_finite_order() || is_non_linear_finite_order())
       return verify_exact_solution(*this);
-    else {
-      assert(is_functional_equation());
+    else if (is_functional_equation())
       // Special case: functional equation of the form `x(n) = x(n/b)'. 
       return PROVABLY_CORRECT;
+    // FIXME: temporary! At the moment there is not implemented
+    // the verification in the case of infinite order recurrences.
+    else { // linear infinite order
+      assert(is_linear_infinite_order());
+      return INCONCLUSIVE_VERIFICATION;
     }
   }
   else
