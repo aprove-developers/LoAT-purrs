@@ -34,7 +34,7 @@ namespace Parma_Recurrence_Relation_Solver {
 
 class Constant {
 public:
-  //! Ordinary copy-constructor.
+  //! Default constructor.
   Constant();
 
   //! Copy-constructor.

@@ -33,11 +33,15 @@ namespace Parma_Recurrence_Relation_Solver {
 
 class Matrix {
 public:
-  //! Ordinary copy-constructor.
+  //! Default constructor.
   Matrix();
 
+  //! Builds the matrix with \p i rows and \j columns.
   Matrix(unsigned i, unsigned j);
 
+  //! \brief
+  //! Builds the matrix with \p i rows and \j columns containing the
+  //! expression in \p lst.
   Matrix(unsigned i, unsigned j, const Expr_List& lst);
 
   //! Copy-constructor.

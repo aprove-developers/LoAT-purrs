@@ -35,7 +35,7 @@ namespace Parma_Recurrence_Relation_Solver {
 
 class Expr_List {
 public:
-  //! Ordinary copy-constructor.
+  //! Default constructor.
   Expr_List();
 
   explicit Expr_List(const Symbol& symb);
@@ -66,7 +66,6 @@ private:
   friend class Expr;
   friend class Matrix;
 
-public:
   Expr_List(const GiNaC::lst& gl);
 };
 

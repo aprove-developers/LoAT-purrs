@@ -34,7 +34,7 @@ namespace Parma_Recurrence_Relation_Solver {
 
 class Symbol {
 public:
-  //! Ordinary copy-constructor.
+  //! Default constructor.
   Symbol();
 
   //! Copy-constructor.
