@@ -288,3 +288,8 @@ y 5*x(n-1)+n*log(n)
 y 5*x(n-1)+log(n)
 y x(n-1)+sqrt(n)
 y x(n-1)+sin(n)
+n x(n)+n!
+y x(n-1)+n!
+n x(n-2)+n!
+y x(n-1)+n*n!
+y x(n-1)+(n*n)!
