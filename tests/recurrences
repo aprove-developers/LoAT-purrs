@@ -7,6 +7,9 @@
 % Comments are added when appropriate. 
 % Some solutions have to be fixed.
 %
+% Notational convention: we write mod(n, k) for the least non negative 
+% integer that is congruent to n modulo k (not a funcion of GiNaC)
+%
 
 % from purrs.tex
 % ORDER 1 
@@ -47,8 +50,8 @@ x(n) = 2 * a * x(n-1) - a^2 * x(n-2)
 
 % With complex roots (two different shapes for the solution) 
 x(n) = 2 * x(n-1) - 2 * x(n-2)
-% Solution: x(n) = numeric(1, 2 * I) * ( (1 + I)^n - (1 - I)^n )
-% Solution: x(n) = pow(2, n * numeric(1, 2)) * sin( n * Pi / 4)
+% Solution: x(n) = numeric(1, 2) * x(0) * ( (1+I)^(n+1) + (1-I)^(n+1) ) + numeric(1, 2) * I * x(1) * ( (1-I)^n - (1+I)^n )
+% Solution: x(n) = pow(2, n * numeric(1, 2)) * (sqrt(2) * x(0) * cos((n+1) * Pi / 4) + x(1) * sin( n * Pi / 4))
 
 % non homogeneous, Fibonacci plus one      to be completed!!!!!
 x(n) = x(n-1) + x(n-2) + 1
@@ -211,4 +214,9 @@ x(n) = 2 * x(n-1) + n
 % Order 1 disguised, two equivalent solutions
 x(n) = x(n-2)
 % Solution: x(n) = numeric(1, 2) * x(0) * (1 + (-1)^n) + numeric(1, 2) * x(1) * (1 - (-1)^n) 
-% Solution: x(n) = x(n mod 2)
+% Solution: x(n) = x(mod(n, 2))
+
+% Order 1 disguised, two equivalent solutions
+x(n) = 2 * x(n-2)
+% Solution: x(n) = numeric(1, 2) * x(0) * pow(2, n * numeric(1, 2)) * (1 + (-1)^n) + sqrt(2) * numeric(1, 4) * x(1) * pow(2, n * numeric(1, 2)) * (1 - (-1)^n)
+% Solution: x(n) = x(mod(n, 2)) * pow(2, (n - mod(n, 2))* numeric(1, 2))
