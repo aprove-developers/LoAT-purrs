@@ -231,9 +231,10 @@ PURRS::Recurrence::OK() const {
 void
 PURRS::Recurrence::dump(std::ostream& s) const {
   s << "solved = " << (solved ? "true" : "false") << std::endl;
+  s << "recurrence_rhs_rewritten = "
+    << (recurrence_rhs_rewritten ? "true" : "false") << std::endl;
   s << "recurrence_rhs = " << recurrence_rhs << std::endl;
   s << "auxiliary_definitions:" << std::endl;
   blackboard.dump(s);
-  //s << "solution = " << solution << std::endl;
   s << std::endl;
 }

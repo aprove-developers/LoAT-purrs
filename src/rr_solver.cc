@@ -1630,12 +1630,13 @@ PURRS::Recurrence::solve_easy_cases() const {
   // If the greatest common divisor among the decrements is greater than one,
   // the order reduction is applicable.
   if (gcd_among_decrements > 1 && is_linear_finite_order_const_coeff()) {
-    D_MSG("Order reduction");
+    recurrence_rhs_rewritten = true;
     old_recurrence_rhs = recurrence_rhs;
     gcd_decrements_old_rhs = gcd_among_decrements;
-    Symbol r;
-    // Build the new recurrence substituting `n' by
-    // `gcd_among_decrements * n + r'.
+    Symbol r = insert_auxiliary_definition(mod(n, gcd_among_decrements));
+    // Build the new recurrence substituting `n' not contained in the
+    // `x' functions with `gcd_among_decrements * n + r' and `x(n-k)' with
+    // `x(n - k / gcd_among_decrements)'.
     recurrence_rhs = rewrite_reduced_order_recurrence(expanded_rhs, r,
 						      gcd_among_decrements);
     Solver_Status status = solve_easy_cases();
@@ -1647,7 +1648,7 @@ PURRS::Recurrence::solve_easy_cases() const {
       // -  x(k), k non-negative integer -> x(mod(n, gcd_among_decrements)).
       solution_order_reduced = solution;
       solution = come_back_to_original_variable(solution, r,
-						mod(n, gcd_among_decrements),
+						get_auxiliary_definition(r),
 						gcd_among_decrements);
       solution = simplify_on_output_ex(solution.expand(), false);
     }
@@ -1791,15 +1792,15 @@ PURRS::Recurrence::solve_try_hard() const {
     case HAS_HUGE_DECREMENT:
     case TOO_COMPLEX:
       {
-      D_MSG("too_complex");
-      exit_anyway = true;
+	D_MSG("too_complex");
+	exit_anyway = true;
       }
       break;
     case HAS_NEGATIVE_DECREMENT:
       {
 	Expr new_rhs;
 	eliminate_negative_decrements(recurrence_rhs, new_rhs);
-	D_MSGVAR("Recurrence tranformed: ", new_rhs);
+	recurrence_rhs_rewritten = true;
 	recurrence_rhs = new_rhs;
 	status = solve_try_hard();
       }
@@ -1808,7 +1809,7 @@ PURRS::Recurrence::solve_try_hard() const {
       {
 	Expr new_rhs;
 	if (eliminate_null_decrements(recurrence_rhs, new_rhs)) {
-	  D_MSGVAR("Recurrence tranformed: ", new_rhs);
+	  recurrence_rhs_rewritten = true;
 	  recurrence_rhs = new_rhs;
 	  status = solve_try_hard();
 	}

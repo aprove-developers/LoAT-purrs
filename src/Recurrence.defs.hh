@@ -101,6 +101,11 @@ public:
   //! Returns a new symbol \f$ z \f$ and records the equation \f$ z = e \f$.
   Symbol insert_auxiliary_definition(const Expr& e) const;
 
+  //! \brief
+  //! Substitutes eventually auxiliary definitions contained in
+  //! \p e with their original values stored in the blackboard.
+  Expr substitute_auxiliary_definitions(const Expr& e) const;
+
   //! Checks if all the invariants are satisfied.
   /*!
     The check is performed so as to intrude as little as possible.
@@ -195,11 +200,6 @@ public:
   //! this function does not realize.
   Verify_Status verify_solution() const;
 
-  //! \brief
-  //! Substitutes eventually auxiliary definitions contained in
-  //! \p e with their original values stored in the blackboard.
-  Expr substitute_auxiliary_definitions(const Expr& e) const;
-
   //! The index of the recurrence.
   static const Symbol& n;
 
@@ -250,6 +250,12 @@ private:
   //! When is applied the order reduction stores the solution of the
   //! reduced order recurrence; stores 0 otherwise.
   mutable Expr solution_order_reduced;
+
+  //! \brief
+  //! It is <CODE>true</CODE> if the recurrence has been rewritten, i. e.,
+  //! in the case there are null or negative decrements or if has been applied
+  //! the order reduction; it is <CODE>false</CODE> in all the other cases.
+  mutable bool recurrence_rhs_rewritten;
 
   //! \brief
   //! Holds the right-hand sides of a system of  recurrence equations.
