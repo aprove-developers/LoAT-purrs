@@ -21,8 +21,7 @@
 \bigskip\noindent
 \begin{itemize}
 \item Un esempio divertente di ricorrenza di ordine 2 la cui equazione
-caratteristica ha radici 
-complesse \`e il seguente: 
+caratteristica ha radici complesse \`e il seguente: 
 $$
 x_n = 2 x_{n-1} - 2 x_{n-2}, \quad x_0=0, \quad x_1=1;
 $$
@@ -35,8 +34,7 @@ La formula generale d\`a
 $$
 x_n = \frac1 {2i} \( (1+i)^n - (1-i)^n \).
 $$
-Dato che $1+i=\sqrt2 \cdot e^{i\pi/4}$, $1-i=\sqrt2 \cdot
-e^{-i\pi/4}$, si pu\`o anche scrivere 
+Dato che $1+i=\sqrt2 \cdot e^{i\pi/4}$, $1-i=\sqrt2 \cdot e^{-i\pi/4}$, si pu\`o anche scrivere 
 $$
 x_n = -i2^{n/2-1} \( e^{in\pi/4} - e^{-in\pi/4}\)
     = 2^{n/2} \sin\frac{n\pi}4.
@@ -46,31 +44,24 @@ $$
 x_n = 2 x_{n-1} - x_{n-2} + 2 x_{n-3},\quad x_0=a,\quad x_1=b,\quad
 x_2=c.
 $$
-Qui l'equazione caratteristica ha le radici $\lambda_1=2$,
-$\lambda_2=i$, $\lambda_3=-i$, e quindi 
-la soluzione \`e del tipo 
+Qui l'equazione caratteristica ha le radici $\lambda_1=2$, $\lambda_2=i$, $\lambda_3=-i$, 
+e quindi la soluzione \`e del tipo 
 $$
 x_n = \alpha \cdot 2^n + \beta \cdot i^n + \gamma\cdot(-i)^n.
 $$
-Facendo pazientemente tutti i calcoli si trovano i valori di
-$\alpha$, $\beta$ e $\gamma$ e in 
+Facendo pazientemente tutti i calcoli si trovano i valori di $\alpha$, $\beta$ e $\gamma$ e in 
 definitiva 
 $$
 x_n = \frac15 (a+c) 2^n + O_{a,b,c}(1)
 $$
 dove, volendo, \`e possibile dire esplicitamente come \`e fatta la
-funzione nascosta dentro 
-$O(1)$. 
-\item Sembra necessaria una procedura per risolvere i sistemi lineari,
-dato che questa serve 
-anche per trovare la soluzione particolare delle ricorrenze di ordine
-$\ge2$. 
+funzione nascosta dentro $O(1)$. 
+\item Sembra necessaria una procedura per risolvere i sistemi lineari, dato che questa serve 
+anche per trovare la soluzione particolare delle ricorrenze di ordine $\ge2$. 
 \item Pu\`o essere utile consultare anche l'Enciclopedia on-line delle
-successioni di interi 
-all'indirizzo 
+successioni di interi all'indirizzo 
 \leftline{\tt http:/$\!$/www.research.att.com/$\sim$njas/sequences/ }
-Il responsabile si chiama Sloane, ed \`e citato in uno degli articoli
-sulle ricorrenze. 
+Il responsabile si chiama Sloane, ed \`e citato in uno degli articoli sulle ricorrenze. 
 
 \item \`E possibile o utile definire un tipo Numero\_Reale che ha
 un'espressione simbolica ed anche 
