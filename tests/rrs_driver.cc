@@ -434,6 +434,7 @@ set_expectations(const string& s) {
       expect_lower_bound = true;
       break;
     case 'B':
+    case 'X':
     case 'n':
       expect_not_to_be_solved = true;
       break;
