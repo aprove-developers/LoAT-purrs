@@ -391,7 +391,7 @@ PURRS::resultant(const Expr& p, const Expr& q, const Symbol& x) {
     while (deg_f > 0) {
       // `prem()' computes the pseudo-remainder of `g' and `f' which satisfies
       // `factor * g = factor * f * q + prem(g, f, x)' where `q' is the
-      // quozient of `g' and `f' and
+      // quotient of `g' and `f' and
       // `factor = f.lcoeff(x)^(g.degree(x) - f.degree(x) + 1)'.
       // `prem()' wants only rational polynomials. The expressions
       // `f' and `g' are surely polynomials but in this point they could be
@@ -500,7 +500,6 @@ ok_argument_factorial(const Expr& argument, const Symbol& n) {
 bool
 largest_positive_int_zero_on_expanded_ex(const Expr& e, const Symbol& x,
 					 Number& z) {
-  assert(e.is_expanded());
   bool ok = false;
   if (e.has(x)) {
     // `e' is a polynomial in `x'.
@@ -571,12 +570,8 @@ largest_positive_int_zero_on_expanded_ex(const Expr& e, const Symbol& x,
 
 bool
 PURRS::largest_positive_int_zero(const Expr& e, const Symbol& x, Number& z) {
-  if (largest_positive_int_zero_on_expanded_ex(numerator(e).expand(), x, z)
-      && largest_positive_int_zero_on_expanded_ex(denominator(e).expand(),
-						  x, z))
-    return true;
-  else
-    return false;
+  return largest_positive_int_zero_on_expanded_ex(numerator(e).expand(), x, z)
+    && largest_positive_int_zero_on_expanded_ex(denominator(e).expand(), x, z);
 }
 
 //! Returns <CODE>true</CODE> if \p e contains parameters;

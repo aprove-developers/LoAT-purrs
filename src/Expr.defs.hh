@@ -324,7 +324,7 @@ Expr binom(const Expr& m, const Expr& k);
 //! \f$ b(x) \f$ in \f$ Q[x] \f$.
 /*!
   \relates Expr
-  The quozient \f$ q(x) \f$ satisfies \f$ a(x) = b(x) * q(x) + r(x) \f$,
+  The quotient \f$ q(x) \f$ satisfies \f$ a(x) = b(x) * q(x) + r(x) \f$,
   where \f$ r(x) \f$ is the remainder.
 
   \exception std::overflow_error   thrown if \f$ b = 0 \f$.
@@ -339,7 +339,7 @@ Expr quo(const Expr& a, const Expr& b, const Symbol& x);
 /*!
   \relates Expr
   The remainder \f$ r(x) \f$ satisfies \f$ a(x) = b(x) * q(x) + r(x) \f$,
-  where \f$ q(x) \f$ is the quozient.
+  where \f$ q(x) \f$ is the quotient.
 
   \exception std::overflow_error   thrown if \f$ b = 0 \f$.
   \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
@@ -362,7 +362,7 @@ Expr rem(const Expr& a, const Expr& b, const Symbol& x);
   \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
                                    rational polynomials.
 */
-// FIXME: what is the pseudo-quozient?
+// FIXME: what is the pseudo-quotient?
 Expr prem(const Expr& a, const Expr& b, const Symbol& x);
 
 //! \brief
