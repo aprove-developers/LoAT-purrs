@@ -795,11 +795,11 @@ compute_infinite_order_recurrence(Expr& solution) const {
 			    substituted with the respective values.
 
   We know the smallest positive integer \f$ s \f$ starting from which the
-  recurrence is well-defined. This function check if in the map
-  \p initial_conditions therea are some initial conditions
+  recurrence is well-defined. This function checks if in the map
+  \p initial_conditions there are some initial conditions
   of the form \f$ x(i) = k \f$ with \f$ k > s \f$: in this case
-  the function shifted the solution or the bounds.
-  Finally substitute to the arbitrary initial conditions in the solution or
+  the function shifts the solution or the bound.
+  Finally substitutes to the arbitrary initial conditions in the solution or
   in the bound the eventual values specified by the user.
 */
 Expr
@@ -831,18 +831,47 @@ substitute_i_c_shifting(bool linear, const Expr& solution_or_bound) const {
       if (i->first > max_i_c)
 	max_i_c = i->first;
     
-    // Shift initial conditions and the index of the recurrence `n'.
+    // Shift initial conditions.
     if (first_well_defined_rhs + order_or_rank - 1 < max_i_c) {
       unsigned shift_forward = max_i_c - first_well_defined_rhs;
-      sol_or_bound
-	= sol_or_bound.substitute(n, n - (shift_forward - order_or_rank + 1));
       for (unsigned i = order_or_rank; i-- > 0; )
 	sol_or_bound
 	  = sol_or_bound.substitute(x(i + first_well_defined_rhs),
 				    x(i + first_well_defined_rhs
 				      + shift_forward - order_or_rank + 1));
+      // The solution of `x(n) = a(n) x(n-1) + p(n)' is of the form
+      // `x(n) = prod(k,i+1,n,a(k)) x(i)
+      //         + prod(k,i+1,n,a(k)) sum(k,i,n,p(k)/a!(k))', where
+      // `i' is the smallest positive integer starting from which the
+      // recurrence is well-defined. If `max_i_c', `m' for short, is bigger
+      // than `i', then the solution is:
+      // `x(n) = prod(k,i+1,n,a(k)) / prod(k,i+1,m,a(k)) x(i)
+      //         +prod(k,i+1,n,a(k))*[sum(k,i+1,n,p(k)/prod(j,i+1,k,a(j)))
+      //                              - sum(k,i+1,m,p(k)/prod(j,i+1,k,a(j)))]'.
+      if (is_linear_finite_order_var_coeff()) {
+	const Expr& homogeneous_term = product_factor()
+	  * x(first_well_defined_rhs + shift_forward);
+	const Expr& non_homogeneous_term = sol_or_bound - homogeneous_term;
+	Symbol index;
+	sol_or_bound = homogeneous_term
+	  / PURRS::prod(index, first_well_defined_rhs+1, max_i_c,
+			coefficients()[1].substitute(n, index)).ex_to_number()
+	  + non_homogeneous_term - product_factor()
+	  * PURRS::sum(index, first_well_defined_rhs + 1, max_i_c,
+		       (inhomogeneous_term / product_factor())
+		       .substitute(n, index));
+      }
+      else
+	// Shift the index of the recurrence `n'.
+	// FIXME: this technique is surely valid in the case of
+	// linear recurrences with constant coefficients of finite order.
+	// To check if it is valid also in the case of functional equations
+	// and infinite order recurrences.
+	sol_or_bound
+	  = sol_or_bound.substitute(n,
+				    n - (shift_forward - order_or_rank + 1));
     }
-  }    
+  }
 
   // Substitute initial conditions with the values in the map
   // `initial_conditions'.
@@ -850,6 +879,9 @@ substitute_i_c_shifting(bool linear, const Expr& solution_or_bound) const {
 	 iend = initial_conditions.end(); i != iend; ++i)
     sol_or_bound = sol_or_bound.substitute(x(i->first),
 					   get_initial_condition(i->first));
+
+  sol_or_bound = simplify_numer_denom(sol_or_bound);
+  sol_or_bound = simplify_ex_for_output(sol_or_bound, false);
   return sol_or_bound;
 }
 
