@@ -11,10 +11,14 @@
 % I indeterminate: the recurrence has infinitely many solutions
 % M malformed: expect the system to gracefully deal with it
 % m malformed: expect the system to die badly
-% U expected to find upper bound with a provably correct result	
 % u expected to find upper bound 
-% L expected to find lower bound with a provably correct result
+%   v with a provably correct result
+%   w with a provably wrong result
+%   d with a result whose correctness can neither be proved nor be disproved
 % l expected to find lower bound
+%   v with a provably correct result
+%   w with a provably wrong result
+%   d with a result whose correctness can neither be proved nor be disproved
 % E explodes
 % B bizarre: even assuming it makes sense, we have no plans to deal with it
 % * no expectations
@@ -140,47 +144,48 @@ n	x(sqrt(n))+1
 n	x(x(n-1))
 n	x(x(n-1))+x(x(n-2))
 ul	(n/2)^2-1+2*x(n/2)
-ul	1+3*x(n/3)
-ul	1+x(n/2)
-ul	2*x(n/2)
-ul	2*x(n/2)+1
 ul	2*x(n/2)+2^n
-ul	2*x(n/2)+2*n
 ul	2*x(n/2)+2*n*log(n)
-ul	2*x(n/2)+3*n
 ul	2*x(n/2)+log(n)
-ul	2*x(n/2)+n
 ul	2*x(n/2)+n*log(log(n))
 ul	2*x(n/2)+n*log(n)
-ul	2*x(n/2)+n-1
-ul	2*x(n/5)+n
-ul	2+x(n/2)
-ul	3*x(n/2)+n
 ul	3*x(n/2)+n*log(n)
 ul	3*x(n/2)+n*log(n)+n
 ul	3*x(n/2)+n*log(n*n)
 ul	3*x(n/2)+n*n*log(n)
-ul	3*x(n/3)+(2*n-1)
-ul	3*x(n/3)+2*n
-ul	3*x(n/3)+n*n*n
 ul	3*x(n/4)+n*log(n)
-ul	4*x(n/2)+n^2
 ul	5*x(n/4)+n*log(log(n))
-ul	5*x(n/5)+5*n
-ul	6*x(n/7)+n
-ul	7*x(n/5)
-ul	7*x(n/5)+10
-ul	7*x(n/5)+10*n
-ul	n+2*x(n/2)
-ul	n+3*x(n/3)
-ul	n+x(n/2)
-ul	n+x(n/5)+7*n/10
-ul	n/2+x(n/2)
-ul	x(n/2)*2+n-1
 ul	x(n/2)*x(n/2)
-ul	x(n/2)+1
-ul	x(n/5)+3
 ul	x(n/2)+log(log(n))
+ulv	1+3*x(n/3)
+ulv	1+x(n/2)
+ulv	2*x(n/2)
+ulv	2*x(n/2)+1
+ulv	2*x(n/2)+2*n
+ulv	2*x(n/2)+3*n
+ulv	2*x(n/2)+n
+ulv	2*x(n/2)+n-1
+ulv	2*x(n/3)+1
+ulv	2*x(n/5)+n
+ulv	2+x(n/2)
+ulv	3*x(n/2)+n
+ulv	3*x(n/3)+(2*n-1)
+ulv	3*x(n/3)+2*n
+ulv	3*x(n/3)+n*n*n
+ulv	4*x(n/2)+n^2
+ulv	5*x(n/5)+5*n
+ulv	6*x(n/7)+n
+ulv	7*x(n/5)
+ulv	7*x(n/5)+10
+ulv	7*x(n/5)+10*n
+ulv	n+2*x(n/2)
+ulv	n+3*x(n/3)
+ulv	n+x(n/2)
+ulv	n+x(n/5)+7*n/10
+ulv	n/2+x(n/2)
+ulv	x(n/2)*2+n-1
+ulv	x(n/2)+1
+ulv	x(n/5)+3
 y	(x(n-3)+x(n-4))/2
 y	2*x(n-1)*x(n-2)
 y	2*x(n-1)+3*x(n-3)
