@@ -38,31 +38,32 @@ const PURRS::Symbol&
 PURRS::Recurrence::n = Symbol("n");
 
 PURRS::Expr
-PURRS::Recurrence::substitute_auxiliary_definition(const Expr& e) const {
+PURRS::Recurrence::substitute_auxiliary_definitions(const Expr& e) const {
   Expr e_after_subs;
   if (e.is_a_add()) {
     e_after_subs = 0;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_after_subs += substitute_auxiliary_definition(e.op(i));
+      e_after_subs += substitute_auxiliary_definitions(e.op(i));
   }
   else if (e.is_a_mul()) {
     e_after_subs = 1;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_after_subs *= substitute_auxiliary_definition(e.op(i));
+      e_after_subs *= substitute_auxiliary_definitions(e.op(i));
   }
   else if (e.is_a_power())
-    e_after_subs = pwr(substitute_auxiliary_definition(e.op(0)),
-		       substitute_auxiliary_definition(e.op(1)));
+    e_after_subs = pwr(substitute_auxiliary_definitions(e.op(0)),
+		       substitute_auxiliary_definitions(e.op(1)));
   else if (e.is_a_function()) {
     // FIXME: evitare la copia e trovare come accedere al funtore.
     // e_after_subs = functor(e)(simplify_on_input_ex(e.op(0), n, input));
-    Expr tmp = substitute_auxiliary_definition(e.op(0));
+    Expr tmp = substitute_auxiliary_definitions(e.op(0));
     Expr f = e;
     e_after_subs = f.subs(f.op(0), tmp);
   }
   else if (e.is_a_symbol()) {
     Symbol s = e.ex_to_symbol();
-    e_after_subs = get_auxiliary_definition(s);
+    if ((e_after_subs = get_auxiliary_definition(s)) != s)
+      e_after_subs = substitute_auxiliary_definitions(e_after_subs);
   }
   else
     e_after_subs = e;

@@ -546,7 +546,6 @@ Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
   return OK;
 }
 
-#if 1
 static void
 substitute_non_rational_roots(const Recurrence& rec,
 			      std::vector<Polynomial_Root>& roots) {
@@ -555,7 +554,6 @@ substitute_non_rational_roots(const Recurrence& rec,
       roots[i].value() = rec.insert_auxiliary_definition(roots[i].value());
   D_VEC(roots, 0, roots.size()-1);
 }
-#endif
 
 /*!
   Returns an expression that is equivalent to \p e and that is
@@ -834,7 +832,7 @@ Recurrence::solve_easy_cases() const {
   solution = simplify_on_output_ex(solution.expand(), n, false);
   // Resubstitutes eventually auxiliary definitions contained in
   // the solution with their original values.
-  //  solution = substitute_auxiliary_definition(solution);
+  //solution = substitute_auxiliary_definitions(solution);
   // Only for the output.
   // FIXME: the initial conditions can not start always from 0 then
   // the following `for' is temporary.
