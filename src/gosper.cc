@@ -27,7 +27,6 @@ http://www.cs.unipr.it/purrs/ . */
 #endif
 
 #include "gosper.hh"
-#include "alg_eq_solver.hh"
 #include "simplify.hh"
 #include "numerator_denominator.hh"
 #include "util.hh"
