@@ -32,7 +32,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-//! The symbolic constant (e.g. \f$ \pi \f$).
+//! The symbolic constants (e.g. \f$ \pi \f$).
 /*!
   ...
 */

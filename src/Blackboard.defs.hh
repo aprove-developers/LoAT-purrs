@@ -43,7 +43,7 @@ namespace Parma_Recurrence_Relation_Solver {
 */
 class Blackboard {
 public:
-  //! Default constructor: created the empty blackboard.
+  //! Default constructor: creates the empty blackboard.
   Blackboard();
 
   //! Copy-constructor.

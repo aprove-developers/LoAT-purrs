@@ -137,7 +137,7 @@ Number lcm(const Number& x, const Number& y);
   \relates Number
   If \f$ x \f$ is a rational complex number and \f$ y \f$ is an
   integer, then this method computes \f$ x^y \f$ because in this
-  case are not introduced approximation errors.
+  case approximation errors are not introduced.
 
   \exception std::runtime_error thrown if \f$ x = y = 0 \f$.
   \exception std::logic_error   thrown if \f$ x = 0 \f$ and \f$ y \f$
@@ -146,7 +146,7 @@ Number lcm(const Number& x, const Number& y);
 Number exact_pwr(const Number& x, const Number& y);
 
 //! \brief
-//! If \f$ x \f$ and \f$ y \f$ are integer and \f$ y \neq 0 \f$,
+//! If \f$ x \f$ and \f$ y \f$ are integers and \f$ y \neq 0 \f$,
 //! returns the remainder of the division of \f$ x \f$ by \f$ y \f$.
 //! If \f$ y = 0 \f$ an exception is thrown.
 //! Returns zero otherwise.
@@ -158,7 +158,7 @@ Number exact_pwr(const Number& x, const Number& y);
 Number mod(const Number& x, const Number& y);
 
 //! \brief
-//! The numeric object (integer, floating point, complex numbers,
+//! The numeric object (integer, floating point, complex number,
 //! \f$ \dots \f$).
 /*!
   ...
@@ -168,16 +168,16 @@ public:
   //! Default constructor.
   Number();
 
-  //! Builds the integer number \p i.
+  //! Builds the integer \p i.
   Number(int i);
 
-  //! Builds the integer number \p i.
+  //! Builds the integer \p i.
   Number(unsigned int i);
 
-  //! Builds the integer number \p i.
+  //! Builds the integer \p i.
   Number(long i);
 
-  //! Builds the integer number \p i.
+  //! Builds the integer \p i.
   Number(unsigned long i);
 
   //! Builds the integer corresponding to the decimal integer numeral in \p s.
@@ -211,7 +211,7 @@ public:
   Number& operator=(unsigned long i);
 
   //! \brief
-  //! Assignes to \p *this the integer corresponding
+  //! Assigns to \p *this the integer corresponding
   //! to the decimal integer numeral in \p s.
   Number& operator=(const char* s);
 
