@@ -278,8 +278,8 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
   else {
     // `deg_a = deg_b' and `lead_a = lead_b'.
     Expr A = a_n.coeff(Recurrence::n, deg_a - 1);
-    Expr B = b_n.substitute(Recurrence::n,
-			    Recurrence::n - 1).coeff(Recurrence::n, deg_a - 1);
+    Expr B = b_n.substitute(Recurrence::n, Recurrence::n - 1).expand()
+      .coeff(Recurrence::n, deg_a - 1);
     Number B_A = ((B - A) * pwr(lead_a, -1)).ex_to_number();
     Number possible_deg = Number(deg_c) - Number(deg_a) + 1;
     if (B_A.is_nonnegative_integer())
