@@ -30,7 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-CInterval
+Expr
 approximate(const Expr& e);
 
 } // namespace Parma_Recurrence_Relation_Solver
