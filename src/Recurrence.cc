@@ -22,9 +22,7 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#ifndef NOISY
-#define NOISY 0
-#endif
+#define NEW_VERIFICATION 1
 
 #include <config.h>
 
@@ -552,6 +550,7 @@ PURRS::Recurrence::verify_finite_order() const {
       summands_without_i_c = exact_solution;
 
   // Step 3.
+#if NEW_VERIFICATION
   std::vector<Polynomial_Root> roots;
   if (is_linear_finite_order_const_coeff()) {
     std::vector<Number> num_coefficients(order_rec + 1);
@@ -572,7 +571,6 @@ PURRS::Recurrence::verify_finite_order() const {
 #endif
     }
     else {
-#if 1
       // Step 3: new method.
       // `summands_with_i_c' e' gia' scritto nella forma
       // `x(n) = x(0)*(...) + x(1)*(...) + ... + x(k)*(...).
@@ -615,6 +613,34 @@ PURRS::Recurrence::verify_finite_order() const {
 					   false))
 	  goto continue_with_step_4;
       }
+//      // Prepare a vector containing all the coefficient of the initial
+//      // conditions.
+//      std::vector<Expr> coefficients_i_c(order_rec);
+//      // Inserts all number 1 in the vector `coefficients_i_c'.
+//      coefficients_i_c.insert(coefficients_i_c.begin(), order_rec, 1);
+//      if (summands_with_i_c.is_a_add())
+//        for (unsigned int i = summands_with_i_c.nops(); i-- > 0; ) {
+//  	const Expr& addend = summands_with_i_c.op(i);
+//  	if (addend.is_a_mul()) {
+//  	  for (unsigned int j = addend.nops(); j-- > 0; ) {
+//  	    const Expr& factor = addend.op(j);
+//  	    if (!factor.is_the_x_function())
+//  	      coefficients_i_c[i] *= factor;
+//  	  }
+//  	}
+//        }
+//      else if (summands_with_i_c.is_a_mul()) {
+//        for (unsigned int j = summands_with_i_c.nops(); j-- > 0; ) {
+//  	const Expr& factor = summands_with_i_c.op(j);
+//  	if (!factor.is_the_x_function())
+//  	  coefficients_i_c[0] *= factor;
+//        }
+//      }
+//      else
+//        // FIXME: chiamare metodo `is_a_symbolic_initial_condition()'.
+//        assert(summands_with_i_c.is_the_x_function());
+//        DD_VAR(summands_with_i_c);
+//        DD_VEC(coefficients_i_c, 0, coefficients_i_c.size()-1);
     }
   }
 #endif
@@ -626,14 +652,14 @@ PURRS::Recurrence::verify_finite_order() const {
 						   summands_with_i_c);
   if (verify_status != PROVABLY_CORRECT)
     return verify_status;
-  }  
+  }
 
  continue_with_step_4:
   // The recurrence is homogeneous.
   if (summands_without_i_c == 0)
     return PROVABLY_CORRECT;
   
-#if 1
+#if NEW_VERIFICATION
   // Step 4: the method of the paper
   // "Checking and Confining the Solutions of Recurrence Relations"
   // for linear finite order with constant coefficients.
@@ -644,13 +670,14 @@ PURRS::Recurrence::verify_finite_order() const {
       return PROVABLY_CORRECT;
 #endif
 
-#if 0
-  // Step 4: the method of the paper
-  // "Checking and Confining the Solutions of Recurrence Relations"
-  // for linear finite order with variable coefficients.
-  if (is_linear_finite_order_var_coeff())
-    if (verify_new_method_var_coeff(order_rec, summands_without_i_c))
-      return PROVABLY_CORRECT;
+#if NEW_VERIFICATION
+  // FIXME: to be finished!
+//    // Step 4: the method of the paper
+//    // "Checking and Confining the Solutions of Recurrence Relations"
+//    // for linear finite order with variable coefficients.
+//    if (is_linear_finite_order_var_coeff())
+//      if (verify_new_method_var_coeff(order_rec, summands_without_i_c))
+//        return PROVABLY_CORRECT;
 #endif
 
   // Traditional way in order to verify exact solution of `*this'..
