@@ -32,6 +32,10 @@ http://www.cs.unipr.it/purrs/ . */
 int
 gcd(int n, int m);
 
+//! Computes the gcd between polynomials with possibly rational coefficients.
+GExpr
+general_gcd(const GExpr& p, const GExpr& q, const GSymbol& x);
+
 //! Computes the lcm among the integers in the vector \f$numbers\f$.
 GNumber
 lcm(const std::vector<GNumber>& numbers);
@@ -55,6 +59,19 @@ is_scalar_representation(const GExpr& e, const GSymbol& x);
 void
 isolate_polynomial_part(const GExpr& p, const GSymbol& var,
 			GExpr& poly, GExpr& no_poly);
+
+//! Finds associate primitive polynomial with integer coefficients.
+GExpr
+convert_to_integer_polynomial(const GExpr& p, const GSymbol& x);
+
+//! Finds associate primitive polynomial with integer coefficients.
+GExpr
+convert_to_integer_polynomial(const GExpr& p, const GSymbol& x,
+			      GNumber& factor);
+
+//! Computes the resultant between the polynomials \p p and \p q.
+GExpr
+resultant(const GExpr& p, const GExpr& q, const GSymbol& x);
 
 #ifdef NOISY
 #define D_MSG(s) std::cout << s << std::endl

@@ -41,6 +41,17 @@ gcd(int n, int m) {
 }
 
 /*!
+  Accept rational polynomial as input, and normalize them 
+  before calling GiNaC's <CODE>gcd()</CODE>.
+*/
+GExpr
+general_gcd(const GExpr& p, const GExpr& q, const GSymbol& x) {
+  GExpr f = convert_to_integer_polynomial(p, x);
+  GExpr g = convert_to_integer_polynomial(q, x);
+  return gcd(f,g);
+}
+
+/*!
   Computes the lcm among the numbers in the vector \p v.
 */
 GNumber
@@ -181,4 +192,96 @@ isolate_polynomial_part(const GExpr& e, const GSymbol& x,
     rest = e;
     polynomial = 0;
   }
+}
+
+/*!
+  A polynomial with integer coefficients is <EM>primitive</EM> if its
+  leading coefficient is positive and its coefficients have no common factor.
+  This function converts a polynomial with rational coefficients into the
+  associate primitive polynomial divides the input polynomial.
+*/
+GExpr
+convert_to_integer_polynomial(const GExpr& p, const GSymbol& x) {
+  assert(p.info(info_flags::rational_polynomial));
+  unsigned deg_p = p.degree(x);
+
+  // Choose non-zero starting value and compute least common
+  // multiple of denominators.
+  GNumber t_lcm = denom(ex_to<GiNaC::numeric>(p.coeff(x, deg_p)));
+  for (unsigned i = 0; i <= deg_p; ++i) {
+    GExpr t_coeff = p.coeff(x, i);
+    assert(is_a<GiNaC::numeric>(t_coeff));
+    t_lcm = lcm(t_lcm, denom(ex_to<GiNaC::numeric>(t_coeff)));
+  }
+  return (p * t_lcm).primpart(x);
+}
+
+/*!
+  Converts a polynomial with rational coefficients into the 
+  associate primitive polynomial with integer coefficients.
+  This version also returns a GNumber containing the factor used to 
+  convert.
+*/
+GExpr
+convert_to_integer_polynomial(const GExpr& p, const GSymbol& x,
+                              GNumber& factor) {
+  assert(p.info(info_flags::rational_polynomial));
+  unsigned deg_p = p.degree(x);
+
+  // Choose non-zero starting value and compute least common
+  // multiple of denominators.
+  GNumber t_lcm = denom(ex_to<GiNaC::numeric>(p.coeff(x, deg_p)));
+  for (unsigned i = 0; i <= deg_p; ++i) {
+    GExpr t_coeff = p.coeff(x, i);
+    assert(is_a<GiNaC::numeric>(t_coeff));
+    t_lcm = lcm(t_lcm, denom(ex_to<GiNaC::numeric>(t_coeff)));
+  }
+
+  GExpr q = (p * t_lcm).primpart(x);
+  factor  = ex_to<GiNaC::numeric>(p.lcoeff(x));
+  factor *= ex_to<GiNaC::numeric>(pow(q.lcoeff(x), -1));
+  return q;
+}
+
+//! Computes the resultant of the polynomials \p f and \p g with 
+//! rational coefficients, using Euclid's algorithm.
+//! Returns the solution in \p res.
+/*!
+  The following properties of the resultant are used:
+  - \f$ R(g, f) = (-1)^{\deg(f)\deg(g)} R(f, g) \f$; 
+  - \f$ R(f, g) = a^{\deg(g) - \deg(r)} R(f, r) \f$
+    if \f$ g = fq + r \f$ for some polynomials \f$ q \f$  and \f$ r \f$.
+    Here \f$ a \f$ is the leading coefficient of the polynomial \f$ f \f$.
+  - \f$ R(f, b) = b^{\deg(f)} \f$ if \f$ b \f$ is a scalar.
+*/
+GExpr
+resultant(const GExpr& p, const GExpr& q, const GSymbol& x) {
+  assert(p.info(info_flags::rational_polynomial));
+  assert(q.info(info_flags::rational_polynomial));
+  GExpr f = p.expand();
+  GExpr g = q.expand();
+  GExpr res = 1;
+  unsigned deg_f = f.degree(x);
+  unsigned deg_g = g.degree(x);
+
+  // Modified Euclid's algorithm starts here.
+  while (deg_f > 0) {
+    GExpr r = rem(g, f, x);
+    unsigned deg_r = r.degree(x);
+    GExpr a = f.lcoeff(x);
+    // Using rule two.
+    res *= pow(a, deg_g - deg_r);
+    // Using rule one.
+    res *= pow(-1, deg_f * deg_r);
+    g = f;
+    f = r;
+    deg_f = f.degree(x);
+    deg_g = g.degree(x);
+  }
+  // Here `f' is a constant: use rule three.
+  res *= pow(f, deg_g);
+#if NOISY
+  std::cout << "Resultant(f(x), g(x)) = " << res << std::endl;
+#endif
+  return res;
 }
