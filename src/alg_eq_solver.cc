@@ -94,6 +94,9 @@ find_divisors(Number n, std::vector<Number>& divisors) {
 */
 static unsigned
 is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
+#if NOISY
+  D_MSGVAR("nested polynomial ", p);
+#endif
   unsigned degree = p.degree(x);  
   if (degree == 0) {
     // The constant polynomial.
@@ -139,6 +142,9 @@ is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
   else
     // n == 1, the polynomial q is equal to the polynomial p.
     q = p;
+#if NOISY
+  D_MSGVAR("nested polynomial ", q);
+#endif
   return n;
 }
 
@@ -187,10 +193,16 @@ bool
 find_roots(const Expr& p, const Symbol& x,
 	   std::vector<Polynomial_Root>& roots,
 	   bool& all_distinct) {
+#if NOISY
+  D_VAR(p);
+#endif
   assert(p.is_integer_polynomial());
   assert(!p.is_a_number());
   // Compute a square-free decomposition for p.
   Expr q = sqrfree(p.expand(), Expr_List(x));
+#if NOISY
+  D_MSGVAR("p after sqrfree = ", q);
+#endif
   // There are now 4 cases depending on the principal functor of `q':
   //
   // 1) q is a product of two or more factors: e.g., (1+x)^2*(2+x);
@@ -306,7 +318,6 @@ find_roots(const Expr& p, const Symbol& x,
       tc = q.tcoeff(x).ex_to_number();
     }
   }
-
   // Direct solution for polynomials of degree between 1 and 4.
   if (degree <= 4) {
     unsigned position = roots.size();
@@ -356,7 +367,6 @@ find_roots(const Expr& p, const Symbol& x,
       }
     }
   }
-
   // If we want to solve q(x) = 0 and we know that q(x) = r(x^n), then
   // we need to find the roots y_1, ... y_k of r(y) = 0, and then we
   // need to solve x^n = y_1, x^n = y_2, ..., x^n = y_k.
@@ -368,6 +378,9 @@ find_roots(const Expr& p, const Symbol& x,
   // on the particular root x_1 that we have chosen.
   Expr r;
   int nested_degree = is_nested_polynomial(q, x, r);
+#if NOISY
+  D_VAR(nested_degree);
+#endif
   if (nested_degree > 1) {
     // We need a vector to hold the roots of `r'.
     std::vector<Polynomial_Root> roots_r;
@@ -380,13 +393,12 @@ find_roots(const Expr& p, const Symbol& x,
 	Expr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
 	for (size_t i = 0; i < num_r_roots; ++i)
 	  roots.push_back(Polynomial_Root(pwr(roots_r[i].value(),
-						1/nested_degree)
+					      Number(1, nested_degree))
 					  * root_of_unity, multiplicity));
       }
       return true;
     }
   }
-
   // Try to factorize the polynomial.
   std::vector<Expr> factors;
   int num_factors = poly_factor(q, x, factors);
