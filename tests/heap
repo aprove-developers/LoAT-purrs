@@ -10,6 +10,7 @@
 % k unsolvable: expect the system not to diagnose this
 % I indeterminate: the recurrence has infinitely many solutions
 % M malformed: expect the system to gracefully deal with it
+% D domain error: the recurrence is not well-defined
 % m malformed: expect the system to die badly
 % u expected to find upper bound 
 %   v with a provably correct result
@@ -86,6 +87,7 @@ M	x(x(-1+n))*x(-1+n)^2
 M	x(x(n-1))
 M	x(x(n-1))+1
 M	x(x(n-1))+x(x(n-2))
+D	2/(n-3)*sum(k,0,n-1,x(k))
 X	3*x(n/2)+n*log(n)+x(n-1)
 X	3*x(n/2)+x(n-3)+3*n
 X	n*x(n-1)+n+3*x(n/2)+n*log(n)
