@@ -963,24 +963,24 @@ rewrite_factorials_and_exponentials(const Expr& e) {
     e_rewritten = pwr(rewrite_factorials_and_exponentials(e.arg(0)),
 		      rewrite_factorials_and_exponentials(e.arg(1)));
     if (e_rewritten.is_a_power() && e_rewritten.arg(1).is_a_add())
-      e_rewritten = e_rewritten.expand();
+      return e_rewritten.expand();
   }
   else if (e.is_a_function())
     if (e.is_the_factorial_function())
-      e_rewritten = decompose_factorial(e);
+      return decompose_factorial(e);
     else
       if (e.nops() == 1)
-	e_rewritten = apply(e.functor(),
-			    rewrite_factorials_and_exponentials(e.arg(0)));
+	return apply(e.functor(),
+		     rewrite_factorials_and_exponentials(e.arg(0)));
       else {
 	unsigned num_argument = e.nops();
 	std::vector<Expr> argument(num_argument);
 	for (unsigned i = 0; i < num_argument; ++i)
 	  argument[i] = rewrite_factorials_and_exponentials(e.arg(i));
-	e_rewritten = apply(e.functor(), argument);
+	return apply(e.functor(), argument);
       }
   else
-    e_rewritten = e;
+    return e;
   return e_rewritten;
 }
 
@@ -1019,17 +1019,17 @@ PURRS::simplify_on_input_ex(const Expr& e, bool input) {
     return simplify_powers(e, input);
   else if (e.is_a_function()) {
     if (e.nops() == 1)
-      e_rewritten = apply(e.functor(), simplify_on_input_ex(e.arg(0), input));
+      return apply(e.functor(), simplify_on_input_ex(e.arg(0), input));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
 	argument[i] = simplify_on_input_ex(e.arg(i), input);
-      e_rewritten = apply(e.functor(), argument);
+      return apply(e.functor(), argument);
     }
   }
   else
-    e_rewritten = e;
+    return e;
   return e_rewritten;
 }
 
@@ -1056,7 +1056,7 @@ PURRS::simplify_on_output_ex(const Expr& e, bool input) {
   else if (e.is_a_mul())
     // We can not call `simplify_on_output_ex()' on every factor because
     // otherwise it is not possible to transform products.
-    e_rewritten = manip_factor(e, input);
+    return manip_factor(e, input);
   else if (e.is_a_power()) {
     // Is necessary to call `red_prod()' in order to rewrite irrational
     // numbers, i.e., powers with base and exponent both numerics. 
@@ -1077,29 +1077,28 @@ PURRS::simplify_on_output_ex(const Expr& e, bool input) {
     // with the following rows `e_rewritten = (3*sqrt(2))^a'
     // (without the following rows `e_rewritten = sqrt(2)^a*3^a').
     if (e_rewritten.is_a_mul())
-      e_rewritten = collect_base_exponent(e_rewritten);
+      return collect_base_exponent(e_rewritten);
   }
   else if (e.is_a_function()) {
     if (e.nops() == 1)
-      e_rewritten = apply(e.functor(),
-			  simplify_on_output_ex(e.arg(0), input));
+      return apply(e.functor(), simplify_on_output_ex(e.arg(0), input));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
 	argument[i] = simplify_on_output_ex(e.arg(i), input);
-      e_rewritten = apply(e.functor(), argument);
+      return apply(e.functor(), argument);
     }
   }
   else
-    e_rewritten = e;
+    return e;
   return e_rewritten;
 }
 
 
 /*!
-  Using the function <CODE>numerator_denomominator_purrs()</CODE> we are able to
-  simplify better rational expression.
+  Using the function <CODE>numerator_denomominator_purrs()</CODE> we
+  are able to simplify better rational expression.
 */
 PURRS::Expr
 PURRS::simplify_numer_denom(const Expr& e) {
@@ -1149,7 +1148,10 @@ PURRS::simplify_factorials_and_exponentials(const Expr& e) {
 /*!
   Applies the following logarithm's property:
   \f[
-    a^{log n / log a} = n, \quad \text{where } a \in \Rset, a > 0. 
+    \begin{cases}
+      log(a^b) = b log(a), \\
+      a^{log n / log a} = n, \quad \text{where } a \in \Rset, a > 0.
+    \end{cases}
   \f]
 */
 PURRS::Expr
@@ -1180,14 +1182,21 @@ PURRS::simplify_logarithm(const Expr& e) {
       return pwr(simplify_logarithm(e.arg(0)), simplify_logarithm(e.arg(1)));
   }
   else if (e.is_a_function()) {
-    if (e.nops() == 1)
-      e_rewritten = apply(e.functor(), simplify_logarithm(e.arg(0)));
+    if (e.is_the_log_function()) {
+      const Expr& arg_log = e.arg(0);
+      if (arg_log.is_a_power())
+	return arg_log.arg(1) * log(arg_log.arg(0));
+      else
+	return e;
+    }
+    else if (e.nops() == 1)
+      return apply(e.functor(), simplify_logarithm(e.arg(0)));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
 	argument[i] = simplify_logarithm(e.arg(i));
-      e_rewritten = apply(e.functor(), argument);
+      return apply(e.functor(), argument);
     }
   }
   else
