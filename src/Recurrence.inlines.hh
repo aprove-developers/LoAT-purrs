@@ -262,207 +262,207 @@ inline index_type
 Recurrence::order() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> order();
+  return finite_order_p->order();
 }
 
 inline index_type
 Recurrence::first_valid_index() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> first_valid_index();
+  return finite_order_p->first_valid_index();
 }
 
 inline void
 Recurrence::set_first_valid_index(index_type i_c) const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  finite_order_p -> set_first_valid_index(i_c);
+  finite_order_p->set_first_valid_index(i_c);
 }
 
 inline const std::vector<Expr>&
 Recurrence::coefficients() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> coefficients();
+  return finite_order_p->coefficients();
 }
 
 inline std::vector<Expr>&
 Recurrence::coefficients() {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> coefficients();
+  return finite_order_p->coefficients();
 }
 
 inline unsigned int
 Recurrence::gcd_among_decrements() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> gcd_among_decrements();
+  return finite_order_p->gcd_among_decrements();
 }
 
 inline const Expr&
 Recurrence::product_factor() const {
   assert(is_linear_finite_order_var_coeff());
   assert(finite_order_p);
-  return finite_order_p -> product_factor();
+  return finite_order_p->product_factor();
 }
 
 inline Expr&
 Recurrence::product_factor() {
   assert(is_linear_finite_order_var_coeff());
   assert(finite_order_p);
-  return finite_order_p -> product_factor();
+  return finite_order_p->product_factor();
 }
 
 inline void
 Recurrence::set_product_factor(const Expr& x) const {
   assert(is_linear_finite_order_var_coeff());
   assert(finite_order_p);
-  return finite_order_p -> set_product_factor(x);
+  return finite_order_p->set_product_factor(x);
 }
 
 inline bool 
 Recurrence::applied_order_reduction() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> applied_order_reduction();
+  return finite_order_p->applied_order_reduction();
 }
 
 inline void 
 Recurrence::set_order_reduction() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> set_order_reduction();
+  return finite_order_p->set_order_reduction();
 }
 
 inline void 
 Recurrence::unset_order_reduction() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> unset_order_reduction();
+  return finite_order_p->unset_order_reduction();
 }
 
 inline index_type
 Recurrence::applicability_condition() const {
   assert(is_functional_equation());
   assert(functional_eq_p);
-  return functional_eq_p -> applicability_condition();
+  return functional_eq_p->applicability_condition();
 }
 
 inline void
 Recurrence::set_applicability_condition(index_type c) const {
   assert(is_functional_equation());
   assert(functional_eq_p);
-  return functional_eq_p -> set_applicability_condition(c);
+  return functional_eq_p->set_applicability_condition(c);
 }
 
 inline index_type
 Recurrence::rank() const {
   assert(is_functional_equation());
   assert(functional_eq_p);
-  return functional_eq_p -> rank();
+  return functional_eq_p->rank();
 }
 
 inline const Recurrence&
 Recurrence::associated_linear_rec() const {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
-  return non_linear_p -> associated_linear_rec();
+  return non_linear_p->associated_linear_rec();
 }
 
 inline Recurrence&
 Recurrence::associated_linear_rec() {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
-  return non_linear_p -> associated_linear_rec();
+  return non_linear_p->associated_linear_rec();
 }
 
 inline const Number&
 Recurrence::coeff_simple_non_linear_rec() const {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
-  return non_linear_p -> coeff_simple_non_linear_rec();
+  return non_linear_p->coeff_simple_non_linear_rec();
 }
 
 inline Number&
 Recurrence::coeff_simple_non_linear_rec() {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
-  return non_linear_p -> coeff_simple_non_linear_rec();
+  return non_linear_p->coeff_simple_non_linear_rec();
 }
 
 inline const Expr&
 Recurrence::base_exp_log() const {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
-  return non_linear_p -> base_exp_log();
+  return non_linear_p->base_exp_log();
 }
 
 inline Expr&
 Recurrence::base_exp_log() {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
-  return non_linear_p -> base_exp_log();
+  return non_linear_p->base_exp_log();
 }
 
 inline const std::vector<Symbol>&
 Recurrence::auxiliary_symbols() const {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
-  return non_linear_p -> auxiliary_symbols();
+  return non_linear_p->auxiliary_symbols();
 }
 
 inline std::vector<Symbol>&
 Recurrence::auxiliary_symbols() {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
-  return non_linear_p -> auxiliary_symbols();
+  return non_linear_p->auxiliary_symbols();
 }
 
 inline const Recurrence&
 Recurrence::associated_first_order_rec() const {
   assert(is_weighted_average());
-  return weighted_average_p -> associated_first_order_rec();
+  return weighted_average_p->associated_first_order_rec();
 }
 
 inline Recurrence&
 Recurrence::associated_first_order_rec() {
   assert(is_weighted_average());
-  return weighted_average_p -> associated_first_order_rec();
+  return weighted_average_p->associated_first_order_rec();
 }
 
 inline void
 Recurrence::set_original_rhs(const Expr& original_rhs) const {
   assert(is_weighted_average());
-  weighted_average_p -> set_original_rhs(original_rhs);
+  weighted_average_p->set_original_rhs(original_rhs);
 }
 
 inline const Expr&
 Recurrence::weight() const {
   assert(is_weighted_average());
   assert(weighted_average_p);
-  return weighted_average_p -> weight();
+  return weighted_average_p->weight();
 }
 
 inline Expr&
 Recurrence::weight() {
   assert(is_weighted_average());
   assert(weighted_average_p);
-  return weighted_average_p -> weight();
+  return weighted_average_p->weight();
 }
 
 inline index_type
 Recurrence::first_valid_index_inf_order() const {
   assert(is_weighted_average());
   assert(weighted_average_p);
-  return weighted_average_p -> first_valid_index_inf_order();
+  return weighted_average_p->first_valid_index_inf_order();
 }
 
 inline void
 Recurrence::set_first_valid_index_inf_order(index_type i_c) const {
   assert(is_weighted_average());
   assert(weighted_average_p);
-  weighted_average_p -> set_first_valid_index_inf_order(i_c);
+  weighted_average_p->set_first_valid_index_inf_order(i_c);
 }
 
 inline void
