@@ -66,20 +66,20 @@ int main() try {
     cout << endl << "Insert the hypergeometric term t(n): ";
 #endif
     getline(input_stream,s);
-    Expr_List l(n, a, b, c, d);
+    Expr_List l(Recurrence::n, a, b, c, d);
     Expr t_n = Expr(s,l);
 #if NOISY   
     cout << endl << "Insert the lower bound of the sum: ";
 #endif
     getline(input_stream,s);
-    l = Expr_List(n, a, b, c, d);
+    l = Expr_List(Recurrence::n, a, b, c, d);
     Expr tmp = Expr(s,l);
     Number l_b = tmp.ex_to_number();
 #if NOISY
     cout << endl << "Insert the upper bound of the sum: ";
 #endif
     getline(input_stream,s);
-    l = Expr_List(n, a, b, c, d);
+    l = Expr_List(Recurrence::n, a, b, c, d);
     Expr u_b = Expr(s,l);
 
     full_gosper(t_n, l_b, u_b, solution);
