@@ -18,7 +18,7 @@ AC_INIT([the Parma Recurrence Relation Solver], 0.1pre1, purrs-devel@cs.unipr.it
 AC_PREREQ(2.52g)
 
 # Make sure the sources are there.
-AC_CONFIG_SRCDIR(src/rr_solver.cc)
+AC_CONFIG_SRCDIR(src/Recurrence.cc)
 
 # Use Automake.
 AM_INIT_AUTOMAKE([foreign dist-bzip2 dist-zip 1.5])
