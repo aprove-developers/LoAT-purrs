@@ -562,15 +562,15 @@ reduce_to_standard_form(const Number root_index, const Number r) {
   Number sign = r > 0 ? 1 : -1;
   Number g = gcd(num, den);
   num /= g;
-  den /= g; // clear any common factors from num, den
-  if ((k % 2 == 0) && (sign == -1)) // complex sign if k is even and r < 0
+  den /= g; // clear any common factors from num, den.
+  if ((k % 2 == 0) && (sign == -1)) // complex sign if k is even and r < 0.
     sign = k > 0 ? Number::I : -Number::I;
-  if (k < 0) { // swap numerator and denominator, and change sign of k 
+  if (k < 0) { // swap numerator and denominator, and change sign of k.
     Number i = num;
     num = den;
      den = i;
      k *= -1;
-  } // now, num, den and k are all positive
+  } // now, num, den and k are all positive.
   
   if (k == 1)
     return sign * num * Parma_Recurrence_Relation_Solver::power(den, -1);
@@ -580,19 +580,19 @@ reduce_to_standard_form(const Number root_index, const Number r) {
   std::vector<Number> den_bases;
   std::vector<int> den_exponents;
   
-  // partial factor and reduce numerator and denominator
+  // Partial factor and reduce numerator and denominator.
   partial_factor(num, num_bases, num_exponents);
 
   unsigned num_size = num_bases.size();
   Expr reduced_num = to_std_form(k, num_bases, num_exponents);
-  // here <CODE>to_std_form</CODE> is called with a negative value of k 
-  // because we are dealing with the denominator of r 
+  // Here <CODE>to_std_form</CODE> is called with a negative value of k 
+  // because we are dealing with the denominator of r.
   partial_factor(den, den_bases, den_exponents);
   unsigned den_size = den_bases.size();
   Expr reduced_den = to_std_form(-k, den_bases, den_exponents);
   
   // Try one last simplification: if all exponents have a common factor 
-  // with the root index, remove it
+  // with the root index, remove it.
   int gc = k;
   for (unsigned i=0; (i < num_size) && (gc > 1); ++i)
     gc = gcd(gc, num_exponents[i]);
@@ -607,13 +607,15 @@ reduce_to_standard_form(const Number root_index, const Number r) {
       den_exponents[i] /= gc;
   }
   
-  Number irr_part = 1;
+  // The object `irr_part' is surely numeric but we have to use an expression
+  // because otherwise the number, since it is irrational, is rounded.
+  Expr irr_part = 1;
   for (unsigned i = 0; i < num_size; ++i)
     irr_part *= Parma_Recurrence_Relation_Solver::power(num_bases[i], num_exponents[i]);
   for (unsigned i = 0; i < den_size; ++i)
     irr_part *= Parma_Recurrence_Relation_Solver::power(den_bases[i], den_exponents[i]);
   Expr q = sign * reduced_num * Parma_Recurrence_Relation_Solver::power(reduced_den, -1);
-  if (irr_part > 1)
+  if (irr_part.ex_to_number() > 1)
     q *= Parma_Recurrence_Relation_Solver::power(irr_part, Number(1, k));
   return q;
 }
