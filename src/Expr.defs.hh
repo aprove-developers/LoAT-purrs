@@ -287,12 +287,11 @@ Expr log(const Expr& x);
 Expr factorial(const Expr& x);
 
 //! \brief
-//! If \f$ x \f$ is a natural number, returns \f$ (x-1)! \f$;
+//! If \f$ x > 0 \f$, returns \f$ (x-1)! \f$;
 //! returns \f$ \Gamma(x) \f$ symbolically otherwise.
 /*!
   \relates Expr
-  \exception std::pole_error thrown if \f$ x \f$ is non-positive integer
-                             number.
+  \exception std::pole_error thrown if \f$ x \f$ is non-positive integer.
 */
 Expr gamma(const Expr& x);
 
@@ -310,7 +309,7 @@ Expr gamma(const Expr& x);
 
   \relates Expr
   \exception std::range_error thrown if \f$ k \f$ is not a non-negative
-                              integer number.
+                              integer.
 */
 Expr binom(const Expr& m, const Expr& k);
 
@@ -730,6 +729,9 @@ public:
     return base and exponent of the power.
     If \p *this is a function then <CODE>arg(i)</CODE> returns the
     \f$ i \f$-th argument of the function.
+
+    \exception std::out_of_range thrown if
+                                 \f$ i \notin \{0, \dotsc, nops() - 1 \} \f$.
   */
 #ifdef UNSAFE_ARG
   const Expr& arg(unsigned int i) const;
@@ -739,14 +741,14 @@ public:
 #endif
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is sinctatically
+  //! Returns <CODE>true</CODE> if and only if \p *this is syntactically
   //! zero.
   bool is_zero() const;
 
   //! \brief
   //! Substitutes every occurrence of the expression \p s in \p *this
   //! with the expression \p r.
-  /*! relates Expr */
+  /*! \relates Expr */
   Expr substitute(const Expr& s, const Expr& r) const;
 
   //! \brief

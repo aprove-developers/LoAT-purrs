@@ -370,7 +370,10 @@ Expr::nops() const {
 inline Expr
 Expr::op(unsigned int i) const {
   assert(!is_a_function() && !is_a_power());
-  assert(i < nops());
+  // If `i' is out of range (0, nops()-1) in GiNaC 1.1.5 returns `0'.
+  if (i > nops()-1)
+    throw std::out_of_range("PURRS::Expr::op(): the index of `op()' "
+			    "must be between 0 and `nops()-1'");
   return Base::op(i);
 }
 
@@ -378,21 +381,33 @@ Expr::op(unsigned int i) const {
 inline Expr&
 Expr::arg(unsigned int i) {
   assert(is_a_function() || is_a_power());
-  assert(i < nops());
+  // FIXME: if `i' is out of range (0, nops()-1) in GiNaC 1.1.5 happens a
+  // segmentation fault. 
+  if (i > nops()-1)
+    throw std::out_of_range("PURRS::Expr::arg(): the index of `arg()' "
+			    "must be between 0 and `nops()-1'");
   return static_cast<Expr&>(let_op(i));
 }
 
 inline const Expr&
 Expr::arg(unsigned int i) const {
   assert(is_a_function() || is_a_power());
-  assert(i < nops());
+  // FIXME: if `i' is out of range (0, nops()-1) in GiNaC 1.1.5 happens a
+  // segmentation fault. 
+  if (i > nops()-1)
+    throw std::out_of_range("PURRS::Expr::arg(): the index of `arg()' "
+			    "must be between 0 and `nops()-1'");
   return static_cast<Expr&>(const_cast<Expr&>(*this).let_op(i));
 }
 #else
 inline Expr
 Expr::arg(unsigned int i) const {
   assert(is_a_function() || is_a_power());
-  assert(i < nops());
+  // FIXME: if `i' is out of range (0, nops()-1) in GiNaC 1.1.5 happens a
+  // segmentation fault. 
+  if (i > nops()-1)
+    throw std::out_of_range("PURRS::Expr::arg(): the index of `arg()' "
+			    "must be between 0 and `nops()-1'");
   return Base::op(i);
 }
 #endif
