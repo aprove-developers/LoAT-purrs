@@ -956,7 +956,10 @@ operator >> (istream& s, Interval& x)
     s >> ch;
   }
   else {
+#if 0
+    // FIXME: ISO C++ forbids assignment of arrays
     u = l;
+#endif
     nf = Interval::REAL;
   }
   if (ch == ')')
