@@ -147,6 +147,22 @@ Expr wild(unsigned label);
 Expr apply(Functor f, const Expr& x);
 
 //! \brief
+//! Returns the application of functor \f$ f \f$ to operands \f$ x_1 \f$
+//! and \f$ x_2 \f$, i.e., the expression \f$ f(x_1, x_2) \f$.
+Expr apply(Functor f, const Expr& x1, const Expr& x2);
+
+//! \brief
+//! Returns the application of functor \f$ f \f$ to operands \f$ x_1, x_2 \f$
+//! and \f$ x_3 \f$, i.e., the expression \f$ f(x_1, x_2, x_3) \f$.
+Expr apply(Functor f, const Expr& x1, const Expr& x2, const Expr& x3);
+
+//! \brief
+//! Returns the application of functor \f$ f \f$ to operands \f$ x_1, x_2, x_3 \f$
+//! and \f$ x_4 \f$, i.e., the expression \f$ f(x_1, x_2, x_3, x_4) \f$.
+Expr apply(Functor f,
+	   const Expr& x1, const Expr& x2, const Expr& x3, const Expr& x4);
+
+//! \brief
 //! Returns the application of functor \f$ f \f$ to operands
 //! \f$ x_1, \dots, x_k \f$, i.e., the expression \f$ f(x_1, \dots, x_k) \f$.
 Expr apply(Functor f, const std::vector<Expr>& x);
@@ -759,6 +775,10 @@ private:
 
   friend Expr wild(unsigned label);
   friend Expr apply(Functor f, const Expr& x);
+  friend Expr apply(Functor f, const Expr& x1, const Expr& x2);
+  friend Expr apply(Functor f, const Expr& x1, const Expr& x2, const Expr& x3);
+  friend Expr apply(Functor f,
+		    const Expr& x1, const Expr& x2, const Expr& x3, const Expr& x4);
   friend Expr apply(Functor f, const std::vector<Expr>& x);
   friend Expr pwr(const Expr& x, const Expr& y);
   friend Expr sqrt(const Expr& x);

@@ -464,12 +464,52 @@ apply(Functor f, const Expr& x) {
 }
 
 inline Expr
+apply(Functor f, const Expr& x1, const Expr& x2) {
+  return GiNaC::function(f,
+			 static_cast<const Expr::Base>(x1),
+			 static_cast<const Expr::Base>(x2));
+}
+
+inline Expr
+apply(Functor f, const Expr& x1, const Expr& x2, const Expr& x3) {
+  return GiNaC::function(f,
+			 static_cast<const Expr::Base>(x1),
+			 static_cast<const Expr::Base>(x2),
+			 static_cast<const Expr::Base>(x3));
+}
+
+inline Expr
+apply(Functor f,
+      const Expr& x1, const Expr& x2, const Expr& x3, const Expr& x4) {
+  return GiNaC::function(f,
+			 static_cast<const Expr::Base>(x1),
+			 static_cast<const Expr::Base>(x2),
+			 static_cast<const Expr::Base>(x3),
+			 static_cast<const Expr::Base>(x4));
+}
+
+inline Expr
 apply(Functor f, const std::vector<Expr>& x) {
   unsigned x_size = x.size();
-  std::vector<GiNaC::ex> tmp_x(x_size);
-  for (unsigned i = 0; i < x_size; ++i)
-    tmp_x[i] = static_cast<const Expr::Base>(x[i]);
-  return GiNaC::function(f, tmp_x);
+  assert(x_size > 1);
+  switch (x_size) {
+  case 2:
+    return apply(f, x[0], x[1]);
+    break;
+  case 3:
+    return apply(f, x[0], x[1], x[2]);
+    break;
+  case 4:
+    return apply(f, x[0], x[1], x[2], x[3]);
+    break;
+  default:
+    {
+      std::vector<GiNaC::ex> tmp_x(x_size);
+      for (unsigned i = 0; i < x_size; ++i)
+	tmp_x[i] = static_cast<const Expr::Base>(x[i]);
+      return GiNaC::function(f, tmp_x);
+    }
+  }
 }
 
 inline Expr
