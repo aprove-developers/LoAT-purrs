@@ -33,6 +33,48 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+//! \brief
+//! Contains all the components necessary to rebuilding the
+//! original recurrence before the transformation of it in
+//! weighted-average recurrence.
+struct Components_Original_Rec {
+  //! \brief
+  //! Contains the factor \f$ f(n) \f$ of the recurrence
+  //! \f[
+  //!   x(n) = f(n) \sum_{k=n_0}^{u(n)} x(k) + g(n),
+  //! \f]
+  //! where \f$ n_0 \in \Nset \cup \{ 0 \} \f$ and
+  //! \f$ u(n) \in \{ n-1, n \} \f$.
+  Expr weight_;
+
+  //! \brief
+  //! Contains the inhomogeneous term \f$ g(n) \f$ of the recurrence
+  //! \f[
+  //!   x(n) = f(n) \sum_{k=n_0}^{u(n)} x(k) + g(n),
+  //! \f]
+  //! where \f$ n_0 \in \Nset \cup \{ 0 \} \f$ and
+  //! \f$ u(n) \in \{ n-1, n \} \f$.
+  Expr inhomogeneous_;
+
+  //! \brief
+  //! Contains the lower limit \f$ n_0 \in \Nset \cup \{ 0 \} \f$
+  //! of the sum in the recurrence
+  //! \f[
+  //!   x(n) = f(n) \sum_{k=n_0}^{u(n)} x(k) + g(n),
+  //! \f]
+  //! where \f$ u(n) \in \{ n-1, n \} \f$.
+  unsigned int lower_limit_;  
+
+  //! \brief
+  //! Contains the upper limit \f$ u(n) \in \{ n-1, n \} \f$
+  //! of the sum in the recurrence
+  //! \f[
+  //!   x(n) = f(n) \sum_{k=n_0}^{u(n)} x(k) + g(n),
+  //! \f]
+  //! where \f$ n_0 \in \Nset \cup \{ 0 \} \f$.
+  Expr upper_limit_;
+};
+
 class Weighted_Average_Info {
 public:
   //! \brief
@@ -57,20 +99,32 @@ public:
   //! Returns <CODE>associated_first_order_rec_</CODE>.
   Recurrence& associated_first_order_rec();
 
-  //! Sets <CODE>original_rhs_</CODE> with \p original_rhs.
-  void set_original_rhs(const Expr& original_rhs);
-
-  //! Returns <CODE>lower_limit_</CODE>.
-  unsigned int lower_limit() const;
-
-  //! Sets <CODE>lower_limit_</CODE> with \p lower.
-  void set_lower_limit(unsigned int lower);
-  
   //! Returns <CODE>weight_</CODE>.
   const Expr& weight() const;
 
   //! Returns <CODE>weight_</CODE>.
   Expr& weight();
+
+  //! Returns <CODE>original_weight_</CODE>.
+  const Expr& original_weight() const;
+
+  //! Returns <CODE>Components_Original_Rec.original_weight_</CODE>.
+  Expr& original_weight();
+
+  //! Returns <CODE>Components_Original_Rec.original_inhomogeneous_</CODE>.
+  const Expr& original_inhomogeneous() const;
+
+  //! Returns <CODE>Components_Original_Rec.original_inhomogeneous_</CODE>.
+  Expr& original_inhomogeneous();
+
+  //! Returns <CODE>Components_Original_Rec.lower_limit_</CODE>.
+  unsigned int lower_limit() const;
+
+  //! \brief
+  //! Sets with \p weight, \p inhomogeneous, \p lower and \p upper
+  //! the elements of <CODE>Components_Original_Rec</CODE>.
+  void set_original_rhs(const Expr& weight, const Expr& inhomogeneous,
+			unsigned int lower, const Expr& upper);
 
 private:
   //! \brief
@@ -81,16 +135,6 @@ private:
   Recurrence associated_first_order_rec_;
 
   //! \brief
-  //! Contains the right hand side of the recurrence before the rewriting
-  //! of the system in a weighted-average recurrence
-  //! \f[
-  //!   x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n).
-  //! \f]
-  //! If the recurrence is already in form of weighted-average recurrence
-  //! then this data is undefined.
-  Expr original_rhs_;
-
-  //! \brief
   //! Contains the factor \f$ f(n) \f$ of the weighted-average recurrence
   //! \f[
   //!   x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n).
@@ -98,12 +142,10 @@ private:
   Expr weight_;
 
   //! \brief
-  //! Contains the lower limit of the sum \f$ n_0 \f$ of a recurrence
-  //! \f[
-  //!   x(n) = f(n) \sum_{k=n_0}^{u(n)} x(k) + g(n).
-  //! \f]
-  //! rewritable in a weighted-average recurrence.
-  unsigned int lower_limit_;
+  //! Pointer to a structure which contains all the components necessary
+  //! to rebuilding the original recurrence before the transformation of
+  //! it in weighted-average recurrence.
+  Components_Original_Rec* components_original_rec_p;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver
