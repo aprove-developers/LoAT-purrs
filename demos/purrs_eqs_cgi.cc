@@ -319,6 +319,8 @@ main() try {
        << h1() << "PURRS Demo " << span("Results", set("class", "green"))
        << h1() << endl;
 
+  cout << h2() << "Roots of " << p << h2() << endl;
+
   cout << cgicc::div().set("align", "center") << endl
        << table()
     .set("border", "0").set("rules", "none").set("frame", "void")
@@ -350,7 +352,7 @@ main() try {
   cout << br() << br()
        <<cgicc::div().set("align", "center").set("class", "bigger") << endl;
 #if HAVE_GETRUSAGE
-  cout << "The computation of roots took "
+  cout << "The computation of roots took about "
        << (double) (us_of_cpu_time/1000000.0) << " s of CPU time."
        << br() << br() << endl;
 #endif
