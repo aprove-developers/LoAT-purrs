@@ -522,6 +522,13 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   D_VEC(coefficients(), 1, order());
   D_VAR(inhomogeneous_term);
 
+  // We call recurrences of `order zero' special recurrences of the
+  // form `x(n) = rhs', where `rhs' contains only functions of `n',
+  // parameters and `x(k_1),...,x(k_m)' where `m >= 0' and
+  // `k_1,...,k_m' are non-negative integers.
+  // In these cases are not mathematical relationship expressing `x(n)'
+  // as some combination of `x(i)', with i < n and the solution
+  // is simply `rhs' (now equal to `inhomogeneous_term').
   if (is_order_zero()) {
     exact_solution_.set_expression(inhomogeneous_term);
     exact_solution_.set_expression

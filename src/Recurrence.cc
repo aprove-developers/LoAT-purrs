@@ -125,16 +125,16 @@ validate_initial_conditions(index_type order,
   Consider the right hand side \p rhs of the order \f$ k \f$ recurrence
   relation
   \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$,
-  which is stored in the expression <CODE>recurrence_rhs</CODE>.
+  which is stored in the expression \p recurrence_rhs.
   Let \f$ i \f$ be \p first_valid_index, that is, the least non-negative
   integer \f$ j \f$ such that the recurrence is well-defined for
   \f$ n \geq j \f$.
   Assume that the system has produced the expression
-  <CODE>exact_solution_.expression()</CODE>, which is a function of the
+  \p exact_solution_.expression(), which is a function of the
   variable \f$ n \f$.
 
   The verification's process is divided in 4 steps:
-  -  Validation of <EM>symbolic initial conditions</EM>.
+  -  Validation of \ref initial_conditions "symbolic initial conditions".
      Evaluate the expression \p exact_solution_.expression() for
      \f$ n = i, \cdots, i+k-1 \f$ and simplify as much as possible.
      If the final result is <EM>synctactically</EM> equal to \f$ x(n) \f$
@@ -161,22 +161,26 @@ validate_initial_conditions(index_type order,
  			        the solution can be wrong or we failed to
 			        simplify it.
      FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
-  -  FIXME: as above.
-     By substitution, verifies that \p summands_without_i_c satisfies
-     the recurrence (in other words, we are considering all initial
-     conditions equal to \f$ 0 \f$).
-     Considers the difference, called \f$ d2 \f$, between
-     \p summands_without_i_c and the new right hand side obtained by
-     substitution:
+  -  Verify that \p summands_without_i_c satisfies the recurrence
+     (in other words, we are considering all initial conditions equal
+     to \f$ 0 \f$).
+     Replace \f$ x(n-i) \f$ by \p exact_solution_.expression()
+     evaluated at \f$ n-i \f$ (for \f$ i = 1, \cdots, k \f$) in the
+     right hand side of the recurrence, and store the result in
+     \p substituted_rhs.
+     Consider the difference
+     \f$ d2 = summands_without_i_c - substituted_rhs \f$:
      - if \f$ d2 = 0 \f$     -> returns <CODE>PROVABLY_CORRECT</CODE>:
                                 the solution is certainly right.
      - if \f$ d2 \neq 0 \f$  -> returns <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
  			        the solution can be wrong or we failed to
 			        simplify it.
+     FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
+
    FIXME: In the latter case, we will need more powerful tools to
    decide whether the solution is right or it is really wrong and, in this
    last case, to return <CODE>PROVABLY_INCORRECT</CODE>.
-
+     
    Case 2: non-linear recurrences of finite order.
    Considers the order of the linear recurrence associated to that one
    non-linear, since the initial conditions are the same.
@@ -184,11 +188,14 @@ validate_initial_conditions(index_type order,
 */
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_finite_order() const {
-  // ...
+  // We will store here the order of the recurrence.
   index_type order_rec;
-  // ...
+  // We will store here the the least non-negative integer `j'
+  // such that the recurrence is well-defined for `n >= j':
+  // the index `k' of the symbolic initial condition `x(k)'
+  // will start from it.
   index_type first_i_c;
-  // perche' prendi
+  // FIXME: chiarire discorso dell'ordine con le non lineari.
   if (is_non_linear_finite_order()) {
     order_rec = associated_linear_rec().order();
     first_i_c = associated_linear_rec().first_valid_index();
@@ -199,11 +206,16 @@ PURRS::Recurrence::verify_finite_order() const {
   }
   
   if (order_rec == 0)
-    // commento...
+    // We call recurrence of `order zero' special recurrences of the
+    // form `x(n) = rhs', where `rhs' contains only functions of `n',
+    // parameters and `x(k_1),...,x(k_m)' where `m >= 0' and
+    // `k_1,...,k_m' are non-negative integers.
+    // In these cases are not mathematical relationship expressing `x(n)'
+    // as some combination of `x(i)', with i < n and the solution
+    // is simply `rhs'.
     return PROVABLY_CORRECT;
   
-  // Step 1: validation of initial conditions:
-  // FIXME: specificare c.i. simboliche.
+  // Step 1: validation of symbolic initial conditions.
   Verify_Status status = validate_initial_conditions(order_rec, first_i_c);
   if (status == INCONCLUSIVE_VERIFICATION || status == PROVABLY_INCORRECT)
     return status;
@@ -213,19 +225,20 @@ PURRS::Recurrence::verify_finite_order() const {
   // `summands_without_i_c'.
   Expr summands_with_i_c = 0;
   Expr summands_without_i_c = 0;
-  // troppe chiamate di funzione!!
-  if (exact_solution_.expression().is_a_add())
-    for (unsigned int i = exact_solution_.expression().nops(); i-- > 0; ) {
-      if (exact_solution_.expression().op(i).has_symbolic_initial_conditions())
-	summands_with_i_c += exact_solution_.expression().op(i);
+  const Expr& exact_solution = exact_solution_.expression();
+  if (exact_solution.is_a_add())
+    for (unsigned int i = exact_solution.nops(); i-- > 0; ) {
+      const Expr& addend_exact_solution = exact_solution.op(i);
+      if (addend_exact_solution.has_symbolic_initial_conditions())
+	summands_with_i_c += addend_exact_solution;
       else
-	summands_without_i_c += exact_solution_.expression().op(i);
+	summands_without_i_c += addend_exact_solution;
     }
   else
-    if (exact_solution_.expression().has_symbolic_initial_conditions())
-      summands_with_i_c = exact_solution_.expression();
+    if (exact_solution.has_symbolic_initial_conditions())
+      summands_with_i_c = exact_solution;
     else
-      summands_without_i_c = exact_solution_.expression();
+      summands_without_i_c = exact_solution;
   
 #if 0
   // Step 3: by substitution, verifies that `summands_with_i_c'
@@ -475,9 +488,10 @@ PURRS::Recurrence::verify_finite_order() const {
     substituted_rhs = substituted_rhs.substitute(x(n - d), shifted_solution);
   }
   Expr diff = summands_without_i_c - substituted_rhs;
-  // commento: il fatto che ci sia il simbolo n rende l'espressione
-  // molto piu' complicata di quella nel caso delle cond. iniz.
-  // FIXME: altro motivo legato al nuovo metodo di verifica.
+  // Differently from the step 1 (validation of symbolic initial condition)
+  // the expression `diff' now contains `n' and is more difficult
+  // to simplify it. For this motive we performed simplification also
+  // before to expand blackboard's definitions.
   diff = blackboard.rewrite(diff);
   diff = simplify_all(diff);
   if (diff.is_zero())
@@ -486,13 +500,13 @@ PURRS::Recurrence::verify_finite_order() const {
   // If we have applied the order reduction and we did not succeed
   // in the verification of the original recurrence, then
   // we try to verify the solution of the reduced recurrence.
-  // FIXME:
-  // Nota che la soluzione "verificare la ricorrenza originale (non ridotta)"
-  // viene tentata per prima perche' quella e' la vera soluzione
-  // (fornita all'utente). La verifica della ricorrenza ridotta,
-  // che tentiamo in subordine, non garantisce la correttezza della
-  // soluzione fornita all'utente nel caso di bachi nel passaggio da
-  // una all'altra.
+  // Note that "verify the original recurrence" is the first tentative
+  // because the solution given to the user is relative to the non-reduced
+  // recurrence. The verification of the reduced recurrence, tried only
+  // if the previous verification fails, does not guarantee the correctness
+  // of the solution supplied to the user in the case of errors in the
+  // computation of the solution of the original recurrence starting
+  // from the solution of the reduced recurrence.
   if (applied_order_reduction()) {
     unset_order_reduction();
     Symbol r = insert_auxiliary_definition(mod(n, gcd_among_decrements()));
@@ -509,7 +523,6 @@ PURRS::Recurrence::verify_finite_order() const {
     rec_rewritten.set_type(type());
     rec_rewritten.set_inhomogeneous_term(inhomogeneous);
     rec_rewritten.solve_linear_finite_order();
-    D_VAR(exact_solution_.expression());
     return rec_rewritten.verify_exact_solution();
   }
   else {
@@ -523,27 +536,41 @@ PURRS::Recurrence::verify_finite_order() const {
 
 //! Verify the exact solution of the infinite order recurrence \p *this.
 /*!
+  Consider the right hand side of a infinite ordr recurrence in
+  <EM>normal form</EM>
+  \f$ f(n) \sum_{k=0}^{n-1} x(k) + g(n) \f$,
+  which is stored in the expression \p recurrence_rhs.
+  Assume that the system has produced the expression
+  \p exact_solution_.expression(), which is a function of the
+  variable \f$ n \f$.
+
   The verification's process is divided in 2 steps:
-  -  Validation of the initial condition by substitution of \f$ n \f$
-     with \f$ 0 \f$.
+  -  Validation of \ref initial_conditions "symbolic initial condition".
+     Evaluate the expression \p exact_solution_.expression() for
+     \f$ n = 0 \f$ and simplify as much as possible.
+     If the final result is <EM>synctactically</EM> equal to \f$ x(0) \f$
+     the symbolic initial conditions is verified and we can proceed to
+     step 2; otherwise return <CODE>INCONCLUSIVE_VERIFICATION</CODE>
+     because the solution can be wrong or it is not enough simplified.
+     FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
   -  Validation of the solution using substitution.
+// FIXME: to finish comment.
 */
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_infinite_order() const {
+  Expr weight = infinite_order_weight();
+  
   // The case `f(n) = -1', i.e. the recurrence has the form
   // `x(n) = - sum(k, 0, n-1, x(k)) + g(n)', is special:
   // the solution is simply `x(n) = g(n) - g(n-1)'.
   // FIXME: the traditional validation' process does not work,
   // is it true?
-  // FIXME: first_valid_index e' shiftato in avanti?
-  if (infinite_order_weight() == -1)
+  if (weight == -1)
     // FIXME: verify!!!
     return PROVABLY_CORRECT;
   
-  Expr weight = infinite_order_weight();
-  
   // Note: the solution is valid only for `n > 0'.
-  
+ 
   // Step 1: validation of the initial condition.
   Expr e = exact_solution_.expression().substitute(n, 1);
   e = simplify_all(e);
@@ -553,12 +580,6 @@ PURRS::Recurrence::verify_infinite_order() const {
     return INCONCLUSIVE_VERIFICATION;
   
   // Step 2: validation of the solution.
-  // Note: with recurrences of infinite order is not true that if it is
-  // homogeneous then is sufficient to verify the initial condition.
-  // In fact, the recurrences could be in a non-standard form like
-  // `x(n) = f(n) sum(k, 0, n-1, x(k)+h(n))'. For standard form
-  // we consider recurrences with the argument of the sum equal to `x(k)'. 
-  
   // Let `x(n) = f(n) sum(k, 0, n-1, x(k)) + g(n)' be the infinite
   // order recurrence. Now we must consider the expression
   // `x(n) - f(n) x(0) - f(n) sum(k, 0 + 1, n - 1, x(k)) - g(n)',
