@@ -703,6 +703,10 @@ public:
          of the solution of the non-linear recurrence fails then it
 	 tries to verify the solution of the linear recurrence associated
 	 to \p *this.
+      -  weighted-average recurrences. If the verification
+         of the solution of the weighted-average recurrence fails then it
+	 tries to verify the solution of the first order recurrence associated
+	 to \p *this.
     */
     PARTIAL_PROVABLY_CORRECT,
 
@@ -897,6 +901,9 @@ public:
        -  when the system fails in the verification of the solution of the
           non-linear recurrence but it has success in the validation
 	  of the solution of the associated linear recurrence.
+       -  when the system fails in the verification of the solution of the
+          weighted-average recurrence but it has success in the validation
+	  of the solution of the associated first order recurrence.
     -  returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
        not able to prove if the solution of the recurrence \p *this
        is correct or not.
