@@ -32,18 +32,21 @@ namespace Parma_Recurrence_Relation_Solver {
 inline
 Infinite_Order_Info::Infinite_Order_Info(const Expr& new_rhs,
 					 const Expr& coefficient,
-					 const Expr& inhomogeneous) 
-  : rhs_transformed_in_first_order_var_coeffs_(new_rhs),
-    coeff_var_first_order_(coefficient),
-    inhomog_var_first_order_(inhomogeneous) {
+					 const Expr& inhomogeneous,
+					 const Expr& first_element) 
+  : rhs_transformed_in_first_order_(new_rhs),
+    coeff_first_order_(coefficient),
+    inhomog_first_order_(inhomogeneous),
+    value_of_first_element_(first_element) {
 }
 
 inline
 Infinite_Order_Info::Infinite_Order_Info(const Infinite_Order_Info& y)
-  : rhs_transformed_in_first_order_var_coeffs_
-(y.rhs_transformed_in_first_order_var_coeffs_),
-    coeff_var_first_order_(y.coeff_var_first_order_),
-    inhomog_var_first_order_(y.inhomog_var_first_order_) {
+  : rhs_transformed_in_first_order_
+(y.rhs_transformed_in_first_order_),
+    coeff_first_order_(y.coeff_first_order_),
+    inhomog_first_order_(y.inhomog_first_order_),
+    value_of_first_element_(y.value_of_first_element_) {
 }
 
 inline
@@ -52,41 +55,52 @@ Infinite_Order_Info::~Infinite_Order_Info() {
 
 inline Infinite_Order_Info&
 Infinite_Order_Info::operator=(const Infinite_Order_Info& y) {
-  rhs_transformed_in_first_order_var_coeffs_
-    = y.rhs_transformed_in_first_order_var_coeffs_;
-  coeff_var_first_order_ = y.coeff_var_first_order_;
-  inhomog_var_first_order_ = y.inhomog_var_first_order_;
+  rhs_transformed_in_first_order_
+    = y.rhs_transformed_in_first_order_;
+  coeff_first_order_ = y.coeff_first_order_;
+  inhomog_first_order_ = y.inhomog_first_order_;
+  value_of_first_element_ = y.value_of_first_element_;
   return *this;
 }
 
 inline Expr
-Infinite_Order_Info::rhs_transformed_in_first_order_var_coeffs() const {
-  return rhs_transformed_in_first_order_var_coeffs_;
+Infinite_Order_Info::rhs_transformed_in_first_order() const {
+  return rhs_transformed_in_first_order_;
 }
 
 inline Expr&
-Infinite_Order_Info::rhs_transformed_in_first_order_var_coeffs() {
-  return rhs_transformed_in_first_order_var_coeffs_;
+Infinite_Order_Info::rhs_transformed_in_first_order() {
+  return rhs_transformed_in_first_order_;
 }
 
 inline Expr
-Infinite_Order_Info::coeff_var_first_order() const {
-  return coeff_var_first_order_;
+Infinite_Order_Info::coeff_first_order() const {
+  return coeff_first_order_;
 }
 
 inline Expr&
-Infinite_Order_Info::coeff_var_first_order() {
-  return coeff_var_first_order_;
+Infinite_Order_Info::coeff_first_order() {
+  return coeff_first_order_;
 }
 
 inline Expr
-Infinite_Order_Info::inhomog_var_first_order() const {
-  return inhomog_var_first_order_;
+Infinite_Order_Info::inhomog_first_order() const {
+  return inhomog_first_order_;
 }
 
 inline Expr&
-Infinite_Order_Info::inhomog_var_first_order() {
-  return inhomog_var_first_order_;
+Infinite_Order_Info::inhomog_first_order() {
+  return inhomog_first_order_;
+}
+
+inline Expr
+Infinite_Order_Info::value_of_first_element() const {
+  return value_of_first_element_;
+}
+
+inline Expr&
+Infinite_Order_Info::value_of_first_element() {
+  return value_of_first_element_;
 }
 
 // inline unsigned

@@ -608,39 +608,40 @@ private:
 
   //! \brief
   //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence with variable coefficient then this last recurrence is
+  //! recurrence then this last recurrence is returned from this method.
+  Expr rhs_transformed_in_first_order() const;
+
+  //! \brief
+  //! If the infinite order recurrence is rewritable in a first order linear
+  //! recurrence then this last recurrence is returned from this method.
+  Expr& rhs_transformed_in_first_order();
+
+  //! \brief
+  //! If the infinite order recurrence is rewritable in a first order linear
+  //! recurrence then the coefficient of this last recurrence is returned
+  //! from this method.
+  Expr coeff_first_order() const;
+
+  //! \brief
+  //! If the infinite order recurrence is rewritable in a first order linear
+  //! recurrence then the coefficient of this last recurrence is returned
+  //! from this method.
+  Expr& coeff_first_order();
+
+  //! \brief
+  //! If the infinite order recurrence is rewritable in a first order linear
+  //! recurrence then the non-homogeneous part of this last recurrence is
   //! returned from this method.
-  Expr rhs_transformed_in_first_order_var_coeffs() const;
+  Expr inhomog_first_order() const;
 
   //! \brief
   //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence with variable coefficient then this last recurrence is
+  //! recurrence then the non-homogeneous part of this last recurrence is
   //! returned from this method.
-  Expr& rhs_transformed_in_first_order_var_coeffs();
+  Expr& inhomog_first_order();
 
-  //! \brief
-  //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence with variable coefficient then the coefficient of this last
-  //! recurrence is returned from this method.
-  Expr coeff_var_first_order() const;
-
-  //! \brief
-  //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence with variable coefficient then the coefficient of this last
-  //! recurrence is returned from this method.
-  Expr& coeff_var_first_order();
-
-  //! \brief
-  //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence with variable coefficient then the non-homogeneous part of
-  //! this last recurrence is returned from this method.
-  Expr inhomog_var_first_order() const;
-
-  //! \brief
-  //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence with variable coefficient then the non-homogeneous part of
-  //! this last recurrence is returned from this method.
-  Expr& inhomog_var_first_order();
+  Expr value_of_first_element() const;
+  Expr& value_of_first_element();
 
 //   //! \brief
 //   //! Stores the smallest positive integer for which the infinite

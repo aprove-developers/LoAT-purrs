@@ -412,45 +412,59 @@ Recurrence::set_non_linear_to_linear_fwdr(unsigned i_c) const {
 }
 
 inline Expr
-Recurrence::rhs_transformed_in_first_order_var_coeffs() const {
+Recurrence::rhs_transformed_in_first_order() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> rhs_transformed_in_first_order_var_coeffs();
+  return infinite_order_p -> rhs_transformed_in_first_order();
 }
 
 inline Expr&
-Recurrence::rhs_transformed_in_first_order_var_coeffs() {
+Recurrence::rhs_transformed_in_first_order() {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> rhs_transformed_in_first_order_var_coeffs();
+  return infinite_order_p -> rhs_transformed_in_first_order();
 }
 
 inline Expr
-Recurrence::coeff_var_first_order() const {
+Recurrence::coeff_first_order() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> coeff_var_first_order();
+  return infinite_order_p -> coeff_first_order();
 }
 
 inline Expr&
-Recurrence::coeff_var_first_order() {
+Recurrence::coeff_first_order() {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> coeff_var_first_order();
+  return infinite_order_p -> coeff_first_order();
 }
 
 inline Expr
-Recurrence::inhomog_var_first_order() const {
+Recurrence::inhomog_first_order() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> inhomog_var_first_order();
+  return infinite_order_p -> inhomog_first_order();
 }
 
 inline Expr&
-Recurrence::inhomog_var_first_order() {
+Recurrence::inhomog_first_order() {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> inhomog_var_first_order();
+  return infinite_order_p -> inhomog_first_order();
+}
+
+inline Expr
+Recurrence::value_of_first_element() const {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  return infinite_order_p -> value_of_first_element();
+}
+
+inline Expr&
+Recurrence::value_of_first_element() {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  return infinite_order_p -> value_of_first_element();
 }
 
 // inline unsigned

@@ -35,11 +35,12 @@ class Infinite_Order_Info {
 public:
   //! \brief
   //! Constructor: sets
-  //! \f$ rhs_transformed_in_first_order_var_coeffs_ = new_rhs \f$,
-  //! \f$ coeff_var_first_order_ = coefficient \f$;
-  //! \f$ inhomog_var_first_order_ = inhomogeneous \f$;
+  //! \f$ rhs_transformed_in_first_order_ = new_rhs \f$,
+  //! \f$ coeff_first_order_ = coefficient \f$;
+  //! \f$ inhomog_first_order_ = inhomogeneous \f$;
+  //! \f$ value_of_first_element_ = first_element \f$.
   Infinite_Order_Info(const Expr& new_rhs, const Expr& coefficient,
-		      const Expr& inhomog);
+		      const Expr& inhomog, const Expr& first_element);
 
   //! Copy-constructor.
   Infinite_Order_Info(const Infinite_Order_Info& y);
@@ -50,23 +51,26 @@ public:
   //! Assignment operator.
   Infinite_Order_Info& operator=(const Infinite_Order_Info& y);
 
-  //! Returns <CODE>rhs_transformed_in_first_order_var_coeffs_</CODE>.
-  Expr rhs_transformed_in_first_order_var_coeffs() const;
+  //! Returns <CODE>rhs_transformed_in_first_order_</CODE>.
+  Expr rhs_transformed_in_first_order() const;
 
-  //! Returns <CODE>rhs_transformed_in_first_order_var_coeffs_</CODE>.
-  Expr& rhs_transformed_in_first_order_var_coeffs();
+  //! Returns <CODE>rhs_transformed_in_first_order_</CODE>.
+  Expr& rhs_transformed_in_first_order();
 
-  //! Returns <CODE>coeff_var_first_order_</CODE>.
-  Expr coeff_var_first_order() const;
+  //! Returns <CODE>coeff_first_order_</CODE>.
+  Expr coeff_first_order() const;
 
-  //! Returns <CODE>coeff_var_first_order_</CODE>.
-  Expr& coeff_var_first_order();
+  //! Returns <CODE>coeff_first_order_</CODE>.
+  Expr& coeff_first_order();
 
-  //! Returns <CODE>inhomog_var_first_order_</CODE>.
-  Expr inhomog_var_first_order() const;
+  //! Returns <CODE>inhomog_first_order_</CODE>.
+  Expr inhomog_first_order() const;
 
-  //! Returns <CODE>inhomog_var_first_order_</CODE>.
-  Expr& inhomog_var_first_order();
+  //! Returns <CODE>inhomog_first_order_</CODE>.
+  Expr& inhomog_first_order();
+
+  Expr value_of_first_element() const;
+  Expr& value_of_first_element();
 
 //   //! Returns <CODE>infinite_order_fwdr_</CODE>.
 //   unsigned infinite_order_fwdr() const;
@@ -84,27 +88,27 @@ private:
   //! \f[
   //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
   //! \f]
-  Expr rhs_transformed_in_first_order_var_coeffs_;
+  Expr rhs_transformed_in_first_order_;
 
   //! \brief
   //! If the infinite order recurrence is of the shape
   //! \f[
   //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
   //! \f]
-  //! then it is transformable in a first order linear recurrence
-  //! with wariable coefficient. This data contains the coefficient
-  //! of the new recurrence.
-  Expr coeff_var_first_order_;
+  //! then it is transformable in a first order linear recurrence.
+  //! This data contains the coefficient of the new recurrence.
+  Expr coeff_first_order_;
 
   //! \brief
   //! If the infinite order recurrence is of the shape
   //! \f[
   //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
   //! \f]
-  //! then it is transformable in a first order linear recurrence
-  //! with wariable coefficient. This data contains the non homogeneous
-  //! part of the new recurrence.
-  Expr inhomog_var_first_order_;
+  //! then it is transformable in a first order linear recurrence.
+  //! This data contains the non homogeneous part of the new recurrence.
+  Expr inhomog_first_order_;
+
+  Expr value_of_first_element_;
 
 //   //! \brief
 //   //! Stores the smallest positive integer for which the recurrence is
