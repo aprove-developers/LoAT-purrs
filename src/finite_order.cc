@@ -704,13 +704,14 @@ PURRS::come_back_to_original_variable(const Expr& e, const Symbol& r,
   1)  the problem of expressing the part depending on the initial conditions;
   2)  to give an expression for \f$ r = n \bmod k \f$.
   
-  Let \f$ \omega_h \f$, for \f$h, 1 \dots, k \f$ the $k$-th roots of unity.
+  Let \f$ \omega_h \f$, for \f$h, 1 \dots, k \f$ the \f$ k \f$-th roots
+  of unity.
   1) Let
      \f[
        \eta_{r,k}(n) \defeq \frac 1k \sum_{h=1}^k \omega_h^{n-r},
      \f]
-     so that $\eta_{r,k}(n) = 1$ if $n\equiv r \bmod k$, and is~$0$
-     otherwise.
+     so that \f$ \eta_{r,k}(n) = 1 \f$ if \f$ n \equiv r \bmod k \f$,
+     and is~\f$ 0 \f$ otherwise.
      Therefore we have
      \f[
        x_r = \sum_{s=0}^{k-1} \eta_{s,k}(n) x_s.

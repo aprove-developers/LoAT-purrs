@@ -29,7 +29,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "zeilberger.hh"
 #include "simplify.hh"
 #include "numerator_denominator.hh"
-#include "factorize.hh"
 #include "util.hh"
 #include "Expr.defs.hh"
 #include "Symbol.defs.hh"
@@ -51,7 +50,7 @@ using namespace PURRS;
   \f[
     t(k) = a_0 F(m, k) + a_1 F(m+1, k) + \dots a_j F(m+j, k),
   \f]
-  computes \f$ p_0(k) \f$, \f$ r(k) \f$ and \f$ \p s(k) \f$ so that
+  computes \f$ p_0(k) \f$, \f$ r(k) \f$ and \f$ s(k) \f$ so that
   \f[
     \frac{t(k+1)}{t(k)} = \frac{p(k+1)}{p_0(k)} \frac{r(k)}{s(k)}.
   \f]
@@ -63,7 +62,7 @@ zeilberger_step_one(const Expr& F_m_k,
 		    const Symbol& m, const Symbol& k,
 		    const std::vector<Symbol>& coefficients,
 		    Expr& p_0_k, Expr& r_k, Expr& s_k) {
-  D_MSG("ZEIL step one");
+  DD_MSGVAR("ZEIL step one -> ", F_m_k);
   Expr first
     = simplify_binomials_factorials_exponentials(F_m_k.substitute(m, m+1))
     * pwr(simplify_binomials_factorials_exponentials(F_m_k), -1);
@@ -132,26 +131,22 @@ zeilberger_step_one(const Expr& F_m_k,
   r_k = r_1 * prod_for_r;
   s_k = r_2 * prod_for_s;
   
-  Expr common_factor;
-  Expr rem;
-  factorize(r_k, common_factor, rem);
-  r_k = common_factor * rem;
-  factorize(s_k, common_factor, rem);
-  s_k = common_factor * rem;
-
   return true;
 }
 
 bool
 parametric_gosper_step_two(const Symbol& /*m*/, const Expr& /*r_m*/,
 			   Expr& /*a_m*/, Expr& /*b_m*/, Expr& /*c_m*/) {
+
   return true;
 }
+
 
 bool
 parametric_gosper_step_three(const Symbol& /*m*/,
 			     const Expr& /*a_m*/, const Expr& /*b_m*/,
 			     const Expr& /*c_m*/, Expr& /*x_m*/) {
+
   return true;
 }
 
@@ -188,9 +183,19 @@ PURRS::zeilberger_algorithm(const Expr& F_m_k,
   Expr p_1_k;
   Expr p_2_k;
   Expr p_3_k;
-  if (!parametric_gosper_step_two(m, r_k / s_k, p_1_k, p_2_k, p_3_k))
+#if 0
+  if (!parametric_gosper_step_two(k, r_k / s_k, p_1_k, p_2_k, p_3_k))
     // Problem in the computation of the resultant and its roots.
     return false;
+#else
+  const Expr& tmp = simplify_all(r_k / s_k);
+  p_1_k = 1;
+  p_2_k = numerator(tmp);
+  p_3_k = denominator(tmp);
+#endif
+  DD_VAR(p_1_k);
+  DD_VAR(p_2_k);
+  DD_VAR(p_3_k);
 
   Expr b_k;
   if (parametric_gosper_step_three(k, p_2_k.expand(), p_3_k.expand(),
