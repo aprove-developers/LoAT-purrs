@@ -136,7 +136,7 @@ footer() {
             .set("src", "http://www.cs.unipr.it/images/cs_at_parma")
             .set("alt", "cs@parma")
             .set("border", "0"))
-    .set("href", "http://www.cs.unipr.it/details#verification") << br()
+    .set("href", "http://www.cs.unipr.it/") << br()
        << endl;
 
   // End of document.
@@ -232,7 +232,7 @@ mark_verified_solution() {
 	    .set("src", "http://www.cs.unipr.it/purrs/images/verified")
 	    .set("alt", "Verified solution")
 	    .set("border", "0"))
-    .set("href", "http://www.cs.unipr.it/") << br()
+    .set("href", "http://www.cs.unipr.it/details#verification")
        << " ";
 }
 
