@@ -125,6 +125,12 @@ public:
   Expr exact_solution() const;
   bool verify_solution() const;
 
+  //! \brief
+  //! Substitutes eventually auxiliary definitions contained in
+  //! \p e with their original values stored in the map
+  //! <CODE>auxiliary_definitions</CODE>.
+  Expr substitute_auxiliary_definition(const Expr& e) const;
+
   //! The index of the recurrence.
   static const Symbol& n;
 

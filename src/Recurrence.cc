@@ -22,15 +22,52 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
+#ifndef NOISY
+#define NOISY 0
+#endif
+
 #include <config.h>
 
 #include "Recurrence.defs.hh"
+#include "util.hh"
 #include <iostream>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 const PURRS::Symbol&
 PURRS::Recurrence::n = Symbol("n");
+
+PURRS::Expr
+PURRS::Recurrence::substitute_auxiliary_definition(const Expr& e) const {
+  Expr e_after_subs;
+  if (e.is_a_add()) {
+    e_after_subs = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_after_subs += substitute_auxiliary_definition(e.op(i));
+  }
+  else if (e.is_a_mul()) {
+    e_after_subs = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_after_subs *= substitute_auxiliary_definition(e.op(i));
+  }
+  else if (e.is_a_power())
+    e_after_subs = pwr(substitute_auxiliary_definition(e.op(0)),
+		       substitute_auxiliary_definition(e.op(1)));
+  else if (e.is_a_function()) {
+    // FIXME: evitare la copia e trovare come accedere al funtore.
+    // e_after_subs = functor(e)(simplify_on_input_ex(e.op(0), n, input));
+    Expr tmp = substitute_auxiliary_definition(e.op(0));
+    Expr f = e;
+    e_after_subs = f.subs(f.op(0), tmp);
+  }
+  else if (e.is_a_symbol()) {
+    Symbol s = e.ex_to_symbol();
+    e_after_subs = get_auxiliary_definition(s);
+  }
+  else
+    e_after_subs = e;
+  return e_after_subs;
+}
 
 void
 PURRS::Recurrence::dump(std::ostream& s) const {
