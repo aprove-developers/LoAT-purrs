@@ -82,7 +82,7 @@ sum_falling_prod_times_exp(const Symbol& n, Number k,
 static void 
 poly_dec(const Expr& p, const Symbol& x, std::vector<Expr>& summands) {
 
-  unsigned d = p.degree(x);
+  int d = p.degree(x);
   Expr q = p;
   Expr r = p.coeff(x,0);
   summands[0] = r;
@@ -105,7 +105,7 @@ poly_dec(const Expr& p, const Symbol& x, std::vector<Expr>& summands) {
 static void 
 sum_poly(const Expr& p, const Symbol& x, const Symbol& n, Expr& q) {
   
-  unsigned d = p.degree(x);
+  int d = p.degree(x);
   std::vector<Expr> summands(d+1);
   poly_dec(p, x, summands);
   q = 0;
@@ -140,7 +140,7 @@ sum_poly_times_exponentials(const Expr& p, const Symbol& x,
   // we just have to compute the sum of the values of the polynomial 
   else {
     Expr r;
-    unsigned d = p.degree(x);
+    int d = p.degree(x);
     std::vector<Expr> summands(d+1);
     poly_dec(p, x, summands);
     q = 0;
@@ -170,7 +170,7 @@ sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x,
     q = sum_poly_times_exponentials(p, x, n, alpha);
     return q;
   } 
-  unsigned d = p.degree(x);
+  int d = p.degree(x);
   std::vector<Expr> summands(d+1);
   poly_dec(p, x, summands);
   q = 0;
@@ -201,7 +201,7 @@ sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x,
   if (theta.is_zero()) {
     return q;
   } 
-  unsigned d = p.degree(x);
+  int d = p.degree(x);
   std::vector<Expr> summands(d+1);
   poly_dec(p, x, summands);
   q = 0;
