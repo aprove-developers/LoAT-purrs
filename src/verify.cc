@@ -713,7 +713,7 @@ fill_vector_coefficients_i_c(const Expr& summands_with_i_c, unsigned int gcd,
    Applies the 4 steps of the previous case.
 */
 PURRS::Recurrence::Verify_Status
-PURRS::Recurrence::verify_finite_order() const {
+PURRS::Recurrence::verify_finite_order(bool partial_verification) const {
   // If `is_symbolic_solution' is true then the solution contains
   // symbolic initial conditions (e.g. x(i), with i non-negative integer);
   // otherwise the solution has been evaluated on the values contained in
@@ -787,7 +787,7 @@ PURRS::Recurrence::verify_finite_order() const {
       rec_rewritten.set_inhomogeneous_term(inhomogeneous);
       rec_rewritten.set_first_valid_index(first_valid_index);
       rec_rewritten.solve_linear_finite_order();
-      return rec_rewritten.verify_exact_solution();
+      return rec_rewritten.verify_exact_solution(true);
     }
   else
     if (is_symbolic_solution)
@@ -891,7 +891,10 @@ PURRS::Recurrence::verify_finite_order() const {
  continue_with_step_4:
   // The recurrence is homogeneous.
   if (summands_without_i_c == 0)
-    return PROVABLY_CORRECT;
+    if (partial_verification)
+      return PARTIAL_PROVABLY_CORRECT;
+    else
+      return PROVABLY_CORRECT;
   
 #if NEW_VERIFICATION
   // Step 4: the method of the paper
@@ -900,9 +903,12 @@ PURRS::Recurrence::verify_finite_order() const {
   if (is_linear_finite_order_const_coeff())
     if (verify_new_method_const_coeff(order_rec, summands_without_i_c, roots,
 				      true))
-      return PROVABLY_CORRECT;
+      if (partial_verification)
+	return PARTIAL_PROVABLY_CORRECT;
+      else
+	return PROVABLY_CORRECT;
 #endif
-
+  
 #if NEW_VERIFICATION
   // FIXME: to be finished!
 //    // Step 4: the method of the paper
@@ -954,7 +960,10 @@ PURRS::Recurrence::verify_finite_order() const {
   diff = blackboard.rewrite(diff);
   diff = simplify_all(diff);
   if (diff.is_zero())
-    return PROVABLY_CORRECT;
+    if (partial_verification)
+      return PARTIAL_PROVABLY_CORRECT;
+    else
+      return PROVABLY_CORRECT;
   
   // If we have applied the order reduction and we did not succeed
   // in the verification of the original recurrence, then
@@ -987,7 +996,10 @@ PURRS::Recurrence::verify_finite_order() const {
   else {
     diff = simplify_all(diff);
     if (diff.is_zero())
-      return PROVABLY_CORRECT;
+      if (partial_verification)
+	return PARTIAL_PROVABLY_CORRECT;
+      else
+	return PROVABLY_CORRECT;
     else
       return INCONCLUSIVE_VERIFICATION;
   }
@@ -1263,7 +1275,7 @@ PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
 }
 
 PURRS::Recurrence::Verify_Status
-PURRS::Recurrence::verify_exact_solution() const {
+PURRS::Recurrence::verify_exact_solution(bool partial_verification) const {
   if (!exact_solution_.has_expression())
     throw std::logic_error("PURRS::Recurrence::verify_exact_solution() "
 			   "called, but no exact solution was computed");
@@ -1272,8 +1284,24 @@ PURRS::Recurrence::verify_exact_solution() const {
   case ORDER_ZERO:
   case LINEAR_FINITE_ORDER_CONST_COEFF:
   case LINEAR_FINITE_ORDER_VAR_COEFF:
+    return verify_finite_order(partial_verification);
   case NON_LINEAR_FINITE_ORDER:
-    return verify_finite_order();
+    {
+      Verify_Status status = verify_finite_order(partial_verification);
+      if (status == INCONCLUSIVE_VERIFICATION && !partial_verification) {
+	// In the simple case of non-linear recurrence of the form
+	// `x(n) = c x(n-1)^a', where `c' and `a' are constants (`a != 1'),
+	// we know the solution without computing the associated linear
+	// recurrence. Now we want to know the solution of the associated
+	// linear recurrence.
+	if (coeff_simple_non_linear_rec() != 0)
+	  associated_linear_rec().compute_exact_solution_finite_order();
+	return associated_linear_rec().verify_exact_solution(true);
+      }
+      else
+	return status;
+    }
+    break;
   case WEIGHTED_AVERAGE:
     return verify_weighted_average();
   case FUNCTIONAL_EQUATION:

@@ -689,6 +689,24 @@ public:
     PROVABLY_CORRECT,
 
     /*!
+      The system can not prove whether the solution, or the approximation,
+      of \p *this, is correct or not, but it can prove that the solution,
+      or the approximation, of another recurrence used to compute the
+      solution, or the approximation, of \p *this, is correct.
+      This is the case of
+      -  linear recurrences of finite order solved with the order reduction
+         method. The system tries to verify the solution (expanded,
+	 e.g, without using the function \f$ mod() \f$) of the original
+	 recurrence and if it fails tries to verify the solution of the
+	 reduced recurrence.
+      -  non-linear recurrences of finite order. If the verification
+         of the solution of the non-linear recurrence fails then it
+	 tries to verify the solution of the linear recurrence associated
+	 to \p *this.
+    */
+    PARTIAL_PROVABLY_CORRECT,
+
+    /*!
       The system can prove that the solution, or the approximation, of
       \p *this, is wrong.
     */
@@ -865,10 +883,20 @@ public:
     (for a description about the computation of the exact solution
     see the documentation of the method <CODE>compute_exact_solution()</CODE>).
 
-    There are two different answers when the system does not succeed
+    There are three different answers when the system does not succeed
     to verify the solution:
     -  returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
        that the solution of the recurrence \p *this is wrong;
+    -  returns <CODE>PARTIAL_PROVABLY_CORRECT</CODE> in the following
+       cases:
+       -  when the system fails in the verification of the solution (expanded,
+          e.g, without using the function \f$ mod() \f$) of linear finite
+	  order recurrences solved with the order reduction method but
+	  it has success in the validation of the solution of the associated
+	  reduced recurrences.
+       -  when the system fails in the verification of the solution of the
+          non-linear recurrence but it has success in the validation
+	  of the solution of the associated linear recurrence.
     -  returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
        not able to prove if the solution of the recurrence \p *this
        is correct or not.
@@ -876,7 +904,7 @@ public:
     \exception std::logic_error thrown if this method is called
                                 when no exact solution was computed.
   */
-  Verify_Status verify_exact_solution() const;
+  Verify_Status verify_exact_solution(bool partial_verification = false) const;
  
   //! \brief
   //! Tries to verify the lower bound of the solution of \p *this and
@@ -1171,7 +1199,7 @@ private:
   //! Verifies the exact solution of the finite order recurrence \p *this.
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
   //! the verification.
-  Verify_Status verify_finite_order() const;
+  Verify_Status verify_finite_order(bool partial_verification) const;
 
   //! \brief
   //! Verifies the exact solution of the weighted-average recurrence \p *this.
