@@ -572,26 +572,32 @@ substitute_i_c_shifting(bool linear, const Expr& solution_or_bound) const {
     order_or_rank = rank();
   }
 
-  // Consider the maximum index of `x' function in the map
-  // `initial_conditions'.
-  unsigned max_i_c = 0;
-  for (std::map<unsigned, Expr>::const_iterator i = initial_conditions.begin(),
-	 iend = initial_conditions.end(); i != iend; ++i)
-    if (i->first > max_i_c)
-      max_i_c = i->first;
-
-  // Shift initial conditions and the index of the recurrence `n'.
-  if (first_well_defined_rhs < max_i_c) {
-    unsigned shift_forward = max_i_c - first_well_defined_rhs;
-    sol_or_bound
-      = sol_or_bound.substitute(n, n - (shift_forward - order_or_rank + 1));
-    for (unsigned i = order_or_rank; i-- > 0; )
+  // If the order of linear recurrences is zero than it does not go made
+  // no shifts (the rank of functional equations can not to be zero, it is
+  // greater or equal to one).
+  if (order_or_rank != 0) {
+    // Consider the maximum index of `x' function in the map
+    // `initial_conditions'.
+    unsigned max_i_c = 0;
+    for (std::map<unsigned, Expr>::const_iterator i
+	   = initial_conditions.begin(),
+	   iend = initial_conditions.end(); i != iend; ++i)
+      if (i->first > max_i_c)
+	max_i_c = i->first;
+    
+    // Shift initial conditions and the index of the recurrence `n'.
+    if (first_well_defined_rhs < max_i_c) {
+      unsigned shift_forward = max_i_c - first_well_defined_rhs;
       sol_or_bound
-	= sol_or_bound.substitute(x(i + first_well_defined_rhs),
-				  x(i + first_well_defined_rhs
-				    + shift_forward - order_or_rank + 1));
-  }
-  
+	= sol_or_bound.substitute(n, n - (shift_forward - order_or_rank + 1));
+      for (unsigned i = order_or_rank; i-- > 0; )
+	sol_or_bound
+	  = sol_or_bound.substitute(x(i + first_well_defined_rhs),
+				    x(i + first_well_defined_rhs
+				      + shift_forward - order_or_rank + 1));
+    }
+  }    
+
   // Substitute initial conditions with the values in the map
   // `initial_conditions'.
   for (std::map<unsigned, Expr>::const_iterator i = initial_conditions.begin(),
