@@ -117,7 +117,7 @@ substitute_x_function(const Expr& e, const Expr& k, bool do_power);
 
 //! \brief
 //! Returns <CODE>true</CODE> if and only if the functions \f$ x() \f$
-//! occurring in \p *this are all initial conditions; returns
+//! occurring in \p *this are all symbolic initial conditions; returns
 //! <CODE>false</CODE> otherwise, i.e., if there is at least one
 //! function \f$ x() \f$ that is not a symbolic initial condition.
 /*!
@@ -128,7 +128,7 @@ substitute_x_function(const Expr& e, const Expr& k, bool do_power);
   - the argument is equal to \f$ mod(n, k) + h \f$, with
     \f$ k, h \in \Nset \f$.
 */
-bool has_symbolic_initial_conditions(const Expr& e);
+bool has_only_symbolic_initial_conditions(const Expr& e);
 
 //! \brief
 //! Returns <CODE>true</CODE> if and only there is at least
@@ -142,7 +142,7 @@ bool has_symbolic_initial_conditions(const Expr& e);
   - the argument is equal to \f$ mod(n, k) + h \f$, with
     \f$ k, h \in \Nset \f$.
 */
-bool has_at_least_a_symbolic_ic(const Expr& e);
+bool has_at_least_a_symbolic_initial_condition(const Expr& e);
 
 #define DD_MSG(s) std::cout << s << std::endl
 #define DD_VAR(x) std::cout << #x " = " << x << std::endl

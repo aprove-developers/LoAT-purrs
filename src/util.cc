@@ -650,15 +650,15 @@ PURRS::substitute_x_function(const Expr& e, const Expr& k, bool do_power) {
 }
 
 bool
-PURRS::has_symbolic_initial_conditions(const Expr& e) {
+PURRS::has_only_symbolic_initial_conditions(const Expr& e) {
   if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned int i = e.nops(); i-- > 0; )
-      if (!has_symbolic_initial_conditions(e.op(i)))
+      if (!has_only_symbolic_initial_conditions(e.op(i)))
 	return false;
   }
   else if (e.is_a_power()) {
-    if (!has_symbolic_initial_conditions(e.arg(0))
-	|| !has_symbolic_initial_conditions(e.arg(1)))
+    if (!has_only_symbolic_initial_conditions(e.arg(0))
+	|| !has_only_symbolic_initial_conditions(e.arg(1)))
       return false;
   }
   else if (e.is_a_function())
@@ -677,12 +677,12 @@ PURRS::has_symbolic_initial_conditions(const Expr& e) {
     }
     else
       for (unsigned int i = e.nops(); i-- > 0; )
-	if (!has_symbolic_initial_conditions(e.arg(i)))
+	if (!has_only_symbolic_initial_conditions(e.arg(i)))
 	  return false;
   return true;
 }
 
 bool
-PURRS::has_at_least_a_symbolic_ic(const Expr& e) {
-  return e.has_x_function() && has_symbolic_initial_conditions(e);
+PURRS::has_at_least_a_symbolic_initial_condition(const Expr& e) {
+  return e.has_x_function() && has_only_symbolic_initial_conditions(e);
 }

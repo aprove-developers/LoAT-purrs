@@ -254,17 +254,17 @@ PURRS::Recurrence::verify_finite_order() const {
   if (exact_solution.is_a_add())
     for (unsigned int i = exact_solution.nops(); i-- > 0; ) {
       const Expr& addend_exact_solution = exact_solution.op(i);
-      if (has_symbolic_initial_conditions(addend_exact_solution))
+      if (has_at_least_a_symbolic_initial_condition(addend_exact_solution))
 	summands_with_i_c += addend_exact_solution;
       else
 	summands_without_i_c += addend_exact_solution;
     }
   else
-    if (has_symbolic_initial_conditions(exact_solution))
+    if (has_only_symbolic_initial_conditions(exact_solution))
       summands_with_i_c = exact_solution;
     else
       summands_without_i_c = exact_solution;
-  
+
 #if 0
   // Step 3: by substitution, verifies that `summands_with_i_c'
   // satisfies the homogeneous part of the recurrence.
@@ -400,7 +400,7 @@ PURRS::Recurrence::verify_finite_order() const {
 	    }
 	    else if (factor.is_a_power() && factor.arg(0) == n) {
 	      assert(factor.arg(1).is_a_number());
-	      unsigned int k = factor.arg(1).ex_to_number().to_unsigned int();
+	      unsigned int k = factor.arg(1).ex_to_number().to_unsigned_int();
 	      assert(k < coefficients_of_exponentials.size());
 	      coefficients_of_exponentials[k] += summand/factor;
 	      done = true;
@@ -494,12 +494,14 @@ PURRS::Recurrence::verify_finite_order() const {
 	}
       }
     }
+    DD_MSG("NEW");
     return PROVABLY_CORRECT;
   }
   
  traditional:
 #endif
 
+  D_MSG("OLD");
   // Step 4: by substitution, verifies that `summands_without_i_c'
   // satisfies the recurrence.
   // Computes `substituted_rhs' by substituting, in the rhs
@@ -751,11 +753,11 @@ PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
   Expr partial_bound = 0;
   if (bound.is_a_add())
     for (unsigned int i = bound.nops(); i-- > 0; ) {
-      if (!has_symbolic_initial_conditions(bound.op(i)))
+      if (!has_only_symbolic_initial_conditions(bound.op(i)))
 	partial_bound += bound.op(i);
     }
   else
-    if (!has_symbolic_initial_conditions(bound))
+    if (!has_only_symbolic_initial_conditions(bound))
       partial_bound = bound;
   D_VAR(partial_bound);
   // The recurrence is homogeneous.
@@ -883,15 +885,18 @@ PURRS::Recurrence::replace_initial_condition(unsigned int k, const Expr& e) {
   // then we must substitute the value `e' in the place of `x(k)'
   // shifting, if necessary, the solution or the bound.
   if (exact_solution_.has_expression()
-      && has_at_least_a_symbolic_ic(exact_solution_.expression()))
+      && has_at_least_a_symbolic_initial_condition(exact_solution_
+						   .expression()))
     exact_solution_.set_expression
       (substitute_i_c_shifting(exact_solution_.expression()));
   if (lower_bound_.has_expression()
-      && has_at_least_a_symbolic_ic(exact_solution_.expression()))
+      && has_at_least_a_symbolic_initial_condition(exact_solution_
+						   .expression()))
     lower_bound_.set_expression
       (substitute_i_c_shifting(lower_bound_.expression()));
   if (upper_bound_.has_expression()
-      && has_at_least_a_symbolic_ic(exact_solution_.expression()))
+      && has_at_least_a_symbolic_initial_condition(exact_solution_
+						   .expression()))
     upper_bound_.set_expression
       (substitute_i_c_shifting(upper_bound_.expression()));
 }
@@ -1464,7 +1469,7 @@ Expr
 PURRS::Recurrence::
 substitute_i_c_shifting(const Expr& solution_or_bound) const {
   assert(!initial_conditions_.empty());
-  assert(has_at_least_a_symbolic_ic(solution_or_bound));
+  assert(has_at_least_a_symbolic_initial_condition(solution_or_bound));
 
   Expr sol_or_bound = solution_or_bound;
   // Consider the maximum index of `x' function in the map
@@ -1785,7 +1790,7 @@ PURRS::Recurrence::exact_solution(Expr& e) const {
   else
     e = exact_solution_.expression();
   
-  assert(has_symbolic_initial_conditions(e));
+  assert(has_only_symbolic_initial_conditions(e));
 }
 
 PURRS::Recurrence::Solver_Status
@@ -1967,7 +1972,7 @@ PURRS::Recurrence::lower_bound(Expr& e) const {
   else
     e = lower_bound_.expression();
 
-  assert(has_symbolic_initial_conditions(e));
+  assert(has_only_symbolic_initial_conditions(e));
 }
 
 void
@@ -1990,7 +1995,7 @@ PURRS::Recurrence::upper_bound(Expr& e) const {
   else
     e = upper_bound_.expression();
 
-  assert(has_symbolic_initial_conditions(e));
+  assert(has_only_symbolic_initial_conditions(e));
 }
 
 bool

@@ -335,7 +335,7 @@ public:
       \ref non_linear "non linear finite order recurrence" of order \f$ k \f$.
       Let also \f$ j \f$ be the least non-negative integer \f$ j \f$
       such that the recurrence is well-defined for \f$ n \geq j \f$
-      (this is obtainable with the method <CODE>first_valid_index()</CODE>.
+      (this is obtainable with the method <CODE>first_valid_index()</CODE>).
       Then the initial conditions in the map must include the \f$ k \f$ pairs
       \f[
            (j-k+p, e_1), (j-k+p+1, e_2), (j-k+p+2, e_3), \ldots, (j+p-1, e_k)
@@ -346,12 +346,16 @@ public:
       if any, are interpreted as special cases.
 
     - Let \p *this be a \ref weighted_average "weighted-average recurrence".
-      Then the map must contain only one initial condition of the form
-      \f$ (0, e) \f$.  Notice that the recurrence may have been rewritten
-      by shifting the index back to \f$ 0 \f$: this happens when the domain
-      of the functions occurring in the definition is not the whole set of
-      positive integers, or when the summation lower and upper limit are
-      different from \f$ 0 \f$ and \f$ n-1 \f$ respectively.
+      Only one initial condition of the form \f$ (j, e) \f$ is sufficient
+      to uniquely determine the sequence of complex numbers.
+      \f$ j \f$ is the least non-negative integer such that the recurrence
+      is well-defined for \f$ n \geq j \f$ (this is obtainable with the
+      method <CODE>first_valid_index()</CODE>).
+      If \p initial_conditions contains more initial conditions of the form
+      \f$ (j+p, e_p) \f$, for \f$ p \geq 0 \f$, the pair with the biggest
+      left values is used.
+      Conditions in  \p initial_conditions for indexes less than \f$ j+p \f$,
+      if any, are interpreted as special cases.
 
     - a \ref generalized_recurrence "functional equation":         
                                      to be written.
