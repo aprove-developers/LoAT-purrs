@@ -146,7 +146,7 @@ sum_poly_times_exponentials(const GExpr& p, const GSymbol& x,
     for (unsigned i = 0; i <= d; ++i) {
       sum_falling_prod_times_exp(n, i, x, r);
       r.expand();
-      q += r * pow(x, i) * summands[i];
+      q += r * summands[i];
     }
   }
   q = expand(q.subs(x == alpha));
