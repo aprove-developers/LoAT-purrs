@@ -95,7 +95,7 @@ bool less_than(const Recurrence& x, const Recurrence& y);
 
   We say that a recurrence is
   \anchor syntactically_correct <EM>syntactically correct</EM>
-  if it is sum, product and powers of the following object:
+  if its right-hand side is sum, product and powers of the following object:
   - numbers (no floating-point);
   - symbols for parameters;
   - mathematical functions (ex. \f$ \log() \f$, \dots);
@@ -611,6 +611,41 @@ public:
   void
   evaluate_upper_bound(const Number& l, const Number& r,
 		       OutputIterator oi) const;
+
+  //! Returns the right-hand side of \p *this evaluated for \f$ n = num \f$.
+  /*!
+    \exception std::logic_error       thrown if \p *this is not classified yet
+                                      and the classification's process
+				      called by this method fails.
+
+    \exception std::invalid_argument  thrown if \p num is not a non-negative
+                                      integer bigger or equal to the least
+				      non-negative integer \f$ j \f$ such
+				      that the recurrence is valid for
+				      \f$ n \geq j \f$.
+  */
+  Expr evaluate_recurrence_rhs(const Number& num) const;
+
+  //! \brief
+  //! Evaluates the right-hand side of \p *this for \f$ n = i \f$,
+  //! where \f$ i \f$ assumes all the values of the interval \f$ [l, r] \f$.
+  //! Puts the results in a container marked by \p oi.
+  /*!
+    \exception std::logic_error       thrown if \p *this is not classified yet
+                                      and the classification's process
+				      called by this method fails.
+
+    \exception std::invalid_argument  thrown if \f$ l > r \f$ 
+                                      or \p l is not a non-negative
+                                      integer bigger or equal to the least
+				      non-negative integer \f$ j \f$ such
+				      that the recurrence is well-defined
+				      for \f$ n \geq j \f$.
+  */
+  template <class OutputIterator>
+  void
+  evaluate_recurrence_rhs(const Number& l, const Number& r,
+			  OutputIterator oi) const;
 
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Checks if all the invariants are satisfied.
