@@ -1285,6 +1285,7 @@ private:
   friend Expr prod(const Expr& index, const Expr& lower, const Expr& upper,
 		   const Expr& factor);
   friend Expr max(const Expr& x, const Expr& y);
+  friend Expr min(const Expr& x, const Expr& y);
   friend GiNaC::ex GiNaC::max_eval(const GiNaC::ex& x, const GiNaC::ex& y);
   friend GiNaC::ex GiNaC::min_eval(const GiNaC::ex& x, const GiNaC::ex& y);
 

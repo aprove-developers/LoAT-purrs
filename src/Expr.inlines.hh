@@ -739,6 +739,12 @@ max(const Expr& x, const Expr& y) {
 	     static_cast<const Expr::Base>(y));
 }
 
+inline Expr
+min(const Expr& x, const Expr& y) {
+  return max(static_cast<const Expr::Base>(x),
+	     static_cast<const Expr::Base>(y));
+}
+
 inline bool
 Expr::is_the_abs_function() const {
   using namespace GiNaC;
