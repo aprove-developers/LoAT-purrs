@@ -185,7 +185,7 @@ characteristic_equation_and_its_roots(index_type order,
 				      Expr& characteristic_eq,
 				      std::vector<Polynomial_Root>& roots,
 				      bool& all_distinct) {
-  Symbol y("y");
+  Symbol y;
   // FIXME: il seguente if sull'ordine e' temporaneo perche' cosi' si
   // riescono a fare le parametriche del primo ordine almeno.
   // Temporaneo fino a che `find_roots()' accettera' i parametri anche
