@@ -422,39 +422,53 @@ Recurrence::rhs_transformed_in_first_order_var_coeffs() {
 }
 
 inline Expr
-Recurrence::weight() const {
+Recurrence::coeff_var_first_order() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> weight();
+  return infinite_order_p -> coeff_var_first_order();
 }
 
 inline Expr&
-Recurrence::weight() {
+Recurrence::coeff_var_first_order() {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> weight();
+  return infinite_order_p -> coeff_var_first_order();
 }
 
-inline unsigned
-Recurrence::infinite_order_fwdr() const {
+inline Expr
+Recurrence::inhomog_var_first_order() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> infinite_order_fwdr();
+  return infinite_order_p -> inhomog_var_first_order();
 }
 
-inline unsigned&
-Recurrence::infinite_order_fwdr() {
+inline Expr&
+Recurrence::inhomog_var_first_order() {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> infinite_order_fwdr();
+  return infinite_order_p -> inhomog_var_first_order();
 }
 
-inline void
-Recurrence::set_infinite_order_fwdr(unsigned i_c) const {
-  assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  infinite_order_p -> set_infinite_order_fwdr(i_c);
-}
+// inline unsigned
+// Recurrence::infinite_order_fwdr() const {
+//   assert(is_linear_infinite_order());
+//   assert(infinite_order_p);
+//   return infinite_order_p -> infinite_order_fwdr();
+// }
+
+// inline unsigned&
+// Recurrence::infinite_order_fwdr() {
+//   assert(is_linear_infinite_order());
+//   assert(infinite_order_p);
+//   return infinite_order_p -> infinite_order_fwdr();
+// }
+
+// inline void
+// Recurrence::set_infinite_order_fwdr(unsigned i_c) const {
+//   assert(is_linear_infinite_order());
+//   assert(infinite_order_p);
+//   infinite_order_p -> set_infinite_order_fwdr(i_c);
+// }
 
 inline void
 Recurrence::exact_solution(Expr& e) const {

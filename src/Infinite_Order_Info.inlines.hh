@@ -31,19 +31,19 @@ namespace Parma_Recurrence_Relation_Solver {
 
 inline
 Infinite_Order_Info::Infinite_Order_Info(const Expr& new_rhs,
-					 const Expr& weight,
-					 unsigned i_c) 
+					 const Expr& coefficient,
+					 const Expr& inhomogeneous) 
   : rhs_transformed_in_first_order_var_coeffs_(new_rhs),
-    weight_(weight),
-    infinite_order_fwdr_(i_c) {
+    coeff_var_first_order_(coefficient),
+    inhomog_var_first_order_(inhomogeneous) {
 }
 
 inline
 Infinite_Order_Info::Infinite_Order_Info(const Infinite_Order_Info& y)
   : rhs_transformed_in_first_order_var_coeffs_
 (y.rhs_transformed_in_first_order_var_coeffs_),
-    weight_(y.weight_),
-    infinite_order_fwdr_(y.infinite_order_fwdr_) {
+    coeff_var_first_order_(y.coeff_var_first_order_),
+    inhomog_var_first_order_(y.inhomog_var_first_order_) {
 }
 
 inline
@@ -54,8 +54,8 @@ inline Infinite_Order_Info&
 Infinite_Order_Info::operator=(const Infinite_Order_Info& y) {
   rhs_transformed_in_first_order_var_coeffs_
     = y.rhs_transformed_in_first_order_var_coeffs_;
-  weight_ = y.weight_;
-  infinite_order_fwdr_ = y.infinite_order_fwdr_;
+  coeff_var_first_order_ = y.coeff_var_first_order_;
+  inhomog_var_first_order_ = y.inhomog_var_first_order_;
   return *this;
 }
 
@@ -70,29 +70,39 @@ Infinite_Order_Info::rhs_transformed_in_first_order_var_coeffs() {
 }
 
 inline Expr
-Infinite_Order_Info::weight() const {
-  return weight_;
+Infinite_Order_Info::coeff_var_first_order() const {
+  return coeff_var_first_order_;
 }
 
 inline Expr&
-Infinite_Order_Info::weight() {
-  return weight_;
+Infinite_Order_Info::coeff_var_first_order() {
+  return coeff_var_first_order_;
 }
 
-inline unsigned
-Infinite_Order_Info::infinite_order_fwdr() const {
-  return infinite_order_fwdr_;
+inline Expr
+Infinite_Order_Info::inhomog_var_first_order() const {
+  return inhomog_var_first_order_;
 }
 
-inline unsigned&
-Infinite_Order_Info::infinite_order_fwdr() {
-    return infinite_order_fwdr_;
+inline Expr&
+Infinite_Order_Info::inhomog_var_first_order() {
+  return inhomog_var_first_order_;
 }
 
-inline void
-Infinite_Order_Info::set_infinite_order_fwdr(unsigned i_c) {
-  infinite_order_fwdr_ = i_c;
-}
+// inline unsigned
+// Infinite_Order_Info::infinite_order_fwdr() const {
+//   return infinite_order_fwdr_;
+// }
+
+// inline unsigned&
+// Infinite_Order_Info::infinite_order_fwdr() {
+//     return infinite_order_fwdr_;
+// }
+
+// inline void
+// Infinite_Order_Info::set_infinite_order_fwdr(unsigned i_c) {
+//   infinite_order_fwdr_ = i_c;
+// }
 
 } // namespace Parma_Recurrence_Relation_Solver
 

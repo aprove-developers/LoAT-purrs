@@ -36,9 +36,10 @@ public:
   //! \brief
   //! Constructor: sets
   //! \f$ rhs_transformed_in_first_order_var_coeffs_ = new_rhs \f$,
-  //! \f$ weight_ = weight \f$, \f$ infinite_order_fwdr_ = i_c \f$.
-  Infinite_Order_Info(const Expr& new_rhs, const Expr& weight,
-		      unsigned i_c);
+  //! \f$ coeff_var_first_order_ = coefficient \f$;
+  //! \f$ inhomog_var_first_order_ = inhomogeneous \f$;
+  Infinite_Order_Info(const Expr& new_rhs, const Expr& coefficient,
+		      const Expr& inhomog);
 
   //! Copy-constructor.
   Infinite_Order_Info(const Infinite_Order_Info& y);
@@ -55,20 +56,26 @@ public:
   //! Returns <CODE>rhs_transformed_in_first_order_var_coeffs_</CODE>.
   Expr& rhs_transformed_in_first_order_var_coeffs();
 
-  //! Returns <CODE>weight_</CODE>.
-  Expr weight() const;
+  //! Returns <CODE>coeff_var_first_order_</CODE>.
+  Expr coeff_var_first_order() const;
 
-  //! Returns <CODE>weight_</CODE>.
-  Expr& weight();
+  //! Returns <CODE>coeff_var_first_order_</CODE>.
+  Expr& coeff_var_first_order();
 
-  //! Returns <CODE>infinite_order_fwdr_</CODE>.
-  unsigned infinite_order_fwdr() const;
+  //! Returns <CODE>inhomog_var_first_order_</CODE>.
+  Expr inhomog_var_first_order() const;
 
-  //! Returns <CODE>infinite_order_fwdr_</CODE>.
-  unsigned& infinite_order_fwdr();
+  //! Returns <CODE>inhomog_var_first_order_</CODE>.
+  Expr& inhomog_var_first_order();
 
-  //! Sets <CODE>infinite_order_fwdr_</CODE> with \p i_c
-  void set_infinite_order_fwdr(unsigned i_c);
+//   //! Returns <CODE>infinite_order_fwdr_</CODE>.
+//   unsigned infinite_order_fwdr() const;
+
+//   //! Returns <CODE>infinite_order_fwdr_</CODE>.
+//   unsigned& infinite_order_fwdr();
+
+//   //! Sets <CODE>infinite_order_fwdr_</CODE> with \p i_c
+//   void set_infinite_order_fwdr(unsigned i_c);
 
 private:
   //! \brief
@@ -80,18 +87,29 @@ private:
   Expr rhs_transformed_in_first_order_var_coeffs_;
 
   //! \brief
-  //! Contains the common coefficient \f$ f(n) \f$ to all terms \f$ x(i) \f$,
-  //! for \f$ i = 0, dots, n-1 \f$, of the infinite order recurrence
-  //! of the form
+  //! If the infinite order recurrence is of the shape
   //! \f[
   //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
   //! \f]
-  Expr weight_;
+  //! then it is transformable in a first order linear recurrence
+  //! with wariable coefficient. This data contains the coefficient
+  //! of the new recurrence.
+  Expr coeff_var_first_order_;
 
   //! \brief
-  //! Stores the smallest positive integer for which the recurrence is
-  //! well-defined: the initial conditions will start from it.
-  unsigned infinite_order_fwdr_;
+  //! If the infinite order recurrence is of the shape
+  //! \f[
+  //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
+  //! \f]
+  //! then it is transformable in a first order linear recurrence
+  //! with wariable coefficient. This data contains the non homogeneous
+  //! part of the new recurrence.
+  Expr inhomog_var_first_order_;
+
+//   //! \brief
+//   //! Stores the smallest positive integer for which the recurrence is
+//   //! well-defined: the initial conditions will start from it.
+//   unsigned infinite_order_fwdr_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

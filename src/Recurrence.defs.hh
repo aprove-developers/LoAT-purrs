@@ -603,52 +603,57 @@ private:
   //! \brief
   //! If the infinite order recurrence is rewritable in a first order linear
   //! recurrence with variable coefficient then this last recurrence is
-  //! stored in this data.
+  //! returned from this method.
   Expr rhs_transformed_in_first_order_var_coeffs() const;
 
   //! \brief
   //! If the infinite order recurrence is rewritable in a first order linear
   //! recurrence with variable coefficient then this last recurrence is
-  //! stored in this data.
+  //! returned from this method.
   Expr& rhs_transformed_in_first_order_var_coeffs();
 
   //! \brief
   //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence with variable coefficient then this data contains the
-  //! common coefficient \f$ f(n) \f$ to all terms \f$ x(i) \f$, for
-  //! \f$ i = 0, dots, n-1 \f$, of the infinite order recurrence of the form
-  //! \f[
-  //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
-  //! \f]
-  Expr weight() const;
+  //! recurrence with variable coefficient then the coefficient of this last
+  //! recurrence is returned from this method.
+  Expr coeff_var_first_order() const;
 
   //! \brief
   //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence with variable coefficient then this data contains the
-  //! common coefficient \f$ f(n) \f$ to all terms \f$ x(i) \f$, for
-  //! \f$ i = 0, dots, n-1 \f$, of the infinite order recurrence of the form
-  //! \f[
-  //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
-  //! \f]
-  Expr& weight();
+  //! recurrence with variable coefficient then the coefficient of this last
+  //! recurrence is returned from this method.
+  Expr& coeff_var_first_order();
 
   //! \brief
-  //! Stores the smallest positive integer for which the infinite
-  //! order recurrence is well-defined: the initial conditions will
-  //! start from it.
-  unsigned infinite_order_fwdr() const;
+  //! If the infinite order recurrence is rewritable in a first order linear
+  //! recurrence with variable coefficient then the non-homogeneous part of
+  //! this last recurrence is returned from this method.
+  Expr inhomog_var_first_order() const;
 
   //! \brief
-  //! Stores the smallest positive integer for which the infinite
-  //! order recurrence is well-defined: the initial conditions will
-  //! start from it.
-  unsigned& infinite_order_fwdr();
+  //! If the infinite order recurrence is rewritable in a first order linear
+  //! recurrence with variable coefficient then the non-homogeneous part of
+  //! this last recurrence is returned from this method.
+  Expr& inhomog_var_first_order();
 
-  //! \brief
-  //! Stores the smallest positive integer for which the infinite
-  //! order recurrence is well-defined: the initial conditions will
-  //! start from it.
-  void set_infinite_order_fwdr(unsigned i_c) const;
+//   //! \brief
+//   //! Stores the smallest positive integer for which the infinite
+//   //! order recurrence is well-defined: the initial conditions will
+//   //! start from it.
+//   unsigned infinite_order_fwdr() const;
+
+//   //! \brief
+//   //! Stores the smallest positive integer for which the infinite
+//   //! order recurrence is well-defined: the initial conditions will
+//   //! start from it.
+//   unsigned& infinite_order_fwdr();
+
+//   //! \brief
+//   //! Stores the smallest positive integer for which the infinite
+//   //! order recurrence is well-defined: the initial conditions will
+//   //! start from it.
+//   void set_infinite_order_fwdr(unsigned i_c) const;
+
 
 
   mutable Cached_Expr exact_solution_;
