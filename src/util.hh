@@ -30,4 +30,8 @@ http://www.cs.unipr.it/purrs/ . */
 void
 clear(GList& l);
 
+void
+assign_poly_part_and_no_poly_part(const GExpr& p, const GSymbol& var,
+				  GExpr& p_poly, GExpr& p_no_poly);
+
 #endif
