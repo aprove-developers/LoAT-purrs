@@ -271,7 +271,7 @@ public:
   //! is correct or not.
   /*!
     \exception std::logic_error thrown if this method is called
-                                when no exact solution were computed.
+                                when no exact solution was computed.
   */
   Verify_Status verify_exact_solution() const;
  
@@ -289,7 +289,7 @@ public:
   //! recurrence \p *this is correct or not.
   /*!
     \exception std::logic_error thrown if this method is called
-                                when no lower bound were computed.
+                                when no lower bound was computed.
   */
   Verify_Status verify_lower_bound() const;
 
@@ -307,7 +307,7 @@ public:
   //! recurrence \p *this is correct or not.
   /*!
     \exception std::logic_error thrown if this method is called
-                                when no upper bound were computed.
+                                when no upper bound was computed.
   */
   Verify_Status verify_upper_bound() const;
 
@@ -574,13 +574,13 @@ private:
   //! \brief
   //! Returns the smallest positive integer for which the finite order
   //! recurrence is well-defined: the initial conditions will start from it.
-  unsigned first_well_defined_rhs_linear() const;
+  unsigned first_valid_index() const;
 
   //! \brief
   //! Sets to \p i_c is the smallest positive integer for which the finite
   //! order recurrence is well-defined: the initial conditions will start
   //! from it. 
-  void set_first_well_defined_rhs_linear(unsigned i_c) const;
+  void set_first_valid_index(unsigned i_c) const;
 
   //! Returns the coefficients of the linear finite order recurrence.
   const std::vector<Expr>& coefficients() const;
@@ -596,21 +596,21 @@ private:
 
   //! \brief
   //! Returns the expression \f$ \prod_{i}^n a(k)\f$,
-  //! where \f$ i \f$ is \p first_well_defined_rhs_linear() and \f$ a(n) \f$
+  //! where \f$ i \f$ is \p first_valid_index() and \f$ a(n) \f$
   //! is the coefficient of the recurrence of first order with variable
   //! coefficient.
   Expr& product_factor();
 
   //! \brief
   //! Returns the expression \f$ \prod_{i}^n a(k)\f$,
-  //! where \f$ i \f$ is \p first_well_defined_rhs_linear() and \f$ a(n) \f$
+  //! where \f$ i \f$ is \p first_valid_index() and \f$ a(n) \f$
   //! is the coefficient of the recurrence of first order with variable
   //! coefficient.
   Expr product_factor() const;
 
   //! \brief
   //! Sets to \p x the expression \f$ \prod_{i}^n a(k)\f$,
-  //! where \f$ i \f$ is \p first_well_defined_rhs_linear() and \f$ a(n) \f$
+  //! where \f$ i \f$ is \p first_valid_index() and \f$ a(n) \f$
   //! is the coefficient of the recurrence of first order with variable
   //! coefficient.
   void set_product_factor(const Expr& x) const;
@@ -713,14 +713,14 @@ private:
   //! of finite order then this method returns the smallest positive
   //! integer for which the finite order recurrence is well-defined:
   //! the initial conditions will start from it.
-  unsigned non_linear_to_linear_fwdr() const;
+  unsigned first_valid_index_if_linear() const;
 
   //! \brief
   //! When the non-linear recurrence is rewritable in a linear recurrence
   //! of finite order then this method sets to \p i_c is the smallest
   //! positive integer for which the finite order recurrence is well-defined:
   //! the initial conditions will start from it. 
-  void set_non_linear_to_linear_fwdr(unsigned i_c) const;
+  void set_first_valid_index_if_linear(unsigned i_c) const;
 
 
   // Method to access to private data of `Infinite_Order_Info'.
@@ -798,13 +798,13 @@ private:
   //! Stores the smallest positive integer for which the infinite
   //! order recurrence is well-defined: the initial conditions will
   //! start from it.
-  unsigned infinite_order_fwdr() const;
+  unsigned first_valid_index_inf_order() const;
 
   //! \brief
   //! Stores the smallest positive integer for which the infinite
   //! order recurrence is well-defined: the initial conditions will
   //! start from it.
-  void set_infinite_order_fwdr(unsigned i_c) const;
+  void set_first_valid_index_inf_order(unsigned i_c) const;
 
 
 

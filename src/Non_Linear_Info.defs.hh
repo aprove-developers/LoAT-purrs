@@ -83,11 +83,11 @@ public:
   //! Sets <CODE>order_if_non_linear_</CODE> with \p x.
   void set_order_if_linear(unsigned int x);
 
-  //! Returns <CODE>non_linear_to_linear_fwdr_</CODE>.
-  unsigned non_linear_to_linear_fwdr() const;
+  //! Returns <CODE>first_valid_index_if_linear_</CODE>.
+  unsigned first_valid_index_if_linear() const;
 
-  //! Sets <CODE>non_linear_to_linear_fwdr_</CODE> with \p i_c
-  void set_non_linear_to_linear_fwdr(unsigned i_c);
+  //! Sets <CODE>first_valid_index_if_linear_</CODE> with \p i_c
+  void set_first_valid_index_if_linear(unsigned i_c);
 
 private:
   //! \brief
@@ -121,7 +121,7 @@ private:
   //! of finite order this data stores the smallest positive integer for
   //! which the recurrence is well-defined: the initial conditions will
   //! start from it.
-  unsigned non_linear_to_linear_fwdr_;
+  unsigned first_valid_index_if_linear_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

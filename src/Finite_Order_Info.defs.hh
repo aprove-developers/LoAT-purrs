@@ -54,11 +54,11 @@ public:
   //! Returns <CODE>order_</CODE>.
   unsigned int order() const;
 
-  //! Returns <CODE>first_well_defined_rhs_linear_</CODE>.
-  unsigned first_well_defined_rhs_linear() const;
+  //! Returns <CODE>first_valid_index_</CODE>.
+  unsigned first_valid_index() const;
 
-  //! Sets <CODE>first_well_defined_rhs_linear_</CODE> with \p i_c
-  void set_first_well_defined_rhs_linear(unsigned i_c);
+  //! Sets <CODE>first_valid_index_</CODE> with \p i_c
+  void set_first_valid_index(unsigned i_c);
 
   //! Returns <CODE>coefficients_</CODE>.
   const std::vector<Expr>& coefficients() const;
@@ -104,13 +104,13 @@ private:
   //! \brief
   //! The smallest positive integer for which the recurrence is
   //! well-defined: the initial conditions will start from it.
-  unsigned first_well_defined_rhs_linear_;
+  unsigned first_valid_index_;
 
   //! \brief
   //! In the recurrences of the first order with variable coefficient
   //! \f$ a(n) \f$, stores the factor \f$ \prod_{i}^n a(k)\f$,
   //! where \f$ i \f$ is the non-negative integer
-  //! \p first_well_defined_rhs_linear_. In the case of constant
+  //! \p first_valid_index_. In the case of constant
   //! coefficients it is \f$ 0 \f$.
   Expr product_factor_;
 

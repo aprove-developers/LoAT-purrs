@@ -36,7 +36,7 @@ Finite_Order_Info::Finite_Order_Info(int k,const std::vector<Expr>& coeffs,
   : order_(k),
     coefficients_(coeffs),
     gcd_among_decrements_(gcd),
-    first_well_defined_rhs_linear_(0),
+    first_valid_index_(0),
     product_factor_(0),
     applied_order_reduction_(false) {
 }
@@ -46,7 +46,7 @@ Finite_Order_Info::Finite_Order_Info(const Finite_Order_Info& y)
   : order_(y.order_),
     coefficients_(y.coefficients_),
     gcd_among_decrements_(y.gcd_among_decrements_),
-    first_well_defined_rhs_linear_(y.first_well_defined_rhs_linear_),
+    first_valid_index_(y.first_valid_index_),
     product_factor_(y.product_factor_),
     applied_order_reduction_(y.applied_order_reduction_) {
 }
@@ -60,7 +60,7 @@ Finite_Order_Info::operator=(const Finite_Order_Info& y) {
   order_ = y.order_;
   coefficients_ = y.coefficients_;
   gcd_among_decrements_ = y.gcd_among_decrements_;
-  first_well_defined_rhs_linear_ = y.first_well_defined_rhs_linear_;
+  first_valid_index_ = y.first_valid_index_;
   product_factor_ = y.product_factor_;
   applied_order_reduction_ = y.applied_order_reduction_;
   return *this;
@@ -72,13 +72,13 @@ Finite_Order_Info::order() const {
 }
 
 inline unsigned
-Finite_Order_Info::first_well_defined_rhs_linear() const {
-  return first_well_defined_rhs_linear_;
+Finite_Order_Info::first_valid_index() const {
+  return first_valid_index_;
 }
 
 inline void
-Finite_Order_Info::set_first_well_defined_rhs_linear(unsigned i_c) {
-  first_well_defined_rhs_linear_ = i_c;
+Finite_Order_Info::set_first_valid_index(unsigned i_c) {
+  first_valid_index_ = i_c;
 }
 
 inline const std::vector<Expr>&

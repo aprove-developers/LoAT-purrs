@@ -312,7 +312,7 @@ PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_exact_solution() const {
   if (!exact_solution_.has_expression())
     throw std::logic_error("PURRS::Recurrence::verify_exact_solution() "
-			   "called, but no exact solution were computed");
+			   "called, but no exact solution was computed");
 
   // Case 1 and case 2: linear recurrences of finite order
   // and non-linear recurrences of finite order. 
@@ -324,12 +324,12 @@ PURRS::Recurrence::verify_exact_solution() const {
     if (is_non_linear_finite_order()) {
       // order_rec = associated_linear_rec().order();
       order_rec = order_if_linear();
-      // first_i_c = associated_linear_rec().first_well_defined_rhs_linear();
-      first_i_c = non_linear_to_linear_fwdr();
+      // first_i_c = associated_linear_rec().first_valid_index();
+      first_i_c = first_valid_index_if_linear();
     }
     else {
       order_rec = order();
-      first_i_c = first_well_defined_rhs_linear();
+      first_i_c = first_valid_index();
     }
     
     if (order_rec == 0)
@@ -729,7 +729,7 @@ PURRS::Recurrence::verify_lower_bound() const {
       return INCONCLUSIVE_VERIFICATION;
   else
     throw std::logic_error("PURRS::Recurrence::verify_lower_bound() "
-			   "called, but no lower bound were computed");
+			   "called, but no lower bound was computed");
 }
 
 PURRS::Recurrence::Verify_Status
@@ -744,7 +744,7 @@ PURRS::Recurrence::verify_upper_bound() const {
       return INCONCLUSIVE_VERIFICATION;
   else
     throw std::logic_error("PURRS::Recurrence::verify_upper_bound() "
-			   "called, but no upper bound were computed");
+			   "called, but no upper bound was computed");
 }
 
 PURRS::Recurrence::Solver_Status
@@ -849,8 +849,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
       if ((status = rec_rewritten.solve_linear_finite_order())
 	  == SUCCESS) {
 	set_order_if_linear(rec_rewritten.order());
-	set_non_linear_to_linear_fwdr
-	  (rec_rewritten.first_well_defined_rhs_linear());
+	set_first_valid_index_if_linear(rec_rewritten.first_valid_index());
 	// Transform the solution of the linear recurrence in the solution
 	// of the non linear recurrence.
 	if (rec_rewritten.exact_solution_.expression() == 0)
@@ -955,7 +954,7 @@ PURRS::Recurrence::solve_new_infinite_order_rec(const Expr& weight,
 			      coeff_first_order, inhomog_first_order,
 			      weight, 0, n-1);
   rec_rewritten.set_linear_infinite_order();
-  rec_rewritten.set_infinite_order_fwdr(first_well_defined);
+  rec_rewritten.set_first_valid_index_inf_order(first_well_defined);
   rec_rewritten.set_inhomogeneous_term(inhomogeneous);
   return rec_rewritten.compute_infinite_order_recurrence(solution);
 }
@@ -1046,8 +1045,8 @@ compute_infinite_order_recurrence(Expr& solution) const {
 	// Shift backward: n -> n - 1.
 	solution = solution.substitute(n, n - 1);
 	solution = solution
-	  .substitute(x(rec_rewritten.first_well_defined_rhs_linear()),
-		      x(rec_rewritten.first_well_defined_rhs_linear()+1));
+	  .substitute(x(rec_rewritten.first_valid_index()),
+		      x(rec_rewritten.first_valid_index()+1));
 	// If there is the initial condition `x(1)' specified then
 	// the system substitute it with the respective value; otherwise
 	// the system does the substitution `x(1) = 2*x(0)+1'.
@@ -1059,7 +1058,7 @@ compute_infinite_order_recurrence(Expr& solution) const {
 	  solution = solution.substitute(x(1), get_initial_condition(1));
 	else
 	  solution = solution
-	    .substitute(x(rec_rewritten.first_well_defined_rhs_linear()+1),
+	    .substitute(x(rec_rewritten.first_valid_index()+1),
 			(weight_inf_order()*x(0)+inhomogeneous_term)
 			.substitute(n, 1));
 	//	solution = simplify_ex_for_output(solution, false);
@@ -1088,18 +1087,20 @@ compute_infinite_order_recurrence(Expr& solution) const {
 	    tmp = tmp.substitute(n, n + lower);
 	  }
 	  Solver_Status status;
-	  if ((status = solve_new_infinite_order_rec(weight_rewritten,
-						     inhomogeneous_rewritten,
-						     infinite_order_fwdr(),
-						     solution))
+	  if ((status
+	       = solve_new_infinite_order_rec(weight_rewritten,
+					      inhomogeneous_rewritten,
+					      first_valid_index_inf_order(),
+					      solution))
 	      != SUCCESS)
 	    return status;
 	  // We must shift the solution: n    -> n - lower,
 	  //                             x(a) -> x(a + lower).
 	  if (lower > 0) {
 	    solution = solution.substitute(n, n - lower);
-	    solution = solution.substitute(x(infinite_order_fwdr()),
-					   x(infinite_order_fwdr() + lower));
+	    solution
+	      = solution.substitute(x(first_valid_index_inf_order()),
+				    x(first_valid_index_inf_order() + lower));
 	  }
 	  return SUCCESS;
 	}
@@ -1109,9 +1110,9 @@ compute_infinite_order_recurrence(Expr& solution) const {
     // Consider the "shifted" recurrence
     // `y(n) = f(n+n_0) sum(k, 0, n-1, x(k)) + g(n+n_0)';
     // later on, the solution `y(n)' will be shifted in order to find `x(n)'.
-    // Note: if `infinite_order_fwdr() > 0' means that the recurrence does
-    // not have any sense for positive integer less than
-    // `infinite_order_fwdr()', so it is not possible to consider the
+    // Note: if `first_valid_index_inf_order() > 0' means that the recurrence
+    // does not have any sense for positive integer less than
+    // `first_valid_index_inf_order()', so it is not possible to consider the
     // aforesaid method.
       else if (lower > 0) {
 	const Expr& weight_rewritten
@@ -1119,10 +1120,11 @@ compute_infinite_order_recurrence(Expr& solution) const {
 	const Expr& inhomogeneous_rewritten
 	  = inhomogeneous_term.substitute(n, n + lower);
 	Solver_Status status;
-	if ((status = solve_new_infinite_order_rec(weight_rewritten,
-						   inhomogeneous_rewritten,
-						   infinite_order_fwdr(),
-						   solution))
+	if ((status
+	     = solve_new_infinite_order_rec(weight_rewritten,
+					    inhomogeneous_rewritten,
+					    first_valid_index_inf_order(),
+					    solution))
 	    != SUCCESS)
 	  return status;
 	// We must shift the solution: n    -> n - lower,
@@ -1167,7 +1169,7 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
   unsigned first_well_defined_rhs;
   unsigned order_or_rank;
   if (is_linear_finite_order()) {
-    first_well_defined_rhs = first_well_defined_rhs_linear();
+    first_well_defined_rhs = first_valid_index();
     order_or_rank = order();
   }
   else if (is_functional_equation()) {

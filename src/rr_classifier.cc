@@ -890,7 +890,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 						     weight, lower_bound_sum,
 						     addend.arg(2));
 	  set_linear_infinite_order();
-	  set_infinite_order_fwdr(first_well_defined);
+	  set_first_valid_index_inf_order(first_well_defined);
 	  inhomogeneous = rhs - addend * weight;
 	  return SUCCESS;
 	}
@@ -998,7 +998,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 						       lower_bound_sum,
 						       factor.arg(2));
 	    set_linear_infinite_order();
-	    set_infinite_order_fwdr(first_well_defined);
+	    set_first_valid_index_inf_order(first_well_defined);
 	    // Note: `weight * factor' is different from `addend' when
 	    // in `rhs' there is more than one term containing the sum
 	    // in `factor'.

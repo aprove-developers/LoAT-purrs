@@ -134,9 +134,8 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
     Symbol lambda("lambda");
     std::vector<Expr> symbolic_sum_distinct;
     std::vector<Expr> symbolic_sum_no_distinct;
-    compute_symbolic_sum(alpha, lambda, roots,
-			 base_of_exps, exp_poly_coeff,
-			 order() + first_well_defined_rhs_linear(),
+    compute_symbolic_sum(alpha, lambda, roots, base_of_exps, exp_poly_coeff,
+			 order() + first_valid_index(), 
 			 symbolic_sum_distinct, symbolic_sum_no_distinct);
     // Substitutes to the sums in the vectors `symbolic_sum_distinct' or
     // `symbolic_sum_no_distinct' the value of the characteristic equation's
@@ -154,10 +153,10 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
   if (vector_not_all_zero(exp_no_poly_coeff))
     // If the summand is an hypergeometric term then is applied the
     // Gosper's algorithm; otherwise is returned the symbolic sum.
-    solution
-      += compute_sum_with_transcendental_method(first_well_defined_rhs_linear()
-						+ 1, n, base_of_exps,
-						exp_no_poly_coeff, roots);
+    solution += compute_sum_with_transcendental_method(first_valid_index() + 1,
+						       n, base_of_exps,
+						       exp_no_poly_coeff,
+						       roots);
   return solution;
 }
 
@@ -209,7 +208,7 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
     if (!largest_positive_int_zero(denominator(inhomogeneous_term), n, z))
       return TOO_COMPLEX;
   // The initial conditions will start from `z'.
-  set_first_well_defined_rhs_linear(z.to_unsigned());
+  set_first_valid_index(z.to_unsigned());
   // `product_factor' is `alpha!(n)'.
   Symbol index;
   Expr product_factor
@@ -227,7 +226,7 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
   new_roots.push_back(Polynomial_Root(Expr(1), RATIONAL));
   rec_const_coeff.finite_order_p
     = new Finite_Order_Info(1, coefficients, 1);
-  rec_const_coeff.set_first_well_defined_rhs_linear(z.to_unsigned());
+  rec_const_coeff.set_first_valid_index(z.to_unsigned());
   rec_const_coeff.set_type(LINEAR_FINITE_ORDER_CONST_COEFF);
   rec_const_coeff.set_inhomogeneous_term(inhomogeneous_term/product_factor);
 
@@ -325,7 +324,7 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
       std::vector<Expr> symbolic_sum_no_distinct;
       compute_symbolic_sum(alpha, lambda, roots,
 			   base_of_exps, exp_poly_coeff,
-			   order() + first_well_defined_rhs_linear(),
+			   order() + first_valid_index(),
 			   symbolic_sum_distinct, symbolic_sum_no_distinct);
       for (unsigned j = symbolic_sum_distinct.size(); j-- > 0; ) {
 	symbolic_sum_no_distinct[j] *= lambda / diff_roots;
@@ -344,8 +343,8 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
     else {
       Symbol h;
       // In this function we know the order: 2.
-      // unsigned lower = first_well_defined_rhs_linear() + order();
-      unsigned lower = first_well_defined_rhs_linear() + 2;
+      // unsigned lower = first_valid_index() + order();
+      unsigned lower = first_valid_index() + 2;
       solution = 1 / diff_roots
 	* (pwr(root_1, Recurrence::n+1)
 	   * PURRS::sum(h, lower, Recurrence::n, pwr(root_1, -h)
@@ -372,8 +371,8 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
     else {
       Symbol h;
       // In this function we know the order: 2.
-      // unsigned lower = first_well_defined_rhs_linear() + order();
-      unsigned lower = first_well_defined_rhs_linear() + 2;
+      // unsigned lower = first_valid_index() + order();
+      unsigned lower = first_valid_index() + 2;
       solution
 	= PURRS::sum(h, lower, Recurrence::n,
 		     g_n.substitute(Recurrence::n, Recurrence::n - h)
@@ -474,7 +473,7 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
       std::vector<Expr> symbolic_sum_no_distinct;
       compute_symbolic_sum(alpha, lambda, roots,
 			   base_of_exps, poly_coeff_tot,
-			   order() + first_well_defined_rhs_linear(),
+			   order() + first_valid_index(),
 			   symbolic_sum_distinct, symbolic_sum_no_distinct);
       // Substitutes to the sums in the vector `symbolic_sum_distinct'
       // or `symbolic_sum_no_distinct' the corresponding values of the
@@ -488,7 +487,7 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
     }
     else {
       Symbol h;
-      unsigned lower = first_well_defined_rhs_linear() + order();
+      unsigned lower = first_valid_index() + order();
       solution
 	= PURRS::sum(h, lower, Recurrence::n,
 		     g_n.substitute(Recurrence::n, Recurrence::n - h)
@@ -501,7 +500,7 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
 					      exp_poly_coeff);
     else {
       Symbol h;
-      unsigned lower = first_well_defined_rhs_linear() + order();
+      unsigned lower = first_valid_index() + order();
       solution
 	= PURRS::sum(h, lower, Recurrence::n,
 		     g_n.substitute(Recurrence::n, Recurrence::n - h)
@@ -544,8 +543,8 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       return TOO_COMPLEX;
   }
   // The initial conditions will start from `z'.
-  set_first_well_defined_rhs_linear(z.to_unsigned());
-  D_VAR(first_well_defined_rhs_linear());
+  set_first_valid_index(z.to_unsigned());
+  D_VAR(first_valid_index());
 
   std::vector<Number> num_coefficients(order() + 1);
   std::vector<Polynomial_Root> roots;
@@ -617,15 +616,15 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       // le parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
       // compute_term_about_initial_conditions(g_n, coefficients, solution);
       exact_solution_.set_expression(exact_solution_.expression()
-				     + x(first_well_defined_rhs_linear())
+				     + x(first_valid_index())
 				     * pwr(coefficients()[1],
-					   n-(first_well_defined_rhs_linear()
+					   n-(first_valid_index()
 					      -order()+1)));
     else
       exact_solution_.set_expression(exact_solution_.expression()
 				     + compute_term_about_initial_conditions
 				     (g_n, num_coefficients,
-				      first_well_defined_rhs_linear()));
+				      first_valid_index()));
   
   // Resubstitutes eventually auxiliary definitions contained in
   // the solution with their original values.
@@ -643,7 +642,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   if (exact_solution_.expression().is_a_add()) {
     Expr_List conditions;
     for (unsigned i = order(); i-- > 0; )
-      conditions.append(x(first_well_defined_rhs_linear() + i));
+      conditions.append(x(first_valid_index() + i));
     // FIXME: `collect' throws an exception if the object to collect has
     // non-integer exponent. 
     exact_solution_

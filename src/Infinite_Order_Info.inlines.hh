@@ -127,13 +127,13 @@ Infinite_Order_Info::upper_bound_sum() {
 }
 
 inline unsigned
-Infinite_Order_Info::infinite_order_fwdr() const {
-  return infinite_order_fwdr_;
+Infinite_Order_Info::first_valid_index_inf_order() const {
+  return first_valid_index_inf_order_;
 }
 
 inline void
-Infinite_Order_Info::set_infinite_order_fwdr(unsigned i_c) {
-  infinite_order_fwdr_ = i_c;
+Infinite_Order_Info::set_first_valid_index_inf_order(unsigned i_c) {
+  first_valid_index_inf_order_ = i_c;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

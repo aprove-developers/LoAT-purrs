@@ -253,17 +253,17 @@ Recurrence::order() const {
 }
 
 inline unsigned
-Recurrence::first_well_defined_rhs_linear() const {
+Recurrence::first_valid_index() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> first_well_defined_rhs_linear();
+  return finite_order_p -> first_valid_index();
 }
 
 inline void
-Recurrence::set_first_well_defined_rhs_linear(unsigned i_c) const {
+Recurrence::set_first_valid_index(unsigned i_c) const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  finite_order_p -> set_first_well_defined_rhs_linear(i_c);
+  finite_order_p -> set_first_valid_index(i_c);
 }
 
 inline const std::vector<Expr>&
@@ -411,17 +411,17 @@ Recurrence::set_order_if_linear(unsigned int x) const {
 }
 
 inline unsigned
-Recurrence::non_linear_to_linear_fwdr() const {
+Recurrence::first_valid_index_if_linear() const {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
-  return non_linear_p -> non_linear_to_linear_fwdr();
+  return non_linear_p -> first_valid_index_if_linear();
 }
 
 inline void
-Recurrence::set_non_linear_to_linear_fwdr(unsigned i_c) const {
+Recurrence::set_first_valid_index_if_linear(unsigned i_c) const {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
-  non_linear_p -> set_non_linear_to_linear_fwdr(i_c);
+  non_linear_p -> set_first_valid_index_if_linear(i_c);
 }
 
 inline Expr
@@ -502,17 +502,17 @@ Recurrence::upper_bound_sum() {
 }
 
 inline unsigned
-Recurrence::infinite_order_fwdr() const {
+Recurrence::first_valid_index_inf_order() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> infinite_order_fwdr();
+  return infinite_order_p -> first_valid_index_inf_order();
 }
 
 inline void
-Recurrence::set_infinite_order_fwdr(unsigned i_c) const {
+Recurrence::set_first_valid_index_inf_order(unsigned i_c) const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  infinite_order_p -> set_infinite_order_fwdr(i_c);
+  infinite_order_p -> set_first_valid_index_inf_order(i_c);
 }
 
 inline void
