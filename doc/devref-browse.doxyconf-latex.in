@@ -457,6 +457,7 @@ INPUT                  = @srcdir@/definitions.dox \
                          @srcdir@/../src/Symbol.cc \
                          @srcdir@/../src/util.hh \
                          @srcdir@/../src/util.cc \
+                         @srcdir@/../src/verify.cc \
                          @srcdir@/../src/zeilberger.hh \
                          @srcdir@/../src/zeilberger.cc
 
