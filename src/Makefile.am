@@ -42,8 +42,6 @@ Expr.inlines.hh \
 Expr_List.inlines.hh \
 Matrix.defs.hh \
 Matrix.inlines.hh \
-Recurrence.defs.hh \
-Recurrence.inlines.hh \
 approx_expr.hh \
 alg_eq_solver.hh \
 poly_factor.hh \
@@ -51,7 +49,9 @@ rr_solver.hh \
 gosper.hh \
 simplify.hh \
 sum_poly.hh \
-util.hh
+util.hh \
+Recurrence.defs.hh \
+Recurrence.inlines.hh
 
 libpurrs_a_SOURCES = \
 Recurrence.cc \
