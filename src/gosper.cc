@@ -57,10 +57,13 @@ FACTOR_THRESHOLD = 100;
   Returns <CODE>false</CODE> otherwise.
 */
 static bool
-gosper_step_one(const Expr& t, const Symbol& n, Expr& r_n) {
-  Expr t_plus_one = t.subs(n, n+1); 
-  r_n = simplify_factorials_and_exponentials(t_plus_one, n)
-    * pwr(simplify_factorials_and_exponentials(t, n), -1);
+gosper_step_one(const Expr& t_n, Expr& r_n, const Symbol& n) {
+  // Not is the case of variable coefficient.
+  if (r_n.is_zero()) {
+    Expr t_plus_one = t_n.subs(n, n+1); 
+    r_n = simplify_factorials_and_exponentials(t_plus_one, n)
+      * pwr(simplify_factorials_and_exponentials(t_n, n), -1);
+  }
   // The following use of `numerator_denominator()' simplify ulteriorly
   // `r_n' (we can not to call `simplify_numer_denom()' because it expandes
   // the expressions).
@@ -341,10 +344,9 @@ gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
      in \p solution the symbolic sum \f$ \sum_{k=lower_limit}^{upper} t_k \f$.
 */
 bool
-gosper(const Expr& t, const Symbol& n,
+gosper(const Expr& t_n, Expr& r_n, const Symbol& n,
        const Number& lower, const Expr& upper, Expr& solution) {
-  Expr r_n;
-  if (!gosper_step_one(t, n, r_n))
+  if (!gosper_step_one(t_n, r_n, n))
     // `t' is not hypergeometric: no chance of using Gosper's algorithm.
     return false;
   Expr a_n;
@@ -353,13 +355,13 @@ gosper(const Expr& t, const Symbol& n,
   gosper_step_two(r_n, n, a_n, b_n, c_n);
   Expr x_n;
   if (gosper_step_three(a_n, b_n, c_n, n, x_n))
-    solution = gosper_step_four(t, b_n, c_n, x_n, n, lower, upper,
+    solution = gosper_step_four(t_n, b_n, c_n, x_n, n, lower, upper,
 				solution);
   else {
     // `t' is not Gosper-summable, i. e., there is not hypergeometric
     // solution.
     Symbol h("h");
-    Expr t_h = t.subs(n, h);
+    Expr t_h = t_n.subs(n, h);
     solution = sum(Expr(h), Expr(lower), upper, t_h);
   }
   D_MSGVAR("The sum is: ", solution);
