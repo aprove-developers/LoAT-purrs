@@ -39,7 +39,8 @@ Recurrence::Recurrence()
     type(ORDER_ZERO),
     finite_order_p(0),
     functional_eq_p(0),
-    order_reduction_p(0) {
+    order_reduction_p(0),
+    tested_exact_solution(false) {
 }
 
 inline
@@ -50,7 +51,8 @@ Recurrence::Recurrence(const Expr& e)
     type(UNKNOWN),
     finite_order_p(0),
     functional_eq_p(0),
-    order_reduction_p(0) {
+    order_reduction_p(0),
+    tested_exact_solution(false) {
 }
 
 inline
@@ -65,7 +67,8 @@ Recurrence::Recurrence(const Recurrence& y)
     order_reduction_p(y.order_reduction_p),
     exact_solution_(y.exact_solution_),
     lower_bound_(y.lower_bound_),
-    upper_bound_(y.upper_bound_) {
+    upper_bound_(y.upper_bound_),
+    tested_exact_solution(y.tested_exact_solution) {
 }
 
 inline
@@ -88,6 +91,7 @@ Recurrence::operator=(const Recurrence& y) {
   exact_solution_ = y.exact_solution_;
   lower_bound_ = y.lower_bound_;
   upper_bound_ = y.upper_bound_;
+  tested_exact_solution = y.tested_exact_solution;
   return *this;
 }
 

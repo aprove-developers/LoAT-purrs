@@ -468,6 +468,8 @@ private:
   mutable Cached_Expr lower_bound_;
   mutable Cached_Expr upper_bound_;
 
+  mutable bool tested_exact_solution;
+
   mutable Blackboard blackboard;
 
   std::map<unsigned, Expr> initial_conditions;

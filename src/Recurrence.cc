@@ -209,6 +209,7 @@ PURRS::Recurrence::verify_solution() const {
 
 Recurrence::Solver_Status
 Recurrence::compute_exact_solution() const {
+  tested_exact_solution = true;
   // See if we have the exact solution already.
   if (exact_solution_.has_expression())
     return SUCCESS;
@@ -278,6 +279,10 @@ PURRS::Recurrence::compute_lower_bound() const {
   Solver_Status status;
   if ((status = classify_and_catch_special_cases()) == SUCCESS) {
     assert(is_linear_finite_order() || is_functional_equation());
+    if (!tested_exact_solution && compute_exact_solution() == SUCCESS) {
+      lower_bound_.set_expression(exact_solution_.expression());
+      return SUCCESS;
+    }
     if (is_functional_equation()
 	&& (status = approximate_functional_equation()) == SUCCESS)
       return SUCCESS;
@@ -303,6 +308,11 @@ PURRS::Recurrence::compute_upper_bound() const {
 
   Solver_Status status;
   if ((status = classify_and_catch_special_cases()) == SUCCESS) {
+    assert(is_linear_finite_order() || is_functional_equation());
+    if (!tested_exact_solution && compute_exact_solution() == SUCCESS) {
+      upper_bound_.set_expression(exact_solution_.expression());
+      return SUCCESS;
+    }
     if (is_functional_equation()
 	&& (status = approximate_functional_equation()) == SUCCESS)
       return SUCCESS;
