@@ -68,17 +68,13 @@ gosper_step_one(const Expr& t, const Symbol& n, Expr& r_n) {
   Expr r_n_den;
   r_n.numerator_denominator(r_n_num, r_n_den);
   r_n = r_n_num * pwr(r_n_den, -1);
-#if NOISY
-  std::cout << std::endl << "r_n =  " << r_n << std::endl;
-#endif
+  D_VAR(r_n);
   // FIXME: is_rational_function() is temporary until we build a PURRS
   // function for this.
   if (r_n.is_rational_function())
     return true;
   else {
-#if NOISY
-    std::cout << "r_n not rational function" << std::endl;
-#endif
+    D_MSG("r_n not rational function");
     return false;
   }
 }
@@ -175,11 +171,9 @@ gosper_step_two(const Expr& r_n, const Symbol& n,
   b_n = convert_to_integer_polynomial(b_n, n, b_n_factor);
   a_n *= b_n_factor.denominator();
   b_n *= b_n_factor.numerator();
-#if NOISY
-  std::cout << "a(n) = " << a_n << std::endl;
-  std::cout << "b(n) = " << b_n << std::endl;
-  std::cout << "c(n) = " << c_n << std::endl;
-#endif
+  D_VAR(a_n);
+  D_VAR(b_n);
+  D_VAR(c_n);
 }
 
 static bool
@@ -236,9 +230,7 @@ find_polynomial_solution(const Symbol& n, const Number& deg_x,
   for (unsigned i = 0; i < number_of_coeffs; ++i)
     x_n = x_n.subs(unknowns.op(i), solution.op(i).op(1));
 
-#if NOISY
-  std::cout << "Solution x(n) = " << x_n << std::endl;
-#endif  
+  D_VAR(x_n);
   return true;
 }
 
@@ -287,9 +279,7 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
   }
   if (deg_x == -1)
     return false;
-#if NOISY
-  std::cout << "Degree of x(n) = " << deg_x << std::endl;
-#endif
+  D_MSGVAR("Degree of x(n): ", deg_x);
 
   // Gosper's algorithm, step 3.2.
   return find_polynomial_solution(n, deg_x, a_n, b_n, c_n, x_n);
@@ -372,9 +362,8 @@ gosper(const Expr& t, const Symbol& n,
     Expr t_h = t.subs(n, h);
     solution = sum(Expr(h), Expr(lower), upper, t_h);
   }
-#if NOISY
-  std::cout << "The sum is: " << solution << std::endl;
-#endif
+  D_MSGVAR("The sum is: ", solution);
+
   return true;
 }
 

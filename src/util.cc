@@ -302,9 +302,7 @@ resultant(const Expr& p, const Expr& q, const Symbol& x) {
     // Here `f' is a constant: use rule three.
     res *= pwr(f, deg_g);
   }
-#if NOISY
-  std::cout << "Resultant(f(x), g(x)) = " << res << std::endl;
-#endif
+  D_MSGVAR("Resultant(f(x), g(x)): ", res);
   return res;
 }
 

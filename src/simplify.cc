@@ -244,11 +244,10 @@ pow_simpl(const Expr& e, const Symbol& n, bool input) {
   // built the exponent for the new power not nested.
   Expr base = e;
   find_real_base_and_build_exponent(base, num_exponent, not_num_exponent);
-#if NOISY
-  std::cout << "base " << base << std::endl;
-  std::cout << "num_exp " << num_exponent << std::endl;
-  std::cout << "not_num_exp " << not_num_exponent << std::endl;
-#endif
+  D_VAR(base);
+  D_VAR(num_exponent);
+  D_VAR(not_num_exponent);
+
   // The base is a multiplication.
   if (base.is_a_mul())
     return simpl_powers_base(base, num_exponent, not_num_exponent, n, input);
@@ -411,17 +410,14 @@ collect_base_exponent(const Expr& e) {
   // before than `collect_same_base()' (ex. `2*2^n*(1/2)^n').
   // Applies rule `C3'.
   e_rewritten = collect_same_exponents(e_rewritten, bases, exponents);
-#if NOISY
-  std::cout << "e_rewritten dopo same exponents... " << e_rewritten << std::endl;
-#endif
+  D_MSGVAR("e_rewritten dopo same exponents: ", e_rewritten);
+
   // After the simplifications by the function `collect_same_exponents()'
   // `e_rewritten' could not be a `mul'. 
   if (e_rewritten.is_a_mul())
     // Applies rules `C1' and `C2'.    
     e_rewritten = collect_same_base(e_rewritten, bases, exponents);
-#if NOISY
-  std::cout << "e_rewritten dopo same base... " << e_rewritten << std::endl;
-#endif
+  D_MSGVAR("e_rewritten dopo same base: ", e_rewritten);
   return e_rewritten;
 }
 
@@ -747,9 +743,8 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
     }
     else
       e_rewritten *= e.op(i);
-#if NOISY
-  std::cout << "e_rewritten dopo nested... " << e_rewritten << std::endl;
-#endif
+  D_MSGVAR("e_rewritten dopo nested: ", e_rewritten);
+
   // From this time forward we do not know if `e_rewritten' is a again `mul'.
   
   // Simplifies recursively the factors which are functions simplifying
@@ -771,10 +766,8 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
     Expr argument = simplify_on_output_ex(e_rewritten.op(0), n, input);
     e_rewritten = e_rewritten.subs(e_rewritten.op(0), argument);
   }
-#if NOISY
-  std::cout << "e_rewritten dopo function... " << e_rewritten << std::endl
-	    << std::endl;
-#endif
+  D_MSGVAR("e_rewritten dopo function: ", e_rewritten);
+
   // Special case: the exponential `exp' is a `function' but it has
   // the same properties of the powers.
   if (e_rewritten.is_a_mul()) {
@@ -788,10 +781,7 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
 	rem *= e_rewritten.op(i);
     }
     e_rewritten = exp(argument) * rem;
-#if NOISY
-    std::cout << "e_rewritten dopo `exp'... " << e_rewritten << std::endl
-	      << std::endl;
-#endif
+  D_MSGVAR("e_rewritten dopo `exp': ", e_rewritten);
   }
   
   // Simplifies eventual powers with same base or same exponents.

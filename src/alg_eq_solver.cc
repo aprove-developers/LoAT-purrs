@@ -94,9 +94,7 @@ find_divisors(Number n, std::vector<Number>& divisors) {
 */
 static unsigned
 is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
-#if NOISY
   D_MSGVAR("nested polynomial ", p);
-#endif
   unsigned degree = p.degree(x);  
   if (degree == 0) {
     // The constant polynomial.
@@ -142,9 +140,6 @@ is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
   else
     // n == 1, the polynomial q is equal to the polynomial p.
     q = p;
-#if NOISY
-  D_MSGVAR("nested polynomial ", q);
-#endif
   return n;
 }
 
@@ -193,16 +188,13 @@ bool
 find_roots(const Expr& p, const Symbol& x,
 	   std::vector<Polynomial_Root>& roots,
 	   bool& all_distinct) {
-#if NOISY
   D_VAR(p);
-#endif
   assert(p.is_integer_polynomial());
   assert(!p.is_a_number());
   // Compute a square-free decomposition for p.
   Expr q = sqrfree(p.expand(), Expr_List(x));
-#if NOISY
   D_MSGVAR("p after sqrfree = ", q);
-#endif
+
   // There are now 4 cases depending on the principal functor of `q':
   //
   // 1) q is a product of two or more factors: e.g., (1+x)^2*(2+x);
@@ -378,9 +370,7 @@ find_roots(const Expr& p, const Symbol& x,
   // on the particular root x_1 that we have chosen.
   Expr r;
   int nested_degree = is_nested_polynomial(q, x, r);
-#if NOISY
   D_VAR(nested_degree);
-#endif
   if (nested_degree > 1) {
     // We need a vector to hold the roots of `r'.
     std::vector<Polynomial_Root> roots_r;
@@ -418,13 +408,9 @@ solve_equation_2(const Expr& b, const Expr& c,
 		 Expr& x1, Expr& x2) {
   Symbol n("n");
   Expr sqrt_d = sqrt(b*b - 4*c);
-#if NOISY
   D_MSGVAR("Before: ", sqrt_d);
-#endif
   sqrt_d = simplify_on_output_ex(sqrt_d, n, false);
-#if NOISY
   D_VAR(sqrt_d);
-#endif
   x1 = (-b + sqrt_d)/2;
   x2 = (-b - sqrt_d)/2;
 
@@ -491,16 +477,12 @@ solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
 	T = cubic_root(B);
       }
     }
-#if NOISY
     D_MSGVAR("Before: ", S); 
     D_MSGVAR("Before: ", T);
-#endif
     S = simplify_on_output_ex(S, n, false);
     T = simplify_on_output_ex(T, n, false);
-#if NOISY
     D_VAR(S); 
     D_VAR(T);
-#endif
     Expr S_plus_T = S + T;
 
     // FIXME: S+T are of the form (a+b)^(1/3) + (a-b)^(1/3).
@@ -529,11 +511,10 @@ solve_equation_4(const Number& a1, const Number& a2,
   Number f = a2 - 3*a1*a1*1/8;
   Number g = a3 + a1*a1*a1/8 - a1*a2/2;
   Number h = a4 - 3*a1*a1*a1*a1/256 + a1*a1*a2/16 - a1*a3/4;
-#if NOISY
   D_VAR(f); 
   D_VAR(g); 
   D_VAR(h);
-#endif
+
   Expr y1;
   Expr y2;
   Expr y3;
@@ -553,41 +534,34 @@ solve_equation_4(const Number& a1, const Number& a2,
   Expr p, q;
   p = sqrt(y1);
   q = sqrt(y2);
-#if NOISY
   D_MSGVAR("Before: ", p); 
   D_MSGVAR("Before: ", q);
-#endif
+
   // FIXME: the one and only `n' symbol should be global,
   // i.e., created once and for all.
   Symbol n("n");
   p = simplify_on_output_ex(p, n, false);
   q = simplify_on_output_ex(q, n, false);
-#if NOISY
   D_VAR(p); 
   D_VAR(q);
-#endif
+
   Expr r = -g/(8*p*q);
-#if NOISY
   D_MSGVAR("Before: ", r); 
-#endif
   r = simplify_on_output_ex(r, n, false);
   Expr s = a1/4;
-#if NOISY
   D_VAR(r); 
   D_VAR(s); 
-#endif
+
   x1 = p + q + r - s;
   x2 = p - q - r - s;
   x3 = -p + q - r - s;
   x4 = -p - q + r - s;
-#if NOISY
   D_MSG("Solutions before calling simplify: ");
   D_VAR(x1); 
   D_VAR(x2); 
   D_VAR(x3); 
   D_VAR(x4);
   D_MSG("");
-#endif
   x1 = simplify_on_output_ex(x1, n, false);
   x2 = simplify_on_output_ex(x2, n, false);
   x3 = simplify_on_output_ex(x3, n, false);

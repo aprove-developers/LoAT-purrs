@@ -126,9 +126,6 @@ build_characteristic_equation(const Symbol& x,
       p += pwr(x, i) * (-coefficients[coefficients.size() - 1 - i]);
     p += pwr(x, coefficients.size() - 1);
   }
-#if NOISY
-  std::cout << "characteristic equation = " << p << std::endl;
-#endif
   return p;
 }
 
@@ -170,10 +167,9 @@ characteristic_equation_and_its_roots(int order,
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
       return false;
   }
-#if NOISY
+  D_VAR(characteristic_eq);
   D_VEC(roots, 0, roots.size()-1);
   D_MSG("");
-#endif
   return true;
 }
 
@@ -401,13 +397,11 @@ additive_form(const Expr& e) {
 */
 Solver_Status
 solve(const Expr& rhs, const Symbol& n, Expr& solution) {
-#if NOISY
   D_VAR(rhs);
-#endif
   // The following code depends on the possibility of recovering
   // the various parts of `rhs' as summands of an additive expression.
-  Expr e = additive_form(rhs);
-  
+  Expr e = additive_form(rhs);  
+
   // Initialize the computation of the order of the linear part of the
   // recurrence.  This works like the computation of a maximum: it is
   // the maximum `k' such that `rhs = a*x(n-k) + b' where `a' is not
@@ -440,12 +434,12 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
     // This will hold the coefficient `a' in contexts of the form
     // `a*x(i)'.
     Expr a;
-    
+
     // The following matches are attempted starting from the most
     // common, then the second most common and so forth.  The check
     // `if (!i.has(n))' is necessary because otherwise do not accept
     // `x(i)' with `i' numeric in a general recurrence relation
-    // (es. x(n) = x(n-1)+x(0)).
+    // (es. x(n) = x(n-1)+x(0) or x(n) = x(n-1)*x(0)).
     if (clear(substitution), e.match(x_i_plus_r, substitution)) {
       i = get_binding(substitution, 0);
       if (!i.has(n))
@@ -476,7 +470,7 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
     }
     else
       break;
-
+ 
     Number decrement;
     if (!get_constant_decrement(i, n, decrement))
       return HAS_NON_INTEGER_DECREMENT;
@@ -513,10 +507,12 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   
   // `order' is negative in two cases. 
   if (order < 0)
-    if (e.has(x(wild(0))))
+    if (e.has(x(wild(0)))) {
       // 1. the recurrence is not linear, i.e. there is a non-linear term
       // containing `x(n-k)', where `k' non-negative-integer.
-      return NOT_LINEAR_RECURRENCE;
+      D_MSG("non linear");
+      return NON_LINEAR_RECURRENCE;
+    }
     else { 
       // 2. `e' is a function of `n', the parameters and of
       // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
@@ -524,11 +520,10 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
       solution = e;
       return OK;
     }
-#if NOISY
   D_VAR(order);
   D_VEC(coefficients, 1, order);
   D_MSGVAR("Inhomogeneous term: ", e);
-#endif
+
   // Simplifies expanded expressions, in particular rewrites nested powers.
   e = simplify_on_input_ex(e, n, true);
 
@@ -546,11 +541,10 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   std::vector<Expr> exp_no_poly_coeff;
   exp_poly_decomposition(e, n,
 			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
-#if NOISY
   D_VEC(base_of_exps, 0, base_of_exps.size()-1);
   D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
   D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
-#endif
+
   // FIXME: the initial conditions can not start always from 0:
   // make a function for this check.
   // Create the vector of initial conditions.
@@ -636,9 +630,7 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   if (order > 1)
     add_initial_conditions(g_n, n, num_coefficients, initial_conditions,
 			   solution);
-#if NOISY
   D_MSGVAR("Before calling simplify: ", solution);
-#endif
   solution = simplify_on_output_ex(solution.expand(), n, false);
   // Only for the output.
   // FIXME: the initial conditions can not start always from 0 then
@@ -867,7 +859,7 @@ solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
       }
       exit_anyway = true;
       break;
-    case NOT_LINEAR_RECURRENCE:
+    case NON_LINEAR_RECURRENCE:
       // FIXME: can we do something here to try to linearize the recurrence?
       status = TOO_COMPLEX;
       exit_anyway = true;
@@ -1381,9 +1373,7 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
 					     symbolic_sum_no_distinct);
       g_n = (pwr(root_1, n+1) - pwr(root_2, n+1)) / diff_roots;
       // FIXME: forse conviene semplificare g_n
-#if NOISY
       D_VAR(g_n);
-#endif
     }
     else {
       // The characteristic equation
@@ -1395,9 +1385,7 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
       
       // Finds `g_n', always taking into account the root's multiplicity
       g_n = find_g_n(n, all_distinct, sol, roots);
-#if NOISY
       D_VAR(g_n);
-#endif
       solution = compute_non_homogeneous_part(n, g_n, order, base_of_exps,
 					      exp_poly_coeff);
     }
@@ -1469,9 +1457,7 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
     
     // Finds `g_n', always taking into account the root's multiplicity
     g_n = find_g_n(n, all_distinct, sol, roots);
-#if NOISY
     D_VAR(g_n);
-#endif
     if (all_distinct) {      
       // Prepare for to compute the symbolic sum.
       std::vector<Expr> poly_coeff_tot;
@@ -1696,9 +1682,7 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
 			     const Expr& coefficient) {
   // Compute `\alpha!(n)' when possible.
   Expr alpha_factorial = compute_alpha_factorial(coefficient, n);
-#if NOISY
   D_VAR(alpha_factorial);
-#endif
   // Compute the non-homogeneous term for the recurrence
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
   // In this case is better to jump a part of Gosper's step one:
@@ -1745,11 +1729,9 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
 //  #endif
   //solution *= alpha_factorial;
   Expr solution;
-#if NOISY
   D_VAR(new_p_n);
   D_VAR(new_rhs);
   D_MSGVAR("Solution new_rhs = ", solution);
-#endif
   return solution;
 }
 

@@ -59,7 +59,7 @@ enum Solver_Status {
   /*!
     The recurrence is not linear.
   */
-  NOT_LINEAR_RECURRENCE,
+  NON_LINEAR_RECURRENCE,
   /*!
     Catchall: the recurrence is generically too complex.
   */
