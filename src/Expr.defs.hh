@@ -420,9 +420,19 @@ public:
   bool is_a_power() const;
 
   //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is a constant
+  //! power with respect to the variable \p x.
+  bool is_a_constant_power(const Symbol& x) const;
+
+  //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is a function
   //! with like argument an expression.
   bool is_a_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is a constant
+  //! function with respect to the variable \p x.
+  bool is_a_constant_function(const Symbol& x) const;
 
   //! Returns <CODE>true</CODE> if and only if \p *this is a matrix expression.
   bool is_a_matrix() const;
@@ -758,7 +768,9 @@ public:
       representation;
     - if \f$ f \f$ is any function and \f$ x_1, \dots, x_k \f$ are parameters
       different from \f$ x \f$, then \f$ f(x_1, \dots, x_k) \f$ is an
-      integer scalar representation;
+      integer scalar representation (note: is not a constant function
+      with respect to the variable \p x, because otherwise also \f$ log(2) \f$
+      would be an integerscalar representation);
     - if \f$ a \f$ and \f$ b \f$ are integer scalar representations then
       \f$ a+b \f$, \f$ a*b \f$ are integer scalar representations;
     - if \f$ a \f$ is an integer scalar representation in \f$ x \f$ and

@@ -404,10 +404,10 @@ using namespace PURRS;
 /*!
   A <EM>critical expression</EM> is a polynomial expression that
   for GiNaC is not a polynomial. More rigorously: 
-  -  if \f$ f(x) \f$ is any function and the argument \f$ x \f$ does
-     not contain the symbols of the list \p y that indicate the variables
-     with respect to which \p e is a polynomial, then \f$ f(x) \f$ is a
-     critical expression.
+  -  every constant function with respect to the symbol contained
+     in \p y, is a critical expression;
+  -  every power with not numeric exponent or numeric not integer
+     exponent, is a critical expression.
 */
 Expr
 substitute_critical_ex(const Expr& e, const Expr_List& y,
@@ -424,23 +424,18 @@ substitute_critical_ex(const Expr& e, const Expr_List& y,
       e_rewritten *= substitute_critical_ex(e.op(i), y, blackboard);
   }
   else if (e.is_a_power()) {
-    const Expr& base = e.arg(0);
     const Expr& exponent = e.arg(1);
     Number num;
     if (!exponent.is_a_number()
 	|| (exponent.is_a_number(num) && !num.is_integer()))
       return blackboard.insert_definition(e);
     else
-      return pwr(substitute_critical_ex(base, y, blackboard),
+      return pwr(substitute_critical_ex(e.arg(0), y, blackboard),
 		 substitute_critical_ex(exponent, y, blackboard));
   }
-  else if (e.is_a_function() && e.nops() == 1) {
-    // The argument of the function does not contain the symbols of `y',
-    // so we can consider the function a constant with respect to
-    // these symbols.
+  else if (e.is_a_function()) {
     for (unsigned i = y.nops(); i-- > 0; )
-      if (e.arg(0).has(y.op(i)))
-	break;
+      assert(e.is_a_constant_function(y.op(i).ex_to_symbol()));
     return blackboard.insert_definition(e);
   }
   else
@@ -484,6 +479,24 @@ PURRS::compare(const Expr& x, const Expr& y) {
     else
       return 2;
   }
+}
+
+bool
+PURRS::Expr::is_a_constant_power(const Symbol& x) const {
+  const Expr& e = *this;
+  if (e.is_a_power() && !e.has(x))
+    return true;
+  else
+    return false;
+}
+
+bool
+PURRS::Expr::is_a_constant_function(const Symbol& x) const {
+  const Expr& e = *this;
+  if (e.is_a_function() && !e.has(x))
+    return true;
+  else
+    return false;
 }
 
 /*! \relates Parma_Recurrence_Realtion_Solver::Expr */
