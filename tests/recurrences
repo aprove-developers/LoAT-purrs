@@ -136,7 +136,7 @@ x(n-1) + x(n-2)
 % 4. Order 2 (actually, order 1 disguised)
 % x(n) =
 x(n-2) + (n - 2)^2
-% Solution: x(n) = 1/3 * n - 1/2 * n^2 + 1/6 * n^3 + 1/2 * (1 - (-1)^n) * x(1) + 1/2 * (1 + (-1)^n)*x(0) = 4 - 4*mod(n,2) + x(-1+n) + (mod(n,2) + 2*n)^2 - 8*n
+% Solution: x(n) = 1/3 * n - 1/2 * n^2 + 1/6 * n^3 + 1/2 * (1 - (-1)^n) * x(1) + 1/2 * (1 + (-1)^n)*x(0)
 
 % 5. Double root lambda = 1
 % x(n) =
