@@ -433,8 +433,6 @@ INPUT                  = @srcdir@/definitions.dox \
                          @srcdir@/../src/Number.types.hh \
                          @srcdir@/../src/Number.inlines.hh \
                          @srcdir@/../src/Number.cc \
-                         @srcdir@/../src/numerator_denominator.cc \
-                         @srcdir@/../src/numerator_denominator.hh \
                          @srcdir@/../src/poly_factor.cc \
                          @srcdir@/../src/poly_factor.hh \
                          @srcdir@/../src/Recurrence.defs.hh \
