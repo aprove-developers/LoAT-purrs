@@ -68,9 +68,77 @@ find_divisors(GNumber n, std::vector<GNumber>& divisors) {
     }
 }
 
+/*!
+  Compute the gcd between the integers \f$n\f$ and \f$m\f$.
+*/
+static int
+gcd(int n, int m) {
+  int r = m;
+  while (r != 0){
+    r = n % m;
+    n = m; 
+    m = r;
+  }
+  return n;  
+}
+
+/*!
+  This function takes a polynomial expression \f$p(x)\f$ and returns 
+  the largest integer \f$n\f$ such that there is a polynomial \f$q\f$
+  such that \f$p(x) = q(x^n)\f$ and the polynomial \f$q\f$ itself.
+*/
+static int
+is_nested_polynomial(const GExpr& p, const GSymbol& x, GExpr& q) {
+  int degree = p.degree(x);  
+  if (degree == 0) {
+    // The constant polynomial.
+    q = p;
+    return 0;
+  }
+  // Here the degree is at least 1.
+  if (p.coeff(x, 1) != 0) {
+    // The gcd of the coefficients is 1.
+    q = p;
+    return 1;
+  }
+  // Here the degree is at least 2 and the polynomial does not have a
+  // linear term.  Look for the first non-zero coefficient (apart from
+  // constant term).
+  int i = 2;
+  while(p.coeff(x, i) == 0)
+    ++i;
+   // Here i >= 2 and the polynomial has the form a_0 + a_i x^i + ... 
+
+   // Check whether all exponents are multiple of some integer n.
+   // We first set n = i, and update its value every time that we 
+   // find a non-zero coefficient.
+   // The routine ends as soon as n reaches the value of 1
+   // (this means that the gcd of all exponents of non-zero 
+   // monomials is 1) or when the polynomial has been entirely processed.
+  int n = i;
+  for (int j = i+1; j <= degree && n > 1; ++j)
+    // If n ==1 there is no need to read the rest of the polynomial.
+    if (p.coeff(x, j) !=0)
+      n = gcd(n, j);
+
+  // Here, n is the largest integer such that there is 
+  // a polynomial q such that p(x) == q(x^n). 
+  // Now we compute q.
+  if (n > 1) {
+    q = p.coeff(x, 0);
+    // Note that `n' divides `degree'.
+    for (int j = 1, m = degree/n; j <= m; ++j)
+      q += p.coeff(x, n*j) * pow(x, j); 
+  }
+  else
+    // n == 1, the polynomial q is equal to the polynomial p.
+    q = p;
+  return n;
+}
+
 static bool
 find_roots(const GExpr& p, const GSymbol& x,
-	   std::vector<Polynomial_Root>& roots, GNumber multiplicity = 1);
+	   std::vector<Polynomial_Root>& roots, GNumber multiplicity);
 
 static bool
 find_power_roots(const GExpr& p, const GSymbol& x,
@@ -129,7 +197,7 @@ find_roots(const GExpr& p, const GSymbol& x,
   // in cases 3 and 4 there are not.
   if (is_a<add>(q)) {
     all_distinct = true;
-    return find_roots(q, x, roots);
+    return find_roots(q, x, roots, 1);
   }
   else if (is_a<mul>(q)) {
     all_distinct = false;
@@ -139,7 +207,7 @@ find_roots(const GExpr& p, const GSymbol& x,
 	if (!find_power_roots(factor, x, roots))
 	  return false;
       }
-      else if (!find_roots(factor, x, roots))
+      else if (!find_roots(factor, x, roots, 1))
 	return false;
     }
     return true;
@@ -289,9 +357,32 @@ find_roots(const GExpr& p, const GSymbol& x,
 			 roots[position+3].value());
 	return true;
       }
-    default:
-      abort();
-      break;
+    }
+  }
+
+  // If we want to solve q(x) = 0 and we know that q(x) = r(x^n), then
+  // we need to find the roots y_1, ... y_k of r(y) = 0, and then we
+  // need to solve x^n = y_1, x^n = y_2, ..., x^n = y_k.
+  // Once a root of x^n = y_1, call it x_1, has been found, all the
+  // roots of the equation x^n = y_1 can be found by multiplying x_1
+  // by the n-th roots of unity, that is by the complex numbers z such
+  // that z^n = 1.
+  // We note that the set of roots found in this way does not depend
+  // on the particular root x_1 that we have chosen.
+  GExpr r;
+  int nested_degree = is_nested_polynomial(q, x, r);
+  if (nested_degree > 1) {
+    size_t num_roots_before = roots.size();
+    if (find_roots(r, x, roots, 1)) {
+      size_t num_roots_after = roots.size();
+      GExpr theta = 2*Pi/nested_degree;
+      for (int j = 1; j < nested_degree; ++j) {
+	GExpr root_of_unity = cos(j*theta) + I*sin(j*theta);
+	for (size_t i = num_roots_before; i < num_roots_after; ++i)
+	  roots.push_back(Polynomial_Root(roots[i].value() * root_of_unity,
+					  multiplicity));
+      }
+      return true;
     }
   }
 
@@ -300,7 +391,7 @@ find_roots(const GExpr& p, const GSymbol& x,
   int num_factors = poly_factor(q, x, factors);
   if (num_factors > 1) {
     for (int i = num_factors-1; i >= 0; --i)
-      if (!find_roots(factors[i], x, roots))
+      if (!find_roots(factors[i], x, roots, 1))
 	return false;
     return true;
   }
