@@ -678,33 +678,51 @@ known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
 			      Expr& coeff_first_order,
 			      Expr& inhomog_first_order,
 			      unsigned& first_well_defined) {
-  Expr inhomog_infinite_order_rec = rhs - weight * term_sum;
+  const Expr& inhomog_infinite_order_rec = rhs - weight * term_sum;
+  unsigned lower = term_sum.arg(1).ex_to_number().to_unsigned();
+  const Expr& upper = term_sum.arg(2);
 
   // If `f(n)' or `g(n)' contain other functions `x()' with `n' in the
-  // argument or contain the parameters then the recurrence is too
+  // argument or contain the parameters or the upper bound of the sum
+  // is different from `n' and `n-1', then the recurrence is too
   // complex for the system.
   if (weight.has_x_function(Recurrence::n)
       || inhomog_infinite_order_rec.has_x_function(Recurrence::n)
-      || has_parameters(weight))
+      || has_parameters(weight)
+      || (upper != Recurrence::n && upper != Recurrence::n-1))
     return false;
 
+  Number z = 0;
+  // Find the largest positive or null integer that cancel the numerator of
+  // `f(n)' and store it in `z' if it is bigger than the current `z'.
+  if (!largest_positive_int_zero(numerator(weight), Recurrence::n, z))
+    return false;
+  // FIXME: how we must do in these cases? It is not a DOMAIN_ERROR!
+  // Example: `x(n) = (n-2) * sum(k,0,n-1,x(k))'. The recurrence is
+  // well-defined for any `n >= 1' but the method is not right in this case.
+  // With `x(n) = (n-2) * sum(k,2,n-1,x(k))' it is all ok.
+  // If this case is simply wrong, i.e. it is an error of the user, then
+  // we can do only one check (without consider before numerator anf then
+  // denominator of `weight').
+  if (lower < z)
+    return false;
   // `z' will contain the largest positive or null integer, if it exists,
   // that cancel the denominator of `f(n)'.
   // If this integer does not exist then `z' is left to 0.
-  Number z = 0;
-  if (!largest_positive_int_zero(weight, Recurrence::n, z))
-    return false;
-  // Find the largest positive or null integer that cancel the denominator of
-  // `f(n)' and store it in `z' if it is bigger than the current `z'.
   if (!largest_positive_int_zero(denominator(weight), Recurrence::n, z))
+    return false;
+
+  if (!largest_positive_int_zero(denominator(inhomog_infinite_order_rec),
+				 Recurrence::n, z))
     return false;
   first_well_defined = z.to_unsigned();
 
-  Expr weight_shifted = weight.substitute(Recurrence::n, Recurrence::n-1);
+  const Expr& weight_shifted = weight.substitute(Recurrence::n,
+						 Recurrence::n-1);
   coeff_first_order = weight / weight_shifted * (1 + weight_shifted);
   coeff_first_order = simplify_all(coeff_first_order);
   
-  Expr inhomog_infinite_order_rec_shifted
+  const Expr& inhomog_infinite_order_rec_shifted
     = inhomog_infinite_order_rec.substitute(Recurrence::n, Recurrence::n-1);
   inhomog_first_order
     = weight * (inhomog_infinite_order_rec / weight
@@ -832,10 +850,16 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
     else if (addend.is_the_sum_function() && addend.arg(2).has(n)
 	     && addend.arg(3).has_x_function(addend.arg(0))) {
       if (is_order_zero()) {
+	// If there are many terms equal to the sum stored in `addend'
+	// we must collect them in order to find the weight `f(n)' of
+	// the recurrence of infinite order
+	// `x(n) = f(n) sum(k, n_0, u(n), x(k)) + g(n)'.
+	Expr weight;
+	Expr rhs_rewritten = rhs.collect_term(addend, weight);
 	Expr coeff_first_order;
 	Expr inhomog_first_order;
 	unsigned first_well_defined;
-	if (known_class_of_infinite_order(rhs, addend, 1,
+	if (known_class_of_infinite_order(rhs_rewritten, addend, weight,
 					  coeff_first_order,
 					  inhomog_first_order,
 					  first_well_defined)) {
@@ -852,12 +876,12 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 						     * x(Recurrence::n - 1)
 						     + inhomog_first_order,
 						     coeff_first_order,
-						     inhomog_first_order, 1,
-						     lower_bound_sum,
+						     inhomog_first_order,
+						     weight, lower_bound_sum,
 						     addend.arg(2));
 	  set_linear_infinite_order();
 	  set_infinite_order_fwdr(first_well_defined);
-	  inhomogeneous = rhs - addend;
+	  inhomogeneous = rhs - addend * weight;
 	  return SUCCESS;
 	}
 	else
@@ -928,14 +952,21 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
       else if (factor.is_the_sum_function() && factor.arg(2).has(n)
 	       && factor.arg(3).has_x_function(factor.arg(0))) {
 	if (is_order_zero()) {
-	  Expr weight = 1;
-	  for (unsigned j = num_factors; j-- > 0; )
-	    if (addend.op(j) != factor)
-	      weight *= addend.op(j);
+	  // If there are many terms equal to the sum in `factor' stored
+	  // in `rhs', we must collect them in order to find the weight
+	  // `f(n)' of the recurrence of infinite order
+	  // `x(n) = f(n) sum(k, n_0, u(n), x(k)) + g(n)'.
+	  Expr weight;
+	  Expr rhs_rewritten = rhs.collect_term(factor, weight);
+	  // There are not other sums equal to `factor'.
+	  if (weight == 1)
+	    for (unsigned j = num_factors; j-- > 0; )
+	      if (addend.op(j) != factor)
+		weight *= addend.op(j);
 	  Expr coeff_first_order;
 	  Expr inhomog_first_order;
 	  unsigned first_well_defined;
-	  if (known_class_of_infinite_order(rhs, factor, weight,
+	  if (known_class_of_infinite_order(rhs_rewritten, factor, weight,
 					    coeff_first_order,
 					    inhomog_first_order,
 					    first_well_defined)) {
@@ -958,7 +989,10 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 						       factor.arg(2));
 	    set_linear_infinite_order();
 	    set_infinite_order_fwdr(first_well_defined);
-	    inhomogeneous = rhs - addend;
+	    // Note: `weight * factor' is different from `addend' when
+	    // in `rhs' there is more than one term containing the sum
+	    // in `factor'.
+	    inhomogeneous = rhs_rewritten - weight * factor;
 	    return SUCCESS;
 	  }
 	  else
