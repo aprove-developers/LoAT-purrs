@@ -47,33 +47,43 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
+namespace {
+using namespace PURRS;
+
 /*!
-  This function adds the part of the solution of linear recurrences
+  This function returns the part of the solution of linear recurrences
   with constant coefficients of finite order corresponding to the initial
   conditions:
   \f[
     \sum_{i=0}^{order - 1} g_{n-i}
       \bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \bigr).
   \f]
+  Opportune modifications are considered when the recurrence is not
+  well-defined for every natural number, but only starting from
+  one determined value, called here \p first_well_defined.
 */
 // FIXME: il vettore `coefficients' dovra' diventare di `Expr' quando
 // sapremo risolvere anche le eq. di grado superiore al primo con i
 // parametri.
-void
-PURRS::Recurrence::
-add_term_with_initial_conditions(const Expr& g_n,
-				 const std::vector<Number>& coefficients) const {
-  Expr solution = exact_solution_.expression();
-  for (unsigned i = 0; i < order(); ++i) {
+Expr
+compute_term_about_initial_conditions(const Expr& g_n,
+				      const std::vector<Number>& coefficients,
+				      unsigned first_well_defined) {
+  Expr term = 0;
+  // `coefficients.size() - 1' is equal to the order of the recurrence.
+  for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
     const Expr& g_n_i
-      = g_n.substitute(n, n - i - first_well_defined_rhs_linear());
-    Expr tmp = x(first_well_defined_rhs_linear() + i);
+      = g_n.substitute(Recurrence::n, Recurrence::n - i - first_well_defined);
+    Expr tmp = x(first_well_defined + i);
     for (unsigned j = i; j > 0; j--)
-      tmp -= coefficients[j] * x(first_well_defined_rhs_linear() + i - j);
-    solution += tmp * g_n_i;
+      tmp -= coefficients[j] * x(first_well_defined + i - j);
+    term += tmp * g_n_i;
   }
-  exact_solution_.set_expression(solution);
+  return term;
 }
+
+} // anonymous namespace
+
 
 /*!
   Consider the linear recurrence relation of first order with
@@ -89,14 +99,16 @@ add_term_with_initial_conditions(const Expr& g_n,
     x_n = \lambda^n * x_0
           + \sum_{k=1}^n \lambda^{n-k} p(k).
   \f]
-  In this function we compute, when possible, the sum of the previous
-  formula; when this is not possible, we return the symbolic sum.
+  In this function is computeed, when possible, the closed form for the sum
+  of the previous formula; when this is not possible, is returned the
+  symbolic sum.
 */
 PURRS::Expr
 PURRS::Recurrence::
 solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
-  // We search exponentials in `n' (for this the expression
-  // `inhomogeneous_term' must be expanded).
+  assert(is_linear_finite_order_const_coeff());
+  assert(order() == 1);
+  // We search exponentials in `Recurrence::n'.
   // The vector `base_of_exps' contains the exponential's bases
   // of all exponentials in `inhomogeneous_term'. In the `i'-th position of
   // the vectors `exp_poly_coeff' and `exp_no_poly_coeff' there are
@@ -104,7 +116,7 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
   // the coefficient of the exponential with the base in `i'-th position of
   // `base_of_exp'.
   // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
-  // coefficient of base_of_exps[i]^n.
+  // coefficient of `base_of_exps[i]^n'.
   std::vector<Expr> base_of_exps;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
@@ -150,7 +162,7 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
 
 /*!
   Consider the linear recurrence relation of first order with
-  constant coefficients
+  variable coefficient
   \f[
     x_n = \alpha(n) x_{n-1} + p(n),
   \f]
@@ -179,6 +191,8 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
 solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
+  assert(is_linear_finite_order_var_coeff());
+  assert(order() == 1);
   if (has_parameters(coefficients[1]))
     return TOO_COMPLEX;
   // `z' will contain the largest positive or null integer, if it exists,
@@ -265,15 +279,17 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
   \f]
   The two sums in the previous formula correspond to the non-homogeneous
   part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
-  the function <CODE>add_term_with_initial_conditions()</CODE>), respectively.
+  the function <CODE>compute_term_about_initial_conditions()</CODE>),
+  respectively.
 */
 PURRS::Expr
 PURRS::Recurrence::
 solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
 			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots) const {
-  // We search exponentials in `n' (for this the expression
-  // `inhomogeneous_term' must be expanded).
+  assert(is_linear_finite_order_const_coeff());
+  assert(order() == 2);
+  // We search exponentials in `Recurrence::n'.
   // The vector `base_of_exps' contains the exponential's bases
   // of all exponentials in `inhomogeneous_term'.
   // In the `i'-th position of the vectors
@@ -281,7 +297,7 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
   // the polynomial part and possibly non polynomial part of the coefficient
   // of the exponential with the base in `i'-th position of `base_of_exp'.
   // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
-  // coefficient of base_of_exps[i]^n.
+  // coefficient of `base_of_exps[i]^n'.
   std::vector<Expr> base_of_exps;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
@@ -294,12 +310,11 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
   Expr solution;
   // Calculates the solution of the second order recurrences when
   // the inhomogeneous term is a polynomial or the product of a
-  // polynomial and an exponential; return the symbolic solution with
-  // the object `sum' otherwise.
+  // polynomial and an exponential; return the symbolic solution otherwise.
   if (all_distinct) {
     const Expr& root_1 = roots[0].value();
     const Expr& root_2 = roots[1].value();
-    Expr diff_roots = root_1 - root_2;
+    const Expr& diff_roots = root_1 - root_2;
     g_n = (pwr(root_1, Recurrence::n+1) - pwr(root_2, Recurrence::n+1))
       / diff_roots;
     if (!vector_not_all_zero(exp_no_poly_coeff)) {
@@ -335,7 +350,8 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
 			* inhomogeneous_term.substitute(Recurrence::n, h))
 	   - (pwr(root_2, Recurrence::n+1)
 	      * PURRS::sum(h, lower, Recurrence::n, pwr(root_2, -h)
-			   * inhomogeneous_term.substitute(Recurrence::n, h))));
+			   * inhomogeneous_term
+			   .substitute(Recurrence::n, h))));
     }
   }
   else {
@@ -404,15 +420,17 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
   \f]
   The two sums in the previous formula correspond to the non-homogeneous
   part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
-  the function <CODE>add_term_with_initial_conditions()</CODE>), respectively.
+  the function <CODE>compute_term_about_initial_conditions()</CODE>),
+  respectively.
 */
 PURRS::Expr
 PURRS::Recurrence::
 solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
 			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots) const {
-  // We search exponentials in `n' (for this the expression
-  // `inhomogeneous_term' must be expanded).
+  assert(is_linear_finite_order_const_coeff());
+  assert(order() > 2);
+  // We search exponentials in `n'.
   // The vector `base_of_exps' contains the exponential's bases
   // of all exponentials in `inhomogeneous_term'.
   // In the `i'-th position of the vectors
@@ -420,7 +438,7 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
   // the polynomial part and possibly non polynomial part of the coefficient
   // of the exponential with the base in `i'-th position of `base_of_exp'.
   // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
-  // coefficient of base_of_exps[i]^n.
+  // coefficient of `base_of_exps[i]^n'.
   std::vector<Expr> base_of_exps;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
@@ -490,12 +508,12 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
 }
 
 /*!
-  Solves the linear recurrence of finite order (we have already considered
-  the banal case of order zero recurrence), i. e., linear finite
-  order recurrence with constant or variable coefficients.
+  Solves the linear recurrence of finite order with constant or variable
+  coefficients.
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::solve_linear_finite_order() const {
+  assert(is_linear_finite_order());
   D_VAR(order());
   D_VEC(coefficients(), 1, order());
   D_VAR(inhomogeneous_term);
@@ -539,7 +557,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   }
 
   // `g_n' is defined here because it is necessary in the function
-  // `add_term_with_initial_conditions()' (at the end of function
+  // `compute_term_about_initial_conditions()' (at the end of function
   // `solve_linear_finite_order()').
   Expr g_n;
   switch (order()) {
@@ -591,18 +609,21 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   if (is_linear_finite_order_const_coeff())
     if (order() == 1 )
       // FIXME: per ora non si puo' usare la funzione
-      // `add_term_with_initial_conditions' perche' richiede un vettore di
-      // `Number' come `coefficients' e voglio risolvere anche le
-      // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
-      // add_term_with_initial_conditions(g_n, coefficients, solution);
+      // `compute_term_about_initial_conditions' perche' richiede un
+      // vettore di `Number' come `coefficients' e voglio risolvere anche
+      // le parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
+      // compute_term_about_initial_conditions(g_n, coefficients, solution);
       exact_solution_.set_expression(exact_solution_.expression()
 				     + x(first_well_defined_rhs_linear())
 				     * pwr(coefficients()[1],
 					   n-(first_well_defined_rhs_linear()
 					      -order()+1)));
     else
-      add_term_with_initial_conditions(g_n, num_coefficients);
-
+      exact_solution_.set_expression(exact_solution_.expression()
+				     + compute_term_about_initial_conditions
+				     (g_n, num_coefficients,
+				      first_well_defined_rhs_linear()));
+  
   // Resubstitutes eventually auxiliary definitions contained in
   // the solution with their original values.
   //exact_solution_.set_expression(blackboard.rewrite(solution));

@@ -858,39 +858,43 @@ compute_non_homogeneous_part(bool lower,
   }
   return true;
 }
-					     
-} // anonymous namespace
 
 /*!
   Computes
   \f[
     a^q x( \frac {n}{b^q} )
   \f]
-  where \f$ a \f$ is stored in
-  <CODE>functional_eq_p->ht_begin()->second</CODE>, \f$ b \f$
-  is stored <CODE>functional_eq_p->ht_begin()->first</CODE>.
+  where \f$ a \f$ is stored in \p coefficient, \f$ b \f$
+  is stored \p divisor.
 */
 void
-PURRS::Recurrence::add_term_with_initial_condition(bool lower, const Expr& q,
-						   Expr& bound) const {
+compute_term_about_initial_condition(bool lower, unsigned condition,
+				     const Number& divisor,
+				     const Expr& coefficient,
+				     const Expr& q, Expr& bound) {
   Expr index_initial_condition;
   if (lower)
     index_initial_condition 
-      = simplify_logarithm(n / pwr(functional_eq_p->ht_begin()->first, q + 1));
+      = simplify_logarithm(Recurrence::n / pwr(divisor, q + 1));
   else
     index_initial_condition
-      = simplify_logarithm(n / pwr(functional_eq_p->ht_begin()->first, q));
+      = simplify_logarithm(Recurrence::n / pwr(divisor, q));
   index_initial_condition = simplify_ex_for_output(index_initial_condition,
 						   false);
 
   if (index_initial_condition.is_a_number()
-      && index_initial_condition.ex_to_number() < applicability_condition())
-    index_initial_condition = applicability_condition();
+      && index_initial_condition.ex_to_number() < condition)
+    index_initial_condition = condition;
   
-  bound += pwr(functional_eq_p->ht_begin()->second, q)
-    * x(index_initial_condition);
+  bound += pwr(coefficient, q) * x(index_initial_condition);
 }
+					     
+} // anonymous namespace
 
+
+/*!
+  Computes the lower bound for the functional equation.
+*/
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::approximate_functional_equation_lower() const {
   if (functional_eq_p->rank() == 1) {
@@ -914,7 +918,9 @@ PURRS::Recurrence::approximate_functional_equation_lower() const {
 
     if (condition > 1)
       set_applicability_condition(condition.to_unsigned());
-    add_term_with_initial_condition(true, q_lower, lower_bound);
+    compute_term_about_initial_condition(true, applicability_condition(),
+					 divisor_arg, coefficient, q_lower,
+					 lower_bound);
     
     lower_bound_.set_expression(simplify_logarithm(lower_bound));
     if (upper_bound_.has_expression()
@@ -926,6 +932,9 @@ PURRS::Recurrence::approximate_functional_equation_lower() const {
     return TOO_COMPLEX;
 }
 
+/*!
+  Computes the upper bound for the functional equation.
+*/
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::approximate_functional_equation_upper() const {
   if (functional_eq_p->rank() == 1) {
@@ -949,7 +958,9 @@ PURRS::Recurrence::approximate_functional_equation_upper() const {
 
     if (condition > 1)
       set_applicability_condition(condition.to_unsigned());
-    add_term_with_initial_condition(false, q_upper, upper_bound);
+    compute_term_about_initial_condition(false, applicability_condition(),
+					 divisor_arg, coefficient, q_upper,
+					 upper_bound);
     
     upper_bound_.set_expression(simplify_logarithm(upper_bound));
     if (lower_bound_.has_expression()

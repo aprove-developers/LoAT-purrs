@@ -278,14 +278,46 @@ public:
   void dump(std::ostream& s) const;
 
 private:
+  //! \brief
+  //! Computes the solution of \p *this applying the order reduction method:
+  //! builds a new object <CODE>Recurrence</CODE> with the reduced recurrence;
+  //! solves the reduced recurrence; from the solution of the reduced
+  //! recurrence finds the solution of the original recurrence \p *this.
   Solver_Status apply_order_reduction() const;
+
+  //! \brief
+  //! Computes the solution of \p *this: transforms \p *this in a linear
+  //! recurrence and stores it in a new object <CODE>Recurrence</CODE>;
+  //! solves the linear recurrence; from the solution of the linear
+  //! recurrence finds the solution of the original recurrence \p *this.
   Solver_Status compute_non_linear_recurrence(Expr& solution_or_bound,
 					      unsigned type) const;
+
+  //! \brief
+  //! Solves the recurrence of infinite order \p *this transforming it
+  //! in a linear recurrence of finite order stored in a new object
+  //! <CODE>Recurrence</CODE>.
   Solver_Status compute_infinite_order_recurrence(Expr& solution) const;
+
+  //! \brief
+  //! Let \p solution_or_bound be the expression that represent the
+  //! solution or the bound computed for the recurrence \p *this.
+  //! This function substitutes eventual initial conditions specified
+  //! by the user shifting the solution or the bound if necessary.
   Expr substitute_i_c_shifting(bool exact,
 			       const Expr& solution_or_bound) const;
+
+  //! Classifies the recurrence \p *this sliding it recursively.
   Solver_Status classify() const;
+
+  //! \brief
+  //! Classifies the recurrence \p *this calling the method
+  //! <CODE>classify()<CODE>. 
   Solver_Status classify_and_catch_special_cases() const;
+
+  //! \brief
+  //! Analyzes the \f$ i \f$-th addend of the right hand side of the
+  //! recurrence \p *this.
   Solver_Status classification_summand(const Expr& r, Expr& e,
 				       unsigned int& order,
 				       std::vector<Expr>& coefficients,
@@ -293,25 +325,39 @@ private:
 				       int num_term,
 				       std::map<Number, Expr>&
 				       homogeneous_terms) const;
-  void
-  add_term_with_initial_conditions(const Expr& g_n,
-				   const std::vector<Number>& coefficients) const;
+
+  //! \brief
+  //! Solves the linear recurrence of finite order.
+  //! The recurrence can have constant or variable coefficients.
   Solver_Status solve_linear_finite_order() const;
+
+  //! Solves the linear recurrence of first order with constant coefficient.
   Expr solve_constant_coeff_order_1(const std::vector<Polynomial_Root>&
 				    roots) const;
+
+  //! Solves the linear recurrence of first order with variable coefficient. 
   Solver_Status
   solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const;
+
+  //! Solves the linear recurrence of second order with constant coefficients. 
   Expr solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
 				    const std::vector<Number>& coefficients,
 				    const std::vector<Polynomial_Root>&
 				    roots) const;
+
+  //! \brief
+  //! Solves the linear recurrence of finite order \f$ k \f$, \f$ k > 2 \f$,
+  //! with constant coefficients.
   Expr solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
 				    const std::vector<Number>& coefficients,
 				    const std::vector<Polynomial_Root>&
 				    roots) const;
-  void add_term_with_initial_condition(bool lower, const Expr& q,
-				       Expr& bound) const;
+
+  //! \brief
+  //! Computes the lower bound for the functional equation. 
   Solver_Status approximate_functional_equation_lower() const;
+
+  //! Computes the upper bound for the functional equation. 
   Solver_Status approximate_functional_equation_upper() const;
 
   //! \brief
@@ -464,6 +510,7 @@ private:
 
   //! Sets <CODE>type_recurrence =  LINEAR_INFINITE_ORDER</CODE>.
   void set_linear_infinite_order() const;
+
 
   // Methods to access to private data of `Finite_Order_Info'.
 
