@@ -225,6 +225,25 @@ solve_equation_4(const Number& a1, const Number& a2,
   x4 = simplify_ex_for_output(x4, false);
 }
 
+//! Solve the equation \f$a*x^n + k = 0\f$.
+void
+solve_monomial(const Number& a, int n, const Number& k,
+	       std::vector<Polynomial_Root>& monomial_roots) {
+  assert(a != 0);
+  assert(n >= 1);
+  assert(k != 0);
+  Expr theta = 2*Constant::Pi/n;
+  for (int j = 0; j < n; ++j) {
+    Expr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
+    monomial_roots.push_back(Polynomial_Root(pwr(-k/a,
+						 Number(1, n))
+					     * root_of_unity,
+					     // FIXME: if rational?
+					     NON_RATIONAL, 1));
+  }
+}
+
+
 /*!
   This function takes a polynomial expression \f$p(x)\f$ and returns 
   the largest integer \f$n\f$ such that there is a polynomial \f$q\f$
@@ -291,6 +310,9 @@ find_roots(const Expr& p, const Symbol& x,
   if (ldegree == 1) {
     roots.push_back(Polynomial_Root(zero, RATIONAL, multiplicity));
     q = quo(p, x, x);
+    // If no further roots exist, return.
+    if (q.degree(x) == 0)
+      return true;
   }
   else
     q = p;
@@ -304,6 +326,18 @@ find_roots(const Expr& p, const Symbol& x,
   }
 
   // Here `q' has degree at least 2 and the least coefficient is non-zero.
+  // If it is in the form a*x^n = k, just solve it.
+  if (q.ldegree(x) == 0) {
+    unsigned int d = degree - 1;
+    for (; d >= 1 && q.coeff(x, d).ex_to_number() == 0; --d);
+    if (d == 0) {
+      solve_monomial(tc, degree, lc, roots);
+      return true;
+    }
+  }
+
+  // Here `q' has degree at least 2, the least coefficient is non-zero and
+  // it is not in the form a*x^n = k.
   Number abs_lc = abs(lc);
   Number abs_tc = abs(tc);
   if (abs_lc < FIND_DIVISORS_THRESHOLD && abs_tc < FIND_DIVISORS_THRESHOLD) {
@@ -404,7 +438,7 @@ find_roots(const Expr& p, const Symbol& x,
   // NOTE: after the introduction of the order reduction method the
   // function `is_nested_polynomial()' is useless in the computation
   // of the solution but it is used in the "new" method (see the paper
-  // "Checking and Confining the Solutions of Recurrence Realtions")
+  // "Checking and Confining the Solutions of Recurrence Relations")
   // for the validation of the exact solution of linear finite order
   // recurrences with constant coefficients.
   // If we want to solve q(x) = 0 and we know that q(x) = r(x^n), then

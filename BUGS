@@ -9,7 +9,7 @@ Known bugs are listed below.
 Bug #1
 Title: 		Cannot solve x^n-1=0
 Description:	eqs_driver can easily solve x^n-K=0 for all values of K but 1.
-Status:		ASSIGNED (pescetti)
+Status:		SOLVED UNVERIFIED
 Priority:	High
 Reproducible:	Always
 Steps to reproduce:
@@ -24,6 +24,10 @@ Comments:
     Seems to apply only for N>=5, K=+1 or K=-1.
   2004-04-14 pescetti
     It happens whenever the real root can be easily calculated. Try x^5-32.
+  2004-04-15 pescetti
+    Any time a rational solution is found, a division is always carried out.
+  2004-04-15 pescetti
+    SOLVED: polynomials in the form x^n=k are now recognized and solved.
 
 -----
 
