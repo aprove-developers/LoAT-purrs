@@ -52,7 +52,7 @@ ZZ_to_long(const ZZ& zz) {
 
 int
 PURRS::poly_factor(const Expr& p, const Symbol& x, std::vector<Expr>& factors) {
-  assert(p.is_integer_polynomial());
+  assert(p.is_integer_polynomial(x));
   ZZX ntl_p;
   for (int i = p.ldegree(x), d = p.degree(x); i<= d; ++i) {
     Expr e_i = p.coeff(x, i);

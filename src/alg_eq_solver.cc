@@ -527,7 +527,7 @@ PURRS::find_roots(const Expr& p, const Symbol& x,
 		  std::vector<Polynomial_Root>& roots,
 		  bool& all_distinct) {
   D_VAR(p);
-  assert(p.is_integer_polynomial());
+  assert(p.is_integer_polynomial(x));
   assert(!p.is_a_number());
   // Compute a square-free decomposition for p.
   Expr q = sqrfree(p.expand(), Expr_List(x));

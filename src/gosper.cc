@@ -98,7 +98,7 @@ compute_resultant_and_its_roots(const Symbol& m, const Expr& f, const Expr& g,
   Expr R = resultant(f, temp_g, m);
   R = simplify_all(R);
   R = R.primpart(h);
-  if (!R.is_integer_polynomial())
+  if (!R.is_integer_polynomial(m))
     R = convert_to_integer_polynomial(R, h);
   std::vector<Number> potential_roots;
   Number constant_term = abs(R.tcoeff(h).ex_to_number());

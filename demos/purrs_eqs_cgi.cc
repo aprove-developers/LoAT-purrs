@@ -237,7 +237,7 @@ main() try {
   Symbol x("x");
   Expr p = Expr(**expr, Expr_List(x));
   if (p.is_zero()
-      || !p.is_integer_polynomial()
+      || !p.is_integer_polynomial(x)
       || p.is_a_number()) {
     std::ostringstream s;
     s << "you call '<TT>" << p << "</TT>' a polynomial in <TT>x</TT> "
