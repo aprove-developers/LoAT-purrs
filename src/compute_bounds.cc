@@ -758,6 +758,8 @@ PURRS::Recurrence::approximate_functional_equation() const {
     
     upper_bound_.set_expression(simplify_logarithm(ub));
     lower_bound_.set_expression(simplify_logarithm(lb));
+    if (upper_bound_.expression() == lower_bound_.expression())
+      exact_solution_.set_expression(upper_bound_.has_expression());
     return SUCCESS;
   }
   else {
