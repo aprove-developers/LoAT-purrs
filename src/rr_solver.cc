@@ -559,7 +559,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   D_MSGVAR("Before calling simplify: ", solution);  
   solution = simplify_on_output_ex(solution.expand(), n, false);
 
-  // For the output and for a better functionality of 'verify_solution()'.
+  // Only for the output.
   GList conditions;
   for (unsigned i = order; i-- > 0; )
     conditions.append(initial_conditions[i]);
@@ -1171,8 +1171,9 @@ verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
   // Validation of initial conditions.
   for (int i = order; i-- > 0; ) {
     GExpr g_i = x(i);
-    if (!g_i.is_equal(solution.subs(n == i))) {
-      print_bad_exp(solution.subs(n == i), rhs, true);
+    GExpr sol_subs = simplify_numer_denom(solution.subs(n == i));
+    if (!g_i.is_equal(sol_subs)) {
+      print_bad_exp(sol_subs, rhs, true);
       return false;
     }
   }
@@ -1184,14 +1185,15 @@ verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
     if (!solution.op(i).match(x(wild(0)))
 	&& !solution.op(i).match(wild(1) * x(wild(0))))
       partial_solution += solution.op(i);
+
   std::vector<GExpr> terms_to_sub(order);
   for (int i = 0; i < order; ++i)
-    terms_to_sub[i] = partial_solution.subs(n == n - i - 1);    
+    terms_to_sub[i] = partial_solution.subs(n == n - i - 1);
   GExpr substituted_rhs = simplify_on_input_ex(rhs.expand(), n, true);
   for (unsigned i = terms_to_sub.size(); i-- > 0; )
     substituted_rhs = substituted_rhs.subs(x(n - i - 1) == terms_to_sub[i]);
   GExpr diff = (partial_solution - substituted_rhs).expand();
-
+  diff = simplify_numer_denom(diff);
   if (diff.is_zero())
     return true;
   else {

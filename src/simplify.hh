@@ -33,4 +33,6 @@ simplify_on_input_ex(const GExpr& e, const GSymbol& n, const bool& input);
 GExpr
 simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input);
 
+GExpr
+simplify_numer_denom(const GExpr& e);
 #endif
