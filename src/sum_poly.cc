@@ -22,6 +22,19 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
+#include <config.h>
+
+#ifndef NOISY
+#define NOISY 0
+#endif
+
+#include "sum_poly.hh"
+#include "util.hh"
+#include "Expr.defs.hh"
+#include "Recurrence.defs.hh"
+#include <vector>
+
+namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 /*!
   This file contains the routines that sum formally expressions of the 
@@ -30,13 +43,6 @@ http://www.cs.unipr.it/purrs/ . */
   <CODE> Expr </CODE>.
   The sum is always over the range \f$ n \in [0, N] \f$.
 */
-
-#include "sum_poly.hh"
-#include "Expr.defs.hh"
-#include "Recurrence.defs.hh"
-#include <vector>
-
-namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 namespace {
 using namespace PURRS;
@@ -157,6 +163,7 @@ PURRS::sum_poly_times_exponentials(const Expr& p, const Symbol& x,
     }
   }
   q = q.subs(x, alpha).expand();
+  D_VAR(q);
   return q;
 }
 
