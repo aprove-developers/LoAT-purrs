@@ -80,7 +80,7 @@ for LIB_SHORT_NAME in ; do
   fi
   mkdir obj$LIBNAME;
   cd obj$LIBNAME;
-  $PRE_CONF && $CONF_PATH/configure $OPT_PARAM && make && make install && echo "$LIB_SHORT_NAME installed successfully.";
+  $PRE_CONF && $CONF_PATH/configure $OPT_PARAM && make && make install && ldconfig && echo "$LIB_SHORT_NAME installed successfully.";
   echo "`date +%Y-%m-%d_%H:%M:%S` Installed $LIB_SHORT_NAME as $LIBNAME" >> $INST_LOG;
 done
 
