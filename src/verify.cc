@@ -125,19 +125,16 @@ validate_initial_conditions(index_type order,
 	return INCONCLUSIVE_VERIFICATION;
     }
     else {
-      D_VEC(coefficients_i_c, 0, coefficients_i_c.size()-1);
       unsigned int coefficients_i_c_size = coefficients_i_c.size();
       // coefficients of initial conditions.
       for (unsigned j = 0; j < coefficients_i_c_size; ++j) {
+	D_VAR(coefficients_i_c[j]);
 	Expr e = simplify_all(coefficients_i_c[j].substitute(n, index));
 	// Expand blackboard's definitions in order to increase the
 	// opportunities for simplifications.
 	e = blackboard.rewrite(e);
 	e = simplify_all(e);
 	D_VAR(index);
-	D_VAR(j);
-	D_VAR(e);
-	D_MSG("");
 	if (index == first_valid_index + j) {
 	  if (e != 1)
 	    // FIXME: provably_incorrect nei casi semplici.
@@ -770,9 +767,20 @@ PURRS::Recurrence::verify_finite_order() const {
     // The traditional step 3 is applied in the case of non-linear recurrence
     // or if the new method applied on the homogeneous part of the
     // recurrence is failed.
-    for (unsigned int i = 0; i < order_rec/gcd; ++i) {
+    if (is_linear_finite_order())
+      for (unsigned int i = 0; i < order_rec/gcd; ++i) {
+	Verify_Status verify_status = traditional_step_3(order_rec,
+							 coefficients_i_c[i]);
+	if (verify_status != PROVABLY_CORRECT)
+	  return verify_status;
+      }
+    // In the case of non-linear recurrences the homogeneous part
+    // of the solution can contains more than one symbolic initial
+    // condition: the vector `coefficients_i_c' is in this case empty.
+    else {
+      assert(is_non_linear_finite_order());
       Verify_Status verify_status = traditional_step_3(order_rec,
-						       coefficients_i_c[i]);
+						       summands_with_i_c);
       if (verify_status != PROVABLY_CORRECT)
 	return verify_status;
     }
@@ -818,6 +826,7 @@ PURRS::Recurrence::verify_finite_order() const {
     shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
     substituted_rhs = substituted_rhs.substitute(x(n - d), shifted_solution);
   }
+
   Expr diff = summands_without_i_c - substituted_rhs;
   // The expression `diff' can be more difficult to simplify.
   // For this motive we performed simplification also
