@@ -140,9 +140,10 @@ inline index_type
 Recurrence::first_valid_index_for_solution() const {
   if (!exact_solution_.has_expression()
       && !lower_bound_.has_expression() && !upper_bound_.has_expression())
-    throw std::logic_error("PURRS::Recurrence::exact_solution() called, "
-			   "but no exact solution, no lower bound "
-			   "and no upper bound were computed");
+    throw
+      std::logic_error("PURRS::Recurrence::first_valid_index_for_solution() "
+		       "called, but no exact solution, no lower bound "
+		       "and no upper bound were computed");
   return first_valid_index_for_solution_;
 }
 
@@ -436,6 +437,24 @@ Recurrence::rank() const {
   assert(is_functional_equation());
   assert(functional_eq_p);
   return functional_eq_p->rank();
+}
+
+inline std::string
+Recurrence::definition_Sc() const {
+  if (!lower_bound_.has_expression() && !upper_bound_.has_expression())
+    throw std::logic_error("PURRS::Recurrence::definition_Sc() called, "
+			   "but no lower bound and no upper bound were "
+			   "computed");
+  assert(is_functional_equation());
+  assert(functional_eq_p);
+  return functional_eq_p->definition_Sc();
+}
+
+inline void
+Recurrence::set_definition_Sc() const {
+  assert(is_functional_equation());
+  assert(functional_eq_p);
+  functional_eq_p->set_definition_Sc();
 }
 
 inline const Recurrence&

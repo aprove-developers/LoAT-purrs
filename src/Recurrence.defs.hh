@@ -267,6 +267,23 @@ public:
   index_type first_valid_index_for_solution() const;
 
   //! \brief
+  //! In the case of functional equations, if the divisor \f$ b \f$ of
+  //! the homogeneous term \f$ a x(n/b) \f$ in \p *this is different
+  //! from \f$ 2 \f$, returns the definition of the function \f$ Sc() \f$:
+  //! \f[
+  //!   Sc(n, b) = \lfloor
+  //!                \frac{n}{b^{\lfloor \frac{\log n}{\log b} \rfloor}}
+  //!              \rfloor.
+  //! \f]
+  //! Returns the empty string if \f$ b = 2 \f$.
+  /*!
+    \exception std::logic_error      thrown if this method is called
+                                     but no lower bound and no upper bound
+				     were computed.
+  */
+  std::string definition_Sc() const;
+
+  //! \brief
   //! Defines initial conditions of the recurrence that have been stored
   //! in the map \p initial_conditions.
   /*!
@@ -1400,6 +1417,18 @@ private:
   //! larger than one.
   index_type rank() const;
 
+  //! \brief
+  //! If the divisor \f$ b \f$ of the homogeneous term \f$ a x(n/b) \f$ in
+  //! \p *this is different from \f$ 2 \f$, sets the function \f$ Sc() \f$
+  //! in the following way:
+  //! \f[
+  //!   Sc(n, b) = \lfloor
+  //!                \frac{n}{b^{\lfloor \frac{\log n}{\log b} \rfloor}}
+  //!              \rfloor.
+  //! \f]
+  //! Set the definition of the function \f$ Sc() \f$ to the empty string
+  //! if \f$ b = 2 \f$.
+  void set_definition_Sc() const;
 
   // Method to access to private data of `Non_Linear_Info'.
 
