@@ -802,15 +802,15 @@ rewrite_infinite_order_recurrence(const Expr& rhs, const Expr& term_sum,
   Number z = 0;
   // Find the largest positive or null integer that cancel the numerator of
   // `f(n)' and store it in `z' if it is bigger than the current `z'.
-  if (!largest_positive_int_zero(numerator(weight), Recurrence::n, z))
+  if (!find_domain_in_N(numerator(weight), Recurrence::n, z))
     return false;
   // `z' will contain the largest positive or null integer, if it exists,
   // that cancel the denominator of `f(n)'.
   // If this integer does not exist then `z' is left to 0.
-  if (!largest_positive_int_zero(denominator(weight), Recurrence::n, z))
+  if (!find_domain_in_N(denominator(weight), Recurrence::n, z))
     return false;
 
-  if (!largest_positive_int_zero(denominator(inhomogeneous), Recurrence::n, z))
+  if (!find_domain_in_N(denominator(inhomogeneous), Recurrence::n, z))
     return false;
   first_valid_index = z.to_unsigned_int();
 

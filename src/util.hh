@@ -107,7 +107,7 @@ Expr
 resultant(const Expr& p, const Expr& q, const Symbol& x);
 
 bool
-largest_positive_int_zero(const Expr& e, const Symbol& x, Number& z);
+find_domain_in_N(const Expr& e, const Symbol& x, Number& z);
 
 bool
 has_parameters(const Expr& e);

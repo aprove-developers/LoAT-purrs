@@ -498,8 +498,7 @@ ok_argument_factorial(const Expr& argument, const Symbol& n) {
   than \p z, stores it in \p z, otherwise \p z is left unchanged.
 */
 bool
-largest_positive_int_zero_on_expanded_ex(const Expr& e, const Symbol& x,
-					 Number& z) {
+find_domain_in_N_on_expanded_ex(const Expr& e, const Symbol& x, Number& z) {
   bool ok = false;
   if (e.has(x)) {
     // `e' is a polynomial in `x'.
@@ -523,7 +522,7 @@ largest_positive_int_zero_on_expanded_ex(const Expr& e, const Symbol& x,
       // `e' is not a polynomial in `x'.
       if (e.is_a_add() || e.is_a_mul()) {
 	for (unsigned int i = e.nops(); i-- > 0; )
-	  if (!largest_positive_int_zero_on_expanded_ex(e.op(i), x, z))
+	  if (!find_domain_in_N_on_expanded_ex(e.op(i), x, z))
 	    return false;
 	ok = true;
       }
@@ -531,11 +530,11 @@ largest_positive_int_zero_on_expanded_ex(const Expr& e, const Symbol& x,
 	if (e.is_the_log_function()) {
 	  if (e.arg(0).is_polynomial(x)) {
 	    ok = true;
-	    largest_positive_int_zero_on_expanded_ex(e.arg(0) - 1, x, z);
+	    find_domain_in_N_on_expanded_ex(e.arg(0) - 1, x, z);
 	  }
 	  else if (e.arg(0).is_the_log_function()) {
 	    ok = true;
-	    largest_positive_int_zero_on_expanded_ex(e.arg(0), x, z);
+	    find_domain_in_N_on_expanded_ex(e.arg(0), x, z);
 	    while (compare(z, Napier) == -1)
 	      ++z;
 	  }
@@ -544,7 +543,7 @@ largest_positive_int_zero_on_expanded_ex(const Expr& e, const Symbol& x,
 	  // If it is in the form `(a n + b)!' with `a' positive integer
 	  // then we find the minimum `n' such that `a n + b >= 0'.
 	  if (ok_argument_factorial(e.arg(0), x))
-	    if (largest_positive_int_zero_on_expanded_ex(e.arg(0), x, z))
+	    if (find_domain_in_N_on_expanded_ex(e.arg(0), x, z))
 	      ok = true;
       }
       else if (e.is_a_power()) {
@@ -555,7 +554,7 @@ largest_positive_int_zero_on_expanded_ex(const Expr& e, const Symbol& x,
 	    && e.arg(1).has(x))
 	  ok = true;
 	// `p(n)^q(n) = e^(q(n)*log(p(n)))'.
-	else if (largest_positive_int_zero(e.arg(1) * log(e.arg(0)), x, z))
+	else if (find_domain_in_N(e.arg(1) * log(e.arg(0)), x, z))
 	  ok = true;
       }
     }
@@ -569,9 +568,9 @@ largest_positive_int_zero_on_expanded_ex(const Expr& e, const Symbol& x,
 } // anonymous namespace
 
 bool
-PURRS::largest_positive_int_zero(const Expr& e, const Symbol& x, Number& z) {
-  return largest_positive_int_zero_on_expanded_ex(numerator(e).expand(), x, z)
-    && largest_positive_int_zero_on_expanded_ex(denominator(e).expand(), x, z);
+PURRS::find_domain_in_N(const Expr& e, const Symbol& x, Number& z) {
+  return find_domain_in_N_on_expanded_ex(numerator(e).expand(), x, z)
+    && find_domain_in_N_on_expanded_ex(denominator(e).expand(), x, z);
 }
 
 //! Returns <CODE>true</CODE> if \p e contains parameters;

@@ -201,13 +201,13 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
   // that cancel the denominator of the coefficient.
   // If this integer does not exist then `z' is left to 0.
   Number z = 0;
-  if (!largest_positive_int_zero(coefficients[1], n, z))
+  if (!find_domain_in_N(coefficients[1], n, z))
     return TOO_COMPLEX;
   // Find the largest positive or null integer that cancel the denominator of
   // `inhomogeneous_term' and store it in `z' if it is bigger than the
   // current `z'.
   if (!inhomogeneous_term.is_zero())
-    if (!largest_positive_int_zero(denominator(inhomogeneous_term), n, z))
+    if (!find_domain_in_N(denominator(inhomogeneous_term), n, z))
       return TOO_COMPLEX;
   // The initial conditions will start from `z'.
   set_first_valid_index(z.to_unsigned_int());
@@ -543,8 +543,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     const Expr& denom_inhomogeneous_term = denominator(inhomogeneous_term);
     if (has_parameters(denom_inhomogeneous_term))
       return TOO_COMPLEX;
-    // FIXME: find_largest_zero_or_singularity() pole???
-    if (!largest_positive_int_zero(denom_inhomogeneous_term, n, z))
+    if (!find_domain_in_N(denom_inhomogeneous_term, n, z))
       // The system did not find an integer cancelling `inhomogeneous_term' or
       // starting from which `inhomogeneous_term' is well-defined
       // (polynomials are always well-defined).

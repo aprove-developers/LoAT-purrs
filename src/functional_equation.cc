@@ -51,7 +51,7 @@ bool
 is_non_negative(const Expr& e, const Symbol& x, Number& i) {
   // Find the integer `i' starting from which the function `e' is
   // well defined and non-negative.
-  if (!largest_positive_int_zero(e, x, i))
+  if (!find_domain_in_N(e, x, i))
     return false;
   D_VAR(i);
   if (i == -1)
