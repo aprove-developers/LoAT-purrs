@@ -730,6 +730,13 @@ PURRS::Expr::substitute(const Expr& s, const Expr& r) const {
 	argument[j] = e.arg(j).substitute(s, r);
       return apply(e.functor(), argument);
     }
+  else if (e.is_a_Expr_List()) {
+    unsigned int num_arguments = e.nops();
+    GiNaC::lst l;
+    for (unsigned int i = 0; i < num_arguments; ++i)
+      l.append(static_cast<const GiNaC::ex>(e.op(i).substitute(s, r)));
+    e_substituted = static_cast<const GiNaC::ex>(l);
+  }
   else
     return e;
   return e_substituted;
