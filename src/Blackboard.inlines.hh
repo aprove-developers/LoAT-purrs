@@ -95,13 +95,8 @@ Blackboard::find_symbol(const Expr& e) {
   std::map<Symbol, unsigned int>::const_iterator j = index.begin();
   for (std::deque<Definition>::const_iterator i = definitions.begin(),
 	 definitions_end = definitions.end(); i != definitions_end; ++i, ++j) {
-    D_VAR(e);
-    D_VAR((*i).rhs);
-    if ((*i).rhs == e) {
-      D_MSG("UGUALI");
-      D_MSG("");
+    if ((*i).rhs == e)
       return j->first;
-    }
   }
   return insert_definition(e);
 }

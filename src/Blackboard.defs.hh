@@ -29,6 +29,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Blackboard.types.hh"
 #include "Expr.defs.hh"
 #include "Symbol.defs.hh"
+
 #include <map>
 #include <deque>
 #include <iosfwd>
