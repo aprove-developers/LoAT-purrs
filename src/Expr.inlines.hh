@@ -446,6 +446,41 @@ lsolve(const Expr_List& lst1, const Expr_List& lst2) {
   return lsolve(lst1, lst2);
 }
 
+inline bool
+Expr::is_the_abs_function() const {
+  return is_ex_the_function(e, abs);
+}
+
+inline bool
+Expr::is_the_exp_function() const {
+  return is_ex_the_function(e, exp);
+}
+
+inline bool
+Expr::is_the_log_function() const {
+  return is_ex_the_function(e, log);
+}
+
+inline bool
+Expr::is_the_sin_function() const {
+  return is_ex_the_function(e, sin);
+}
+
+inline bool
+Expr::is_the_cos_function() const {
+  return is_ex_the_function(e, cos);
+}
+
+inline bool
+Expr::is_the_tan_function() const {
+  return is_ex_the_function(e, tan);
+}
+
+inline bool
+Expr::is_the_acos_function() const {
+  return is_ex_the_function(e, acos);
+}
+
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_Expr_inlines_hh)
