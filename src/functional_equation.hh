@@ -28,13 +28,16 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr.types.hh"
 #include "Symbol.types.hh"
 #include "Number.types.hh"
+#include <vector>
 
 namespace Parma_Recurrence_Relation_Solver {
 
 bool
-is_non_negative_non_decreasing(const Expr& f, const Symbol& x,
+is_non_negative_non_decreasing(const Expr& f, const Number& base,
+			       const Expr& coefficient, bool poly,
+			       const Symbol& x,
 			       Number& condition);
-
+  
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_functional_equation_hh)

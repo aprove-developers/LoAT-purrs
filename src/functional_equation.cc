@@ -53,15 +53,25 @@ is_non_negative(const Expr& e, const Symbol& x, Number& i) {
   D_VAR(i);
   if (i == -1)
     ++i;
+  Expr tmp = numerator(e).substitute(x, i);
+  D_VAR(tmp);
   Number num;
-  if (numerator(e).substitute(x, i).is_a_number(num) && !num.is_negative()) {
-    D_MSG("true");
-    return true;
-  }
-  else {
-    D_MSG("false");
-    return false;
-  }
+  if (tmp.is_a_number(num))
+    if (!num.is_negative())
+      return true;
+    else
+      return false;
+  else
+    if (tmp.is_a_mul()) {
+      for (unsigned i = tmp.nops(); i-- > 0; )
+	if (tmp.is_the_log_function() && i == 0)
+	  return false;
+      return true;
+    }
+    else if (tmp.is_the_log_function() && i == 0)
+      return false;
+    else
+      return true;
 }
 
 //! \brief
@@ -151,50 +161,36 @@ is_non_decreasing_no_poly(const Expr& e, const Symbol& x) {
 //! Returns <CODE>true</CODE> if \p f is a non-negative, non-decreasing
 //! function in \p x; returns <CODE>false</CODE> otherwise.
 bool
-PURRS::is_non_negative_non_decreasing(const Expr& f, const Symbol& x,
-				      Number& condition) {
+PURRS::
+is_non_negative_non_decreasing(const Expr& f, const Number& base,
+			       const Expr& coefficient, bool poly,
+			       const Symbol& x,
+			       Number& condition) {
   D_VAR(f);
-  // We search exponentials in `n' (for this the expression
-  // `f' must be expanded).
-  // The vector `base_of_exps' contains the exponential's bases
-  // of all exponentials in `f'.
-  // In the `i'-th position of the vectors
-  // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
-  // the polynomial part and possibly non polynomial part of the coefficient
-  // of the exponential with the base in `i'-th position of `base_of_exp'.
-  // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
-  // coefficient of base_of_exps[i]^n.
-  std::vector<Expr> base_of_exps;
-  std::vector<Expr> exp_poly_coeff;
-  std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(f.expand(), base_of_exps,
-			 exp_poly_coeff, exp_no_poly_coeff);
-  D_VEC(base_of_exps, 0, base_of_exps.size()-1);
-  D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
-  D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
-
-  for (unsigned i = base_of_exps.size(); i-- > 0; ) {
-    // First step: checks that all exponentials'bases are greater or equal
-    // than `1'.
-    Number num_base;
-    if (!base_of_exps[i].is_a_number(num_base)
-	|| !num_base.is_positive())
-      return false;
-    // Second step: checks the polynomial part of the exponential's
-    // coefficient.
-    if (!exp_poly_coeff[i].is_zero())
-      if (!is_non_negative(exp_poly_coeff[i], x, condition))
-	if (!is_non_decreasing_poly(exp_poly_coeff[i], x)
-	    && !is_non_negative_non_decreasing
-	    (f.substitute(Recurrence::n, Recurrence::n+1)-f, x, condition))
+  D_VAR(base);
+  D_VAR(coefficient);
+  // First step: checks that all exponentials'bases are greater or equal
+  // than `1'.
+  if (!base.is_positive())
+    return false;
+  // Second step: checks the polynomial part of the exponential's
+  // coefficient.
+  if (poly) {
+    if (!is_non_negative(coefficient, x, condition))
+      if (!is_non_decreasing_poly(coefficient, x)) {
+	Expr tmp = f.substitute(Recurrence::n, Recurrence::n+1)-f;
+	if (!f.is_zero()
+	    && !is_non_negative_non_decreasing(tmp, base, coefficient,
+					       poly, x, condition))
 	  return false;
+      }
+  }
+  else {
     // Third step: checks the possibly non polynomial part of the
     // exponential's coefficient.
-    D_MSG("STEP 3");
-    if (!exp_no_poly_coeff[i].is_zero())
-      if (!is_non_negative(exp_no_poly_coeff[i], x, condition)
-	  || !is_non_decreasing_no_poly(exp_no_poly_coeff[i], x))
-	return false;
+    if (!is_non_negative(coefficient, x, condition)
+	|| !is_non_decreasing_no_poly(coefficient, x))
+      return false;
   }
   return true;
 }
