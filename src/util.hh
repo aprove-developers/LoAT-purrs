@@ -112,8 +112,29 @@ find_domain_in_N(const Expr& e, const Symbol& x, Number& z);
 bool
 has_parameters(const Expr& e);
 
+//! Kinds of substitution of the symbolic initial condition \f$ x() \f$.
+enum Mode_Subs {
+  //! Substitute the function \f$ x() \f$ with \f$ k^{x()} \f$.
+  EXPONENT,
+
+  //! Substitute the function \f$ x() \f$ with \f$ log_k x() \f$.
+  ARGUMENT_LOG,
+};
+
+//! \brief
+//! Substitutes all the symbolic initial conditions occurring in \p e
+//! with another expression depending from \p mode_subs_x.
+/*!
+  If \p mode_subs_x is equal to <CODE>EXPONENT</CODE> then this function
+  substitutes every occurrence in \p e of the function \f$ x() \f$ with
+  \f$ k^{x()} \f$.
+  If \p mode_subs_x is equal to <CODE>ARGUMENT_LOG</CODE> then this function
+  substitutes every occurrence in \p e of the function \f$ x() \f$ with
+  \f$ \log_k x() \f$.
+*/
 Expr
-substitute_x_function(const Expr& e, const Expr& k, bool do_power);
+substitute_x_function(const Expr& e, const Expr& k,
+		      const Mode_Subs mode_subs_x);
 
 //! \brief
 //! Returns <CODE>true</CODE> if and only if the functions \f$ x() \f$
