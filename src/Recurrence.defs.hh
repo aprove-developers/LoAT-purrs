@@ -1104,13 +1104,16 @@ private:
 				    roots) const;
 
   //! \brief
-  //! Performs the first step of the validation's process of exact solutions
+  //! Performs the second step of the validation's process of exact solutions
   //! of the recurrence relation of finite order \p *this verifying
   //! \ref initial_conditions "symbolic initial conditions".
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
   //! the verification.
   Verify_Status
-  validate_initial_conditions(index_type order) const;
+  validate_initial_conditions(index_type order,
+			      const std::vector<Expr>& coefficients_i_c,
+			      const Expr& summands_with_i_c,
+			      const Expr& summands_without_i_c) const;
 
   Verify_Status
   traditional_step_3(index_type order_rec,

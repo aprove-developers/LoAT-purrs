@@ -36,6 +36,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Recurrence.defs.hh"
 #include "Recurrence.inlines.hh"
 #include <vector>
+#include <algorithm>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
@@ -92,32 +93,68 @@ ok_inequalities(const Expr& e, unsigned int condition) {
 
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::
-validate_initial_conditions(index_type order) const {
-  Expr exact_solution;
-  if (evaluated_exact_solution_.has_expression())
-    exact_solution = evaluated_exact_solution_.expression();
-  else
-    exact_solution = exact_solution_.expression();
-
+validate_initial_conditions(index_type order,
+			    const std::vector<Expr>& coefficients_i_c,
+			    const Expr& summands_with_i_c,
+			    const Expr& summands_without_i_c) const {
   for (index_type i = 0; i < order; ++i) {
     index_type index =
       get_max_index_initial_condition() > first_valid_index + i
       ? get_max_index_initial_condition() : first_valid_index + i;
-    // The expression `e' can be more difficult to simplify.
-    // For this motive we performed simplification also
-    // before to expand blackboard's definitions.
-    Expr e = simplify_all(exact_solution.substitute(n, index));
-    // Expand blackboard's definitions in order to increase the
-    // opportunities for simplifications.
+    // In the case of non-linear recurrences the homogeneous part
+    // of the solution can contains more than one symbolic initial
+    // condition: the vector `coefficients_i_c' is in this case empty.
+    // FIXME: to generalize the method for linear finite order with
+    // constant coefficients solved with the order reduction method.
+    if ((is_linear_finite_order_const_coeff() && applied_order_reduction())
+	|| is_non_linear_finite_order()) {
+      // The expression `e' can be more difficult to simplify.
+      // For this motive we performed simplification also
+      // before to expand blackboard's definitions.
+      Expr e = simplify_all(summands_with_i_c.substitute(n, index));
+      // Expand blackboard's definitions in order to increase the
+      // opportunities for simplifications.
+      e = blackboard.rewrite(e);
+      e = simplify_all(e);
+      // If in the map `initial_conditions' there is an expression
+      // `e' correspondent to the integer `first_valid_index + i'
+      // (the index of the initial condition), then returns `e';
+      // returns `x(first_valid_index + i)' otherwise.
+      if (e != get_initial_condition(index))
+	// FIXME: provably_incorrect nei casi semplici.
+	return INCONCLUSIVE_VERIFICATION;
+    }
+    else {
+      D_VEC(coefficients_i_c, 0, coefficients_i_c.size()-1);
+      unsigned int coefficients_i_c_size = coefficients_i_c.size();
+      // coefficients of initial conditions.
+      for (unsigned j = 0; j < coefficients_i_c_size; ++j) {
+	Expr e = simplify_all(coefficients_i_c[j].substitute(n, index));
+	// Expand blackboard's definitions in order to increase the
+	// opportunities for simplifications.
+	e = blackboard.rewrite(e);
+	e = simplify_all(e);
+	D_VAR(index);
+	D_VAR(j);
+	D_VAR(e);
+	D_MSG("");
+	if (index == first_valid_index + j) {
+	  if (e != 1)
+	    // FIXME: provably_incorrect nei casi semplici.
+	    return INCONCLUSIVE_VERIFICATION;
+	}
+	else
+	  if (!e.is_zero())
+	    // FIXME: provably_incorrect nei casi semplici.
+	    return INCONCLUSIVE_VERIFICATION;
+      }
+    }
+    // The non-homogeneous part of the solution.
+    Expr e = simplify_all(summands_without_i_c.substitute(n, index));
     e = blackboard.rewrite(e);
     e = simplify_all(e);
-
-    // If in the map `initial_conditions' there is an expression
-    // `e' correspondent to the integer `first_valid_index + i'
-    // (the index of the initial condition), then returns `e';
-    // returns `x(first_valid_index + i)' otherwise.
-    if (e != get_initial_condition(index))
-      // FIXME: pravably_incorrect nei casi semplici.
+    if (!e.is_zero())
+      // FIXME: provably_incorrect nei casi semplici.
       return INCONCLUSIVE_VERIFICATION;
   }
   return PROVABLY_CORRECT;
@@ -532,7 +569,7 @@ fill_vector_coefficients_i_c(const Expr& summands_with_i_c, unsigned int gcd,
   Case 1: linear recurrences of finite order.
   Consider the right hand side \p rhs of the order \f$ k \f$ recurrence
   relation
-  \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$,
+  \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dots + a_k * x_{n-k} + p(n) \f$,
   which is stored in the expression \p recurrence_rhs.
   Let \f$ i \f$ be the \ref first_valid_index "first_valid_index" and
   assume that the system has produced the expression
@@ -540,33 +577,50 @@ fill_vector_coefficients_i_c(const Expr& summands_with_i_c, unsigned int gcd,
   variable \f$ n \f$.
 
   The verification's process is divided in 4 steps:
-  -  Validation of \ref initial_conditions "symbolic initial conditions".
-     Evaluate the expression \p exact_solution_.expression() for
-     \f$ n = i, \cdots, i+k-1 \f$ and simplify as much as possible.
-     If the final result is <EM>synctactically</EM> equal to \f$ x(n) \f$
-     for \f$ n = i, \cdots, i+k-1 \f$, the symbolic initial conditions are
-     verified and we can proceed to step 2; otherwise return
-     <CODE>INCONCLUSIVE_VERIFICATION</CODE> because the
-     solution can be wrong or it is not enough simplified.
-     FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
   -  Split \p exact_solution_.expression() in 2 expressions:
      \p summands_with_i_c contains the summands with an occurrence of a
      symbolic initial conditions \f$ x(i), \cdots, x(i+k) \f$;
      \p summands_without_i_c contains all the other summands.
-  -  Verify that \p summands_with_i_c satisfies the homogeneous part of
-     the recurrence
-     \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} \f$.
-     Replace \f$ x(n-i) \f$ by \p exact_solution_.expression()
-     evaluated at \f$ n-i \f$ (for \f$ i = 1, \cdots, k \f$) in the
-     above expression, and store the result in
-     \p substituted_homogeneous_rhs.
-     Consider the difference
-     \f$ d1 = summands_with_i_c - substituted_homogeneous_rhs \f$:
-     - if \f$ d1 = 0 \f$     -> proceed to step 3;
-     - if \f$ d1 \neq 0 \f$  -> returns <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
- 			        the solution can be wrong or we failed to
-			        simplify it.
+     Consider the homogeneous part of the solution: the coefficients of
+     the symbolic initial conditions \f$ x(i), \cdots, x(i+k) \f$ are put
+     in the vector \p coefficients_i_c.
+  -  Validation of \ref initial_conditions "symbolic initial conditions".
+     Evaluate the elements of the vector \p coefficients_i_c for
+     \f$ n = i, \cdots, i+k-1 \f$ and simplify as much as possible.
+     Only the element corresponding to the \f$ i \f$-th symbolic initial
+     condition must be <EM>synctactically</EM> equal to \f$ 1 \f$, while
+     all the other elements must be <EM>synctactically</EM> equal to
+     \f$ 0 \f$: if it is not so the function returns
+     <CODE>INCONCLUSIVE_VERIFICATION</CODE> because
+     the solution can be wrong or it is not enough simplified.
      FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
+     If the previous verification on the coefficients of symbolic
+     initial conditions is successfully, then evaluate \p summands_without_i_c
+     for \f$ n = i, \cdots, i+k-1 \f$ and simplify as much as possible.
+     If the final result is not <EM>synctactically</EM> equal to \f$ 0 \f$
+     the function returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> because the
+     solution can be wrong or it is not enough simplified.
+     FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
+  -  Verify that the elements of the vector \p coefficients_i_c satisfy
+     the homogeneous part of the recurrence
+     \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} \f$.
+     There are two different way:
+     - Replace \f$ x(n-i) \f$ by the \f$ i \f$-th elements of the vector
+       evaluated at \f$ n-i \f$ (for \f$ i = 1, \cdots, k \f$) in the
+       above expression, and store the result in
+       \p substituted_homogeneous_rhs.
+       For each element of the vector consider the difference
+       \f$ d_i = summands_with_i_c - substituted_homogeneous_rhs \f$:
+       - if \f$ d_i = 0 \f$     -> proceed with the other elements or,
+                                   if they are finished, proceed to step 4;
+       - if \f$ d_i \neq 0 \f$  -> returns
+                                   <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
+				   the solution can be wrong or we failed to
+				   simplify it.
+     FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
+     - A new method explained in the paper
+       "Checking and Confining the Solutions of Recurrence Relations".
+       FIXME: to be written
   -  There are two different way:
      - Verify that \p summands_without_i_c satisfies the recurrence
        (in other words, we are considering all initial conditions equal
@@ -576,13 +630,13 @@ fill_vector_coefficients_i_c(const Expr& summands_with_i_c, unsigned int gcd,
        right hand side of the recurrence, and store the result in
        \p substituted_rhs.
        Consider the difference
-       \f$ d2 = summands_without_i_c - substituted_rhs \f$:
-       - if \f$ d2 = 0 \f$     -> returns <CODE>PROVABLY_CORRECT</CODE>:
-                                  the solution is certainly right.
-       - if \f$ d2 \neq 0 \f$  -> returns
-                                  <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
-				  the solution can be wrong or we failed to
-				  simplify it.
+       \f$ d = summands_without_i_c - substituted_rhs \f$:
+       - if \f$ d = 0 \f$     -> returns <CODE>PROVABLY_CORRECT</CODE>:
+                                 the solution is certainly right.
+       - if \f$ d \neq 0 \f$  -> returns
+                                 <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
+				 the solution can be wrong or we failed to
+				 simplify it.
 	 FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
 
      - A new method explained in the paper
@@ -630,13 +684,8 @@ PURRS::Recurrence::verify_finite_order() const {
     // as some combination of `x(i)', with i < n and the solution
     // is simply `rhs'.
     return PROVABLY_CORRECT;
-  
-  // Step 1: validation of symbolic initial conditions.
-  Verify_Status status = validate_initial_conditions(order_rec);
-  if (status != PROVABLY_CORRECT)
-    return status;
-  
-  // Step 2: split the solution in 2 parts: terms with initial conditions
+
+  // Step 1: split the solution in 2 parts: terms with initial conditions
   // are stored in `summands_with_i_c', all the other terms are stored in
   // `summands_without_i_c'.
   Expr summands_with_i_c = 0;
@@ -659,13 +708,23 @@ PURRS::Recurrence::verify_finite_order() const {
       summands_with_i_c = exact_solution;
     else
       summands_without_i_c = exact_solution;
-
-  // Step 3.
+  
   // Prepare a vector containing the coefficients of the symbolic
-  // initial conditions occurring in `summands_with_i_c'.
+  // initial conditions occurring in the solution.
   std::vector<Expr> coefficients_i_c(order_rec/gcd);
-  fill_vector_coefficients_i_c(summands_with_i_c, gcd, first_valid_index,
-			       coefficients_i_c);
+  if (is_linear_finite_order())
+    fill_vector_coefficients_i_c(summands_with_i_c, gcd, first_valid_index,
+				 coefficients_i_c);
+
+  // Step 2: validation of symbolic initial conditions.
+  Verify_Status status = validate_initial_conditions(order_rec,
+						     coefficients_i_c,
+						     summands_with_i_c,
+						     summands_without_i_c);
+  if (status != PROVABLY_CORRECT)
+    return status;
+  
+  // Step 3.
 #if NEW_VERIFICATION
   // In order to apply the method explained in the paper
   // "Checking and Confining the Solutions of Recurrence Relations"
