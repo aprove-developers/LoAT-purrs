@@ -466,6 +466,10 @@ Expr prod(const Expr& index, const Expr& lower, const Expr& upper,
 /*! \relates Expr */
 Expr mod(const Expr& x, const Expr& y);
 
+//! Returns the function \f$ floor(x) \f$.
+/*! \relates Expr */
+Expr floor(const Expr& x);
+
 //! The base class for mathematical object.
 /*!
   ...
@@ -1243,6 +1247,7 @@ private:
   friend Expr prod(const Expr& index, const Expr& lower, const Expr& upper,
 		   const Expr& factor);
   friend Expr mod(const Expr& x, const Expr& y);
+  friend Expr floor(const Expr& x);
 
   //! Builds the expression corresponding to \p ge.
   Expr(const Base& ge);

@@ -37,10 +37,11 @@ http://www.cs.unipr.it/purrs/ . */
 namespace GiNaC {
 
 DECLARE_FUNCTION_1P(x);
-DECLARE_FUNCTION_4P(sum);
-DECLARE_FUNCTION_4P(prod);
+DECLARE_FUNCTION_1P(floor);
 DECLARE_FUNCTION_2P(mod);
 DECLARE_FUNCTION_2P(binom);
+DECLARE_FUNCTION_4P(sum);
+DECLARE_FUNCTION_4P(prod);
 
 } // namespace GiNaC
 
@@ -689,6 +690,11 @@ x(const Expr& y) {
   if (y.is_a_number(num))
     assert(num.is_nonnegative_integer());
   return x(static_cast<const Expr::Base>(y));
+}
+
+inline Expr
+floor(const Expr& x) {
+  return floor(static_cast<const Expr::Base>(x));
 }
 
 inline Expr

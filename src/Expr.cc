@@ -32,10 +32,15 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Blackboard.defs.hh"
 #include "Expr.defs.hh"
 #include "simplify.hh"
+#include <cln/rational_io.h>
+#include <cln/rational_ring.h>
+
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 namespace GiNaC {
+
+/* x() function */
 
 ex
 x_eval(const ex& e) {
@@ -56,6 +61,160 @@ REGISTER_FUNCTION(x,
 		  eval_func(x_eval).
 		  evalf_func(x_evalf).
 		  derivative_func(x_deriv));
+
+
+/* floor() function */
+
+//! Evaluation of the <CODE>floor(x)</CODE>.
+ex
+floor_eval(const ex& x) {
+  if (is_a<numeric>(x)) {
+    numeric num_x = ex_to<numeric>(x);
+    if (num_x.is_integer())
+      return x;
+    else if (num_x.is_rational()) {
+      const cln::cl_I tmp = cln::floor1(cln::the<cln::cl_RA>(num_x.to_cl_N()));
+      return numeric(tmp);
+    }
+    else
+      return floor(x).hold();
+  }
+  else
+    return floor(x).hold();
+}
+
+ex
+floor_evalf(const ex& x) {
+  return floor(x).hold();
+}
+
+ex
+floor_deriv(const ex&, unsigned int) {
+  abort();
+}
+
+/*!
+  We define the symbolic function
+  \f[
+    \floor{x}.
+  \f]
+  It gives the largest integer less than or equal to x.
+*/
+REGISTER_FUNCTION(floor,
+		  eval_func(floor_eval).
+		  evalf_func(floor_evalf).
+		  derivative_func(floor_deriv));
+
+
+/* mod() function */
+
+//! Evaluation of the <CODE>mod(x, y)</CODE>.
+/*!
+  mod_eval(const ex& x, const ex& y)
+
+  \param x    The expression that we want divide.
+  \param y    The expression for which \p x is divided.
+
+  We apply the following properties:
+  \f[
+    \begin{cases}
+      mod(x, y) = Number::mod(x, y),
+        \quad \text{if x and y are both numerics}; \\
+      mod(x - h y, y) = mod(x, y),
+          \quad \text{if y and h are integers}.
+    \end{cases}
+  \f]
+*/
+ex
+mod_eval(const ex& x, const ex& y) {
+  if (is_a<numeric>(x) && is_a<numeric>(y))
+    return mod(ex_to<numeric>(x), ex_to<numeric>(y));
+  else
+    if (is_a<numeric>(y)) {
+      numeric k = ex_to<numeric>(y);
+      if (k.is_integer() && is_a<add>(x) && x.nops() == 2) {
+	if (is_a<symbol>(x.op(0)) && is_a<numeric>(x.op(1))) {
+	  numeric h = ex_to<numeric>(x.op(1));
+	  if (mod(h, k) == 0)
+	    return mod(x.op(0), y).hold();
+	}
+	if (is_a<symbol>(x.op(1)) && is_a<numeric>(x.op(0))) {
+	  numeric h = ex_to<numeric>(x.op(0));
+	  if (mod(h, k) == 0)
+	    return mod(x.op(1), y).hold();
+	}
+      }
+    }
+  return mod(x, y).hold();
+}
+
+ex
+mod_evalf(const ex& x, const ex& y) {
+  return mod(x, y).hold();
+}
+
+ex
+mod_deriv(const ex&, const ex&, unsigned int) {
+  abort();
+}
+
+/*!
+  We define the general symbolic function
+  \f[
+    mod(n, k).
+  \f]
+*/
+REGISTER_FUNCTION(mod,
+		  eval_func(mod_eval).
+		  evalf_func(mod_evalf).
+		  derivative_func(mod_deriv));
+
+
+/* binom() function */
+
+//! ...
+ex
+binom_eval(const ex& m, const ex& k) {
+  if (is_a<numeric>(m) && is_a<numeric>(k)) {
+    numeric num_k = ex_to<numeric>(k);;
+    if (num_k < 0 || !num_k.is_integer())
+      throw std::range_error("We do not know how to evaluate\n"
+			     "`binom(m, k)' with `k' not non-negative "
+			     "integer.");
+    else {
+      // If `k == 0' then `prod(h, m - num_k + 1, m, h) / factorial(num_k)'
+      // is equal to 1.
+      symbol h;
+      return prod(ex(h), m-num_k+1, m, ex(h)) / factorial(num_k);
+    }
+  }
+  else
+    return binom(m, k).hold();
+}
+
+ex
+binom_evalf(const ex& m, const ex& k) {
+  return binom(m, k).hold();
+}
+
+ex
+binom_deriv(const ex&, const ex&, unsigned int) {
+  abort();
+}
+
+/*!
+  We define the symbolic function
+  \f[
+    \binom{m}{k}, \text{for } m \in \Cset, k \in \Zset, k \geq 0.
+  \f]
+*/
+REGISTER_FUNCTION(binom,
+		  eval_func(binom_eval).
+		  evalf_func(binom_evalf).
+		  derivative_func(binom_deriv));
+
+
+/* sum() function */
 
 /*!
   Let \f$ e(x) \f$ be the expression in \p x contained in \p e.
@@ -173,6 +332,8 @@ REGISTER_FUNCTION(sum,
 		  evalf_func(sum_evalf).
 		  derivative_func(sum_deriv));
 
+
+/* prod() function */
 
 //! Evaluation of the <CODE>prod(index, lower, upper, factor)</CODE>.
 /*!
@@ -328,109 +489,6 @@ REGISTER_FUNCTION(prod,
 		  eval_func(prod_eval).
 		  evalf_func(prod_evalf).
 		  derivative_func(prod_deriv));
-
-//! Evaluation of the <CODE>mod(x, y)</CODE>.
-/*!
-  mod_eval(const ex& x, const ex& y)
-
-  \param x    The expression that we want divide.
-  \param y    The expression for which \p x is divided.
-
-  We apply the following properties:
-  \f[
-    \begin{cases}
-      mod(x, y) = Number::mod(x, y),
-        \quad \text{if x and y are both numerics}; \\
-      mod(x - h y, y) = mod(x, y),
-          \quad \text{if y and h are integers}.
-    \end{cases}
-  \f]
-*/
-ex
-mod_eval(const ex& x, const ex& y) {
-  if (is_a<numeric>(x) && is_a<numeric>(y))
-    return mod(ex_to<numeric>(x), ex_to<numeric>(y));
-  else
-    if (is_a<numeric>(y)) {
-      numeric k = ex_to<numeric>(y);
-      if (k.is_integer() && is_a<add>(x) && x.nops() == 2) {
-	if (is_a<symbol>(x.op(0)) && is_a<numeric>(x.op(1))) {
-	  numeric h = ex_to<numeric>(x.op(1));
-	  if (mod(h, k) == 0)
-	    return mod(x.op(0), y).hold();
-	}
-	if (is_a<symbol>(x.op(1)) && is_a<numeric>(x.op(0))) {
-	  numeric h = ex_to<numeric>(x.op(0));
-	  if (mod(h, k) == 0)
-	    return mod(x.op(1), y).hold();
-	}
-      }
-    }
-  return mod(x, y).hold();
-}
-
-ex
-mod_evalf(const ex& x, const ex& y) {
-  return mod(x, y).hold();
-}
-
-ex
-mod_deriv(const ex&, const ex&, unsigned int) {
-  abort();
-}
-
-/*!
-  We define the general symbolic function
-  \f[
-    mod(n, k).
-  \f]
-*/
-REGISTER_FUNCTION(mod,
-		  eval_func(mod_eval).
-		  evalf_func(mod_evalf).
-		  derivative_func(mod_deriv));
-
-
-//! ...
-ex
-binom_eval(const ex& m, const ex& k) {
-  if (is_a<numeric>(m) && is_a<numeric>(k)) {
-    numeric num_k = ex_to<numeric>(k);;
-    if (num_k < 0 || !num_k.is_integer())
-      throw std::range_error("We do not know how to evaluate\n"
-			     "`binom(m, k)' with `k' not non-negative "
-			     "integer.");
-    else {
-      // If `k == 0' then `prod(h, m - num_k + 1, m, h) / factorial(num_k)'
-      // is equal to 1.
-      symbol h;
-      return prod(ex(h), m-num_k+1, m, ex(h)) / factorial(num_k);
-    }
-  }
-  else
-    return binom(m, k).hold();
-}
-
-ex
-binom_evalf(const ex& m, const ex& k) {
-  return binom(m, k).hold();
-}
-
-ex
-binom_deriv(const ex&, const ex&, unsigned int) {
-  abort();
-}
-
-/*!
-  We define the symbolic function
-  \f[
-    \binom{m}{k}, \text{for } m \in \Cset, k \in \Zset, k \geq 0.
-  \f]
-*/
-REGISTER_FUNCTION(binom,
-		  eval_func(binom_eval).
-		  evalf_func(binom_evalf).
-		  derivative_func(binom_deriv));
 
 } // namespace GiNaC
 
