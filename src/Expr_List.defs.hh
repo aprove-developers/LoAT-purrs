@@ -67,6 +67,10 @@ public:
 private:
   GiNaC::lst l;
 
+  friend Expr sqrfree(const Expr& e, const Expr_List& lst);
+  
+  friend Expr lsolve(const Expr_List& lst1, const Expr_List& lst2);
+
   friend class Expr;
   friend class Matrix;
 
