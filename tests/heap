@@ -723,9 +723,13 @@ yv	5*log(n+1)
 yv	5*n*n
 yv      5*x(n-1)+1/n
 yv	5*x(n-1)+log(n)
+yv	5*x(n-1)+log(n-3)^(-1)*n
 yv	5*x(n-1)+n*log(log(n))
 yv	5*x(n-1)+n*log(n)
 yv	5*x(n-1)-6*x(n-2)
+yv      5*x(n-1)-6*x(n-2)+1/log(n+2)
+yv      5*x(n-1)-6*x(n-2)+1/(n-1)
+yv      5*x(n-1)-6*x(n-2)+1/log(n-5)
 yv	5*x(n-1)-6*x(n-2)+2*n+2^n
 yv	5*x(n-1)-6*x(n-2)+4
 yv	5*x(n-4)+n*log(log(n))
