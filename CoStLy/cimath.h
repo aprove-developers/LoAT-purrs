@@ -1,8 +1,8 @@
 /*
 
- File: cimath.h, 2002/05/16
+ File: cimath.h, 2002/12/06
 
- CoStLy (COmplex interval STandard functions LibrarY), Version 0.2
+ CoStLy (COmplex interval STandard functions LibrarY), Version 0.3
 
  Copyright (C) Markus Neher, markus.neher@math.uni-karlsruhe.de
                Ingo Eble,    ingoeble@web.de
@@ -38,6 +38,8 @@ using namespace cxsc;
 
 #endif
 
+#include <list> //STL
+
 cinterval exp(const cinterval&);
 cinterval cos(const cinterval&);
 cinterval sin(const cinterval&);
@@ -51,11 +53,20 @@ cinterval coth(const cinterval&);
 
 interval arg(const cinterval&);
 
+#ifdef FILIB_VERSION
+cinterval log(const cinterval&);
+#else //C-XSC Version
 cinterval ln(const cinterval&);
+#endif
 
 cinterval sqr(const cinterval&);
+
 cinterval sqrt(const cinterval&);
-cinterval sqrt(const cinterval&,int);
+cinterval root(const cinterval&,unsigned int);
+
+std::list<cinterval> sqrt_all(const cinterval&); 
+std::list<cinterval> root_all(const cinterval&,unsigned int);
+
 cinterval asin(const cinterval&);
 cinterval acos(const cinterval&);
 cinterval asinh(const cinterval&);
@@ -66,8 +77,12 @@ cinterval atanh(const cinterval&);
 cinterval acoth(const cinterval&);
 
 cinterval power(const cinterval&,int);
+
 cinterval pow(const cinterval&,const interval&);
 cinterval pow(const cinterval&,const cinterval&);
+
+std::list<cinterval> pow_all(const cinterval&,const interval&);
+std::list<cinterval> pow_all(const cinterval&,const cinterval&);
 
 #endif
 

@@ -1,26 +1,27 @@
 /*
 
- File: cimath.cpp, 2002/05/16
+ File: cimath.cpp, 2002/12/06
 
- CoStLy (COmplex interval STandard functions LibrarY), Version 0.2
+ CoStLy (COmplex interval STandard functions LibrarY), Version 0.3
 
  Copyright (C) Markus Neher, markus.neher@math.uni-karlsruhe.de
                Ingo Eble,    ingoeble@web.de
 
- This implementation of some complex standard functions for interval arithmetic
- was taken from a Pascal-XSC modul written by Andreas Westphal.
- Implemetation ...
+ Implemetation in C++ with 
 
- ... in C++ with 
+        filib++:     Copyright (C) 2002 Markus Neher 
+                                        Ingo Eble
 
-            filib++:	     Copyright (C) 2002 Markus Neher 
-                                                Ingo Eble
+	C-XSC:	     Copyright (C) 2000 Markus Neher 
+	                                Ingo Eble
 
-	    C-XSC:	     Copyright (C) 2000 Markus Neher 
-	                                        Ingo Eble
+ Documentation: See attached file CoStLy03.pdf
 
- ... in Pascal-XSC:  Copyright (C) 1999 Andreas Westphal
-                                        Walter Kraemer
+
+ Most of this implementation of complex interval standard functions 
+ was taken from a Pascal-XSC modul written by Andreas Westphal
+ ((C) 1999 Andreas Westphal, Walter Kraemer, Universitaet Karlsruhe).
+
 
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
@@ -36,79 +37,61 @@
  along with this program; if not, write to the Free Software
  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
 
- 
- Original header of the Pascal-xsc file written by Andreas Westphal:
-
- ************************************************************************** 
- ************************************************************************** 
- ***                                                                    *** 
- ***        Weitere Standardfunktionen fuer komplexe Intervalle         *** 
- ***                                                                    *** 
- ************************************************************************** 
- ************************************************************************** 
- ************************************************************************** 
- ***  Literatur :                                                       *** 
- ***                                                                    *** 
- ***   Braune, K.D. : 'Hochgenaue Standardfunktionen fuer reelle und    *** 
- ***     und komplexe Punkte und Intervalle in beliebigen Gleitpunkt-   *** 
- ***     rastern', Dissertation, Karlsruhe, 1987.                       *** 
- ***   Buehler, G. : 'Standardfunktionen fuer komplexe Intervalle im    *** 
- ***     64 Bit IEEE Datenformat', Diplomarbeit, Karlsruhe, 1993.       *** 
- ***   Kraemer, W. : 'Inverse Standardfunktionen fuer reelle und        *** 
- ***     komplexe Intervallargumente mit a priori Fehlerabschaetzungen  *** 
- ***     fuer beliebige Datenformate', Dissertation, Karlsruhe, 1987.   *** 
- ***                                                                    *** 
- ************************************************************************** 
- ***  Autor: Andreas Westphal                                           *** 
- ***  Betreuer: Walter Kraemer                                          ***  
- ***     Institut fuer Wissenschaftliches Rechnen  und                  ***   
- ***     Mathematische Modellbildung, Universitaet Karlsruhe (TH)       *** 
- ***                       Stand: Maerz 1999                            *** 
- ************************************************************************** 
-
 */
 
 
-//Include header files
+/*
+  Include header files
+*/
+
 #include "cimath.h" //Declaration of the complex functions
 
 #ifdef FILIB_VERSION
 
 #include "Interval.h" //fi_lib++ Header: Macro Version
 typedef Interval interval;
+typedef double flnumber;
+
+#ifdef FILIB_NAMESPACES
+using namespace filib;
+#endif
 
 #else //C-XSC Version
 
 #include "rmath.hpp" //"real" standard functions 
 #include "imath.hpp" //"interval" standard functions 
-#include "dot.hpp" //"dotprecision" standard functions 
+#include "dot.hpp"   //"dotprecision" standard functions 
+typedef real flnumber;
 
 #endif
-
-using std::abs;
-using std::max;
 
 #include "error.h"
 
-#ifdef FILIB_VERSION
-#else //C-XSC Version
+/*
+  Some useful values
+*/
 
 inline const interval& PI()
 { 
-  static const interval pi( acos(interval(-1.0)) );
+  static const interval pi( 
+#ifdef FILIB_VERSION
+			   interval::PI()
+#else
+			   acos(interval(-1.0))
+#endif
+			   );
   return pi;
 }
-
-#endif
 
 inline const interval& HALFPI()
 { 
   static const interval hp( 
 #ifdef FILIB_VERSION
-			   interval::PI() / 2.0 );
+			   interval::PI() / 2.0
 #else //C-XSC Version
-                           acos(interval(0.0))  );
+                           acos(interval(0.0))
 #endif
+			   );
   return hp;
 }
 
@@ -116,162 +99,146 @@ inline const interval& QUARTERPI()
 {
   static const interval qp( 
 #ifdef FILIB_VERSION
-			   interval::PI() / 4.0 );
+			   interval::PI() / 4.0
 #else //C-XSC Version
-                           acos(interval(0.0))/2.0);
+                           acos(interval(0.0)) / 2.0
 #endif
+			   );
   return qp;
 }
 
-/* ***************************************************************************/
-/* ***************************************************************************/
-/* ***                      Single-valued functions                      *** */
-/* ***************************************************************************/
-/* ***************************************************************************/
+inline const interval& SQRT_2()
+{
+  static const interval square_root_2( sqrt(interval(2.0,2.0)) );
+  return square_root_2;
+}
 
+inline const interval& INV_SQRT_2()
+{
+  static const interval inv_square_root_2( SQRT_2()/2.0 );
+  return inv_square_root_2;
+}
 
-/* ***************************************************************************/
-/* *** Power operator  pow  is not listed here, since it relies on the    ****/
-/* *** (multi-valued) logarithm                                           ****/
-/* ***************************************************************************/
- 
+inline const interval& ZERO_INTERVAL()
+{
+  static const interval zero_interval(
+#ifdef FILIB_VERSION
+				      interval::ZERO()
+#else
+				      0.0
+#endif
+				      );
+  return zero_interval;
+}
 
-/* ***************************************************************************/
-/* *** The hyperbolic functions exp, sin, cos, sinh, cosh are separable:  ****/
-/* *** Their real and imaginary parts are products of real functions      ****/
-/* ***************************************************************************/
-/* ***   With Re(z)=x, Im(z)=y :                                          ****/
-/* ***                                                                    ****/
-/* ***        exp   :   Re(exp(z)) = exp(x) * cos(y)                      ****/
-/* ***                  Im(exp(z)) = exp(x) * sin(y)                      ****/
-/* ***                                                                    ****/
-/* ***        sin   :   Re(sin(z)) = sin(x) * cosh(y)                     ****/
-/* ***                  Im(sin(x)) = cos(x) * sinh(y)                     ****/
-/* ***                                                                    ****/
-/* ***        cos   :   Re(cos(z)) = cos(x) * cosh(y)                     ****/
-/* ***                  Im(sin(x)) = -sin(x) * sinh(y)                    ****/
-/* ***                                                                    ****/
-/* ***        sinh  :   Re(sinh(z)) = sinh(x) * cos(y)                    ****/
-/* ***                  Im(sinh(z)) = cosh(x) * sin(y)                    ****/
-/* ***                                                                    ****/
-/* ***        cosh  :   Re(cosh(z)) = cosh(x) * cos(y)                    ****/
-/* ***                  Im(cosh(z)) = sinh(x) * sin(y)                    ****/
-/* ***                                                                    ****/
-/* ***************************************************************************/
+inline const interval& ONE_INTERVAL()
+{
+  static const interval one_interval(
+#ifdef FILIB_VERSION
+				      interval::ONE()
+#else
+				      1.0
+#endif
+				      );
+  return one_interval;
+}
+
+/* ------------------------------------------------------------------------- */
+/*                          Single-valued functions                          */
+/* ------------------------------------------------------------------------- */
+
+/* ------------------------------------------------------------------------- */
+/*     Power operator  pow  is not listed here, since it relies on the       */
+/*     (multi-valued) logarithm                                              */
+/* ------------------------------------------------------------------------- */
+
+/* ------------------------------------------------------------------------- */
+/*                                                                           */
+/*     The hyperbolic functions exp, sin, cos, sinh, cosh are separable:     */
+/*     Their real and imaginary parts are products of real functions         */
+/*                                                                           */
+/*     With Re(z)=x, Im(z)=y :                                               */
+/*                                                                           */
+/*          exp   :   Re(exp(z)) = exp(x) * cos(y)                           */
+/*                    Im(exp(z)) = exp(x) * sin(y)                           */
+/*                                                                           */
+/*          sin   :   Re(sin(z)) = sin(x) * cosh(y)                          */
+/*                    Im(sin(x)) = cos(x) * sinh(y)                          */
+/*                                                                           */
+/*          cos   :   Re(cos(z)) = cos(x) * cosh(y)                          */
+/*                    Im(sin(x)) = -sin(x) * sinh(y)                         */
+/*                                                                           */
+/*          sinh  :   Re(sinh(z)) = sinh(x) * cos(y)                         */
+/*                    Im(sinh(z)) = cosh(x) * sin(y)                         */
+/*                                                                           */
+/*          cosh  :   Re(cosh(z)) = cosh(x) * cos(y)                         */
+/*                    Im(cosh(z)) = sinh(x) * sin(y)                         */
+/*                                                                           */
+/* ------------------------------------------------------------------------- */
  
 cinterval exp(const cinterval& z) 
 {
 #ifdef FILIB_VERSION
-
-  interval 
-    A( exp( z.re() ) ), 
-    B(      z.im()   );
-
+  interval A( exp( z.re() ) ), B( z.im() );   
 #else //C-XSC Version
-
-  interval 
-    A( exp( Re(z) ) ), 
-    B(      Im(z)   );
-
+  interval A( exp( Re(z) ) ), B( Im(z) );  
 #endif
-
   return cinterval( A*cos( B ) , A*sin( B ) );
 }
 
 cinterval cos(const cinterval& z) 
 {
 #ifdef FILIB_VERSION
-
-  interval 
-    A( z.re() ), 
-    B( z.im() );
-
+  interval A( z.re() ), B( z.im() );   
 #else //C-XSC Version
-
-  interval 
-    A( Re(z) ), 
-    B( Im(z) );
-
-#endif
-
+  interval A( Re(z) ), B( Im(z) );  
+#endif 
   return cinterval( cos( A )*cosh( B ) , -sin( A )*sinh( B ) );
 }
 
 cinterval sin(const cinterval& z) 
 {
 #ifdef FILIB_VERSION
-
-  interval 
-    A( z.re() ), 
-    B( z.im() );
-
+  interval A( z.re() ), B( z.im() );   
 #else //C-XSC Version
-
-  interval 
-    A( Re(z) ), 
-    B( Im(z) );
-
-#endif
-
+  interval A( Re(z) ), B( Im(z) );  
+#endif 
   return cinterval( sin( A )*cosh( B ) , cos( A )*sinh( B ) );
 } 
     
 cinterval cosh(const cinterval& z) 
 {
 #ifdef FILIB_VERSION
-
-  interval 
-    A( z.re() ), 
-    B( z.im() );
-
+  interval A( z.re() ), B( z.im() );   
 #else //C-XSC Version
-
-  interval 
-    A( Re(z) ), 
-    B( Im(z) );
-
-#endif
-
+  interval A( Re(z) ), B( Im(z) );  
+#endif 
   return cinterval( cos( B )*cosh( A ) , sin( B )*sinh( A ) );
 }
 
 cinterval sinh(const cinterval& z) 
 {
 #ifdef FILIB_VERSION
-
-  interval 
-    A( z.re() ), 
-    B( z.im() );
-
+  interval A( z.re() ), B( z.im() );   
 #else //C-XSC Version
-
-  interval 
-    A( Re(z) ), 
-    B( Im(z) );
-
-#endif
-
+  interval A( Re(z) ), B( Im(z) );  
+#endif 
   return cinterval( cos( B )*sinh( A ) , sin( B )*cosh( A ) );
 }
 
-/* *************************************************************/
-/* *** Tangent is NOT separable, naive evaluation may yield ****/
-/* *** range  overestimation.                               ****/
-/* ***                                                      ****/
-/* *** Accurate range evaluation requires discussion of     ****/
-/* *** several cases and uses the symmetry condition        ****/
-/* ***                                                      ****/
-/* ***      tan(z) = transp( tan( transp(z) ) )             ****/
-/* ***                                                      ****/
-/* *************************************************************/
+/* ------------------------------------------------------------------------- */
+/*                                                                           */
+/*     Tangent is NOT separable, naive evaluation may yield                  */
+/*     range overestimation.                                                 */
+/*                                                                           */
+/*     Accurate range evaluation requires discussion of                      */
+/*     several cases and uses the symmetry condition                         */
+/*                                                                           */
+/*     tan(z) = transp( tan( transp(z) ) )                                   */
+/*                                                                           */
+/* ------------------------------------------------------------------------- */
 
-void ReAdd(
-#ifdef FILIB_VERSION
-	   const double& hx,const double& hy,
-#else //C-XSC Version
-           const real& hx,const real& hy,
-#endif
-	   interval& re_tan,bool& re_first,bool both) 
+void ReAdd(const flnumber& hx,const flnumber& hy,interval& re_tan,bool& re_first,bool both) 
 {
   if( both ) 
     {
@@ -283,21 +250,18 @@ void ReAdd(
 	}
       else 
 	{ //Interval hull of former calculations
+	  re_tan
 #ifdef FILIB_VERSION
-	  re_tan = hull( re_tan, sin( HX ) * cosHX /( sqr( cosHX ) + sqr( sinh( HY )) ) );
+	    = hull( re_tan, sin( HX ) * cosHX /( sqr( cosHX ) + sqr( sinh( HY )) ) )
 #else //C-XSC Version
-	  re_tan |= sin( HX ) * cosHX /( sqr( cosHX ) + sqr( sinh( HY )) );
+	    |= sin( HX ) * cosHX /( sqr( cosHX ) + sqr( sinh( HY )) )
 #endif
+	    ;
 	}
     }
 }
 
-void ReAdd(const interval& hx,
-#ifdef FILIB_VERSION
-	   const double& hy,interval& re_tan,bool& re_first,bool both) 
-#else //C-XSC Version
-           const real& hy,interval& re_tan,bool& re_first,bool both) 
-#endif
+void ReAdd(const interval& hx,const flnumber& hy,interval& re_tan,bool& re_first,bool both)
 {
   if( both ) 
     {
@@ -309,22 +273,18 @@ void ReAdd(const interval& hx,
 	}
       else 
 	{ //Interval hull of former calculations
+	  re_tan
 #ifdef FILIB_VERSION
-	  re_tan = hull( re_tan, sin( hx ) * cosHX /( sqr( cosHX ) + sqr( sinh( interval(hy) )) ) );
+	    = hull( re_tan, sin( hx ) * cosHX /( sqr( cosHX ) + sqr( sinh( interval(hy) )) ) )
 #else //C-XSC Version
-	  re_tan |= sin( hx ) * cosHX /( sqr( cosHX ) + sqr( sinh( interval(hy) )) );
+	    |= sin( hx ) * cosHX /( sqr( cosHX ) + sqr( sinh( interval(hy) )) )
 #endif
+	    ;
 	}
     }
 }
 
-void ImAdd(
-#ifdef FILIB_VERSION
-           const double& hx,const double& hy,
-#else //C-XSC Version
-	   const real& hx,const real& hy,
-#endif
-	   interval& im_tan,bool& im_first) 
+void ImAdd(const flnumber& hx,const flnumber& hy,interval& im_tan,bool& im_first) 
 {
   interval HX( hx ),HY( hy ),sinhHY( sinh( HY ) );
   if( im_first ) 
@@ -334,21 +294,17 @@ void ImAdd(
     }
   else 
     { //Interval hull of former calculations
+      im_tan
 #ifdef FILIB_VERSION
-      im_tan = hull( im_tan, sinhHY * cosh( HY ) /( sqr( cos( HX )) + sqr( sinhHY ) ) );
+	= hull( im_tan, sinhHY * cosh( HY ) /( sqr( cos( HX )) + sqr( sinhHY ) ) )
 #else //C-XSC Version
-      im_tan |= sinhHY * cosh( HY ) /( sqr( cos( HX )) + sqr( sinhHY ) );
+	|= sinhHY * cosh( HY ) /( sqr( cos( HX )) + sqr( sinhHY ) )
 #endif
+	;
     }
 }
 
-void ImAdd(const interval& hy,
-#ifdef FILIB_VERSION
-	   const double& hx,
-#else //C-XSC Version
-	   const real& hx,
-#endif
-	   interval& im_tan,bool& im_first) 
+void ImAdd(const interval& hy,const flnumber& hx,interval& im_tan,bool& im_first) 
 {
   interval sinhHY( sinh( hy ) );
   if( im_first ) 
@@ -358,26 +314,25 @@ void ImAdd(const interval& hy,
     }
   else 
     { //Interval hull of former calculations
+      im_tan
 #ifdef FILIB_VERSION
-      im_tan = hull( im_tan, sinhHY * cosh( hy ) /( sqr( cos( interval( hx ) )) + sqr( sinhHY ) ) );
+	= hull( im_tan, sinhHY * cosh( hy ) /( sqr( cos( interval( hx ) )) + sqr( sinhHY ) ) )
 #else //C-XSC Version
-      im_tan |= sinhHY * cosh( hy ) /( sqr( cos( interval( hx ) )) + sqr( sinhHY ) );
+	|= sinhHY * cosh( hy ) /( sqr( cos( interval( hx ) )) + sqr( sinhHY ) )
 #endif
+	;
     }
 }
 
-#ifdef FILIB_VERSION
-#else //C-XSC Version
-
+#ifndef FILIB_VERSION
 bool disjoint(const interval& x,const interval& y) 
 {
-  real ix( Inf(x) ),iy( Inf(y) ),sx( Sup(x) ), sy( Sup(y) );
-  real inf( ( ix > iy )? ix : iy );
-  real sup( ( sx < sy )? sx : sy );
+  flnumber ix( Inf(x) ),iy( Inf(y) ),sx( Sup(x) ), sy( Sup(y) );
+  flnumber inf( ( ix > iy )? ix : iy );
+  flnumber sup( ( sx < sy )? sx : sy );
 
   return ( inf > sup );
 }
-
 #endif
 
 void htan(const interval& x,const interval& y,interval& re_tan,interval& im_tan,bool both) 
@@ -392,7 +347,6 @@ void htan(const interval& x,const interval& y,interval& re_tan,interval& im_tan,
   /* Real part of arguments from left to right */
   
   interval hint(0.0),argx(0.0),argy(0.0);
-
 #ifdef FILIB_VERSION
   if( inf(x) < (-inf(QUARTERPI())) ) 
     { //Real part of argument intersects [-pi/2,-pi/4] 
@@ -589,7 +543,6 @@ void htan(const interval& x,const interval& y,interval& re_tan,interval& im_tan,
 #endif
 }
 
-
 void h_tan(const interval& x,const interval& y,interval& re_tan,interval& im_tan,int& Error) 
 {
   interval hx(0.0),hx2(0.0);
@@ -598,19 +551,18 @@ void h_tan(const interval& x,const interval& y,interval& re_tan,interval& im_tan
   bool bisection( false ); // Pi/2 mod Pi  in x ? 
   
   Error = 0;
-
 #ifdef FILIB_VERSION
-  if ( x == interval::ZERO() ) 
+  if ( x == ZERO_INTERVAL() ) 
     {
       re_tan = x;               //Re(tan) = 0
       im_tan = tanh(y);
     }
   else
     {
-      if( (!disjoint(interval::ZERO(),y)) && (!disjoint(interval::ZERO(),cos(x))) ) Error = 1;
+      if( (!disjoint(ZERO_INTERVAL(),y)) && (!disjoint(ZERO_INTERVAL(),cos(x))) ) Error = 1;
       else
 	{
-	  if ( y == interval::ZERO() )  
+	  if ( y == ZERO_INTERVAL() )  
 	    {
 	      re_tan = tan(x);
 	      im_tan = y;         //Im(tan) = 0
@@ -619,14 +571,14 @@ void h_tan(const interval& x,const interval& y,interval& re_tan,interval& im_tan
 	    { 
 	      //Since  z equivalent (z mod pi), use  
 	      //equivalent argument in [ -pi/2 , pi/2 ] .  
-	      double r_int;
+	      flnumber r_int;
 
-	      if( inf(x) > 0 ) modf( inf(x/interval::PI()) + 0.5, &r_int );
-	      else             modf( inf(x/interval::PI()) - 0.5, &r_int );
+	      if( inf(x) > 0 ) modf( inf(x/PI()) + 0.5, &r_int );
+	      else             modf( inf(x/PI()) - 0.5, &r_int );
 	      
-	      hx = x - r_int * interval::PI();
+	      hx = x - r_int * PI();
 
-	      if( inf(interval::PI()) < (2*sup(hx)) )  
+	      if( inf(PI()) < (2*sup(hx)) )  
 		{
 		  bisection = true;
 		  hx2 = interval( -sup(HALFPI()), sup(hx)-inf(HALFPI()) );
@@ -712,17 +664,17 @@ void h_tan(const interval& x,const interval& y,interval& re_tan,interval& im_tan
 	}
     }
 #else //C-XSC Version
-  if ( x == interval(0.0) )  
+  if ( x == ZERO_INTERVAL() )  
     {
       re_tan = x;               //Re(tan) = 0
       im_tan = tanh(y);
     }
   else
     {
-      if( (!disjoint(interval(0.0),y)) && (!disjoint(interval(0.0),cos(x))) ) Error = 1;
+      if( (!disjoint(ZERO_INTERVAL(),y)) && (!disjoint(ZERO_INTERVAL(),cos(x))) ) Error = 1;
       else
 	{
-	  if ( y == interval(0.0) )  
+	  if ( y == ZERO_INTERVAL() )  
 	    {
 	      re_tan = tan(x);
 	      im_tan = y;         //Im(tan) = 0
@@ -822,16 +774,17 @@ void h_tan(const interval& x,const interval& y,interval& re_tan,interval& im_tan
     }
 #endif
 }
-	
-/* ****************************************************************/
-/* ***  Computation of cot, tanh, coth based on tan.           ****/
-/* ****************************************************************/
-/* ****************************************************************/
-/* ***  cot(z)  = tan( pi/2 - z )                              ****/
-/* ***  tanh(z) = transp( i * tan( transp( i * z ) ) )         ****/
-/* ***  coth(z) = i * cot( i * z )                             ****/
-/* ***          = i * tan( pi/2 - i * z )                      ****/
-/* ****************************************************************/
+
+/* ------------------------------------------------------------------------- */
+/*                                                                           */
+/*      Computation of cot, tanh, coth based on tan.                         */
+/*                                                                           */
+/*      cot(z)  = tan( pi/2 - z )                                            */
+/*      tanh(z) = transp( i * tan( transp( i * z ) ) )                       */
+/*      coth(z) = i * cot( i * z )                                           */
+/*              = i * tan( pi/2 - i * z )                                    */
+/*                                                                           */
+/* ------------------------------------------------------------------------- */
 
 void h_cot(const interval& x,const interval& y,interval& re_cot,interval& im_cot,int& Error) 
 {
@@ -842,22 +795,21 @@ void h_cot(const interval& x,const interval& y,interval& re_cot,interval& im_cot
   //If yes: bisect input interval
   
   Error =  0;
-
 #ifdef FILIB_VERSION
-  if( (!disjoint(interval::ZERO(),y))&&(!disjoint(interval::ZERO(),sin(x))) ) 
+  if( (!disjoint(ZERO_INTERVAL(),y))&&(!disjoint(ZERO_INTERVAL(),sin(x))) ) 
     {
       Error = 1;
     }
   else
     {
-      if( y == interval::ZERO() ) 
+      if( y == ZERO_INTERVAL() ) 
 	{
 	  re_cot = cot(x);
 	  im_cot = y;               //Im(cot) = 0 
 	}
       else
 	{
-	  if( x == interval::ZERO() ) 
+	  if( x == ZERO_INTERVAL() ) 
 	    {
 	      re_cot =  x;              //Re(cot) = 0 
 	      im_cot =  coth(y);
@@ -870,7 +822,7 @@ void h_cot(const interval& x,const interval& y,interval& re_cot,interval& im_cot
 	      /* compute                                          */
 	      /*    hz = Pi/2 - z  mod Pi  in  [ -Pi/2 , Pi/2 ]   */
 	      /* and use procedure htan.                          */
-	      if( (sup(x)-inf(x)) > inf(interval::PI()) ) 
+	      if( (sup(x)-inf(x)) > inf(PI()) ) 
 		{
 		  hx = interval( -sup(HALFPI()), sup(HALFPI()) );
 		}
@@ -879,16 +831,16 @@ void h_cot(const interval& x,const interval& y,interval& re_cot,interval& im_cot
 		  /* z equivalent (z mod pi), use               */
 		  /* equivalent argument in [ -pi/2 , pi/2 ] .  */
 		  
-		  double r_int;
+		  flnumber r_int;
 		  
 		  if( inf(x) < 0 ) 
 		    {
-		      modf( -inf(x/interval::PI()), &r_int );
+		      modf( -inf(x/PI()), &r_int );
 		      hx = -x + ( -1 - 2 * r_int ) * HALFPI(); 
 		    }
 		  else
 		    {
-		      modf(  inf(x/interval::PI()), &r_int );
+		      modf(  inf(x/PI()), &r_int );
 		      hx = -x + (  1 + 2 * r_int ) * HALFPI(); 
 		    }
 		  
@@ -964,20 +916,20 @@ void h_cot(const interval& x,const interval& y,interval& re_cot,interval& im_cot
 	}
     }
 #else //C-XSC Version
-  if( (!disjoint(interval(0.0),y))&&(!disjoint(interval(0.0),sin(x))) ) 
+  if( (!disjoint(ZERO_INTERVAL(),y))&&(!disjoint(ZERO_INTERVAL(),sin(x))) ) 
     {
       Error = 1;
     }
   else
     {
-      if( y == interval(0.0) ) 
+      if( y == ZERO_INTERVAL() ) 
 	{
 	  re_cot = cot(x);
 	  im_cot = y;               //Im(cot) = 0 
 	}
       else
 	{
-	  if( x == interval(0.0) ) 
+	  if( x == ZERO_INTERVAL() ) 
 	    {
 	      re_cot =  x;              //Re(cot) = 0 
 	      im_cot =  coth(y);
@@ -1147,25 +1099,20 @@ cinterval coth(const cinterval& z)
     }
 }
 
-/* ***************************************************************************/
-
-
-/* ***************************************************************************/
-/* ***************************************************************************/
-/* ***                      Multi-valued functions                        ****/
-/* ***************************************************************************/
-/* ***************************************************************************/
+/* ------------------------------------------------------------------------- */
+/*                                                                           */
+/*                          Multi-valued functions                           */
+/*                                                                           */
+/* ------------------------------------------------------------------------- */
 
 interval arg(const cinterval& z) 
 {
-  //interval wert(0.0); 
   interval hxl(0.0),hyl(0.0);
   interval hxu(0.0),hyu(0.0);
-
 #ifdef FILIB_VERSION  
-  if( interval::ZERO() == Re(z) ) 
+  if( ZERO_INTERVAL() == Re(z) ) 
     {
-      if( interval::ZERO() == Im(z) ) throw function_not_defined();//arg not defined at (0,0).
+      if( ZERO_INTERVAL() == Im(z) ) throw function_not_defined();//arg not defined at (0,0).
       else                         //z purely imaginary  
 	{
 	  if( 0 < inf(Im(z)) )  return HALFPI();       //Im(z) positive
@@ -1178,21 +1125,21 @@ interval arg(const cinterval& z)
     {    
       hxl = interval(inf(Re(z))); hxu = interval(sup(Re(z)));
       hyl = interval(inf(Im(z))); hyu = interval(sup(Im(z))); 
-      if( interval::ZERO() <= Re(z) ) 
+      if( ZERO_INTERVAL() <= Re(z) ) 
 	{
-	  if( interval::ZERO() <= Im(z) )            //all quadrants 
+	  if( ZERO_INTERVAL() <= Im(z) )            //all quadrants 
 	    return 2.0 * interval(-sup(HALFPI()),sup(HALFPI()));
 	  else 
 	    {
 	      if( inf(Im(z)) >= 0 )                //1. and 2. quadrant 
-		return interval(inf(atan(hyl/hxu)),sup(atan(hyl/hxl)+interval::PI()));//Minimum, maximum 
+		return interval(inf(atan(hyl/hxu)),sup(atan(hyl/hxl)+PI()));//Minimum, maximum 
 	      else                                   //3. and 4. quadrant 
-		return interval(inf(atan(hyu/hxl)-interval::PI()),sup(atan(hyu/hxu)));//Minimum, maximum 
+		return interval(inf(atan(hyu/hxl)-PI()),sup(atan(hyu/hxu)));//Minimum, maximum 
 	    }
 	}
       else
 	{ 
-	  if( interval::ZERO() <= Im(z) ) 
+	  if( ZERO_INTERVAL() <= Im(z) ) 
 	    {
 	      if( inf(Re(z)) >= 0 )                //1. and 4. quadrant 
 		{
@@ -1206,7 +1153,7 @@ interval arg(const cinterval& z)
 		  if( sup(Re(z)) == 0 ) 
 		    return interval(inf(HALFPI()),sup(3.0*HALFPI())); //Minimum, maximum 
 		  else
-		    return interval(inf(atan(hyu/hxu)),sup(atan(hyl/hxu))) + interval::PI(); //Minimum, maximum 
+		    return interval(inf(atan(hyu/hxu)),sup(atan(hyl/hxu))) + PI(); //Minimum, maximum 
 		}
 	    }
 	  else                 //argument lies in single quadrant  
@@ -1223,9 +1170,9 @@ interval arg(const cinterval& z)
 		  else                                            //2. quadrant 
 		    {
 		      if( sup(Re(z)) == 0 )  
-			return interval(inf(HALFPI()),sup(atan(hyl/hxl)+interval::PI())); //Maximum 
+			return interval(inf(HALFPI()),sup(atan(hyl/hxl)+PI())); //Maximum 
 		      else
-			return interval(inf(atan(hyu/hxu)),sup(atan(hyl/hxl))) + interval::PI(); //Minimum, maximum 
+			return interval(inf(atan(hyu/hxu)),sup(atan(hyl/hxl))) + PI(); //Minimum, maximum 
 		    }
 		}
 	      else                                          //lower half plane 
@@ -1240,18 +1187,18 @@ interval arg(const cinterval& z)
 		  else                                            //3. quadrant 
 		    {
 		      if( sup(Re(z)) == 0 ) 
-			return interval(-sup(HALFPI()),sup(atan(hxu/hyl)-interval::PI())); //Minimum, maximum 
+			return interval(-sup(HALFPI()),sup(atan(hxu/hyl)-PI())); //Minimum, maximum 
 		      else
-			return interval(inf(atan(hyu/hxl)),sup(atan(hyl/hxu))) - interval::PI(); //Minimum, maximum 
+			return interval(inf(atan(hyu/hxl)),sup(atan(hyl/hxu))) - PI(); //Minimum, maximum 
 		    }
 		}
 	    }
 	}
     }
 #else //C-XSC Version
-  if( interval(0.0) == Re(z) ) 
+  if( ZERO_INTERVAL() == Re(z) ) 
     {
-      if( interval(0.0) == Im(z) ) throw function_not_defined();//arg not defined at (0,0).
+      if( ZERO_INTERVAL() == Im(z) ) throw function_not_defined();//arg not defined at (0,0).
       else                         //z purely imaginary  
 	{
 	  if( 0 < Inf(Im(z)) )  return HALFPI();       //Im(z) positive
@@ -1264,9 +1211,9 @@ interval arg(const cinterval& z)
     {    
       hxl = interval(Inf(Re(z))); hxu = interval(Sup(Re(z)));
       hyl = interval(Inf(Im(z))); hyu = interval(Sup(Im(z))); 
-      if( interval(0.0) <= Re(z) ) 
+      if( ZERO_INTERVAL() <= Re(z) ) 
 	{
-	  if( interval(0.0) <= Im(z) )            //all quadrants 
+	  if( ZERO_INTERVAL() <= Im(z) )            //all quadrants 
 	    return 2 * interval(-Sup(HALFPI()),Sup(HALFPI()));
 	  else 
 	    {
@@ -1278,7 +1225,7 @@ interval arg(const cinterval& z)
 	}
       else
 	{ 
-	  if( interval(0.0) <= Im(z) ) 
+	  if( ZERO_INTERVAL() <= Im(z) ) 
 	    {
 	      if( Inf(Re(z)) >= 0 )                //1. and 4. quadrant 
 		{
@@ -1342,16 +1289,21 @@ inline interval abs(const interval& x,const interval& y)
   return sqrt(sqr(x)+sqr(y));
 } 
 
-cinterval ln(const cinterval& z) 
-{
+cinterval
 #ifdef FILIB_VERSION
-  double re_min(0.0),im_min(0.0);
-  double re_max(0.0),im_max(0.0);
+log
+#else //C-XSC Version
+ln 
+#endif
+(const cinterval& z) 
+{
+  flnumber re_min(0.0),im_min(0.0);
+  flnumber re_max(0.0),im_max(0.0);
   interval re_ln(0.0);
-  
-  double srez( sup( Re(z) ) ),irez( inf( Re(z) ) ), simz( sup( Im(z) ) ),iimz( inf( Im(z) ) );
+#ifdef FILIB_VERSION
+  flnumber srez( sup( Re(z) ) ),irez( inf( Re(z) ) ), simz( sup( Im(z) ) ),iimz( inf( Im(z) ) );
 
-  if( srez < 0 )  re_min = -srez;
+  if( srez < 0 ) re_min = -srez;
   else 
     if( irez < 0 ) re_min = 0;
     else re_min = irez;
@@ -1360,28 +1312,26 @@ cinterval ln(const cinterval& z)
   else 
     if( iimz < 0 ) im_min = 0;
     else im_min = iimz;
-  
+
   if( re_min == 0 && im_min == 0 )//Singularity of logarithm in argument.
-    throw function_not_defined();
-  else 
-    if( (srez <= 0)&&(im_min==0) )//Argument intersects negative real axis.
       throw function_not_defined();
+  else 
+    if( (irez <= 0)&&(iimz <= 0)&&(simz >= 0) )//Argument intersects negative real axis.
+	throw function_not_defined();
     else
-      { 
-	re_max = max( srez, -irez );
-	im_max = max( simz, -iimz );
+      {
+	re_max = std::max( srez, -irez );
+	im_max = std::max( simz, -iimz );
+
 	re_ln = interval( inf( log( abs(interval(re_min),interval(im_min)) ) ),
 			  sup( log( abs(interval(re_max),interval(im_max)) ) )  );
+
 	return cinterval(re_ln,arg(z));
       }
 #else //C-XSC Version
-  real re_min(0.0),im_min(0.0);
-  real re_max(0.0),im_max(0.0);
-  interval re_ln(0.0);
-  
-  real srez( Sup( Re(z) ) ),irez( Inf( Re(z) ) ), simz( Sup( Im(z) ) ),iimz( Inf( Im(z) ) );
+  flnumber srez( Sup( Re(z) ) ),irez( Inf( Re(z) ) ), simz( Sup( Im(z) ) ),iimz( Inf( Im(z) ) );
 
-  if( srez < 0 )  re_min = -srez;
+  if( srez < 0 ) re_min = -srez;
   else 
     if( irez < 0 ) re_min = 0;
     else re_min = irez;
@@ -1394,14 +1344,16 @@ cinterval ln(const cinterval& z)
   if( re_min == 0 && im_min == 0 )//Singularity of logarithm in argument.
     throw function_not_defined();
   else 
-    if( (srez <= 0)&&(im_min==0) )//Argument intersects negative real axis.
+    if( (irez <= 0)&&(iimz <= 0)&&(simz >= 0) )//Argument intersects negative real axis.
       throw function_not_defined();
     else
       { 
 	re_max = max( srez, -irez );
 	im_max = max( simz, -iimz );
+
 	re_ln = interval( Inf( ln( abs(interval(re_min),interval(im_min)) ) ),
 			  Sup( ln( abs(interval(re_max),interval(im_max)) ) )  );
+
 	return cinterval(re_ln,arg(z));
       }
 #endif
@@ -1410,8 +1362,8 @@ cinterval ln(const cinterval& z)
 inline interval sign(const interval& x) 
 {
 #ifdef FILIB_VERSION
-  double ix = inf(x), sx = sup(x);
-  double inf, sup;
+  flnumber ix = inf(x), sx = sup(x);
+  flnumber inf, sup;
 
   if( ix > 0 ) inf = 1;
   else 
@@ -1432,28 +1384,27 @@ inline interval sign(const interval& x)
 interval re_sqrt(const interval& x,const interval& y) 
 {
   //Formulas for special quadrants 
-
 #ifdef FILIB_VERSION
   if( sup(x) < 0 )
     {
-      if( y == interval::ZERO() ) return interval::ZERO();
-      else return 1.0/sqrt(interval(2.0))*abs(y)/sqrt(abs(x,y)-x);
+      if( y == ZERO_INTERVAL() ) return ZERO_INTERVAL();
+      else return INV_SQRT_2()*abs(y)/sqrt(abs(x,y)-x);
     }
   else 
     {
-      if( y == interval::ZERO() ) return sqrt(x);
-      else return 1.0/sqrt(interval(2.0))*sqrt(abs(x,y)+x);
+      if( y == ZERO_INTERVAL() ) return sqrt(x);
+      else return INV_SQRT_2()*sqrt(abs(x,y)+x);
     }
 #else //C-XSC Version
   if( Sup(x) < 0 )
     {
-      if( y == interval(0.0) ) return interval(0.0);
-      else return 1/sqrt(interval(2.0))*abs(y)/sqrt(abs(x,y)-x);
+      if( y == ZERO_INTERVAL() ) return ZERO_INTERVAL();
+      else return INV_SQRT_2()*abs(y)/sqrt(abs(x,y)-x);
     }
   else 
     {
-      if( y == interval(0.0) ) return sqrt(x);
-      else return 1/sqrt(interval(2.0))*sqrt(abs(x,y)+x);
+      if( y == ZERO_INTERVAL() ) return sqrt(x);
+      else return INV_SQRT_2()*sqrt(abs(x,y)+x);
     }
 #endif
 }
@@ -1461,28 +1412,27 @@ interval re_sqrt(const interval& x,const interval& y)
 interval im_sqrt(const interval& x,const interval& y) 
 {
   //Formulas for special quadrants 
-
 #ifdef FILIB_VERSION 
   if( sup(x) < 0 )
     {
-      if( y == interval::ZERO() ) return 1.0/sqrt(-x);
-      else return 1.0/sqrt(interval(2.0))*sign(y)*sqrt(abs(x,y)-x);
+      if( y == ZERO_INTERVAL() ) return sqrt(-x); //arg(z) = pi
+      else return INV_SQRT_2()*sign(y)*sqrt(abs(x,y)-x);
     }
   else
     {
-      if( y == interval::ZERO() ) return interval::ZERO(); 
-      else return 1.0/sqrt(interval(2.0))*y/sqrt(abs(x,y)+x);
+      if( y == ZERO_INTERVAL() ) return ZERO_INTERVAL(); 
+      else return INV_SQRT_2()*y/sqrt(abs(x,y)+x);
     }
 #else //C-XSC Version
   if( Sup(x) < 0 )
     {
-      if( y == interval(0.0) ) return 1/sqrt(-x);
-      else return 1/sqrt(interval(2.0))*sign(y)*sqrt(abs(x,y)-x);
+      if( y == ZERO_INTERVAL() ) return sqrt(-x); //arg(z) = pi
+      else return INV_SQRT_2()*sign(y)*sqrt(abs(x,y)-x);
     }
   else
     {
-      if( y == interval(0.0) ) return interval(0.0); 
-      else return 1/sqrt(interval(2.0))*y/sqrt(abs(x,y)+x);
+      if( y == ZERO_INTERVAL() ) return ZERO_INTERVAL(); 
+      else return INV_SQRT_2()*y/sqrt(abs(x,y)+x);
     }
 #endif
 }
@@ -1494,7 +1444,7 @@ cinterval sqrt(const cinterval& z)
   interval hxl( inf(Re(z)) ),hyl( inf(Im(z)) );
   interval hxu( sup(Re(z)) ),hyu( sup(Im(z)) );
   
-  if( (sup(hxl) < 0.0) && (sup(hyl) <= 0.0) && (inf(hyu) >= 0.0) ) 
+  if( (sup(hxl) < 0.0) && (inf(hyl) < 0.0) && (inf(hyu) >= 0.0) ) 
     throw function_not_defined();//Argument intersects negative real axis
 
   if( sup(hyu) < 0.0 )  //lower half plane (without intersection)
@@ -1517,7 +1467,7 @@ cinterval sqrt(const cinterval& z)
 	{
 	  //right half plane (no intersection) 
 	  rwert = sqrt(hxl); //Minimum 
-	  rwert = interval(inf(rwert),max(sup(re_sqrt(hxu,hyu)),sup(re_sqrt(hxu,hyl))));
+	  rwert = interval(inf(rwert),std::max(sup(re_sqrt(hxu,hyu)),sup(re_sqrt(hxu,hyl))));
 	  iwert = im_sqrt(hxl,hyl); //Minimum 
 	  iwert = interval(inf(iwert),sup(im_sqrt(hxl,hyu))); //with maximum 
 	}
@@ -1560,16 +1510,170 @@ cinterval sqrt(const cinterval& z)
 #endif
 }
 
-cinterval sqrt(const cinterval& z,int n) 
+std::list<cinterval> sqrt_all(const cinterval& z) 
 {
 #ifdef FILIB_VERSION
-  if( n==0 ) return cinterval( interval::ONE(), interval::ZERO() );
+  interval rwert(0.0),iwert(0.0);
+  interval hxl( inf(Re(z)) ),hyl( inf(Im(z)) );
+  interval hxu( sup(Re(z)) ),hyu( sup(Im(z)) );
+  
+  if( sup(hyu) < 0.0 )  //lower half plane
+    {
+      rwert = re_sqrt(hxl,hyu); //Minimum 
+      rwert = interval(inf(rwert),sup(re_sqrt(hxu,hyl))); //with maximum 
+      iwert = im_sqrt(hxl,hyl); //Minimum 
+      iwert = interval(inf(iwert),sup(im_sqrt(hxu,hyu))); //with maximum 
+    } 
+  else
+    {
+      if( inf(hyl) > 0.0 )  //upper half plane 
+	{
+	  rwert = re_sqrt(hxl,hyl); //Minimum 
+	  rwert = interval(inf(rwert),sup(re_sqrt(hxu,hyu)));//with maximum 
+	  iwert = im_sqrt(hxu,hyl); //Minimum 
+	  iwert = interval(inf(iwert),sup(im_sqrt(hxl,hyu)));//with maximum 
+	} 
+      else  //Zero contained im imaginary part of argument! 
+	{
+	  //right half plane (no intersection) 
+	  rwert = re_sqrt(hxl,ZERO_INTERVAL()); //Minimum 
+	  rwert = interval(inf(rwert),std::max(sup(re_sqrt(hxu,hyu)),sup(re_sqrt(hxu,hyl))));
+	  iwert = im_sqrt(hxl,hyl); //Minimum 
+	  iwert = interval(inf(iwert),sup(im_sqrt(hxl,hyu))); //with maximum 
+	}
+    }
 #else //C-XSC Version
-  if( n==0 ) return cinterval( 1.0 );
+  interval rwert(0.0),iwert(0.0);
+  interval hxl( InfRe(z) ),hyl( InfIm(z) );
+  interval hxu( SupRe(z) ),hyu( SupIm(z) );
+
+  if( Sup(hyu) < 0 )  //lower half plane
+    {
+      rwert = re_sqrt(hxl,hyu); //Minimum 
+      rwert = interval(Inf(rwert),Sup(re_sqrt(hxu,hyl))); //with maximum 
+      iwert = im_sqrt(hxl,hyl); //Minimum 
+      iwert = interval(Inf(iwert),Sup(im_sqrt(hxu,hyu))); //with maximum 
+    } 
+  else
+    {
+      if( Inf(hyl) >= 0 )  //upper half plane 
+	{
+	  rwert = re_sqrt(hxl,hyl); //Minimum 
+	  rwert = interval(Inf(rwert),Sup(re_sqrt(hxu,hyu)));//with maximum 
+	  iwert = im_sqrt(hxu,hyl); //Minimum 
+	  iwert = interval(Inf(iwert),Sup(im_sqrt(hxl,hyu)));//with maximum 
+	} 
+       else  //Zero contained im imaginary part of argument! 
+	{
+	  //right half plane (no intersection) 
+	  rwert = re_sqrt(hxl,ZERO_INTERVAL()); //Minimum 
+	  rwert = interval(Inf(rwert),max(Sup(re_sqrt(hxu,hyu)),Sup(re_sqrt(hxu,hyl))));
+	  iwert = im_sqrt(hxl,hyl); //Minimum 
+	  iwert = interval(Inf(iwert),Sup(im_sqrt(hxl,hyu))); //with maximum 
+	} 
+    }
 #endif
+  
+  cinterval w(rwert,iwert);
+  std::list<cinterval> res;
+  res.push_back( w); 
+  res.push_back(-w);
+
+  return res;
+}
+
+cinterval root(const cinterval& z,int n) 
+{
+  if( n==0 ) return
+#ifdef FILIB_VERSION
+	       cinterval( ONE_INTERVAL(), ZERO_INTERVAL() )
+#else //C-XSC Version
+	       cinterval( 1.0 )
+#endif
+	       ;
   if( n==1 ) return z;
   if( n==2 ) return sqrt( z );
-  if( n>=3 ) return pow( z, interval( 1.0/n ) );
+  if( n>=3 ) return pow( z, 1.0/interval(n) );
+}
+
+/*
+  For use in 'root_all'
+*/
+
+interval root(const interval& i,unsigned int n)
+{
+  flnumber inf_i(
+#ifdef FILIB_VERSION
+		 inf(i)
+#else
+		 Inf(i)
+#endif
+		 );
+
+  if( inf_i < 0.0 ) throw function_not_defined();
+  else if( inf_i > 0 ) return exp( 1.0/
+#ifdef FILIB_VERSION
+				   interval(n) * log(i)
+#else
+				   interval(int(n)) * ln (i)
+#endif
+				   );
+  else
+    {
+      flnumber sup_res(
+#ifdef FILIB_VERSION
+		       sup(exp( 1.0/interval(n) * log(interval(sup(i))) ))
+#else
+		       Sup(exp( 1.0/interval(int(n)) * ln(interval(Sup(i))) ))
+#endif
+		       );
+
+      return interval( 0, sup_res );
+    }
+}
+
+std::list<cinterval> root_all(const cinterval& z,unsigned int n)
+{
+  std::list<cinterval> res;
+
+  if( n == 0 )
+#ifdef FILIB_VERSION
+    {
+      res.push_back( cinterval( ONE_INTERVAL(), ZERO_INTERVAL() ) );
+      return res;
+    }
+#else //C-XSC Version
+    {
+      res.push_back( cinterval( 1.0 ) );
+      return res;
+    }
+#endif
+  else if( n == 1 )
+    {
+      res.push_back(z);
+      return res;
+    }
+  else if( n == 2 ) return sqrt_all( z );
+  else
+    {
+      interval root_abs_z(root(abs(z),n)), arg_z(arg(z));
+
+      for(unsigned int i = 0; i < n; i++)
+	{
+	  interval arg_z_plus_2_i_pi_div_n( (arg_z+2*i*PI())/
+#ifdef FILIB_VERSION
+						     n
+#else
+						     int(n)
+#endif
+					   );
+
+	  res.push_back( cinterval( root_abs_z * cos(arg_z_plus_2_i_pi_div_n) ,
+				    root_abs_z * sin(arg_z_plus_2_i_pi_div_n)  ) );
+	}
+
+      return res;
+    }
 }
 
 cinterval sqr(const cinterval& z) 
@@ -1577,12 +1681,15 @@ cinterval sqr(const cinterval& z)
   interval 
     A( Re(z) ),
     B( Im(z) );
+
   return cinterval( sqr( A ) - sqr( B ) , 2.0 * A * B );
 }
 
-/* ********************************************************/
-/* *** arcsin from diploma thesis of Gabriele Buehler. ****/
-/* ********************************************************/
+/* ------------------------------------------------------------------------- */
+/*                                                                           */
+/*    arcsin from diploma thesis of Gabriele Buehler                         */
+/*                                                                           */
+/* ------------------------------------------------------------------------- */
 
 inline interval g(const interval& s) 
 {
@@ -1594,12 +1701,7 @@ inline interval s_re(const interval& ix,const interval& iy)
   return 2.0 * iy / ( ix*ix + iy*iy - 1.0 );
 }
 
-interval re_arcsin(
-#ifdef FILIB_VERSION
-		   const double& x,const double& y) 
-#else //C-XSC Version
-                   const real& x,const real& y) 
-#endif
+interval re_arcsin(const flnumber& x,const flnumber& y)
 {
   //Real part 
   if( x == 0.0 ) 
@@ -1661,12 +1763,7 @@ interval re_arcsin(
     }
 }
 
-interval im_arcsin(
-#ifdef FILIB_VERSION
-                   const double& x,const double& y) 
-#else //C-XSC Version
-                   const real& x,const real& y) 
-#endif
+interval im_arcsin(const flnumber& x,const flnumber& y)
 {
   /* Interval computation of imaginary part of arcsin(z) */
   interval 
@@ -1676,16 +1773,10 @@ interval im_arcsin(
     hilf4(0.0),
     hilf5(0.0),
     hilf6(0.0),
-    //nenner(0.0),
-    //zaehler(0.0),
     ix( abs(interval(x)) ),
     iy( y );
   interval t(0.0),r(0.0);
-#ifdef FILIB_VERSION
-  double xc( abs(x) );
-#else //C-XSC Version
-  real xc( abs(x) );
-#endif
+  flnumber xc( fabs(x) );
   
   //Imaginary part 
   if( y == 0.0 )           //y = 0.0 
@@ -1697,21 +1788,25 @@ interval im_arcsin(
 	  if( xc > 1.1 )       //x> 1.1 
 	    {
 	      t = 0.5 * ( (ix + 1.0) + (ix - 1.0) );
+	      return
 #ifdef FILIB_VERSION
-	      return log(t + sqrt(sqr(t) - 1.0));
+		log
 #else //C-XSC Version
-	      return ln(t + sqrt(sqr(t) - 1.0));
+		ln
 #endif
+		(t + sqrt(sqr(t) - 1.0));
 	    }
 	  else                          //1< x < 1.1 
 	    {
 	      t = ix;
 	      r = t - 1.0;
+	      return
 #ifdef FILIB_VERSION
-	      return log(1.0 + (r + sqrt(sqr(r) + 2.0 * r)));
+		log
 #else //C-XSC Version
-	      return ln(1.0 + (r + sqrt(sqr(r) + 2.0 * r)));
+		ln
 #endif
+		(1.0 + (r + sqrt(sqr(r) + 2.0 * r)));
 	    }
 	}
     }
@@ -1720,11 +1815,13 @@ interval im_arcsin(
       hilf1 = ix*ix + iy*iy;
       hilf2 = hilf1 + 1.0;
       if( xc == 0.0 )         //x= 0.0 
+	return
 #ifdef FILIB_VERSION
-        return log(sqrt(1.0 + iy * iy) + iy);
+	  log
 #else //C-XSC Version
-        return ln(sqrt(1.0 + iy * iy) + iy);
+	  ln
 #endif
+	  (sqrt(1.0 + iy * iy) + iy);
       else                   //x <> 0.0 
         {
           t  = 0.5 * ( sqrt( hilf2 + 2.0 * ix) + sqrt( hilf2 - 2.0 * ix ));
@@ -1749,50 +1846,45 @@ interval im_arcsin(
                   else              //x > 1.0 
                     r  = 0.5 * (hilf4 + (ix - 1.0) + sqrt(hilf2 -2.0 * ix));
                 }
+	      return
 #ifdef FILIB_VERSION
-              return log(1.0 + (r + sqrt(sqr(r) + 2.0 * r)));
+		log
 #else //C-XSC Version
-              return ln(1.0 + (r + sqrt(sqr(r) + 2.0 * r)));
+		ln
 #endif
+		(1.0 + (r + sqrt(sqr(r) + 2.0 * r)));
             }
           else                    //t > 1.1 
+	    return
 #ifdef FILIB_VERSION
-            return log(t + sqrt(sqr(t) - 1.0));
+	      log
 #else //C-XSC Version
-            return ln(t + sqrt(sqr(t) - 1.0));
+	      ln
 #endif
+	      (t + sqrt(sqr(t) - 1.0));
         }
     }
 }
 
-inline interval fortsetz_asin(
-#ifdef FILIB_VERSION
-                              const double& x,const double& y) 
-#else //C-XSC Version
-                              const real& x,const real& y) 
-#endif
+inline interval fortsetz_asin(const flnumber& x,const flnumber& y)
 {
   interval hilf( re_arcsin(x,y) );
 
+  if( hilf ==
 #ifdef FILIB_VERSION
-  if( hilf == interval::ZERO() ) 
-    return interval::PI();
-  else
-    return interval::PI() - hilf;
+       ZERO_INTERVAL()
 #else //C-XSC Version
-  if( hilf == 0.0 ) 
+       0.0 
+#endif
+      )
+
     return PI();
   else
     return PI() - hilf;
-#endif
+
 }
 
-inline void z(const cinterval& z,
-#ifdef FILIB_VERSION
-              double& re_l,double& re_u,double& im_l,double& im_u) 
-#else //C-XSC Version
-              real& re_l,real& re_u,real& im_l,real& im_u) 
-#endif
+inline void z(const cinterval& z,flnumber& re_l,flnumber& re_u,flnumber& im_l,flnumber& im_u)
 {
 #ifdef FILIB_VERSION
   re_l = inf(Re(z));
@@ -1807,12 +1899,7 @@ inline void z(const cinterval& z,
 #endif
 }
 
-inline void z(const interval& x,const interval& y,
-#ifdef FILIB_VERSION
-              double& x_l,double& x_u,double& y_l,double& y_u)
-#else //C-XSC Version
-              real& x_l,real& x_u,real& y_l,real& y_u) 
-#endif
+inline void z(const interval& x,const interval& y,flnumber& x_l,flnumber& x_u,flnumber& y_l,flnumber& y_u)
 {
 #ifdef FILIB_VERSION
   x_l = inf(x);
@@ -1829,13 +1916,8 @@ inline void z(const interval& x,const interval& y,
 
 interval real_asin(const cinterval& c) 
 {
-#ifdef FILIB_VERSION
-  double xl(0.0),xu(0.0),yl(0.0),yu(0.0),maxy(0.0),max(0.0);
-  double null( 0.0 ),eins( 1.0 );
-#else //C-XSC Version
-  real xl(0.0),xu(0.0),yl(0.0),yu(0.0),maxy(0.0),max(0.0);
-  real null( 0.0 ),eins( 1.0 );
-#endif
+  flnumber xl(0.0),xu(0.0),yl(0.0),yu(0.0),maxy(0.0),max(0.0);
+  flnumber null( 0.0 ),eins( 1.0 );
   bool re_spiegel( false );
   interval ergxl(0.0),ergxu(0.0),ergx(0.0);
   cinterval c1( c );
@@ -1940,13 +2022,8 @@ interval real_asin(const cinterval& c)
 
 interval imag_asin(const cinterval& c) 
 {
-#ifdef FILIB_VERSION
-  double xl(0.0),xu(0.0),yl(0.0),yu(0.0),maxx(0.0),maxy(0.0)/*,max(0.0)*/;
-  double null( 0.0 ),eins( 1.0 );
-#else //C-XSC Version
-  real xl(0.0),xu(0.0),yl(0.0),yu(0.0),maxx(0.0),maxy(0.0),max(0.0);
-  real null( 0.0 ),eins( 1.0 );
-#endif
+  flnumber xl(0.0),xu(0.0),yl(0.0),yu(0.0),maxx(0.0),maxy(0.0);
+  flnumber null( 0.0 ),eins( 1.0 );
   bool im_spiegel( false );
   interval ergyl(0.0),ergyu(0.0),ergy(0.0);
   cinterval c1( c );
@@ -2000,30 +2077,28 @@ interval imag_asin(const cinterval& c)
 	  ergyu = im_arcsin(maxx,yu);
 	}
     }
-
 #ifdef FILIB_VERSION  
   ergy = interval(inf(ergyl),sup(ergyu));
 #else //C-XSC Version
   ergy = interval(Inf(ergyl),Sup(ergyu));
 #endif
-  
   if( im_spiegel )
     return -ergy;
   else
     return ergy;
 }
 
-
-/* ********************************************************************/
-/* *** Computation of  arccos, arsinh and arcosh  based on  arcsin ****/
-/* ********************************************************************/
-/* ***                                                             ****/
-/* ***  Arccos(z) = -/+ ( Arcsin(z) - pi/2 )                       ****/
-/* ***  Arsinh(z) = i * Arcsin( -i * z ) ( mod i*2*pi )            ****/
-/* ***  Arcosh(z) = -/+ i * Arccos(z)                              ****/
-/* ***                                                             ****/
-/* ***  Only principal values are computed.                        ****/
-/* ********************************************************************/
+/* ------------------------------------------------------------------------- */
+/*                                                                           */
+/*     Computation of  arccos, arsinh and arcosh  based on  arcsin           */
+/*                                                                           */
+/*     Arccos(z) = -/+ ( Arcsin(z) - pi/2 )                                  */
+/*     Arsinh(z) = i * Arcsin( -i * z ) ( mod i*2*pi )                       */
+/*     Arcosh(z) = -/+ i * Arccos(z)                                         */
+/*                                                                           */
+/*     Only principal values are computed.                                   */
+/*                                                                           */
+/* ------------------------------------------------------------------------- */
 
 cinterval asin(const cinterval& c) 
 {
@@ -2050,7 +2125,6 @@ cinterval acos(const cinterval& c)
        ((Inf(Re(c)) < -1.0) || (Sup(Re(c)) > 1.0 ))  ) //real part intersects (-INFINITY,-1) and/or (1,+INFINITY)
     throw function_not_defined();
 #endif
-  
   return cinterval(real_asin(c)-HALFPI(),imag_asin(c));
 }
 
@@ -2065,7 +2139,6 @@ cinterval asinh(const cinterval& c)
        ((Inf(Im(c)) < -1.0) || (Sup(Im(c)) > 1.0 ))  ) //imaginary part intersects i*(-INFINITY,-1) and/or i*(1,+INFINITY)
     throw function_not_defined();
 #endif
-
   cinterval hc( -Im(c), Re(c) ); //hc = i*c 
   
   return cinterval(imag_asin(hc),-real_asin(hc)); //arsinh(c) = -i*arcsin(i*c) 
@@ -2082,29 +2155,22 @@ cinterval acosh(const cinterval& c)
        (Inf(Re(c)) < 1.0)                           ) //real part intersects (-INFINITY,1)
     throw function_not_defined();
 #endif
-
   cinterval hc( real_asin(c)-HALFPI(),imag_asin(c) );
   
   return cinterval(-Im(hc),Re(hc));               //arcosh = i * arccos(c) 
 }
 
-/* ***************************************************************************/
+/* ------------------------------------------------------------------------- */
+/*                                                                           */
+/*     Auxiliary functions for inverse tangent                               */
+/*                                                                           */
+/* ------------------------------------------------------------------------- */
 
-
-/* *************************************************/
-/* ***  Auxiliary functions for inverse tangent ****/
-/* *************************************************/
-
-interval qbetrag(
-#ifdef FILIB_VERSION
-                 const double& lx,const double& ux,const double& ly,const double& uy) 
-#else //C-XSC Version
-                 const real& lx,const real& ux,const real& ly,const real& uy) 
-#endif
+interval qbetrag(const flnumber& lx,const flnumber& ux,const flnumber& ly,const flnumber& uy)
 {
+  flnumber infqbetr(0.0),supqbetr(0.0);
 #ifdef FILIB_VERSION
-  double infqbetr(0.0),supqbetr(0.0);
-  double tmp1,tmp2;
+  flnumber tmp1,tmp2;
   
   if( lx >= 0 ) 
     {
@@ -2157,7 +2223,6 @@ interval qbetrag(
 	  return qbetrag( 0.0,-lx,ly,uy );
       }
 #else //C-XSC Version
-  real Infqbetr(0.0),Supqbetr(0.0);
   dotprecision akku(0.0);
   
   if( lx >= 0 ) 
@@ -2166,38 +2231,38 @@ interval qbetrag(
 	{
 	  akku = 0.0;
 	  accumulate( akku , lx , lx ); accumulate( akku , ly , ly );
-	  Infqbetr = rnd( akku , RND_DOWN );
+	  infqbetr = rnd( akku , RND_DOWN );
 	  akku = 0.0;
 	  accumulate( akku , ux , ux ); accumulate( akku , uy , uy );
-	  Supqbetr = rnd( akku , RND_UP );
+	  supqbetr = rnd( akku , RND_UP );
 	}
       else
 	if( uy < 0 )
 	  {
 	    akku = 0.0;
 	    accumulate( akku , lx , lx ); accumulate( akku , uy , uy );
-	    Infqbetr = rnd( akku , RND_DOWN );
+	    infqbetr = rnd( akku , RND_DOWN );
 	    akku = 0.0;
 	    accumulate( akku , ux , ux ); accumulate( akku , ly , ly );
-	    Supqbetr = rnd( akku , RND_UP );
+	    supqbetr = rnd( akku , RND_UP );
 	  }
 	else
 	  {
 	    
-	    Infqbetr = multdown( lx,lx );
+	    infqbetr = multdown( lx,lx );
 	    if ( -ly < uy ) {
 	      akku = 0.0;
 	      accumulate( akku , ux , ux ); accumulate( akku , uy , uy );
-	      Supqbetr = rnd( akku , RND_UP ); 
+	      supqbetr = rnd( akku , RND_UP ); 
 	    }
 	    else 
 	      {
 		akku = 0.0;
 		accumulate( akku , ux , ux ); accumulate( akku , ly , ly );
-		Supqbetr = rnd( akku , RND_UP );
+		supqbetr = rnd( akku , RND_UP );
 	      }
 	  }
-      return interval(Infqbetr,Supqbetr);
+      return interval(infqbetr,supqbetr);
     }
   else
     if( ux <= 0 ) return qbetrag( -ux,-lx,ly,uy );
@@ -2211,12 +2276,7 @@ interval qbetrag(
 #endif
 }
 
-interval re_fun(
-#ifdef FILIB_VERSION
-                const double& hx,const double& hy) 
-#else //C-XSC Version
-                const real& hx,const real& hy) 
-#endif
+interval re_fun(const flnumber& hx,const flnumber& hy)
 {
   interval qbetr( qbetrag(hx,hx,hy,hy) );
 #ifdef FILIB_VERSION
@@ -2225,7 +2285,7 @@ interval re_fun(
   else
     {
       if( 1 < inf(qbetr) )
-	return (atan( interval(2*hx)/(1.0-qbetr) ) - interval::PI() ) / 2.0 ;
+	return (atan( interval(2*hx)/(1.0-qbetr) ) - PI() ) / 2.0 ;
       else
 	return -QUARTERPI();
     }
@@ -2242,12 +2302,7 @@ interval re_fun(
 #endif
 }
 
-interval re_fun(const interval& hx,
-#ifdef FILIB_VERSION
-                const double& hy) 
-#else //C-XSC Version
-                const real& hy) 
-#endif
+interval re_fun(const interval& hx,const flnumber& hy)
 {
 #ifdef FILIB_VERSION
   interval qbetr( qbetrag(inf(hx),sup(hx),hy,hy) );
@@ -2257,7 +2312,7 @@ interval re_fun(const interval& hx,
   else
     {
       if( 1 < inf(qbetr) ) 
-	return (atan( 2.0*hx/(1.0-qbetr) ) - interval::PI() ) / 2.0;
+	return (atan( 2.0*hx/(1.0-qbetr) ) - PI() ) / 2.0;
       else 
 	return -QUARTERPI();
     }
@@ -2276,15 +2331,10 @@ interval re_fun(const interval& hx,
 #endif
 }
 
-interval im_fun(
-#ifdef FILIB_VERSION
-                const double& hx,const double& hy) 
-#else //C-XSC Version
-                const real& hx,const real& hy) 
-#endif
+interval im_fun(const flnumber& hx,const flnumber& hy)
 {
 #ifdef FILIB_VERSION
-  double ly,uy;
+  flnumber ly,uy;
 
   SUB_DOWN( ly, 1.0, hy );
   SUB_UP( uy, 1.0, hy );
@@ -2296,7 +2346,7 @@ interval im_fun(
   else//Argument too near to singularity.
     throw function_not_defined();
 #else //C-XSC Version
-  real ly( subdown( 1 , hy ) ),uy( subup( 1 , hy ) );
+  flnumber ly( subdown( 1 , hy ) ),uy( subup( 1 , hy ) );
   interval nenner( qbetrag(hx,hx,ly,uy) );
 
   if( 0 < Inf(nenner) ) 
@@ -2306,16 +2356,10 @@ interval im_fun(
 #endif
 }
 
-interval im_fun(
-#ifdef FILIB_VERSION
-                const double& hx,
-#else //C-XSC Version
-                const real& hx,
-#endif
-                const interval& hy) 
+interval im_fun(const flnumber& hx,const interval& hy) 
 {
 #ifdef FILIB_VERSION
-  double ly,uy;
+  flnumber ly,uy;
 
   SUB_DOWN( ly, 1.0, sup(hy) );
   SUB_UP( uy, 1.0, inf(hy) );
@@ -2327,7 +2371,7 @@ interval im_fun(
   else//Argument too near to singularity.
     throw function_not_defined();
 #else //C-XSC Version
-  real ly( subdown( 1 , Sup(hy) ) ),uy( subup( 1 , Inf(hy) ) );
+  flnumber ly( subdown( 1 , Sup(hy) ) ),uy( subup( 1 , Inf(hy) ) );
   interval nenner( qbetrag(hx,hx,ly,uy) );
 
   if( 0 < Inf(nenner) )   
@@ -2399,7 +2443,6 @@ void right_side(const interval& hx,const interval& hy,interval& re_a,interval& i
 void harctan(const interval& x,const interval& y,interval& re_arct,interval& im_arct) 
 {
   interval h_re(0.0),h_im(0.0);
-
 #ifdef FILIB_VERSION  
   if( inf(x) >= 0 ) //1. quadrant 
     right_side(x,y,re_arct,im_arct);
@@ -2412,13 +2455,13 @@ void harctan(const interval& x,const interval& y,interval& re_arct,interval& im_
 	  if( sup(y) < 1.0 )
 	    {
 	      re_arct = interval( inf(re_fun(inf(x),sup(y))),sup(re_fun(sup(x),sup(y))) );
-	      im_arct = interval( inf(im_fun(max(sup(x),-inf(x)),inf(y))),sup(im_fun(0.0,sup(y))) );
+	      im_arct = interval( inf(im_fun(std::max(sup(x),-inf(x)),inf(y))),sup(im_fun(0.0,sup(y))) );
 	    }
 	  else //Intersection in argument 
 	    {
 	      right_side(interval(0,sup(x)),y,re_arct,im_arct);
 	      left_side(interval(inf(x),0),y,h_re,h_im);
-	      re_arct = hull( re_arct, h_re + interval::PI() );
+	      re_arct = hull( re_arct, h_re + PI() );
 	      im_arct = hull( im_arct, h_im                  ); 
 	    }
 	}
@@ -2449,11 +2492,9 @@ void harctan(const interval& x,const interval& y,interval& re_arct,interval& im_
 #endif
 }
 
-
 void h_arctan(const interval& x,const interval& y,interval& re_arct,interval& im_arct,bool& singular) 
 {
 #ifdef FILIB_VERSION
-  //cinterval z( interval::ZERO(), interval::ZERO() );
   interval imarct(0.0),rearct(0.0);
   
   if( (inf(x) <= 0)&&(sup(x) >= 0)&&( ((inf(y) <= -1)&&(sup(y) >= -1))||((inf(y) <= 1)&&(sup(y) >= 1)) ) )
@@ -2461,14 +2502,14 @@ void h_arctan(const interval& x,const interval& y,interval& re_arct,interval& im
   else
     {
       singular = false;
-      if( y==interval::ZERO() ) 
+      if( y==ZERO_INTERVAL() ) 
 	{
 	  re_arct = atan(x);
 	  im_arct = y;  //Im(arctan) = 0 
 	}
       else
 	{
-	  if( (x == interval::ZERO())&&( inf(y) >- 1 )&&( sup(y) < 1 ) ) 
+	  if( (x == ZERO_INTERVAL())&&( inf(y) >- 1 )&&( sup(y) < 1 ) ) 
 	    {
 	      re_arct = x; //Re(arctan) = 0 
 	      im_arct = atanh(y); //Only defined for  -1 < y < 1   
@@ -2498,7 +2539,7 @@ void h_arctan(const interval& x,const interval& y,interval& re_arct,interval& im
 	}
     }
 #else //C-XSC Version
-  cinterval z( interval(0.0), interval(0.0) );
+  cinterval z( ZERO_INTERVAL(), ZERO_INTERVAL() );
   interval imarct(0.0),rearct(0.0);
   
   if( (Inf(x) <= 0)&&(Sup(x) >= 0)&&( ((Inf(y) <= -1)&&(Sup(y) >= -1))||((Inf(y) <= 1)&&(Sup(y) >= 1)) ) )
@@ -2506,14 +2547,14 @@ void h_arctan(const interval& x,const interval& y,interval& re_arct,interval& im
   else
     {
       singular = false;
-      if( y==interval(0.0) ) 
+      if( y==ZERO_INTERVAL() ) 
 	{
 	  re_arct = atan(x);
 	  im_arct = y;  //Im(arctan) = 0 
 	}
       else
 	{
-	  if( (x == interval(0.0))&&( Inf(y) >- 1 )&&( Sup(y) < 1 ) ) 
+	  if( (x == ZERO_INTERVAL())&&( Inf(y) >- 1 )&&( Sup(y) < 1 ) ) 
 	    {
 	      re_arct = x; //Re(arctan) = 0 
 	      im_arct = atanh(y); //Only defined for  -1 < y < 1   
@@ -2545,15 +2586,15 @@ void h_arctan(const interval& x,const interval& y,interval& re_arct,interval& im
 #endif
 }
 
-/* ****************************************************************** */
-/* *** Computation of  arccot, artanh and arcoth  based on arctan *** */
-/* ****************************************************************** */
-/* ***                                                            *** */
-/* ***  arccot(z) = arctan(-z) +/-  pi/2 ,  z <> +/- i            *** */
-/* ***  artanh(z) = -i * arctan( i * z ) ,  z <> +/- 1            *** */
-/* ***  arcoth(z) = i * arccot( i * z )  ,  --- '' ---            *** */
-/* ***                                                            *** */
-/* ****************************************************************** */
+/* ------------------------------------------------------------------------- */
+/*                                                                           */
+/*     Computation of  arccot, artanh and arcoth  based on arctan            */
+/*                                                                           */
+/*     arccot(z) = arctan(-z) +/-  pi/2 ,  z <> +/- i                        */
+/*     artanh(z) = -i * arctan( i * z ) ,  z <> +/- 1                        */
+/*     arcoth(z) = i * arccot( i * z )  ,  --- '' ---                        */
+/*                                                                           */
+/* ------------------------------------------------------------------------- */
 
 cinterval atan(const cinterval& z) 
 {
@@ -2566,7 +2607,6 @@ cinterval atan(const cinterval& z)
        ((Inf(Im(z)) < -1.0) || (Sup(Im(z)) > 1.0 ))  ) //imaginary part intersects i*(-INFINITY,-1) and/or i*(1,+INFINITY)
     throw function_not_defined();
 #endif
-
   interval im_arct(0.0),re_arct(0.0);
   bool singular( false );
   
@@ -2585,6 +2625,7 @@ void h_arccot(const interval& x,const interval& y,interval& re_arcc,interval& im
 #else //C-XSC Version
     if( Inf(re_arcc) >= 0.0 )
 #endif
+
       re_arcc = -re_arcc - HALFPI();
     else
       re_arcc =  HALFPI() - re_arcc;
@@ -2601,7 +2642,6 @@ cinterval acot(const cinterval& z)
        ((Inf(Im(z)) < -1.0) || (Sup(Im(z)) > 1.0 ))  ) //imaginary part intersects i*(-INFINITY,-1) and/or i*(1,+INFINITY)
     throw function_not_defined();
 #endif
-
   interval im_arcc(0.0),re_arcc(0.0);
   bool singular( false );
 
@@ -2621,7 +2661,6 @@ cinterval atanh(const cinterval& z)
        ((Inf(Re(z)) < -1.0) || (Sup(Re(z)) > 1.0 ))  ) //real part intersects (-INFINITY,-1) and/or (1,+INFINITY)
     throw function_not_defined();
 #endif
-
   interval im_art(0.0),m_re_art(0.0);
   bool singular( false );
   
@@ -2641,7 +2680,6 @@ cinterval acoth(const cinterval& z)
        (Sup(Re(z)) > -1.0) && (Inf(Re(z)) < 1.0 )   )  //real part intersects (-1,1)
     throw function_not_defined();
 #endif
-
   interval im_arco(0.0),m_re_arco(0.0);
   bool singular( false );
 
@@ -2651,45 +2689,46 @@ cinterval acoth(const cinterval& z)
   else return cinterval(-m_re_arco,im_arco); 
 }
 
-/* ********************************************************* */
-/* *** Computation of power function based on logarithm  *** */
-/* ********************************************************* */
+/* ------------------------------------------------------------------------- */
+/*                                                                           */
+/*     Computation of power function based on logarithm                      */
+/*                                                                           */
+/* ------------------------------------------------------------------------- */
 
-cinterval power(const cinterval& bas,int n) 
+cinterval power(const cinterval& z,int n) 
 {
-  if( n < 0 ) return 1.0/power( bas , -n );
-#ifdef FILIB_VERSION
-  else if( n == 0 ) return cinterval( interval::ONE(), interval::ZERO() );
-#else //C-XSC Version
-  else if( n == 0 ) return cinterval( 1.0 );
-#endif
-  else if( n == 1 ) return bas;
-  else if( n == 2 ) return sqr( bas );
+  if( n < 0 ) return 1.0/power( z , -n );
+  else if( n == 0 ) return cinterval( ONE_INTERVAL(), ZERO_INTERVAL() );
+  else if( n == 1 ) return z;
+  else if( n == 2 ) return sqr( z );
   else
     {
 #ifdef FILIB_VERSION
-      if( (inf(Re(bas)) > 0)||(inf(Im(bas)) > 0)||(sup(Im(bas)) < 0) ) 
-#else //C-XSC Version
-      if( (Inf(Re(bas)) > 0)||(Inf(Im(bas)) > 0)||(Sup(Im(bas)) < 0) ) 
+       if( (inf(Re(z)) > 0)||(inf(Im(z)) > 0)||(sup(Im(z)) < 0) ) 
+	 return exp( n * log(z) );
+#else  //C-XSC Version
+       if( (Inf(Re(z)) > 0)||(Inf(Im(z)) > 0)||(Sup(Im(z)) < 0) ) 
+	 return exp( n * ln(z) );
 #endif
-	return exp( n * ln(bas) );
       else
 	{//Zero in argument
+	  cinterval w( z ),u(
 #ifdef FILIB_VERSION
-	  cinterval z( bas ),u( interval::ONE(), interval::ZERO() );
+			     ONE_INTERVAL(), ZERO_INTERVAL()
 #else //C-XSC Version
-	  cinterval z( bas ),u( 1.0 );
+	                     1.0
 #endif
+			     );
 	  while( n > 0 )
 	    {
-	      if( (n%2) == 0 )//even exponent
+	      if( (n & 1) == 0 )//even exponent
 		{
-		  z = sqr(z);
+		  w = sqr(w);
 		  n >>= 1;//Division by 2, realized with a right shift
 		}
 	      else
 		{
-		  u *= z;
+		  u *= w;
 		  n -= 1;
 		}
 	    }
@@ -2698,26 +2737,175 @@ cinterval power(const cinterval& bas,int n)
     }
 }
 
-cinterval pow(const cinterval& bas,const interval& n) 
+cinterval pow(const cinterval& z,const interval& n) 
 {
+  interval re_z(Re(z)), im_z(Im(z));
+
 #ifdef FILIB_VERSION
-  if( ( inf(Re(bas)) > 0 )||( inf(Im(bas)) > 0 )||( sup(Re(bas)) < 0 )||( sup(Im(bas)) < 0 ) ) 
+  if( ( inf(re_z) > 0 )||( inf(im_z) > 0 )||( sup(im_z) < 0 ) ) 
+    return exp(n*log(z));
 #else //C-XSC Version
-  if( ( Inf(Re(bas)) > 0 )||( Inf(Im(bas)) > 0 )||( Sup(Re(bas)) < 0 )||( Sup(Im(bas)) < 0 ) ) 
+  if( ( Inf(re_z) > 0 )||( Inf(im_z) > 0 )||( Sup(im_z) < 0 ) ) 
+    return exp(n*ln(z));
 #endif
-    return exp(n*ln(bas));
+
+  else throw function_not_defined();//Z contains zero.
+}
+
+std::list<cinterval> pow_all(const cinterval& z, const interval& n)
+{
+  interval abs_z(abs(z));
+
+  if( 
+#ifdef FILIB_VERSION
+     inf(abs_z)
+#else
+     Inf(abs_z)
+#endif
+     > 0 )
+    {
+      interval sqrt_2( sqrt(interval(2.0)) ), dist_1(0.0), dist_2(0.0);
+      interval exp_n_ln_abs_z(
+#ifdef FILIB_VERSION
+			      exp(n * log(abs_z))
+#else
+			      exp(n * ln (abs_z))
+#endif
+			      );
+      dist_1 = 0.5 * sqrt_2 * 
+#ifdef FILIB_VERSION
+	inf(exp_n_ln_abs_z)
+#else
+	Inf(exp_n_ln_abs_z)
+#endif
+	;
+      dist_2 = 
+#ifdef FILIB_VERSION
+	sup(exp_n_ln_abs_z)
+#else
+	Sup(exp_n_ln_abs_z)
+#endif
+	;
+
+      std::list<cinterval> res;
+      
+#ifdef FILIB_VERSION
+      res.push_back( cinterval( interval(  inf(dist_1),  sup(dist_2) ),
+				interval( -sup(dist_1),  sup(dist_2) ) ) );
+      res.push_back( cinterval( interval( -sup(dist_2),  sup(dist_1) ),
+				interval(  inf(dist_1),  sup(dist_2) ) ) );
+      res.push_back( cinterval( interval( -sup(dist_2), -inf(dist_1) ),
+				interval( -sup(dist_2),  sup(dist_1) ) ) );
+      res.push_back( cinterval( interval( -sup(dist_1),  sup(dist_2) ),
+				interval( -sup(dist_2), -inf(dist_1) ) ) );
+#else
+      res.push_back( cinterval( interval(  Inf(dist_1),  Sup(dist_2) ), 
+				interval( -Sup(dist_1),  Sup(dist_2) ) ) );
+      res.push_back( cinterval( interval( -Sup(dist_2),  Sup(dist_1) ), 
+				interval(  Inf(dist_1),  Sup(dist_2) ) ) );
+      res.push_back( cinterval( interval( -Sup(dist_2), -Inf(dist_1) ), 
+				interval( -Sup(dist_2),  Sup(dist_1) ) ) );
+      res.push_back( cinterval( interval( -Sup(dist_1),  Sup(dist_2) ), 
+				interval( -Sup(dist_2), -Inf(dist_1) ) ) );
+#endif
+  
+      return res;
+    }
+  else //z contains zero
+    {
+      if(
+#ifdef FILIB_VERSION
+	 inf(n)
+#else
+	 Inf(n)
+#endif
+	 < 0 ) //return entire complex plane
+	{
+	  std::list<cinterval> res;
+	  
+#ifdef FILIB_VERSION
+	  res.push_back( cinterval( interval( -Double::MAX(),Double::MAX() ),
+				    interval( -Double::MAX(),Double::MAX() ) ) ); 
+#else
+	  res.push_back( cinterval( interval( -MaxReal,MaxReal ),
+				    interval( -MaxReal,MaxReal ) ) );
+#endif
+	  return res;
+	}
+      else if(
+#ifdef FILIB_VERSION
+	      inf(n) == 0 && sup(n) == 0
+#else
+	      Inf(n) == 0 && Sup(n) == 0
+#endif
+	      )
+	{
+	  std::list<cinterval> res;
+	  
+	  res.push_back( cinterval( interval( 0.0, 1.0 ),
+				    interval( ZERO_INTERVAL()   ) ) ); 
+
+	  return res;
+	}
+      else
+	{
+	  interval exp_n_ln_sup_abs_z(
+#ifdef FILIB_VERSION
+				      exp(n * log(interval(sup(abs_z))))
+#else
+				      exp(n * ln (interval(Sup(abs_z))))
+#endif
+				      );
+	  flnumber d_2 = 
+#ifdef FILIB_VERSION
+	    sup(exp_n_ln_sup_abs_z)
+#else
+	    Sup(exp_n_ln_sup_abs_z)
+#endif
+	    ;
+
+	  std::list<cinterval> res;
+	  
+	  res.push_back( cinterval( interval( 0.0, d_2 ),
+				    interval( 0.0, d_2 ) ) ); 
+	  
+	  return res;
+	}
+    }
+}
+
+cinterval pow(const cinterval& z,const cinterval& n) 
+{
+  interval re_z(Re(z)), im_z(Im(z));
+
+#ifdef FILIB_VERSION
+  if( ( inf(re_z) > 0 )||( inf(im_z) > 0 )||( sup(re_z) < 0 )||( sup(im_z) < 0 ) ) 
+    return exp(n*log(z));
+#else //C-XSC Version
+  if( ( Inf(re_z) > 0 )||( Inf(im_z) > 0 )||( Sup(re_z) < 0 )||( Sup(im_z) < 0 ) ) 
+    return exp(n*ln(z));
+#endif
+
   else throw function_not_defined();//Base contains zero.
 }
 
-cinterval pow(const cinterval& bas,const cinterval& n) 
+std::list<cinterval> pow_all(const cinterval& z, const cinterval& n)
 {
+  if( Im(n) == ZERO_INTERVAL() ) return pow_all( z, Re(n) );
+  else 
+    { // nonreal eponent: return entire complex plane
+      std::list<cinterval> res;
+      
 #ifdef FILIB_VERSION
-  if( ( inf(Re(bas)) > 0 )||( inf(Im(bas)) > 0 )||( sup(Re(bas)) < 0 )||( sup(Im(bas)) < 0 ) ) 
-#else //C-XSC Version
-  if( ( Inf(Re(bas)) > 0 )||( Inf(Im(bas)) > 0 )||( Sup(Re(bas)) < 0 )||( Sup(Im(bas)) < 0 ) ) 
+       res.push_back( cinterval( interval( -Double::MAX(),Double::MAX() ),
+                                 interval( -Double::MAX(),Double::MAX() ) ) ); 
+#else
+       res.push_back( cinterval( interval( -MaxReal,MaxReal ),
+                                 interval( -MaxReal,MaxReal ) ) );
 #endif
-    return exp(n*ln(bas));
-  else throw function_not_defined();//Base contains zero.
+
+      return res;
+    }
 }
 
 /*

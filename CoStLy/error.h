@@ -1,8 +1,8 @@
 /*
 
- File: error.h, 2002/05/16
+ File: error.h, 2002/12/06
 
- CoStLy (COmplex interval STandard functions LibrarY), Version 0.2
+ CoStLy (COmplex interval STandard functions LibrarY), Version 0.3
 
  Copyright (C) Markus Neher, markus.neher@math.uni-karlsruhe.de
                Ingo Eble,    ingoeble@web.de
@@ -31,25 +31,25 @@
 class syntax_error : public std::logic_error 
 {
  public:
-  syntax_error(const std::string& what_arg) : std::logic_error(what_arg) { abort(); }
+  syntax_error(const std::string& what_arg) : std::logic_error(what_arg) {}
 };
 
 class division_by_zero : public std::logic_error  
 {
  public:
-  division_by_zero() : std::logic_error("") { abort(); }
+  division_by_zero() : std::logic_error("") {}
 };
 
 class function_not_defined : public std::invalid_argument
 {
  public:
-  function_not_defined() : std::invalid_argument("") { abort(); }
+  function_not_defined() : invalid_argument("") {}
 };
 
 class wrong_dimensions : public std::length_error
 {
  public:
-  wrong_dimensions() : std::length_error("") { abort(); }
+  wrong_dimensions() : length_error("") {}
 };
 
 #endif

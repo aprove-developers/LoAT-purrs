@@ -1,8 +1,8 @@
 /*
 
- File: cinterval.cpp, 2002/04/18
+ File: cinterval.cpp, 2002/12/06
 
- CoStLy (COmplex interval STandard functions LibrarY), Version 0.2
+ CoStLy (COmplex interval STandard functions LibrarY), Version 0.3
 
  Copyright (C) Markus Neher, markus.neher@math.uni-karlsruhe.de
                Ingo Eble,    ingoeble@web.de
@@ -25,9 +25,9 @@
 
 #include "cinterval.h"
 #include "error.h"
-
-#include "Interval.h" //fi_lib++ Header: Macro Version
+#ifdef FILIB_NAMESPACES
 using filib::Double;
+#endif
 
 cinterval operator - (const cinterval& z)
 {
@@ -463,7 +463,6 @@ Interval abs(const cinterval& z)
 {
   return sqrt(sqr(z.re())+sqr(z.im())); 
 } 
-
 
 #ifdef HAS_Complex
 Complex  mid (const cinterval& z)

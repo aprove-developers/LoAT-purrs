@@ -1,8 +1,8 @@
 /*
 
- File: cinterval.h, 2002/03/21
+ File: cinterval.h, 2002/12/06
 
- CoStLy (COmplex interval STandard functions LibrarY), Version 0.2
+ CoStLy (COmplex interval STandard functions LibrarY), Version 0.3
 
  Copyright (C) Markus Neher, markus.neher@math.uni-karlsruhe.de
                Ingo Eble,    ingoeble@web.de
@@ -104,6 +104,7 @@ Interval abs (const cinterval&);
 Complex  mid (const cinterval&);
 Complex  diam(const cinterval&);
 #endif
+
 cinterval operator - (const cinterval&);
 
 // cinterval o cinterval, o \in { +,-,* }.
