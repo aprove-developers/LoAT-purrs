@@ -20,7 +20,7 @@ Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
 USA.
 
 For the most up-to-date information see the PURRS site:
-http://www.cs.unipr.it/purrs/ . */
+http://www.cs.unip.it/purrs/ . */
 
 #include <config.h>
 
@@ -104,10 +104,7 @@ validate_initial_conditions(index_type order,
     // In the case of non-linear recurrences the homogeneous part
     // of the solution can contains more than one symbolic initial
     // condition: the vector `coefficients_i_c' is in this case empty.
-    // FIXME: to generalize the method for linear finite order with
-    // constant coefficients solved with the order reduction method.
-    if ((is_linear_finite_order_const_coeff() && applied_order_reduction())
-	|| is_non_linear_finite_order()) {
+    if (is_non_linear_finite_order()) {
       // The expression `e' can be more difficult to simplify.
       // For this motive we performed simplification also
       // before to expand blackboard's definitions.
@@ -168,14 +165,14 @@ traditional_step_3(index_type order_rec, const Expr& e) const {
   Expr substituted_homogeneous_rhs = recurrence_rhs - inhomogeneous_term;
   // Substitutes in the homogeneous part of the recurrence the terms
   // of the form `x(n-i)'.
-  //for (index_type d = 1; d <= order_rec; d = d + gcd) {
-  for (index_type d = 1; d <= order_rec; ++d) {
-    Expr shifted_solution
-      = simplify_all(e.substitute(n, n - d));
-    shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
-    substituted_homogeneous_rhs
-      = substituted_homogeneous_rhs.substitute(x(n - d), shifted_solution);
-  }
+  for (index_type d = 1; d <= order_rec; ++d)
+    if (substituted_homogeneous_rhs.has(x(n-d))) {
+      Expr shifted_solution
+	= simplify_all(e.substitute(n, n - d));
+      shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
+      substituted_homogeneous_rhs
+	= substituted_homogeneous_rhs.substitute(x(n - d), shifted_solution);
+    }
   Expr diff = e - substituted_homogeneous_rhs;
   // The expression `diff' can be more difficult to simplify.
   // For this motive we performed simplification also
@@ -278,12 +275,13 @@ verify_new_method_const_coeff(index_type order_rec, const Expr& e,
     substituted_rhs -= inhomogeneous_term;
   
   // FIXME: fare i = i-gcd se e' stata applicata la riduzione dell'ordine.
-  for (index_type i = order_rec; i-- > 0; ) {
-    const Expr& shifted_solution = e.substitute(n, n - (i + 1));
-    //shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
-    substituted_rhs = substituted_rhs
-      .substitute(x(n - (i + 1)), shifted_solution);
-  }
+  for (index_type i = order_rec; i-- > 0; )
+    if (substituted_rhs.has(x(n - (i + 1)))) {
+      const Expr& shifted_solution = e.substitute(n, n - (i + 1));
+      //shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
+      substituted_rhs = substituted_rhs
+	.substitute(x(n - (i + 1)), shifted_solution);
+    }
   // FIXME: ritardare la riscrittura.
   Expr diff = blackboard.rewrite(e - substituted_rhs);
   diff = diff.expand();
@@ -557,7 +555,6 @@ fill_vector_coefficients_i_c(const Expr& summands_with_i_c, unsigned int gcd,
     assert(summands_with_i_c.is_the_x_function());
     coefficients_i_c[0] = 1;
   }
-  D_VEC(coefficients_i_c, 0, coefficients_i_c.size()-1);
 }
 
 } // anonymous namespace
@@ -682,16 +679,45 @@ PURRS::Recurrence::verify_finite_order() const {
     // is simply `rhs'.
     return PROVABLY_CORRECT;
 
+  Expr exact_solution;
+  // Expand the solution in the case `*this' has been solved with the
+  // order reduction method.
+  if (is_linear_finite_order_const_coeff() && applied_order_reduction())
+    if (gcd_among_decrements() < 9)
+      exact_solution = write_expanded_solution(*this, gcd_among_decrements());
+    else {
+      // In this case the expanded solution is too much complicated, then
+      // we try to verify the solution of the reduced recurrence.
+      // The verification of the reduced recurrence, does not guarantee
+      // the correctness of the solution supplied to the user in the case
+      // of errors in the computation of the solution of the original
+      // recurrence starting from the solution of the reduced recurrence.
+      unset_order_reduction();
+      Symbol r = insert_auxiliary_definition(mod(n, gcd));
+      unsigned int dim = coefficients().size() / gcd + 1;
+      std::vector<Expr> new_coefficients(dim);
+      Expr inhomogeneous = 0;
+      Recurrence rec_rewritten
+	(write_reduced_order_recurrence(recurrence_rhs, r, gcd, 
+					coefficients(), new_coefficients,
+					inhomogeneous));
+      rec_rewritten.finite_order_p
+	= new Finite_Order_Info(dim - 1, new_coefficients, 1);
+      rec_rewritten.set_type(type());
+      rec_rewritten.set_inhomogeneous_term(inhomogeneous);
+      rec_rewritten.set_first_valid_index(first_valid_index);
+      rec_rewritten.solve_linear_finite_order();
+      return rec_rewritten.verify_exact_solution();
+    }
+  else
+    exact_solution = exact_solution_.expression();
+  D_VAR(exact_solution);
+
   // Step 1: split the solution in 2 parts: terms with initial conditions
   // are stored in `summands_with_i_c', all the other terms are stored in
   // `summands_without_i_c'.
   Expr summands_with_i_c = 0;
   Expr summands_without_i_c = 0;
-  Expr exact_solution;
-  if (evaluated_exact_solution_.has_expression())
-    exact_solution = evaluated_exact_solution_.expression();
-  else
-    exact_solution = exact_solution_.expression();
   if (exact_solution.is_a_add())
     for (unsigned int i = exact_solution.nops(); i-- > 0; ) {
       const Expr& addend_exact_solution = exact_solution.op(i);
@@ -705,14 +731,16 @@ PURRS::Recurrence::verify_finite_order() const {
       summands_with_i_c = exact_solution;
     else
       summands_without_i_c = exact_solution;
+  D_VAR(summands_without_i_c);
   
   // Prepare a vector containing the coefficients of the symbolic
   // initial conditions occurring in the solution.
-  std::vector<Expr> coefficients_i_c(order_rec/gcd);
+  std::vector<Expr> coefficients_i_c(order_rec);
   if (is_linear_finite_order())
     fill_vector_coefficients_i_c(summands_with_i_c, gcd, first_valid_index,
 				 coefficients_i_c);
-
+  D_VEC(coefficients_i_c, 0, coefficients_i_c.size()-1);
+  
   // Step 2: validation of symbolic initial conditions.
   Verify_Status status = validate_initial_conditions(order_rec,
 						     coefficients_i_c,
@@ -795,8 +823,7 @@ PURRS::Recurrence::verify_finite_order() const {
   // Step 4: the method of the paper
   // "Checking and Confining the Solutions of Recurrence Relations"
   // for linear finite order with constant coefficients.
-  // FIXME: is efficient the new method also in the case of order reduction?
-  if (is_linear_finite_order_const_coeff()/* && !applied_order_reduction()*/)
+  if (is_linear_finite_order_const_coeff())
     if (verify_new_method_const_coeff(order_rec, summands_without_i_c, roots,
 				      true))
       return PROVABLY_CORRECT;
@@ -820,13 +847,14 @@ PURRS::Recurrence::verify_finite_order() const {
   // of the recurrence, `n' by `n - d' (where `d' is the decrement
   // of the i-th term `a_i(n)*x(n - d)').
   Expr substituted_rhs = recurrence_rhs;
-  for (index_type d = 1; d <= order_rec; ++d) {
-    Expr shifted_solution
-      = simplify_all(summands_without_i_c.substitute(n, n - d));
-    shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
-    substituted_rhs = substituted_rhs.substitute(x(n - d), shifted_solution);
-  }
-
+  for (index_type d = 1; d <= order_rec; ++d)
+    if (substituted_rhs.has(x(n - d))) {
+      Expr shifted_solution
+	= simplify_all(summands_without_i_c.substitute(n, n - d));
+      shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
+      substituted_rhs = substituted_rhs.substitute(x(n - d), shifted_solution);
+    }
+  
   Expr diff = summands_without_i_c - substituted_rhs;
   // The expression `diff' can be more difficult to simplify.
   // For this motive we performed simplification also
