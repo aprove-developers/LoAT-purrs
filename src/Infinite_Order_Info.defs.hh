@@ -70,7 +70,10 @@ public:
   //! Returns <CODE>inhomog_first_order_</CODE>.
   Expr& inhomog_first_order();
 
+  //! Returns <CODE>weight_inf_order_</CODE>.
   Expr weight_inf_order() const;
+
+  //! Returns <CODE>weight_inf_order_</CODE>.
   Expr& weight_inf_order();
 
 //   //! Returns <CODE>infinite_order_fwdr_</CODE>.
@@ -109,6 +112,11 @@ private:
   //! This data contains the non homogeneous part of the new recurrence.
   Expr inhomog_first_order_;
 
+  //! \brief
+  //! Contains the factor \f$ f(n) \f$ of the infinite order recurrence
+  //! \f[
+  //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
+  //! \f]
   Expr weight_inf_order_;
 
 //   //! \brief
