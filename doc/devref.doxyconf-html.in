@@ -357,7 +357,8 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = @srcdir@/../src/alg_eq_solver.cc \
+INPUT                  = @srcdir@/definitions.dox \
+			 @srcdir@/../src/alg_eq_solver.cc \
                          @srcdir@/../src/alg_eq_solver.hh \
                          @srcdir@/../src/approximate.cc \
                          @srcdir@/../src/approximate.hh \

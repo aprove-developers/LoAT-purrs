@@ -71,6 +71,7 @@ world: $(ALL_TARGETS)
 PURRS_SOURCE_FILES = $(wildcard $(srcdir)/../src/*.hh $(srcdir)/../src/*.cc)
 
 DOX_FILES = \
+definitions.dox \
 gpl.dox \
 fdl.dox
 
