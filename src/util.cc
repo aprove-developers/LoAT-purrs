@@ -52,7 +52,7 @@ general_gcd(const GExpr& p, const GExpr& q, const GSymbol& x) {
 }
 
 /*!
-  Computes the lcm among the numbers in the vector \p v.
+  Computes the LCM among the numbers in the vector \p v.
 */
 GNumber
 lcm(const std::vector<GNumber>& v) {
@@ -65,7 +65,7 @@ lcm(const std::vector<GNumber>& v) {
 GExpr
 cubic_root(const GExpr& e) {
   static GExpr one_third = GExpr(1)/3;
-  return pow(e, one_third);
+  return power(e, one_third);
 }
 
 void
@@ -239,7 +239,7 @@ convert_to_integer_polynomial(const GExpr& p, const GSymbol& x,
 
   GExpr q = (p * t_lcm).primpart(x);
   factor  = p.lcoeff(x).ex_to_number();
-  factor *= pow(q.lcoeff(x), -1).ex_to_number();
+  factor *= power(q.lcoeff(x), -1).ex_to_number();
   return q;
 }
 
@@ -267,7 +267,7 @@ resultant(const GExpr& p, const GExpr& q, const GSymbol& x) {
   // Special case: `f' or `g' is a constant polynomial. By definition
   // `Res(f, g) = f.lcoeff(n)^g.degree(n) * g.lcoeff(n)^f.degree(n)'. 
   if (deg_f == 0 || deg_g == 0)
-    res = pow(f.lcoeff(x), deg_g) * pow(g.lcoeff(x), deg_f);
+    res = power(f.lcoeff(x), deg_g) * power(g.lcoeff(x), deg_f);
   else {
     // Modified Euclid's algorithm starts here.
     while (deg_f > 0) {
@@ -276,23 +276,25 @@ resultant(const GExpr& p, const GExpr& q, const GSymbol& x) {
       // quozient of `g' and `f' and
       // `factor = f.lcoeff(x)^(g.degree(x) - f.degree(x) + 1)'.
       GExpr r = prem(g, f, x);
-      GExpr factor = pow(f.lcoeff(x), g.degree(x) - f.degree(x) + 1);
+      GExpr factor = power(f.lcoeff(x), g.degree(x) - f.degree(x) + 1);
       // The rest of euclidean's division is given by the ratio
       // `pseudo-remainder / factor'.
-      r *= pow(factor, -1);
+      r *= power(factor, -1);
       unsigned deg_r = r.degree(x);
       GExpr a = f.lcoeff(x);
       // Using rule two.
-      res *= pow(a, deg_g - deg_r);
+      res *= power(a, deg_g - deg_r);
       // Using rule one.
-      res *= pow(-1, deg_f * deg_r);
+      if ((deg_f * deg_r) & 1 != 0)
+	// `deg_f * deg_r' is odd.
+	res = -res;
       g = f;
       f = r;
       deg_f = f.degree(x);
       deg_g = g.degree(x);
     }
     // Here `f' is a constant: use rule three.
-    res *= pow(f, deg_g);
+    res *= power(f, deg_g);
   }
 #if NOISY
   std::cout << "Resultant(f(x), g(x)) = " << res << std::endl;

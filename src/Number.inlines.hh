@@ -254,6 +254,11 @@ power(const Number& b, const Number& e) {
 }
 
 inline Number
+lcm(const Number& x, const Number& y) {
+  return GiNaC::lcm(x.n, y.n);
+}
+
+inline Number
 factorial(const Number& n) {
   return GiNaC::factorial(n.n);
 };

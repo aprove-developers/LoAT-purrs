@@ -49,6 +49,7 @@ Number operator++(Number& lh, int);
 Number operator--(Number& lh, int);
 
 Number power(const Number& b, const Number& e);
+Number lcm(const Number& x, const Number& y);
 Number factorial(const Number& n);
 
 class Number {
@@ -102,6 +103,7 @@ public:
 private:
   friend class Expr;
   friend Number power(const Number& b, const Number& e);
+  friend Number lcm(const Number& x, const Number& y);
   friend Number factorial(const Number& n);
 
   GiNaC::numeric n;
