@@ -1885,8 +1885,7 @@ solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
   Expr new_p_n;
   if (!p_n.is_zero()) {
     new_p_n = p_n.subs(n, n+1) / (p_n * coefficient.subs(n, n+1));
-    new_p_n = simplify_on_output_ex(new_p_n.expand(), false);
-    new_p_n = simplify_numer_denom(new_p_n);
+    new_p_n = simplify_all(new_p_n);
     D_VAR(new_p_n);
     std::vector<Expr> base_of_exps;
     std::vector<Expr> exp_poly_coeff;

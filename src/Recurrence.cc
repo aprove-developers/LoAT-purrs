@@ -226,7 +226,8 @@ PURRS::Recurrence::verify_solution() const {
 	    += find_term_without_function_x(solution.op(i));
       else
 	partial_solution = find_term_without_function_x(solution);
-      partial_solution = simplify_on_input_ex(partial_solution.expand(), true);
+      partial_solution = simplify_on_output_ex(partial_solution.expand(),
+					       false);
       D_VAR(partial_solution);
       // The recurrence is homogeneous.
       if (partial_solution == 0)
@@ -243,33 +244,24 @@ PURRS::Recurrence::verify_solution() const {
 	terms_to_sub[i]
 	  = substitute_symbol_with_expression(partial_solution,
 					      n, n-decrements[i]);
-      Expr substituted_rhs = simplify_on_input_ex(recurrence_rhs.expand(),
-						  true);
+      Expr substituted_rhs = simplify_on_output_ex(recurrence_rhs.expand(),
+						   false);
       substituted_rhs = substitute_function_x(recurrence_rhs, terms_to_sub,
 					      decrements);
 #else
       std::vector<Expr> terms_to_sub(order());
       for (unsigned i = order(); i-- > 0; )
-	terms_to_sub[i] = partial_solution.subs(n, n-i-1);
+	terms_to_sub[i] = simplify_all(partial_solution.subs(n, n-i-1));
       D_VEC(terms_to_sub, 0, terms_to_sub.size()-1);
-      Expr substituted_rhs = simplify_on_input_ex(recurrence_rhs.expand(),
-						  true);
+      Expr substituted_rhs = simplify_on_output_ex(recurrence_rhs.expand(),
+						   false);
       for (unsigned i = terms_to_sub.size(); i-- > 0; )
 	substituted_rhs = substituted_rhs.subs(x(n-i-1), terms_to_sub[i]);
 #endif
       D_VAR(substituted_rhs);
-      Expr diff = partial_solution - substituted_rhs;
-      D_VAR(diff);
-      // `simplify_factorials_and_exponentials()' must be call on not
-      // expanded expression.
-      diff = simplify_factorials_and_exponentials(diff).expand();
-      diff = simplify_numer_denom(diff);
-      if (!diff.is_zero()) {
-	diff = simplify_factorials_and_exponentials(diff).expand();
-	if (!diff.is_zero()) {
-	  return DONT_KNOW;
-	}
-      }
+      Expr diff = simplify_all(partial_solution - substituted_rhs);
+      if (!diff.is_zero())
+	return DONT_KNOW;
       return CORRECT;
     }
   }
