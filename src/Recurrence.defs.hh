@@ -105,8 +105,8 @@ public:
   Symbol insert_auxiliary_definition(const Expr& e) const;
 
   //! \brief
-  //! Substitutes eventually auxiliary definitions contained in
-  //! \p e with their original values stored in the blackboard.
+  //! Returns an expression obtained from \p e by substituting the symbols
+  //! that are also on the blackboard with their definition.
   Expr substitute_auxiliary_definitions(const Expr& e) const;
 
   //! Checks if all the invariants are satisfied.
