@@ -129,6 +129,15 @@ Expr::is_a_number() const {
 }
 
 inline bool
+Expr::is_a_number(Number& n) const {
+  if (GiNaC::is_a<GiNaC::numeric>(*this)) {
+    n = GiNaC::ex_to<GiNaC::numeric>(*this);
+    return true;
+  }
+  return false;
+}
+
+inline bool
 Expr::is_a_constant() const {
   return GiNaC::is_a<GiNaC::constant>(*this);
 }

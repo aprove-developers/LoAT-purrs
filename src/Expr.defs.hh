@@ -344,9 +344,15 @@ public:
   bool is_a_symbol() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is a numberic
+  //! Returns <CODE>true</CODE> if and only if \p *this is a numeric
   //! expression.
   bool is_a_number() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is a numeric
+  //! expression, in which case its value is assigned to \p n.
+  //! Returns <CODE>false</CODE> leaving \p n untouched otherwise.
+  bool is_a_number(Number& n) const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is a constant
@@ -354,7 +360,7 @@ public:
   bool is_a_constant() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is an addiction
+  //! Returns <CODE>true</CODE> if and only if \p *this is an addition
   //! of expressions.
   bool is_a_add() const;
 
