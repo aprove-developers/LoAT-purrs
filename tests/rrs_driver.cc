@@ -77,7 +77,7 @@ main() try {
 #endif
 
     GExpr solution;
-    if (!solve(rhs, n, solution)) {
+    if (solve_try_hard(rhs, n, solution) != OK) {
 #if NOISY
       cout << "Sorry, this is too difficult." << endl;
 #endif
