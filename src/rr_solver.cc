@@ -46,6 +46,11 @@ get_binding(const GList& l, unsigned wild_index) {
   return l.op(wild_index).rhs();
 }
 
+/*!
+  Returns <CODE>true</CODE> if and only if the <CODE>GExpr</CODE> \f$ e \f$
+  is of the form \f$ n + d \f$ with \f$ d \f$ a <CODE>GiNaC::numeric</CODE>;
+  in this case <CODE>decrement</CODE> contains the opposite of \f$ d \f$.
+*/
 static bool
 get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
   static GExpr n_plus_d = n + GiNaC::wild(0);
@@ -79,6 +84,9 @@ order_2_sol_poly_times_exponentials(const GSymbol& n,
 				    const std::vector<GNumber>& coefficients,
 				    GExpr& solution);
 
+/*!
+...
+*/
 bool
 solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   static GExpr x_i = x(GiNaC::wild(0));
@@ -91,6 +99,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   GExpr e = rhs;
 
   // Special case: 'e' is only a function in n or a constant.
+  // If there is not in 'e' 'x(argument)' or there is but with
+  // 'argument' that not contains the variable 'n', then the solution
+  // is obviously 'e'. 
   GList occurrences;
   bool finished = true;
   if (e.find(x_i, occurrences)) {
@@ -107,7 +118,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   if (finished) {
     solution = e; 
 #if NOISY 
-    std::cout << "Solution  " << solution << std::endl << std::endl;
+    std::cout << "Solution " << solution << std::endl << std::endl;
 #endif
     return true;
   }
@@ -136,15 +147,14 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     }
     else if (clear(substitution), match(e, x_i, substitution)) {
       i = get_binding(substitution, 0);
-      if (!i.has(n))
-	// In this case means that user insrted x(i) with i numeric.
-	break;
       a = 1;
       e = 0;
     }
     else
       break;
 
+    // FIXME: con questo controllo qui ed in questo modo non accetta
+    // per esempio x(n) = x(n-1) + x(0).
     GNumber decrement;
     if (!get_constant_decrement(i, n, decrement)) {
       failed = true;
@@ -173,7 +183,8 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       order = index;
 
     // The vector 'coefficients' contains in the i-th position
-    // the i-th coefficient, i. e., the coefficient of x(n-i).
+    // the coefficient of x(n-i); in the first position and in the
+    // positions corresponding to x(n-i) absent, there is '0'.
     if (index > coefficients.size())
       coefficients.insert(coefficients.end(),
 			  index - coefficients.size(),
@@ -184,7 +195,6 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       coefficients[index] += coefficient;
   
   } while (e != 0);
-
   if (failed)
     return false;
 
@@ -197,11 +207,11 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   std::cout << "Inhomogeneous term = " << e << std::endl;
 #endif
 
-  // Simplifies expressions.
+  // Simplifies expressions, in particular rewrite nested powers.
   e = simplify_on_input_ex(e);
 
-  // Now certainly the inhomogeneous term contains only exponential
-  // with exponent n (or a power of n).
+  // Now certainly the exponentials in the inhomogeneous term have
+  // as exponent 'n' (or a power of 'n').
   // 'decomposition' is a matrix with two rows and a number of columns
   // which is at most the number of exponentials in the inhomogeneous term
   // plus one.
