@@ -682,3 +682,7 @@ PURRS::has_symbolic_initial_conditions(const Expr& e) {
   return true;
 }
 
+bool
+PURRS::has_at_least_a_symbolic_ic(const Expr& e) {
+  return e.has_x_function() && has_symbolic_initial_conditions(e);
+}

@@ -130,6 +130,20 @@ substitute_x_function(const Expr& e, const Expr& k, bool do_power);
 */
 bool has_symbolic_initial_conditions(const Expr& e);
 
+//! \brief
+//! Returns <CODE>true</CODE> if and only there is at least
+//! a symbolic initial condition in \p *this; returns
+//! <CODE>false</CODE> otherwise.
+/*!
+  A function \f$ x() \f$ is a symbolic initial condition in the
+  following cases:
+  - the argument is a positive integer;
+  - the argument is parametric;
+  - the argument is equal to \f$ mod(n, k) + h \f$, with
+    \f$ k, h \in \Nset \f$.
+*/
+bool has_at_least_a_symbolic_ic(const Expr& e);
+
 #define DD_MSG(s) std::cout << s << std::endl
 #define DD_VAR(x) std::cout << #x " = " << x << std::endl
 #define DD_MSGVAR(s, x) std::cout << s << #x " = " << x << std::endl
