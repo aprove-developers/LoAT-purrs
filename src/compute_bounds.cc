@@ -49,15 +49,23 @@ using namespace PURRS;
 
 
 void
-bound_for_exp_function(bool lower, const Number& coeff, const Number& divisor,
-		       const Number& base, Expr& bound) {
+compute_bounds_for_exp_function(bool lower, const Number& coeff,
+				const Number& divisor, const Number& base,
+				Expr& bound) {
   // Lower bound.
   if (lower)
     bound += pwr(base, Recurrence::n);
   // Upper bound.
   else {
-    Expr tmp = pwr(base, pwr(divisor, 2));
-    Expr constant = coeff * tmp * pwr(tmp - coeff * pwr(base, divisor), -1);
+    Expr constant;
+    if (pwr(base, pwr(divisor, 2)) > coeff * pwr(base, divisor)) {
+      const Expr& tmp = pwr(base, pwr(divisor, 2));
+      constant = coeff * tmp * pwr(tmp - coeff * pwr(base, divisor), -1);
+    }
+    else
+      constant = coeff * pwr(coeff - 1, -1) * pwr(base, divisor)
+	* pwr(log(base), -1 - log(coeff) * pwr(log(divisor), -1))
+	* gamma(1 + log(coeff) * pwr(log(divisor), -1));
     bound += pwr(base, Recurrence::n)
       + constant * pwr(base, Recurrence::n / divisor);
   }
@@ -127,6 +135,60 @@ compute_bounds_for_power_of_n(bool lower,
   }
 }
 
+bool
+compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
+				      const Number& divisor, const Number& num,
+				      Expr& bound) {
+  // Lower bound.
+  if (lower)
+    return false;
+  // Upper bound.
+  else {
+    Expr tmp_bound = 0;
+    if (coeff == 1)
+      tmp_bound += Number(1, 2) * log(Recurrence::n)
+	* (log(Recurrence::n) / log(divisor) + 1);
+    else {
+      assert(coeff > 1);
+      Expr ratio_log = log(coeff) / log(divisor);
+      tmp_bound += (1 / (coeff - 1)) * log(Recurrence::n)
+	* (pwr(Recurrence::n, ratio_log) - 1)
+	+ log(divisor) * pwr(coeff - 1, -2)
+	* ((coeff + 1) * pwr(Recurrence::n, ratio_log) - coeff);
+    }
+    bound =+ num * tmp_bound;
+    return true;
+  }
+}
+
+bool
+compute_bounds_for_power_times_logarithm_function(bool lower,
+						  const Number& coeff,
+						  const Number& divisor,
+						  const Number& num,
+						  const Number& k,
+						  Expr& bound) {
+  // Lower bound.
+  if (lower)
+    return false;
+  // Upper bound.
+  else {
+    Expr tmp_bound = 0;
+    Number div_k = pwr(divisor, k);
+    Expr tmp = pwr(Recurrence::n, k) * log(Recurrence::n);
+    if (coeff < div_k)
+      tmp_bound += (div_k * tmp) / (div_k - coeff);
+    else if (coeff == div_k)
+      tmp_bound += tmp * log(Recurrence::n) / log(divisor);
+    else
+      tmp_bound += tmp
+	* (pwr(coeff / div_k, log(Recurrence::n) / log(divisor)) - 1)
+	* div_k / (coeff - div_k);
+    bound += num * tmp_bound;
+    return true;
+  }
+}
+
 /*!
   a * n^k
 */
@@ -189,60 +251,6 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
     }
   }
   return false;
-}
-
-bool
-compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
-				      const Number& divisor, const Number& num,
-				      Expr& bound) {
-  // Lower bound.
-  if (lower)
-    return false;
-  // Upper bound.
-  else {
-    Expr tmp_bound = 0;
-    if (coeff == 1)
-      tmp_bound += Number(1, 2) * log(Recurrence::n)
-	* (log(Recurrence::n) / log(divisor) + 1);
-    else {
-      assert(coeff > 1);
-      Expr ratio_log = log(coeff) / log(divisor);
-      tmp_bound += (1 / (coeff - 1)) * log(Recurrence::n)
-	* (pwr(Recurrence::n, ratio_log) - 1)
-	+ log(divisor) * pwr(coeff - 1, -2)
-	* ((coeff + 1) * pwr(Recurrence::n, ratio_log) - coeff);
-    }
-    bound =+ num * tmp_bound;
-    return true;
-  }
-}
-
-bool
-compute_bounds_for_power_times_logarithm_function(bool lower,
-						  const Number& coeff,
-						  const Number& divisor,
-						  const Number& num,
-						  const Number& k,
-						  Expr& bound) {
-  // Lower bound.
-  if (lower)
-    return false;
-  // Upper bound.
-  else {
-    Expr tmp_bound = 0;
-    Number div_k = pwr(divisor, k);
-    Expr tmp = pwr(Recurrence::n, k) * log(Recurrence::n);
-    if (coeff < div_k)
-      tmp_bound += (div_k * tmp) / (div_k - coeff);
-    else if (coeff == div_k)
-      tmp_bound += tmp * log(Recurrence::n) / log(divisor);
-    else
-      tmp_bound += tmp
-	* (pwr(coeff / div_k, log(Recurrence::n) / log(divisor)) - 1)
-	* div_k / (coeff - div_k);
-    bound += num * tmp_bound;
-    return true;
-  }
 }
 
 /*!
@@ -370,10 +378,9 @@ sharper_bounds_for_exponential(bool lower,
 			       Expr& bound) {
   Number num;
   if (poly_coeff.is_a_number(num) && num.is_positive())
-    if (coeff >= 1
-	&& pwr(base, pwr(divisor, 2)) > coeff * pwr(base, divisor)) {
-      Expr tmp_bound = 0;
-      bound_for_exp_function(lower, coeff, divisor, base, tmp_bound);
+    if (coeff >= 1) {
+      Expr tmp_bound;
+      compute_bounds_for_exp_function(lower, coeff, divisor, base, tmp_bound);
       bound += num * tmp_bound;
       return true;
     }
@@ -480,10 +487,15 @@ try_to_compute_sum(bool lower, const Expr& summand,
       }
 }
 
+//! \brief
+//! Returns <CODE>true<CODE> if the system is able to approximate the
+//! functional equation \f$ x(n) = a x(n/b) + g(n) \f$ with
+//! \ p coefficient as \f$ a \f$, \p divisor_arg as \f$ b \f$ and
+//! \p inhomogeneous as \f$ g(n) \f$; returns <CODE>false<CODE> otherwise.
 bool
-known_class_of_functional_eq(const Expr& coefficient,
-			     const Number& divisor_arg,
-			     const Expr& inhomogeneous) {
+known_class_of_functional_eq_rank_1(const Expr& coefficient,
+				    const Number& divisor_arg,
+				    const Expr& inhomogeneous) {
   assert(divisor_arg.is_rational() && divisor_arg.is_positive());
   // We want that `coefficient' is a positive number and
   // `divisor_arg' a rational number bigger than `1'.
@@ -491,10 +503,10 @@ known_class_of_functional_eq(const Expr& coefficient,
   if (!coefficient.is_a_number(coeff) || !coeff.is_positive()
       || divisor_arg < 1)
     return false;
-  if (has_parameters(inhomogeneous)) {
-    D_MSG("Functional equation with parameters");
+
+  if (has_parameters(inhomogeneous))
     return false;
-  }
+
   return true;
 }
 
@@ -508,9 +520,6 @@ compute_non_homogeneous_part(bool lower,
   std::vector<Expr> exp_no_poly_coeff;
   exp_poly_decomposition(inhomogeneous, Recurrence::n,
 			 bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
-  D_VEC(bases_of_exp, 0, bases_of_exp.size()-1);
-  D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
-  D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
   for (unsigned i = bases_of_exp.size(); i-- > 0; ) {
     const Expr& base = bases_of_exp[i];
     const Expr& poly_coeff = exp_poly_coeff[i];
@@ -529,7 +538,7 @@ compute_non_homogeneous_part(bool lower,
 	  if (!is_non_negative_non_decreasing(1, poly_coeff, true,
 					      Recurrence::n, true, condition))
 	    return false ;
-	  Expr sum = 0;
+	  Expr sum;
 	  try_to_compute_sum(lower, poly_coeff, coeff, divisor_arg, sum);
 	  if (lower)
 	    bound += sum.substitute(Recurrence::n, q);
@@ -546,7 +555,7 @@ compute_non_homogeneous_part(bool lower,
 	  if (!is_non_negative_non_decreasing(1, no_poly_coeff, false,
 					      Recurrence::n, true, condition))
 	    return false;
-	  Expr sum = 0;
+	  Expr sum;
 	  try_to_compute_sum(lower, no_poly_coeff, coeff, divisor_arg, sum);
 	  if (lower)
 	    bound += sum.substitute(Recurrence::n, q);
@@ -566,7 +575,7 @@ compute_non_homogeneous_part(bool lower,
 						Recurrence::n, true,
 						condition))
 	      return false ;
-	    Expr sum = 0;
+	    Expr sum;
 	    try_to_compute_sum(lower, pwr(base, Recurrence::n) * poly_coeff,
 			       coeff, divisor_arg, sum);
 	    if (lower)
@@ -577,12 +586,12 @@ compute_non_homogeneous_part(bool lower,
 	if (!no_poly_coeff.is_zero()) {
 	  // In this case is not possible to apply the sharper
 	  // bounds for the exponential.
-	  // Check if the polynomial part times esponential is a
+	  // Check if the polynomial part times exponential is a
 	  // non-negative, non-decreasing function.
 	  if (!is_non_negative_non_decreasing(num_base, no_poly_coeff, false,
 					      Recurrence::n, true, condition))
 	    return false ;
-	  Expr sum = 0;
+	  Expr sum;
 	  try_to_compute_sum(lower, pwr(base, Recurrence::n) * no_poly_coeff,
 			     coeff, divisor_arg, sum);
 	  if (lower)
@@ -604,13 +613,11 @@ compute_non_homogeneous_part(bool lower,
 /*!
   Computes
   \f[
-    a^q x ( \frac {n}{b^q} )
+    a^q x( \frac {n}{b^q} )
   \f]
-  where \f$ a \f$ is stored in <CODE>coefficient()</CODE>, \f$ b \f$
-  is stored <CODE>divisor_arg()</CODE>.
-  \f$ q \f$ is stored in \p q_upper if the value computed will be
-  added to \p ub or it is stored in \p q_lower if the value computed
-  will be added to \p lb.
+  where \f$ a \f$ is stored in
+  <CODE>functional_eq_p->ht_begin()->second</CODE>, \f$ b \f$
+  is stored <CODE>functional_eq_p->ht_begin()->first</CODE>.
 */
 void
 PURRS::Recurrence::add_term_with_initial_condition(bool lower, const Expr& q,
@@ -637,25 +644,26 @@ PURRS::Recurrence::approximate_functional_equation_lower() const {
     Number divisor_arg = functional_eq_p->ht_begin()->first;
     Expr coefficient = functional_eq_p->ht_begin()->second;    
     
-    if (!known_class_of_functional_eq(coefficient, divisor_arg,
-				      inhomogeneous_term))
+    if (!known_class_of_functional_eq_rank_1(coefficient, divisor_arg,
+					     inhomogeneous_term))
       return TOO_COMPLEX;
 
     Number coeff = coefficient.ex_to_number();
     Expr q_lower = log(n) / log(divisor_arg) - 1;
-    Expr lb = 0;
+    Expr lower_bound;
 
     Number condition = -1;
-    if (!inhomogeneous_term.is_zero())
-      if (!compute_non_homogeneous_part(true, coeff, divisor_arg,
-					inhomogeneous_term, q_lower,
-					lb, condition))
-	return TOO_COMPLEX;
+    if (!inhomogeneous_term.is_zero()
+	&& !compute_non_homogeneous_part(true, coeff, divisor_arg,
+					 inhomogeneous_term, q_lower,
+					 lower_bound, condition))
+      return TOO_COMPLEX;
+
     if (condition > 1)
       set_applicability_condition(condition.to_unsigned());
-    add_term_with_initial_condition(true, q_lower, lb);
+    add_term_with_initial_condition(true, q_lower, lower_bound);
     
-    lower_bound_.set_expression(simplify_logarithm(lb));
+    lower_bound_.set_expression(simplify_logarithm(lower_bound));
     if (upper_bound_.has_expression()
 	&& upper_bound_.expression() == lower_bound_.expression())
       exact_solution_.set_expression(upper_bound_.has_expression());
@@ -671,25 +679,26 @@ PURRS::Recurrence::approximate_functional_equation_upper() const {
     Number divisor_arg = functional_eq_p->ht_begin()->first;
     Expr coefficient = functional_eq_p->ht_begin()->second;    
     
-    if (!known_class_of_functional_eq(coefficient, divisor_arg,
-				      inhomogeneous_term))
+    if (!known_class_of_functional_eq_rank_1(coefficient, divisor_arg,
+					     inhomogeneous_term))
       return TOO_COMPLEX;
 
     Number coeff = coefficient.ex_to_number();
     Expr q_upper = log(n) / log(divisor_arg);
-    Expr ub = 0;
+    Expr upper_bound;
 
     Number condition = -1;    
-    if (!inhomogeneous_term.is_zero())
-      if (!compute_non_homogeneous_part(false, coeff, divisor_arg,
-					inhomogeneous_term, q_upper,
-					ub, condition))
-	return TOO_COMPLEX;
+    if (!inhomogeneous_term.is_zero()
+	&& !compute_non_homogeneous_part(false, coeff, divisor_arg,
+					 inhomogeneous_term, q_upper,
+					 upper_bound, condition))
+      return TOO_COMPLEX;
+
     if (condition > 1)
       set_applicability_condition(condition.to_unsigned());
-    add_term_with_initial_condition(false, q_upper, ub);
+    add_term_with_initial_condition(false, q_upper, upper_bound);
     
-    upper_bound_.set_expression(simplify_logarithm(ub));
+    upper_bound_.set_expression(simplify_logarithm(upper_bound));
     if (lower_bound_.has_expression()
 	&& upper_bound_.expression() == lower_bound_.expression())
       exact_solution_.set_expression(lower_bound_.has_expression());
