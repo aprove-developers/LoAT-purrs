@@ -169,9 +169,9 @@ for \f$ n \geq k \f$.
 We implicitly assume that \f$ \alpha_k(n) \neq 0 \f$ "syntactically",
 for otherwise the order would be smaller.
 The <EM>coefficients</EM> \f$ \alpha_j(n) \f$, for \f$ j = 1, \dots, k \f$,
-are real or complex numbers.
-The function \f$ p \f$ is defined on \f$ \Nset \cap [k, +\infty) \f$,
-and is the <EM>non-homogeneous part</EM> of the recurrence.
+are functions defined on \f$ \Nset \cap [k, +\infty) \f$.
+Also the function \f$ p \f$, called the <EM>non-homogeneous part</EM>
+of the recurrence, is defined on \f$ \Nset \cap [k, +\infty) \f$.
 If \f$ p \doteq 0 \f$ (that is, \f$ p \f$ vanishes identically from a
 syntactical point of view), we say that the recurrence is
 <EM>homogeneous</EM>.
@@ -239,9 +239,6 @@ where
 	                \right),
 \f]
 (for the proof see ...).
-
-For this transformation is essential that the ``weight'' \f$ f(n) \f$ be
-the same for all values of \f$ k \f$.
 
 In the actual practice, PURRS creates a new recurrence \f$ z_n \f$ such
 that \f$ z_n = x_{n+1} \f$:
