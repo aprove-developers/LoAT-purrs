@@ -93,14 +93,29 @@ ok_inequalities(const Expr& e, unsigned int condition) {
 
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::
-validate_initial_conditions(index_type order,
+validate_initial_conditions(bool is_symbolic_solution, index_type order,
 			    const std::vector<Expr>& coefficients_i_c,
 			    const Expr& summands_with_i_c,
 			    const Expr& summands_without_i_c) const {
+  if (!is_symbolic_solution) {
+    for (index_type i = 0; i < order; ++i) {
+      index_type index =
+	get_max_index_initial_condition() > first_valid_index + i
+	? get_max_index_initial_condition() : first_valid_index + i;
+      Expr e = simplify_all(summands_without_i_c.substitute(n, index));
+      e = blackboard.rewrite(e);
+      e = simplify_all(e);
+      // Get from the map `initial_conditions_' the value associated
+      // to the symbolic initial conditions `x(index)'.
+      if (e != get_initial_condition(index))
+	// FIXME: provably_incorrect nei casi semplici.
+	return INCONCLUSIVE_VERIFICATION;
+    }
+    return PROVABLY_CORRECT;
+  }
+
   for (index_type i = 0; i < order; ++i) {
-    index_type index =
-      get_max_index_initial_condition() > first_valid_index + i
-      ? get_max_index_initial_condition() : first_valid_index + i;
+    index_type index = first_valid_index + i;
     // In the case of non-linear recurrences the homogeneous part
     // of the solution can contains more than one symbolic initial
     // condition: the vector `coefficients_i_c' is in this case empty.
@@ -113,11 +128,7 @@ validate_initial_conditions(index_type order,
       // opportunities for simplifications.
       e = blackboard.rewrite(e);
       e = simplify_all(e);
-      // If in the map `initial_conditions' there is an expression
-      // `e' correspondent to the integer `first_valid_index + i'
-      // (the index of the initial condition), then returns `e';
-      // returns `x(first_valid_index + i)' otherwise.
-      if (e != get_initial_condition(index))
+      if (e != x(index))
 	// FIXME: provably_incorrect nei casi semplici.
 	return INCONCLUSIVE_VERIFICATION;
     }
@@ -681,6 +692,14 @@ fill_vector_coefficients_i_c(const Expr& summands_with_i_c, unsigned int gcd,
 */
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_finite_order() const {
+  // If `is_symbolic_solution' is true then the solution contains
+  // symbolic initial conditions (e.g. x(i), with i non-negative integer);
+  // otherwise the solution has been evaluated on the values contained in
+  // the map `initial_conditions_'.
+  bool is_symbolic_solution = false;
+  if (initial_conditions_.empty())
+    is_symbolic_solution = true;
+
   // We will store here the order of the recurrence.
   index_type order_rec;
   // We will store here the greatest common divisor among the
@@ -714,8 +733,11 @@ PURRS::Recurrence::verify_finite_order() const {
 
   Expr exact_solution;
   // Expand the solution in the case `*this' has been solved with the
-  // order reduction method.
-  if (is_linear_finite_order_const_coeff() && applied_order_reduction())
+  // order reduction method (if we are in the case of solution NOT symbolic
+  // then it has already been expanded before substituting the values
+  // of the map `initial_conditions_').
+  if (is_linear_finite_order_const_coeff() && applied_order_reduction()
+      && is_symbolic_solution)
     // FIXME: with `2' means that the solution is never expanded!
     // At the moment we always verify the solution of the "reduced"
     // recurrence.
@@ -746,7 +768,10 @@ PURRS::Recurrence::verify_finite_order() const {
       return rec_rewritten.verify_exact_solution();
     }
   else
-    exact_solution = exact_solution_.expression();
+    if (is_symbolic_solution)
+      exact_solution = exact_solution_.expression();
+    else
+      exact_solution = evaluated_exact_solution_.expression();
   D_VAR(exact_solution);
 
   // Step 1: split the solution in 2 parts: terms with initial conditions
@@ -754,31 +779,35 @@ PURRS::Recurrence::verify_finite_order() const {
   // `summands_without_i_c'.
   Expr summands_with_i_c = 0;
   Expr summands_without_i_c = 0;
-  if (exact_solution.is_a_add())
-    for (unsigned int i = exact_solution.nops(); i-- > 0; ) {
-      const Expr& addend_exact_solution = exact_solution.op(i);
-      if (has_at_least_a_symbolic_initial_condition(addend_exact_solution))
-	summands_with_i_c += addend_exact_solution;
-      else
-	summands_without_i_c += addend_exact_solution;
-    }
-  else
-    if (has_only_symbolic_initial_conditions(exact_solution))
-      summands_with_i_c = exact_solution;
+  if (is_symbolic_solution)
+    if (exact_solution.is_a_add())
+      for (unsigned int i = exact_solution.nops(); i-- > 0; ) {
+	const Expr& addend_exact_solution = exact_solution.op(i);
+	if (has_at_least_a_symbolic_initial_condition(addend_exact_solution))
+	  summands_with_i_c += addend_exact_solution;
+	else
+	  summands_without_i_c += addend_exact_solution;
+      }
     else
-      summands_without_i_c = exact_solution;
+      if (has_only_symbolic_initial_conditions(exact_solution))
+	summands_with_i_c = exact_solution;
+      else
+	summands_without_i_c = exact_solution;
+  else
+    summands_without_i_c = exact_solution;
   D_VAR(summands_without_i_c);
   
   // Prepare a vector containing the coefficients of the symbolic
   // initial conditions occurring in the solution.
   std::vector<Expr> coefficients_i_c(order_rec);
-  if (is_linear_finite_order())
+  if (is_linear_finite_order() && is_symbolic_solution)
     fill_vector_coefficients_i_c(summands_with_i_c, gcd, first_valid_index,
 				 coefficients_i_c);
   D_VEC(coefficients_i_c, 0, coefficients_i_c.size()-1);
   
   // Step 2: validation of symbolic initial conditions.
-  Verify_Status status = validate_initial_conditions(order_rec,
+  Verify_Status status = validate_initial_conditions(is_symbolic_solution,
+						     order_rec,
 						     coefficients_i_c,
 						     summands_with_i_c,
 						     summands_without_i_c);

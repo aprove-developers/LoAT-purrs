@@ -1140,7 +1140,7 @@ private:
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
   //! the verification.
   Verify_Status
-  validate_initial_conditions(index_type order,
+  validate_initial_conditions(bool symbolic_solution, index_type order,
 			      const std::vector<Expr>& coefficients_i_c,
 			      const Expr& summands_with_i_c,
 			      const Expr& summands_without_i_c) const;
