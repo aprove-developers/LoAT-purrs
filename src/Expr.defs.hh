@@ -139,6 +139,11 @@ bool operator!=(const Expr& x, const Expr& y);
 Expr wild(unsigned label);
 
 //! \brief
+//! Returns the application of functor \f$ f \f$ to operand \f$ x \f$,
+//! i.e., \f$ f(x) \f$.
+Expr function_appl(unsigned f, const Expr& x);
+
+//! \brief
 //! If \f$ x \f$ and \f$ y \f$ are not zero or \f$ x = 0 \f$ and \f$ y \f$
 //! is a positive rational number, returns \f$ x^y \f$.
 /*!
@@ -428,6 +433,8 @@ public:
   bool is_the_acos_function() const;
 
   bool is_the_x_function() const;
+  bool is_the_sum_function() const;
+  bool is_the_prod_function() const;
 
   //! Returns the numeric value of \p *this.
   Number ex_to_number() const;
@@ -440,6 +447,12 @@ public:
   bool is_rational_polynomial() const;
   bool is_relation_equal() const;
 
+  //! Returns the functor of \p *this.
+  /*!
+    It is assumed that \p *this is a function application.
+    Returns the unsigned integer encoding the functor name.
+  */
+  unsigned functor() const;
 
   //! Returns the operand's number of \p *this.
   /*!
@@ -722,6 +735,7 @@ private:
   friend bool operator==(const Expr& x, const Expr& y);
 
   friend Expr wild(unsigned label);
+  friend Expr function_appl(unsigned f, const Expr& x);
   friend Expr pwr(const Expr& x, const Expr& y);
   friend Expr sqrt(const Expr& x);
   friend Expr sin(const Expr& x);

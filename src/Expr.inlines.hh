@@ -337,6 +337,12 @@ Expr::operator[](int i) const {
 }
 
 inline unsigned
+Expr::functor() const {
+  assert(is_a_function());
+  return GiNaC::ex_to<GiNaC::function>(*this).get_serial();
+}
+
+inline unsigned
 Expr::nops() const {
   return Base::nops();
 }
@@ -450,6 +456,11 @@ Expr::diff(const Symbol& x, unsigned nth) {
 inline Expr
 wild(unsigned label) {
   return GiNaC::wild(label);
+}
+
+inline Expr
+function_appl(unsigned f, const Expr& x) {
+  return GiNaC::function(f, static_cast<const Expr::Base>(x));
 }
 
 inline Expr
@@ -594,6 +605,16 @@ Expr::is_the_acos_function() const {
 inline bool
 Expr::is_the_x_function() const {
   return is_ex_the_function(*this, x);
+}
+
+inline bool
+Expr::is_the_sum_function() const {
+  return is_ex_the_function(*this, sum);
+}
+
+inline bool
+Expr::is_the_prod_function() const {
+  return is_ex_the_function(*this, prod);
 }
 
 inline void
