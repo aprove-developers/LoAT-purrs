@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "globals.hh"
 #include "util.hh"
 #include "sum_poly.hh"
+#include "simplify.hh"
 #include "alg_eq_solver.hh"
 #include <climits>
 
@@ -36,7 +37,6 @@ http://www.cs.unipr.it/purrs/ . */
 using namespace GiNaC;
 
 #define NOISY 1
-
 
 static GExpr
 get_binding(const GList& l, unsigned wild_index) {
@@ -58,189 +58,6 @@ get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
     }
   }
   return false;
-}
-
-/*!
-  Transforms expressions of the form \f$(a^x)^b)\f$ in the expression \p p
-  into \f$a^(b*x)\f$.
-*/
-static GExpr
-mul_exponents_exp(GExpr& p, const GList lst_of_exp) {
-  GExpr q = 0;
-
-  for (size_t i = lst_of_exp.nops(); i-- > 0; ) {
-    GExpr tmp = lst_of_exp.op(i);
-    tmp = tmp.subs(pow(pow(wild(0), wild(1)), wild(2)) == 
-		   pow(wild(0), wild(1)*wild(2)));
-    // Finds coefficient of exponential 'lst_of_exp.op(i)'.
-    GList substitution;
-    clear(substitution);
-    if (match(p, lst_of_exp.op(i)*wild(0), substitution) ||
-	match(p, lst_of_exp.op(i)*wild(0) + wild(1), substitution)) {
-      GExpr coeff = get_binding(substitution, 0);
-      q += tmp*coeff;
-      p -= coeff*lst_of_exp.op(i);
-    }
-    // The exponential's coefficient is 1.
-    else {
-      q += tmp;
-      p -= lst_of_exp.op(i);
-    }
-  }
-  // Now p does not contain other exponential of the form (a^x)^b. 
-  q += p;
-
-  return q;
-}
-
-/*!
-  Transforms expressions of the form \f$a^(b*x)\f$ in the expression \p p
-  into \f$(a^b)^x\f$.
-*/
-static GExpr
-split_exp(GExpr& p, const GSymbol& x, const GList lst_of_exp) {
-  GExpr q = 0;
-
-  for (size_t i = lst_of_exp.nops(); i-- > 0; ) {
-    GExpr tmp = lst_of_exp.op(i);
-    tmp = tmp.subs(pow(wild(0),x*wild(1)) == pow(pow(wild(0),wild(1)),x));
-    // Finds coefficient of exponential 'lst_of_exp.op(i)'.
-    GList substitution;
-    clear(substitution);
-    if (match(p, lst_of_exp.op(i)*wild(0), substitution) ||
-	match(p, lst_of_exp.op(i)*wild(0) + wild(1), substitution)) {
-      GExpr coeff = get_binding(substitution, 0);
-      q += tmp*coeff;
-      p -= coeff*lst_of_exp.op(i);
-    }
-    // The exponential's coefficient is 1.
-    else {
-      q += tmp;
-      p -= lst_of_exp.op(i);
-    }
-  }
-  // Now p does not contain other exponential of the form a^(b*x). 
-  q += p;
-
-  return q;
-}
-
-/*!
-  Transforms expressions of the form \f$a^b*a^c)\f$ in the expression \p p
-  into \f$a^(b+c)^x\f$.
-*/
-static GExpr
-union_exp(GExpr& p, /*const GSymbol& x,*/ const GList lst_of_exp) {
-  GExpr q = 0;
-
-  //FIXME: this part must be finished!!
-//   std::cout << "p " << p << std::endl; 
-  for (size_t i = lst_of_exp.nops(); i-- > 0; ) {
-    GExpr tmp = lst_of_exp.op(i);
-    tmp = tmp.subs(pow(wild(0),wild(1))*pow(wild(0), wild(2)) ==
-		   pow(wild(0), wild(1)+wild(2)));
-    // Finds coefficient of exponential 'lst_of_exp.op(i)'.
-    GList substitution;
-    clear(substitution);
-    if (match(p, lst_of_exp.op(i)*wild(0), substitution) ||
-	match(p, lst_of_exp.op(i)*wild(0) + wild(1), substitution)) {
-      GExpr coeff = get_binding(substitution, 0);
-      q += tmp*coeff;
-      p -= coeff*lst_of_exp.op(i);
-    }
-    // The exponential's coefficient is 1.
-    else {
-      q += tmp;
-      p -= lst_of_exp.op(i);
-    }
-  }
-  // Now p does not contain other exponential of the form a^(b*x). 
-  q += p;
-
-  return q;
-}
-
-/*!
-  Transforms expressions of the form \f$a^x*b^x\f$ in the expression \p p
-  into \f$(a^b)^x\f$.
-*/
-static GExpr 
-mul_base_exp(GExpr& p, const GSymbol& x, const GList lst_of_exp,
-	  const unsigned n) {
-  GExpr q = 0;
-
-  for (size_t i = lst_of_exp.nops(); i-- > 0; ) {
-    GExpr tmp = lst_of_exp.op(i);
-    if (n == 1) {
-      tmp = tmp.subs(pow(wild(0),x)*pow(wild(1),x) == pow(wild(0)*wild(1),x));
-      q += tmp;
-    } 
-    else {
-      tmp = tmp.subs(pow(wild(0),x)*pow(wild(1),x)*wild(2) == 
-		     pow(wild(0)*wild(1),x));
-      // Finds coefficient of exponential 'lst_of_exp.op(i)'.  
-      GList l;
-      GExpr coeff;
-      if (p.find(lst_of_exp.op(i) * wild(), l)) {
-	coeff = l.op(0);
-	coeff = coeff.subs(wild(0)*pow(wild(1), x)*pow(wild(2), x) == wild(0));
-      }
-      q += tmp*coeff;
-    }
-    p -= lst_of_exp.op(i);
-  }
-  // Now p does not contain other exponential of the form a^x*b^x.
-  q += p;
-
-  return q;
-}
-
-static void
-transform_exponentials(GExpr& e, const GSymbol& n, const bool input) {
-  GList lst_of_exp;
-
-  // Transforms (a^n)^b into a^(b*n).
-  static GExpr a_x_b = pow(pow(wild(0), wild(1)), wild(2));
-  while (e.find(a_x_b, lst_of_exp)) {
-    e = mul_exponents_exp(e, lst_of_exp);
-    clear(lst_of_exp);
-  }
-
-  if (input == true) {
-    // Transform a^(b*n+c) into a^c*a^(b*n)
-    // (to do only on input expression).
-    e = e.expand();
-  }
-  // Transforms a^(b*n) into (a^b)^n
-  static GExpr a_bn = pow(wild(0), n*wild(1));
-  if (e.find(a_bn, lst_of_exp))
-    e = split_exp(e, n, lst_of_exp);
-
-#if 0
-  if (input == false) {
-    //FIXME: this part must be finished!!
-    // Transforms a^b*a^c into a^(b+c)
-    // (to do only on output expression).
-    static GExpr a_b_times_a_c = pow(wild(0), wild(1)) * pow(wild(0), wild(2));
- //      pow(wild(1)*wild(0), wild(2)) *
-//       pow(wild(3)*wild(0), wild(4));
-    if (e.find(a_b_times_a_c, lst_of_exp)) {
-      std::cout << "lst_of_exp " << lst_of_exp << std::endl;   
-      //e = union_exp(e, n, lst_of_exp);
-    }
-  }
-#endif
-
-  // Transforms a^n*b^n into (a*b)^n.
-  static GExpr a_n_b_n = pow(wild(0), n)*pow(wild(1), n);
-  static GExpr c_a_n_b_n = pow(wild(0), n)*pow(wild(1), n)*wild(2);
-  while (e.find(a_n_b_n, lst_of_exp) || e.find(c_a_n_b_n, lst_of_exp)) { 
-    if (e.find(a_n_b_n, lst_of_exp))
-	e = mul_base_exp(e, n, lst_of_exp, 1);
-    else
-      e = mul_base_exp(e, n, lst_of_exp, 2);
-    clear(lst_of_exp);
-  }
 }
 
 static GMatrix
@@ -380,12 +197,8 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   std::cout << "Inhomogeneous term = " << e << std::endl;
 #endif
 
-  // The factors of the form a^(bn+c) (a,b,c numeric) must be transformed
-  // into (a^b)^n*a^c. GiNaC tranforms only a^(bn+c) in a^c*a^(bn) but not
-  // a^(bn) into (a^b)^n.
-  // Besides transform factor of the form (a^n)^b into a a^(b*n)
-  // (GiNaC do not make this).
-  transform_exponentials(e, n, true);
+  // Simplifies expressions.
+  e = simplify_on_input_ex(e);
 
   // Now certainly the inhomogeneous term contains only exponential
   // with exponent n (or a power of n).
@@ -504,10 +317,6 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       throw ("PURRS error: order too large"); 
     } 
   } 
-  
-#if NOISY
-  std::cout << "Solution  " << solution << std::endl << std::endl;
-#endif
   
   return true;
 }
@@ -628,7 +437,8 @@ order_1_sol_poly_times_exponentials(const GSymbol& n,
   }
   solution_tot *= alpha_n;
   solution_tot = solution_tot.expand();
-  transform_exponentials(solution_tot, n, false);
+  solution_tot = simplify_on_output_ex(solution_tot);
+  solution_tot = simplify_roots(solution_tot);
 
   return true;
 } 
@@ -724,9 +534,10 @@ order_2_sol_roots_distinct(const GSymbol& n, const GMatrix& decomposition,
     solution_tot += solution_1 - solution_2;
   }
   solution_tot = solution_tot.expand();
+  solution_tot = simplify_on_output_ex(solution_tot);
+  solution_tot = simplify_roots(solution_tot);
   solution_tot = solution_tot.collect(lst(initials_conditions[0],
-					  initials_conditions[1]));
-  transform_exponentials(solution_tot, n, false);
+  					  initials_conditions[1]));
   return solution_tot;
 }
 
@@ -830,9 +641,10 @@ order_2_sol_roots_no_distinct(const GSymbol& n, const GMatrix& decomposition,
       solution_tot += solution;
     }
     solution_tot = solution_tot.expand();
+    solution_tot = simplify_on_output_ex(solution_tot);
+    solution_tot = simplify_roots(solution_tot);
     solution_tot = solution_tot.collect(lst(initials_conditions[0],
 					    initials_conditions[1]));
-    transform_exponentials(solution_tot, n, false);
   }
   return solution_tot;
 }
