@@ -645,7 +645,6 @@ exp_poly_decomposition_factor(const GExpr& base,
     q.push_back(0);
     position = alpha_size;
   }
-
   // Here `alpha[position]' contains `base' and the polynomial and
   // possibly not polynomial parts of `e' can be added to
   // `p[position]' and `q[position]', respectively.
@@ -656,10 +655,44 @@ exp_poly_decomposition_factor(const GExpr& base,
   q[position] += possibly_not_polynomial;
 }
 
-// FIXME: this is just a temporary definition.
+/*!
+  Definition of a <CODE>valid_base</CODE> for an exponential in inductive way:
+  - every <CODE>GiNaC::numeric</CODE> is a <CODE>valid_base</CODE>;
+  - every <CODE>GiNaC::costant</CODE> is a <CODE>valid_base</CODE>;
+  - every <CODE>GiNaC::symbol</CODE> different from \p n is a
+    <CODE>valid_base</CODE>;
+  - given \f$ e \f$ a <CODE>GiNaC::power</CODE>,
+    if \f$ e.op(0) \f$ and \f$ e.op(1) \f$ are <CODE>valid_base</CODE>
+    then \f$ e \f$ is a <CODE>valid_base</CODE>;
+  - given \f$ f \f$ a <CODE>GiNaC::function</CODE>,
+    if \f$ f.op(0) \f$ is <CODE>valid_base</CODE>
+    then \f$ f \f$ is a <CODE>valid_base</CODE>;
+  - given the binary operations sum (\f$ + \f$) and multiplication (\f$ * \f$),
+    if \f$ a \f$ and \f$ b \f$ are <CODE>valid_base</CODE> then
+    \f$ a + b \f$ and \f$ a * b \f$ are <CODE>valid_base</CODE>.
+*/
 static bool
-ground(const GExpr& /* e */) {
-  return true;
+valid_base(const GExpr& e, const GSymbol& n) {
+  bool ok;
+  if (is_a<numeric>(e))
+    ok = true;
+  else if (is_a<constant>(e))
+    ok = true;
+  else if (is_a<symbol>(e) && !e.is_equal(n))
+    ok = true;
+  else if (is_a<power>(e))
+    ok = valid_base(e.op(0), n) && valid_base(e.op(1), n);
+  else if (is_a<function>(e))
+    ok = valid_base(e.op(0), n);
+  else if (is_a<add>(e) || is_a<mul>(e)) {
+    ok = true;
+    for (unsigned i = e.nops(); i-- > 0; )
+      ok = ok && valid_base(e.op(i), n);
+  }
+  else
+    ok = false;
+  
+  return ok;
 }
 
 static void
@@ -675,9 +708,9 @@ exp_poly_decomposition_summand(const GExpr& e, const GSymbol& n,
       // We have found something of the form `pow(base, n)'.
       GExpr base = get_binding(substitution, 0);
       assert(base != 0);
-      if (ground(base)) {
+      if (valid_base(base, n)) {
 	// We have found something of the form `pow(base, n)'
-	// and `base' is good for the decomposition: determine
+	// and `base' is good for the decomposition.
 	exp_poly_decomposition_factor(base, 1, n, alpha, p, q);
 	return;
       }
@@ -689,7 +722,7 @@ exp_poly_decomposition_summand(const GExpr& e, const GSymbol& n,
 	// We have found something of the form `pow(base, n)'.
 	GExpr base = get_binding(substitution, 0);
 	assert(base != 0);
-	if (ground(base)) {
+	if (valid_base(base, n)) {
 	  // We have found something of the form `pow(base, n)'
 	  // and `base' is good for the decomposition: determine
 	  // `r = e/pow(base, n)'.
@@ -711,7 +744,7 @@ exp_poly_decomposition_summand(const GExpr& e, const GSymbol& n,
   which is assumed to be already expanded.
   This function computes a decomposition
   \f$ e(n) = \sum_{i=0}^k \alpha_i^n \bigl(p_i(n) + q_i(n)\bigr) \f$, where
-  - \f$ \alpha_i \f$ is a ground expression
+  - \f$ \alpha_i \f$ is a expression valid for to be an exponential's base.
     (syntactically different from \p 0);
   - \f$ \alpha_i \neq \alpha_j \f$ if \f$ i \neq j \f$;
   - \f$ p_i(n) \f$ is (syntactically) a polynomial in \f$ n \f$.
