@@ -43,6 +43,8 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Finite_Order_Info.defs.hh"
 #include "Cached_Expr.defs.hh"
 #include "Recurrence.defs.hh"
+#include "Recurrence.inlines.hh"
+
 #include <vector>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
