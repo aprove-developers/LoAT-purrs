@@ -90,17 +90,34 @@ bool operator<=(const Number& x, const Number& y);
 //! Returns the absolute value of \f$ x \f$.
 Number abs(const Number& x);
 
-//! Returns the least common multiple of \f$ x \f$ and \f$ y \f$.
-Number factorial(const Number& n);
+//! If \f$ x \f$ is a natural number, returns \f$ x! \f$.
+/*!
+  \exception std::range_error thrown if \f$ x \f$ is not a natural number.
+*/
+Number factorial(const Number& x);
 
-//! Returns the greatest common divisor of \f$ x \f$ and \f$ y \f$.
+//! If \f$ x \f$ and \f$ y \f$ are integer, returns the greatest common
+//! divisor of \f$ x \f$ and \f$ y \f$.
+//! Returns 1 otherwise.
 Number gcd(const Number& x, const Number& y);
 
-//! Returns the least common multiple of \f$ x \f$ and \f$ y \f$.
+//! If \f$ x \f$ and \f$ y \f$ are integer, returns the least common
+//! multiple of \f$ x \f$ and \f$ y \f$.
+//! Returns \f$ x \cdot y \f$ otherwise.
 Number lcm(const Number& x, const Number& y);
 
-//! If ..., returns \f$ x^y \f$.
+//! If \f$ x \f$ and \f$ y \f$ are not zero or \f$ x = 0 \f$ and \f$ y \f$
+//! is a positive rational number, returns \f$ x^y \f$.
+/*!
+  \exception std::runtime_error thrown if \f$ x = y = 0 \f$.
+  \exception std::logic_error   thrown if \f$ x = 0 \f$ and \f$ y \f$
+                                is not a positive rational number.
+*/
 Number power(const Number& x, const Number& y);
+
+//! If \f$ x \f$ and \f$ y \f$ are integer, returns the reminder
+//! of the division of \f$ x \f$ by \f$ y \f$.
+Number irem(const Number& x, const Number& y);
 
 
 class Number {
@@ -182,17 +199,50 @@ public:
   //! Returns <CODE>true</CODE> if and only if \p *this is an even integer.
   bool is_even() const;
 
+  //! Returns <CODE>true</CODE> if and only if \p *this is an odd integer.
   bool is_odd() const;
+
+  //! Returns <CODE>true</CODE> if and only if \p *this is a prime natural.
   bool is_prime() const;
+
+  //! Returns <CODE>true</CODE> if and only if \p *this is a rational number.
   bool is_rational() const;
+
+  //! Returns <CODE>true</CODE> if and only if \p *this is a real number.
   bool is_real() const;
+
+  //! Returns <CODE>true</CODE> if and only if \p *this is a complex number
+  //! with integral real and imaginary parts.
   bool is_complex_integer() const;
 
+  //! Returns <CODE>true</CODE> if and only if \p *this is a complex number
+  //! with rational real and imaginary parts.
+  bool is_complex_rational() const;
+
+  //! Returns the <CODE>int</CODE> corresponding to \p *this, if any.
+  /*!
+    \exception std::domain_error thrown if \p *this is not convertible
+                                 to <CODE>int</CODE>.
+  */
   int to_int() const;
+
+  //! Returns the <CODE>long</CODE> corresponding to \p *this, if any.
+  /*!
+    \exception std::domain_error thrown if \p *this is not convertible
+                                 to <CODE>long</CODE>.
+  */
   long to_long() const;
+
+  //! Returns the real part of \p *this, seen as a complex number.
   Number real() const;
+
+  //! Returns the imaginary part of \p *this, seen as a complex number.
   Number imaginary() const;
+
+  //! Returns the numerator of \p *this, seen as a fraction.
   Number numerator() const;
+
+  //! Returns the denominator of \p *this, seen as a fraction.
   Number denominator() const;
 
 private:
@@ -223,6 +273,8 @@ private:
   friend Number gcd(const Number& x, const Number& y);
   friend Number lcm(const Number& x, const Number& y);
   friend Number power(const Number& x, const Number& y);
+  friend Number irem(const Number& x, const Number& y);
+
 
 private:
   GiNaC::numeric n;
@@ -233,10 +285,6 @@ public:
 };
 
 extern const Number I;
-
-Number gcd(const Number& a, const Number& b);
-Number abs(const Number& n);
-Number irem(const Number& a, const Number& b);
 
 } // namespace Parma_Recurrence_Relation_Solver
 

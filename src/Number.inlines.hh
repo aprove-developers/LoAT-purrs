@@ -1,4 +1,4 @@
-/* *******************: a recurrence: inline functions.
+/* Number class implementation: inline functions.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -26,6 +26,8 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Number_inlines_hh
 
 #include "Expr.defs.hh"
+#include <climits>
+#include <stdexcept>
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -277,6 +279,10 @@ Number::Number::is_odd() const {
 
 inline bool
 Number::Number::is_prime() const {
+  // FIXME: this test is due to a problem in CLN 1.1.5 and/or GiNaC 1.0.11.
+  // See http://www.cs.unipr.it/pipermail/purrs-devel/2002-October/000411.html.
+  if (!is_positive_integer())
+    return false;
   return n.is_prime();
 }
 
@@ -295,13 +301,30 @@ Number::Number::is_complex_integer() const {
   return n.is_cinteger();
 }
 
+inline bool
+Number::Number::is_complex_rational() const {
+  return n.is_crational();
+}
+
 inline int
 Number::to_int() const {
+  // FIXME: this test is necessary to circumvent a misfeature
+  // of CLN 1.1.5 and/or GiNaC 1.0.11.
+  // See http://www.cs.unipr.it/pipermail/purrs-devel/2002-October/000412.html.
+  if (!is_integer() || (n > 0 && n > INT_MAX)  || (n < 0 && n < INT_MIN))
+    throw std::domain_error("Cannot conver to an `int'"
+			    "in PURRS::Number::to_int()");
   return n.to_int();
 }
 
 inline long
 Number::to_long() const {
+  // FIXME: this test is necessary to circumvent a misfeature
+  // of CLN 1.1.5 and/or GiNaC 1.0.11.
+  // See http://www.cs.unipr.it/pipermail/purrs-devel/2002-October/000412.html.
+  if (!is_integer() || (n > 0 && n > LONG_MAX)  || (n < 0 && n < LONG_MIN))
+    throw std::domain_error("Cannot conver to a `long'"
+			    "in PURRS::Number::to_long()");
   return n.to_long();
 }
 
