@@ -126,7 +126,54 @@ build_characteristic_equation(const Symbol& x,
       p += pwr(x, i) * (-coefficients[coefficients.size() - 1 - i]);
     p += pwr(x, coefficients.size() - 1);
   }
+#if NOISY
+  std::cout << "characteristic equation = " << p << std::endl;
+#endif
   return p;
+}
+
+/*
+  Builds the characteristic equation and computes its roots.
+  Returns <CODE>true<CODE> if all roots are distinct, i.e., every
+  roots has multiplicity equal to one.
+  Returns <CODE>false<CODE> otherwise. 
+*/
+static bool
+characteristic_equation_and_its_roots(int order,
+				      const std::vector<Expr>& coefficients,
+				      std::vector<Number>& num_coefficients,
+				      Expr& characteristic_eq,
+				      std::vector<Polynomial_Root>& roots) {
+  bool all_distinct = true;
+  Symbol y("y");
+  // FIXME: il seguente if sull'ordine e' temporaneo perche' cosi' si
+  // riescono a fare le parametriche del primo ordine almeno.
+  // Temporaneo fino a che `find_roots()' accettera' i parametri anche
+  // per equazioni di grado superiore al primo.
+  if (order == 1) {
+    characteristic_eq = y - coefficients[1];
+    roots.push_back(coefficients[1]);
+  }
+  else {
+  // Check if the vector `coefficients' contains only numeric
+  // elements and in this case use a vector of Number.
+    for (unsigned i = coefficients.size(); i--> 0; )
+      if (coefficients[i].is_a_number())
+	num_coefficients[i] = coefficients[i].ex_to_number();
+      else
+	throw
+	  "PURRS error: today the recurrence relation\n"
+	  "does not support irrationals coefficients.\n"
+	  "Please come back tomorrow.";
+    characteristic_eq = build_characteristic_equation(y, num_coefficients);
+    if (!find_roots(characteristic_eq, y, roots, all_distinct))
+      return TOO_COMPLEX;
+  }
+#if NOISY
+  D_VEC(roots, 0, roots.size()-1);
+  D_MSG("");
+#endif
+  return all_distinct;
 }
 
 //! \brief
@@ -143,7 +190,7 @@ vector_not_all_zero(const std::vector<Expr>& v) {
 }
 
 static Expr
-return_sum(const bool distinct, const Symbol& n, const Number& order,
+return_sum(bool distinct, const Symbol& n, const Number& order,
 	   const Expr& coeff, const Symbol& alpha, const Symbol& lambda) {
   Symbol k("k");
   Symbol x("x");
@@ -301,7 +348,7 @@ add_initial_conditions(const Expr& g_n, const Symbol& n,
 		       Expr& solution);
 
 static Expr
-solve_constant_coeff_order_1(const Symbol& n, const int order,
+solve_constant_coeff_order_1(const Symbol& n, int order,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff,
 			     const std::vector<Expr>& exp_no_poly_coeff,
@@ -309,8 +356,8 @@ solve_constant_coeff_order_1(const Symbol& n, const int order,
 			     const std::vector<Expr>& initial_conditions);
 
 static Expr
-solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, const int order,
-			     const bool all_distinct,
+solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
+			     bool all_distinct,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff,
 			     const std::vector<Expr>& exp_no_poly_coeff,
@@ -318,8 +365,8 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, const int order,
 			     const std::vector<Polynomial_Root>& roots);
 
 static Expr
-solve_constant_coeff_order_k(const Symbol& n, Expr& g_n, const int order,
-			     const bool all_distinct,
+solve_constant_coeff_order_k(const Symbol& n, Expr& g_n, int order,
+			     bool all_distinct,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff,
 			     const std::vector<Expr>& exp_no_poly_coeff,
@@ -328,8 +375,7 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n, const int order,
 
 static Expr
 solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
-			     const Expr& coefficient,
-			     const std::vector<Expr>& initial_conditions);
+			     const Expr& coefficient);
 
 static Expr
 compute_alpha_factorial(const Expr& alpha, const Symbol& n);
@@ -354,6 +400,9 @@ additive_form(const Expr& e) {
 */
 Solver_Status
 solve(const Expr& rhs, const Symbol& n, Expr& solution) {
+#if NOISY
+  D_VAR(rhs);
+#endif
   // The following code depends on the possibility of recovering
   // the various parts of `rhs' as summands of an additive expression.
   Expr e = additive_form(rhs);
@@ -501,54 +550,31 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
   D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
 #endif
+  // FIXME: the initial conditions can not start always from 0:
+  // make a function for this check.
   // Create the vector of initial conditions.
   std::vector<Expr> initial_conditions(order);
   for (int i = 0; i < order; ++i)
     initial_conditions[i] = x(i);
 
-  // Compute the characteristic equation and its roots.
-  Expr characteristic_eq;
-  Symbol y("y");
-  std::vector<Polynomial_Root> roots;
-  bool all_distinct = true;
-  // FIXME: il seguente if sull'ordine e' temporaneo perche' cosi' si
-  // riescono a fare le parametriche del primo ordine almeno.
-  // Temporaneo fino a che `find_roots()' accettera' i parametri anche
-  // per equazioni di grado superiore al primo.
-  std::vector<Number> num_coefficients(order+1);
-  if (order == 1) {
-    characteristic_eq = y - coefficients[1];
-    roots.push_back(coefficients[1]);
-  }
-  else {
-  // Check if the vector `coefficients' contains only numeric
-  // elements and in this case use a vector of Number.
-    for (unsigned i = coefficients.size(); i--> 0; )
-      if (coefficients[i].is_a_number())
-	num_coefficients[i] = coefficients[i].ex_to_number();
-      else
-	throw
-	  "PURRS error: today the recurrence relation\n"
-	  "does not support irrationals coefficients.\n"
-	  "Please come back tomorrow.";
-    characteristic_eq
-      = build_characteristic_equation(y, num_coefficients);
-    if (!find_roots(characteristic_eq, y, roots, all_distinct))
-      return TOO_COMPLEX;
-  }
-#if NOISY
-  D_VAR(characteristic_eq);
-  D_VEC(roots, 0, roots.size()-1);
-  D_MSG("");
-#endif
+  // `num_coefficients' and `g_n' are defined here because they are
+  // necessary in the function `add_initial_conditions()' (at the end
+  // of function `solve()').
+  std::vector<Number> num_coefficients(order + 1);
   Expr g_n;
   switch (order) {
   case 1:
-    if (!has_non_constant_coefficients)
+    if (!has_non_constant_coefficients) {
+      Expr characteristic_eq;
+      std::vector<Polynomial_Root> roots;
+      characteristic_equation_and_its_roots(order, coefficients,
+					    num_coefficients,
+					    characteristic_eq, roots);
       solution = solve_constant_coeff_order_1(n, order, base_of_exps,
 					      exp_poly_coeff,
 					      exp_no_poly_coeff, roots,
 					      initial_conditions);
+    }
     else {
 #if 1
       throw
@@ -556,29 +582,42 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
 	"relations with constant coefficients.\n"
 	"Please come back tomorrow.";
 #else
-      solution = solve_variable_coeff_order_1(n, e, coefficients[1],
-					      initial_conditions);
+      solution = solve_variable_coeff_order_1(n, e, coefficients[1]);
 #endif
     }
     break;
   case 2:
-    if (!has_non_constant_coefficients)
+    if (!has_non_constant_coefficients) {
+      Expr characteristic_eq;
+      std::vector<Polynomial_Root> roots;
+      bool all_distinct
+	= characteristic_equation_and_its_roots(order, coefficients,
+						num_coefficients,
+						characteristic_eq, roots);
       solution = solve_constant_coeff_order_2(n, g_n, order, all_distinct,
 					      base_of_exps, exp_poly_coeff,
 					      exp_no_poly_coeff, 
 					      num_coefficients, roots);
+    }
     else
       throw
-	"PURRS error: today we only solve recurrence"
-	"relations with constant coefficients.\n"
+	"PURRS error: today we only solve second order "
+	"recurrence relations with constant coefficients.\n"
 	"Please come back tomorrow.";
     break;
   default:
-    if (!has_non_constant_coefficients)
+    if (!has_non_constant_coefficients) {
+      Expr characteristic_eq;
+      std::vector<Polynomial_Root> roots;
+      bool all_distinct
+	= characteristic_equation_and_its_roots(order, coefficients,
+						num_coefficients,
+						characteristic_eq, roots);
       solution = solve_constant_coeff_order_k(n, g_n, order, all_distinct,
 					      base_of_exps, exp_poly_coeff,
 					      exp_no_poly_coeff,
 					      num_coefficients, roots);
+    }
     else
       throw
 	"PURRS error: today we only solve recurrence"
@@ -976,10 +1015,10 @@ add_initial_conditions(const Expr& g_n, const Symbol& n,
   Returns <CODE>false</CODE> otherwise.
 */
 static bool
-gosper(const int order, const Symbol& n,
-       const std::vector<Expr>& base_of_exps,
-       const std::vector<Expr>& exp_no_poly_coeff,
-       const std::vector<Polynomial_Root>& roots,
+gosper_algorithm(int order, const Symbol& n,
+		 const std::vector<Expr>& base_of_exps,
+		 const std::vector<Expr>& exp_no_poly_coeff,
+		 const std::vector<Polynomial_Root>& roots,
        Expr& solution) {
   solution = 0;
   for (unsigned i = exp_no_poly_coeff.size(); i-- > 0; ) {
@@ -1017,7 +1056,7 @@ gosper(const int order, const Symbol& n,
   \f]
 */
 static Expr
-solve_constant_coeff_order_1(const Symbol& n, const int order,
+solve_constant_coeff_order_1(const Symbol& n, int order,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff,
 			     const std::vector<Expr>& exp_no_poly_coeff,
@@ -1049,8 +1088,8 @@ solve_constant_coeff_order_1(const Symbol& n, const int order,
   // The summand must be an hypergeometric term
   if (vector_not_all_zero(exp_no_poly_coeff)) {
     Expr gosper_solution;
-    if (gosper(order, n, base_of_exps, exp_no_poly_coeff, roots,
-	       gosper_solution))
+    if (gosper_algorithm(order, n, base_of_exps, exp_no_poly_coeff, roots,
+			 gosper_solution))
       solution += gosper_solution;
     else {
       // FIXME: the summand is not hypergeometric:
@@ -1094,7 +1133,7 @@ solve_constant_coeff_order_1(const Symbol& n, const int order,
   Returns in the matrix \p solution the solution of the system. 
 */
 static Matrix
-solve_system(const bool all_distinct,
+solve_system(bool all_distinct,
 	     const std::vector<Number>& coefficients,
 	     const std::vector<Polynomial_Root>& roots) {
   unsigned coefficients_size = coefficients.size();
@@ -1140,7 +1179,7 @@ solve_system(const bool all_distinct,
 }
 
 static Expr
-find_g_n(const Symbol& n, const bool all_distinct, const Matrix sol,
+find_g_n(const Symbol& n, bool all_distinct, const Matrix sol,
 	 const std::vector<Polynomial_Root>& roots) {
   // Compute the order of the recurrence relation.
   Number order = 0;
@@ -1216,8 +1255,7 @@ prepare_for_symbolic_sum(const Symbol& n, const Expr& g_n,
 }
 
 static Expr
-compute_non_homogeneous_part(const Symbol& n, const Expr& g_n,
-			     const int order,
+compute_non_homogeneous_part(const Symbol& n, const Expr& g_n, int order,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff) {
   Expr solution_tot = 0;
@@ -1292,8 +1330,8 @@ compute_non_homogeneous_part(const Symbol& n, const Expr& g_n,
   the function <CODE>add_initial_conditions()</CODE>), respectively.
 */
 static Expr
-solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, const int order,
-			     const bool all_distinct, 
+solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
+			     bool all_distinct, 
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff,
 			     const std::vector<Expr>& exp_no_poly_coeff,
@@ -1402,7 +1440,7 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, const int order,
 */
 static Expr
 solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
-			     const int order, const bool all_distinct,
+			     int order, bool all_distinct,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff,
 			     const std::vector<Expr>& exp_no_poly_coeff,
@@ -1642,28 +1680,58 @@ compute_alpha_factorial(const Expr& alpha, const Symbol& n) {
 */
 static Expr
 solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
-			     const Expr& coefficient,
-			     const std::vector<Expr>& initial_conditions) {
+			     const Expr& coefficient) {
   // Compute `\alpha!(n)' when possible.
   Expr alpha_factorial = compute_alpha_factorial(coefficient, n);
+#if NOISY
+  D_VAR(alpha_factorial);
+#endif
   // Compute the non-homogeneous term for the recurrence
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
-  Expr new_p_n
-    = simplify_factorials_and_exponentials(p_n / alpha_factorial, n);
+  // In this case is better to jump a part of Gosper's step one:
+  // `r(n) = \frac{t(n+1)}{t(n)}
+  //       = \frac{p(n+1)}{\alpha!(n+1)} * \frac{\alpha!(n)}{p(n)}
+  //       = \frac{p(n+1)}{p(n) * \alpha(n+1)}'.
+  Expr new_p_n;
+  if (!p_n.is_zero()) {
+    Expr p_n_plus_one = p_n.subs(n, n+1);
+    D_VAR(p_n_plus_one);
+    Expr alpha_plus_one = coefficient.subs(n, n+1);
+    D_VAR(alpha_plus_one);
+    new_p_n = p_n_plus_one / (p_n * alpha_plus_one);
+    D_VAR(new_p_n);
+  }
+  else
+    new_p_n = 0;
   Expr new_rhs = x(n-1) + new_p_n;
+//    D_VAR(new_rhs);
+//    std::vector<Expr> base_of_exps;
+//    std::vector<Expr> exp_poly_coeff;
+//    std::vector<Expr> exp_no_poly_coeff;
+//    exp_poly_decomposition(new_p_n, n,
+//  			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
+//    std::vector<Polynomial_Root> new_roots;
+//    new_roots.push_back(Expr(1));
 
-  std::vector<Expr> base_of_exps;
-  std::vector<Expr> exp_poly_coeff;
-  std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(new_p_n, n,
-			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
-  std::vector<Polynomial_Root> new_roots;
-  new_roots.push_back(Expr(1));
-  Expr solution = solve_constant_coeff_order_1(n, 1, base_of_exps,
-					       exp_poly_coeff,
-					       exp_no_poly_coeff, new_roots,
-					       initial_conditions);
-  solution *= alpha_factorial;  
+//    Expr solution;
+//  #if 1
+//    int order = 1;
+//    Expr t_n = p_n/alpha_factorial;
+//    if (!gosper_algorithm(t_n, order, n, base_of_exps,
+//  			exp_poly_coeff, exp_no_poly_coeff,
+//  			new_roots, solution)) {
+//      // FIXME: the summand is not hypergeometric:
+//      // no chance of using Gosper's algorithm.
+//    }
+//    solution += x(0);
+//  #else
+//    Expr solution = solve_constant_coeff_order_1(n, 1, base_of_exps,
+//  					       exp_poly_coeff,
+//  					       exp_no_poly_coeff, new_roots,
+//  					       initial_conditions);
+//  #endif
+  //solution *= alpha_factorial;
+  Expr solution;
 #if NOISY
   D_VAR(new_p_n);
   D_VAR(new_rhs);
@@ -1717,6 +1785,10 @@ print_bad_exp(const Expr& e, const Expr rhs, bool conditions) {
 static bool
 verify_solution(const Expr& solution, int order, const Expr& rhs,
 		const Symbol& n) {
+  // FIXME: the initial conditions can not start always from 0:
+  // `order' is temporary until we will consider a method in order to
+  // know the right initial conditions.
+
   // Validation of initial conditions.
   for (int i = order; i-- > 0; ) {
     Expr g_i = x(i);
@@ -1742,7 +1814,8 @@ verify_solution(const Expr& solution, int order, const Expr& rhs,
   for (unsigned i = terms_to_sub.size(); i-- > 0; )
     substituted_rhs = substituted_rhs.subs(x(n - i - 1), terms_to_sub[i]);
   Expr diff = (partial_solution - substituted_rhs);
-  // `simplify_factorials_and_exponentials()' must be call on not expanded expression.
+  // `simplify_factorials_and_exponentials()' must be call on not
+  // expanded expression.
   diff = simplify_factorials_and_exponentials(diff, n).expand();
   diff = simplify_numer_denom(diff);
   if (!diff.is_zero()) {
