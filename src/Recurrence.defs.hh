@@ -1086,10 +1086,13 @@ private:
   Solver_Status compute_weighted_average_recurrence(Expr& solution) const;
 
   Expr
-  compute_solution_functional_equation_on_i_c(const Expr& bound) const;
+  compute_solution_linear_finite_order_on_i_c(const Expr& solution) const;
 
   Expr
-  compute_solution_finite_order_on_i_c(const Expr& solution) const;
+  compute_solution_non_linear_finite_order_on_i_c(const Expr& solution) const;
+
+  Expr
+  compute_bound_functional_equation_on_i_c(const Expr& bound) const;
 
   Expr
   compute_solution_weighted_average_on_i_c(const Expr& solution) const;
@@ -1099,7 +1102,7 @@ private:
   //! solution or the bound computed for the recurrence \p *this.
   //! This function substitutes possible initial conditions specified
   //! by the user shifting the solution or the bound if necessary.
-  Expr compute_solution_on_i_c(const Expr& solution_or_bound) const;
+  Expr compute_solution_or_bound_on_i_c(const Expr& solution_or_bound) const;
 
   //! Classifies the recurrence \p *this sliding it recursively.
   Classifier_Status classify() const;
