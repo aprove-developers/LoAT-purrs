@@ -190,13 +190,28 @@ public:
   };
 
 
+  //! \brief
+  //! Tries to solve \p *this exactly and returns <CODE>SUCCESS</CODE>
+  //! if the system finds the exact solution.
   Solver_Status compute_exact_solution() const;
+
+  //! Gets the exact solution and puts it in \p e
   void exact_solution(Expr& e) const;
 
+  //! \brief
+  //! Tries to get lower bound for \p *this and returns <CODE>SUCCESS</CODE>
+  //! if the system finds the lower bound.
   Solver_Status compute_lower_bound() const;
+
+  //! Gets the lower bound for the solution and puts it in \p e.
   void lower_bound(Expr& e) const;
 
+  //! \brief
+  //! Tries to get upper bound for \p *this and returns <CODE>SUCCESS</CODE>
+  //! if the system finds the upper bound.
   Solver_Status compute_upper_bound() const;
+
+  //! Gets the upper bound for the solution and puts it in \p e.
   void upper_bound(Expr& e) const;
 
   Expr approximated_solution() const;
@@ -216,7 +231,7 @@ public:
 
 private:
   Solver_Status classify() const;
-  Solver_Status catch_special_cases() const;
+  Solver_Status classify_and_catch_special_cases() const;
   Solver_Status classification_recurrence(const Expr& rhs,
 					  int& gcd_among_decrements) const;
   Solver_Status classification_summand(const Expr& r, Expr& e,

@@ -797,7 +797,7 @@ PURRS::Recurrence::classify() const {
   the errors that may arise.
 */
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::catch_special_cases() const {
+PURRS::Recurrence::classify_and_catch_special_cases() const {
   bool exit_anyway = false;
   Solver_Status status;
   do {
@@ -819,7 +819,7 @@ PURRS::Recurrence::catch_special_cases() const {
 	eliminate_negative_decrements(recurrence_rhs, new_rhs);
 	recurrence_rhs_rewritten = true;
 	recurrence_rhs = new_rhs;
-	status = catch_special_cases();
+	status = classify_and_catch_special_cases();
       }
       break;
     case HAS_NULL_DECREMENT:
@@ -828,7 +828,7 @@ PURRS::Recurrence::catch_special_cases() const {
 	if (eliminate_null_decrements(recurrence_rhs, new_rhs)) {
 	  recurrence_rhs_rewritten = true;
 	  recurrence_rhs = new_rhs;
-	  status = catch_special_cases();
+	  status = classify_and_catch_special_cases();
 	}
 	else
 	  status = UNSOLVABLE_RECURRENCE;

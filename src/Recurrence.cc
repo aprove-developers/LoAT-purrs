@@ -222,10 +222,8 @@ Recurrence::compute_exact_solution() const {
   }
 
   Solver_Status status;
-  if ((status = catch_special_cases()) == SUCCESS) {
+  if ((status = classify_and_catch_special_cases()) == SUCCESS) {
     assert(is_linear_finite_order() || is_functional_equation());
-//      Expr lower;
-//      Expr upper;
     if (is_linear_finite_order()) {
       if ((status = solve_linear_finite_order()) == SUCCESS) {
 	if (order_reduction_p) {
@@ -278,7 +276,7 @@ PURRS::Recurrence::compute_lower_bound() const {
   }
 
   Solver_Status status;
-  if ((status = catch_special_cases()) == SUCCESS) {
+  if ((status = classify_and_catch_special_cases()) == SUCCESS) {
     assert(is_linear_finite_order() || is_functional_equation());
     if (is_functional_equation()
 	&& (status = approximate_functional_equation()) == SUCCESS)
@@ -304,7 +302,7 @@ PURRS::Recurrence::compute_upper_bound() const {
   }
 
   Solver_Status status;
-  if ((status = catch_special_cases()) == SUCCESS) {
+  if ((status = classify_and_catch_special_cases()) == SUCCESS) {
     if (is_functional_equation()
 	&& (status = approximate_functional_equation()) == SUCCESS)
       return SUCCESS;
