@@ -13,10 +13,10 @@ typedef GiNaC::numeric GNumber;
 typedef GiNaC::matrix GMatrix;
 #else
 typedef Parma_Recurrence_Relation_Solver::Expr GExpr;
-typedef GiNaC::symbol GSymbol;
-typedef GiNaC::lst GList;
-typedef GiNaC::numeric GNumber;
-typedef GiNaC::matrix GMatrix;
+typedef Parma_Recurrence_Relation_Solver::Symbol GSymbol;
+typedef Parma_Recurrence_Relation_Solver::Expr_List GList;
+typedef Parma_Recurrence_Relation_Solver::Number GNumber;
+typedef Parma_Recurrence_Relation_Solver::Matrix GMatrix;
 #endif
 
 GExpr x_eval(const GExpr& e);
