@@ -76,37 +76,39 @@ compute_bounds_for_power_of_n(bool lower,
 			      const Number& coeff, const Number& divisor,
 			      const Number& num, const Number& k,
 			      Expr& bound) {
+  assert(!k.is_negative());
   // Lower bound.
+  // FIXME: check the lower!!
   if (lower) {
     if ((k == 0)
 	|| ((coeff == pwr(divisor, k-1) || coeff == pwr(divisor, k))
 	    &&  k >= 1)) {
-      Expr tmp_lb = 0;
+      Expr tmp_lb;
       assert(k == 0 || k >= 1);
-      Expr log_log = log(Recurrence::n) / log(divisor);
+      const Expr& log_log = log(Recurrence::n) / log(divisor);
       if (k == 0) {
-	Expr n_log_log = pwr(Recurrence::n, log(coeff) / log(divisor));
+	const Expr& n_log_log = pwr(Recurrence::n, log(coeff) / log(divisor));
 	if (coeff < 1)
-	  tmp_lb += (coeff - n_log_log) / (coeff * (1 - coeff));
+	  tmp_lb = (coeff - n_log_log) / (coeff * (1 - coeff));
 	else if (coeff == 1)
 	  if (divisor.is_integer())
-	    tmp_lb += log_log - 1;
+	    tmp_lb = log_log - 1;
 	  else // `divisor' is a rational (non-integer) number.  
-	    tmp_lb += log_log
+	    tmp_lb = log_log
 	      + log((divisor - 1) / (2 * divisor - 1)) / log(divisor); 
 	else
-	  tmp_lb += (n_log_log - coeff) / (coeff * (coeff - 1));
+	  tmp_lb = (n_log_log - coeff) / (coeff * (coeff - 1));
       }
       else {
 	assert(k >= 1);
-	Expr inv_div_minus_one = pwr(divisor - 1, -1);
+	const Expr& inv_div_minus_one = pwr(divisor - 1, -1);
 	if (coeff == pwr(divisor, k-1))
-	  tmp_lb += divisor * inv_div_minus_one * pwr(Recurrence::n, k)
+	  tmp_lb = divisor * inv_div_minus_one * pwr(Recurrence::n, k)
 	    - (pwr(divisor, 2) * inv_div_minus_one + k * log_log - k)
 	    * pwr(Recurrence::n, k-1);
 	else {
 	  assert(coeff == pwr(divisor, k));
-	  tmp_lb += (log_log - 1 - k * inv_div_minus_one)
+	  tmp_lb = (log_log - 1 - k * inv_div_minus_one)
 	    * pwr(Recurrence::n, k)
 	    + k * pwr(Recurrence::n, k-1) * divisor * inv_div_minus_one;
 	}
@@ -119,15 +121,20 @@ compute_bounds_for_power_of_n(bool lower,
   }
   // Upper bound.
   else {
-    Expr tmp_ub = 0;
-    Number div_k = pwr(divisor, k);
-    Expr tmp = pwr(Recurrence::n, k);
-    if (coeff < div_k)
-      tmp_ub += tmp * div_k / (div_k - coeff);
-    else if (coeff == div_k)
-      tmp_ub += tmp * log(Recurrence::n) / log(divisor);
+    // FIXME: come si puo' fare per evitare che saltino fuori i numeri in
+    // virgola mobile? Usare tutte Expr non mi sembra una buona idea.
+    const Expr& divisor_ex = divisor;
+    const Expr& k_ex = k;
+    const Expr& div_k = pwr(divisor_ex, k_ex);
+    Number div_k_numeric = pwr(divisor, k);
+    const Expr& tmp = pwr(Recurrence::n, k);
+    Expr tmp_ub;
+    if (coeff < div_k_numeric)
+      tmp_ub = tmp * div_k / (div_k - coeff);
+    else if (coeff == div_k_numeric)
+      tmp_ub = tmp * log(Recurrence::n) / log(divisor);
     else
-      tmp_ub += div_k
+      tmp_ub = div_k
 	* (pwr(Recurrence::n, log(coeff) / log(divisor)) - tmp)
 	/ (coeff - div_k);
     bound += num * tmp_ub;
@@ -144,14 +151,16 @@ compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
     return false;
   // Upper bound.
   else {
-    Expr tmp_bound = 0;
+    Expr tmp_bound;
+    if (coeff < 1)
+      return false;
     if (coeff == 1)
-      tmp_bound += Number(1, 2) * log(Recurrence::n)
+      tmp_bound = Number(1, 2) * log(Recurrence::n)
 	* (log(Recurrence::n) / log(divisor) + 1);
     else {
       assert(coeff > 1);
-      Expr ratio_log = log(coeff) / log(divisor);
-      tmp_bound += (1 / (coeff - 1)) * log(Recurrence::n)
+      const Expr& ratio_log = log(coeff) / log(divisor);
+      tmp_bound = (1 / (coeff - 1)) * log(Recurrence::n)
 	* (pwr(Recurrence::n, ratio_log) - 1)
 	+ log(divisor) * pwr(coeff - 1, -2)
 	* ((coeff + 1) * pwr(Recurrence::n, ratio_log) - coeff);
@@ -173,31 +182,30 @@ compute_bounds_for_power_times_logarithm_function(bool lower,
     return false;
   // Upper bound.
   else {
-    Expr tmp_bound = 0;
+    Expr tmp_bound;
     Number div_k = pwr(divisor, k);
-    Expr tmp = pwr(Recurrence::n, k) * log(Recurrence::n);
+    const Expr& tmp = pwr(Recurrence::n, k) * log(Recurrence::n);
     if (coeff < div_k)
-      tmp_bound += (div_k * tmp) / (div_k - coeff);
+      tmp_bound = (div_k * tmp) / (div_k - coeff);
     else if (coeff == div_k)
-      tmp_bound += tmp * log(Recurrence::n) / log(divisor);
+      tmp_bound = tmp * log(Recurrence::n) / log(divisor);
     else
-      tmp_bound += tmp
-	* (pwr(coeff / div_k, log(Recurrence::n) / log(divisor)) - 1)
-	* div_k / (coeff - div_k);
+      tmp_bound = (div_k / (coeff - div_k)) 
+	* (pwr(Recurrence::n, log(coeff) / log(divisor)) * log(Recurrence::n)
+	   - tmp);
     bound += num * tmp_bound;
     return true;
   }
 }
 
 /*!
-  a * n^k
+  g(n) = a * n^k.
 */
 bool
 sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
 				       const Number& coeff,
 				       const Number& divisor,
 				       Expr& bound) {
-  Number k;
   // Case `g(n) = a n^0' with `a' positive number.
   Number num;
   if (poly_coeff.is_a_number(num) && num.is_positive()
@@ -208,19 +216,18 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
 	   && compute_bounds_for_power_of_n(lower, coeff, divisor, 1, 1,
 					    bound))
     return true;
-  // Case `g(n) = n^k' with `k > 1'.
+  // Case `g(n) = n^k' with `k > 1' integer.
   else if (poly_coeff.is_a_power()
 	   && poly_coeff.arg(0) == Recurrence::n
-	   && poly_coeff.arg(1).is_a_number(k)
-	   && k.is_positive()
-	   && compute_bounds_for_power_of_n(lower, coeff, divisor, 1, k,
+	   && poly_coeff.arg(1).is_a_number(num)
+	   && num.is_positive()
+	   && compute_bounds_for_power_of_n(lower, coeff, divisor, 1, num,
 					    bound))
     return true;
   else if (poly_coeff.is_a_mul() && poly_coeff.nops() == 2) {
     const Expr& first = poly_coeff.op(0);
     const Expr& second = poly_coeff.op(1);
-    // Case `g(n) = a * n^k', with `a' and `k' positive numbers.
-    Number num;
+    // Case `g(n) = a * n^k', with `a' and `k' positive integer numbers.
     if (first.is_a_number(num) && num.is_positive()) {
       if (second == Recurrence::n
 	  && compute_bounds_for_power_of_n(lower, coeff, divisor, num, 1,
@@ -254,7 +261,7 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
 }
 
 /*!
-  g(n) = a log(n) or g(n) = a * n^k log(n).
+  g(n) = a n^k or g(n) = a log(n) or g(n) = a * n^k log(n).
 */
 bool
 sharper_bounds_for_no_polynomial_function(bool lower,
@@ -278,23 +285,25 @@ sharper_bounds_for_no_polynomial_function(bool lower,
 					    bound))
     return true;
   else if (no_poly_coeff.is_a_mul()) {
+    // 3 possibilities: `a log(n)' or `n^k log(n)' or `a n^k'.
     if (no_poly_coeff.nops() == 2) {
+      Number num;
       const Expr& first = no_poly_coeff.op(0);
       const Expr& second = no_poly_coeff.op(1);
       if (first == log(Recurrence::n)) {
 	// Case `g(n) = a log(n)' with `a' positive number.
-	Number num;
 	if (second.is_a_number(num) && num.is_positive()
 	    && compute_bounds_for_logarithm_function(lower, coeff, divisor,
 						     num, bound))
 	  return true;
-	// Case `g(n) = n^k log(n)' with `k >= 1'.
-	Number k;
+	// Case `g(n) = n^k log(n)' with `k > 0'.
+	// `k = 1'.
 	if (second == Recurrence::n
 	    && compute_bounds_for_power_times_logarithm_function(lower, coeff,
 								 divisor,
 								 1, 1, bound))
 	  return true;
+	// `k > 0 && k != 1'.
 	else if (second.is_a_power() && second.arg(0) == Recurrence::n
 		 && second.arg(1).is_a_number(k) && k.is_positive()
 		 && compute_bounds_for_power_times_logarithm_function(lower,
@@ -304,20 +313,20 @@ sharper_bounds_for_no_polynomial_function(bool lower,
 								      bound))
 	  return true;
       }
-      if (second == log(Recurrence::n)) {
+      else if (second == log(Recurrence::n)) {
 	// Case `g(n) = a log(n)' with `a' positive number.
-	Number num;
 	if (first.is_a_number(num) && num.is_positive()
 	    && compute_bounds_for_logarithm_function(lower, coeff, divisor,
 						     num, bound))
 	  return true;
-	// Case `g(n) = n^k log(n)' with `k >= 1'.
-	Number k;
+	// Case `g(n) = n^k log(n)' with `k > 0'.
+	// `k = 1'.
 	if (first == Recurrence::n
 	    && compute_bounds_for_power_times_logarithm_function(lower, coeff,
 								 divisor,
 								 1, 1, bound))
 	    return true;
+	// `k > 0 && k != 1'.
 	else if (first.is_a_power() && first.arg(0) == Recurrence::n
 		 && first.arg(1).is_a_number(k) && k.is_positive()
 		 && compute_bounds_for_power_times_logarithm_function(lower,
@@ -327,6 +336,17 @@ sharper_bounds_for_no_polynomial_function(bool lower,
 								      bound))
 	  return true;
       }
+      // Case `g(n) = a n^k' with `a' positive number and `k' positive
+      // rational non-integer number.
+      else if (((first.is_a_number(num) && num.is_positive()
+	   && second.is_a_power()&& second.arg(0) == Recurrence::n
+	   && second.arg(1).is_a_number(k) && k.is_positive())
+	  || (second.is_a_number(num) && num.is_positive()
+	      && first.is_a_power()&& first.arg(0) == Recurrence::n
+	      && first.arg(1).is_a_number(k) && k.is_positive()))
+	  && compute_bounds_for_power_of_n(lower, coeff, divisor, num, k,
+					   bound))
+	return true;
     }
     // Case `g(n) = a n^k log(n)' with `a' positive number and `k >= 1'.
     if (no_poly_coeff.nops() == 3) {
