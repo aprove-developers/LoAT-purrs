@@ -270,10 +270,7 @@ y x(n-2)-x(n-1)+1
 y x(n-2)/2
 y x(n-3)
 y x(n-3)+3*n
-
-% Makes PURRS segfault
-%* x(n-3)+x(n-7)
-
+n x(n-3)+x(n-7)
 n x(n-3)+x(n-7.6)
 n x(n/2)+1
 n x(n/2)+1/n
