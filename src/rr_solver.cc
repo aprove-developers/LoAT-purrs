@@ -497,6 +497,8 @@ classification_summand(const Expr& r, const Symbol& n, Expr& e,
 	  return TOO_COMPLEX;
       else if (argument.has(n))
 	return TOO_COMPLEX;
+      else
+	e += r;
     }
     else
       e += r;
