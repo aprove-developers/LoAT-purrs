@@ -320,6 +320,8 @@ compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
       }
       ++r;
     }
+  D_VEC(symbolic_sum_distinct, 0, symbolic_sum_distinct.size()-1);
+  D_VEC(symbolic_sum_no_distinct, 0, symbolic_sum_no_distinct.size()-1);
 }
 
 /*!
@@ -330,8 +332,9 @@ compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
   - substitutes to \p lambda the corresponding value of the characteristic
     equation's root;
   - substitutes to \p alpha the corresponding base of the eventual
-    exponential.  Returns a <CODE>Expr</CODE> \p solution with the
-    sum of all sums of the vectors.
+    exponential.
+  Returns a new expression containing the sum of all sums of the vectors
+  after the substitutions.
 */
 Expr
 subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
@@ -1033,6 +1036,155 @@ substitute_non_rational_roots(const Recurrence& rec,
     D_VAR(roots[i].value());
 }
 
+//! \brief;
+//! Returns <CODE>true</CODE> if \p e, valuated in \f$ 1 \f$, is a
+//! non-negative number; returns <CODE>false</CODE> otherwise.
+bool
+is_non_negative_in_one(const Expr& e, const Symbol& x) {
+  Number i = -1;
+  biggest_positive_int_zero(numerator(e).expand(), i);
+  biggest_positive_int_zero(denominator(e).expand(), i);
+  if (i == -1)
+    ++i;
+  Number num;
+  if (numerator(e).substitute(x, i).is_a_number(num) && !num.is_negative())
+    return true;
+  else
+    return false;
+}
+
+//! \brief
+//! Returns <CODE>true</CODE> if the polynomial function in \p x \p e
+//! is non-decreasing; returns <CODE>false</CODE> otherwise.
+/*!
+  This function checks "heuristically" if the \f$ e(x) \f$ is a non-negative,
+  non-decreasing function in \f$ x \f$, where \f$ x \f$ is any symbol.
+  The function works in an inductive way as follows:
+  - every number or constant non-decreasing function in \f$ x \f$;
+  - \f$ x \f$ is a non-decreasing function in \f$ x \f$;
+  - if \f$ a \f$ is a non-decreasing function in \f$ x \f$ and
+    \f$ b \f$ is a positive integer, then \f$ a^b \f$ is a
+    non-decreasing function in \f$ x \f$;
+  - if \f$ a \f$ and \f$ b \f$ are non-decreasing functions
+    in \f$ x \f$ then \f$ a + b \f$ and \f$ a * b \f$ are
+    non-decreasing functions in \f$ x \f$.
+*/
+bool
+is_non_decreasing_poly(const Expr& e, const Symbol& x) {
+  if (e.is_a_number() || e.is_a_constant())
+    return true;
+  else if (e == x)
+    return true;
+  else if (e.is_a_power()) {
+    if (is_non_decreasing_poly(e.arg(0), x)) {
+      Number exponent;
+      if (e.arg(1).is_a_number(exponent) && exponent.is_positive_integer()) 
+	return true;
+    }
+  }
+  else if (e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!is_non_decreasing_poly(e.op(i), x))
+	return false;
+    return true;
+  }
+  else if (e.is_a_add()) {
+    for (unsigned i = e.nops(); i-- > 0; ) {
+      Number num;
+      if ((e.op(i).is_a_number(num) && !num.is_positive())
+	  || !is_non_decreasing_poly(e.op(i), x))
+	return false;
+    }
+    return true;
+  }
+  return false;
+}
+
+//! \brief
+//! Returns <CODE>true</CODE> if the non polynomial function in \p x \p e
+//! is non-decreasing; returns <CODE>false</CODE> otherwise.
+/*!
+  We consider separately the mathematical functions:
+  - a logarithm with a base grater or equal than \f$ 1 \f$
+    is a non-decreasing function in \f$ x \f$.
+*/
+bool
+is_non_decreasing_no_poly(const Expr& e, const Symbol& x) {
+  if (e.is_polynomial(x)) {
+    if (is_non_decreasing_poly(e, x))
+      return true;
+  }
+  else if (e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!is_non_decreasing_no_poly(e.op(i), x))
+	return false;
+    return true;
+  }
+  else if (e.is_a_add()) {
+    for (unsigned i = e.nops(); i-- > 0; ) {
+      Number num;
+      if ((e.op(i).is_a_number(num) && !num.is_positive())
+	  || !is_non_decreasing_no_poly(e.op(i), x))
+	return false;
+    }
+    return true;;
+  }
+  else if (e.is_the_log_function())
+    return true;
+  return false;
+}
+
+
+//! \brief
+//! Returns <CODE>true</CODE> if \p f is a non-negative, non-decreasing
+//! function in \p x; returns <CODE>false</CODE> otherwise.
+bool
+is_non_negative_non_decreasing(const Expr& f, const Symbol& x) {
+  // We search exponentials in `n' (for this the expression
+  // `f' must be expanded).
+  // The vector `base_of_exps' contains the exponential's bases
+  // of all exponentials in `f'.
+  // In the `i'-th position of the vectors
+  // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
+  // the polynomial part and possibly non polynomial part of the coefficient
+  // of the exponential with the base in `i'-th position of `base_of_exp'.
+  // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
+  // coefficient of base_of_exps[i]^n.
+  std::vector<Expr> base_of_exps;
+  std::vector<Expr> exp_poly_coeff;
+  std::vector<Expr> exp_no_poly_coeff;
+  exp_poly_decomposition(f.expand(), base_of_exps,
+			 exp_poly_coeff, exp_no_poly_coeff);
+  D_VEC(base_of_exps, 0, base_of_exps.size()-1);
+  D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
+  D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
+
+  for (unsigned i = base_of_exps.size(); i-- > 0; ) {
+    // First step: checks that all exponentials'bases are greater or equal
+    // than `1'.
+    Number num_base;
+    if (!base_of_exps[i].is_a_number(num_base)
+	|| !num_base.is_positive())
+      return false;
+    // Second step: checks the polynomial part of the exponential's
+    // coefficient.
+    // FIXME!!!!!!!!!!!! commentato solo per fare `2*x(1/2*n)+n-1'
+    if (!exp_poly_coeff[i].is_zero())
+      if (!is_non_negative_in_one(exp_poly_coeff[i], x))
+	if (!is_non_decreasing_poly(exp_poly_coeff[i], x)
+	    && !is_non_negative_non_decreasing
+	    (f.substitute(Recurrence::n, Recurrence::n+1)-f, x))
+	return false;
+    // Third step: checks the possibly non polynomial part of the
+    // exponential's coefficient.
+    if (!exp_no_poly_coeff[i].is_zero())
+      if (!is_non_negative_in_one(exp_no_poly_coeff[i], x)
+	  || !is_non_decreasing_no_poly(exp_no_poly_coeff[i], x))
+	return false;
+  }
+  return true;
+}
+
 } // anonymous namespace
 
 PURRS::Recurrence::Solver_Status
@@ -1299,8 +1451,8 @@ PURRS::Recurrence::classification_recurrence(const Expr& rhs,
   // We will store here the coefficient of the functional equation
   // `x(n) = a x(n/b) + d n^e'.
   Expr coefficient;
-  // We will store here the divisor of the argument of the function `x' in
-  // the functional equation `x(n) = a x(n/b) + d n^e'.
+  // We will store here the positive integer divisor of the argument of the
+  // function `x' in the functional equation `x(n) = a x(n/b) + d n^e'.
   unsigned divisor_arg;
 
   Expr inhomogeneous = 0;
@@ -1536,16 +1688,71 @@ PURRS::Recurrence::solve_linear_finite_order(int gcd_among_decrements) const {
     // FIXME: `collect' throws an exception if the object to collect has
     // non-integer exponent. 
     solution = solution.collect(conditions);
-  }  
+  }
   return SUCCESS;
 }
 
+/*
+  This function find a lower bound and an upper bound for special recurrences
+  that we call <EM>functional equations</EM>.
+  For the moment we consider a limited part of these recurrences, i. e.
+  equations of the form
+  \f[
+    x_n = a x_{n/b} + p(n)
+  \f]
+  where \f$ a > 0 \f$, \f$ b \in \Nset \ setminus \{0, 1\} \f$ and
+  \f$ p : \Nset \setminus \{ 0 \} \rightarrow \Rset \f$.
+*/
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::approximate_functional_equation() const {
-  D_MSG("APPROXIMATE!!!");
   D_VAR(coefficient());
   D_VAR(divisor_arg());
-  return TOO_COMPLEX;
+  // We already know that `b' is a positive integer and we want also
+  // that `a' is a positive number.
+  Number coeff;
+  if (!coefficient().is_a_number(coeff) || !coeff.is_positive())
+    return TOO_COMPLEX;
+  // Check if the inhomogeneous term `p(n)' is a non-negative,
+  // non-decreasing function. For to do this, the parameters are
+  // not allowed. 
+  if (find_parameters(inhomogeneous_term)
+      || !is_non_negative_non_decreasing(inhomogeneous_term, n))
+    return TOO_COMPLEX;
+  // Compute `sum_{k = 1}^n a^{n-k} p(b^k)'.
+  std::vector<Expr> bases_of_exp;
+  std::vector<Expr> exp_poly_coeff;
+  std::vector<Expr> exp_no_poly_coeff;
+  Expr tmp = inhomogeneous_term.substitute(n, pwr(divisor_arg(), n));
+  exp_poly_decomposition(simplify_on_input_ex(tmp, true),
+			 bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
+  assert(coefficient().is_a_number());
+  Expr sum = 0;
+  if (vector_not_all_zero(exp_no_poly_coeff))
+    return TOO_COMPLEX;
+  else
+    for (unsigned i = bases_of_exp.size(); i-- > 0; ) {
+      Symbol k("k");
+      Expr exp_poly_coeff_k = exp_poly_coeff[i].substitute(n, k);
+      sum += sum_poly_times_exponentials(exp_poly_coeff_k, k,
+					 bases_of_exp[i] / coefficient());
+      // `sum_poly_times_exponentials' computes the sum from 0, whereas
+      // we want that the sum start from `1'.
+      sum -= exp_poly_coeff_k.substitute(k, 0);
+    }
+  sum *= pwr(coefficient(), n);
+  sum = simplify_on_output_ex(sum.expand(), false);
+  D_VAR(sum);
+  // Consider an upper bound and a lower bound for `q = [log n / log b]'.
+  Expr q_upper = log(n) / log(divisor_arg());
+  Expr q_lower = q_upper - 1;
+  Expr initial_condition = x(n / pwr(divisor_arg(), q_upper));
+  upper_bound = (pwr(coefficient(), q_upper) * initial_condition
+		 + sum.substitute(n, q_upper + 1)).expand();
+  lower_bound = (pwr(coefficient(), q_lower) * initial_condition
+		 + sum.substitute(n, q_lower)).expand();
+  upper_bound = simplify_logarithm(upper_bound);
+  lower_bound = simplify_logarithm(lower_bound);
+  return SUCCESS;
 }
 
 /*!
