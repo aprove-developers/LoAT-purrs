@@ -536,24 +536,32 @@ do_production_mode() {
       cout << "x(n) = " << exact_solution << "." << endl;
       goto exit;
 
-    case Recurrence::UNSOLVABLE_RECURRENCE:
-      cout << "unsolvable." << endl;
-      goto exit;
+    case Recurrence::CLASSIFICATION_FAIL:
+      switch (precp->classifier_status_) {
+      case Recurrence::UNSOLVABLE_RECURRENCE:
+	cout << "unsolvable." << endl;
+	goto exit;
 
-    case Recurrence::INDETERMINATE_RECURRENCE:
-      cout << "indeterminate." << endl;
-      goto exit;
+      case Recurrence::INDETERMINATE_RECURRENCE:
+	cout << "indeterminate." << endl;
+	goto exit;
 
-    case Recurrence::MALFORMED_RECURRENCE:
-      cout << "malformed." << endl;
-      goto exit;
+      case Recurrence::MALFORMED_RECURRENCE:
+	cout << "malformed." << endl;
+	goto exit;
 
-    case Recurrence::DOMAIN_ERROR:
-      cout << "domain error." << endl;
-      goto exit;
+      case Recurrence::DOMAIN_ERROR:
+	cout << "domain error." << endl;
+	goto exit;
 
-    case Recurrence::HAS_NON_INTEGER_DECREMENT:
-    case Recurrence::HAS_HUGE_DECREMENT:
+      case Recurrence::HAS_NON_INTEGER_DECREMENT:
+      case Recurrence::HAS_HUGE_DECREMENT:
+      case Recurrence::CLASSIFICATION_COMPLEX:
+      default:
+	cout << "exact(too_complex)." << endl;
+	break;
+      }
+
     case Recurrence::TOO_COMPLEX:
     default:
       cout << "exact(too_complex)." << endl;
@@ -570,29 +578,38 @@ do_production_mode() {
       cout << "x(n) >= " << lower << "." << endl;
       break;
 
-    case Recurrence::UNSOLVABLE_RECURRENCE:
-      cout << "unsolvable." << endl;
-      goto exit;
-
-    case Recurrence::INDETERMINATE_RECURRENCE:
-      cout << "indeterminate." << endl;
-      goto exit;
-
-    case Recurrence::MALFORMED_RECURRENCE:
-      cout << "malformed." << endl;
-      goto exit;
-
-    case Recurrence::DOMAIN_ERROR:
-      cout << "domain error." << endl;
-      goto exit;
-
-    case Recurrence::HAS_NON_INTEGER_DECREMENT:
-    case Recurrence::HAS_HUGE_DECREMENT:
+    case Recurrence::CLASSIFICATION_FAIL:
+      switch (precp->classifier_status_) {
+      case Recurrence::UNSOLVABLE_RECURRENCE:
+	cout << "unsolvable." << endl;
+	goto exit;
+	
+      case Recurrence::INDETERMINATE_RECURRENCE:
+	cout << "indeterminate." << endl;
+	goto exit;
+	
+      case Recurrence::MALFORMED_RECURRENCE:
+	cout << "malformed." << endl;
+	goto exit;
+	
+      case Recurrence::DOMAIN_ERROR:
+	cout << "domain error." << endl;
+	goto exit;
+	
+      case Recurrence::HAS_NON_INTEGER_DECREMENT:
+      case Recurrence::HAS_HUGE_DECREMENT:
+      case Recurrence::CLASSIFICATION_COMPLEX:
+      default:
+	cout << "lower_bound(too_complex)." << endl;
+	break;
+      }
+      
     case Recurrence::TOO_COMPLEX:
     default:
       cout << "lower_bound(too_complex)." << endl;
       break;
     }
+    
   }
 
   if (upper_bound_required) {
@@ -603,24 +620,33 @@ do_production_mode() {
       precp->upper_bound(upper);
       cout << "x(n) =< " << upper << "." << endl;
       break;
-    case Recurrence::UNSOLVABLE_RECURRENCE:
-      cout << "unsolvable." << endl;
-      goto exit;
 
-    case Recurrence::INDETERMINATE_RECURRENCE:
-      cout << "indeterminate." << endl;
-      goto exit;
+    case Recurrence::CLASSIFICATION_FAIL:
+      switch (precp->classifier_status_) {
+      case Recurrence::UNSOLVABLE_RECURRENCE:
+	cout << "unsolvable." << endl;
+	goto exit;
+	
+      case Recurrence::INDETERMINATE_RECURRENCE:
+	cout << "indeterminate." << endl;
+	goto exit;
+	
+      case Recurrence::MALFORMED_RECURRENCE:
+	cout << "malformed." << endl;
+	goto exit;
+	
+      case Recurrence::DOMAIN_ERROR:
+	cout << "domain error." << endl;
+	goto exit;
 
-    case Recurrence::MALFORMED_RECURRENCE:
-      cout << "malformed." << endl;
-      goto exit;
-
-    case Recurrence::DOMAIN_ERROR:
-      cout << "domain error." << endl;
-      goto exit;
-
-    case Recurrence::HAS_NON_INTEGER_DECREMENT:
-    case Recurrence::HAS_HUGE_DECREMENT:
+      case Recurrence::HAS_NON_INTEGER_DECREMENT:
+      case Recurrence::HAS_HUGE_DECREMENT:
+      case Recurrence::CLASSIFICATION_COMPLEX:
+      default:
+	cout << "upper_bound(too_complex)." << endl;
+	break;
+      }
+      
     case Recurrence::TOO_COMPLEX:
     default:
       cout << "upper_bound(too_complex)." << endl;
@@ -915,12 +941,13 @@ main(int argc, char *argv[]) try {
 	  ++unexpected_solution_or_bounds_for_it;
 	}
       if (expect_not_diagnose_unsolvable)
-	if (compute_exact_solution_wrapper(rec)
-	    == Recurrence::UNSOLVABLE_RECURRENCE
-	    || rec.compute_lower_bound()
-	    == Recurrence::UNSOLVABLE_RECURRENCE
-	    || rec.compute_upper_bound()
-	    == Recurrence::UNSOLVABLE_RECURRENCE) {
+	if ((compute_exact_solution_wrapper(rec)
+	     == Recurrence::CLASSIFICATION_FAIL
+	     || rec.compute_lower_bound()
+	     == Recurrence::CLASSIFICATION_FAIL
+	     || rec.compute_upper_bound()
+	     == Recurrence::CLASSIFICATION_FAIL)
+	    && rec.classifier_status_ == Recurrence::UNSOLVABLE_RECURRENCE) {
 	  if (verbose)
 	    cerr << "*** unexpected unsolvability diagnosis" << endl;
 	  ++unexpected_unsolvability_diagnoses;
@@ -928,22 +955,26 @@ main(int argc, char *argv[]) try {
 	    cout << "Unsolvable." << endl;
 	}
       if (expect_diagnose_unsolvable)
-	if (compute_exact_solution_wrapper(rec)
-	    != Recurrence::UNSOLVABLE_RECURRENCE
-	    || rec.compute_lower_bound()
-	    != Recurrence::UNSOLVABLE_RECURRENCE
-	    || rec.compute_upper_bound()
-	    != Recurrence::UNSOLVABLE_RECURRENCE) {
+	if ((compute_exact_solution_wrapper(rec)
+	     == Recurrence::CLASSIFICATION_FAIL
+	     || rec.compute_lower_bound()
+	     == Recurrence::CLASSIFICATION_FAIL
+	     || rec.compute_upper_bound()
+	     == Recurrence::CLASSIFICATION_FAIL)
+	    && rec.classifier_status_ != Recurrence::UNSOLVABLE_RECURRENCE) {
 	  if (verbose)
-	    cerr << "*** unexpected failure to diagnose unsolvability" << endl;
+	    cerr << "*** unexpected failure to diagnose unsolvability"
+		 << endl;
 	  ++unexpected_failures_to_diagnose_unsolvability;
 	}
       if (expect_diagnose_indeterminate)
-	if (compute_exact_solution_wrapper(rec)
-	    != Recurrence::INDETERMINATE_RECURRENCE
-	    || rec.compute_lower_bound()
-	    != Recurrence::INDETERMINATE_RECURRENCE
-	    || rec.compute_upper_bound()
+	if ((compute_exact_solution_wrapper(rec)
+	     == Recurrence::CLASSIFICATION_FAIL
+	     || rec.compute_lower_bound()
+	     == Recurrence::CLASSIFICATION_FAIL
+	     || rec.compute_upper_bound()
+	     == Recurrence::CLASSIFICATION_FAIL)
+	    && rec.classifier_status_
 	    != Recurrence::INDETERMINATE_RECURRENCE) {
 	  if (verbose)
 	    cerr << "*** unexpected failure to diagnose indeterminably"
@@ -951,24 +982,26 @@ main(int argc, char *argv[]) try {
 	  ++unexpected_failures_to_diagnose_indeterminably;
 	}
       if (expect_diagnose_malformed)
-	if (compute_exact_solution_wrapper(rec)
-	    != Recurrence::MALFORMED_RECURRENCE
-	    || rec.compute_lower_bound()
-	    != Recurrence::MALFORMED_RECURRENCE
-	    || rec.compute_upper_bound()
-	    != Recurrence::MALFORMED_RECURRENCE) {
+	if ((compute_exact_solution_wrapper(rec)
+	     == Recurrence::CLASSIFICATION_FAIL
+	     || rec.compute_lower_bound()
+	     == Recurrence::CLASSIFICATION_FAIL
+	     || rec.compute_upper_bound()
+	     == Recurrence::CLASSIFICATION_FAIL)	    
+	    && rec.classifier_status_ != Recurrence::MALFORMED_RECURRENCE) {
 	  if (verbose)
 	    cerr << "*** unexpected failure to diagnose malformation"
 		 << endl;
 	  ++unexpected_failures_to_diagnose_malformation;
 	}
       if (expect_diagnose_domain_error)
-	if (compute_exact_solution_wrapper(rec)
-	    != Recurrence::DOMAIN_ERROR
-	    || rec.compute_lower_bound()
-	    != Recurrence::DOMAIN_ERROR
-	    || rec.compute_upper_bound()
-	    != Recurrence::DOMAIN_ERROR) {
+	if ((compute_exact_solution_wrapper(rec)
+	     == Recurrence::CLASSIFICATION_FAIL
+	     || rec.compute_lower_bound()
+	     == Recurrence::CLASSIFICATION_FAIL
+	     || rec.compute_upper_bound()
+	     == Recurrence::CLASSIFICATION_FAIL)
+	    && rec.classifier_status_ != Recurrence::DOMAIN_ERROR) {
 	  if (verbose)
 	    cerr << "*** unexpected failure to diagnose domain error"
 		 << endl;
@@ -999,28 +1032,37 @@ main(int argc, char *argv[]) try {
 	}
 	goto finish;
 	break;
-      case Recurrence::UNSOLVABLE_RECURRENCE:
-	if (interactive)
-	  cout << endl << "Unsolvable" << endl << endl;
-	goto finish;
-	break;
-      case Recurrence::INDETERMINATE_RECURRENCE:
-	if (interactive)
-	  cout << endl << "Indeterminate" << endl << endl;
-	goto finish;
-	break;
-      case Recurrence::MALFORMED_RECURRENCE:
-	if (interactive)
-	  cout << endl << "Malformed" << endl << endl;
-	goto finish;
-	break;
-      case Recurrence::DOMAIN_ERROR:
-	if (interactive)
-	  cout << endl << "Domain error" << endl << endl;
-	goto finish;
-	break;
-      case Recurrence::HAS_NON_INTEGER_DECREMENT:
-      case Recurrence::HAS_HUGE_DECREMENT:
+
+      case Recurrence::CLASSIFICATION_FAIL:
+	switch (rec.classifier_status_) {
+	case Recurrence::UNSOLVABLE_RECURRENCE:
+	  if (interactive)
+	    cout << endl << "Unsolvable" << endl << endl;
+	  goto finish;
+	  break;
+	case Recurrence::INDETERMINATE_RECURRENCE:
+	  if (interactive)
+	    cout << endl << "Indeterminate" << endl << endl;
+	  goto finish;
+	  break;
+	case Recurrence::MALFORMED_RECURRENCE:
+	  if (interactive)
+	    cout << endl << "Malformed" << endl << endl;
+	  goto finish;
+	  break;
+	case Recurrence::DOMAIN_ERROR:
+	  if (interactive)
+	    cout << endl << "Domain error" << endl << endl;
+	  goto finish;
+	  break;
+	case Recurrence::HAS_NON_INTEGER_DECREMENT:
+	case Recurrence::HAS_HUGE_DECREMENT:
+	case Recurrence::CLASSIFICATION_COMPLEX:
+	default:
+	  cout << "exact(too_complex)." << endl;
+	  break;
+	}
+     
       case Recurrence::TOO_COMPLEX:
       default:
 	break;
@@ -1038,28 +1080,41 @@ main(int argc, char *argv[]) try {
 	       << "*******************"
 	       << endl << endl;
 	break;
-      case Recurrence::UNSOLVABLE_RECURRENCE:
-	if (interactive)
-	  cout << endl << "Unsolvable" << endl << endl;
-	goto finish;
-	break;
-      case Recurrence::INDETERMINATE_RECURRENCE:
-	if (interactive)
-	  cout << endl << "Indeterminate" << endl;
-	goto finish;
-	break;
-      case Recurrence::MALFORMED_RECURRENCE:
-	if (interactive)
-	  cout << endl << "Malformed" << endl;
-	goto finish;
-	break;
-      case Recurrence::DOMAIN_ERROR:
-	if (interactive)
-	  cout << endl << "Domain error" << endl;
-	goto finish;
-	break;
-      case Recurrence::HAS_NON_INTEGER_DECREMENT:
-      case Recurrence::HAS_HUGE_DECREMENT:
+
+      case Recurrence::CLASSIFICATION_FAIL:
+	switch (rec.classifier_status_) {
+	case Recurrence::UNSOLVABLE_RECURRENCE:
+	  if (interactive)
+	    cout << endl << "Unsolvable" << endl << endl;
+	  goto finish;
+	  break;
+
+	case Recurrence::INDETERMINATE_RECURRENCE:
+	  if (interactive)
+	    cout << endl << "Indeterminate" << endl;
+	  goto finish;
+	  break;
+
+	case Recurrence::MALFORMED_RECURRENCE:
+	  if (interactive)
+	    cout << endl << "Malformed" << endl;
+	  goto finish;
+	  break;
+
+	case Recurrence::DOMAIN_ERROR:
+	  if (interactive)
+	    cout << endl << "Domain error" << endl;
+	  goto finish;
+	  break;
+
+	case Recurrence::HAS_NON_INTEGER_DECREMENT:
+	case Recurrence::HAS_HUGE_DECREMENT:
+	case Recurrence::CLASSIFICATION_COMPLEX:
+	default:
+	  cout << "lower_bound(too_complex)." << endl;
+	  break;
+	}
+	
       case Recurrence::TOO_COMPLEX:
 	if (!too_complex_printed && interactive) {
 	  cout << endl << "Too complex" << endl << endl;
@@ -1081,28 +1136,37 @@ main(int argc, char *argv[]) try {
 	       << "*******************"
 	       << endl << endl;
 	break;
-      case Recurrence::UNSOLVABLE_RECURRENCE:
-	if (interactive)
-	  cout << endl << "Unsolvable" << endl << endl;
-	goto finish;
-	break;
-      case Recurrence::INDETERMINATE_RECURRENCE:
-	if (interactive)
-	  cout << "Indeterminate" << endl;
-	goto finish;
-	break;
-      case Recurrence::MALFORMED_RECURRENCE:
-	if (interactive)
-	  cout << "Malformed" << endl;
-	goto finish;
-	break;
-      case Recurrence::DOMAIN_ERROR:
-	if (interactive)
-	  cout << "Domain error" << endl;
-	goto finish;
-	break;
-      case Recurrence::HAS_NON_INTEGER_DECREMENT:
-      case Recurrence::HAS_HUGE_DECREMENT:
+
+      case Recurrence::CLASSIFICATION_FAIL:
+	switch (rec.classifier_status_) {
+	case Recurrence::UNSOLVABLE_RECURRENCE:
+	  if (interactive)
+	    cout << endl << "Unsolvable" << endl << endl;
+	  goto finish;
+	  break;
+	case Recurrence::INDETERMINATE_RECURRENCE:
+	  if (interactive)
+	    cout << "Indeterminate" << endl;
+	  goto finish;
+	  break;
+	case Recurrence::MALFORMED_RECURRENCE:
+	  if (interactive)
+	    cout << "Malformed" << endl;
+	  goto finish;
+	  break;
+	case Recurrence::DOMAIN_ERROR:
+	  if (interactive)
+	    cout << "Domain error" << endl;
+	  goto finish;
+	  break;
+	case Recurrence::HAS_NON_INTEGER_DECREMENT:
+	case Recurrence::HAS_HUGE_DECREMENT:
+	case Recurrence::CLASSIFICATION_COMPLEX:
+	default:
+	  cout << "upper_bound(too_complex)." << endl;
+	  break;
+	}
+	
       case Recurrence::TOO_COMPLEX:
 	if (!too_complex_printed && interactive)
 	  cout << endl << "Too complex" << endl << endl;

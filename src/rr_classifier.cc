@@ -735,7 +735,7 @@ known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
 
 } // anonymous namespace
 
-PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::Classifier_Status
 PURRS::Recurrence::compute_order(const Number& decrement, index_type& order,
 				 unsigned long& index,
 				 unsigned long max_size) {
@@ -751,7 +751,7 @@ PURRS::Recurrence::compute_order(const Number& decrement, index_type& order,
   index = decrement.to_long();
   if (order == 0 || index > unsigned(order))
     order = index;
-  return SUCCESS;
+  return CLASSIFICATION_OK;
 }
 
 /*!
@@ -761,7 +761,7 @@ PURRS::Recurrence::compute_order(const Number& decrement, index_type& order,
   solution or of the bounds, or during the verification of the obtained
   results.
 */
-PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::Classifier_Status
 PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 					  Expr& inhomogeneous,
 					  index_type& order,
@@ -792,10 +792,10 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
       set_non_linear_finite_order();
       non_linear_p = new Non_Linear_Info(Recurrence(new_rhs), coeff_and_base,
 					 auxiliary_symbols);
-      return SUCCESS;
+      return CLASSIFICATION_OK;
     }
     else
-      return TOO_COMPLEX;
+      return CLASSIFICATION_COMPLEX;
   }
   // This is the case of nested `x' function with argument containing `n'.
   else if (non_linear_term == 1)
@@ -811,21 +811,21 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
       if (argument == n)
 	return HAS_NULL_DECREMENT;
       else if (has_parameters(argument))
-	return TOO_COMPLEX;
+	return CLASSIFICATION_COMPLEX;
       // Check if this term has the form `x(n + d)'.
       else if (argument.is_a_add() && argument.nops() == 2) {
 	Number decrement;
 	if (get_constant_decrement(argument, decrement)) {
 	  unsigned long index;
-	  Solver_Status status
+	  Classifier_Status status
 	    = compute_order(decrement, order, index,
 			    coefficients.max_size());
-	  if (status != SUCCESS)
+	  if (status != CLASSIFICATION_OK)
 	    return status;
-	  if (is_order_zero())
+	  if (classifier_status_ == NOT_CLASSIFIED_YET || is_order_zero())
 	    set_linear_finite_order_const_coeff();
 	  else if (is_functional_equation())
-	    return TOO_COMPLEX;
+	    return CLASSIFICATION_COMPLEX;
 	  // `num_term == 0' if `r' is the unique term of `rhs'
 	  // or if it is the first term of `rhs' (i.e. is the
 	  // first time that the system entry in this function).
@@ -842,26 +842,29 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
       else if (argument.is_a_mul() && argument.nops() == 2) {
 	Number divisor;
 	if (get_constant_divisor(argument, divisor)) {
-	  if (is_order_zero())
+	  if (classifier_status_ == NOT_CLASSIFIED_YET || is_order_zero())
 	    set_functional_equation();
 	  else if (is_linear_finite_order())
-	    return TOO_COMPLEX;
+	    return CLASSIFICATION_COMPLEX;
 	  homogeneous_terms
 	    .insert(std::map<Number, Expr>::value_type(divisor, 1));
 	}
 	else
-	  return TOO_COMPLEX;
+	  return CLASSIFICATION_COMPLEX;
       }
       else if (argument.has(n))
-	return TOO_COMPLEX;
-      else
+	return CLASSIFICATION_COMPLEX;
+      else {
 	inhomogeneous += addend;
+	if (classifier_status_ == NOT_CLASSIFIED_YET)
+	  set_order_zero();
+      }
     } // ended case of `addend' `x' function.
   // Check if the summand has the `x' function with the argument
   // dependently from the index of the sum.
     else if (addend.is_the_sum_function() && addend.arg(2).has(n)
 	     && addend.arg(3).has_x_function(addend.arg(0))) {
-      if (is_order_zero()) {
+      if (classifier_status_ == NOT_CLASSIFIED_YET || is_order_zero()) {
 	// If there are many terms equal to the sum stored in `addend'
 	// we must collect them in order to find the weight `f(n)' of
 	// the recurrence of infinite order
@@ -894,16 +897,19 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 	  set_linear_infinite_order();
 	  set_first_valid_index_inf_order(first_valid_index);
 	  inhomogeneous = rhs - addend * weight;
-	  return SUCCESS;
+	  return CLASSIFICATION_OK;
 	}
 	else
-	  return TOO_COMPLEX;
+	  return CLASSIFICATION_COMPLEX;
       }
       else
-	return TOO_COMPLEX;
+	return CLASSIFICATION_COMPLEX;
     }
-    else
+    else {
       inhomogeneous += addend;
+      if (classifier_status_ == NOT_CLASSIFIED_YET)
+	set_order_zero();
+    }
   else {
     Expr no_x_factor = 1;
     bool has_x = false;
@@ -919,19 +925,20 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 	if (argument == n)
 	  return HAS_NULL_DECREMENT;
 	else if (has_parameters(argument))
-	  return TOO_COMPLEX;
+	  return CLASSIFICATION_COMPLEX;
 	else if (argument.is_a_add() && argument.nops() == 2) {
 	  Number decrement;
 	  if (get_constant_decrement(argument, decrement)) {
 	    // The non linear terms have already been considered before.
 	    assert(!has_x);
-	    Solver_Status status
+	    Classifier_Status status
 	      = compute_order(decrement, order, index,
 			      coefficients.max_size());
-	    if (status != SUCCESS)
+	    if (status != CLASSIFICATION_OK)
 	      return status;
-	    if (is_functional_equation())
-	      return TOO_COMPLEX;
+	    if (classifier_status_ != NOT_CLASSIFIED_YET
+		&& is_functional_equation())
+	      return CLASSIFICATION_COMPLEX;
 	    if (num_term == 0)
 	      gcd_among_decrements = index;
 	    else
@@ -945,17 +952,17 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 	  if (get_constant_divisor(argument, divisor)) {
 	    // The non linear terms have already been considered before.
 	    assert(!has_x);
-	    if (is_order_zero())
+	    if (classifier_status_ == NOT_CLASSIFIED_YET || is_order_zero())
 	      set_functional_equation();
 	    else if (is_linear_finite_order())
-	      return TOO_COMPLEX;
+	      return CLASSIFICATION_COMPLEX;
 	    has_x = true;
 	  }
 	  else
-	    return TOO_COMPLEX;
+	    return CLASSIFICATION_COMPLEX;
 	}
 	else if (argument.has(n))
-	  return TOO_COMPLEX;
+	  return CLASSIFICATION_COMPLEX;
 	else
 	  no_x_factor *= factor;
       } // ended case of `factor' `x' function.
@@ -963,7 +970,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
       // dependently from the index of the sum.
       else if (factor.is_the_sum_function() && factor.arg(2).has(n)
 	       && factor.arg(3).has_x_function(factor.arg(0))) {
-	if (is_order_zero()) {
+	if (classifier_status_ == NOT_CLASSIFIED_YET || is_order_zero()) {
 	  // If there are many terms equal to the sum in `factor' stored
 	  // in `rhs', we must collect them in order to find the weight
 	  // `f(n)' of the recurrence of infinite order
@@ -1005,13 +1012,13 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 	    // in `rhs' there is more than one term containing the sum
 	    // in `factor'.
 	    inhomogeneous = rhs_rewritten - weight * factor;
-	    return SUCCESS;
+	    return CLASSIFICATION_OK;
 	  }
 	  else
-	    return TOO_COMPLEX;
+	    return CLASSIFICATION_COMPLEX;
 	}
 	else
-	  return TOO_COMPLEX;
+	  return CLASSIFICATION_COMPLEX;
       }
       else {
 	if (factor.has(n))
@@ -1020,28 +1027,34 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
       }
     }
     if (has_x) {
-      if (is_functional_equation())
+      if (classifier_status_ != NOT_CLASSIFIED_YET
+	  && is_functional_equation())
 	homogeneous_terms
 	  .insert(std::map<Number, Expr>::value_type(divisor, no_x_factor));
       else {
 	insert_coefficients(no_x_factor, index, coefficients);
-	if (!is_linear_finite_order_var_coeff())
+	if (classifier_status_ == NOT_CLASSIFIED_YET
+	    || (classifier_status_ != NOT_CLASSIFIED_YET
+		&& !is_linear_finite_order_var_coeff()))
 	  if (has_n)
 	    set_linear_finite_order_var_coeff();
 	  else
 	    set_linear_finite_order_const_coeff();
       }
     }
-    else
+    else {
       inhomogeneous += no_x_factor;
+      if (classifier_status_ == NOT_CLASSIFIED_YET)
+	set_order_zero();
+    }
   }
-  return SUCCESS;
+  return CLASSIFICATION_OK;
 }
 
 /*!
   Classifies the recurrence \p *this.
   Returns:
-  - <CODE>SUCCESS</CODE>                   if the recurrence is linear of
+  - <CODE>CLASSIFICATION_OK</CODE>         if the recurrence is linear of
                                            finite or infinite order;
 					   non-linear of finite order;
 					   in the case of functional equation;
@@ -1071,10 +1084,10 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
   - <CODE>UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not solvable;
   - <CODE>INDETERMINATE_RECURRENCE</CODE>  if the recurrence is indeterminate,
                                            hence it has infinite solutions.
-  - <CODE>TOO_COMPLEX</CODE>               in all the other cases.
+  - <CODE>CLASSIFICATION_COMPLEX</CODE>    in all the other cases.
 
   For each class of recurrences for which the system returns
-  <CODE>SUCCESS</CODE>, it is initialized a pointer to an opportune
+  <CODE>CLASSIFICATION_OK</CODE>, it is initialized a pointer to an opportune
   class containing all necessary informations about the recurrence
   of which the system it will have need during the computations of the
   solution or of the bounds, or during the verification of the obtained
@@ -1121,7 +1134,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
   In all the previous cases is besides computed the non-homogeneous part
   of the recurrence.
 */
-PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::Classifier_Status
 PURRS::Recurrence::classify() const {
   // Simplifies expanded expressions, in particular rewrites nested powers.
   Expr rhs = simplify_ex_for_input(recurrence_rhs, true);
@@ -1149,10 +1162,10 @@ PURRS::Recurrence::classify() const {
 
   std::map<Number, Expr> homogeneous_terms;
 
-
+  // Date for all types of recurrences
   Expr inhomogeneous = 0;
 
-  Solver_Status status;
+  Classifier_Status status;
 
   unsigned int num_summands = rhs.is_a_add() ? rhs.nops() : 1;
   if (num_summands > 1)
@@ -1162,7 +1175,7 @@ PURRS::Recurrence::classify() const {
 					   order, coefficients,
 					   gcd_among_decrements, i,
 					   homogeneous_terms))
-	  != SUCCESS)
+	  != CLASSIFICATION_OK)
 	return status;
       // As soon as the system notices the this is recurrences
       // of infinite order, stops the classification because already
@@ -1175,7 +1188,7 @@ PURRS::Recurrence::classify() const {
 					 order, coefficients,
 					 gcd_among_decrements, 0,
 					 homogeneous_terms))
-	!= SUCCESS)
+	!= CLASSIFICATION_OK)
       return status;
 
   set_inhomogeneous_term(inhomogeneous);
@@ -1192,9 +1205,7 @@ PURRS::Recurrence::classify() const {
   assert(is_linear_finite_order() || is_functional_equation()
 	 || is_non_linear_finite_order() || is_linear_infinite_order());
 
-  bool& classified = const_cast<bool&>(is_classified);
-  classified = true;
-  return SUCCESS;
+  return CLASSIFICATION_OK;
 }
 
 /*!
@@ -1208,7 +1219,7 @@ PURRS::Recurrence::classify() const {
   is not a positive integer.
 
   Returns:
-  - <CODE>SUCCESS</CODE>                   if the recurrence is linear of
+  - <CODE>CLASSIFICATION_OK</CODE>         if the recurrence is linear of
                                            finite or infinite order;
 					   non-linear of finite order;
 					   in the case of functional equation;
@@ -1230,29 +1241,33 @@ PURRS::Recurrence::classify() const {
   - <CODE>UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not solvable;
   - <CODE>INDETERMINATE_RECURRENCE</CODE>  if the recurrence is indeterminate,
                                            hence it has infinite solutions.
-  - <CODE>TOO_COMPLEX</CODE>               in all the other cases. 
+  - <CODE>CLASSIFICATION_COMPLEX</CODE>    in all the other cases. 
   
   For each class of recurrences for which the system returns
-  <CODE>SUCCESS</CODE>, it is initialized a pointer to an opportune
+  <CODE>CLASSIFICATION_OK</CODE>, it is initialized a pointer to an opportune
   class containing all necessary informations about the recurrence
   of which the system it will have need during the computations of the
   solution or of the bounds, or during the verification of the obtained
   results.
 */
-PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::Classifier_Status
 PURRS::Recurrence::classify_and_catch_special_cases() const {
+  // If `*this' is already classified returns as soon as its status.
+  if (classifier_status_ != NOT_CLASSIFIED_YET)
+    return classifier_status_;
+
   bool exit_anyway = false;
-  Solver_Status status;
+  Classifier_Status status;
   do {
     status = classify();
     switch (status) {
-    case SUCCESS:
+    case CLASSIFICATION_OK:
       break;
     case HAS_NON_INTEGER_DECREMENT:
     case HAS_HUGE_DECREMENT:
     case MALFORMED_RECURRENCE:
     case DOMAIN_ERROR:
-    case TOO_COMPLEX:
+    case CLASSIFICATION_COMPLEX:
       exit_anyway = true;
       break;
     case HAS_NEGATIVE_DECREMENT:
@@ -1263,6 +1278,8 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	rec_rewritten = true;
 	Expr& rhs = const_cast<Expr&>(recurrence_rhs);
 	rhs = new_rhs;
+	classifier_status_ = NOT_CLASSIFIED_YET;
+	type_ = ORDER_ZERO;
 	status = classify_and_catch_special_cases();
       }
       break;
@@ -1276,6 +1293,8 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	  rec_rewritten = true;
 	  Expr& rhs = const_cast<Expr&>(recurrence_rhs);
 	  rhs = new_rhs;
+	  classifier_status_ = NOT_CLASSIFIED_YET;
+	  type_ = ORDER_ZERO;
 	  status = classify_and_catch_special_cases();
 	}
 	else if (result == 1)
@@ -1283,7 +1302,7 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	else if (result == 2)
 	  status = INDETERMINATE_RECURRENCE;
 	else
-	  return TOO_COMPLEX;
+	  return CLASSIFICATION_COMPLEX;
 	exit_anyway = true;
       }
       break;
@@ -1293,6 +1312,8 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 			       "catch_special_cases().");
       break;
     }
-  } while (!exit_anyway && status != SUCCESS);
+  } while (!exit_anyway && status != CLASSIFICATION_OK);
+
+  classifier_status_ = status;
   return status;
 }

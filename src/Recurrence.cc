@@ -48,13 +48,6 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
 const PURRS::Symbol&
 PURRS::Recurrence::n = Symbol("n");
 
-// PURRS::Recurrence::~Recurrence() {
-//   delete finite_order_p;
-//   delete functional_eq_p;
-//   delete non_linear_p;
-//   delete infinite_order_p;
-// }
-
 namespace {
 using namespace PURRS;
 
@@ -537,7 +530,7 @@ PURRS::Recurrence::verify_finite_order() const {
   -  Validation of the initial condition by substitution of \f$ n \f$
   with the value in <CODE>rec.lower_bound_sum()</CODE>, i.e., the first
   value starting from which the solution is valid.
-  -  Validation of the solution using mathematic induction.
+  -  Validation of the solution using mathematical induction.
 */
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_infinite_order() const {
@@ -546,7 +539,9 @@ PURRS::Recurrence::verify_infinite_order() const {
   // the solution is simply `x(n) = g(n) - g(n-1)'.
   // FIXME: the traditional validation' process does not work,
   // is it true?
+  // FIXME: first_valid_index e' shiftato in avanti?
   if (weight_inf_order() == -1)
+    // FIXME: verify!!!
     return PROVABLY_CORRECT;
   
   Expr weight;
@@ -572,9 +567,10 @@ PURRS::Recurrence::verify_infinite_order() const {
   e = simplify_all(e);
   if (e != weight.substitute(n, lower_bound_sum()+1) * x(lower_bound_sum())
       + inhomogeneous.substitute(n, lower_bound_sum()+1))
+    // FIXME: provably_incorrect...
     return INCONCLUSIVE_VERIFICATION;
   
-  // Step 2: validation of the solution using mathematic induction.
+  // Step 2: validation of the solution using mathematical induction.
   // Note: with recurrences of infinite order is not true that if it is
   // homogeneous then is sufficient to verify the initial condition.
   // In fact, the recurrences could be in a non-standard form like
@@ -587,7 +583,9 @@ PURRS::Recurrence::verify_infinite_order() const {
   // where `x(n)' and `x(k)' are substituted with the solution.
   // If we are able to demonstrate that this expression is syntactically
   // zero, then the solution is correct.
-  Symbol h("h");
+  // FIXME: specificare perche' e' necessario tirare fuori il primo
+  // termine oppure lasciarlo dentro.
+  Symbol h;
   Expr diff = PURRS::sum(h, lower_bound_sum() + 1, n - 1,
 			 exact_solution_.expression().substitute(n, h));
   diff = simplify_sum(diff, false, true);
@@ -900,14 +898,14 @@ compute_non_linear_recurrence(Expr& solution_or_bound,
       * pwr(x(0), pwr(base_exp_log(), n));
     return SUCCESS;
   }
-  Solver_Status status;
+  Classifier_Status classifier_status
+    = associated_linear_rec().classify_and_catch_special_cases();
   // Classify the linear recurrence `associated_linear_rec()'.
-  if (associated_linear_rec().is_classified
-      || (status
-	  = associated_linear_rec().classify_and_catch_special_cases())
-      == SUCCESS) {
+  if (classifier_status == CLASSIFICATION_OK) {
     assert(associated_linear_rec().is_linear_finite_order()
 	   || associated_linear_rec().is_functional_equation());
+    
+    Solver_Status status;
     // Linear finite order.
     if (associated_linear_rec().is_linear_finite_order())
       if ((status = associated_linear_rec().solve_linear_finite_order())
@@ -993,7 +991,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound,
     }
   }
   else
-    return status;
+    return CLASSIFICATION_FAIL;
 }
 
 /*!
@@ -1319,8 +1317,6 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_exact_solution() const {
-  bool& tried_to_compute_exact_solution
-    = const_cast<bool&>(tested_exact_solution);
   tried_to_compute_exact_solution = true;
   // See if we have the exact solution already.
   if (exact_solution_.has_expression())
@@ -1328,34 +1324,38 @@ PURRS::Recurrence::compute_exact_solution() const {
 
   // We may not have the exact solution explicitely, yet we may have
   // the lower and the upper bounds equal among themselves.
+  // FIXME: invece di == usare quella funzione li'...
   if (lower_bound_.has_expression() && upper_bound_.has_expression()
       && lower_bound_.expression() == upper_bound_.expression()) {
     exact_solution_.set_expression(lower_bound_.expression());
     return SUCCESS;
   }
 
-  Solver_Status status;
-  if (is_classified
-      || (status = classify_and_catch_special_cases()) == SUCCESS) {
-    assert(is_linear_finite_order() || is_functional_equation()
-	   || is_non_linear_finite_order() || is_linear_infinite_order());
+  Classifier_Status classifier_status = classify_and_catch_special_cases();
+  if (classifier_status == CLASSIFICATION_OK) {
+    Solver_Status status;
 
     // Linear finite order.
     if (is_linear_finite_order()) {
       // If the greatest common divisor among the decrements is greater
       // than one, the order reduction is applicable.
-      // FIXME: the order reduction is for the moment applied only to
-      // recurrences with constant coefficients because the recurrences
-      // with variable coefficients are not allowed with parameters.
-      if (gcd_among_decrements() > 1 && is_linear_finite_order_const_coeff()) {
-	if ((status = apply_order_reduction()) != SUCCESS)
-	  return status;
-      }
+      if (gcd_among_decrements() > 1)
+	// FIXME: the order reduction is for the moment applied only to
+	// recurrences with constant coefficients because the recurrences
+	// with variable coefficients are not allowed with parameters.
+	if (is_linear_finite_order_const_coeff()) {
+	  if ((status = apply_order_reduction()) != SUCCESS)
+	    return status;
+	}
+	else {
+	  if ((status = solve_linear_finite_order()) != SUCCESS)
+	    return status;
+	}
       // We do not have applied the order reduction.
       else
 	if ((status = solve_linear_finite_order()) != SUCCESS)
 	  return status;
-
+      
       // Check if there are specified initial conditions and in this case
       // eventually shift the solution in according with them before to
       // substitute the values of the initial conditions to the
@@ -1395,7 +1395,7 @@ PURRS::Recurrence::compute_exact_solution() const {
 	return status;
     }
     // Linear infinite order.
-    else {
+    else {  //if (is_linear_infinite_order()) {
       Expr solution;
       if ((status = compute_infinite_order_recurrence(solution))
 	  == SUCCESS) {
@@ -1415,7 +1415,7 @@ PURRS::Recurrence::compute_exact_solution() const {
     }
   }
   else
-    return status;
+    return CLASSIFICATION_FAIL;
 }
 
 PURRS::Recurrence::Solver_Status
@@ -1432,14 +1432,15 @@ PURRS::Recurrence::compute_lower_bound() const {
     return SUCCESS;
   }
 
-  Solver_Status status;
-  if (is_classified
-      || (status = classify_and_catch_special_cases()) == SUCCESS) {
+  Classifier_Status classifier_status = classify_and_catch_special_cases();
+  if (classifier_status == CLASSIFICATION_OK) {
     assert(is_linear_finite_order() || is_functional_equation()
 	   || is_non_linear_finite_order() || is_linear_infinite_order());
+    
+    Solver_Status status;
 
     if (is_linear_finite_order() || is_linear_infinite_order())
-      if (!tested_exact_solution)
+      if (!tried_to_compute_exact_solution)
 	// There is an exact solution.
 	return compute_exact_solution();
       else
@@ -1466,7 +1467,7 @@ PURRS::Recurrence::compute_lower_bound() const {
     }
   }
   else
-    return status;
+    return CLASSIFICATION_FAIL;
 }
 
 PURRS::Recurrence::Solver_Status
@@ -1483,14 +1484,15 @@ PURRS::Recurrence::compute_upper_bound() const {
     return SUCCESS;
   }
 
-  Solver_Status status;
-  if (is_classified
-      || (status = classify_and_catch_special_cases()) == SUCCESS) {
+  Classifier_Status classifier_status = classify_and_catch_special_cases();
+  if (classifier_status == CLASSIFICATION_OK) {
     assert(is_linear_finite_order() || is_functional_equation()
 	   || is_non_linear_finite_order() || is_linear_infinite_order());
     
+    Solver_Status status;
+    
     if (is_linear_finite_order() || is_linear_infinite_order())
-      if (!tested_exact_solution)
+      if (!tried_to_compute_exact_solution)
 	// There is an exact solution.
 	return compute_exact_solution();
       else
@@ -1517,7 +1519,7 @@ PURRS::Recurrence::compute_upper_bound() const {
     }
   }
   else
-    return status;
+    return CLASSIFICATION_FAIL;
 }
 
 bool

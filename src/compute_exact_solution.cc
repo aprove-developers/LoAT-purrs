@@ -228,8 +228,8 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
   new_roots.push_back(Polynomial_Root(Expr(1), RATIONAL));
   rec_const_coeff.finite_order_p
     = new Finite_Order_Info(1, coefficients, 1);
-  rec_const_coeff.set_first_valid_index(z.to_unsigned_int());
   rec_const_coeff.set_type(LINEAR_FINITE_ORDER_CONST_COEFF);
+  rec_const_coeff.set_first_valid_index(z.to_unsigned_int());
   rec_const_coeff.set_inhomogeneous_term(inhomogeneous_term/product_factor);
 
   exact_solution_

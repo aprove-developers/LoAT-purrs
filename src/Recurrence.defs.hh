@@ -217,12 +217,13 @@ private:
   Expr get_initial_condition(unsigned int k) const;
 
 public:
-  //! The possible states of the recurrence.
-  enum Solver_Status {
+  //! The possible classification of the recurrence.
+  enum Classifier_Status {
     /*!
-      Solution was successful.
+      The classification's process was successful: the type of the
+      recurrence is known and the solver is able to work with it
     */
-    SUCCESS,
+    CLASSIFICATION_OK,
 
     /*!
       The recurrence is indeterminate, hence it has infinite solutions.
@@ -272,7 +273,33 @@ public:
     /*!
       Catchall: the recurrence is generically too complex for the solver.
     */
-    TOO_COMPLEX
+    CLASSIFICATION_COMPLEX,
+
+    /*!
+      The recurrence is not yet classified.
+    */
+    NOT_CLASSIFIED_YET
+  };
+
+  mutable Classifier_Status classifier_status_;
+
+  //! The possible states of the recurrence.
+  enum Solver_Status {
+    /*!
+      Solution, or approximation, was successful.
+    */
+    SUCCESS,
+
+    /*!
+      Catchall: the recurrence is generically too complex for the solver.
+    */
+    TOO_COMPLEX,
+
+    /*!
+      The classification's process is failed and then the system can not
+      to solve, or approximate, the recurrence.
+    */
+    CLASSIFICATION_FAIL
   };
 
   //! \brief
@@ -456,17 +483,17 @@ private:
   Expr substitute_i_c_shifting(const Expr& solution_or_bound) const;
 
   //! Classifies the recurrence \p *this sliding it recursively.
-  Solver_Status classify() const;
+  Classifier_Status classify() const;
 
   //! \brief
   //! Classifies the recurrence \p *this calling the method
   //! <CODE>classify()</CODE>. 
-  Solver_Status classify_and_catch_special_cases() const;
+  Classifier_Status classify_and_catch_special_cases() const;
 
   //! \brief
   //! Analyzes the \f$ i \f$-th addend of the right hand side \p rhs
   //! of the recurrence \p *this.
-  Solver_Status classification_summand(const Expr& rhs, const Expr& r,
+  Classifier_Status classification_summand(const Expr& rhs, const Expr& r,
 				       Expr& e, index_type& order,
 				       std::vector<Expr>& coefficients,
 				       int& gcd_among_decrements,
@@ -593,18 +620,13 @@ private:
 
   mutable Type type_;
 
-  //! \brief
-  //! It is <CODE>true</CODE> if the recurrence already it has been
-  //! classified; it is <CODE>false</CODE> otherwise.
-  bool is_classified;
-
   mutable Finite_Order_Info* finite_order_p;
   mutable Functional_Equation_Info* functional_eq_p;
   mutable Non_Linear_Info* non_linear_p;
   mutable Infinite_Order_Info* infinite_order_p;
 
   //! Returns <CODE>type_</CODE>.
-  Type type() const;
+  const Type& type() const;
 
   //! Returns <CODE>type_</CODE>.
   Type& type();
@@ -892,16 +914,16 @@ private:
   mutable Cached_Expr upper_bound_;
 
   //! \brief
-  //! If \p tested_exact_solution is true then the system have already
-  //! try to compute the exact solution.
-  bool tested_exact_solution;
+  //! If \p tried_to_compute_exact_solution is true then the system has already
+  //! tried_to_compute the exact solution.
+  mutable bool tried_to_compute_exact_solution;
 
   mutable Blackboard blackboard;
 
   std::map<unsigned int, Expr> initial_conditions;
 
 private:
-  static Solver_Status
+  static Classifier_Status
   compute_order(const Number& decrement, index_type& order,
 		unsigned long& index, unsigned long max_size);
   static Expr

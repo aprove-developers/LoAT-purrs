@@ -1,3 +1,4 @@
+
 /* Recurrence class implementation: inline functions.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
@@ -36,40 +37,41 @@ namespace Parma_Recurrence_Relation_Solver {
 
 inline
 Recurrence::Recurrence()
-  : recurrence_rhs(0),
+  : classifier_status_(CLASSIFICATION_OK),
+    recurrence_rhs(0),
     recurrence_rewritten(false),
     inhomogeneous_term(0),
     type_(ORDER_ZERO),
-    is_classified(false),
     finite_order_p(0),
     functional_eq_p(0),
     non_linear_p(0),
     infinite_order_p(0),
-    tested_exact_solution(false) {
+    tried_to_compute_exact_solution(false) {
 }
 
 inline
 Recurrence::Recurrence(const Expr& e)
-  : recurrence_rhs(e),
+  : classifier_status_(NOT_CLASSIFIED_YET),
+    recurrence_rhs(e),
     recurrence_rewritten(false),
     inhomogeneous_term(0),
+    // Not meaningful because the recurrence is not yet classified.
     type_(ORDER_ZERO),
-    is_classified(false),
     finite_order_p(0),
     functional_eq_p(0),
     non_linear_p(0),
     infinite_order_p(0),
-    tested_exact_solution(false) {
+    tried_to_compute_exact_solution(false) {
 }
 
 inline
 Recurrence::Recurrence(const Recurrence& y)
-  : recurrence_rhs(y.recurrence_rhs),
+  : classifier_status_(y.classifier_status_),
+    recurrence_rhs(y.recurrence_rhs),
     recurrence_rewritten(y.recurrence_rewritten),
     inhomogeneous_term(y.inhomogeneous_term),
     system_rhs(y.system_rhs),
     type_(y.type_),
-    is_classified(y.is_classified),
     finite_order_p(y.finite_order_p),
     functional_eq_p(y.functional_eq_p),    
     non_linear_p(y.non_linear_p),
@@ -77,19 +79,19 @@ Recurrence::Recurrence(const Recurrence& y)
     exact_solution_(y.exact_solution_),
     lower_bound_(y.lower_bound_),
     upper_bound_(y.upper_bound_),
-    tested_exact_solution(y.tested_exact_solution),
+    tried_to_compute_exact_solution(y.tried_to_compute_exact_solution),
     blackboard(y.blackboard),
     initial_conditions(y.initial_conditions) {
 }
 
 inline Recurrence&
 Recurrence::operator=(const Recurrence& y) {
+  classifier_status_ = y.classifier_status_;
   recurrence_rhs = y.recurrence_rhs;
   recurrence_rewritten = y.recurrence_rewritten;
   inhomogeneous_term = y.inhomogeneous_term;
   system_rhs = y.system_rhs;
   type_ = y.type_;
-  is_classified = y.is_classified;
   finite_order_p = y.finite_order_p;
   functional_eq_p = y.functional_eq_p;
   non_linear_p = y.non_linear_p;
@@ -97,7 +99,7 @@ Recurrence::operator=(const Recurrence& y) {
   exact_solution_ = y.exact_solution_;
   lower_bound_ = y.lower_bound_;
   upper_bound_ = y.upper_bound_;
-  tested_exact_solution = y.tested_exact_solution;
+  tried_to_compute_exact_solution = y.tried_to_compute_exact_solution;
   blackboard = y.blackboard;
   initial_conditions = y.initial_conditions;
   return *this;
@@ -161,53 +163,67 @@ Recurrence::set_inhomogeneous_term(const Expr& e) const {
   inhomogeneous_term = e;
 }
 
-inline Recurrence::Type
+inline const Recurrence::Type&
 Recurrence::type() const {
+  assert(classifier_status_ != NOT_CLASSIFIED_YET);
   return type_;
 }
 
 inline Recurrence::Type&
 Recurrence::type() {
+  assert(classifier_status_ != NOT_CLASSIFIED_YET);
   return type_;
 }
 
 inline void
 Recurrence::set_type(const Type& t) const {
   type_ = t;
+  classifier_status_ = CLASSIFICATION_OK;
 }
 
 inline bool
 Recurrence::is_order_zero() const {
+  // In this case we do not put the following assertion 
+  // `assert(classifier_status_ != NOT_CLASSIFIED_YET)'
+  // because the constructor `Recurrence(const Expr& e)'
+  // set `type_ = ORDER_ZERO' even if the recurrence
+  // is not yet classified. 
   return type_ == ORDER_ZERO; 
 }
 
 inline void
 Recurrence::set_order_zero() const {
   type_ = ORDER_ZERO; 
+  classifier_status_ = CLASSIFICATION_OK;
 }
 
 inline bool
 Recurrence::is_linear_finite_order_const_coeff() const {
+  assert(classifier_status_ != NOT_CLASSIFIED_YET);
   return type_ == LINEAR_FINITE_ORDER_CONST_COEFF;
 }
 
 inline void
 Recurrence::set_linear_finite_order_const_coeff() const {
   type_ = LINEAR_FINITE_ORDER_CONST_COEFF;
+  classifier_status_ = CLASSIFICATION_OK;
 }
 
 inline bool
 Recurrence::is_linear_finite_order_var_coeff() const {
+  assert(classifier_status_ != NOT_CLASSIFIED_YET);
   return type_ == LINEAR_FINITE_ORDER_VAR_COEFF;
 }
 
 inline void
 Recurrence::set_linear_finite_order_var_coeff() const {
   type_ = LINEAR_FINITE_ORDER_VAR_COEFF;
+  classifier_status_ = CLASSIFICATION_OK;
 }
 
 inline bool
 Recurrence::is_linear_finite_order() const {
+  assert(classifier_status_ != NOT_CLASSIFIED_YET);
   return (type_ == ORDER_ZERO
 	  || type_ == LINEAR_FINITE_ORDER_CONST_COEFF
 	  || type_ == LINEAR_FINITE_ORDER_VAR_COEFF);
@@ -215,32 +231,38 @@ Recurrence::is_linear_finite_order() const {
 
 inline bool
 Recurrence::is_non_linear_finite_order() const {
+  assert(classifier_status_ != NOT_CLASSIFIED_YET);
   return type_ == NON_LINEAR_FINITE_ORDER;
 }
 
 inline void
 Recurrence::set_non_linear_finite_order() const {
   type_ = NON_LINEAR_FINITE_ORDER;
+  classifier_status_ = CLASSIFICATION_OK;
 }
 
 inline bool
 Recurrence::is_functional_equation() const {
+  assert(classifier_status_ != NOT_CLASSIFIED_YET);
   return type_ == FUNCTIONAL_EQUATION;
 }
 
 inline void
 Recurrence::set_functional_equation() const {
   type_ = FUNCTIONAL_EQUATION;
+  classifier_status_ = CLASSIFICATION_OK;
 }
 
 inline bool
 Recurrence::is_linear_infinite_order() const {
+  assert(classifier_status_ != NOT_CLASSIFIED_YET);
   return type_ == LINEAR_INFINITE_ORDER;
 }
 
 inline void
 Recurrence::set_linear_infinite_order() const {
   type_ = LINEAR_INFINITE_ORDER;
+  classifier_status_ = CLASSIFICATION_OK;
 }
 
 inline index_type

@@ -282,17 +282,28 @@ main() try {
 	= recurrence.substitute_auxiliary_definitions(exact_solution);
       goto done;
       break;
-    case Recurrence::UNSOLVABLE_RECURRENCE:
-      error("this recurrence is unsolvable");
-      break;
-    case Recurrence::INDETERMINATE_RECURRENCE:
-      error("this recurrence has infinitely many solutions");
-      break;
-    case Recurrence::MALFORMED_RECURRENCE:
-      error("this recurrence is malformed");
-      break;
-    case Recurrence::HAS_NON_INTEGER_DECREMENT:
-    case Recurrence::HAS_HUGE_DECREMENT:
+
+    case Recurrence::CLASSIFICATION_FAIL:
+      switch (recurrence.classifier_status_) {
+      case Recurrence::UNSOLVABLE_RECURRENCE:
+	error("this recurrence is unsolvable");
+	break;
+
+      case Recurrence::INDETERMINATE_RECURRENCE:
+	error("this recurrence has infinitely many solutions");
+	break;
+
+      case Recurrence::MALFORMED_RECURRENCE:
+	error("this recurrence is malformed");
+	break;
+
+      case Recurrence::HAS_NON_INTEGER_DECREMENT:
+      case Recurrence::HAS_HUGE_DECREMENT:
+      case Recurrence::CLASSIFICATION_COMPLEX:
+      default:
+	;
+      }
+      
     case Recurrence::TOO_COMPLEX:
     default:
       ;
@@ -308,17 +319,28 @@ main() try {
       have_lower_bound = true;
       recurrence.lower_bound(lower_bound);
       break;
-    case Recurrence::UNSOLVABLE_RECURRENCE:
-      error("this recurrence is unsolvable");
-      break;
-    case Recurrence::INDETERMINATE_RECURRENCE:
-      error("this recurrence has infinitely many solutions");
-      break;
-    case Recurrence::MALFORMED_RECURRENCE:
-      error("this recurrence is malformed");
-      break;
-    case Recurrence::HAS_NON_INTEGER_DECREMENT:
-    case Recurrence::HAS_HUGE_DECREMENT:
+
+    case Recurrence::CLASSIFICATION_FAIL:
+      switch (recurrence.classifier_status_) {
+      case Recurrence::UNSOLVABLE_RECURRENCE:
+	error("this recurrence is unsolvable");
+	break;
+	
+      case Recurrence::INDETERMINATE_RECURRENCE:
+	error("this recurrence has infinitely many solutions");
+	break;
+
+      case Recurrence::MALFORMED_RECURRENCE:
+	error("this recurrence is malformed");
+	break;
+
+      case Recurrence::HAS_NON_INTEGER_DECREMENT:
+      case Recurrence::HAS_HUGE_DECREMENT:
+      case Recurrence::CLASSIFICATION_COMPLEX:
+      default:
+	;
+      }
+      
     case Recurrence::TOO_COMPLEX:
     default:
       ;
@@ -334,17 +356,28 @@ main() try {
       have_upper_bound = true;
       recurrence.upper_bound(upper_bound);
       break;
-    case Recurrence::UNSOLVABLE_RECURRENCE:
-      error("this recurrence is unsolvable");
-      break;
-    case Recurrence::INDETERMINATE_RECURRENCE:
-      error("this recurrence has infinitely many solutions");
-      break;
-    case Recurrence::MALFORMED_RECURRENCE:
-      error("this recurrence is malformed");
-      break;
-    case Recurrence::HAS_NON_INTEGER_DECREMENT:
-    case Recurrence::HAS_HUGE_DECREMENT:
+
+    case Recurrence::CLASSIFICATION_FAIL:
+      switch (recurrence.classifier_status_) {
+      case Recurrence::UNSOLVABLE_RECURRENCE:
+	error("this recurrence is unsolvable");
+	break;
+
+      case Recurrence::INDETERMINATE_RECURRENCE:
+	error("this recurrence has infinitely many solutions");
+	break;
+
+      case Recurrence::MALFORMED_RECURRENCE:
+	error("this recurrence is malformed");
+	break;
+
+      case Recurrence::HAS_NON_INTEGER_DECREMENT:
+      case Recurrence::HAS_HUGE_DECREMENT:
+      case Recurrence::CLASSIFICATION_COMPLEX:
+      default:
+	;
+      }
+      
     case Recurrence::TOO_COMPLEX:
     default:
       ;
