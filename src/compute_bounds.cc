@@ -405,7 +405,8 @@ sharper_bounds_for_no_polynomial_function(bool lower,
 	   && no_poly_coeff.arg(1).is_a_number(k)
 	   && k.is_positive()) {
     Expr tmp_bound;
-    compute_bounds_for_power_of_n(lower, coeff, divisor, k, tmp_bound);
+    if (!compute_bounds_for_power_of_n(lower, coeff, divisor, k, tmp_bound))
+      return false;
     bound += tmp_bound;
     return true;
   }
@@ -440,13 +441,17 @@ sharper_bounds_for_no_polynomial_function(bool lower,
       assert(!log_part.is_zero());
       // `a' positive number.
       Expr tmp_bound;
-      if (cmp == 1)
-	compute_bounds_for_logarithm_function(lower, coeff, divisor,
-					      tmp_bound);
+      if (cmp == 1) {
+	if (!compute_bounds_for_logarithm_function(lower, coeff, divisor,
+						   tmp_bound))
+	  return false;
+      }
       // `a' negative number -> swap lower with upper or upper with lower.
-      else if (cmp == -1)
-	compute_bounds_for_logarithm_function(!lower, coeff, divisor,
-					      tmp_bound);
+      else if (cmp == -1) {
+	if (!compute_bounds_for_logarithm_function(!lower, coeff, divisor,
+						   tmp_bound))
+	  return false;
+      }
       else
 	return false;
       bound += factor * tmp_bound;
@@ -456,11 +461,17 @@ sharper_bounds_for_no_polynomial_function(bool lower,
       assert(k != 0);
       Expr tmp_bound;
       // `a' positive number.
-      if (cmp == 1)
-	compute_bounds_for_power_of_n(lower, coeff, divisor, k, tmp_bound);
+      if (cmp == 1) {
+	if (!compute_bounds_for_power_of_n(lower, coeff, divisor, k,
+					   tmp_bound))
+	  return false;
+      }
       // `a' negative number -> swap lower with upper or upper with lower.
-      else if (cmp == -1)
-	compute_bounds_for_power_of_n(!lower, coeff, divisor, k, tmp_bound);
+      else if (cmp == -1) {
+	if (!compute_bounds_for_power_of_n(!lower, coeff, divisor, k,
+					   tmp_bound))
+	  return false;
+      }
       else
 	return false;
       bound += factor * tmp_bound;
@@ -470,15 +481,19 @@ sharper_bounds_for_no_polynomial_function(bool lower,
       assert(k != 0 && !log_part.is_zero());
       Expr tmp_bound;
       // `a' positive number.
-      if (cmp == 1)
-	compute_bounds_for_power_times_logarithm_function(lower, coeff,
-							  divisor, k,
-							  tmp_bound);
+      if (cmp == 1) {
+	if (!compute_bounds_for_power_times_logarithm_function(lower, coeff,
+							       divisor, k,
+							       tmp_bound))
+	  return false;
+      }
       // `a' negative number -> swap lower with upper or upper with lower.
-      else if (cmp == -1)
-	compute_bounds_for_power_times_logarithm_function(!lower, coeff,
-							  divisor, k,
-							  tmp_bound);
+      else if (cmp == -1) {
+	if (!compute_bounds_for_power_times_logarithm_function(!lower, coeff,
+							       divisor, k,
+							       tmp_bound))
+	  return false;
+      }
       else
 	return false;
       bound += factor * tmp_bound;
