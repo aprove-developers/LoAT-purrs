@@ -421,6 +421,8 @@ public:
   //! <CODE>acos()</CODE>.
   bool is_the_acos_function() const;
 
+  bool is_the_x_function() const;
+
   //! Returns the numeric value of \p *this.
   Number ex_to_number() const;
 

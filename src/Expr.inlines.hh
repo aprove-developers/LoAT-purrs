@@ -591,6 +591,11 @@ Expr::is_the_acos_function() const {
   return is_ex_the_function(*this, acos);
 }
 
+inline bool
+Expr::is_the_x_function() const {
+  return is_ex_the_function(*this, x);
+}
+
 inline void
 Expr::latex_print(std::ostream& s) {
   print(GiNaC::print_latex(s));
