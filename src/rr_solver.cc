@@ -32,6 +32,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "simplify.hh"
 #include "alg_eq_solver.hh"
 #include <climits>
+#include <algorithm>
 
 // TEMPORARY
 #include <iostream>
@@ -159,7 +160,7 @@ return_sum(const bool distinct, const GSymbol& n, const int order,
   and \p alpha the generic base of an exponential.
 
   This function fills the two vectors of <CODE>GExpr</CODE>
-  \p symbolic_sum_distinct and \p symbolic_sum_no_distinct
+  \p symbolic_sum_distinct and \p symbolic_sum_no_distinct,
   with two different sums:
   fixed tha base \p alpha_i, for each root \p lambda 
   - if \f$ \alpha_i \neq \lambda \f$ then
@@ -182,32 +183,43 @@ static void
 compute_symbolic_sum(const int order, const GSymbol& n,
 		     const GSymbol& alpha, const GSymbol& lambda,
 		     const std::vector<Polynomial_Root>& roots,
-		     std::vector<GExpr>& base_of_exps,
-		     std::vector<GExpr>& exp_poly_coeff,
+		     const std::vector<GExpr>& base_of_exps,
+		     const std::vector<GExpr>& exp_poly_coeff,
 		     std::vector<GExpr>& symbolic_sum_distinct,
 		     std::vector<GExpr>& symbolic_sum_no_distinct) {
-  for (unsigned i = base_of_exps.size(); i-- > 0; ) {
-    bool distinct = true;
+  unsigned r = 0;
+  for (unsigned i = base_of_exps.size(); i-- > 0; )
     for (unsigned j = roots.size(); j-- > 0; ) {
+      bool distinct = true;
       if (roots[j].value().is_equal(base_of_exps[i]))
 	distinct = false;
       
       // The root is different from the exponential's base.
       if (distinct) {
-	symbolic_sum_distinct.push_back(return_sum(true, n, order,
-						   exp_poly_coeff[i],
-						   alpha, lambda));
+	if (order <= 2)
+	  symbolic_sum_distinct.push_back(return_sum(true, n, order,
+						     exp_poly_coeff[i],
+						     alpha, lambda));
+	else
+	  symbolic_sum_distinct.push_back(return_sum(true, n, order,
+						     exp_poly_coeff[r],
+						     alpha, lambda));
 	symbolic_sum_no_distinct.push_back(0);
       }
       // The root is equal to the exponential's base.
       else {
-	symbolic_sum_no_distinct.push_back(return_sum(false, n, order,
-						      exp_poly_coeff[i],
-						      alpha, lambda));
+	if (order <= 2)
+	  symbolic_sum_no_distinct.push_back(return_sum(false, n, order,
+							exp_poly_coeff[i],
+							alpha, lambda));
+	else
+	  symbolic_sum_no_distinct.push_back(return_sum(false, n, order,
+							exp_poly_coeff[r],
+							alpha, lambda));
 	symbolic_sum_distinct.push_back(0);
       }
+      ++r;
     }
-  }
 }
 
 /*!
@@ -222,32 +234,34 @@ compute_symbolic_sum(const int order, const GSymbol& n,
   Returns a <CODE>GExpr</CODE> \p solution with the sum of all sums of the
   vectors.
  */
-static void
-subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
+static GExpr
+subs_to_sum_roots_and_bases(const int order,
+			    const GSymbol& alpha, const GSymbol& lambda,
 			    const std::vector<Polynomial_Root>& roots,
-			    std::vector<GExpr>& base_of_exps,
+			    const std::vector<GExpr>& base_of_exps,
 			    std::vector<GExpr>& symbolic_sum_distinct,
-			    std::vector<GExpr>& symbolic_sum_no_distinct,
-			    GExpr& solution) {
-  solution = 0;
-  unsigned ind = 0;
+			    std::vector<GExpr>& symbolic_sum_no_distinct) {
+  GExpr solution = 0;
+  unsigned r = 0;
   for (unsigned i = base_of_exps.size(); i-- > 0; )
     for (unsigned j = roots.size(); j-- > 0; ) {
       GExpr base_exp = base_of_exps[i];
       GExpr tmp;
       if (!base_exp.is_equal(roots[j].value()))
-	tmp = 
-	  symbolic_sum_distinct[ind].subs(lst(alpha == base_exp,
-					      lambda == roots[j].value()));
+	tmp = symbolic_sum_distinct[r].subs(lst(alpha == base_exp,
+						lambda == roots[j].value()));
       else
-	tmp = 
-	  symbolic_sum_no_distinct[ind].subs(lst(alpha == base_exp,
-						 lambda == roots[j].value()));
-      solution += tmp * pow(-1, j);
-      ++ind;
+	tmp =
+	  symbolic_sum_no_distinct[r].subs(lst(alpha == base_exp,
+					       lambda == roots[j].value()));
+      if (order == 2)
+      	solution += tmp * pow(-1, j);
+      else
+	solution += tmp;
+      ++r;
     }
+  return solution;
 }
-
 
 static void
 exp_poly_decomposition(const GExpr& e, const GSymbol& n,
@@ -262,16 +276,17 @@ add_initial_conditions(const GExpr& g_n, const GSymbol& n,
 		       GExpr& solution);
 
 static GExpr
-order_2_sol_roots_no_distinct(const GSymbol& n, GExpr& g_n,
-			      const std::vector<GExpr>& base_of_exps,
-			      const std::vector<GExpr>& exp_poly_coeff,
-			      const std::vector<GExpr>& initial_conditions,
-			      const std::vector<GNumber>& coefficients,
-			      const std::vector<Polynomial_Root>& roots);
+solve_order_2(const GSymbol& n, GExpr& g_n, const int order,
+              const bool all_distinct, const GSymbol& alpha,
+	      const GSymbol& lambda, const std::vector<GExpr>& base_of_exps,
+	      const std::vector<GExpr>& exp_poly_coeff,
+	      const std::vector<GNumber>& coefficients,
+	      const std::vector<Polynomial_Root>& roots);
 
 static GExpr
 solve_linear_constant_coeff(const GSymbol& n, GExpr& g_n,
 			    const int order, const bool all_distinct,
+			    const GSymbol& alpha, const GSymbol& lambda,
 			    const std::vector<GExpr>& base_of_exps,
 			    const std::vector<GExpr>& exp_poly_coeff,
 			    const std::vector<GNumber>& coefficients,
@@ -479,25 +494,12 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       return false;
   }
 
-
   D_VAR(characteristic_eq);
   D_VEC(roots, 0, roots.size()-1);
   D_MSG("");
 
-
   GSymbol alpha("alpha");
   GSymbol lambda("lambda");
-  std::vector<GExpr> symbolic_sum_distinct;
-  std::vector<GExpr> symbolic_sum_no_distinct;
-
-  if (all_distinct) {
-    // Fills the two vector 'symbolic_sum_distinct' and
-    // 'symbolic_sum_no_distinct' with two different symbolic sum
-    // in according to the roots are equal or not to the exponential's bases.
-    compute_symbolic_sum(order, n, alpha, lambda, roots,
-			 base_of_exps, exp_poly_coeff,
-			 symbolic_sum_distinct, symbolic_sum_no_distinct);
-  }
   GExpr g_n;
   switch (order) {
   case 1:
@@ -506,14 +508,20 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       // the inhomogeneous term is a polynomial or the product of a
       // polynomial and an exponential.
       if (check_poly_times_exponential(exp_no_poly_coeff)) {
+	std::vector<GExpr> symbolic_sum_distinct;
+	std::vector<GExpr> symbolic_sum_no_distinct;
+	compute_symbolic_sum(order, n, alpha, lambda, roots,
+			     base_of_exps, exp_poly_coeff,
+			     symbolic_sum_distinct, symbolic_sum_no_distinct);
 	// Substitutes to the sums in the vectors 'symbolic_sum_distinct' or
 	// 'symbolic_sum_no_distinct' the corresponding values of the
 	// characteristic equation's roots and of the bases of the eventual
 	// exponentials and in 'solution' put the sum of all sums of the
 	// vectors after the substitution.
-	subs_to_sum_roots_and_bases(alpha, lambda, roots, base_of_exps,
-				    symbolic_sum_distinct,
-				    symbolic_sum_no_distinct, solution);
+	solution = subs_to_sum_roots_and_bases(order, alpha, lambda, roots,
+					       base_of_exps,
+					       symbolic_sum_distinct,
+					       symbolic_sum_no_distinct);
 	// FIXME: per ora non si puo' usare la funzione
 	// 'add_initial_conditions' perche' richiede un vettore di
 	// 'GNumber' come 'coefficients' e voglio risolvere anche le
@@ -528,72 +536,43 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	       "Please come back tomorrow.");
       break;
     }
-  case 2:
-    {
-      // There are two roots with multiplicity equal to 1.
-      if (all_distinct)
-	// Calculates the solution of the second order recurrences when
-	// the inhomogeneous term is a polynomial or the product of a
-	// polynomial and an exponential.
-	if (check_poly_times_exponential(exp_no_poly_coeff)) {
-	  GExpr root_1 = roots[0].value();
-	  GExpr root_2 = roots[1].value();
-	  GExpr diff_roots = root_1 - root_2;
-	  for (unsigned j = symbolic_sum_distinct.size(); j-- > 0; ) {
-	    symbolic_sum_no_distinct[j] *= lambda / diff_roots;
-	    symbolic_sum_distinct[j] *= lambda / diff_roots;
-	  }
-	  // Substitutes to the sums in the vector 'symbolic_sum_distinct'
-	  // or 'symbolic_sum_no_distinct' the corresponding values of the
-	  // characteristic equation's roots and of the bases of the
-	  // eventual exponentials and in 'solution' put the sum of all
-	  // sums of the vector after the substitution.
-	  subs_to_sum_roots_and_bases(alpha, lambda, roots, base_of_exps,
-				      symbolic_sum_distinct,
-				      symbolic_sum_no_distinct, solution);
-	  g_n = (pow(root_1, n+1) - pow(root_2, n+1)) / diff_roots;
-	  // FIXME: forse conviene semplificare g_n
-	  D_VAR(g_n);
-	}
-	else 
-	  throw ("PURRS error: today we only allow inhomogeneous terms\n"
-		 "in the form of polynomials or product of exponentials\n"
-		 "and polynomials.\n"
-		 "Please come back tomorrow.");
-      else {
-	// The characteristic equation
-	// x^2 + a_1 * x + a_2 = 0 has a double root.
-	assert(roots[0].multiplicity() == 2);      
-	solution = order_2_sol_roots_no_distinct(n, g_n, base_of_exps,
-						 exp_poly_coeff,
-						 initial_conditions,
-						 num_coefficients, roots);
-      }
-      break;
-    }
+   case 2:
+     {
+       // Calculates the solution of the second order recurrences when
+       // the inhomogeneous term is a polynomial or the product of a
+       // polynomial and an exponential.
+       if (check_poly_times_exponential(exp_no_poly_coeff))
+	 solution = solve_order_2(n, g_n, order, all_distinct, alpha, lambda,
+				  base_of_exps, exp_poly_coeff,
+				  num_coefficients, roots);
+       else 
+	 throw ("PURRS error: today we only allow inhomogeneous terms\n"
+		"in the form of polynomials or product of exponentials\n"
+		"and polynomials.\n"
+		"Please come back tomorrow.");
+       break;
+     }
   default:
-      // Calculates the solution of linear recurrence relations with
-      // constant coefficients (of order grater than two) when
-      // the inhomogeneous term is a polynomial or the product of a
-      // polynomial and an exponential.
-      if (check_poly_times_exponential(exp_no_poly_coeff)) {
-	solution = solve_linear_constant_coeff(n, g_n, order, all_distinct,
-					       base_of_exps, exp_poly_coeff,
-					       num_coefficients, roots);
-	D_VAR(solution);
-      }
-      else
-	throw ("PURRS error: today we only allow inhomogeneous terms\n"
-	       "in the form of polynomials or product of exponentials\n"
-	       "and polynomials.\n"
-	       "Please come back tomorrow.");
-      break;
+    // Calculates the solution of the recurrences when
+    // the inhomogeneous term is a polynomial or the product of a
+    // polynomial and an exponential.
+    if (check_poly_times_exponential(exp_no_poly_coeff))
+      solution = solve_linear_constant_coeff(n, g_n, order, all_distinct,
+					     alpha, lambda, base_of_exps,
+					     exp_poly_coeff, num_coefficients,
+					     roots);
+    else
+      throw ("PURRS error: today we only allow inhomogeneous terms\n"
+	     "in the form of polynomials or product of exponentials\n"
+	     "and polynomials.\n"
+	     "Please come back tomorrow.");
+    break;
   }
   
-  if (order > 2 || (order == 2 && all_distinct))
+  if (order > 1)
     add_initial_conditions(g_n, n, num_coefficients, initial_conditions,
 			   solution);
-
+  
   D_MSGVAR("Before calling simplify: ", solution);  
   solution = simplify_on_output_ex(solution.expand(), n, false);
 
@@ -609,88 +588,6 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   
   return true;
   }
-
-/*
-  GExpr p, q;
-  GList(lst_of_exp);
-  p = e;
-  GExpr pattern = pow(wild(), n);
-  p.find(pattern, lst_of_exp);
-  // 'lst_of_exp' contains all exponentials.
-  p = p.collect(lst_of_exp);
-
-  if (lst_of_exp.nops() == 0) {
-    // In this case there are not any exponentials.
-    GExpr p_poly; 
-    GExpr p_no_poly;
-    // In 'p' there are not nested powers.
-    assign_polynomial_part(p, n, p_poly, p_no_poly);
-    return GMatrix (3, 1, lst(1, p_poly, p_no_poly));
-  }
-  else {
-    // In this case there is at least one exponential in 'p'.
-    // 'row_exp' will contains all exponentials; 'row_coeff_poly' and
-    // 'row_coeff_no_poly' will contain polynomial part and non
-    // polynomial part of exponential's coefficients, rispectively.
-    GList row_exp;
-    GList row_coeff_poly;
-    GList row_coeff_no_poly;
-    q = p;
-    for (size_t i = lst_of_exp.nops(); i-- > 0; ) {
-      GList addendum;
-      // 'addendum' has always only one element because we have collected
-      // 'p' with respect to the exponentials.
-      p.find(lst_of_exp.op(i) * wild(), addendum);
-      row_exp.append(lst_of_exp.op(i));
-      if (addendum.nops() != 0) {
-	// The exponential's coefficient is not 1.
-	GExpr coeff = addendum.op(0);
-	coeff = coeff.subs(wild(1)*pow(wild(2), n) == wild(1));
-	GExpr coeff_poly;
-	GExpr coeff_no_poly;
-	// In 'coeff' there are not nested powers.
-	assign_polynomial_part(coeff, n, coeff_poly, coeff_no_poly);
-	row_coeff_poly.append(coeff_poly);
-	row_coeff_no_poly.append(coeff_no_poly);
-	q -= addendum.op(0);
-      }
-      else {
-	// The exponential's coefficient is 1.
-	row_coeff_poly.append(1);
-	row_coeff_no_poly.append(0);
-	q -= lst_of_exp.op(i);
-      }
-    }
-    // Now 'q' does not contains any exponentials or product of exponential 
-    // times other expressions.
-    unsigned int num_columns;
-    if (!q.is_zero()) {
-      row_exp.append(1);
-      GExpr q_poly;
-      GExpr q_no_poly;
-      assign_polynomial_part(q, n, q_poly, q_no_poly);
-      row_coeff_poly.append(q_poly);
-      row_coeff_no_poly.append(q_no_poly);
-
-      num_columns = lst_of_exp.nops() + 1;
-    }
-    else
-      num_columns = lst_of_exp.nops();
- 
-    // The next 'for' is necessary for to use the constructor matrices
-    //      matrix::matrix(unsigned r, unsigned c, const lst& l);
-    unsigned row_coeff_poly_nops = row_coeff_poly.nops();
-    for (size_t i = 0; i < row_coeff_poly_nops; ++i)
-      row_exp.append(row_coeff_poly.op(i));
-    for (size_t i = 0; i < row_coeff_poly_nops; ++i)
-      row_exp.append(row_coeff_no_poly.op(i));
-    
-    GMatrix terms_divided(3, num_columns, row_exp);
-    
-    return terms_divided;
-  }
-}
-*/
 
 static void
 exp_poly_decomposition_factor(const GExpr& base,
@@ -853,7 +750,7 @@ exp_poly_decomposition(const GExpr& e, const GSymbol& n,
 // parametri.
 static void
 add_initial_conditions(const GExpr& g_n, const GSymbol& n,
-		       const std::vector<GNumber>& coefficients,
+                       const std::vector<GNumber>& coefficients,
 		       const std::vector<GExpr>& initial_conditions,
 		       GExpr& solution) {
   // 'coefficients.size()' has 'order + 1' elements because in the first
@@ -867,112 +764,20 @@ add_initial_conditions(const GExpr& g_n, const GSymbol& n,
   }
 }
 
-static GExpr
-order_2_sol_roots_no_distinct(const GSymbol& n, GExpr& g_n,
-			      const std::vector<GExpr>& base_of_exps,
-			      const std::vector<GExpr>& exp_poly_coeff,
-			      const std::vector<GExpr>& initial_conditions,
-			      const std::vector<GNumber>& coefficients,
-			      const std::vector<Polynomial_Root>& roots) {
-  GExpr solution_tot;
-
-  unsigned num_exponentials = base_of_exps.size();
-
-  GSymbol a("a"), b("b");
-  GExpr root = roots[0].value();
-
-  D_VAR(root);
-
-  if (num_exponentials == 0) {
-    // The binary recurrence is homogeneous.
-    // The solution of the homogeneous recurrence is of the form
-    // x_n = (a + b * n) \lambda^n where
-    // \lambda is the root with multiplicity 2.
-    // In this case we must solve a linear system:
-    //             a = x(0)
-    //             (a + b) * \lambda = x(1).
-    solution_tot = (a + b * n) * pow(root, n);
-    // Solved the system with the inverse matrix'method.
-    GMatrix vars(2, 2, lst(1, 0, root, root));
-    GMatrix rhs(2, 1, lst(initial_conditions[0], initial_conditions[1]));
-    GMatrix sol(2, 1);
-    sol = vars.inverse();
-    sol = sol.mul(rhs);
-    
-    solution_tot = solution_tot.subs(lst(a == sol(0,0), b == sol(1,0)));
-  }
-  else {
-    // The binary recurrence is non-homogeneous.
-    // We set
-    // g(n) = \alpha * g(n-1) + \beta * g(n-2)
-    // with g_0 = 1 and g_1 = \alpha as initials conditions for the
-    // fundamental solution.
-    // g_n = (a + b * n) \lambda^n where
-    // \lambda is the root with multiplicity 2.
-    // In this case we must to solve a linear system:
-    //             a = 1
-    //             (a + b) * \lambda = \alpha.
-    g_n = (a + b * n) * pow(root, n);
-    // Solved the system with the inverse matrix method.
-    GMatrix vars(2, 2, lst(1, 0, root, root));
-    GMatrix rhs(2, 1, lst(1, coefficients[1]));
-    GMatrix sol(2, 1);
-    sol = vars.inverse();
-    sol = sol.mul(rhs);
-    g_n = g_n.subs(lst(a == sol(0,0), b == sol(1,0)));
-    GExpr g_n_1 = g_n.subs(n == n - 1);
-    GExpr g_n_2 = g_n.subs(n == n - 2);
-	
-    solution_tot = initial_conditions[1]*g_n_1 + 
-      initial_conditions[0]*g_n_2*coefficients[2];
-
-    for (unsigned i = 0; i < num_exponentials; ++i) {
-      GExpr solution = 0;
-      GExpr base_of_exp = base_of_exps[i];
-      GExpr coeff_of_exp = exp_poly_coeff[i];
-      GSymbol k("k");
-      GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
-      GExpr g_n_k = g_n.subs(n == n - k);
-      // In this case g_n_k always contains root^(n-k).
-      // We pass to the function 'sum_poly_exponentials' only
-      // (1/root)^k that it is multiplied for 'base_of_exp'.
-      // Hence we pass only the polynomial part of g_n with
-      // the substitution n == n - k.
-      GExpr poly_g_n = g_n.subs(wild(0) * power(wild(1), n) == wild(0));
-      poly_g_n = poly_g_n.subs(n == n - k);
-      solution = sum_poly_times_exponentials(coeff_of_exp_k * poly_g_n,
-					     k, n, base_of_exp *
-					     pow(root, -1));
-      // 'sum_poly_times_exponentials' calculates the sum from 0 while
-      // we want to start from 2.
-      solution -= (coeff_of_exp_k * poly_g_n).subs(k == 0) +
-	(coeff_of_exp_k * poly_g_n).subs(k == 1) * 
-	(1/root) * base_of_exp;
-      // We have passed to the function 'sum_poly_times_exponentials'
-      // only (1/root)^k then now we must multiply for (root)^n.
-      solution *= power(root, n);
-      solution = solution.expand();
-      solution_tot += solution;
-    }
-  }
-  return solution_tot;
-}
-
-static void
-prepare_system(const int order, const bool all_distinct,
-	       const std::vector<GNumber>& coefficients,
-	       const std::vector<Polynomial_Root>& roots,
-	       GList& g_i, GList& coeff_equations) {
+static GMatrix
+solve_system(const int order, const bool all_distinct,
+	     const std::vector<GNumber>& coefficients,
+	     const std::vector<Polynomial_Root>& roots) {
   // Prepares a list with the elments for the 'rhs' of the system
   // to will find the numbers 'alpha_i' (for i = 1,...,k where k is the
   // order of the recurrence).
   // The first element is g_0, then g_1, ..., g_k.
-  // Attenzione: nel caso bool distinct == false cambia! NON E' VERO!!!!
   std::vector<GExpr> tmp(order);
   tmp[0] = 1;
   for (int i = 1; i < order; ++i)
     for (int j = 0; j < i; ++j)
       tmp[i] += coefficients[j+1] * tmp[i-j-1];
+  GList g_i;
   for (int i = 0; i < order; ++i)
     g_i.append(tmp[i]);
   
@@ -984,6 +789,7 @@ prepare_system(const int order, const bool all_distinct,
   // 'g_n = \sum_{j=1}^r (\alpha_{j,0} + \alpha_{j,1}n
   //        + \cdots + \alpha_{j,\mu_j-1}n^{\mu_j-1}) \lambda_j^n'
   // if there are multiple roots.
+  GList coeff_equations;
   if (all_distinct)
     for (int i = 0; i < order; ++i)
       for (int j = 0; j < order; ++j)
@@ -995,18 +801,100 @@ prepare_system(const int order, const bool all_distinct,
 	  coeff_equations.append(pow(h, j) * pow(roots[i].value(), h));
 	coeff_equations.append(pow(roots[i].value(), h));
       }
+  GMatrix system(order, order, coeff_equations);
+  GMatrix rhs(order, 1, g_i);
 #if NOISY
   std::cout << "g_i: " << g_i << std::endl;
   std::cout << "equations: " << coeff_equations << std::endl;
+  std::cout << "system: " << system << std::endl;
+  std::cout << "rhs: " << rhs << std::endl;
 #endif
+  GMatrix vars(order, 1);
+  for (int i = 0; i < order; ++i)
+    vars(i, 0) = GSymbol();
+  // Solve system in order to finds 'alpha_i' (i = 1,...,order).
+  GMatrix sol = system.solve(vars, rhs);
+#if NOISY
+  std::cout << "alpha_i: " << sol << std::endl;
+#endif
+  return sol;
 }
 
 static GExpr
-compute_non_homogeneous_part_solution(const GSymbol& n, const GExpr& g_n,
-				      const int order,
-				      const std::vector<GExpr>& base_of_exps,
-				      const std::vector<GExpr>&
-				      exp_poly_coeff) {
+find_g_n(const GSymbol& n, const int order, const bool all_distinct,
+	 const GMatrix sol, const std::vector<Polynomial_Root>& roots) {
+  GExpr g_n = 0;
+  if (all_distinct)
+    for (int i = 0; i < order; ++i)
+      g_n += sol(i, 0) * pow(roots[i].value(), n);
+  else
+    for (unsigned i = roots.size(); i-- > 0; ) {
+      int h = 0;
+      for (GNumber j = roots[i].multiplicity(); j-- > 0 && h < order; ) {
+	g_n += sol(h, 0) * pow(n, j) * pow(roots[i].value(), n);
+	++h;
+      }
+    }
+  return g_n;
+}
+
+/*!
+  Given \f$ p(n) \f$ the non homogeneous part of the recurrence relation
+  \f$ p(n) = c_1 p_1^n + c_2 p_2^n + \dotsb + c_k p_k^n \f$ and
+  \f$ g(n) = d_1 g_1^n + d_2 g_2^n + \dotsb + d_k g_h^n \f$.
+  We consider the decompositions of both the previous sum:
+  \f[
+    bases_of_exp    -> p_1  p_2  \dots  p_k
+    exp_poly_coeff  -> c_1  c_2  \dots  c_k
+  \f]
+  and
+  \f[
+    bases_exp_g_n   -> g_1  g_2  \dots  g_h
+    g_n_poly_coeff  -> d_1  d_2  \dots  d_h.
+  \f]
+  We build the new vector \p poly_coeff_tot multiplting the elements
+  of \p exp_poly_coeff and \p g_n_poly_coeff, i. e. it will contain
+  \f$ c_1 d_1, c_1 d_2, \cdtos, c_1 d_h, c_2 d_1, \cdots, c_k d_h \f$. 
+*/
+static void
+prepare_for_symbolic_sum(const GSymbol& n, const GExpr& g_n,
+			 const std::vector<Polynomial_Root>& roots,
+			 const std::vector<GExpr>& exp_poly_coeff,
+			 std::vector<GExpr>& poly_coeff_tot) {
+  std::vector<GExpr> bases_exp_g_n;
+  std::vector<GExpr> g_n_poly_coeff;
+  std::vector<GExpr> g_n_no_poly_coeff;
+  exp_poly_decomposition(g_n, n, bases_exp_g_n,
+			 g_n_poly_coeff, g_n_no_poly_coeff);
+#if NOISY
+  D_VEC(bases_exp_g_n, 0, bases_exp_g_n.size()-1);
+  D_VEC(g_n_poly_coeff, 0, g_n_poly_coeff.size()-1);
+  D_VEC(g_n_no_poly_coeff, 0, g_n_no_poly_coeff.size()-1);
+#endif
+  // Devo controllare che bases_exp_g_n abbia stesso ordine rispetto
+  // a roots e, se non e' cosi', fare in modo che lo sia.
+  bool equal = true;
+  for (unsigned i = roots.size(); i-- > 0; )
+    // FIXME: basta questo controllo? Non puo' essere che le roots
+    // siano tutte uguali ed i coefficienti no?
+    if (!roots[i].value().is_equal(bases_exp_g_n[i]))
+      equal = false;
+  if (!equal) {
+    reverse(bases_exp_g_n.begin(),bases_exp_g_n.end());
+    reverse(g_n_poly_coeff.begin(),g_n_poly_coeff.end());
+    reverse(g_n_no_poly_coeff.begin(),g_n_no_poly_coeff.end());
+  }
+  // The roots are simple, i. e., their multiplicity is 1.
+  for (unsigned i = exp_poly_coeff.size(); i-- > 0; )
+    for (unsigned j = g_n_poly_coeff.size(); j-- > 0; )
+      poly_coeff_tot.push_back(exp_poly_coeff[i] * g_n_poly_coeff[j]);
+}
+
+static GExpr
+compute_non_homogeneous_part(const GSymbol& n, const GExpr& g_n,
+			     const int order,
+			     const std::vector<GExpr>& base_of_exps,
+			     const std::vector<GExpr>& exp_poly_coeff) {
   GExpr solution_tot = 0;
   std::vector<GExpr> bases_exp_g_n;
   std::vector<GExpr> g_n_poly_coeff;
@@ -1038,6 +926,58 @@ compute_non_homogeneous_part_solution(const GSymbol& n, const GExpr& g_n,
     }
   return solution_tot;
 }
+
+static GExpr
+solve_order_2(const GSymbol& n, GExpr& g_n, const int order,
+              const bool all_distinct, const GSymbol& alpha,
+	      const GSymbol& lambda, const std::vector<GExpr>& base_of_exps,
+	      const std::vector<GExpr>& exp_poly_coeff,
+	      const std::vector<GNumber>& coefficients,
+	      const std::vector<Polynomial_Root>& roots) {
+  GExpr solution;
+  if (all_distinct) {
+    GExpr root_1 = roots[0].value();
+    GExpr root_2 = roots[1].value();
+    GExpr diff_roots = root_1 - root_2;
+    std::vector<GExpr> symbolic_sum_distinct;
+    std::vector<GExpr> symbolic_sum_no_distinct;
+    compute_symbolic_sum(order, n, alpha, lambda, roots, base_of_exps,
+			 exp_poly_coeff, symbolic_sum_distinct,
+			 symbolic_sum_no_distinct);
+    for (unsigned j = symbolic_sum_distinct.size(); j-- > 0; ) {
+      symbolic_sum_no_distinct[j] *= lambda / diff_roots;
+      symbolic_sum_distinct[j] *= lambda / diff_roots;
+    }
+    // Substitutes to the sums in the vector 'symbolic_sum_distinct'
+    // or 'symbolic_sum_no_distinct' the corresponding values of the
+    // characteristic equation's roots and of the bases of the
+    // eventual exponentials and in 'solution' put the sum of all
+    // sums of the vector after the substitution.
+    solution = subs_to_sum_roots_and_bases(order, alpha, lambda, roots,
+					   base_of_exps,
+					   symbolic_sum_distinct,
+					   symbolic_sum_no_distinct);
+    g_n = (pow(root_1, n+1) - pow(root_2, n+1)) / diff_roots;
+    // FIXME: forse conviene semplificare g_n    
+    D_VAR(g_n);
+  }
+  else {
+    // The characteristic equation
+    // x^2 + a_1 * x + a_2 = 0 has a double root.
+    assert(roots[0].multiplicity() == 2);      
+    
+    // Solve system in order to finds 'alpha_i' (i = 1,...,order).
+    GMatrix sol = solve_system(order, all_distinct, coefficients, roots);
+    
+    // Finds 'g_n', always taking into account the root's multiplicity
+    g_n = find_g_n(n, order, all_distinct, sol, roots);
+    D_VAR(g_n);
+    
+    solution = compute_non_homogeneous_part(n, g_n, order, base_of_exps,
+					    exp_poly_coeff);
+  }
+  return solution;
+ }
 
 /*!
   Consider the linear recurrence relation of order \f$ k \f$ with constant
@@ -1076,53 +1016,48 @@ compute_non_homogeneous_part_solution(const GSymbol& n, const GExpr& g_n,
 	    \Bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \Bigr).
   \f]
   The two sums in the previous formula correspond to the non-homogeneous
-  part \f$ p(n) \f$ and to the initial conditions, respectively.
+  part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
+  the function <CODE>add_initial_conditions</CODE>), respectively.
 */
 static GExpr
 solve_linear_constant_coeff(const GSymbol& n, GExpr& g_n,
 			    const int order, const bool all_distinct,
+			    const GSymbol& alpha, const GSymbol& lambda,
 			    const std::vector<GExpr>& base_of_exps,
 			    const std::vector<GExpr>& exp_poly_coeff,
 			    const std::vector<GNumber>& coefficients,
 			    const std::vector<Polynomial_Root>& roots) {
-
-  GList g_i;
-  GList coeff_equations;
-  // Prepare the elements to insert in the system.
-  prepare_system(order, all_distinct, coefficients, roots,
-		 g_i, coeff_equations);  
-  GMatrix system(order, order, coeff_equations);
-  GMatrix rhs(order, 1, g_i);
-#if NOISY
-  std::cout << "system: " << system << std::endl;
-  std::cout << "rhs: " << rhs << std::endl;
-#endif
-  GMatrix vars(order, 1);
-  for (int i = 0; i < order; ++i)
-    vars(i, 0) = GSymbol();
   // Solve system in order to finds 'alpha_i' (i = 1,...,order).
-  GMatrix sol = system.solve(vars, rhs);
-#if NOISY
-  std::cout << "alpha_i: " << sol << std::endl;
-#endif
+  GMatrix sol = solve_system(order, all_distinct, coefficients, roots);
+  
   // Finds 'g_n', always taking into account the root's multiplicity
-  g_n = 0;
-  if (all_distinct)
-    for (int i = 0; i < order; ++i)
-      g_n += sol(i, 0) * pow(roots[i].value(), n);
-  else
-    for (unsigned i = roots.size(); i-- > 0; ) {
-      int h = 0;
-      for (GNumber j = roots[i].multiplicity(); j-- > 0 && h < order; ) {
-	g_n += sol(h, 0) * pow(n, j) * pow(roots[i].value(), n);
-	++h;
-      }
-    }
+  g_n = find_g_n(n, order, all_distinct, sol, roots);
   D_VAR(g_n);
-  // Computes '\sum_{i=k}^n g_{n-i} p(i)'.
-  GExpr solution = compute_non_homogeneous_part_solution(n, g_n, order,
-							 base_of_exps,
-							 exp_poly_coeff);
+
+  GExpr solution;  
+  if (all_distinct) {      
+    // Prepare for to compute the symbolic sum.
+    std::vector<GExpr> poly_coeff_tot;
+    prepare_for_symbolic_sum(n, g_n, roots, exp_poly_coeff, poly_coeff_tot);
+    std::vector<GExpr> symbolic_sum_distinct;
+    std::vector<GExpr> symbolic_sum_no_distinct;
+    compute_symbolic_sum(order, n, alpha, lambda, roots, base_of_exps,
+			 poly_coeff_tot, symbolic_sum_distinct,
+			 symbolic_sum_no_distinct);
+    // Substitutes to the sums in the vector 'symbolic_sum_distinct'
+    // or 'symbolic_sum_no_distinct' the corresponding values of the
+    // characteristic equation's roots and of the bases of the
+    // eventual exponentials and in 'solution' put the sum of all
+    // sums of the vector after the substitution.
+    solution = subs_to_sum_roots_and_bases(order, alpha, lambda, roots,
+					   base_of_exps,
+					   symbolic_sum_distinct,
+					   symbolic_sum_no_distinct);
+  }
+  else
+    // There are roots with multiplicity greater than 1.
+    solution = compute_non_homogeneous_part(n, g_n, order, base_of_exps,
+					    exp_poly_coeff);
   return solution;
 }
 
