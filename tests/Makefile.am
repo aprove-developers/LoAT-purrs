@@ -17,7 +17,7 @@ SUBDIRS =
 
 INCLUDES = -I$(top_builddir)/src -I$(top_srcdir)/CoStLy @extra_includes@
 
-LDADD = $(top_builddir)/src/libpurrs.a ehandlers.o $(top_builddir)/CoStLy/libCoStLy.a -lstdc++ @extra_libraries@ -lntl @readline_libraries@
+LDADD = $(top_builddir)/src/libpurrs.a ehandlers.o $(top_builddir)/CoStLy/libCoStLy.a -lstdc++ -lntl @extra_libraries@ @readline_libraries@
 
 CPPFLAGS = @extra_cpp_flags@
 
