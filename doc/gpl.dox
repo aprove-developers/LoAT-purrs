@@ -432,10 +432,10 @@ for details.
 </PRE>
 
 <P>
-The hypothetical commands <SAMP>`show w'</SAMP> and <SAMP>`show c'</SAMP> should show
+The hypothetical commands <CODE>`show w'</CODE> and <CODE>`show c'</CODE> should show
 the appropriate parts of the General Public License.  Of course, the
-commands you use may be called something other than <SAMP>`show w'</SAMP> and
-<SAMP>`show c'</SAMP>; they could even be mouse-clicks or menu items--whatever
+commands you use may be called something other than <CODE>`show w'</CODE> and
+<CODE>`show c'</CODE>; they could even be mouse-clicks or menu items--whatever
 suits your program.
 
 </P>
