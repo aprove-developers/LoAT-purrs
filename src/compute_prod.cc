@@ -48,6 +48,20 @@ Expr
 comp_prod(const Symbol& index, const Number& lower, const Expr& e,
 	  bool is_denominator = false);
 
+
+
+//! \brief
+//! To compute \f$ \prod_{k=lower}^n e(k) \f$ \f$ we will sometimes compute
+//! \f$ \prod_{k=0}^n e(k) \f$ first and then divide out the extra terms.
+Expr
+remove_extra_terms(const Symbol& index, const Number& lower, const Expr& e, 
+		   const Expr& complete_product) {
+  Expr extra_factor = 1;
+  for (Number i = 1; i < lower; ++i)
+    extra_factor *= e.substitute(index, i);
+  return complete_product / extra_factor;
+}
+
 //! \brief
 //! When possible, computes \f$ \prod_{k=lower}^n e(k) \f$
 //! if \f$ e \f$ is a sum of terms, otherwise returns the symbolic product.
@@ -78,7 +92,7 @@ compute_product_on_add(const Symbol& index, const Number& lower,
 	else
 	  if (is_denominator)
 	    throw std::domain_error("Cannot compute a product at the "
-				    "denominator if one of the factor "
+				    "denominator if one of the factors "
 				    "is zero.");
 	  else {
 	    e_prod = 0;
@@ -87,11 +101,16 @@ compute_product_on_add(const Symbol& index, const Number& lower,
     else if (e == 2*index+1) {
       e_prod = factorial(2*Recurrence::n+1) * pwr(2, -Recurrence::n)
 	/ factorial(Recurrence::n);
+      // Remove extra terms if the lower index is not 1.
+      if (lower != 1)
+	e_prod = remove_extra_terms(index, lower, e, e_prod);
       e_prod_computed = true;
     }
     else if (e == 2*index-1) {
       e_prod = factorial(2*Recurrence::n) * pwr(2, -Recurrence::n)
 	/ factorial(Recurrence::n);
+      if (lower != 1)
+	e_prod = remove_extra_terms(index, lower, e, e_prod);
       e_prod_computed = true;
     }
   }
@@ -116,6 +135,26 @@ compute_product_on_add(const Symbol& index, const Number& lower,
 	* pwr(comp_prod(index, lower, denominator), -1);
       e_prod_computed = true;
     }
+    // Special case e == (3*index-1)*(3*index-2).
+    else if (e == 2 - 9*index + 9*index*index ) {
+      e_prod = factorial(3*Recurrence::n) * pwr(3, -Recurrence::n)
+	/ factorial(Recurrence::n);
+      // Remove extra terms if the lower index is not 1.
+      if (lower != 1)
+	e_prod = remove_extra_terms(index, lower, e, e_prod);
+      e_prod_computed = true;
+    }
+    /*
+    // Special case e == -(3*index-1)*(3*index-2).
+    else if (e == -2 + 9*index - 9*index*index ) {
+      e_prod = pwr(-1, Recurrence::n) * factorial(3*Recurrence::n) * pwr(3, -Recurrence::n)
+	/ factorial(Recurrence::n);
+      // Remove extra terms if the lower index is not 1.
+      if (lower != 1)
+	e_prod = remove_extra_terms(index, lower, e, e_prod);
+      e_prod_computed = true;
+    }
+    */
   }
   if (!e_prod_computed) {
     Symbol h;
