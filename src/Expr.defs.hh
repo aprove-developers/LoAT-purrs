@@ -167,7 +167,6 @@ private:
 Expr wild(unsigned label);
 
 Expr pow(const Expr& b, const Expr& e);
-Expr pow(const Symbol& b, const unsigned i);
 Expr sqrt(const Expr& e);
 Expr sin(const Expr& e);
 Expr cos(const Expr& e);
@@ -180,7 +179,6 @@ Expr factorial(const Expr& e);
 Expr factorial(const unsigned i);
 
 Expr quo(const Expr& a, const Expr& b, const Symbol& x);
-Expr quo(const Expr& a, const Symbol& x, const Symbol& y);
 Expr rem(const Expr& a, const Expr& b, const Symbol& x);
 Expr prem(const Expr& a, const Expr& b, const Symbol& x);
 Expr gcd(const Expr& a, const Expr& b);

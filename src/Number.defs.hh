@@ -86,8 +86,8 @@ public:
   bool is_real() const;
   bool is_cinteger() const;
   bool is_crational() const;
-
-  Number numer_denom() const;
+  // FIXME: see Number.inlines.hh
+  Expr numer_denom() const;
 
   int to_int() const;
   long to_long() const;

@@ -260,6 +260,7 @@ Expr::is_exactly_a_function() const {
 
 inline Number
 Expr::ex_to_number() const {
+  assert(GiNaC::is_a<GiNaC::numeric>(e));
   return GiNaC::ex_to<GiNaC::numeric>(e);
 }
 
@@ -411,11 +412,6 @@ pow(const Expr& b, const Expr& e) {
 }
 
 inline Expr
-pow(const Symbol& b, const unsigned i) {
-  return pow(b, i);
-}
-
-inline Expr
 sqrt(const Expr& e) {
   return sqrt(e);
 };
@@ -464,11 +460,6 @@ factorial(const unsigned i) {
 inline Expr
 quo(const Expr& a, const Expr& b, const Symbol& x) {
   return quo(a, b, x);
-}
-
-inline Expr
-quo(const Expr& a, const Symbol& x, const Symbol& y) {
-  return quo(a, x, y);
 }
 
 inline Expr

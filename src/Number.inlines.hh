@@ -198,6 +198,11 @@ Number::Number::is_crational() const {
   return n.is_crational();
 }
 
+//  inline Expr
+//  numer_denom() const {
+//    return n.numer_denom();
+//  }
+
 inline int
 Number::to_int() const {
   return n.to_int();
