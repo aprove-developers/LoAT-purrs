@@ -911,26 +911,34 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 
   if (is_linear_finite_order_const_coeff())
     if (order() == 1 )
-      // FIXME: This is a special case because we allow parameters.
-      // `compute_term_about_initial_conditions' doesn't allow them.
+      // FIXME: This could be integrated in the method below if 
+      // parameters are not a problem.
       exact_solution_.set_expression((x(first_valid_index) - solution.substitute(n, first_valid_index))
 				     * pwr(coefficients()[1],
 					   n-first_valid_index)
 				     + solution);
     else {
-      // FIXME: Adapt the formula to the general case and allow multiple roots.
-      if (!all_distinct)
-	return TOO_COMPLEX;
-      unsigned int num_unknowns = roots.size();
+      unsigned int num_roots = roots.size();
       Expr_List unknowns;
-      for (unsigned int i = 0; i < num_unknowns; ++i)
-	unknowns.append(Symbol());
+      std::vector<unsigned int> root_for;
+      std::vector<unsigned int> multiplicity;
+      Expr general_solution = solution;
+      for (unsigned int i = 0; i < num_roots; ++i) {
+	unsigned int root_multiplicity = roots[i].multiplicity();
+	for (unsigned int j = 1; j <= root_multiplicity; ++j) {
+	  unknowns.append(Symbol());
+	  root_for.push_back(i);
+	  multiplicity.push_back(j);
+	  general_solution += unknowns.op(unknowns.nops()-1) * pwr(roots[i].value(),n) * pwr(n, j-1);
+	}
+      }
+      D_MSGVAR("General solution: ", general_solution);
+      unsigned int num_unknowns = unknowns.nops();
       Expr_List equations;
       for (unsigned int i = 0; i < num_unknowns; ++i) {
-	Expr tmp = x(first_valid_index + i) - solution.substitute(n, first_valid_index + i);
-	for (unsigned int j = 0; j < num_unknowns; ++j)
-	  tmp -= unknowns.op(j) * pwr(roots[j].value(), first_valid_index + i);
-	equations.prepend(Expr(tmp, 0));
+	//	Expr tmp = x(first_valid_index + i) - general_solution.substitute(n, first_valid_index + i);
+	//	D_MSGVAR("Equation: ", tmp);
+	equations.prepend(Expr(x(first_valid_index + i) - general_solution.substitute(n, first_valid_index + i), 0));
       }
 
       // Solve the system.
@@ -941,20 +949,14 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 	return TOO_COMPLEX;
 
       // Substitute the correct values of the coefficients found above.
-      Expr tmp = solution;
       for (unsigned int i = sol_system.nops(); i-- > 0; ) {
 	D_MSGVAR("Solution: ", sol_system.op(i).rhs());
-	tmp += (sol_system.op(i).rhs()) * pwr(roots[i].value(), n);
-      }
+	general_solution = general_solution.substitute(unknowns.op(i), sol_system.op(i).rhs());
+     }
 
-      D_MSGVAR("Rec. Solution: ", tmp);
-
-      exact_solution_.set_expression(tmp);
-      /*
-      exact_solution_.set_expression(compute_term_about_initial_conditions
-				     (g_n, num_coefficients, first_valid_index)
-				     + solution);
-      */
+      D_MSGVAR("Complete solution: ", general_solution);
+     
+      exact_solution_.set_expression(general_solution);
     }
   else
     // In the case of variable coefficients the expression contained in
