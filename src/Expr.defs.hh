@@ -29,6 +29,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Symbol.types.hh"
 #include "Expr_List.types.hh"
 #include "Number.types.hh"
+#include "Constant.types.hh"
 
 #include <ginac/ginac.h>
 
@@ -46,6 +47,13 @@ Expr& operator-=(Expr& lh, const Expr& rh);
 Expr& operator*=(Expr& lh, const Expr& rh);
 Expr& operator/=(Expr& lh, const Expr& rh);
 
+Expr operator+(const Expr &lh);
+Expr operator-(const Expr &lh);
+
+// binary relational operators Expr with Expr
+// bool operator==(const Expr& lh, const Expr& rh);
+// bool operator!=(const Expr& lh, const Expr& rh);
+
 class Parma_Recurrence_Relation_Solver::Expr {
 public:
   //! Default constructor.
@@ -53,6 +61,15 @@ public:
 
   //! Builds the integer expression \p i.
   Expr(int i);
+
+  //! Builds the numeric expression \p n.
+  Expr(const Number& n);
+
+  //! Builds the symbolic expression \p s.
+  Expr(const Symbol& s);
+
+  //! Builds the constant expression \p s.
+  Expr(const Constant& k);
 
   //! Copy-constructor.
   Expr(const Expr& exp);
@@ -84,7 +101,7 @@ public:
   Expr op(unsigned i) const;
   bool is_equal(const Expr& e) const;
   bool is_zero() const;
-  Expr subs(const Expr& e) const;
+  Expr subs(const Symbol& s, const Expr& e) const;
   Expr subs(const Expr_List& symbols, const Expr_List& replacements) const;
   bool match(const Expr& pattern) const;
   bool match(const Expr& pattern, Expr_List& replacements) const;
@@ -116,6 +133,10 @@ private:
 
 Expr pow(const Expr& b, const Expr& e);
 Expr pow(const Symbol& b, const unsigned i);
+Expr sqrt(const Expr& e);
+Expr sin(const Expr& e);
+Expr cos(const Expr& e);
+Expr acos(const Expr& e);
 
 Expr quo(const Expr& a, const Expr& b, const Symbol& x);
 Expr quo(const Expr& a, const Symbol& x, const Symbol& y);

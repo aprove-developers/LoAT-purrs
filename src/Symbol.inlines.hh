@@ -43,6 +43,11 @@ Symbol::operator=(const Symbol& symb) {
 };
 
 inline
+Symbol::Symbol(const GiNaC::symbol& gs)
+  : s(gs) {
+}
+
+inline
 Symbol::~Symbol() {
 }
 

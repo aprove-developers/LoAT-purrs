@@ -104,11 +104,6 @@ Number::Number(int i)
 }
 
 inline
-Number::Number(Expr& exp)
-  : n(exp.e) {
-}
-
-inline
 Number::Number(const Number& num)
   : n(num.n) {
 };
@@ -132,11 +127,6 @@ inline Number
 abs(const Number& n) {
   return abs(n);
 }
-
-inline Number
-sqrt(const Number &n) {
-  return sqrt(n);
-};
 
 } // namespace Parma_Recurrence_Relation_Solver
 

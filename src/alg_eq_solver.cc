@@ -34,7 +34,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <cassert>
 #include <iostream>
 
-using namespace GiNaC;
+using namespace Parma_Recurrence_Relation_Solver;
 
 /*!
    We look for possible rational solutions of a polynomial with 
@@ -186,6 +186,9 @@ find_roots(const GExpr& p, const GSymbol& x,
 	   bool& all_distinct) {
   assert(p.is_integer_polynomial());
   assert(!p.is_a_number());
+  /////
+  Expr_List a;
+  /////
   // Compute a square-free decomposition for p.
   GExpr q = sqrfree(p.expand(), Expr_List(x));
   // There are now 4 cases depending on the principal functor of `q':
@@ -278,14 +281,14 @@ find_roots(const GExpr& p, const GSymbol& x,
     for (unsigned l = 0, ml = abs_lc_divisors.size(); l < ml; ++l) 
       for (unsigned t = 0, mt = abs_tc_divisors.size(); t < mt; ++t) {
 	GNumber r = abs_tc_divisors[t] / abs_lc_divisors[l];
-	if (q.subs(x == r) == 0) {
+	if (q.subs(x, r).is_zero()) {
 	  q = quo(q, x-r, x);
 	  --degree;
 	  roots.push_back(Polynomial_Root(r, multiplicity));
 	  coefficients_changed = true;
 	}
 	r = -r;
-	if (q.subs(x == r) == 0) {
+	if (q.subs(x, r).is_zero()) {
 	  q = quo(q, x-r, x);
 	  --degree;
 	  roots.push_back(Polynomial_Root(r, multiplicity));
@@ -388,7 +391,7 @@ find_roots(const GExpr& p, const GSymbol& x,
 	GExpr root_of_unity = cos(j*theta) + I*sin(j*theta);
 	for (size_t i = 0; i < num_r_roots; ++i)
 	  roots.push_back(Polynomial_Root(pow(roots_r[i].value(),
-					      numeric(1)/nested_degree)
+					      1/nested_degree)
 					  * root_of_unity, multiplicity));
       }
       return true;
@@ -412,7 +415,7 @@ find_roots(const GExpr& p, const GSymbol& x,
 static void
 solve_equation_2(const GExpr& b, const GExpr& c,
 		 GExpr& x1, GExpr& x2) {
-  GSymbol n("n");
+  Symbol n;
   GExpr sqrt_d = sqrt(b*b - 4*c);
 
   D_MSGVAR("Before: ", sqrt_d);
@@ -444,7 +447,7 @@ solve_equation_2(const GExpr& b, const GExpr& c,
 bool
 solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
 		 GExpr& x1, GExpr& x2, GExpr& x3) {
-  GSymbol n("n");
+  Symbol n;
   GNumber Q = (3*a2 - a1*a1) / 9;
   GNumber R = (9*a1*a2 - 27*a3 -2*a1*a1*a1) / 54;
   GNumber d = Q*Q*Q + R*R;
@@ -522,7 +525,7 @@ void
 solve_equation_4(const GNumber& a1, const GNumber& a2,
 		 const GNumber& a3, const GNumber& a4,
 		 GExpr& x1, GExpr& x2, GExpr& x3, GExpr& x4) {
-  GNumber f = a2 - 3*a1*a1*numeric(1)/8;
+  GNumber f = a2 - 3*a1*a1*1/8;
   GNumber g = a3 + a1*a1*a1/8 - a1*a2/2;
   GNumber h = a4 - 3*a1*a1*a1*a1/256 + a1*a1*a2/16 - a1*a3/4;
 
@@ -540,7 +543,7 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   if (g == 0) {
     solve_equation_2(f/2, (f*f - 4*h)/16, y1, y2);
     // Both roots are nonzero.
-    assert(y1 != 0 && y2 != 0);
+    assert(!y1.is_zero() && !y2.is_zero());
   }
   else
     // We are deliberately ignoring the return value.
@@ -555,14 +558,14 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
 
   // FIXME: the one and only `n' symbol should be global,
   // i.e., created once and for all.
-  GSymbol n("n");
+  Symbol n;
   p = simplify_on_output_ex(p, n, false);
   q = simplify_on_output_ex(q, n, false);
 
   D_VAR(p); 
   D_VAR(q);
 
-  GExpr r = numeric(-g)/(8*p*q);
+  GExpr r = -g/(8*p*q);
 
   D_MSGVAR("Before: ", r); 
 

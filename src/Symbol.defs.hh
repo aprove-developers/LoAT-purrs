@@ -51,6 +51,8 @@ private:
 
   friend class Expr;
   friend class Expr_List;
+
+  Symbol(const GiNaC::symbol& gs);
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

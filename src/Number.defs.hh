@@ -49,8 +49,6 @@ public:
   //! Builds the integer number \p i.
   Number(int i);
 
-  Number(Expr& exp);
-
   //! Copy-constructor.
   Number(const Number& s);
 
@@ -85,14 +83,17 @@ private:
 
   GiNaC::numeric n;
 
+public:
+  // Made public only to initialize the constant I.
   Number(const GiNaC::numeric& gn);
 };
+
+extern const Number I;
 
 int to_int(const Number& n);
 long to_long(const Number& n);
 
 Number abs(const Number& n);
-Number sqrt(const Number &n);
 
 } // namespace Parma_Recurrence_Relation_Solver
 

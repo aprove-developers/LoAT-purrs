@@ -28,6 +28,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Number.defs.hh"
 #include "Expr_List.defs.hh"
 #include "Symbol.defs.hh"
+#include "Constant.defs.hh"
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -51,6 +52,16 @@ operator/(const Expr& lh, const Expr& rh) {
   return lh / rh;
 }
 
+Expr
+operator+(const Expr& lh) {
+  return +lh;
+}
+
+Expr
+operator-(const Expr& lh) {
+  return -lh;
+}
+
 Expr&
 operator+=(const Expr& lh, const Expr& rh) {
   return lh += rh;
@@ -71,6 +82,16 @@ operator/=(const Expr& lh, const Expr& rh) {
   return lh /= rh;
 }
 
+// bool
+// operator==(const Expr& lh, const Expr& rh) {
+//   lh == rh;
+// };
+
+// bool
+// operator!=(const Expr& lh, const Expr& rh) {
+//   lh == rh;
+// };
+
 inline
 Expr::Expr() {
 }
@@ -78,6 +99,21 @@ Expr::Expr() {
 inline
 Expr::Expr(int i)
   : e(i) {
+}
+
+inline
+Expr::Expr(const Number& n)
+  : e(n.n) {
+}
+
+inline
+Expr::Expr(const Symbol& s)
+  : e(s.s) {
+}
+
+inline
+Expr::Expr(const Constant& k)
+  : e(k.c) {
 }
 
 inline
@@ -187,8 +223,8 @@ Expr::is_zero() const {
 }
 
 inline Expr
-Expr::subs(const Expr& exp) const {
-  return e.subs(exp.e);
+Expr::subs(const Symbol& s, const Expr& exp) const {
+  return e.subs(s.s == exp.e);
 }
 
 inline Expr
@@ -281,6 +317,26 @@ inline Expr
 pow(const Symbol& b, const unsigned i) {
   return pow(b, i);
 }
+
+inline Expr
+sqrt(const Expr& e) {
+  return sqrt(e);
+};
+
+inline Expr
+sin(const Expr& e) {
+  return sin(e);
+};
+
+inline Expr
+cos(const Expr& e) {
+  return cos(e);
+};
+
+inline Expr
+acos(const Expr& e) {
+  return acos(e);
+};
 
 inline Expr
 quo(const Expr& a, const Expr& b, const Symbol& x) {

@@ -7,6 +7,7 @@
 #include "Expr_List.defs.hh"
 #include "Number.defs.hh"
 #include "Matrix.defs.hh"
+#include "Constant.defs.hh"
 
 #include <ginac/ginac.h>
 #include <cln/complex.h>
@@ -23,6 +24,7 @@ typedef Parma_Recurrence_Relation_Solver::Symbol GSymbol;
 typedef Parma_Recurrence_Relation_Solver::Expr_List GList;
 typedef Parma_Recurrence_Relation_Solver::Number GNumber;
 typedef Parma_Recurrence_Relation_Solver::Matrix GMatrix;
+typedef Parma_Recurrence_Relation_Solver::Constant constant;
 #endif
 
 GExpr x_eval(const GExpr& e);
