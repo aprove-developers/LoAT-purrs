@@ -26,9 +26,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include <stdexcept>
 #include <string>
 #include <giac/giac.h>
-//#include <giac/sym2poly.h>
-//#include <giac/usual.h>
-//#include <giac/symbolic.h>
 
 #include "factorize_giac.hh"
 
@@ -73,38 +70,23 @@ int main() try {
     string s;
 #if NOISY
     cout << endl << "Insert the hypergeometric term t(n): " << endl;
-    cout << "(Type anything, I'm using a hard-coded hypergeometric term anyway!)" << endl;
+    cout << "(Blank line to use the hard-coded hypergeometric term binom(n,k)^2  )" << endl;
 #endif
     getline(input_stream,s);
-    s = "((n!) / ((k!) * (n-k)!))^2";
+    if (s == "") {
+      s = "((n!) / ((k!) * (n-k)!))^2";
+    }
     Expr_List l(Recurrence::n, k, a, b, c, d);
     Expr t_n = Expr(s,l);
     cout << t_n << endl;
-    /*
-#if NOISY   
-    cout << endl << "Insert the lower bound of the sum: " << endl;
-#endif
-    getline(input_stream,s);
-    l = Expr_List(Recurrence::n, a, b, c, d);
-    Expr tmp = Expr(s,l);
-    Number l_b = tmp.ex_to_number();
-#if NOISY
-    cout << endl << "Insert the upper bound of the sum: " << endl;
-#endif
-    getline(input_stream,s);
-    l = Expr_List(Recurrence::n, a, b, c, d);
-    Expr u_b = Expr(s,l);
-    */
-    //    if (zeilberger_algorithm(Recurrence::n, t_n, l_b, u_b, solution))
-    if (zeilberger_algorithm(t_n, Recurrence::n, k))
+    if (zeilberger_algorithm(t_n, Recurrence::n, k, solution))
 #if NOISY
     std::cout << endl << "The sum is: " << solution << std::endl;
 #endif
     else {
       Symbol h;
 #if NOISY
-      std::cout << endl << "Error in Zeilberger Algorithm."
-	//		<< PURRS::sum(h, l_b, u_b, t_n.substitute(Recurrence::n, h))
+      std::cout << endl << "Error in Zeilberger Algorithm for term " << t_n
 		<< std::endl;
 #endif
     }
