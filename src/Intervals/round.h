@@ -32,7 +32,7 @@ extern "C" {
 #if USE_DIRECTED_ROUNDING
 #if defined(__GNUC__) && (defined(i386) || defined(sparc) || defined(m68k) || defined(alpha))
 #if defined(i386)
-#include "i386.h"
+#include "ix86.h"
 #elif defined(sparc)
 #include "sparc.h"
 #elif defined(m68k)

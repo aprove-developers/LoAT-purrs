@@ -32,7 +32,8 @@ globals.cc \
 $(INCLUDE_FILES)
 
 # The ordering of the following list *matters*!
-DOC_FILES = /dev/null
+DOC_FILES = \
+alg_eq_solver.hh
 
 libpurrs_a_LIBADD =
 

@@ -310,7 +310,8 @@ WARN_LOGFILE           =
 # "myfile.cpp" or directories like "/usr/src/myproject". Separate the
 # files or directories with spaces.
 
-INPUT                  = @srcdir@/../src/alg_eq_solver.cc
+INPUT		     =	@srcdir@/../src/alg_eq_solver.hh \
+			@srcdir@/../src/alg_eq_solver.cc
 #                         @srcdir@/gpl.dox
 #                         @srcdir@/fdl.dox
 

@@ -13,6 +13,6 @@ VPATH = @srcdir@
 
 noinst_HEADERS = \
 alpha.h \
-i386.h \
+ix86.h \
 m68k.h \
 sparc.h
