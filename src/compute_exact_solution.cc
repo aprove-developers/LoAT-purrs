@@ -106,7 +106,7 @@ add_term_with_initial_conditions(const Expr& g_n,
   In this function we compute, when possible, the sum of the previous
   formula; when this is not possible, we return the symbolic sum.
 */
-PURRS::Recurrence::Solver_Status
+PURRS::Expr
 PURRS::Recurrence::
 solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
   // We search exponentials in `n' (for this the expression
@@ -169,8 +169,7 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
 			     * inhomogeneous_term.substitute(n, h));
     }
   }
-  exact_solution_.set_expression(solution);
-  return SUCCESS;
+  return solution;
 }
 
 /*!
@@ -559,10 +558,13 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   Number z = 0;
   if (!inhomogeneous_term.is_zero()) {
     if (has_parameters(denominator(inhomogeneous_term))) {
-      D_MSG("Constant coefficient with parameters in the denominator of "
+      D_MSG("Linear finite order with parameters in the denominator of "
 	    "the inhomogeneous term.");
       return TOO_COMPLEX;
     }
+    // The system not finds an integer that cancel `inhomogeneous_term' or
+    // starting from which `inhomogeneous_term' is well-defined
+    // (polynomials are always well-defined).
     if (!largest_positive_int_zero(denominator(inhomogeneous_term), z))
       return TOO_COMPLEX;
   }
@@ -578,7 +580,6 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   switch (order()) {
   case 1:
     {
-      Solver_Status status;
       if (is_linear_finite_order_const_coeff()) {
 	Expr characteristic_eq;
 	std::vector<Polynomial_Root> roots;
@@ -588,14 +589,14 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 						   characteristic_eq, roots,
 						   all_distinct))
 	  return TOO_COMPLEX;
-	status = solve_constant_coeff_order_1(roots);
+	exact_solution_
+	  .set_expression(solve_constant_coeff_order_1(roots));
       }
-      else
-	status = solve_variable_coeff_order_1(coefficients()[1]);
-      if (status != SUCCESS) {
-	D_MSG("Summand not hypergeometric: no chance of using Gosper's "
-	      "algorithm");
-	return status;
+      else {
+	Solver_Status status;
+	if ((status = solve_variable_coeff_order_1(coefficients()[1]))
+	    != SUCCESS)
+	  return status;
       }
     }
     break;
