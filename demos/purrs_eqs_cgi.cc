@@ -245,9 +245,13 @@ main() try {
     error(s.str());
   }
 
-#if HAVE_GETTIMEOFDAY
+#if HAVE_GETRUSAGE
   timeval start;
-  gettimeofday(&start, NULL);
+  rusage rsg;
+  if (getrusage(RUSAGE_SELF, &rsg) != 0)
+    error("getrusage failed");
+  else
+    start = rsg.ru_utime;
 #endif
 
   std::vector<Polynomial_Root> roots;
@@ -255,10 +259,15 @@ main() try {
   if (!find_roots(p, x, roots, all_distinct))
     error("sorry, this is too difficult");
 
-#if HAVE_GETTIMEOFDAY
-  // Information on this query
+#if HAVE_GETRUSAGE
   timeval end;
-  gettimeofday(&end, NULL);
+  if (getrusage(RUSAGE_SELF, &rsg) != 0)
+    error("getrusage failed");
+  else
+    end = rsg.ru_utime;
+
+  long us_of_cpu_time = ((end.tv_sec - start.tv_sec) * 1000000)
+    + (end.tv_usec - start.tv_usec);
 #endif
 
   // Output the HTTP headers for an HTML document, and the HTML 4.0 DTD info.
@@ -337,17 +346,13 @@ main() try {
   // Get a pointer to the environment.
   const CgiEnvironment& env = cgi.getEnvironment();
 
-#if HAVE_GETTIMEOFDAY
   // Timings and thank you.
-  long us = ((end.tv_sec - start.tv_sec) * 1000000)
-    + (end.tv_usec - start.tv_usec);
-#endif
-
   cout << br() << br()
        <<cgicc::div().set("align", "center").set("class", "bigger") << endl;
-#if HAVE_GETTIMEOFDAY
-  cout << "The computation of roots took " << us << " us"
-       << " (" << (double) (us/1000000.0) << " s)" << br() << br() << endl;
+#if HAVE_GETRUSAGE
+  cout << "The computation of roots took "
+       << (double) (us_of_cpu_time/1000000.0) << " s of CPU time."
+       << br() << br() << endl;
 #endif
   string host = env.getRemoteHost();
   if (host.empty())
