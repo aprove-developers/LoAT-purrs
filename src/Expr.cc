@@ -216,7 +216,7 @@ prod_eval(const ex& index, const ex& lower, const ex& upper,
       throw std::invalid_argument("If the upper limit of a product is a"
 				  "number, it must be an integer");
     if (num_lower > num_upper)
-      return 0;
+      return 1;
     else if (num_lower == num_upper)
       return factor.subs(index == lower);
     else
