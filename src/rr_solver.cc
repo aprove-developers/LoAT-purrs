@@ -797,7 +797,7 @@ solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
       {
 	Expr new_rhs;
 	eliminate_negative_decrements(rhs, new_rhs, n);
-	std::cout << "Recurrence tranformed x(n) = " << new_rhs << std::endl;
+	//std::cout << "Recurrence tranformed x(n) = " << new_rhs << std::endl;
 	status = solve(new_rhs, n, solution);
       }
       break;
@@ -805,7 +805,7 @@ solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
       {
 	Expr new_rhs;
 	if (eliminate_null_decrements(rhs, new_rhs, n)) {
-	  std::cout << "Recurrence tranformed x(n) = " << new_rhs << std::endl;
+	  //std::cout << "Recurrence tranformed x(n) = " << new_rhs << std::endl;
 	  status = solve(new_rhs, n, solution);
 	}
 	else
