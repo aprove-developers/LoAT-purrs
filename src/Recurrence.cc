@@ -206,7 +206,7 @@ PURRS::Recurrence::verify_solution() const {
     D_VAR(order());
     D_VAR(first_initial_condition());
     if (order() == 0)
-      return CORRECT;
+      return PROVABLY_CORRECT;
     else {
       // Step 1: validation of initial conditions.
       for (unsigned i = order(); i-- > 0; ) {
@@ -226,7 +226,7 @@ PURRS::Recurrence::verify_solution() const {
 	  i_c -= gcd_decrements_old_rhs;
 	D_VAR(i_c);
 	if (solution_valuated != x(i_c))
-	  return DONT_KNOW;
+	  return INCONCLUSIVE_VERIFICATION;
       }
       // Step 2: find `partial_solution'.
       // The initial conditions are verified. Build the expression
@@ -244,7 +244,7 @@ PURRS::Recurrence::verify_solution() const {
       D_VAR(partial_solution);
       // The recurrence is homogeneous.
       if (partial_solution == 0)
-	return CORRECT;
+	return PROVABLY_CORRECT;
       // Step 3: construct the vector `terms_to_sub': each element of it
       // contains `partial_solution' with `n' substituted by `n - d'
       // (the `d' are the decrements of the terms `x(n - d)').
@@ -287,13 +287,13 @@ PURRS::Recurrence::verify_solution() const {
       Expr diff = simplify_all(partial_solution - substituted_rhs);
       D_VAR(diff);
       if (!diff.is_zero())
-	return DONT_KNOW;
-      return CORRECT;
+	return INCONCLUSIVE_VERIFICATION;
+      return PROVABLY_CORRECT;
     }
   }
   // We failed to solve the recurrence.
   // If the client still insists in asking for the verification...
-  return DONT_KNOW;
+  return INCONCLUSIVE_VERIFICATION;
 }
 
 bool

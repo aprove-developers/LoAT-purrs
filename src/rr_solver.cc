@@ -1268,7 +1268,7 @@ PURRS::Recurrence::check_powers_and_functions(const Expr& e) {
       if (exponent.arg(0).has(Recurrence::n))
 	return NON_LINEAR_RECURRENCE;
   }
-  return RECURRENCE_OK;
+  return SUCCESS;
 }
 
 PURRS::Recurrence::Solver_Status
@@ -1281,13 +1281,13 @@ PURRS::Recurrence::find_non_linear_recurrence(const Expr& e) {
       unsigned num_factors = term.is_a_mul() ? term.nops() : 1;
       if (num_factors == 1) {
 	status = check_powers_and_functions(term);
-	if (status != RECURRENCE_OK)
+	if (status != SUCCESS)
 	  return status;
       }
       else
 	for (unsigned j = num_factors; j-- > 0; ) {
 	  status = check_powers_and_functions(term.op(j));
-	  if (status != RECURRENCE_OK)
+	  if (status != SUCCESS)
 	    return status;
 	}
     }
@@ -1295,17 +1295,17 @@ PURRS::Recurrence::find_non_linear_recurrence(const Expr& e) {
     unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
     if (num_factors == 1) {
       status = check_powers_and_functions(e);
-      if (status != RECURRENCE_OK)
+      if (status != SUCCESS)
 	return status;
     }
     else
       for (unsigned j = num_factors; j-- > 0; ) {
 	status = check_powers_and_functions(e.op(j));
-	if (status != RECURRENCE_OK)
+	if (status != SUCCESS)
 	  return status;
       }
   }
-  return RECURRENCE_OK;
+  return SUCCESS;
 }
 
 PURRS::Recurrence::Solver_Status
@@ -1324,7 +1324,7 @@ PURRS::Recurrence::compute_order(const Number& decrement, unsigned int& order,
   index = decrement.to_long();
   if (order == 0 || index > unsigned(order))
     order = index;
-  return RECURRENCE_OK;
+  return SUCCESS;
 }
   
 void
@@ -1360,7 +1360,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	  unsigned long index;
 	  Solver_Status status
 	    = compute_order(decrement, order, index, coefficients.max_size());
-	  if (status != RECURRENCE_OK)
+	  if (status != SUCCESS)
 	    return status;
 	  if (num_term == 0)
 	    gcd_among_decrements = index;
@@ -1397,7 +1397,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	    Solver_Status status
 	      = compute_order(decrement, order, index,
 			      coefficients.max_size());
-	    if (status != RECURRENCE_OK)
+	    if (status != SUCCESS)
 	      return status;
 	    if (num_term == 0)
 	      gcd_among_decrements = index;
@@ -1427,7 +1427,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
     else
       e += possibly_coeff;
   }
-  return RECURRENCE_OK;
+  return SUCCESS;
 }
 
 void
@@ -1501,21 +1501,21 @@ PURRS::Recurrence::solve_easy_cases() const {
       status = classification_summand(expanded_rhs.op(i), inhomogeneous_term,
 				      coefficients, order,
 				      gcd_among_decrements, i);
-      if (status != RECURRENCE_OK)
+      if (status != SUCCESS)
 	return status;
     }
   else {
     status = classification_summand(expanded_rhs, inhomogeneous_term,
 				    coefficients, order,
 				    gcd_among_decrements, 0);
-    if (status != RECURRENCE_OK)
+    if (status != SUCCESS)
       return status;
   }
 
   // Check if the recurrence is non linear, i.e., there is a non-linear term
   // containing in `e' containing `x(a*n+b)'.
   status = find_non_linear_recurrence(inhomogeneous_term);
-  if (status != RECURRENCE_OK)
+  if (status != SUCCESS)
     return status;
 
   // Now we are sure that the recurrence is linear of the finite order.
@@ -1531,7 +1531,7 @@ PURRS::Recurrence::solve_easy_cases() const {
   if (order == 0) {
     set_order_zero();
     solution = inhomogeneous_term;
-    return RECURRENCE_OK;
+    return SUCCESS;
   }
 
   if (!is_linear_finite_order_var_coeff())
@@ -1549,7 +1549,7 @@ PURRS::Recurrence::solve_easy_cases() const {
     recurrence_rhs = rewrite_reduced_order_recurrence(expanded_rhs, r,
 						      gcd_among_decrements);
     Solver_Status status = solve_easy_cases();
-    if (status == RECURRENCE_OK) {
+    if (status == SUCCESS) {
       // Perform three substitutions:
       // -  r                      -> mod(n, gcd_among_decrements);
       // -  n                      -> 1 / gcd_among_decrements
@@ -1593,7 +1593,7 @@ PURRS::Recurrence::solve_easy_cases() const {
       else
 	status = solve_variable_coeff_order_1(inhomogeneous_term,
 					      coefficients[1], solution);
-      if (status != RECURRENCE_OK) {
+      if (status != SUCCESS) {
 	D_MSG("Summand not hypergeometric: no chance of using Gosper's "
 	      "algorithm");
 	return status;
@@ -1678,7 +1678,7 @@ PURRS::Recurrence::solve_easy_cases() const {
     solution = solution.collect(conditions);
   }
 
-  return RECURRENCE_OK;
+  return SUCCESS;
 }
 
 /*!
@@ -1694,7 +1694,7 @@ PURRS::Recurrence::solve_try_hard() const {
   do {
     status = solve_easy_cases();
     switch (status) {
-    case RECURRENCE_OK:
+    case SUCCESS:
       break;
     case HAS_NON_INTEGER_DECREMENT:
     case HAS_HUGE_DECREMENT:
@@ -1740,7 +1740,7 @@ PURRS::Recurrence::solve_try_hard() const {
 			       "solve_try_hard().");
       break;
     }
-  } while (!exit_anyway && status != RECURRENCE_OK);
+  } while (!exit_anyway && status != SUCCESS);
   return status;
 }
 
@@ -1823,7 +1823,7 @@ solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
 			     * inhomogeneous_term.subs(n, h));
     }
   }
-  return RECURRENCE_OK;
+  return SUCCESS;
 }
 
 /*!
@@ -1913,7 +1913,7 @@ solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
       Symbol h;
       solution += alpha_factorial * x(z + 1) + alpha_factorial 
 	* PURRS::sum(h, z + 2, n, p_n.subs(n, h) / alpha_factorial.subs(n, h));
-      return RECURRENCE_OK;
+      return SUCCESS;
     }
     // To do this cycle or to consider `z + 2' as the lower limit of
     // the sum is the same thing,  but so is better for the output.
@@ -1922,5 +1922,5 @@ solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
   }
   solution += x(z + 1);
   solution *= alpha_factorial;
-  return RECURRENCE_OK;
+  return SUCCESS;
 }

@@ -206,8 +206,8 @@ Recurrence::coefficients() {
 
 inline Recurrence::Solver_Status
 Recurrence::solve() const {
-  Solver_Status status = RECURRENCE_OK;
-  if (!solved && (status = solve_try_hard()) == RECURRENCE_OK)
+  Solver_Status status = SUCCESS;
+  if (!solved && (status = solve_try_hard()) == SUCCESS)
     solved = true;
   return status;
 }

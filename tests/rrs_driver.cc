@@ -237,14 +237,14 @@ all_space(const string& s) {
 ostream&
 operator<<(ostream& s, Recurrence::VERIFY_STATUS v) {
   switch (v) {
-  case Recurrence::CORRECT:
-    s << "CORRECT";
+  case Recurrence::PROVABLY_CORRECT:
+    s << "PROVABLY_CORRECT";
     break;
-  case Recurrence::INCORRECT:
-    s << "INCORRECT";
+  case Recurrence::PROVABLY_INCORRECT:
+    s << "PROVABLY_INCORRECT";
     break;
-  case Recurrence::DONT_KNOW:
-    s << "DONT_KNOW";
+  case Recurrence::INCONCLUSIVE_VERIFICATION:
+    s << "INCONCLUSIVE_VERIFICATION";
     break;
   }
   return s;
@@ -379,7 +379,7 @@ main(int argc, char *argv[]) try {
     Expr solution;
 
     switch (solve_wrapper(rec)) {
-    case Recurrence::RECURRENCE_OK:
+    case Recurrence::SUCCESS:
       if (regress_test) {
 	if (expect_exactly_solved
 	    && (expect_provably_correct_result
@@ -387,21 +387,21 @@ main(int argc, char *argv[]) try {
 		|| expect_inconclusive_verification)) {
 	  Recurrence::VERIFY_STATUS status = rec.verify_solution();
 	  if (expect_provably_correct_result
-	      && status != Recurrence::CORRECT) {
+	      && status != Recurrence::PROVABLY_CORRECT) {
 	    if (verbose)
 	      cerr << "*** unexpected failure to verify solution: gave "
 		   << status << endl;
 	    ++unexpected_failures_to_verify;
 	  }
 	  if (expect_provably_wrong_result
-	      && status != Recurrence::INCORRECT) {
+	      && status != Recurrence::PROVABLY_INCORRECT) {
 	    if (verbose)
 	      cerr << "*** unexpected failure to disprove solution: gave "
 		   << status << endl;
 	    ++unexpected_failures_to_disprove;
 	  }
 	  if (expect_inconclusive_verification
-	      && status != Recurrence::DONT_KNOW) {
+	      && status != Recurrence::INCONCLUSIVE_VERIFICATION) {
 	    if (verbose)
 	      cerr << "*** unexpected conclusive verification: gave "
 		   << status << endl;

@@ -132,7 +132,7 @@ public:
     /*!
       Solution was successful.
     */
-    RECURRENCE_OK,
+    SUCCESS,
 
     /*!
       The right-hand side of the recurrence contains at least an occurrence
@@ -180,7 +180,24 @@ public:
   Expr exact_solution() const;
   Expr approximated_solution() const;
 
-  enum VERIFY_STATUS { CORRECT, INCORRECT, DONT_KNOW };
+  enum VERIFY_STATUS {
+    /*!
+      The system can prove that the recurrence has been successfully
+      solved.
+    */
+    PROVABLY_CORRECT,
+
+    /*!
+      The system can prove that the solution of \p *this is wrong.
+    */
+    PROVABLY_INCORRECT,
+
+    /*!
+      The system can not prove if the solution of \p *this is correct
+      or not. 
+    */
+    INCONCLUSIVE_VERIFICATION
+  };
 
   //! \brief
   //! Returns <CODE>true</CODE> if the <CODE>solution</CODE> is right.
