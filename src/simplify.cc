@@ -1122,100 +1122,6 @@ rewrite_factorials_and_exponentials(const Expr& e) {
 }
 
 Expr
-change_base_logarithm(const Expr& base, const Expr exponent,
-		      const Number& new_base, const Number& new_exponent = 1) {
-  if (exponent.is_a_mul() && exponent.nops() == 2) {
-    if (exponent.op(0).is_the_log_function()
-	&& exponent.op(1) == 1 / log(new_base))
-      return pwr(exponent.op(0).arg(0), new_exponent);
-    if (exponent.op(1).is_the_log_function()
-	&& exponent.op(0) == 1 / log(new_base))
-      return pwr(exponent.op(1).arg(0), new_exponent);
-  }
-  return pwr(simplify_logarithm_in_expanded_ex(base),
-	     simplify_logarithm_in_expanded_ex(exponent));
-}
-
-void
-find_log_factors(const Expr& e, Expr& log_factors, Expr& rem_factors) {
-  assert(e.is_a_mul());
-  for (unsigned i = e.nops(); i-- > 0; ) {
-    const Expr& factor = e.op(i);
-    if ((factor.is_a_power() && factor.arg(0).is_the_log_function()
-	 && factor.arg(1) == -1)
-	|| factor.is_the_log_function())
-      log_factors *= factor;
-    else
-      rem_factors *= factor;
-  }
-}
-
-Expr
-prepare_change_base_logarithm(const Expr& base, const Expr& exponent) {
-  D_MSG("CHANGE BASE");
-  Number base_num;
-  // The base is a positive number.
-  if (base.is_a_number(base_num) && base_num.is_positive()) {
-    std::vector<Number> bases;
-    std::vector<int> exponents;
-    // The base is integer.
-    if (base_num.is_integer() && exponent.is_a_mul()) {
-      Expr log_factors_exp = 1;
-      Expr rem_factors_exp = 1;
-      find_log_factors(exponent, log_factors_exp, rem_factors_exp);
-      partial_factor(base_num, bases, exponents);
-      if (bases.size() == 1) {
-	Number new_base = bases[0];
-	return pwr(change_base_logarithm(base, log_factors_exp, new_base,
-					 exponents[0]), rem_factors_exp);
-      }
-      else
-	return pwr(change_base_logarithm(base, log_factors_exp, base_num),
-		   rem_factors_exp);
-    }
-    if (base_num.is_rational() && exponent.is_a_mul()) {
-      // The base is rational with the numerator equal to `1'.
-      if (base_num.numerator() == 1) {
-	Number denom_base = base_num.denominator();
-	Expr log_factors_exp = 1;
-	Expr rem_factors_exp = 1;
-	find_log_factors(exponent, log_factors_exp, rem_factors_exp);
-	partial_factor(denom_base, bases, exponents);
-	if (bases.size() == 1) {
-	  Number new_base = bases[0];
-	  return pwr(change_base_logarithm(base, log_factors_exp, new_base,
-					   exponents[0]),
-		     -rem_factors_exp);
-	}
-	else
-	  return pwr(change_base_logarithm(base, log_factors_exp, base_num),
-		     -rem_factors_exp);
-      }
-      else {
-	Expr log_factors_exp = 1;
-	Expr rem_factors_exp = 1;
-	find_log_factors(exponent, log_factors_exp, rem_factors_exp);
-	return pwr(change_base_logarithm(base, log_factors_exp, base_num),
-		   rem_factors_exp);
-      }
-    }
-  }
-  else if (base == Napier) {
-    if (exponent.is_the_log_function())
-      return exponent.arg(0);
-    if (exponent.is_a_mul()) {
-      Expr log_factors_exp = 1;
-      Expr rem_factors_exp = 1;
-      find_log_factors(exponent, log_factors_exp, rem_factors_exp);
-      if (log_factors_exp.nops() == 1)
-	return pwr(log_factors_exp.arg(0), rem_factors_exp);
-    }
-  }
-  return pwr(simplify_logarithm_in_expanded_ex(base),
-	     simplify_logarithm_in_expanded_ex(exponent));
-}
-
-Expr
 factorize_base_arg_log(const Number& base, const Expr& exponent = 1) {
   std::vector<Number> bases;
   std::vector<int> exponents;
@@ -1254,6 +1160,173 @@ logarithm_of_product(const Expr& arg_log) {
       log(exp(1)^a) = a, \\
       log(a^b) = b log(a), \\
       log(a * b) = log(a) + log(b), \\
+      log(a / b) = log(a) - log(b).
+    \end{cases}
+  \f]
+  The last two properties are applied also if \p all_properties is
+  <CODE>true</CODE>.
+*/
+Expr
+apply_elementary_prop(const Expr& e, bool all_properties = true) {
+  assert(e.is_the_log_function());
+  const Expr& arg_log = e.arg(0);
+  // Apply the second property.
+  Number arg_log_num;
+  if (arg_log.is_a_power()) {
+    const Expr& base = arg_log.arg(0);
+    const Expr& exponent = arg_log.arg(1);
+    Number num_base;
+    if (base.is_a_number(num_base)) {
+      // Factorize the base of the argument of the logarithm.
+      return factorize_base_arg_log(num_base, exponent);
+    }
+    else
+      return exponent * log(base);
+    // Apply the first property.
+    if (base.is_the_exp_function() && base.arg(0) == 1)
+      return exponent;
+  }
+  else if (arg_log.is_a_number(arg_log_num)) {
+    if (arg_log_num.is_positive_integer())
+      // Factorize the base of the argument of the logarithm.
+      return factorize_base_arg_log(arg_log_num);
+    if (all_properties && arg_log_num.denominator() != 1) {
+      Number numer = arg_log_num.numerator();
+      Number denom = arg_log_num.denominator();
+      assert(denom.is_positive_integer());
+      // If `all_properties' is true apply the third and the
+      // fourth properties.
+      if (numer.is_positive_integer())
+	return factorize_base_arg_log(numer)
+	  - factorize_base_arg_log(denom);
+      else
+	return numer - factorize_base_arg_log(denom);
+    }
+  }
+  // If `all_properties' is true apply the third and the fourth properties.
+  if (all_properties && arg_log.is_a_mul())
+    return logarithm_of_product(arg_log);
+  return log(arg_log);
+}
+
+Expr
+simpl_power_in_logarithm(const Expr& base, const Expr exponent,
+		      const Number& new_base, const Number& new_exponent = 1) {
+  if (exponent.is_a_mul() && exponent.nops() == 2) {
+    if (exponent.op(0).is_the_log_function()
+	&& exponent.op(1) == 1 / log(new_base))
+      return pwr(exponent.op(0).arg(0), new_exponent);
+    if (exponent.op(1).is_the_log_function()
+	&& exponent.op(0) == 1 / log(new_base))
+      return pwr(exponent.op(1).arg(0), new_exponent);
+  }
+  return pwr(simplify_logarithm_in_expanded_ex(base),
+	     simplify_logarithm_in_expanded_ex(exponent));
+}
+
+void
+find_log_factors(const Expr& e, Expr& log_factors, Expr& rem_factors) {
+  assert(e.is_a_mul());
+  for (unsigned i = e.nops(); i-- > 0; ) {
+    const Expr& factor = e.op(i);
+    if ((factor.is_a_power() && factor.arg(0).is_the_log_function()
+	 && factor.arg(1) == -1)
+	|| factor.is_the_log_function())
+      log_factors *= factor;
+    else
+      rem_factors *= factor;
+  }
+}
+
+Expr
+prepare_simpl_power_in_logarithm(const Expr& base, const Expr& exponent) {
+  Number base_num;
+  // Apply the first and the second properties to the exponent.
+  Expr exponent_simpl = 1;
+  if (exponent.is_a_mul())
+    for (unsigned i = exponent.nops(); i-- > 0; ) {
+      const Expr& factor = exponent.op(i);
+      if (factor.is_the_log_function())
+	exponent_simpl *= apply_elementary_prop(factor, false);
+      else if (factor.is_a_power() && factor.arg(0).is_the_log_function())
+	exponent_simpl *= pwr(apply_elementary_prop(factor.arg(0), false),
+			      factor.arg(1));
+      else
+	exponent_simpl *= factor;
+    }
+  else
+    if (exponent.is_the_log_function())
+      exponent_simpl = apply_elementary_prop(exponent, false);
+    else
+      exponent_simpl = exponent;
+  // The base is a positive number.
+  if (base.is_a_number(base_num) && base_num.is_positive()) {
+    std::vector<Number> bases;
+    std::vector<int> exponents;
+    // The base is integer.
+    if (base_num.is_integer() && exponent_simpl.is_a_mul()) {
+      Expr log_factors_exp = 1;
+      Expr rem_factors_exp = 1;
+      find_log_factors(exponent_simpl, log_factors_exp, rem_factors_exp);
+      partial_factor(base_num, bases, exponents);
+      if (bases.size() == 1) {
+	Number new_base = bases[0];
+	return pwr(simpl_power_in_logarithm(base, log_factors_exp, new_base,
+					    exponents[0]), rem_factors_exp);
+      }
+      else
+	return pwr(simpl_power_in_logarithm(base, log_factors_exp, base_num),
+		   rem_factors_exp);
+    }
+    if (base_num.is_rational() && exponent_simpl.is_a_mul()) {
+      // The base is rational with the numerator equal to `1'.
+      if (base_num.numerator() == 1) {
+	Number denom_base = base_num.denominator();
+	Expr log_factors_exp = 1;
+	Expr rem_factors_exp = 1;
+	find_log_factors(exponent_simpl, log_factors_exp, rem_factors_exp);
+	partial_factor(denom_base, bases, exponents);
+	if (bases.size() == 1) {
+	  Number new_base = bases[0];
+	  return pwr(simpl_power_in_logarithm(base, log_factors_exp, new_base,
+					      exponents[0]),
+		     -rem_factors_exp);
+	}
+	else
+	  return pwr(simpl_power_in_logarithm(base, log_factors_exp, base_num),
+		     -rem_factors_exp);
+      }
+      else {
+	Expr log_factors_exp = 1;
+	Expr rem_factors_exp = 1;
+	find_log_factors(exponent_simpl, log_factors_exp, rem_factors_exp);
+	return pwr(simpl_power_in_logarithm(base, log_factors_exp, base_num),
+		   rem_factors_exp);
+      }
+    }
+  }
+  else if (base == Napier) {
+    if (exponent_simpl.is_the_log_function())
+      return exponent_simpl.arg(0);
+    if (exponent_simpl.is_a_mul()) {
+      Expr log_factors_exp = 1;
+      Expr rem_factors_exp = 1;
+      find_log_factors(exponent_simpl, log_factors_exp, rem_factors_exp);
+      if (log_factors_exp.nops() == 1)
+	return pwr(log_factors_exp.arg(0), rem_factors_exp);
+    }
+  }
+  return pwr(simplify_logarithm_in_expanded_ex(base),
+	     simplify_logarithm_in_expanded_ex(exponent_simpl));
+}
+
+/*!
+  Applies the following logarithm's property:
+  \f[
+    \begin{cases}
+      log(exp(1)^a) = a, \\
+      log(a^b) = b log(a), \\
+      log(a * b) = log(a) + log(b), \\
       log(a / b) = log(a) - log(b), \\
       (a^b)^{log c / log a} = c^b, \quad \text{where } a \in \Rset, a > 0
         \quad \text{and } b \in \Nset, \\
@@ -1265,7 +1338,6 @@ logarithm_of_product(const Expr& arg_log) {
 Expr
 simplify_logarithm_in_expanded_ex(const Expr& e) {
   Expr e_rewritten;
-  D_MSGVAR("*** ", e);
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
@@ -1280,49 +1352,11 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
     // Apply the fifth and sixth properties: note that is important that
     // these properties are applied before than the third and the fourth
     // properties.
-    return prepare_change_base_logarithm(e.arg(0), e.arg(1));
+    return prepare_simpl_power_in_logarithm(e.arg(0), e.arg(1));
   else if (e.is_a_function()) {
-    if (e.is_the_log_function()) {
-      const Expr& arg_log = e.arg(0);
-      // Apply the second property.
-      Number arg_log_num;
-      if (arg_log.is_a_power()) {
-	const Expr& base = arg_log.arg(0);
-	const Expr& exponent = arg_log.arg(1);
-	Number num_base;
-	if (base.is_a_number(num_base)) {
-	  // Factorize the base of the argument of the logarithm.
-	  return factorize_base_arg_log(num_base, exponent);
-	}
-	else
-	  return exponent * log(base);
-	// Apply the first property.
-	if (base.is_the_exp_function() && base.arg(0) == 1)
-	  return exponent;
-      }
-      else if (arg_log.is_a_number(arg_log_num)) {
-	D_MSG("LOG DI NUM");
-	if (arg_log_num.is_positive_integer())
-	  // Factorize the base of the argument of the logarithm.
-	  return factorize_base_arg_log(arg_log_num);
-	if (arg_log_num.denominator() != 1) {
-	  Number numer = arg_log_num.numerator();
-	  Number denom = arg_log_num.denominator();
-	  assert(denom.is_positive_integer());
-	  // Apply the third and the fourth properties.
-	  if (numer.is_positive_integer())
-	    return factorize_base_arg_log(numer)
-	      - factorize_base_arg_log(denom);
-	  else
-	    return numer - factorize_base_arg_log(denom);
-	}
-      }
-      // Apply the third and the fourth properties.
-      else if (arg_log.is_a_mul())
-	return logarithm_of_product(arg_log);
-      else
-	return e;
-    }
+    // Apply the firsts four properties.
+    if (e.is_the_log_function())
+      return apply_elementary_prop(e);
     else if (e.nops() == 1)
       return apply(e.functor(), simplify_logarithm_in_expanded_ex(e.arg(0)));
     else {
@@ -1506,7 +1540,6 @@ Expr
 simplify_sum_in_expanded_ex(const Expr& e, bool only_verification,
 			    bool only_to_the_beginning) {
   Expr e_rewritten;
-  D_MSGVAR("*** ", e);
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
@@ -1637,7 +1670,7 @@ PURRS::simplify_factorials_and_exponentials(const Expr& e) {
 }
 
 PURRS::Expr
-PURRS::simplify_logarithm(const Expr& e) {
+PURRS::simplify_logarithm(const Expr& e) { 
   return simplify_logarithm_in_expanded_ex(e.expand()).expand();
 }
 
