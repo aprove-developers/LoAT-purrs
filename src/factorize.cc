@@ -179,7 +179,7 @@ PURRS::factorize_no_ratio_ex(const Expr& e,
   D_MSG("");
   D_MSGVAR("INPUT ", e);
   Expr e_factorized = e.expand();
-  if (e.is_rational_polynomial()) {
+  if (e_factorized.is_rational_polynomial()) {
     e_factorized = sqrfree(e_factorized);
     D_MSG("sqrfree");
   }
