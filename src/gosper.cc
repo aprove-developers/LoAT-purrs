@@ -29,6 +29,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "gosper.hh"
 #include "alg_eq_solver.hh"
 #include "simplify.hh"
+#include "numerator_denominator.hh"
 #include "util.hh"
 #include <vector>
 #include <algorithm>
@@ -166,12 +167,12 @@ gosper_step_two(const Expr& r_n, const Symbol& n,
   // have integer coefficients. 
   Number a_n_factor;
   a_n = convert_to_integer_polynomial(a_n, n, a_n_factor);
-  a_n *= a_n_factor.numerator();
-  b_n *= a_n_factor.denominator();
+  a_n *= numerator(a_n_factor);
+  b_n *= denominator(a_n_factor);
   Number b_n_factor;
   b_n = convert_to_integer_polynomial(b_n, n, b_n_factor);
-  a_n *= b_n_factor.denominator();
-  b_n *= b_n_factor.numerator();
+  a_n *= denominator(b_n_factor);
+  b_n *= numerator(b_n_factor);
   D_VAR(a_n);
   D_VAR(b_n);
   D_VAR(c_n);

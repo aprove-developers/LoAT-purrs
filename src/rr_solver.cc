@@ -1742,20 +1742,20 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
 static bool
 domain_recurrence(const Symbol& n, const Expr& e, Number& i_c) {
   bool shift_initial_conditions = false;
-  Expr denominator = (e.denominator()).expand();
+  Expr denom = denominator(e).expand();
   i_c = 0;
-  if (denominator != 1) {
+  if (denom != 1) {
     std::vector<Number> potential_roots;
-    unsigned lower_degree = denominator.ldegree(n);
+    unsigned lower_degree = denom.ldegree(n);
     while (lower_degree > 0) {
-      denominator = quo(denominator, n, n);
-      lower_degree = denominator.ldegree(n);
+      denom = quo(denom, n, n);
+      lower_degree = denom.ldegree(n);
       shift_initial_conditions = true;
     }
-    find_divisors(abs(denominator.tcoeff(n).ex_to_number()), potential_roots);
+    find_divisors(abs(denom.tcoeff(n).ex_to_number()), potential_roots);
     // Find non-negative integral roots of the denominator.
     for(unsigned i = potential_roots.size(); i-- > 0; ) {
-      Number temp = denominator.subs(n, potential_roots[i]).ex_to_number();
+      Number temp = denom.subs(n, potential_roots[i]).ex_to_number();
       if (temp == 0 &&  potential_roots[i] > i_c) {
 	i_c = potential_roots[i];
 	shift_initial_conditions = true;
@@ -2040,7 +2040,7 @@ Recurrence::Solver_Status
 Recurrence::
 solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
 			     const Expr& coefficient, Expr& solution) {
-  if (find_parameters(coefficient.denominator(), n)) {
+  if (find_parameters(denominator(coefficient), n)) {
     D_MSG("Variable coefficient with parameters in the denominator");
     return TOO_COMPLEX;
   }

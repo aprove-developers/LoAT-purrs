@@ -162,7 +162,7 @@ convert_to_integer_polynomial(const Expr& p, const Symbol& x,
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
-  Number t_lcm = p.coeff(x, deg_p).denominator().ex_to_number();
+  Number t_lcm = p.coeff(x, deg_p).ex_to_number().denominator();
   for (unsigned i = 0; i <= deg_p; ++i) {
     Expr t_coeff = p.coeff(x, i);
     t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denominator());

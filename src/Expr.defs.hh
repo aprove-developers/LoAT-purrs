@@ -614,24 +614,6 @@ public:
   */
   Expr content(const Symbol& x) const;
 
-  //! Returns numerator of \p *this.
-  /*!
-    If the expression is not of the normal form `numerator/denominator'
-    (where numerator and denominator are relatively prime) polynomials,
-    it is first converted to this form and then the numerator is returned.
-  */
-  // FIXME: what is a polynomial?
-  Expr numerator() const;
-
-  //! Returns denominator of \p *this.
-  /*!
-    If the expression is not of the normal form `numerator/denominator'
-    (where numerator and denominator are relatively prime) polynomials,
-    it is first converted to this form and then the denominator is returned.
-  */
-  // FIXME: what is a polynomial?
-  Expr denominator() const;
-
   //! Returns numerator \p x and denominator \p y of \p *this.
   /*!
     If the expression is not of the normal form `numerator/denominator'
