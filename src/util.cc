@@ -39,6 +39,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
+#define Napier exp(Expr(1))
+
 static const unsigned
 FACTOR_THRESHOLD = 100;
 
@@ -466,9 +468,7 @@ largest_positive_int_zero_on_expanded_ex(const Expr& e, const Symbol& x,
 	  else if (e.arg(0).is_the_log_function()) {
 	    ok = true;
 	    largest_positive_int_zero_on_expanded_ex(e.arg(0), x, z);
-	    // Consider an approximation of the Napier's number.
-	    Number tmp = pwr(Number(2718, 1000), z);
-	    while (z < tmp)
+	    while (compare(z, Napier) == -1)
 	      ++z;
 	  }
 	}

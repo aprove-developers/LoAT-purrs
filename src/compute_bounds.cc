@@ -58,14 +58,19 @@ compute_bounds_for_exp_function(bool lower, const Number& coeff,
   // Upper bound.
   else {
     Expr constant;
-    if (pwr(base, pwr(divisor, 2)) > coeff * pwr(base, divisor)) {
-      const Expr& tmp = pwr(base, pwr(divisor, 2));
+    int cmp = compare(pwr(base, pwr(divisor, 2)), coeff * pwr(base, divisor));
+    if (cmp == 1) {
+      const Expr& tmp = pwr(base, exact_pwr(divisor, 2));
       constant = coeff * tmp * pwr(tmp - coeff * pwr(base, divisor), -1);
     }
-    else
-      constant = coeff * pwr(coeff - 1, -1) * pwr(base, divisor)
+    else if (cmp == 0 || cmp == -1)
+      constant = coeff * exact_pwr(coeff - 1, -1) * pwr(base, divisor)
 	* pwr(log(base), -1 - log(coeff) * pwr(log(divisor), -1))
 	* gamma(1 + log(coeff) * pwr(log(divisor), -1));
+    else
+      // cmp == 2
+      throw std::runtime_error("PURRS internal error: "
+			       "failure of the function `compare()'.");      
     bound += pwr(base, Recurrence::n)
       + constant * pwr(base, Recurrence::n / divisor);
   }
@@ -77,13 +82,8 @@ compute_bounds_for_power_of_n(bool lower,
 			      const Number& num, const Number& k,
 			      Expr& bound) {
   assert(!k.is_negative());
-  // FIXME: come si puo' fare per evitare che saltino fuori i numeri in
-  // virgola mobile? Usare tutte Expr non mi sembra una buona idea.
-  const Expr& divisor_ex = divisor;
-  const Expr& k_ex = k;
-  const Expr& pow_div_k = pwr(divisor_ex, k_ex);
-  Number pow_div_k_numeric = pwr(divisor, k);
-
+  const Expr& pow_div_k = pwr(divisor, k);
+  int diff_coeff_pow_div_k = compare(coeff, pow_div_k);
   const Expr& pow_n_k = pwr(Recurrence::n, k);
   const Expr& frac_log = log(Recurrence::n) / log(divisor);
   // Lower bound.
@@ -116,29 +116,25 @@ compute_bounds_for_power_of_n(bool lower,
     }
     // k >= 1.
     else if (k >= 1) {
-      // FIXME!!
-      Number pow_div_k_numeric_minus = pwr(divisor, k-1);
-
-      const Expr& pow_div_k_minus = pwr(divisor_ex, k_ex - 1);
-      const Expr& pow_n_k_minus = pwr(Recurrence::n, k-1);
-      if (coeff < pow_div_k_numeric_minus)
+      const Expr& pow_div_k_minus = pwr(divisor, k - 1);
+      const Expr& pow_n_k_minus = pwr(Recurrence::n, k - 1);
+      if (compare(coeff, pow_div_k_minus) == -1)
 	tmp_lb = pow_div_k / (pow_div_k - coeff)
 	  * (pow_n_k - pow_frac_log * pwr(pow_div_k / coeff, mu_b));
-      else if (coeff == pow_div_k_numeric_minus)
+      else if (compare(coeff, pow_div_k_minus) == 0)
 	tmp_lb = divisor / (divisor - 1) * pow_n_k
 	  - (pwr(divisor, 1 + mu_b) / (divisor - 1) + c_b * k * frac_log - 1)
 	  * pow_n_k_minus;
-      else if (coeff < pow_div_k_numeric)
+      else if (diff_coeff_pow_div_k == -1)
 	tmp_lb = pow_div_k / (pow_div_k - coeff) * pow_n_k
 	  - (pow_div_k / (pow_div_k - coeff) * pwr(pow_div_k / coeff, mu_b)
 	     + c_b * k * pow_div_k_minus / (coeff - pow_div_k_minus))
 	  * pow_frac_log
 	  + c_b * k * coeff * pow_n_k_minus / (coeff - pow_div_k_minus);
-      else if (coeff == pow_div_k_numeric)
+      else if (diff_coeff_pow_div_k == 0)
 	tmp_lb = pow_n_k * (frac_log - mu_b - c_b * k / (divisor - 1))
 	  + c_b * k * pow_n_k_minus * divisor / (divisor - 1);
-      else {
-	assert(coeff > pow_div_k_numeric);
+      else if (diff_coeff_pow_div_k == 1) {
 	tmp_lb = pow_frac_log
 	  * (pow_div_k / (coeff - pow_div_k) * pwr(pow_div_k / coeff, mu_b)
 	     - c_b * k * pow_div_k_minus / (coeff - pow_div_k_minus))
@@ -146,38 +142,50 @@ compute_bounds_for_power_of_n(bool lower,
 	  + c_b * k * coeff * pow_n_k_minus
 	  / (coeff - pow_div_k_minus);
       }
+      else
+	// diff_coeff_pow_div_k == 2.
+	throw std::runtime_error("PURRS internal error: "
+				 "failure of the function `compare()'.");
     }
     // 0 < k < 1.
     else {
       const Expr& pow_c_b_k = pwr(c_b, k);
-      if (coeff < pow_div_k_numeric)
+      if (diff_coeff_pow_div_k == -1)
 	tmp_lb = pow_n_k * pow_div_k / (pow_div_k - coeff)
 	  - pow_div_k / (pow_div_k - coeff) * pwr(pow_div_k / coeff, 1 + mu_b)
 	  * pow_frac_log
 	  - pow_c_b_k * (log(Recurrence::n) / log(divisor) - 1);
-      else if (coeff == pow_div_k_numeric)
+      else if (diff_coeff_pow_div_k == 0)
 	tmp_lb = (log(Recurrence::n) / log(divisor) - mu_b)
 	  * (pow_n_k - pow_c_b_k) + pow_c_b_k;
-      else
+      else if (diff_coeff_pow_div_k == 1)
 	tmp_lb = pow_div_k / (coeff - pow_div_k)
 	  * pwr(pow_div_k / coeff, 1 + mu_b)
 	  * pow_frac_log
 	  - pow_div_k / (coeff - pow_div_k) * pow_n_k
 	  - pow_c_b_k * (log(Recurrence::n) / log(divisor) - 1);
+      else
+	// diff_coeff_pow_div_k == 2.
+	throw std::runtime_error("PURRS internal error: "
+				 "failure of the function `compare()'.");
     }
     bound += num * tmp_lb;
   }
   // Upper bound.
   else {
     Expr tmp_ub;
-    if (coeff < pow_div_k_numeric)
+    if (diff_coeff_pow_div_k == -1)
       tmp_ub = pow_n_k * pow_div_k / (pow_div_k - coeff);
-    else if (coeff == pow_div_k_numeric)
+    else if (diff_coeff_pow_div_k == 0)
       tmp_ub = pow_n_k * frac_log;
-    else
+    else if (diff_coeff_pow_div_k == 1)
       tmp_ub = pow_div_k
 	* (pwr(Recurrence::n, log(coeff) / log(divisor)) - pow_n_k)
 	/ (coeff - pow_div_k);
+    else
+      // diff_coeff_pow_div_k == 2.
+      throw std::runtime_error("PURRS internal error: "
+				 "failure of the function `compare()'.");
     bound += num * tmp_ub;
   }
 }
@@ -192,14 +200,14 @@ compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
       const Expr& frac_log = log(Recurrence::n) / log(divisor);
       Expr tmp_lb;
       if (coeff < 1)
-	tmp_lb = log(divisor) * pwr(coeff - 1, -2)
+	tmp_lb = log(divisor) * exact_pwr(coeff - 1, -2)
 	  * ((1 - coeff) * frac_log - 1
 	     + pwr(Recurrence::n, log(coeff) / log(divisor)));
       else if (coeff == 1)
 	tmp_lb = log(Recurrence::n) / (2 * coeff) * (frac_log - 1);
       else {
 	assert(coeff > 1);
-	tmp_lb = log(divisor) * pwr(coeff - 1, -2)
+	tmp_lb = log(divisor) * exact_pwr(coeff - 1, -2)
 	  * (pwr(Recurrence::n, log(coeff) / log(divisor))
 	     - (coeff - 1) * frac_log - coeff);
       }
@@ -215,7 +223,7 @@ compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
       tmp_ub = Number(1, 2) * log(Recurrence::n)
 	* (log(Recurrence::n) / log(divisor) + 1);
     else
-      tmp_ub = log(divisor) / pwr(coeff - 1, 2)
+      tmp_ub = log(divisor) / exact_pwr(coeff - 1, 2)
 	* (coeff * pwr(Recurrence::n, log(coeff) / log(divisor))
 	   - (coeff - 1) * log(Recurrence::n) / log(divisor) - coeff);
     bound =+ num * tmp_ub;
@@ -230,30 +238,29 @@ compute_bounds_for_power_times_logarithm_function(bool lower,
 						  const Number& num,
 						  const Number& k,
 						  Expr& bound) {
-  // FIXME: come si puo' fare per evitare che saltino fuori i numeri in
-  // virgola mobile? Usare tutte Expr non mi sembra una buona idea.
-  const Expr& divisor_ex = divisor;
-  const Expr& k_ex = k;
-  const Expr& pow_div_k = pwr(divisor_ex, k_ex);
-  Number pow_div_k_numeric = pwr(divisor, k);
-  
+  const Expr& pow_div_k = pwr(divisor, k);
+  int diff_coeff_pow_div_k = compare(coeff, pow_div_k);
   const Expr& pow_n_k = pwr(Recurrence::n, k);
   // Lower bound.
   if (lower)
     if (divisor.is_positive_integer()) {
       const Expr& frac_log = log(Recurrence::n) / log(divisor);
       Expr tmp_lb;
-      if (coeff < pow_div_k_numeric)
+      if (diff_coeff_pow_div_k == -1)
 	tmp_lb = log(divisor) * pwr(coeff - pow_div_k, -2)
 	  * (((pow_div_k - coeff) * frac_log - pow_div_k) * pow_n_k
 	     + pow_div_k * pwr(Recurrence::n, log(coeff) / log(divisor)));
-      else if (coeff == pow_div_k_numeric)
+      else if (diff_coeff_pow_div_k == 0)
 	tmp_lb = pow_n_k * log(Recurrence::n) / (2 * coeff)
 	  * (frac_log - 1);
-      else
+      else if (diff_coeff_pow_div_k == 1)
 	tmp_lb = pow_div_k * log(divisor) * pwr(coeff - pow_div_k, -2)
 	  * (pwr(Recurrence::n, log(coeff) / log(divisor))
 	     - ((coeff - pow_div_k) * frac_log + coeff) * pow_n_k);
+      else
+	// diff_coeff_pow_div_k == 2.
+	throw std::runtime_error("PURRS internal error: "
+				 "failure of the function `compare()'.");
       bound += num * tmp_lb;
       return true;
     }
@@ -263,13 +270,17 @@ compute_bounds_for_power_times_logarithm_function(bool lower,
   else {
     Expr tmp_ub;
     const Expr& pow_n_k_log = pow_n_k * log(Recurrence::n);
-    if (coeff == pow_div_k_numeric)
+    if (diff_coeff_pow_div_k == 0)
       tmp_ub = Number(1, 2) * pow_n_k_log
 	* (log(Recurrence::n) / log(divisor) + 1);
-    else
+    else if (diff_coeff_pow_div_k == -1 || diff_coeff_pow_div_k == 1)
       tmp_ub = (pow_div_k * log(divisor) / pwr(coeff - pow_div_k, 2)) 
 	* (coeff * pwr(Recurrence::n, log(coeff) / log(divisor))
 	   - (coeff - pow_div_k) * pow_n_k_log / log(divisor) - coeff);
+    else
+      // diff_coeff_pow_div_k == 2.
+      throw std::runtime_error("PURRS internal error: "
+				 "failure of the function `compare()'.");
     bound += num * tmp_ub;
     return true;
   }
