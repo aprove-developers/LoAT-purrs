@@ -128,7 +128,7 @@ return_sum(bool distinct, unsigned lower_bound_sum, const Expr& coeff,
 
 Expr
 rewrite_factor(const Expr& e, const Symbol& r, unsigned gcd_among_decrements) {
-  if (e.is_a_power())    
+  if (e.is_a_power())
     return pwr(rewrite_factor(e.arg(0), r, gcd_among_decrements),
 	       rewrite_factor(e.arg(1), r, gcd_among_decrements));
   else if (e.is_a_function())
@@ -577,49 +577,49 @@ compute_sum_with_transcendental_method(const Number& lower, const Expr& upper,
   return solution;
 }
 
-//! Let \p e be the right hand side of a recurrence to which is possible
-//! to reduce the order. This function computes and returns the right hand 
-//! side of the reduced order recurrence.
+//! \brief
+//! Let \p old_rhs be the right hand side of a recurrence to which is
+//! possible to reduce the order. This function computes and returns
+//! the right hand side of the reduced order recurrence.
 /*!
   Let \f$ x(n) = a_1 x(n-k_1) + \dotsb + a_h x(n-k_h) + p(n) \f$ be
-  a recurrence such that \f$ g = gcd(k_1, \dotsc, k_h) > 1 \f$, its
-  right hand side is contained in \p e. For these recurrences
-  is possible to reduce the order.
+  a recurrence such that \f$ g = gcd(k_1, \dotsc, k_h) > 1 \f$. Its
+  right hand side is contained in \p old_rhs, while \p r is a symbol
+  that represent the quantity \f$ mod(n, g) \f$.
+  For these recurrences is possible to reduce the order.
   This function computes and returns the right hand side of the reduced
   order recurrence.
-  Note: the expression \p e must be simplified so that not to have
-  nested power (using the function <CODE>simplify_ex_for_input</CODE>).
+  Note: the expression \p old_rhs must be simplified so that not to have
+  nested power (using the function <CODE>simplify_ex_for_input()</CODE>).
 */
 PURRS::Expr
-PURRS::rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
-					unsigned gcd_among_decrements,
-					const std::vector<Expr>& coefficients,
-					std::vector<Expr>& new_coefficients,
-					Expr& inhomogeneous) {
-  unsigned num_summands = e.is_a_add() ? e.nops() : 1;
-  Expr e_rewritten = 0;
+PURRS::write_reduced_order_recurrence(const Expr& old_rhs, const Symbol& r,
+				      unsigned gcd_among_decrements,
+				      const std::vector<Expr>& coefficients,
+				      std::vector<Expr>& new_coefficients,
+				      Expr& inhomogeneous) {
+  unsigned num_summands = old_rhs.is_a_add() ? old_rhs.nops() : 1;
+  // Build the right hand side of the reduced order recurrences and,
+  // at the same time, build its inhomogeneous term.
+  Expr new_rhs = 0;
   if (num_summands > 1)
-    for (unsigned i = num_summands; i-- > 0; )
-      e_rewritten += rewrite_term(e.op(i), r, gcd_among_decrements);
-  else
-    e_rewritten = rewrite_term(e, r, gcd_among_decrements);
-  
-  // Find the non-homogeneous term of the new right hand side found.
-  if (e_rewritten.is_a_add())
-    for (unsigned i = e_rewritten.nops(); i-- > 0; ) {
-      if (!e_rewritten.op(i).has_x_function(false, Recurrence::n))
-	inhomogeneous += e_rewritten.op(i);
+    for (unsigned i = num_summands; i-- > 0; ) {
+      const Expr& tmp = rewrite_term(old_rhs.op(i), r, gcd_among_decrements);
+      new_rhs += tmp;
+      if (!tmp.has_x_function(Recurrence::n))
+	inhomogeneous += tmp;
     }
-  else
-    if (!e_rewritten.has_x_function(false, Recurrence::n))
-      inhomogeneous = e_rewritten;
-  
+  else {
+    const Expr& tmp = rewrite_term(old_rhs, r, gcd_among_decrements);
+    new_rhs += tmp;
+    if (!tmp.has_x_function(Recurrence::n))
+      inhomogeneous += tmp;
+  }
   // Find the coefficients of the reduced order recurrence.
   for (unsigned i = coefficients.size(); i-- > 0; )
     if (i % gcd_among_decrements == 0)
       new_coefficients[i / gcd_among_decrements] = coefficients[i];
-  
-  return e_rewritten;
+  return new_rhs;
 }
 
 //! Let \p e be the expression that represent the solution of the reduced
@@ -696,6 +696,7 @@ PURRS::come_back_to_original_variable(const Expr& e, const Symbol& r,
   return e_rewritten;
 }
 
+//! \brief
 //! Returns the expanded solution of the recurrence \p rec
 //! to which we have applied the order reduction.
 /*!
@@ -726,15 +727,15 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
 					   unsigned gcd_among_decrements) {
   // `term_with_ic' will contain the term of the solution relative to
   // the initial condition; `remainder_solution' will contain the
-  // resto of the solution.
+  // rest of the solution.
   Expr term_with_ic = 0;
   Expr remainder_solution = 0;
   if (rec.exact_solution_.expression().is_a_add())
     for (unsigned i = rec.exact_solution_.expression().nops(); i-- > 0; )
-      if (!rec.exact_solution_.expression().op(i).has_x_function(true))
-	remainder_solution += rec.exact_solution_.expression().op(i);
-      else
+      if (rec.exact_solution_.expression().op(i).has_x_function_only_ic())
 	term_with_ic += rec.exact_solution_.expression().op(i);
+      else
+	remainder_solution += rec.exact_solution_.expression().op(i);
   else {
     assert(rec.exact_solution_.expression().is_the_x_function());
     term_with_ic = rec.exact_solution_.expression();

@@ -88,11 +88,11 @@ compute_sum_with_transcendental_method(const Number& lower, const Expr& upper,
 				       roots);
 
 Expr
-rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
-				 unsigned gcd_among_decrements,
-				 const std::vector<Expr>& coefficients,
-				 std::vector<Expr>& new_coefficients,
-				 Expr& inhomogeneous);
+write_reduced_order_recurrence(const Expr& e, const Symbol& r,
+			       unsigned gcd_among_decrements,
+			       const std::vector<Expr>& coefficients,
+			       std::vector<Expr>& new_coefficients,
+			       Expr& inhomogeneous);
 
 Expr 
 come_back_to_original_variable(const Expr& e, const Symbol& r, const Expr& m,
