@@ -57,6 +57,11 @@ time_unit_to_usecs(time_unit_t t) {
   return tsc_to_usecs(t);
 }
 
+inline long
+time_unit_to_msecs(time_unit_t t) {
+  return tsc_to_msecs(t);
+}
+
 #elif HAVE_GETRUSAGE
 
 typedef timeval time_unit_t;
@@ -99,6 +104,11 @@ time_unit_to_usecs(time_unit_t t) {
   return t.tv_sec*1000000 + t.tv_usec;
 }
 
+inline long
+time_unit_to_msecs(time_unit_t t) {
+  return time_unit_to_usecs(t)/1000;
+}
+
 #else
 
 #error "No way to measure time!!!"
@@ -112,6 +122,11 @@ get_time() {
 
 inline long
 time_unit_to_usecs(time_unit_t t) {
+  return t;
+}
+
+inline long
+time_unit_to_msecs(time_unit_t t) {
   return t;
 }
 
