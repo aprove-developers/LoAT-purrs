@@ -213,9 +213,14 @@ form \anchor general_weighted_average
 \f]
 where \f$ \fund{f,g}{\Nset}{\Cset} \f$, and \f$ f \f$ never vanishes.
 \f$ g(n) \f$ is the <EM>non-homogeneous part</EM> of the recurrence;
-If \f$ g \doteq 0 \f$ (that is, \f$ g \f$ vanishes identically from a
+if \f$ g \doteq 0 \f$ (that is, \f$ g \f$ vanishes identically from a
 syntactical point of view), we say that the recurrence is
 <EM>homogeneous</EM>.
+Such recurrence is given together with the
+\anchor initial_condition <EM>initial condition</EM> \f$ x_0 \f$.
+The user may define the initial condition; if it do not do this
+the initial condition will appear symbolically in the explicit form of
+the solution, and will be called <EM>symbolic initial condition</EM>.
 If \f$ f_k(n) \f$ is constant for each \f$ k = 0, \dotsc, n-1 \f$, then
 the recurrence is called with <EM>constant coefficients</EM>; otherwise
 the recurrence is called with <EM>variable coefficients</EM>.
