@@ -928,6 +928,13 @@ rewrite_weighted_average_recurrence(const Expr& rhs, const Expr& term_sum,
       || (upper != Recurrence::n && upper != Recurrence::n-1))
     return false;
 
+  // Assert that the argument of the sum is linear in x(k): it cannot be
+  // a weighted-average recurrence if it is not linear.
+  Symbol x_k;
+  Expr summand = term_sum.arg(3).substitute(x(term_sum.arg(0)), x_k).expand();
+  if (!summand.is_polynomial(x_k) || summand.degree(x_k) > 1)
+    return false;
+
   // Find the weight `f(n)' and the inhomogeneous term of the
   // recurrence transformed so that to have the upper limit of the
   // sum equal to `n'.
