@@ -201,6 +201,7 @@ Recurrence::VERIFY_STATUS
 PURRS::Recurrence::verify_solution() const {
   if (solved || solve()) {
     D_VAR(order());
+    D_VAR(first_initial_condition());
     if (order() == 0)
       return CORRECT;
     else {
@@ -211,7 +212,7 @@ PURRS::Recurrence::verify_solution() const {
 					      first_initial_condition() + i);
 	solution_valuated = simplify_numer_denom(solution_valuated);
 	D_VAR(solution_valuated);
-	if (solution_valuated != x(i))
+	if (solution_valuated != x(first_initial_condition() + i))
 	  return DONT_KNOW;
       }
       // Step 2: find `partial_solution'.
