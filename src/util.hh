@@ -82,7 +82,16 @@ Expr
 convert_to_integer_polynomial(const Expr& p, const Symbol& x,
 			      Number& factor);
 
-//! Computes the resultant between the polynomials \p p and \p q.
+//! \brief
+//! Returns the resultant between the polynomials \p p and \p q
+//! in the variable \p x using the Sylvester matrix method.
+Expr
+sylvester_matrix_resultant(const Expr& p, const Expr& q, const Symbol& x);
+
+//! \brief
+//! Returns the resultant between the polynomials \p p and \p q
+//! in the variable \p x, using Euclid's algorithm or,
+//! when this last fails, using the Sylvester matrix method.
 Expr
 resultant(const Expr& p, const Expr& q, const Symbol& x);
 

@@ -30,6 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "factorize.hh"
 #include "alg_eq_solver.hh"
 #include "numerator_denominator.hh"
+#include "Matrix.defs.hh"
 #include "Expr.defs.hh"
 #include "Number.defs.hh"
 #include "Symbol.defs.hh"
@@ -281,18 +282,60 @@ PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x,
   return q;
 }
 
-Expr
-sylvester_matrix_resultant(const Expr& /*p*/, const Expr& /*q*/) {
-  throw
-    "PURRS error: function\n"
-    "`compute_resultant_with_determinant()': work in progress.\n"
-    "Please come back tomorrow.";
+//! \brief
+//! Returns the resultant between the polynomials \p p and \p q
+//! in the variable \p x using the Sylvester matrix method.
+/*!
+  Let \f$ m \f$ and \f$ n \f$ be the degree of the polynomials \p p
+  and \p q, respectively.
+  The resultant between \p p and \p q is equal to the determinant
+  of the Sylvester matrix.
+  The Sylvester matrix is a \f$ m + n \times m + n \f$ matrix built
+  like follow: in the first \f$ n \f$ rows there are the coefficients
+  of \p p and in the remaining \f$ m \f$ rows there are the coefficients
+  of \p q.
+  The coefficients of \p p occurs in the first \f$ m + 1 \f$ positions
+  of the first row, while in the remaining positions there are all zeros;
+  in the second row the coefficients are shifted forward by one position,
+  so will be one zero in the first position, and so forth. In the
+  \f$ n \f$-th row the coefficients are in the last \f$ m + 1 \f$ positions,
+  while in the first positions there are all zeroes.
+  The coefficients of \p q in the last \f$ m \f$ rows are arranged in the
+  analogous way.
+*/
+PURRS::Expr
+PURRS::sylvester_matrix_resultant(const Expr& p, const Expr& q,
+				  const Symbol& x) {
+  assert(p.is_polynomial(x) && q.is_polynomial(x));
+  unsigned deg_p = p.degree(x);
+  unsigned deg_q = q.degree(x);
+  // The list `elements_sylvester_matrix' will contain all the elements
+  // of the matrix `sylvester' in succession starting from the first row.
+  Expr_List elements_sylvester_matrix;
+  for (unsigned i = 1; i <= deg_q; ++i) {
+    for (unsigned j = 1; j < i; ++j)
+      elements_sylvester_matrix.append(0);
+    for (unsigned j = i + deg_p; j >= i; --j)
+      elements_sylvester_matrix.append(p.coeff(x, j - i));
+    for (unsigned j = i + deg_p + 1; j <= deg_p + deg_q; ++j)
+      elements_sylvester_matrix.append(0);
+  }
+  for (unsigned i = 1; i <= deg_p; ++i) {
+    for (unsigned j = 1; j < i; ++j)
+      elements_sylvester_matrix.append(0);
+    for (unsigned j = i + deg_q; j >= i; --j)
+      elements_sylvester_matrix.append(q.coeff(x, j - i));
+    for (unsigned j = i + deg_q + 1; j <= deg_p + deg_q; ++j)
+      elements_sylvester_matrix.append(0);
+  }
+  Matrix sylvester(deg_p + deg_q, deg_p + deg_q, elements_sylvester_matrix);
+  return sylvester.determinant();
 }
 
 //! \brief
-//! Computes the resultant of the polynomials \p f and \p g with 
-//! rational coefficients, using Euclid's algorithm.
-//! Returns the solution in \p res.
+//! Computes the resultant of the polynomials \p f and \p g in the
+//! variable \p x with rational coefficients, using Euclid's algorithm or,
+//! when this last fails, using the Sylvester matrix method.
 /*!
   The following properties of the resultant are used:
   - \f$ Res(g, f) = (-1)^{\deg(f)\deg(g)} Res(f, g) \f$; 
@@ -341,7 +384,7 @@ PURRS::resultant(const Expr& p, const Expr& q, const Symbol& x) {
 	// The last chanche to compute the resultant is to use the
 	// method of the Sylvester matrix
 	// (see http://mathworld.wolfram.com/SylvesterMatrix.html).
-	return sylvester_matrix_resultant(f.expand(), g.expand());
+	return sylvester_matrix_resultant(f.expand(), g.expand(), x);
       Expr r = prem(g, f, x);
       Expr factor = pwr(f.lcoeff(x), deg_g - deg_f + 1);
       // The rest of euclidean's division is given by the ratio
