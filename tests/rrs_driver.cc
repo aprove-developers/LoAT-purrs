@@ -80,7 +80,8 @@ main() try {
     cout << "Trying to solve x(n) = " << rhs << endl;
 #endif
 
-    if (!solve(rhs, n)) {
+    GExpr solution;
+    if (!solve(rhs, n, solution)) {
 #if NOISY
       cout << "Sorry, this is too difficult." << endl;
 #endif

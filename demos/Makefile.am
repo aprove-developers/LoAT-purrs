@@ -21,6 +21,7 @@ LDADD = $(top_builddir)/src/libpurrs.a -lstdc++ -lntl @extra_libraries@ -lcgicc 
 
 CPPFLAGS = @extra_cpp_flags@
 
-noinst_PROGRAMS = purrs_eqs.cgi
+noinst_PROGRAMS = purrs_eqs.cgi purrs_rrs.cgi
 
 purrs_eqs_cgi_SOURCES = purrs_eqs_cgi.cc
+purrs_rrs_cgi_SOURCES = purrs_rrs_cgi.cc

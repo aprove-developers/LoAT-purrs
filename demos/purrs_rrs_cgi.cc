@@ -234,8 +234,14 @@ main() try {
   if(expr == (*cgi).end() || expr->isEmpty())
     error("you did not type anything!!!");
 
-  GSymbol x("x");
-  GExpr p = GExpr(**expr, lst(x));
+  GSymbol n("n");
+  GSymbol a("a");
+  GSymbol b("b");
+  GSymbol c("c");
+  GSymbol d("d");
+  GList symbols(n, a, b, c, d);
+  GExpr rhs = GExpr(**expr, symbols);
+#if 0
   if (p == GExpr(0)
       || !p.info(info_flags::integer_polynomial)
       || p.info(info_flags::numeric)) {
@@ -244,6 +250,7 @@ main() try {
       << "with integer coefficients?";
     error(s.str());
   }
+#endif
 
 #if HAVE_GETRUSAGE
   timeval start;
@@ -254,10 +261,14 @@ main() try {
     start = rsg.ru_utime;
 #endif
 
-  std::vector<Polynomial_Root> roots;
-  bool all_distinct;
-  if (!find_roots(p, x, roots, all_distinct))
-    error("sorry, this is too difficult");
+  GExpr solution;
+  try {
+    if (!solve(rhs, n, solution))
+      error("sorry, this is too difficult");
+  }
+  catch (const char* s) {
+    error(s);
+  }
 
 #if HAVE_GETRUSAGE
   timeval end;
@@ -319,8 +330,11 @@ main() try {
        << h1() << "PURRS Demo " << span("Results", set("class", "green"))
        << h1() << endl;
 
-  cout << h2() << "Roots of " << p << h2() << endl;
+  cout << h2() << "Random formula for x(n) = " << rhs << h2() << endl;
 
+  cout << "x(n) = " << solution << endl;
+
+#if 0
   cout << cgicc::div().set("align", "center") << endl
        << table()
     .set("border", "0").set("rules", "none").set("frame", "void")
@@ -344,6 +358,7 @@ main() try {
 	 << tr() << endl;
   }
   cout << table() << cgicc::div() << endl;
+#endif
 
   // Get a pointer to the environment.
   const CgiEnvironment& env = cgi.getEnvironment();
@@ -352,7 +367,7 @@ main() try {
   cout << br() << br()
        <<cgicc::div().set("align", "center").set("class", "bigger") << endl;
 #if HAVE_GETRUSAGE
-  cout << "The computation of roots took about "
+  cout << "The computation took about "
        << (double) (us_of_cpu_time/1000000.0) << " s of CPU time."
        << br() << br() << endl;
 #endif

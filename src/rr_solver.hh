@@ -28,6 +28,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "globals.hh"
 
 bool
-solve(const GExpr& rhs, const GSymbol& n);
+solve(const GExpr& rhs, const GSymbol& n, GExpr& solution);
 
 #endif

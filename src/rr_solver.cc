@@ -35,7 +35,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 using namespace GiNaC;
 
-#define NOISY 1
+#define NOISY 0
 
 static GExpr
 get_binding(const GList& l, unsigned wild_index) {
@@ -215,6 +215,7 @@ transform_exponentials(GExpr& e, const GSymbol& n, const bool input) {
   if (e.find(a_bn, lst_of_exp))
     e = split_exp(e, n, lst_of_exp);
 
+#if 0
   if (input == false) {
     //FIXME: this part must be finished!!
     // Transforms a^b*a^c into a^(b+c)
@@ -227,6 +228,7 @@ transform_exponentials(GExpr& e, const GSymbol& n, const bool input) {
       //e = union_exp(e, n, lst_of_exp);
     }
   }
+#endif
 
   // Transforms a^n*b^n into (a*b)^n.
   static GExpr a_n_b_n = pow(wild(0), n)*pow(wild(1), n);
@@ -259,19 +261,15 @@ order_2_sol_poly_times_exponentials(const std::vector<GExpr>
 				    GExpr& solution);
 
 bool
-solve(const GExpr& rhs, const GSymbol& n) {
+solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   static GExpr x_i = x(GiNaC::wild(0));
   static GExpr x_i_plus_r = x_i + GiNaC::wild(1);
   static GExpr a_times_x_i = GiNaC::wild(1)*x_i;
   static GExpr a_times_x_i_plus_r = a_times_x_i + GiNaC::wild(2);
 
-  static GList substitution;
-
   int order = -1;
   std::vector<GExpr> coefficients;
   GExpr e = rhs;
-
-  GExpr solution;
 
   // Special case: 'e' is only a function in n or a constant.
   GList occurrences;
@@ -294,7 +292,8 @@ solve(const GExpr& rhs, const GSymbol& n) {
 #endif
     return true;
   }
-  
+
+  static GList substitution;
   bool failed = false;
   do {
     GExpr i;
