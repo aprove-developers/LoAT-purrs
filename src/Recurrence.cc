@@ -28,3 +28,5 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
+const PURRS::Symbol&
+PURRS::Recurrence::n = Symbol("n");

@@ -116,6 +116,9 @@ public:
   Expr exact_solution(const Symbol& n) const;
   bool verify_solution(const Symbol& n) const;
 
+  //! The index of the recurrence.
+  static const Symbol& n;
+
 private:
   //! Holds the right-hand side of the global recurrence to be solved.
   //! This may have been set directly by the constructor or it may be the
