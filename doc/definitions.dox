@@ -218,12 +218,9 @@ syntactical point of view), we say that the recurrence is
 <EM>homogeneous</EM>.
 Such recurrence is given together with the
 \anchor initial_condition <EM>initial condition</EM> \f$ x_0 \f$.
-The user may define the initial condition; if it do not do this
+The user may define the initial condition; otherwise
 the initial condition will appear symbolically in the explicit form of
 the solution, and will be called <EM>symbolic initial condition</EM>.
-If \f$ f_k(n) \f$ is constant for each \f$ k = 0, \dotsc, n-1 \f$, then
-the recurrence is called with <EM>constant coefficients</EM>; otherwise
-the recurrence is called with <EM>variable coefficients</EM>.
 
 Sometimes we say that this type of recurrence is of <EM>infinite order</EM>.
 
