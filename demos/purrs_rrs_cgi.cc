@@ -570,7 +570,9 @@ main() try {
        << " took about " << solution_time_msecs << " ms of CPU time";
   if (have_verified_exact_solution
       || have_verified_lower_bound || have_verified_upper_bound) {
-  cout << "Verifying "
+  cout << endl
+       << br()
+       << "verifying "
        << ((have_lower_bound && have_upper_bound) ? "them" : "it")
        << " took about " << verification_time_msecs << " ms of CPU time.";
   }
