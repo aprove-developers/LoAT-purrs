@@ -308,6 +308,27 @@ Recurrence::gcd_among_decrements() {
   return finite_order_p -> gcd_among_decrements();
 }
 
+inline Expr&
+Recurrence::product_factor() {
+  assert(is_linear_finite_order_var_coeff());
+  assert(finite_order_p);
+  return finite_order_p -> product_factor();
+}
+
+inline Expr
+Recurrence::product_factor() const {
+  assert(is_linear_finite_order_var_coeff());
+  assert(finite_order_p);
+  return finite_order_p -> product_factor();
+}
+
+inline void
+Recurrence::set_product_factor(const Expr& x) const {
+  assert(is_linear_finite_order_var_coeff());
+  assert(finite_order_p);
+  return finite_order_p -> set_product_factor(x);
+}
+
 inline unsigned
 Recurrence::applicability_condition() const {
   assert(is_functional_equation());

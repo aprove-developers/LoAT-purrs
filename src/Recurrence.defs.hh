@@ -548,12 +548,32 @@ private:
   //! Returns \f$ 0 \f$ if the order of the recurrence is \f$ 0 \f$.
   unsigned gcd_among_decrements() const;
 
-  //!  \brief
+  //! \brief
   //! Returns the greatest common divisor among the decrements \f$ k \f$
   //! of the terms \f$ x(n-k) \f$ of a linear finite order recurrence.
   //! Returns \f$ 0 \f$ if the order of the recurrence is \f$ 0 \f$.
   unsigned& gcd_among_decrements();
 
+  //! \brief
+  //! Returns the expression \f$ \prod_{i}^n a(k)\f$,
+  //! where \f$ i \f$ is \p first_well_defined_rhs_linear() and \f$ a(n) \f$
+  //! is the coefficient of the recurrence of first order with variable
+  //! coefficient.
+  Expr& product_factor();
+
+  //! \brief
+  //! Returns the expression \f$ \prod_{i}^n a(k)\f$,
+  //! where \f$ i \f$ is \p first_well_defined_rhs_linear() and \f$ a(n) \f$
+  //! is the coefficient of the recurrence of first order with variable
+  //! coefficient.
+  Expr product_factor() const;
+
+  //! \brief
+  //! Sets to \p x the expression \f$ \prod_{i}^n a(k)\f$,
+  //! where \f$ i \f$ is \p first_well_defined_rhs_linear() and \f$ a(n) \f$
+  //! is the coefficient of the recurrence of first order with variable
+  //! coefficient.
+  void set_product_factor(const Expr& x) const;
 
   // Methods to access to private data of `Functional_Equation_Info'.
 

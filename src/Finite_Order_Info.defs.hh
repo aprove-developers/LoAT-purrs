@@ -37,11 +37,13 @@ class Finite_Order_Info {
 public:
   //! \brief
   //! Constructor: sets \f$ order{\_} = k \f$,
-  //! \f$ coefficients{\_} = coeffs \f$ and
+  //! \f$ coefficients{\_} = coeffs \f$,
   //! \f$ gcd{\_}among{\_}decrements{\_} = gcd \f$,
-  //! \f$ first{\_}i{\_}c{\_}for{\_}linear{\_} = i{\_}c \f$.
+  //! \f$ first{\_}i{\_}c{\_}for{\_}linear{\_} = i{\_}c \f$,
+  //! \f$ product{\_}factor{\_} = prod{\_}factor\f$.
   Finite_Order_Info(int k, const std::vector<Expr>& coeffs,
-		    unsigned gcd, unsigned i_c = 0);
+		    unsigned gcd, unsigned i_c = 0,
+		    const Expr prod_factor = 0);
 
   //! Copy-constructor.
   Finite_Order_Info(const Finite_Order_Info& y);
@@ -79,6 +81,15 @@ public:
   //! Returns <CODE>gcd_among_decrements_</CODE>.
   unsigned& gcd_among_decrements();
 
+  //! Returns <CODE>product_factor_</CODE>.
+  Expr& product_factor();
+
+  //! Returns <CODE>product_factor_</CODE>.
+  Expr product_factor() const;
+
+  //! Sets <CODE>product_factor_</CODE> with \p x.
+  void set_product_factor(const Expr& x);
+
 private:
   //! The order of the recurrence. 
   unsigned int order_;
@@ -97,6 +108,13 @@ private:
   //! The smallest positive integer for which the recurrence is
   //! well-defined: the initial conditions will start from it.
   unsigned first_well_defined_rhs_linear_;
+
+  //! \brief
+  //! In the recurrences of the first order with variable coefficient
+  //! \f$ a(n) \f$, stores the factor \f$ \prod_{i}^n a(k)\f$,
+  //! where \f$ i \f$ is the non-negative integer
+  //! \p first_well_defined_rhs_linear_.
+  Expr product_factor_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver
