@@ -71,28 +71,13 @@ get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
   product of a polynomial and an exponential; <CODE>false</CODE> otherwise.
 */
 static bool
-check_poly_times_exponential(const GMatrix& decomposition, const GSymbol& n) {
+check_poly_times_exponential(const GMatrix& decomposition) {
   // Calculates the number of columns of the matrix 'decomposition'.
   unsigned num_columns = decomposition.cols();
   bool poly_times_exp = true;
-  for (size_t i = 0; i < num_columns; ++i) {
-    GExpr exponential = decomposition(0, i);
-    GExpr coeff_of_exp = decomposition(1, i);
-    if (is_a<power>(exponential)) {
-      // The base of exponential must be numeric or an expression that
-      // contains the parameters (a, b, c, d) but not the variable n.
-      if (!GiNaC::is_a<GiNaC::numeric>(exponential.op(0)))
-	if (exponential.op(0).has(n))
-	  poly_times_exp = false;
-    }
-    else
-      assert(exponential.is_equal(1));
-    // FIXME-FIXME: what is a polynomial in a variable n?
-    // For instance, for GiNaC sqrt(3) is not a polynomial...
-    // Non devo usare questo flag ma farmi una funzione mia!
-    if (!coeff_of_exp.info(info_flags::polynomial)) 
+  for (size_t i = 0; i < num_columns; ++i)
+    if (!decomposition(2, i).is_zero())
       poly_times_exp = false;
-  }
   return poly_times_exp;
 }
 
@@ -248,14 +233,17 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   // Simplifies expressions, in particular rewrites nested powers.
   e = simplify_on_input_ex(e);
 
-  // Now certainly the exponentials in the inhomogeneous term have
-  // as exponent 'n' (or a power of 'n').
-  // 'decomposition' is a matrix with two rows and a number of columns
+  // 'decomposition' is a matrix with three rows and a number of columns
   // which is at most the number of exponentials in the inhomogeneous term
   // plus one.
   // In every column there is a exponential in the first row and its
-  // coefficient in the second row. In the last column there is the
-  // constant exponential with its coefficients. 
+  // coefficient in the second and third row: in the second row there is
+  // the polynomial part of the coefficient and in the third row there is
+  // non polynomial part of the coefficients. If the coefficient is not
+  // polynomial then in the second row there is zero and, similarly, in the
+  // third row there is zero if the coefficient is a polynomial.
+  // In the last column there is the constant exponential with its
+  // coefficients. 
   GMatrix decomposition = decomposition_inhomogeneous_term(e, n);
 #if NOISY
   std::cout << "Inhomogeneous term's decomposition"
@@ -277,7 +265,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   switch (order) {
   case 1:
     {
-      if (check_poly_times_exponential(decomposition, n))
+      if (check_poly_times_exponential(decomposition))
 	// Calculates the solution of the first order recurrences when
 	// the inhomogeneous term is a polynomial or the product of a
 	// polynomial and an exponential.      
@@ -306,7 +294,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 		"support the case of the inhomogeneous term with "
 		"parameters. ");
       }
-      if (check_poly_times_exponential(decomposition, n))
+      if (check_poly_times_exponential(decomposition))
 	// Calculates the solution of the second order recurrences when
 	// the inhomogeneous term is a polynomial or the product of a
 	// polynomial and an exponential.      
@@ -329,34 +317,43 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 }
 
 /*!
-  This function makes a matrix with two rows and a number of columns
+  This function makes a matrix with three rows and a number of columns
   does not exceed the number of exponentials in the inhomogeneous term
   plus one.
   The function gives the decomposition 
   \f$ e(n) = sum_{i=0}^k \alpha_i^j \cdot p(n)_i \f$ with
   - \f$ \alpha_i \ne \alpha_j \f$ if \f$ i \ne j \f$
   - \p p does not contains exponentials.
-  It returns the matrix whose \f$ i\f$-th column contains 
-  \f$ \alpha_i^n \f$ and \f$ p(n)_i \f$
-  for \f$ i = 1, \ldots, k \f$.
+  It returns the matrix whose \f$ i\f$-th column, for \f$ i = 1, \ldots, k \f$,
+  contains \f$ \alpha_i^n \f$ in the first row and \f$ p(n)_i \f$
+  in the second and third row: the polynomial part of \f$ p(n)_i \f$ in the
+  second row and the non polynomial part in the third row.
 */
 static GMatrix
 decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
   GExpr p, q;
   GList(lst_of_exp);
-
   p = e;
   GExpr pattern = pow(wild(), n);
   p.find(pattern, lst_of_exp);
+  // 'lst_of_exp' contains all exponentials.
   p = p.collect(lst_of_exp);
 
-  if (lst_of_exp.nops() == 0)
-    // In this case there are no axponentials.
-    return GMatrix (2, 1, lst(1, p));
+  if (lst_of_exp.nops() == 0) {
+    // In this case there are not any exponentials.
+    GExpr p_poly; 
+    GExpr p_no_poly;
+    assign_poly_part_and_no_poly_part(p, n, p_poly, p_no_poly);
+    return GMatrix (3, 1, lst(1, p_poly, p_no_poly));
+  }
   else {
-    // In this case there is at least one exponential in 'p'
+    // In this case there is at least one exponential in 'p'.
+    // 'row_exp' will contains all exponentials; 'row_coeff_poly' and
+    // 'row_coeff_no_poly' will contain polynomial part and non
+    // polynomial part of exponential's coefficients, rispectively.
     GList row_exp;
-    GList row_coeff;
+    GList row_coeff_poly;
+    GList row_coeff_no_poly;
     q = p;
     for (size_t i = lst_of_exp.nops(); i-- > 0; ) {
       GList addendum;
@@ -368,12 +365,17 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
 	// The exponential's coefficient is not 1.
 	GExpr coeff = addendum.op(0);
 	coeff = coeff.subs(wild(1)*pow(wild(2), n) == wild(1));
-	row_coeff.append(coeff);
+	GExpr coeff_poly;
+	GExpr coeff_no_poly;
+	assign_poly_part_and_no_poly_part(coeff, n, coeff_poly, coeff_no_poly);
+	row_coeff_poly.append(coeff_poly);
+	row_coeff_no_poly.append(coeff_no_poly);
 	q -= addendum.op(0);
       }
       else {
 	// The exponential's coefficient is 1.
-	row_coeff.append(1);
+	row_coeff_poly.append(1);
+	row_coeff_no_poly.append(0);
 	q -= lst_of_exp.op(i);
       }
     }
@@ -382,20 +384,27 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
     unsigned int num_columns;
     if (!q.is_zero()) {
       row_exp.append(1);
-      row_coeff.append(q);
+      GExpr q_poly;
+      GExpr q_no_poly;
+      assign_poly_part_and_no_poly_part(q, n, q_poly, q_no_poly);
+      row_coeff_poly.append(q_poly);
+      row_coeff_no_poly.append(q_no_poly);
+
       num_columns = lst_of_exp.nops() + 1;
     }
     else
       num_columns = lst_of_exp.nops();
-
+ 
     // The next 'for' is necessary for to use the constructor matrices
     //      matrix::matrix(unsigned r, unsigned c, const lst& l);
-    unsigned row_coeff_nops = row_coeff.nops();
-    for (size_t i = 0; i < row_coeff_nops; ++i)
-      row_exp.append(row_coeff.op(i));
-
-    GMatrix terms_divided(2, num_columns, row_exp);
-      
+    unsigned row_coeff_poly_nops = row_coeff_poly.nops();
+    for (size_t i = 0; i < row_coeff_poly_nops; ++i)
+      row_exp.append(row_coeff_poly.op(i));
+    for (size_t i = 0; i < row_coeff_poly_nops; ++i)
+      row_exp.append(row_coeff_no_poly.op(i));
+    
+    GMatrix terms_divided(3, num_columns, row_exp);
+    
     return terms_divided;
   }
 }
