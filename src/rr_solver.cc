@@ -47,9 +47,9 @@ get_binding(const GList& l, unsigned wild_index) {
 }
 
 /*!
-  Returns <CODE>true</CODE> if and only if the <CODE>GExpr</CODE> \f$ e \f$
+  Returns <CODE>true</CODE> if and only if the <CODE>GExpr</CODE> \p e
   is of the form \f$ n + d \f$ with \f$ d \f$ a <CODE>GiNaC::numeric</CODE>;
-  in this case <CODE>decrement</CODE> contains the opposite of \f$ d \f$.
+  in this case \p decrement contains the opposite of \f$ d \f$.
 */
 static bool
 get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
@@ -63,6 +63,37 @@ get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
     }
   }
   return false;
+}
+
+/*!
+  Returns <CODE>true</CODE> if and only if the inhomogeneous term (that is
+  decomposed in a matrix \p decomposition is a polynomial or the
+  product of a polynomial and an exponential; <CODE>false</CODE> otherwise.
+*/
+static bool
+check_poly_times_exponential(const GMatrix& decomposition, const GSymbol& n) {
+  // Calculates the number of columns of the matrix 'decomposition'.
+  unsigned num_columns = decomposition.cols();
+  bool poly_times_exp = true;
+  for (size_t i = 0; i < num_columns; ++i) {
+    GExpr exponential = decomposition(0, i);
+    GExpr coeff_of_exp = decomposition(1, i);
+    if (is_a<power>(exponential)) {
+      // The base of exponential must be numeric or an expression that
+      // contains the parameters (a, b, c, d) but not the variable n.
+      if (!GiNaC::is_a<GiNaC::numeric>(exponential.op(0)))
+	if (exponential.op(0).has(n))
+	  poly_times_exp = false;
+    }
+    else
+      assert(exponential.is_equal(1));
+    // FIXME-FIXME: what is a polynomial in a variable n?
+    // For instance, for GiNaC sqrt(3) is not a polynomial...
+    // Non devo usare questo flag ma farmi una funzione mia!
+    if (!coeff_of_exp.info(info_flags::polynomial)) 
+      poly_times_exp = false;
+  }
+  return poly_times_exp;
 }
 
 static GMatrix
@@ -238,9 +269,6 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       throw ("PURRS error: this case (initials conditions in "
 	     "homogeneous term) is temporary suspended. ");
 
-  // Calculates the number of columns of the matrix 'decomposition'.
-  unsigned num_columns = decomposition.cols();
-
   // Creates the vector of initials conditions.
   std::vector<GExpr> initials_conditions(order);
   for (int i = 0; i < order; ++i)
@@ -249,33 +277,13 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   switch (order) {
   case 1:
     {
-      bool poly_times_exp = true;
-      for (size_t i = 0; i < num_columns; ++i) {
-	GExpr exponential = decomposition(0, i);
-	GExpr coeff_of_exp = decomposition(1, i);
-	// Check if the inhomogeneous term is a polynomial or a the
-	// product of a polynomial and an exponential.
-	if (is_a<power>(exponential))
-	  // The base of exponent must be numeric or an expression that
-	  // contains the parameters (a, b, c, d) but not the variable n.
-	  if (!GiNaC::is_a<GiNaC::numeric>(exponential.op(0)))
-	    if (exponential.op(0).has(n))
-	      poly_times_exp = false;
-	if (!is_a<power>(exponential) && exponential != 1) {
-	  poly_times_exp = false;
-	}
-	// FIXME: what is a polynomial in a variable n?
-	if (!coeff_of_exp.info(info_flags::polynomial)) 
-	    poly_times_exp = false;
-      }
-      if (poly_times_exp) {
+      if (check_poly_times_exponential(decomposition, n))
 	// Calculates the solution of the first order recurrences when
 	// the inhomogeneous term is a polynomial or the product of a
 	// polynomial and an exponential.      
 	order_1_sol_poly_times_exponentials(n, decomposition,
 					    initials_conditions,
 					    coefficients, solution);
-      }
       else 
 	throw ("PURRS error: for the moment the recurrence "
 	       "relation is solved only when the inhomogeneous term "
@@ -298,30 +306,13 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 		"support the case of the inhomogeneous term with "
 		"parameters. ");
       }
-
-      bool poly_times_exp = true;
-      for (size_t i = 0; i < num_columns; ++i) {
-	GExpr exponential = decomposition(0, i);
-	GExpr coeff_of_exp = decomposition(1, i);
-	// Check if the inhomogeneous term is a polynomial or a the
-	// product of a polynomial and an exponential.
-	if (is_a<power>(exponential) &&
-	    !GiNaC::is_a<GiNaC::numeric>(exponential.op(0)))
-	  poly_times_exp = false;
-	if (!is_a<power>(exponential) && exponential != 1)
-	  poly_times_exp = false;
-	// FIXME: what is a polynomial in a variable n?
-	if (!coeff_of_exp.info(info_flags::polynomial))
-	  poly_times_exp = false;
-      }
-      if (poly_times_exp) {
+      if (check_poly_times_exponential(decomposition, n))
 	// Calculates the solution of the second order recurrences when
 	// the inhomogeneous term is a polynomial or the product of a
 	// polynomial and an exponential.      
 	order_2_sol_poly_times_exponentials(n, decomposition,
 					    initials_conditions,
 					    num_coefficients, solution);
-      }	
       else 
 	throw ("PURRS error: for the moment the recurrence "
 	       "relation is only solved when the inhomogeneous term "
@@ -334,7 +325,6 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       throw ("PURRS error: order too large"); 
     } 
   } 
-  
   return true;
 }
 
@@ -502,8 +492,7 @@ order_2_sol_roots_distinct(const GSymbol& n, const GMatrix& decomposition,
   //   \sum_{k=2}^n \lambda_2^{-k} \, p(k).
 
   // Calculates the number of columns of the matrix.
-  unsigned num_columns = decomposition.cols();
- 
+  unsigned num_columns = decomposition.cols(); 
   // Construct g(n).
   GExpr root_1 = roots[0].value();
   GExpr root_2 = roots[1].value();
@@ -616,10 +605,7 @@ order_2_sol_roots_no_distinct(const GSymbol& n, const GMatrix& decomposition,
     GMatrix sol(2, 1);
     sol = vars.inverse();
     sol = sol.mul(rhs);
-    
-    g_n = g_n.subs(a == sol(0,0));
-    g_n = g_n.subs(b == sol(1,0));
-	
+    g_n = g_n.subs(lst(a == sol(0,0), b == sol(1,0)));
     GExpr g_n_1 = g_n.subs(n == n - 1);
     GExpr g_n_2 = g_n.subs(n == n - 2);
 	
