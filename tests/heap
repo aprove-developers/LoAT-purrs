@@ -147,7 +147,7 @@ y 2*x(n-1)+n+1
 y 2*x(n-1)+n^25
 y 2*x(n-1)+n^5
 y 2*x(n-1)+n^50
-y 2*x(n-1)+n^n
+n 2*x(n-1)+n^n
 y 2*x(n-1)+x(n-2)
 y 2*x(n-1)+x(n-2)+1
 y 2*x(n-1)+x(n-2)+n/2
@@ -236,7 +236,7 @@ y x(n-1)*a
 y x(n-1)*x(0)
 y x(n-1)+(((n+1)^5)-n^5)
 y x(n-1)+(2^n+5)^3
-y x(n-1)+(2^n+5)^a
+n x(n-1)+(2^n+5)^a
 y x(n-1)+(n/2)
 y x(n-1)+1
 y x(n-1)+2
@@ -283,13 +283,13 @@ y x(n-2)/2
 y x(n-3)
 y x(n-3)+3*n
 n 5*x(n-4)+n*log(log(n))
-y 5*x(n-1)+n*log(log(n))
-y 5*x(n-1)+n*log(n)
-y 5*x(n-1)+log(n)
-y x(n-1)+sqrt(n)
-y x(n-1)+sin(n)
+n 5*x(n-1)+n*log(log(n))
+n 5*x(n-1)+n*log(n)
+n 5*x(n-1)+log(n)
+n x(n-1)+sqrt(n)
+n x(n-1)+sin(n)
 n x(n)+n!
 y x(n-1)+n!
 n x(n-2)+n!
 y x(n-1)+n*n!
-y x(n-1)+(n*n)!
+n x(n-1)+(n*n)!
