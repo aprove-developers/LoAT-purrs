@@ -59,7 +59,7 @@ using namespace PURRS;
     \sum_{i=0}^{order - 1} g_{n-i}
       \bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \bigr).
   \f]
-  Opportune modifications are considered when the recurrence is not
+  Suitable modifications are considered when the recurrence is not
   well-defined for every natural number, i.e., when
   \ref first_valid_index "first_valid_index" is not \f$ 0 \f$.
 */
@@ -93,16 +93,16 @@ compute_term_about_initial_conditions(const Expr& g_n,
     x_n = \lambda x_{n-1} + p(n),
   \f]
   where \f$ p(n) \f$ is a function defined over the natural numbers.
-  In this case we know the final formula that give the solution (we observe
+  In this case we know the final formula that gives the solution (we remark
   that the coefficient coincides with the root of the characteristic
   equation):
   \f[
     x_n = \lambda^n * x_0
           + \sum_{k=1}^n \lambda^{n-k} p(k).
   \f]
-  In this function is computeed, when possible, the closed form for the sum
-  of the previous formula; when this is not possible, is returned the
-  symbolic sum.
+  This function computes, when possible, the closed form for the sum
+  of the previous formula; when this is not possible, the symbolic sum
+  is returned.
 */
 PURRS::Expr
 PURRS::Recurrence::
@@ -311,7 +311,7 @@ find_max_exponent_of_lambda(const Expr& e, const Symbol& lambda,
   where \f$ p(n) \f$ is a function defined over the natural numbers.
   If the roots of the characteristic equation \f$ \lambda_1 \f$ and
   \f$ \lambda_2 \f$ are distinct then we know the final formula that
-  give the solution:
+  gives the solution:
   \f[
     x_n = g_{n-1} x_1 + a_2 g_{n-2} x_0
           + \frac{\lambda_1^{n+1}}{\lambda_1-\lambda_2}

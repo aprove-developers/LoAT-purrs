@@ -58,7 +58,7 @@ using namespace PURRS;
   Since <CODE>find_roots()</CODE> only solves equations with integer
   coefficients, the elements in the vector \p coefficients must be 
   rational numbers.
-  Tf they are not integers, this function builds another vector,
+  If they are not integers, this function builds another vector,
   \p int_coefficients, with the element of \p coefficients multiplied by
   the least common multiple of their denominators.
 */
@@ -245,7 +245,7 @@ characteristic_equation_and_its_roots(index_type order,
   in the first case, and of \p symbolic_sum_distinct, in the second case,
   so that the two vectors have always the same dimensions.
 */
-// FIXME: to add a comment about the difference between the following
+// FIXME: add a comment about the difference between the following
 // cases:
 // - all the bases of the exponentials are different from all the roots
 //   of the characteristic equation (special case);
@@ -275,7 +275,7 @@ PURRS::compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
 
   unsigned int r = 0;
   for (unsigned int i = base_of_exps.size(); i-- > 0; ) {
-    // Special case: FIXME to finish comment...
+    // Special case: FIXME finish comment...
     if (bases_and_roots_all_distinct && order == 2) {
       const Expr& tmp = return_sum(true, lower_bound_sum, exp_poly_coeff[i],
 				   alpha, lambda);
@@ -335,8 +335,7 @@ PURRS::compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
   Returns a new expression containing the sum of all sums of the vectors
   after the substitutions.
 */
-// FIXME: to add a comment about the difference between the following
-// cases:
+// FIXME: add a comment about the difference between the following cases:
 // - all the bases of the exponentials are different from all the roots
 //   of the characteristic equation (special case);
 // - otherwise.
@@ -354,7 +353,7 @@ PURRS::subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
   unsigned int r = 0;
   for (unsigned int i = base_of_exps.size(); i-- > 0; ) {
     const Expr& base_exp = base_of_exps[i];
-    // Special case: FIXME to finish comment...
+    // Special case: FIXME finish comment...
     if (order == 2 && !vector_not_all_zero(symbolic_sum_no_distinct)) {
       for (unsigned int j = roots.size(); j-- > 0; ) {
 	Expr tmp = symbolic_sum_distinct[r];
@@ -407,11 +406,11 @@ PURRS::subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
       g_n = \sum_{j=1}^r (\alpha_{j,0} + \alpha_{j,1}n
             + \cdots + \alpha_{j,\mu_j-1}n^{\mu_j-1}) \lambda_j^n,
     \f]
-  where the roots \f$ lambda \f$ of the recurrence are knowed.
+  where the roots \f$ lambda \f$ of the recurrence are known.
   This function defines and solves the system in \f$ k \f$
-  equations and \f$ k \f$ unknowns to found the \f$ alpha \f$
+  equations and \f$ k \f$ unknowns to find the \f$ alpha \f$
   to insert in order to determine \f$ g_n \f$.
-  Returns in the matrix \p solution the solution of the system. 
+  Returns the solution of the system in the matrix \p solution. 
 */
 PURRS::Matrix
 PURRS::solve_system(bool all_distinct,
@@ -432,8 +431,8 @@ PURRS::solve_system(bool all_distinct,
     g_i.prepend(tmp[i]);
   
   // Prepare a list with the coefficients of the equations of the system
-  // to solve. This calculus is based on different form of `g_n'
-  // in according to the roots' multiplicity.
+  // to solve. This computation is based on different form of `g_n'
+  // according to the roots' multiplicity.
   Expr_List coeff_equations;
   if (all_distinct)
     for (unsigned int i = coefficients_size - 1; i-- > 0; )
