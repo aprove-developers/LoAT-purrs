@@ -468,19 +468,19 @@ Recurrence::weight_inf_order() {
   return infinite_order_p -> weight_inf_order();
 }
 
-// inline unsigned
-// Recurrence::infinite_order_fwdr() const {
-//   assert(is_linear_infinite_order());
-//   assert(infinite_order_p);
-//   return infinite_order_p -> infinite_order_fwdr();
-// }
+inline unsigned
+Recurrence::infinite_order_fwdr() const {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  return infinite_order_p -> infinite_order_fwdr();
+}
 
-// inline void
-// Recurrence::set_infinite_order_fwdr(unsigned i_c) const {
-//   assert(is_linear_infinite_order());
-//   assert(infinite_order_p);
-//   infinite_order_p -> set_infinite_order_fwdr(i_c);
-// }
+inline void
+Recurrence::set_infinite_order_fwdr(unsigned i_c) const {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  infinite_order_p -> set_infinite_order_fwdr(i_c);
+}
 
 inline void
 Recurrence::exact_solution(Expr& e) const {

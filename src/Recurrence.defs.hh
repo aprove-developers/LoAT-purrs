@@ -187,6 +187,11 @@ public:
     MALFORMED_RECURRENCE,
 
     /*!
+      The recurrence is not well-defined.
+    */
+    DOMAIN_ERROR,
+
+    /*!
       Catchall: the recurrence is generically too complex for the solver.
     */
     TOO_COMPLEX
@@ -702,17 +707,17 @@ private:
   //! \f]
   Expr& weight_inf_order();
 
-//   //! \brief
-//   //! Stores the smallest positive integer for which the infinite
-//   //! order recurrence is well-defined: the initial conditions will
-//   //! start from it.
-//   unsigned infinite_order_fwdr() const;
+  //! \brief
+  //! Stores the smallest positive integer for which the infinite
+  //! order recurrence is well-defined: the initial conditions will
+  //! start from it.
+  unsigned infinite_order_fwdr() const;
 
-//   //! \brief
-//   //! Stores the smallest positive integer for which the infinite
-//   //! order recurrence is well-defined: the initial conditions will
-//   //! start from it.
-//   void set_infinite_order_fwdr(unsigned i_c) const;
+  //! \brief
+  //! Stores the smallest positive integer for which the infinite
+  //! order recurrence is well-defined: the initial conditions will
+  //! start from it.
+  void set_infinite_order_fwdr(unsigned i_c) const;
 
 
 
