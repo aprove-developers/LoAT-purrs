@@ -147,7 +147,7 @@ return_sum(const bool distinct, const Symbol& n, const Number& order,
 	   const Expr& coeff, const Symbol& alpha, const Symbol& lambda) {
   Symbol k("k");
   Symbol x("x");
-  Expr q_k = coeff.subs(n,k);
+  Expr q_k = coeff.subs(n, k);
   Expr symbolic_sum;  
   if (distinct)
     symbolic_sum = sum_poly_times_exponentials(q_k, k, n, x);
@@ -330,8 +330,12 @@ static Expr
 solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
 			     const Expr& coefficient,
 			     const std::vector<Expr>& initial_conditions);
+
+static Expr
+compute_alpha_factorial(const Expr& alpha, const Symbol& n);
+
 static bool
-verify_solution(const Expr& solution, const int& order, const Expr& rhs,
+verify_solution(const Expr& solution, int order, const Expr& rhs,
 		const Symbol& n);
 
 /*!
@@ -1042,16 +1046,16 @@ solve_constant_coeff_order_1(const Symbol& n, const int order,
   }
   // Computes the sum when `\lambda^{n-k} p(k)' is not a polynomial or
   // a product of a polynomial times an exponential.
+  // The summand must be an hypergeometric term
   if (vector_not_all_zero(exp_no_poly_coeff)) {
     Expr gosper_solution;
     if (gosper(order, n, base_of_exps, exp_no_poly_coeff, roots,
 	       gosper_solution))
       solution += gosper_solution;
-    else
-      // FIXME: once we have decided how to represent for the sum, the print
-      // in the else will be substitute with the appropriate notation.
-      // solution += ... 
-      std::cout << "No non-zero polynomial solution" << std::endl;
+    else {
+      // FIXME: the summand is not hypergeometric:
+      // no chance of using Gosper's algorithm.
+    }
   }
   // FIXME: per ora non si puo' usare la funzione
   // `add_initial_conditions' perche' richiede un vettore di
@@ -1452,43 +1456,159 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
   return solution;
 }
 
-// FIXME: is correct this method in order to compute `\alpha!(n)'?
+//! \brief
+//! When possible, computes \f$ alpha!(n) \f$ if \f$ alpha \f$ is a sum
+//! or terms, otherwise returns the symbolic product.
 static Expr
-compute_alpha_factorial(const Expr& e, const Symbol& n, 
-			const Expr& sum_first_n) {
-  Expr alpha_factorial = 1;
-  if (!e.has(n))
-    // `e' is_a_number or is_a_constant or is_a_symbol different to `n'...
-    alpha_factorial *= pwr(e, n);
-  else if (e == n)
-    alpha_factorial *= factorial(e);
-  if (e.is_a_power())
-    if (e.op(0).has(n) && e.op(1).has(n))
-      alpha_factorial *= factorial(e);
-    else
-      if (e.op(0).has(n)) {
-	// FIXME!!
-	// Base of the power contain `n'.
-	alpha_factorial *= pwr(compute_alpha_factorial(e.op(0), n, sum_first_n), e.op(1));
+alpha_factorial_if_add(const Expr& alpha, const Symbol& n) {
+  Expr alpha_factorial;
+  Expr_List substitution;
+  bool alpha_factorial_computed = false;
+  if (alpha.match(n + wild(0), substitution)) {
+    Expr tmp = get_binding(substitution, 0);
+    if (tmp.is_a_number()) {
+      Number num = tmp.ex_to_number();
+      if (num.is_positive_integer()) {
+	alpha_factorial = factorial(alpha) / factorial(num);
+	alpha_factorial_computed = true;
       }
-      else {
-	// Exponent of the power contain `n'.
-      }
-  if (e.is_a_add()) {
-    // FIXME!! es. (3+n)/2
-    Expr term_with_n;
-    for (unsigned i = e.nops(); i-- > 0; )
-      if (e.op(i).has(n))
-	term_with_n = e.op(i);
-    Expr rem = e - term_with_n;
-    alpha_factorial *= factorial(e) * 1/factorial(rem);
+    }
   }
-  if (e.is_a_mul())
-    for (unsigned i = e.nops(); i-- > 0; )
-      alpha_factorial *= compute_alpha_factorial(e.op(i), n, sum_first_n);
-#if NOISY
-  D_VAR(alpha_factorial);
-#endif
+  else if (alpha == 2*n+1) {
+    alpha_factorial = factorial(2*n+1) / (pwr(2, n) * factorial(n));
+    alpha_factorial_computed = true;
+  }
+  else {
+    // Allows to compute `alpha!(n)' for function as `a*n+a*b'
+    // (`a' not rational).
+    Expr a = alpha.content(n);
+    if (a != 1) {
+      alpha_factorial = compute_alpha_factorial(alpha.primpart(n), n)
+	* compute_alpha_factorial(a, n);
+      alpha_factorial_computed = true;
+    }
+    // To compute numerator and denominator is useful because allows
+    // to solve cases as `a/b * n + c/d': infact consider separately
+    // `a*n + c*d' (that we are able to solve if `a = 1 && c/d is
+    // positive integer' or `a = 2 && c*d = 1) and `b*d'.
+    Expr num;
+    Expr den;
+    alpha.numerator_denominator(num, den);
+    if (den != 1) {
+      alpha_factorial = compute_alpha_factorial(num, n)
+	* pwr(compute_alpha_factorial(den, n), -1);
+      alpha_factorial_computed = true;
+    }
+  }
+  if (!alpha_factorial_computed) {
+    Symbol h("h");
+    Expr alpha_h = alpha.subs(n, h);
+    alpha_factorial = prod(Expr(h), Expr(1), Expr(n), alpha_h);
+  }
+  return alpha_factorial;
+}
+
+//! \brief
+//! When possible, computes \f$ alpha!(n) \f$ if \f$ alpha \f$ is a
+//! power, otherwise returns the symbolic product.
+static Expr
+alpha_factorial_if_power(const Expr& alpha, const Symbol& n) {
+  Expr alpha_factorial;
+  bool alpha_factorial_computed = false;
+  if (alpha.op(0).has(n)) {
+    if (alpha.op(1).is_a_number()) {
+      alpha_factorial = pwr(compute_alpha_factorial(alpha.op(0), n),
+			    alpha.op(1));
+      alpha_factorial_computed = true;
+    }
+  }
+  // In this case `alpha!(n) = k^{\sum_{h=1}^n f(h)}'.
+  else {
+    std::vector<Expr> base_of_exps;
+    std::vector<Expr> exp_poly_coeff;
+    std::vector<Expr> exp_no_poly_coeff;
+    exp_poly_decomposition(alpha.op(1), n,
+			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
+    Expr new_exponent = 0;
+    // `f(h)' is a polynomial or a product of a polynomial times an
+    // exponential.
+    if (vector_not_all_zero(exp_poly_coeff)) {
+      Symbol k("k");
+      for (unsigned i = base_of_exps.size(); i-- > 0; ) {
+	Expr coeff_k = exp_poly_coeff[i].subs(n, k);
+	new_exponent += sum_poly_times_exponentials(coeff_k, k, n,
+						    base_of_exps[i]);
+	// `sum_poly_times_exponentials' computes the sum from 0, while
+	// we want it to start from `1'.
+	new_exponent -= coeff_k.subs(k, 0);
+      }
+      alpha_factorial = pwr(alpha.op(0), new_exponent);
+      alpha_factorial_computed = true;
+    }
+    // FIXME: aggiungere anche 
+    // if (vector_not_all_zero(exp_no_poly_coeff)) {...}
+    // per risolvere altre sommatorie risolvibili solo con gosper.
+  }
+  if (!alpha_factorial_computed) {
+    Symbol h("h");
+    Expr alpha_h = alpha.subs(n, h);
+    alpha_factorial = prod(Expr(h), Expr(1), Expr(n), alpha_h);
+  }
+  return alpha_factorial;
+}
+
+//! \brief
+//! Let \f$ alpha(n) \f$ be a not constant expression in the
+//! variable \f$ n \f$.
+//! This functions computes \f$ \alpha!(n) \f$ defined as follows:
+//! \f[
+//!   \alpha!(0) \defeq 1,
+//!   \qquad
+//!   \alpha!(n) \defeq \prod_{k=1}^n \alpha(k).
+//! \f]
+/*!
+  When possible to find the closed form for \f$ \prod_{k=1}^n \alpha(k) \f$,
+  we compute it; when it is not possible we returns the symbolic function
+  for the product.
+  We defined inductively \f$ \alpha!(n) \f$ as follows:
+  - if \f$ alpha \f$ is a constant, i.e. it not contains \f$ n \f$,
+    then \f$ alpha!(n) = alpha^n \f$;
+  - if \f$ alpha = n \f$, then \f$ alpha!(n) = n! \f$;
+  - if \f$ alpha = n + k \f$, where \f$ k \in \Nset \setminus \{0\} \f$,
+    then \f$ alpha!(n) = \frac{(n + k)!}{k!}  \f$;
+  - if \f$ alpha = 2*n+1 \f$,
+    then \f$ alpha!(n) = \frac{(2*n + 1)!}{2^n * n} \f$;
+  - if \f$ alpha \f$ is a power there are two cases.
+    We consider \f$ a \f$ and \f$ b \f$ so that \f$ alpha = a^b \f$, 
+    - if \f$ a \f$ contains \f$ n \f$ and \f$ b \f$ is a number,
+      then \f$ alpha!(n) = a!(n)^b;
+    - if \f$ a \f$ not contains \f$ n, i.e. \f$ a \f$ is a constant,
+      then \f$ alpha!(n) = k^{\sum_{h=1}^n f(h)} \f$;
+  - if \f$ alpha = alpha_1 \cdots alpha_k \f$, where \f$ alpha_i \f$,
+    for \f$ i = 1, \dots, k \f$, is one of the previous case,
+    then \f$ alpha!(n) =  alpha_1!(n) \cdots alpha_k!(n) \f$.  
+*/
+static Expr
+compute_alpha_factorial(const Expr& alpha, const Symbol& n) {
+  Expr alpha_factorial;
+  if (!alpha.has(n))
+    alpha_factorial = pwr(alpha, n);
+  else if (alpha == n)
+    alpha_factorial = factorial(alpha);
+  else if (alpha.is_a_add())
+    alpha_factorial = alpha_factorial_if_add(alpha, n);
+  else if (alpha.is_a_power())
+    alpha_factorial = alpha_factorial_if_power(alpha, n);
+  else if (alpha.is_a_mul()) {
+    alpha_factorial = 1;
+    for (unsigned i = alpha.nops(); i-- > 0; )
+      alpha_factorial *= compute_alpha_factorial(alpha.op(i), n);
+  }
+  else {
+    Symbol h("h");
+    Expr alpha_h = alpha.subs(n, h);
+    alpha_factorial = prod(Expr(h), Expr(1), Expr(n), alpha_h);
+  }
   return alpha_factorial;
 }
 
@@ -1524,9 +1644,8 @@ static Expr
 solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
 			     const Expr& coefficient,
 			     const std::vector<Expr>& initial_conditions) {
-  // Compute `\alpha!(n)'.
-  Expr sum_first_n = n*(n+1)/2;
-  Expr alpha_factorial = compute_alpha_factorial(coefficient, n, sum_first_n);
+  // Compute `\alpha!(n)' when possible.
+  Expr alpha_factorial = compute_alpha_factorial(coefficient, n);
   // Compute the non-homogeneous term for the recurrence
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
   Expr new_p_n
@@ -1596,7 +1715,7 @@ print_bad_exp(const Expr& e, const Expr rhs, bool conditions) {
   decide whether the solution is right or it is really wrong.
 */
 static bool
-verify_solution(const Expr& solution, const int& order, const Expr& rhs,
+verify_solution(const Expr& solution, int order, const Expr& rhs,
 		const Symbol& n) {
   // Validation of initial conditions.
   for (int i = order; i-- > 0; ) {
