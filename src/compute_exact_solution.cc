@@ -300,12 +300,20 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
   if (all_distinct) {
     const Expr& root_1 = roots[0].value();
     const Expr& root_2 = roots[1].value();
+#if 0
+    // FIXME: maybe it is possible to simplify `diff_roots' using
+    // the actual values of the roots of the characteristic equation.
+    Expr diff_roots = root_1 - root_2;
+    diff_roots = blackboard.rewrite(diff_roots);
+    D_VAR(diff_roots);
+#else
     const Expr& diff_roots = root_1 - root_2;
+#endif
     g_n = (pwr(root_1, Recurrence::n+1) - pwr(root_2, Recurrence::n+1))
       / diff_roots;
     if (!vector_not_all_zero(exp_no_poly_coeff)) {
-      Symbol alpha("alpha");
-      Symbol lambda("lambda");
+      Symbol alpha;
+      Symbol lambda;
       std::vector<Expr> symbolic_sum_distinct;
       std::vector<Expr> symbolic_sum_no_distinct;
       compute_symbolic_sum(alpha, lambda, roots,
@@ -316,15 +324,18 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
 	symbolic_sum_no_distinct[j] *= lambda / diff_roots;
 	symbolic_sum_distinct[j] *= lambda / diff_roots;
       }
+      D_VEC(symbolic_sum_distinct, 0, symbolic_sum_distinct.size()-1);
+      D_VEC(symbolic_sum_no_distinct, 0, symbolic_sum_no_distinct.size()-1);
       // Substitutes to the sums in the vector `symbolic_sum_distinct'
       // or `symbolic_sum_no_distinct' the corresponding values of the
       // characteristic equation's roots and of the bases of the
-      // eventual exponentials and in `solution' put the sum of all
+      // possible exponentials and in `solution' put the sum of all
       // sums of the vector after the substitution.
       solution = subs_to_sum_roots_and_bases(alpha, lambda, roots,
 					     base_of_exps,
 					     symbolic_sum_distinct,
 					     symbolic_sum_no_distinct);
+      D_VAR(solution);
     }
     else {
       Symbol h;
