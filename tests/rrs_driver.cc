@@ -473,43 +473,66 @@ main(int argc, char *argv[]) try {
       }
       bool have_exact_solution = false;
       if (exact_solution_required)
-	if (compute_exact_solution_wrapper(*production_recurrence)
-	    == Recurrence::SUCCESS) {
+	switch (compute_exact_solution_wrapper(*production_recurrence)) {
+	case Recurrence::SUCCESS:
 	  have_exact_solution = true;
 	  // OK: get the exact solution and print it.
 	  production_recurrence->exact_solution(exact_solution);
-	  cout << "*** EXACT SOLUTION ***"
-	       << endl
-	       << exact_solution
-	       << endl
-	       << "**********************"
-	       << endl << endl;
+	  cout << endl << "x(n) = " << exact_solution << endl << endl;
+	  break;
+	case Recurrence::UNSOLVABLE_RECURRENCE:
+	  cout << endl << "Unsolvable" << endl << endl;
+	  goto exit;
+	  break;
+	case Recurrence::TOO_COMPLEX:
+	  if (!lower_bound_required && !upper_bound_required) {
+	    cout << endl << "Too complex" << endl << endl;
+	    goto exit;
+	  }
+	  break;
+	default:
+	  break;
 	}
+      bool too_complex_printed = false;
       if (!have_exact_solution) {
-	if (lower_bound_required
-	    && (production_recurrence->compute_lower_bound()
-		== Recurrence::SUCCESS)) {
-	  // OK: get the lower bound and print it.
-	  production_recurrence->lower_bound(lower);
-	  cout << "*** LOWER BOUND ***"
-	       << endl
-	       << lower
-	       << endl
-	       << "*******************"
-	       << endl << endl;
-	}
-	if (upper_bound_required
-	    && (production_recurrence->compute_upper_bound()
-		== Recurrence::SUCCESS)) {
-	  // OK: get the upper bound and print it.
-	  production_recurrence->upper_bound(upper);
-	  cout << "*** UPPER BOUND ***"
-	       << endl
-	       << upper
-	       << endl
-	       << "*******************"
-	       << endl << endl;
-	}
+	if (lower_bound_required)
+	  switch (production_recurrence->compute_lower_bound()) {
+	  case Recurrence::SUCCESS:
+	    // OK: get the lower bound and print it.
+	    production_recurrence->lower_bound(lower);
+	    cout << endl << "x(n) >= " << lower << endl << endl;
+	    break;
+	  case Recurrence::UNSOLVABLE_RECURRENCE:
+	    cout << endl << "Unsolvable" << endl << endl;
+	    goto exit;
+	    break;
+	  case Recurrence::TOO_COMPLEX:
+	    if (!too_complex_printed) {
+	      cout << endl << "Too complex" << endl << endl;
+	      too_complex_printed = true;
+	    }
+	    break;
+	  default:
+	    break;
+	  }
+	if (upper_bound_required)
+	  switch (production_recurrence->compute_upper_bound()) {
+	  case Recurrence::SUCCESS:
+	    // OK: get the upper bound and print it.
+	    production_recurrence->upper_bound(upper);
+	    cout << endl << "x(n) <= " << upper << endl << endl;
+	    break;
+	  case Recurrence::UNSOLVABLE_RECURRENCE:
+	    cout << endl << "Unsolvable" << endl << endl;
+	    goto exit;
+	    break;
+	  case Recurrence::TOO_COMPLEX:
+	    if (!too_complex_printed)
+	      cout << endl << "Too complex" << endl << endl;
+	    break;
+	  default:
+	    break;
+	  }
       }
     }
     else {
@@ -517,6 +540,7 @@ main(int argc, char *argv[]) try {
 	   << ": the production mode requires the recurrence." << endl;
       my_exit(1);
     }
+  exit:
     my_exit(0);
   }
   
