@@ -198,7 +198,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
   }
   else {
     order_rec = rec.order();
-    first_i_c = rec.first_i_c_for_linear();
+    first_i_c = rec.first_well_defined_rhs_linear();
   }
   
   D_VAR(rec.recurrence_rhs);
@@ -464,7 +464,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
       if ((status = rec_rewritten.solve_linear_finite_order())
 	  == SUCCESS) {
 	set_order_if_linear(rec_rewritten.order());
-	set_first_i_c_if_linear(rec_rewritten.first_i_c_for_linear());
+	set_first_i_c_if_linear(rec_rewritten.first_well_defined_rhs_linear());
 	// Transform the solution of the linear recurrence in the solution
 	// of the non linear recurrence.
 	if (rec_rewritten.exact_solution_.expression() == 0)
@@ -539,11 +539,9 @@ PURRS::Recurrence::shift_exact_solution_with_i_c() const {
 	 iend = initial_conditions.end(); i != iend; ++i)
     if (i->first > max_i_c)
       max_i_c = i->first;
-  D_VAR(max_i_c);
-  D_VAR(first_i_c_for_linear());
 
-  if (first_i_c_for_linear() < max_i_c) {
-    unsigned shift_forward = max_i_c - first_i_c_for_linear();
+  if (first_well_defined_rhs_linear() < max_i_c) {
+    unsigned shift_forward = max_i_c - first_well_defined_rhs_linear();
     // Shift initial conditions and the index of the recurrence `n'.
     exact_solution_
       .set_expression(exact_solution_.expression()
@@ -551,7 +549,9 @@ PURRS::Recurrence::shift_exact_solution_with_i_c() const {
     for (unsigned i = order(); i-- > 0; )
       exact_solution_
 	.set_expression(exact_solution_.expression()
-			.substitute(x(i), x(i + shift_forward - order() + 1)));
+			.substitute(x(i+first_well_defined_rhs_linear()),
+				    x(i + first_well_defined_rhs_linear()
+				      + shift_forward - order() + 1)));
   }
 
   // Substitute initial conditions with the values in the map
