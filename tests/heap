@@ -978,6 +978,7 @@ yv	x(n-1)+x(n-2)+2^(n-2)
 yv	x(n-1)+x(n-2)+2^n
 yv	x(n-1)+x(n-2)+3
 yv	x(n-1)+x(n-2)+6
+yv	x(n-1)+x(n-2)+a
 yv	x(n-1)+x(n-2)+n^2
 yv	x(n-1)+x(n-2)-2
 yv	x(n-1)+x(n-2)-n
