@@ -466,7 +466,7 @@ x_function_in_powers_or_functions(const Expr& e) {
       // `operand' is the argument (if unary function) or the i-th
       // argument (otherwise) of the function `e'.
       const Expr& operand = e.arg(i);
-      if (operand.has_x_function(false, Recurrence::n))
+      if (operand.has_x_function(Recurrence::n))
 	if (e.is_the_x_function())
 	  return 1;
 	else
@@ -477,8 +477,8 @@ x_function_in_powers_or_functions(const Expr& e) {
   else if (e.is_a_power()) {
     const Expr& base = e.arg(0);
     const Expr& exponent = e.arg(1);
-    if (base.has_x_function(false, Recurrence::n)
-	|| exponent.has_x_function(false, Recurrence::n))
+    if (base.has_x_function(Recurrence::n)
+	|| exponent.has_x_function(Recurrence::n))
       return 0;
   }
   return 2;
@@ -573,7 +573,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
       else if (factor.is_the_x_function())
 	simple_cases = true;
       // Recurrence that the system is not able to transform in linear. 
-      else if (factor.has_x_function(false, Recurrence::n)) {
+      else if (factor.has_x_function(Recurrence::n)) {
 	simple_cases = false;
 	break;
       }
@@ -680,14 +680,14 @@ known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
 			      unsigned& first_well_defined) {
   Expr inhomog_infinite_order_rec = rhs - weight * term_sum;
 
-  // If `f(n)' or `g(n)' contain other `x' function with `n' in the
-  // argument or conatin the parameters then the recurrence is too
+  // If `f(n)' or `g(n)' contain other functions `x()' with `n' in the
+  // argument or contain the parameters then the recurrence is too
   // complex for the system.
   // FIXME: the last two conditions are temporary until that we do
   // not understand like behaving itself when the bounds of the sum
   // are different from `0' and `n-1'.
-  if (weight.has_x_function(false, Recurrence::n)
-      || inhomog_infinite_order_rec.has_x_function(false, Recurrence::n)
+  if (weight.has_x_function(Recurrence::n)
+      || inhomog_infinite_order_rec.has_x_function(Recurrence::n)
       || has_parameters(weight)
       || !term_sum.arg(1).is_zero() || term_sum.arg(2) != Recurrence::n - 1)
     return false;
@@ -834,7 +834,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
   // Check if the summand has the `x' function with the argument
   // dependently from the index of the sum.
     else if (addend.is_the_sum_function() && addend.arg(2).has(n)
-	     && addend.arg(3).has_x_function(false, addend.arg(0))) {
+	     && addend.arg(3).has_x_function(addend.arg(0))) {
       if (is_order_zero()) {
 	Expr coeff_first_order;
 	Expr inhomog_first_order;
@@ -928,7 +928,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
       // Check if the summand has the `x' function with the argument
       // dependently from the index of the sum.
       else if (factor.is_the_sum_function() && factor.arg(2).has(n)
-	       && factor.arg(3).has_x_function(false, factor.arg(0))) {
+	       && factor.arg(3).has_x_function(factor.arg(0))) {
 	if (is_order_zero()) {
 	  Expr weight = 1;
 	  for (unsigned j = num_factors; j-- > 0; )

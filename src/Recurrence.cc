@@ -251,13 +251,13 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
       Expr non_homogeneous_part = 0;
       if (rec.exact_solution_.expression().is_a_add())
 	for (unsigned i = rec.exact_solution_.expression().nops(); i-- > 0; ) {
-	  if (rec.exact_solution_.expression().op(i).has_x_function(true))
+	  if (rec.exact_solution_.expression().op(i).has_x_function_only_ic())
 	    homogeneous_part += rec.exact_solution_.expression().op(i);
 	  else
 	    non_homogeneous_part += rec.exact_solution_.expression().op(i);
 	}
       else
-	if (rec.exact_solution_.expression().has_x_function(true))
+	if (rec.exact_solution_.expression().has_x_function_only_ic())
 	  homogeneous_part = rec.exact_solution_.expression();
 	else
 	  non_homogeneous_part = rec.exact_solution_.expression();
@@ -265,19 +265,11 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 #if 0
       // Step 3: by substitution, verifies that `homogeneous_part'
       // satisfies the homogeneous part of the recurrence.
-      // Finds the homogeneous part of the recurrence
-      // `substituted_homogeneous_rhs' and substitute to it `n' by
-      // `n - d' (where `d' is the decrement of the i-th term
-      // `a_i(n) x(n - d)').
-      Expr substituted_homogeneous_rhs = 0;
-      // Finds the non homogeneous part of the recurrence.
-      if (rec.recurrence_rhs.is_a_add())
-	for (unsigned i = rec.recurrence_rhs.nops(); i-- > 0; ) {
-	  if (rec.recurrence_rhs.op(i).has_x_function(true))
-	    substituted_homogeneous_rhs += rec.recurrence_rhs.op(i);
-	}
-      else if (rec.recurrence_rhs.has_x_function(true))
-	substituted_homogeneous_rhs = rec.recurrence_rhs;
+      // `substituted_homogeneous_rhs' is the homogeneous part of the
+      // recurrence where `n' is substituted by `n - d' (where `d' is
+      // the decrement of the i-th term `a_i(n) x(n - d)').
+      Expr substituted_homogeneous_rhs
+	= rec.recurrence_rhs - rec.inhmogeneous_term;
       // Substitutes in the homogeneous part of the recurrence the terms
       // of the form `x(n-i)'.
       for (unsigned i = 0; i < order_rec; ++i) {
@@ -536,11 +528,11 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 	  std::vector<Expr> new_coefficients(dim);
 	  Expr inhomogeneous = 0;
 	  Recurrence rec_rewritten
-	    (rewrite_reduced_order_recurrence(rec.recurrence_rhs, r,
-					      rec.gcd_among_decrements(),
-					      rec.coefficients(),
-					      new_coefficients,
-					      inhomogeneous));
+	    (write_reduced_order_recurrence(rec.recurrence_rhs, r,
+					    rec.gcd_among_decrements(),
+					    rec.coefficients(),
+					    new_coefficients,
+					    inhomogeneous));
 	  rec_rewritten.finite_order_p
 	    = new Finite_Order_Info(dim - 1, new_coefficients, 1);
 	  rec_rewritten.set_type(rec.type());
@@ -635,11 +627,11 @@ PURRS::Recurrence::verify_bound(const Recurrence& rec, bool upper) {
   Expr partial_bound = 0;
   if (bound.is_a_add())
     for (unsigned i = bound.nops(); i-- > 0; ) {
-      if (!bound.op(i).has_x_function(true))
+      if (!bound.op(i).has_x_function_only_ic())
 	partial_bound += bound.op(i);
     }
   else
-    if (!bound.has_x_function(true))
+    if (!bound.has_x_function_only_ic())
       partial_bound = bound;
   D_VAR(partial_bound);
   // The recurrence is homogeneous.
@@ -710,10 +702,9 @@ PURRS::Recurrence::apply_order_reduction() const {
   std::vector<Expr> new_coefficients(dim);
   Expr inhomogeneous = 0;
   Recurrence rec_rewritten
-    (rewrite_reduced_order_recurrence(recurrence_rhs, r,
-				      gcd_among_decrements(),
-				      coefficients(), new_coefficients,
-				      inhomogeneous));
+    (write_reduced_order_recurrence(recurrence_rhs, r, gcd_among_decrements(),
+				    coefficients(), new_coefficients,
+				    inhomogeneous));
   rec_rewritten.finite_order_p
     = new Finite_Order_Info(dim - 1, new_coefficients, 1);
   rec_rewritten.set_type(type());

@@ -1657,11 +1657,11 @@ simplify_sum_in_expanded_ex(const Expr& e,
 					     try_to_compute_sum);
 	  return e_rewritten;
 	}
-	// If the summand does not contain `x' functions with `n' in the
-	// argument (infinite order recurrence) and we are at the first
-	// visit to the expression, then the sum has been inserted by the
-	// user and we try to compute it.
-	if (!e.arg(3).has_x_function(false, e.arg(0))
+	// If the summand does not contain functions `x()' with the
+	// index of the sum in the argument (infinite order recurrence)
+	// and we are at the first visit to the expression, then the
+	// sum has been inserted by the user and we try to compute it.
+	if (!e.arg(3).has_x_function(e.arg(0))
 	    && try_to_compute_sum)
 	  return compute_sum(e);
 	// `upper' is a sum of two addends: if we are at the point of
