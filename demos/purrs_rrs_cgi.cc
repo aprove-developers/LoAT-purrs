@@ -480,7 +480,7 @@ main() try {
   Expr exact_solution;
   Expr lower_bound;
   Expr upper_bound;
-  unsigned int first_valid_index_for_solution;
+  unsigned int first_valid_index_for_solution = 0;
   string Sc_function;
 
   time_unit_t start_time;
