@@ -190,7 +190,7 @@ characteristic_equation_and_its_roots(int order,
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
       return false;
   }
-  D_VEC(roots, 0, roots.size()-1);
+  //D_VEC(roots, 0, roots.size()-1);
   return true;
 }
 
@@ -236,7 +236,7 @@ return_sum(bool distinct, const Symbol& n, const Number& order,
   \f$ e(n) = \sum_{i=0}^k \alpha_i^{n} p_i(n) \f$ (where \f$ k \f$ is
   the number of exponentials, and we assume that the \f$ \alpha_j \f$'s
   are distinct complex numbers).
-  We let \f$ \lambda \f$ denote the generic root of the characteristic 
+  \f$ \lambda \f$ denote the generic root of the characteristic 
   equation and \f$ \alpha \f$ the generic base of an exponential.
 
   This function fills the two vectors of <CODE>Expr</CODE>
@@ -625,11 +625,12 @@ solve_system(bool all_distinct,
   Matrix vars(coefficients_size - 1, 1);
   for (unsigned i = coefficients_size - 1; i-- > 0; )
     vars(i, 0) = Symbol();
-  // FIXME: in the case of `all_distinct = true' we have a Vandermonde's matrix.
-  // It is more efficient to solve the system with the method of inverse matrix,
-  // where the closed form in order to compute the inverse of Vandermonde's matrix
-  // is given in "Knuth, Fundamental Algorithms, Addison-Wesley Publishing Company"
-  // (second edition pag.36).
+  // FIXME: in the case of `all_distinct = true' we have a Vandermonde's
+  // matrix.
+  // It is more efficient to solve the system with the method of inverse
+  // matrix, where the closed form in order to compute the inverse of
+  // Vandermonde's matrix is given in "Knuth, Fundamental Algorithms,
+  // Addison-Wesley Publishing Company" (second edition pag.36).
   Matrix solution = coeff_alpha.solve(vars, rhs);
 
   return solution;
@@ -788,13 +789,14 @@ compute_non_homogeneous_part(const Symbol& n, const Expr& g_n, int order,
 */
 static Expr
 solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
-			     bool all_distinct, const Expr& e,
+			     bool all_distinct, const Expr& inhomogeneous_term,
 			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots) {
-  // We search exponentials in `n' (for this the expression `e'
-  // must be expanded).
+  // We search exponentials in `n' (for this the expression
+  // `inhomogeneous_term' must be expanded).
   // The vector `base_of_exps' contains the exponential's bases
-  // of all exponentials in `e'. In the `i'-th position of the vectors
+  // of all exponentials in `inhomogeneous_term'.
+  // In the `i'-th position of the vectors
   // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
   // the polynomial part and possibly non polynomial part of the coefficient
   // of the exponential with the base in `i'-th position of `base_of_exp'.
@@ -803,7 +805,7 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
   std::vector<Expr> base_of_exps;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(e, n,
+  exp_poly_decomposition(inhomogeneous_term, n,
 			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
   D_VEC(base_of_exps, 0, base_of_exps.size()-1);
   D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
@@ -844,9 +846,12 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
     else {
       Symbol h;
       solution = diff_roots
-	* (pwr(root_1, n+1) * PURRS::sum(h, 2, n, pwr(root_1, -h) * e.subs(n, h))
-	   - (pwr(root_2, n+1) * PURRS::sum(h, 2, n,
-					    pwr(root_2, -h) * e.subs(n, h))));
+	* (pwr(root_1, n+1)
+	   * PURRS::sum(h, 2, n,
+			pwr(root_1, -h) * inhomogeneous_term.subs(n, h))
+	   - (pwr(root_2, n+1)
+	      * PURRS::sum(h, 2, n,
+			   pwr(root_2, -h) * inhomogeneous_term.subs(n, h))));
     }
   }
   else {
@@ -864,7 +869,9 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
 					      exp_poly_coeff);
     else {
       Symbol h;
-      solution = PURRS::sum(h, 2, n, g_n.subs(n, n - h) * e.subs(n, h));
+      solution
+	= PURRS::sum(h, 2, n,
+		     g_n.subs(n, n - h) * inhomogeneous_term.subs(n, h));
     }
   }
   return solution;
@@ -913,13 +920,14 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
 */
 static Expr
 solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
-			     int order, bool all_distinct, const Expr& e,
+			     int order, bool all_distinct, const Expr& inhomogeneous_term,
 			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots) {
-  // We search exponentials in `n' (for this the expression `e'
-  // must be expanded).
+  // We search exponentials in `n' (for this the expression
+  // `inhomogeneous_term' must be expanded).
   // The vector `base_of_exps' contains the exponential's bases
-  // of all exponentials in `e'. In the `i'-th position of the vectors
+  // of all exponentials in `inhomogeneous_term'.
+  // In the `i'-th position of the vectors
   // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
   // the polynomial part and possibly non polynomial part of the coefficient
   // of the exponential with the base in `i'-th position of `base_of_exp'.
@@ -928,7 +936,7 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
   std::vector<Expr> base_of_exps;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(e, n,
+  exp_poly_decomposition(inhomogeneous_term, n,
 			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
   D_VEC(base_of_exps, 0, base_of_exps.size()-1);
   D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
@@ -971,7 +979,9 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
     }
     else {
       Symbol h;
-      solution = PURRS::sum(h, order, n, g_n.subs(n, n - h) * e.subs(n, h));
+      solution
+	= PURRS::sum(h, order, n,
+		     g_n.subs(n, n - h) * inhomogeneous_term.subs(n, h));
     }
   else
     if (!vector_not_all_zero(exp_no_poly_coeff))
@@ -980,7 +990,9 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
 					      exp_poly_coeff);
     else {
       Symbol h;
-      solution = PURRS::sum(h, order, n, g_n.subs(n, n - h) * e.subs(n, h));
+      solution
+	= PURRS::sum(h, order, n,
+		     g_n.subs(n, n - h) * inhomogeneous_term.subs(n, h));
     }
   return solution;
 }
@@ -1451,6 +1463,100 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs,
   return true;
 }
 
+static Expr
+rewrite_factor(const Expr& e, const Symbol& r, int gcd_among_decrements) {
+  if (e.is_a_power())
+    return pwr(rewrite_factor(e.arg(0), r, gcd_among_decrements),
+	       rewrite_factor(e.arg(1), r, gcd_among_decrements));
+  else if (e.is_a_function())
+    if (e.is_the_x_function()) {
+      Expr argument = e.arg(0);
+      assert(argument.is_a_add() && argument.nops() == 2);
+      assert(argument.op(0).is_a_number() || argument.op(1).is_a_number());
+      Number decrement;
+      argument.op(0).is_a_number(decrement)
+	|| argument.op(1).is_a_number(decrement);
+      return x(Recurrence::n + decrement / gcd_among_decrements);
+    }
+    else
+      for (unsigned i = e.nops(); i-- > 0; )
+	return rewrite_factor(e.arg(i), r, gcd_among_decrements);
+  else if (e == Recurrence::n)
+    return gcd_among_decrements * Recurrence::n + r;
+  return e;
+}
+
+static Expr
+rewrite_term(const Expr& e, const Symbol& r, int gcd_among_decrements) {
+  unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
+  Expr e_rewritten = 1;
+  if (num_factors > 1)
+    for (unsigned i = num_factors; i-- > 0; )
+      e_rewritten *= rewrite_factor(e.op(i), r, gcd_among_decrements);
+  else
+    e_rewritten = rewrite_factor(e, r, gcd_among_decrements);
+  return e_rewritten;
+}
+
+/*!
+  Let \f$ x(n) = a_1 x(n-k_1) + \dotsb + a_h x(n-k_h) + p(n) \f$ be
+  a recurrence such that \f$ g = gcd(k_1, \dotsc, k_h) > 1 \f$.
+  In this case it is possible to reduce the order of the recurrence
+  so that we have to solve \f$ g \f$ recurrences of order smaller
+  than those of the original recurrence. 
+*/
+static Expr
+rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
+				 int gcd_among_decrements) {
+  D_VAR(gcd_among_decrements);
+  unsigned num_summands = e.is_a_add() ? e.nops() : 1;
+  Expr e_rewritten = 0;
+  if (num_summands > 1)
+    for (unsigned i = num_summands; i-- > 0; )
+      e_rewritten += rewrite_term(e.op(i), r, gcd_among_decrements);
+  else
+    e_rewritten = rewrite_term(e, r, gcd_among_decrements);
+  return e_rewritten;
+}
+
+static Expr 
+come_back_to_original_variable(const Expr& e, const Symbol& r,
+			       int gcd_among_decrements) {
+  Expr e_rewritten;
+  if (e.is_a_add()) {
+    e_rewritten = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten += come_back_to_original_variable(e.op(i),
+						    r, gcd_among_decrements);
+  }
+  else if (e.is_a_mul()) {
+    e_rewritten = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten *= come_back_to_original_variable(e.op(i),
+						    r, gcd_among_decrements);
+  }
+  else if (e.is_a_power())
+    return
+      pwr(come_back_to_original_variable(e.arg(0), r, gcd_among_decrements),
+	  come_back_to_original_variable(e.arg(1), r, gcd_among_decrements));
+  else if (e.is_a_function())
+    if (e.is_the_x_function())
+      return x(r);
+  else {
+    unsigned num_argument = e.nops();
+    std::vector<Expr> argument(num_argument);
+    for (unsigned i = 0; i < num_argument; ++i)
+      argument[i] = come_back_to_original_variable(e.arg(i),
+						   r, gcd_among_decrements);
+    return apply(e.functor(), argument);
+  }
+  else if (e == Recurrence::n)
+    return Number(1, gcd_among_decrements) * (Recurrence::n - r);
+  else
+    return e;
+  return e_rewritten;
+}
+
 #if 0
 static void
 print_bad_exp(const Expr& e, const Expr rhs, bool conditions) {
@@ -1583,10 +1689,6 @@ verify_solution(const Expr& solution, int order, const Expr& rhs,
 
 } // anonymous namespace
 
-// bool
-// verify_solution(const Expr& solution, int order, const Expr& rhs,
-// 		const Symbol& n);
-
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::check_powers_and_functions(const Expr& e, const Symbol& n) {
   // If `x(n + k)' is the argument of an other function, then
@@ -1689,14 +1791,15 @@ insert_coefficients(const Expr& coeff, unsigned long index,
 }
 
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
+PURRS::Recurrence::classification_summand(const Expr& r, const Symbol& n,
+					  Expr& e,
 					  std::vector<Expr>& coefficients,
+					  bool& has_non_constant_coefficients,
 					  int& order,
-					  bool& has_non_constant_coefficients) {
-  Solver_Status status;
-  unsigned long index;  
+					  int& gcd_among_decrements,
+					  int num_term) {
   unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
-  if (num_factors == 1) {
+  if (num_factors == 1)
     if (r.is_the_x_function()) {
       const Expr& argument = r.arg(0);
       if (argument == n)
@@ -1706,10 +1809,15 @@ PURRS::Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& 
 	const Expr& second = argument.op(1);
 	if ((first == n && second.is_a_number())
 	    || (second == n && first.is_a_number())) {
-	  status = compute_order(argument, n, order, index,
-				 coefficients.max_size());
+	  unsigned long index;
+	  Solver_Status status = compute_order(argument, n, order, index,
+					       coefficients.max_size());
 	  if (status != OK)
 	    return status;
+	  if (num_term == 0)
+	    gcd_among_decrements = index;
+	  else
+	    gcd_among_decrements = gcd(gcd_among_decrements, index);
 	  insert_coefficients(1, index, coefficients);
 	}
 	else
@@ -1722,11 +1830,11 @@ PURRS::Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& 
     }
     else
       e += r;
-  }
   else {
     Expr possibly_coeff = 1;
     bool found_function_x = false;
     bool found_n = false;
+    unsigned long index;
     for (unsigned i = num_factors; i-- > 0; ) {
       const Expr& factor = r.op(i);
       if (factor.is_the_x_function()) {
@@ -1740,10 +1848,14 @@ PURRS::Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& 
 	      || (second == n && first.is_a_number())) {
 	    if (found_function_x)
 	      return NON_LINEAR_RECURRENCE;
-	    status = compute_order(argument, n, order, index,
-				   coefficients.max_size());
+	    Solver_Status status = compute_order(argument, n, order, index,
+						 coefficients.max_size());
 	    if (status != OK)
 	      return status;
+	    if (num_term == 0)
+	      gcd_among_decrements = index;
+	    else
+	      gcd_among_decrements = gcd(gcd_among_decrements, index);
 	    found_function_x = true;
 	  }
 	  else
@@ -1777,7 +1889,7 @@ substitute_non_rational_roots(const Recurrence& rec,
   for (unsigned i = roots.size(); i-- > 0; )
     if (roots[i].is_non_rational())
       roots[i].value() = rec.insert_auxiliary_definition(roots[i].value());
-  D_VEC(roots, 0, roots.size()-1);
+  //D_VEC(roots, 0, roots.size()-1);
 }
 
 /*!
@@ -1894,42 +2006,70 @@ PURRS::Recurrence::solve_easy_cases() const {
       coefficients[index] += a;
   } while (!e.is_zero());
 #else
-  Expr e = 0;
+  Expr inhomogeneous_term = 0;
   Solver_Status status;
+  int gcd_among_decrements;
   unsigned num_summands = expanded_rhs.is_a_add() ? expanded_rhs.nops() : 1;
   if (num_summands > 1)
-    for (unsigned i = num_summands; i-- > 0; ) {
-      status = classification_summand(expanded_rhs.op(i), n, e, coefficients,
-				      order, has_non_constant_coefficients);
+    // Is necessary that in the first turn `i' is `0'.
+    for (unsigned i = 0; i < num_summands; ++i) {
+      status = classification_summand(expanded_rhs.op(i), n,
+				      inhomogeneous_term, coefficients,
+				      has_non_constant_coefficients,
+				      order, gcd_among_decrements, i);
       if (status != OK)
 	return status;
     }
   else {
-    status = classification_summand(expanded_rhs, n, e, coefficients, order,
-				    has_non_constant_coefficients);
+    status = classification_summand(expanded_rhs, n, inhomogeneous_term,
+				    coefficients,
+				    has_non_constant_coefficients,
+				    order, gcd_among_decrements, 0);
     if (status != OK)
       return status;
   }
 #endif
   // Check if the recurrence is not linear, i.e. there is a non-linear term
   // containig in `e' containing `x(a*n+b)'.
-  status = find_non_linear_recurrence(e, n);
+  status = find_non_linear_recurrence(inhomogeneous_term, n);
   if (status != OK)
     return status;
 
-  // `e' is a function of `n', the parameters and of
+  // `inhomogeneous_term' is a function of `n', the parameters and of
   // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
   //  non-negative integers.
   if (order < 0) {
-    solution = e;
+    solution = inhomogeneous_term;
     return OK;
   }
+
+  // If the greatest common divisor among the decrements is greater than one,
+  // the order reduction is applicable.
+  if (gcd_among_decrements > 1 && !has_non_constant_coefficients) {
+    D_MSG("Order reduction");
+    // `r = n mod gcd_among_decrements'.
+    Symbol r;
+    Expr new_rhs = rewrite_reduced_order_recurrence(expanded_rhs, r,
+						    gcd_among_decrements);
+    recurrence_rhs = new_rhs;
+    Solver_Status status = solve_easy_cases();
+    if (status == OK) {
+      // Perform two substitutions:
+      // -  n                            -> 1/gcd_among_decrements * (n - r);
+      // -  x(k), k non-negative integer -> x(r).
+      solution = come_back_to_original_variable(solution,
+						r, gcd_among_decrements);
+      solution = simplify_on_output_ex(solution.expand(), n, false);
+    }
+    return status;
+  }
+
   D_VAR(order);
   D_VEC(coefficients, 1, order);
-  D_MSGVAR("Inhomogeneous term: ", e);
+  D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
 
   // Simplifies expanded expressions, in particular rewrites nested powers.
-  e = simplify_on_input_ex(e, n, true);
+  inhomogeneous_term = simplify_on_input_ex(inhomogeneous_term, n, true);
 
   // FIXME: the initial conditions can not start always from 0:
   // make a function for this check.
@@ -1956,11 +2096,13 @@ PURRS::Recurrence::solve_easy_cases() const {
 						   characteristic_eq, roots,
 						   all_distinct))
 	  return TOO_COMPLEX;
-	status = solve_constant_coeff_order_1(n, e, roots, initial_conditions,
+	status = solve_constant_coeff_order_1(n, inhomogeneous_term,
+					      roots, initial_conditions,
 					      solution);
       }
       else
-	status = solve_variable_coeff_order_1(n, e, coefficients[1], solution);
+	status = solve_variable_coeff_order_1(n, inhomogeneous_term,
+					      coefficients[1], solution);
       if (status != OK) {
 	D_MSG("Summand not hypergeometric: no chance of using Gosper's "
 	      "algorithm");
@@ -1983,7 +2125,8 @@ PURRS::Recurrence::solve_easy_cases() const {
       // it with an arbitrary symbol.
       substitute_non_rational_roots(*this, roots);
       solution = solve_constant_coeff_order_2(n, g_n, order, all_distinct,
-					      e, num_coefficients, roots);
+					      inhomogeneous_term,
+					      num_coefficients, roots);
     }
     else
       // For the time being, we only solve second order
@@ -2007,7 +2150,8 @@ PURRS::Recurrence::solve_easy_cases() const {
       // it with an arbitrary symbol.
       substitute_non_rational_roots(*this, roots);
       solution = solve_constant_coeff_order_k(n, g_n, order, all_distinct,
-					      e, num_coefficients, roots);
+					      inhomogeneous_term,
+					      num_coefficients, roots);
     }
     else
       // For the time being, we only solve recurrence relations
@@ -2126,23 +2270,24 @@ PURRS::Recurrence::solve_try_hard() const {
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
-solve_constant_coeff_order_1(const Symbol& n, const Expr& e,
+solve_constant_coeff_order_1(const Symbol& n, const Expr& inhomogeneous_term,
 			     const std::vector<Polynomial_Root>& roots,
 			     const std::vector<Expr>& initial_conditions,
 			     Expr& solution) {
-  // We search exponentials in `n' (for this the expression `e'
-  // must be expanded).
+  // We search exponentials in `n' (for this the expression
+  // `inhomogeneous_term' must be expanded).
   // The vector `base_of_exps' contains the exponential's bases
-  // of all exponentials in `e'. In the `i'-th position of the vectors
-  // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
-  // the polynomial part and possibly non polynomial part of the coefficient
-  // of the exponential with the base in `i'-th position of `base_of_exp'.
+  // of all exponentials in `inhomogeneous_term'. In the `i'-th position of
+  // the vectors `exp_poly_coeff' and `exp_no_poly_coeff' there are
+  // respectively the polynomial part and possibly non polynomial part of
+  // the coefficient of the exponential with the base in `i'-th position of
+  // `base_of_exp'.
   // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
   // coefficient of base_of_exps[i]^n.
   std::vector<Expr> base_of_exps;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(e, n,
+  exp_poly_decomposition(inhomogeneous_term, n,
 			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
   D_VEC(base_of_exps, 0, base_of_exps.size()-1);
   D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
@@ -2182,7 +2327,9 @@ solve_constant_coeff_order_1(const Symbol& n, const Expr& e,
       // FIXME: the summand is not hypergeometric:
       // no chance of using Gosper's algorithm.
       Symbol h;
-      solution += PURRS::sum(h, 1, n, pwr(roots[0].value(), -h) * e.subs(n, h));
+      solution
+	+= PURRS::sum(h, 1, n,
+		      pwr(roots[0].value(), -h) * inhomogeneous_term.subs(n, h));
     }
   }
   // FIXME: per ora non si puo' usare la funzione
@@ -2242,7 +2389,7 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
 						    i_c);
   // Consider the biggest positive integer that cancel the denominator of
   // `p_n' if it is bigger than `i_c'.
-  if (!(p_n == 0))
+  if (!p_n.is_zero())
     if (shift_initial_conditions)
       domain_recurrence(n, denominator(p_n).expand(), i_c);
     else
@@ -2256,6 +2403,10 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
   else
     alpha_factorial
       = compute_product(transform_in_single_fraction(coefficient), n, 1, n);
+  // FIXME: this simplification simplifies the value of `alpha_factorial'
+  // but not the solution because we need to the simplification about
+  // factorials and exponentials for the output.
+  //alpha_factorial = simplify_factorials_and_exponentials(alpha_factorial, n);
   D_VAR(alpha_factorial);
   // Compute the non-homogeneous term for the recurrence
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.

@@ -168,19 +168,20 @@ private:
   find_non_linear_recurrence(const Expr& e, const Symbol& n);
   static Solver_Status
   compute_order(const Expr& argument, const Symbol& n, 
-		int& order, unsigned long& index,
-		unsigned long max_size);
+		int& order, unsigned long& index, unsigned long max_size);
   static Solver_Status
   classification_summand(const Expr& r, const Symbol& n, Expr& e,
-			 std::vector<Expr>& coefficients, int& order,
-			 bool& has_non_constant_coefficients);
+			 std::vector<Expr>& coefficients,
+			 bool& has_non_constant_coefficients,
+			 int& order, int& gcd_among_decrements,
+			 int num_term);
   static Solver_Status
-  solve_constant_coeff_order_1(const Symbol& n, const Expr& e,
+  solve_constant_coeff_order_1(const Symbol& n, const Expr& inhomogeneous_term,
 			       const std::vector<Polynomial_Root>& roots,
 			       const std::vector<Expr>& initial_conditions,
 			       Expr& solution);
   static Solver_Status
-  solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
+  solve_variable_coeff_order_1(const Symbol& n, const Expr& inhomogeneous_term,
 			       const Expr& coefficient, Expr& solution);
 
 #if 0
