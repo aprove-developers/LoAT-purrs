@@ -10,6 +10,7 @@ ntl 5.3
 fi_lib++ 2.0
 ginac 1.0.13     (use our ftp version!)
 cgicc 3.2.1
+giac-0.3.0
 
 ============================================================================
 
@@ -19,6 +20,8 @@ More Detailed Installation Instructions:
         that the prefix that you want to install to is "/usr/local"
         and that you download and build all of the packages
         in a directory called "your-path-to-download-dir".
+	It is also assumed that you install the packages in the order
+	shown before because there are dependencies among them.
         For CVS access, it is assumed that you have ssh installed
         into directory "your-path-to-ssh".
 
@@ -340,3 +343,22 @@ Installing (as root):
   exit
 
 ============================================================================
+
+giac-0.3.0 install how-to:
+
+Downloading and unpacking:
+  ftp://ftp.cs.unipr.it/pub/infrastructure/giac_unstable.tgz
+  cd your-path-to-download-dir
+  tar zxf giac_unstable.tgz
+
+Configuring and building:
+  cd your-path-to-download-dir
+  cd giac-0.3.0
+  configure --prefix=/usr/local
+  make
+
+Installing (as root):
+  su
+  <give your root password>
+  make install
+  exit
