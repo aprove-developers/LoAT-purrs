@@ -78,26 +78,98 @@ compute_bounds_for_power_of_n(bool lower,
 			      Expr& bound) {
   assert(!k.is_negative());
   // Lower bound.
+  const Expr& frac_log = log(Recurrence::n) / log(divisor);
   if (lower)
-    return false;
+    // k == 0.
+    if (k == 0) {
+      Expr lambda_b;
+      if (divisor >= 2)
+	lambda_b = 1;
+      else
+	// 1 < divisor < 2.
+	lambda_b = log((2 * divisor - 1)/(divisor - 1)) / log(divisor);
+      Expr tmp_lb;
+      if (coeff == 1)
+	tmp_lb = frac_log - lambda_b;
+      else
+	tmp_lb = (1 - pwr(Recurrence::n, log(coeff) / log(divisor))
+		  * pwr(coeff, -lambda_b)) / (1 - coeff);
+      bound += num * tmp_lb;
+      return true;
+    }
+    // k >= 1.
+    else if (k >= 1) {
+      Expr mu_b;
+      Expr c_b;
+      if (divisor.is_positive_integer()) {
+	mu_b = 1;
+	c_b = 1;
+      }
+      else {
+	mu_b = log(2 * divisor / (divisor - 1)) / log(divisor);
+	c_b = divisor / (divisor - 1);
+      }
+      // FIXME: come si puo' fare per evitare che saltino fuori i numeri in
+      // virgola mobile? Usare tutte Expr non mi sembra una buona idea.
+      const Expr& divisor_ex = divisor;
+      const Expr& k_ex = k;
+      const Expr& pow_div_k = pwr(divisor_ex, k_ex);
+      Number pow_div_k_numeric = pwr(divisor, k);
+      Number pow_div_k_numeric_minus = pwr(divisor, k-1);
+
+      const Expr& pow_div_k_minus = pwr(divisor, k - 1);
+      const Expr& pow_n_k = pwr(Recurrence::n, k);
+      const Expr& pow_n_k_minus = pwr(Recurrence::n, k-1);
+      const Expr& pow_frac_log = pwr(Recurrence::n, log(coeff) / log(divisor));
+      Expr tmp_lb;
+      if (coeff < pow_div_k_numeric - 1)
+	tmp_lb = pow_div_k / (pow_div_k - coeff)
+	  * (pow_n_k - pow_frac_log * pwr(pow_div_k / coeff, mu_b));
+      else if (coeff == pow_div_k_numeric_minus)
+	tmp_lb = divisor / (divisor - 1) * pow_n_k
+	  - (pwr(divisor, 1 + mu_b) / (divisor - 1) + c_b * k * frac_log - 1)
+	  * pow_n_k_minus;
+      else if (coeff < pow_div_k_numeric)
+	tmp_lb = pow_div_k / (pow_div_k - coeff) * pow_n_k
+	  - (pow_div_k / (pow_div_k - coeff) * pwr(pow_div_k / coeff, mu_b)
+	     + c_b * k * pow_div_k_minus / (coeff - pow_div_k_minus))
+	  * pow_frac_log
+	  + c_b * k * coeff * pow_n_k_minus / (coeff - pow_div_k_minus);
+      else if (coeff == pow_div_k_numeric)
+	tmp_lb = pow_n_k * (frac_log - mu_b - c_b * k / (divisor - 1))
+	  + c_b * k * pow_n_k_minus * divisor / (divisor - 1);
+      else {
+	assert(coeff > pow_div_k_numeric);
+	tmp_lb = pow_frac_log
+	  * (pow_div_k / (coeff - pow_div_k) * pwr(pow_div_k / coeff, mu_b)
+	     - c_b * k * pow_div_k_minus / (coeff - pow_div_k_minus))
+	  - pow_div_k / (coeff - pow_div_k) * pow_n_k
+	  + c_b * k * coeff * pow_n_k_minus
+	  / (coeff - pow_div_k_minus);
+      }
+      bound += num * tmp_lb;
+      return true;
+    }
+    else
+      return false;
   // Upper bound.
   else {
     // FIXME: come si puo' fare per evitare che saltino fuori i numeri in
     // virgola mobile? Usare tutte Expr non mi sembra una buona idea.
     const Expr& divisor_ex = divisor;
     const Expr& k_ex = k;
-    const Expr& div_k = pwr(divisor_ex, k_ex);
-    Number div_k_numeric = pwr(divisor, k);
+    const Expr& pow_div_k = pwr(divisor_ex, k_ex);
+    Number pow_div_k_numeric = pwr(divisor, k);
     const Expr& tmp = pwr(Recurrence::n, k);
     Expr tmp_ub;
-    if (coeff < div_k_numeric)
-      tmp_ub = tmp * div_k / (div_k - coeff);
-    else if (coeff == div_k_numeric)
-      tmp_ub = tmp * log(Recurrence::n) / log(divisor);
+    if (coeff < pow_div_k_numeric)
+      tmp_ub = tmp * pow_div_k / (pow_div_k - coeff);
+    else if (coeff == pow_div_k_numeric)
+      tmp_ub = tmp * frac_log;
     else
-      tmp_ub = div_k
+      tmp_ub = pow_div_k
 	* (pwr(Recurrence::n, log(coeff) / log(divisor)) - tmp)
-	/ (coeff - div_k);
+	/ (coeff - pow_div_k);
     bound += num * tmp_ub;
     return true;
   }
@@ -138,14 +210,14 @@ compute_bounds_for_power_times_logarithm_function(bool lower,
   // Upper bound.
   else {
     Expr tmp_bound;
-    Number div_k = pwr(divisor, k);
+    Number pow_div_k = pwr(divisor, k);
     const Expr& tmp = pwr(Recurrence::n, k) * log(Recurrence::n);
-    if (coeff == div_k)
+    if (coeff == pow_div_k)
       tmp_bound = Number(1, 2) * tmp * (log(Recurrence::n) / log(divisor) + 1);
     else
-      tmp_bound = (div_k * log(divisor) / pwr(coeff - div_k, 2)) 
+      tmp_bound = (pow_div_k * log(divisor) / pwr(coeff - pow_div_k, 2)) 
 	* (coeff * pwr(Recurrence::n, log(coeff) / log(divisor))
-	   - (coeff - div_k) * tmp / log(divisor) - coeff);
+	   - (coeff - pow_div_k) * tmp / log(divisor) - coeff);
     bound += num * tmp_bound;
     return true;
   }
