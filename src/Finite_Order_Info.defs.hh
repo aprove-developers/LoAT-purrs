@@ -58,14 +58,14 @@ public:
   //! Returns <CODE>order_</CODE>.
   unsigned int& order();
 
-  //! Returns <CODE>first_i_c_for_linear_</CODE>.
-  unsigned first_i_c_for_linear() const;
+  //! Returns <CODE>first_well_defined_rhs_linear_</CODE>.
+  unsigned first_well_defined_rhs_linear() const;
 
-  //! Returns <CODE>first_i_c_for_linear_</CODE>.
-  unsigned& first_i_c_for_linear();
+  //! Returns <CODE>first_well_defined_rhs_linear_</CODE>.
+  unsigned& first_well_defined_rhs_linear();
 
-  //! Sets <CODE>first_i_c_for_linear_</CODE> with \p i_c
-  void set_first_i_c_for_linear(unsigned i_c);
+  //! Sets <CODE>first_well_defined_rhs_linear_</CODE> with \p i_c
+  void set_first_well_defined_rhs_linear(unsigned i_c);
 
   //! Returns <CODE>coefficients_</CODE>.
   const std::vector<Expr>& coefficients() const;
@@ -96,7 +96,7 @@ private:
   //! \brief
   //! The smallest positive integer for which the recurrence is
   //! well-defined: the initial conditions will start from it.
-  unsigned first_i_c_for_linear_;
+  unsigned first_well_defined_rhs_linear_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

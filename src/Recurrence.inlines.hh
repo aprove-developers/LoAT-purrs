@@ -241,24 +241,24 @@ Recurrence::order() {
 }
 
 inline unsigned
-Recurrence::first_i_c_for_linear() const {
+Recurrence::first_well_defined_rhs_linear() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> first_i_c_for_linear();
+  return finite_order_p -> first_well_defined_rhs_linear();
 }
 
 inline unsigned&
-Recurrence::first_i_c_for_linear() {
+Recurrence::first_well_defined_rhs_linear() {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> first_i_c_for_linear();
+  return finite_order_p -> first_well_defined_rhs_linear();
 }
 
 inline void
-Recurrence::set_first_i_c_for_linear(unsigned i_c) const {
+Recurrence::set_first_well_defined_rhs_linear(unsigned i_c) const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  finite_order_p -> set_first_i_c_for_linear(i_c);
+  finite_order_p -> set_first_well_defined_rhs_linear(i_c);
 }
 
 inline const std::vector<Expr>&

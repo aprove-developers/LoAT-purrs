@@ -458,18 +458,18 @@ private:
   //! \brief
   //! Returns the smallest positive integer for which the finite order
   //! recurrence is well-defined: the initial conditions will start from it.
-  unsigned first_i_c_for_linear() const;
+  unsigned first_well_defined_rhs_linear() const;
 
   //! \brief
   //! Returns the smallest positive integer for which the finite order
   //! recurrence is well-defined: the initial conditions will start from it.
-  unsigned& first_i_c_for_linear();
+  unsigned& first_well_defined_rhs_linear();
 
   //! \brief
   //! Sets to \p i_c is the smallest positive integer for which the finite
   //! order recurrence is well-defined: the initial conditions will start
   //! from it. 
-  void set_first_i_c_for_linear(unsigned i_c) const;
+  void set_first_well_defined_rhs_linear(unsigned i_c) const;
 
   //! Returns the coefficients of the linear finite order recurrence.
   const std::vector<Expr>& coefficients() const;
