@@ -42,6 +42,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Number.defs.hh"
 #include "Matrix.defs.hh"
 #include "Finite_Order_Info.defs.hh"
+#include "Functional_Equation_Info.defs.hh"
 #include "Recurrence.defs.hh"
 
 #include <climits>
@@ -1443,14 +1444,15 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 					  unsigned int& order,
 					  int& gcd_among_decrements,
 					  int num_term,
-					  Expr& /*coefficient*/,
-					  unsigned& /*divisor_arg*/) const {
+					  Expr& coefficient,
+					  unsigned& divisor_arg) const {
   unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
   if (num_factors == 1)
     if (r.is_the_x_function()) {
       const Expr& argument = r.arg(0);
       if (argument == n)
 	return HAS_NULL_DECREMENT;
+      // Check if this term has the form `x(n + d)'.
       else if (argument.is_a_add() && argument.nops() == 2) {
 	Number decrement;
 	if (get_constant_decrement(argument, decrement)) {
@@ -1464,24 +1466,30 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	  else
 	    gcd_among_decrements = gcd(gcd_among_decrements, index);
 	  insert_coefficients(1, index, coefficients);
+	  if (is_order_zero() || is_unknown())
+	    set_linear_finite_order_const_coeff();
+	  else if (is_functional_equation())
+	    return TOO_COMPLEX;
 	}
 	else
 	  return HAS_NON_INTEGER_DECREMENT;
       }
-#if 0
+      // Check if this term has the form `x(n / d)'.
       else if (argument.is_a_mul() && argument.nops() == 2) {
 	Number divisor;
-	if (get_constant_divisor(argument, divisor)
-	    && !is_functional_equation()
-	    && !is_linear_finite_order_var_coeff()) {
+	if (get_constant_divisor(argument, divisor)) {
 	  coefficient = 1;
 	  divisor_arg = divisor.to_int(); 
-	  set_functional_equation();
 	}
 	else
 	  return TOO_COMPLEX;
+	if (is_order_zero() || is_unknown())
+	  set_functional_equation();
+	// `else if (!is_functional_equation())' allows also more than one
+	// term of the form `x(n/b)'.
+	else
+	  return TOO_COMPLEX;
       }
-#endif
       else if (argument.has(n))
 	return TOO_COMPLEX;
       else
@@ -1519,19 +1527,21 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	  else
 	    return HAS_NON_INTEGER_DECREMENT;
 	}
-#if 0
 	else if (argument.is_a_mul() && argument.nops() == 2) {
 	  Number divisor;
-	  if (get_constant_divisor(argument, divisor)
-	      && !is_functional_equation()
-	      && !is_linear_finite_order_var_coeff()) {
-	    divisor_arg = divisor.to_int(); 
-	    set_functional_equation();
+	  if (get_constant_divisor(argument, divisor)) {
+	    divisor_arg = divisor.to_int();
+	    found_function_x = true;
+	    if (is_order_zero() || is_unknown())
+	      set_functional_equation();
+	    // `else if (!is_functional_equation())' allows also more than one
+	    // term of the form `x(n/b)'.
+	    else
+	      return TOO_COMPLEX;
 	  }
 	  else
 	    return TOO_COMPLEX;
 	}
-#endif
 	else if (argument.has(n))
 	  return TOO_COMPLEX;
 	else
@@ -1543,11 +1553,17 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	possibly_coeff *= factor;
       }
     }
-    if (found_function_x) {
-      insert_coefficients(possibly_coeff, index, coefficients);
-      if (found_n)
-	  set_linear_finite_order_var_coeff();
-    }
+    if (found_function_x)
+      if (is_functional_equation())
+	coefficient = possibly_coeff;
+      else {
+	insert_coefficients(possibly_coeff, index, coefficients);
+	if (!is_linear_finite_order_var_coeff())
+	  if (found_n)
+	    set_linear_finite_order_var_coeff();
+	  else
+	    set_linear_finite_order_const_coeff();
+      }
     else
       e += possibly_coeff;
   }
@@ -1560,9 +1576,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
   In the first case are stored in the structure <CODE>Finite_Order_Info</CODE>
   the order of the recurrence, the first initial condition
   (i. e., the smallest positive integer for which the recurrence is
-  well-defined) and the coefficients (if the order is zero it is not necessary
-  to use the pointer to the structure <CODE>Finite_Order_Info</CODE> because
-  we already know the solution). 
+  well-defined) and the coefficients.
   In the second case are stored
   in the structure <CODE>Functional_Equation_Info</CODE> the values
   \f$ a \f$ and \f$ b \f$ of the functional equation
@@ -1627,26 +1641,18 @@ PURRS::Recurrence::classification_recurrence(const Expr& rhs,
   if ((status = find_non_linear_recurrence(inhomogeneous_term)) != SUCCESS)
     return status;
 
-  // `inhomogeneous_term' is a function of `n', the parameters and of
-  // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
-  //  non-negative integers.
-  if (order == 0)
-    set_order_zero();
+  if (!is_functional_equation())
+    // `inhomogeneous_term' is a function of `n', the parameters and of
+    // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
+    //  non-negative integers.
+    if (order == 0)
+      set_order_zero();
 
-  if (!is_order_zero() && !is_linear_finite_order_var_coeff()
-      && !is_functional_equation())
-    set_linear_finite_order_const_coeff();
-
-  if (is_linear_finite_order()) {
+  if (is_linear_finite_order())
     finite_order_p = new Finite_Order_Info(order, 0, coefficients);
-    D_VAR(order);
-    D_VEC(coefficients, 1, order);
-  }
-  else if (is_functional_equation()) {
+  else if (is_functional_equation())
     functional_eq_p = new Functional_Equation_Info(coefficient, divisor_arg);
-    D_VAR(coefficient);
-    D_VAR(divisor_arg);
-  }
+
   return SUCCESS;
 }
 
@@ -1683,6 +1689,8 @@ add_initial_conditions(const Expr& g_n,
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::solve_linear_finite_order(int gcd_among_decrements) const {
+  D_VAR(order());
+  D_VEC(coefficients(), 1, order());
   // If the greatest common divisor among the decrements is greater than one,
   // the order reduction is applicable.
   // FIXME: the order reduction is for the moment applied only to
@@ -1826,6 +1834,9 @@ PURRS::Recurrence::solve_linear_finite_order(int gcd_among_decrements) const {
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::approximate_functional_equation() const {
+  D_MSG("APPROXIMATE!!!");
+  D_VAR(coefficient());
+  D_VAR(divisor_arg());
   return TOO_COMPLEX;
 }
 
@@ -2048,8 +2059,6 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
     D_MSG("Variable coefficient with parameters");
     return TOO_COMPLEX;
   }
-  D_VAR(coefficient);
-  D_VAR(inhomogeneous_term);
   // `z' will contain the biggest positive or null integer, if it exist,
   // that cancel the denominator of the coefficient.
   // If this integer does not exist then `z' is left to 0.
