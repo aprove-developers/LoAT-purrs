@@ -436,7 +436,7 @@ PURRS::Recurrence::apply_order_reduction() const {
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
-compute_non_linear_recurrence(Expr& solution_or_bound, bool exact) const {
+compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
   D_MSG("compute_non_linear_recurrence");
   // Build a new object recurrence with a linear recurrence.
   Recurrence rec_rewritten(rhs_transformed_in_linear());
@@ -484,11 +484,15 @@ compute_non_linear_recurrence(Expr& solution_or_bound, bool exact) const {
 	  == SUCCESS)
 	// Transform the solution of the linear recurrence in the solution
 	// of the non linear recurrence.
-	if (!exact || (exact
-		       && rec_rewritten.lower_bound_.expression()
-		       == rec_rewritten.upper_bound_.expression())) {
-	  solution_or_bound = pwr(base_exp_log(),
-				  rec_rewritten.lower_bound_.expression());
+	if (type != 0 || (type == 0
+			  && rec_rewritten.lower_bound_.expression()
+			  == rec_rewritten.upper_bound_.expression())) {
+	  if (type == 1)
+	    solution_or_bound = pwr(base_exp_log(),
+				    rec_rewritten.lower_bound_.expression());
+	  else
+	    solution_or_bound = pwr(base_exp_log(),
+				    rec_rewritten.upper_bound_.expression());
 	  solution_or_bound = substitute_x_function(solution_or_bound,
 						    base_exp_log(), false);
 	  solution_or_bound = simplify_ex_for_input(solution_or_bound, true);
@@ -564,7 +568,7 @@ PURRS::Recurrence::compute_exact_solution() const {
     // Non linear finite order.
     else {
       Expr solution;
-      if ((status = compute_non_linear_recurrence(solution, true))
+      if ((status = compute_non_linear_recurrence(solution, 0))
 	  == SUCCESS) {
 	exact_solution_.set_expression(solution);
 	lower_bound_.set_expression(solution);
@@ -618,7 +622,7 @@ PURRS::Recurrence::compute_lower_bound() const {
     // Non linear finite order.
     else {
       Expr bound;
-      if ((status = compute_non_linear_recurrence(bound, false))
+      if ((status = compute_non_linear_recurrence(bound, 1))
 	  == SUCCESS) {
 	lower_bound_.set_expression(bound);
 	return SUCCESS;
@@ -669,7 +673,7 @@ PURRS::Recurrence::compute_upper_bound() const {
     // Non linear finite order.
     else {
       Expr bound;
-      if ((status = compute_non_linear_recurrence(bound, false))
+      if ((status = compute_non_linear_recurrence(bound, 2))
 	  == SUCCESS) {
 	upper_bound_.set_expression(bound);
 	return SUCCESS;
