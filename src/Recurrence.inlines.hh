@@ -33,6 +33,11 @@ Recurrence::Recurrence()
 }
 
 inline
+Recurrence::Recurrence(const Expr& e)
+  : recurrence_rhs(e) {
+}
+
+inline
 Recurrence::Recurrence(const Recurrence& y)
   : recurrence_rhs(y.recurrence_rhs),
     system_rhs(y.system_rhs) {
