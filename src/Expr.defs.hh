@@ -452,6 +452,14 @@ Expr lsolve(const Expr_List& x, const Expr_List& y);
 /*! \relates Expr */
 Expr x(const Expr& y);
 
+//! Returns the function \f$ floor(x) \f$.
+/*! \relates Expr */
+Expr floor(const Expr& x);
+
+//! Returns the function \f$ mod(x, y) \f$.
+/*! \relates Expr */
+Expr mod(const Expr& x, const Expr& y);
+
 //! Returns the function \f$ sum(index,lower,upper,summand) \f$.
 /*! \relates Expr */
 Expr sum(const Expr& index, const Expr& lower, const Expr& upper,
@@ -461,14 +469,6 @@ Expr sum(const Expr& index, const Expr& lower, const Expr& upper,
 /*! \relates Expr */
 Expr prod(const Expr& index, const Expr& lower, const Expr& upper,
 	  const Expr& factor);
-
-//! Returns the function \f$ mod(x, y) \f$.
-/*! \relates Expr */
-Expr mod(const Expr& x, const Expr& y);
-
-//! Returns the function \f$ floor(x) \f$.
-/*! \relates Expr */
-Expr floor(const Expr& x);
 
 //! The base class for mathematical object.
 /*!
@@ -664,6 +664,16 @@ public:
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>floor()</CODE>.
+  bool is_the_floor_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>mod()</CODE>.
+  bool is_the_mod_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
   //! function <CODE>sum()</CODE>.
   bool is_the_sum_function() const;
 
@@ -671,11 +681,6 @@ public:
   //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
   //! function <CODE>prod()</CODE>.
   bool is_the_prod_function() const;
-
-  //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
-  //! function <CODE>mod()</CODE>.
-  bool is_the_mod_function() const;
 
   //! If \p *this is a number, returns the corresponding value.
   Number ex_to_number() const;

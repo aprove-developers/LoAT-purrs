@@ -698,6 +698,12 @@ floor(const Expr& x) {
 }
 
 inline Expr
+mod(const Expr& x, const Expr& y) {
+  return mod(static_cast<const Expr::Base>(x),
+	     static_cast<const Expr::Base>(y));
+}
+
+inline Expr
 sum(const Expr& index, const Expr& lower, const Expr& upper,
     const Expr& summand) {
   return sum(static_cast<const Expr::Base>(index),
@@ -713,12 +719,6 @@ prod(const Expr& index, const Expr& lower, const Expr& upper,
 	      static_cast<const Expr::Base>(lower),
 	      static_cast<const Expr::Base>(upper),
 	      static_cast<const Expr::Base>(factor));
-}
-
-inline Expr
-mod(const Expr& x, const Expr& y) {
-  return mod(static_cast<const Expr::Base>(x),
-	     static_cast<const Expr::Base>(y));
 }
 
 inline bool
@@ -777,6 +777,16 @@ Expr::is_the_x_function() const {
 }
 
 inline bool
+Expr::is_the_floor_function() const {
+  return is_ex_the_function(*this, floor);
+}
+
+inline bool
+Expr::is_the_mod_function() const {
+  return is_ex_the_function(*this, mod);
+}
+
+inline bool
 Expr::is_the_sum_function() const {
   return is_ex_the_function(*this, sum);
 }
@@ -784,11 +794,6 @@ Expr::is_the_sum_function() const {
 inline bool
 Expr::is_the_prod_function() const {
   return is_ex_the_function(*this, prod);
-}
-
-inline bool
-Expr::is_the_mod_function() const {
-  return is_ex_the_function(*this, mod);
 }
 
 inline void
