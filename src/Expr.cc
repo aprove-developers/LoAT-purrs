@@ -423,9 +423,17 @@ substitute_critical_ex(const Expr& e, const Expr_List& y,
     for (unsigned i = e.nops(); i-- > 0; )
       e_rewritten *= substitute_critical_ex(e.op(i), y, blackboard);
   }
-  else if (e.is_a_power())
-    return pwr(substitute_critical_ex(e.arg(0), y, blackboard),
-	       substitute_critical_ex(e.arg(1), y, blackboard));
+  else if (e.is_a_power()) {
+    const Expr& base = e.arg(0);
+    const Expr& exponent = e.arg(1);
+    Number num;
+    if (!exponent.is_a_number()
+	|| (exponent.is_a_number(num) && !num.is_integer()))
+      return blackboard.insert_definition(e);
+    else
+      return pwr(substitute_critical_ex(base, y, blackboard),
+		 substitute_critical_ex(exponent, y, blackboard));
+  }
   else if (e.is_a_function() && e.nops() == 1) {
     // The argument of the function does not contain the symbols of `y',
     // so we can consider the function a constant with respect to
