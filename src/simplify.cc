@@ -60,27 +60,27 @@ simplify_on_output_ex(const Expr& e, const Symbol& n, bool input);
 */
 static bool
 erase_factor(Expr& e, const Symbol& n) {
- if (e.is_a_mul()) {
-   unsigned num_factors = e.nops();
-   unsigned i;
-   for (i = 0; i < num_factors; ++i)
-     if (e[i] == n)
-       break;
-   if (i < num_factors) {
-     // Found an occurrence of the symbol `n'.
-     Expr r = 1;
-     for (unsigned j = 0; j < num_factors; ++j)
-       if (i != j)
-	 r *= e[i];
-     e = r;
-     return true;
-   }
- }
- else if (e == n) {
-   e = 1;
-   return true;
- }
- return false;
+  if (e.is_a_mul()) {
+    unsigned num_factors = e.nops();
+    unsigned i;
+    for (i = 0; i < num_factors; ++i)
+      if (e[i] == n)
+	break;
+    if (i < num_factors) {
+      // Found an occurrence of the symbol `n'.
+      Expr r = 1;
+      for (unsigned j = 0; j < num_factors; ++j)
+	if (i != j)
+	  r *= e[j];
+      e = r;
+      return true;
+    }
+  }
+  else if (e == n) {
+    e = 1;
+    return true;
+  }
+  return false;
 }
 
 /*!
@@ -832,7 +832,7 @@ simplify_on_input_ex(const Expr& e, const Symbol& n, bool input) {
       e_rewritten *= simplify_on_input_ex(e.op(i), n, input);
   }
   else if (e.is_a_power())
-      return pow_simpl(e, n, input);
+    return pow_simpl(e, n, input);
   else if (e.is_a_function()) {
     // FIXME: evitare la copia e trovare come accedere al funtore.
     // e_rewritten = functor(e)(simplify_on_input_ex(e.op(0), n, input));
@@ -960,7 +960,8 @@ rewrite_factorials(const Expr& e, const Symbol& n) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
       if (clear(substitution), e.op(i).match(fact_of_sum, substitution))
-	e_rewritten += decompose_factorial(1, get_binding(substitution, 0), 1, n);
+	e_rewritten += decompose_factorial(1, get_binding(substitution, 0), 1,
+					   n);
       else if (clear(substitution),
 	       e.op(i).match(a_times_fact_of_sum, substitution))
 	e_rewritten += decompose_factorial(1, get_binding(substitution, 0),
@@ -981,7 +982,8 @@ rewrite_factorials(const Expr& e, const Symbol& n) {
     e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
       if (clear(substitution), e.op(i).match(fact_of_sum, substitution))
-	e_rewritten *= decompose_factorial(1, get_binding(substitution, 0), 1, n);
+	e_rewritten *= decompose_factorial(1, get_binding(substitution, 0), 1,
+					   n);
       else if (clear(substitution),
 	       e.op(i).match(fact_of_sum_coeff, substitution))
 	e_rewritten *= decompose_factorial(get_binding(substitution, 0),
@@ -992,7 +994,8 @@ rewrite_factorials(const Expr& e, const Symbol& n) {
   else {
     e_rewritten = 0;
     if (clear(substitution), e.match(fact_of_sum, substitution))
-      e_rewritten += decompose_factorial(1, get_binding(substitution, 0), 1, n);
+      e_rewritten += decompose_factorial(1, get_binding(substitution, 0), 1,
+					 n);
     else if (clear(substitution), e.match(fact_of_sum_coeff, substitution))
       e_rewritten += decompose_factorial(get_binding(substitution, 0),
 					 get_binding(substitution, 1), 1, n);
