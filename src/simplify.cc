@@ -42,6 +42,13 @@ split_exponent(GExpr& num, GExpr& not_num, const GExpr& e) {
     num *= e;
 }
 
+static GExpr
+get_binding(const GList& l, unsigned wild_index) {
+  assert(wild_index < l.nops());
+  assert(l.op(wild_index).info(GiNaC::info_flags::relation_equal));
+  return l.op(wild_index).rhs();
+}
+
 /*!
   \f$ f \f$ is a multiplication and at least one of the factors is a
   <CODE>GiNaC::power</CODE>.
@@ -113,50 +120,54 @@ static GExpr
 pow_simpl(const GExpr& e) {
   GExpr num_exponent = 1;
   GExpr not_num_exponent = 1;
-  GExpr f = e;
-  // At the end of the following cycle 'f' will contains the base of
+  GExpr b = e;
+  // At the end of the following cycle 'b' will contains the base of
   // the power.
-  while (is_a<power>(f)) {
+  while (is_a<power>(b)) {
     // Checks and divides the exponents in two part: those numeric and  
     // those not numeric.
-    if (is_a<mul>(f.op(1)))
-      for (unsigned i = f.op(1).nops(); i-- > 0; )
-        split_exponent(num_exponent, not_num_exponent, f.op(1).op(i));
+    if (is_a<mul>(b.op(1)))
+      for (unsigned i = b.op(1).nops(); i-- > 0; )
+        split_exponent(num_exponent, not_num_exponent, b.op(1).op(i));
     else
-      split_exponent(num_exponent, not_num_exponent, f.op(1));
-    f = f.op(0);
+      split_exponent(num_exponent, not_num_exponent, b.op(1));
+    b = b.op(0);
   };
 #if NOISY
-  std::cout << "base " << f << endl;
-  std::cout << "num_exp " << num_exponent << endl;
-  std::cout << "not_num_exp " << not_num_exponent << endl;
+  std::cout << "base " << b << std::endl;
+  std::cout << "num_exp " << num_exponent << std::endl;
+  std::cout << "not_num_exp " << not_num_exponent << std::endl;
 #endif
   // The base is a multiplication.
-  if (is_a<mul>(f)) {
+  if (is_a<mul>(b)) {
     GExpr tot = 1;
     bool base_power = false;
-    for (unsigned i = f.nops(); i-- > 0; )
-      if (is_a<power>(f.op(i)))
+    for (unsigned i = b.nops(); i-- > 0; )
+      if (is_a<power>(b.op(i)))
 	base_power = true;
     // Some factor of the base is a power.
     if (base_power)
-      tot = simpl_powers_base(f, num_exponent, not_num_exponent);
+      tot = simpl_powers_base(b, num_exponent, not_num_exponent);
     // No factors of the base is a power.
     else
-      for (unsigned i = f.nops(); i-- > 0; )
-	if (!is_a<numeric>(f.op(i)))
-	  tot *= pow(f.op(i), num_exponent * not_num_exponent);
+      for (unsigned i = b.nops(); i-- > 0; )
+	if (!is_a<numeric>(b.op(i)))
+	  tot *= pow(b.op(i), num_exponent * not_num_exponent);
 	else
-          tot *= pow(pow(f.op(i), num_exponent), not_num_exponent);
+	  tot *= pow(pow(b.op(i), num_exponent), not_num_exponent);
     return tot;
   }
   // The base is not a multiplication.
   else
-    if (!is_a<numeric>(f))
-      return pow(f, num_exponent * not_num_exponent);
+    if (is_a<numeric>(b)) {
+      GNumber num = GiNaC::ex_to<GiNaC::numeric>(num_exponent);
+      if (num.is_integer())
+	return pow(pow(b, num), not_num_exponent);
+      else
+	return pow(b, num_exponent * not_num_exponent);
+    }
     else
-      return pow(pow(f, num_exponent), not_num_exponent);
-  return 0;
+      return pow(b, num_exponent * not_num_exponent);
 }
 
 /*!
@@ -173,21 +184,13 @@ simplify_on_input_ex(const GExpr& e) {
   GExpr ris;
   if (is_a<add>(e)) {
     ris = 0;
-    for (unsigned i = e.nops(); i-- > 0; ) {
-#if NOISY
-      std::cout << "e " << e.op(i) << endl;
-#endif
+    for (unsigned i = e.nops(); i-- > 0; )
       ris += simplify_on_input_ex(e.op(i));
-    }
   }
   else if (is_a<mul>(e)) {
     ris = 1;
-    for (unsigned i = e.nops(); i-- > 0; ) {
-#if NOISY
-      std::cout << "e " << e.op(i) << endl;
-#endif
+    for (unsigned i = e.nops(); i-- > 0; )
       ris *= simplify_on_input_ex(e.op(i));
-    }
   }
   else if (is_a<power>(e))
       return pow_simpl(e);
@@ -209,66 +212,172 @@ simplify_on_input_ex(const GExpr& e) {
   return ris;
 }
 
-// Rule 5 and 6.
+/*!
+  Applies the rules 5 and 6 of the terms rewriting system \f$ \mathfrak{R} \f$.
+  Returns a new <CODE>GExpr</CODE> <CODE>ris</CODE> with the eventual
+  simplifications.
+ */
 static GExpr
-collect_same_base(const GExpr& e) {
-  GExpr tmp = e;
-  std::cout << "Rule 5 o 6" << std::endl;
-  // Rule 5.
-  while (tmp.has(wild(1) * pow(wild(1), wild(2))))
-    tmp = tmp.subs(wild(1) * pow(wild(1), wild(2))
-		   == pow(wild(1), 1 + wild(2)));
-  while (tmp.has(wild(0) * wild(1) * pow(wild(1), wild(2)))) {
-    //std::cout << "5.2" << endl;
-    tmp = tmp.subs(wild(0) * wild(1) * pow(wild(1), wild(2))
-                   == wild(0) * pow(wild(1), 1 + wild(2)));
+collect_same_base(const GExpr& e, const std::vector<GExpr>& bases,
+		  std::vector<GExpr>& exponents) {
+  // At the end of the cycle 'ris' will contain the powers of 'e', with
+  // the same bases, simplified in only one power with the exponents summed
+  // (rule 6).
+  GExpr ris = 1;
+  std::vector<GExpr> tmp_exp(exponents);
+  unsigned i = bases.size();
+  while (i > 0) {
+    --i;
+    GExpr exp = tmp_exp[i];
+    GExpr base = bases[i];
+    for (unsigned j = i; j-- > 0; )
+      if (bases[j].is_equal(base)) {
+	exp += tmp_exp[j];
+	tmp_exp[j] = 0;
+	exponents[j] = 0;
+	exponents[i] = 0;
+      }
+    ris *= pow(base, exp);
+    tmp_exp[i] = 0;
   }
-  // Rule 6.
-  while (tmp.has(wild(0) * pow(wild(1), wild(2)) * pow(wild(1), wild(3))))
-    tmp = tmp.subs(wild(0) * pow(wild(1), wild(2)) * pow(wild(1), wild(3))
-                   == wild(0) * pow(wild(1), wild(2) + wild(3)));
-  return tmp;
+  // Now adds to 'ris' the factor of 'e' not considered in the
+  // previous simplifications.
+  for (i = e.nops(); i-- > 0; )
+    if (!is_a<power>(e.op(i))) {
+      bool to_sum = false;
+      for (unsigned j = bases.size(); j-- > 0; )
+	if (bases[j].is_equal(e.op(i)))
+	  to_sum = true;
+      // (rule 5.)
+      if (to_sum)
+	ris = ris.subs(pow(e.op(i), wild()) == pow(e.op(i), (wild() + 1)));
+      else
+	ris *= e.op(i);
+    }
+    else {
+      bool insert = true;
+      for (unsigned j = bases.size(); j-- > 0; )
+	if (bases[j].is_equal(e.op(i).op(0)))
+	  insert = false;
+      if (insert)
+	ris *= e.op(i);
+    }
+  return ris;
 }
 
-// Rule 12.
-// Applied under condition that the exponent is not an integer.
+/*!
+  Applies the rule 12 of the terms rewriting system \f$ \mathfrak{R} \f$
+  under condition that the common exponent of the powers is not integer
+  because, in this case, <CODE>GiNaC</CODE> automatically decomposes the
+  power.
+  Returns a new <CODE>GExpr</CODE> <CODE>ris</CODE> with the eventual
+  simplifications.
+ */
 static GExpr
-collect_same_exponent(const GExpr& e) {
-  GExpr tmp = e;
-  GList lst;
-  bool again = true;
-  while (again)
-    if (tmp.find(pow(wild(1), wild(0)) * pow(wild(2), wild(0)) * wild(3),
-		 lst)) {
-      if (is_a<numeric>(lst.op(0).op(0).op(1))) {
-	GNumber num = ex_to<numeric>(lst.op(0).op(0).op(1));
-	if (!num.is_integer())
-	  tmp = tmp.subs(pow(wild(1), wild(0))
-			 * pow(wild(2), wild(0)) * wild(3)
-			 == pow(wild(1)*wild(2), wild(0)) * wild(3));
-	else
-	  again = false;
-      }
+collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
+		       std::vector<GExpr>& exponents) {
+  GExpr ris = 1;
+  unsigned i = exponents.size();
+  while (i > 0) {
+    --i;
+    if (exponents[i] != 0) {
+      GExpr exp = exponents[i];
+      GExpr base = bases[i];
+      bool found = false;
+      for (unsigned j = i; j-- > 0; )
+	if (exponents[j].is_equal(exp)) {
+	  found = true;
+	  base *= bases[j];
+	  exponents[j] = 0;
+	}
+      if (found)
+	ris *= pow(base, exp);
       else
-	tmp = tmp.subs(pow(wild(1), wild(0)) * pow(wild(2), wild(0)) * wild(3)
-		       == pow(wild(1)*wild(2), wild(0)) * wild(3));
+	exponents[i] = 0;
     }
-    else
-      again = false;
-//  while (tmp.has(pow(wild(1), wild(0)) * pow(wild(2), wild(0)) * wild(3))) {
-//     std::cout << "tmp prima: " << tmp << endl;
-//     tmp = tmp.subs(pow(wild(1), wild(0)) * pow(wild(2), wild(0)) * wild(3)
-//                    == pow(wild(1)*wild(2), wild(0)) * wild(3));
-//     std::cout << "tmp dopo: " << tmp << endl;
-//   } 
-//   std::cout << "ris_12: " << tmp << endl;
+  }
+  if (is_a<mul>(e))
+    for (i = e.nops(); i-- > 0; )
+      if (!is_a<power>(e.op(i)))
+	ris *= e.op(i);
+      else {
+	bool insert = true;
+	for (unsigned j = exponents.size(); j-- > 0; )
+	  if (exponents[j].is_equal(e.op(i).op(1)))
+	    insert = false;
+	if (insert)
+	  ris *= e.op(i);
+      }
+  else
+    ris *= e;
+  return ris;
+}
+
+static GExpr
+collect_base_exponent(const GExpr& e) {
+  GExpr tmp = e;
+  // Simplifies nested powers.
+  for (unsigned i = tmp.nops(); i-- > 0; )
+    if (is_a<power>(tmp.op(i))
+	&& (is_a<power>(tmp.op(i).op(0)) || is_a<mul>(tmp.op(i).op(0)))) {
+      if (is_a<power>(tmp.op(i).op(0)) || has(tmp.op(i).op(0), sqrt(wild())))
+	tmp = tmp.subs(tmp.op(i) == pow_simpl(tmp.op(i)));
+      if (is_a<power>(tmp.op(i)) && is_a<mul>(tmp.op(i).op(0)))
+	tmp = tmp.subs(tmp.op(i).op(0)
+		       == collect_base_exponent(tmp.op(i).op(0)));
+    }
+#if NOISY
+  std::cout << "tmp dopo nested... " << tmp << std::endl;
+#endif
+  GExpr factor_function = 1;
+  for (unsigned i = tmp.nops(); i-- > 0; ) {
+    // Goes recursively to simplify factors that are functions simplifying
+    // the argument of the functions.
+    // Put this factor simplified in a new GExpr 'factor_function' and
+    // remove this factor from 'tmp'.
+    if (is_a<function>(tmp.op(i))) {
+      GExpr t = simplify_on_output_ex(tmp.op(i).op(0));
+      factor_function *= tmp.op(i).subs(tmp.op(i).op(0) == t);
+      tmp = tmp.subs(tmp.op(i) == 1);
+    }
+  }
+#if NOISY
+  std::cout << "factor_function... " << factor_function << std::endl;
+  std::cout << "tmp dopo ... " << tmp << std::endl;
+#endif
+  // Now 'tmp' contain only the factor that are not functions
+  // and are not powers with exponents not integer.
+  GList lst;
+  if (find(tmp, wild(0) * pow(wild(1), wild(2)), lst)) {
+    std::vector<GExpr> bases;
+    std::vector<GExpr> exponents;
+    for (unsigned i = lst.op(0).nops(); i-- > 0; )
+      if (is_a<power>(lst.op(0).op(i))) {
+	bases.push_back(lst.op(0).op(i).op(0));
+	exponents.push_back(lst.op(0).op(i).op(1));
+      }
+    // Rules 5 and 6.    
+    tmp = collect_same_base(tmp, bases, exponents);
+#if NOISY
+    std::cout << "tmp dopo same base... " << tmp << std::endl;
+#endif
+    // Rule 12. 
+    tmp = collect_same_exponents(tmp, bases, exponents);
+#if NOISY
+    std::cout << "tmp dopo same exponents... " << tmp << std::endl;
+#endif
+  }
+  tmp *= factor_function;
+
   return tmp;
 }
 
 /*!
-  Crosses the tree of the expression expanded \f$ e \f$ recursevely to find
+  Crosses the tree of the expression expanded \f$ e \f$ recursively to find
   subexpressions which to apply the rule 5, 6 and 12 of the terms rewriting
-  system \f$ /mathfrak{R} \f$ (the rule 11 is automatically applied by GiNaC).
+  system \f$ \mathfrak{R} \f$ (the rule 11 is automatically applied by GiNaC).
+  Note that the function <CODE>collect_base_exponents()</CODE> calls the
+  function that applies the rules 8, 9 and 10.
   Returns a <CODE>GExpr</CODE> that contains the input expression \f$ e \f$
   modified.  
 */ 
@@ -277,41 +386,30 @@ simplify_on_output_ex(const GExpr& e) {
   GExpr ris;
   if (is_a<add>(e)) {
     ris = 0;
-    for (unsigned i = e.nops(); i-- > 0; ) {
-#if NOISY
-      std::cout << "e " << e.op(i) << endl;
-#endif
+    for (unsigned i = e.nops(); i-- > 0; )
       ris += simplify_on_output_ex(e.op(i));
-    }
   }
-  else if (is_a<mul>(e)) {
-    GList lst;
-    // Rule 5 and 6.
-    if (e.has(wild(1) * pow(wild(1), wild(2)))
-	// FIXME: questa seconda condizione non prende casi come
-	// 5*x*x^a mentre prende b*x*x^a.
-	|| e.has(wild(0) * wild(1) * pow(wild(1), wild(2)))
-	|| e.has(wild(0) * pow(wild(1), wild(2)) * pow(wild(1), wild(3))))
-      ris += collect_same_base(e);
-
-    // Rule 12.
-    else if (e.has(pow(wild(1), wild(0)) * pow(wild(2), wild(0)) * wild(3)))
-      ris += collect_same_exponent(e);
-    else
-      ris += e;
+  else if (is_a<power>(e))
+    // FIXME: la condizione qui dovrebbe essere
+    // 'simplify_on_output_ex(pow_simpl(e))' ma cosi' ciclerebbero semplici
+    // potenze come x^2. Se metto condizioni di arresto come
+    // 'if (is_a<power>(e.op(0)))' non fa potenze come '2^(3*x)' che pero'
+    // non posso gestire dopo ma solo contemporaneamente alle potenze annidate.
+    // Cosi' pero' non mette a posto potenze come 'sqrt(x^a*5^a)' per la quale
+    // occorrerebbero due giri. 
+    return pow_simpl(e);
+  else if (is_a<function>(e)) {
+    ris = 1;
+    GExpr f = e;
+    GExpr tmp = simplify_on_output_ex(e.op(0));
+    ris *= f.subs(f.op(0) == tmp);
   }
+  else if (is_a<mul>(e))
+    return collect_base_exponent(e);
   else
     ris += e;
   return ris;
 }      
-
-static GExpr
-get_binding(const GList& l, unsigned wild_index) {
-  assert(wild_index < l.nops());
-  assert(l.op(wild_index).info(GiNaC::info_flags::relation_equal));
-  assert(l.op(wild_index).lhs() == GiNaC::wild(wild_index));
-  return l.op(wild_index).rhs();
-}
 
 /*!
   Compute the gcd between the integers \f$n\f$ and \f$m\f$.
@@ -345,7 +443,7 @@ partial_factor(const GNumber n, std::vector<GNumber>& bases,
   GNumber m = abs(n);
   assert(m != 0);
   int k = 0;
-  while(irem(m, 2) == 0) { // the case 2 is handled separately 
+  while (irem(m, 2) == 0) { // the case 2 is handled separately 
     m /= 2;
     ++k;
   }
@@ -355,7 +453,7 @@ partial_factor(const GNumber n, std::vector<GNumber>& bases,
   }
   for (unsigned i=3; (i < FACTOR_THRESHOLD) && (i*i <= m); i += 2) {
     k = 0;
-    while(irem(m, i) == 0) { // test for divisibility by the odd integer i
+    while (irem(m, i) == 0) { // test for divisibility by the odd integer i
       m /= i;
       ++k;
     }
@@ -504,46 +602,34 @@ reduce_to_standard_form(const GNumber root_index, const GNumber r) {
 }
 
 static GExpr
-red_prod(const GExpr& base_1, const GExpr& exp_1, 
-	 const GExpr& base_2, const GExpr& exp_2) {
+red_prod(const GNumber& base1, const GNumber& exp1, 
+	 const GNumber& base2, const GNumber& exp2) {
+  GNumber base_1 = base1;  
+  GNumber base_2 = base2;
+  assert(exp1 != 0);
+  assert(exp2 != 0);
   
-  GExpr base1 = base_1;
-  GExpr base2 = base_2;
-  GExpr exp1 = exp_1;
-  GExpr exp2 = exp_2;
+  GExpr   n_d_1  = numer_denom(exp1);
+  GNumber k1_num = GiNaC::ex_to<GiNaC::numeric>(n_d_1.op(0));
+  GNumber k1_den = GiNaC::ex_to<GiNaC::numeric>(n_d_1.op(1));
+  GExpr   n_d_2  = numer_denom(exp2);
+  GNumber k2_num = GiNaC::ex_to<GiNaC::numeric>(n_d_2.op(0));
+  GNumber k2_den = GiNaC::ex_to<GiNaC::numeric>(n_d_2.op(1));
   
-  GExpr q = 0;
-  if (GiNaC::is_a<GiNaC::numeric>(base1) && 
-      GiNaC::is_a<GiNaC::numeric>(base2) &&
-      GiNaC::is_a<GiNaC::numeric>(exp1)  &&
-      GiNaC::is_a<GiNaC::numeric>(exp2)) {
-    assert(exp1 != 0);
-    assert(exp2 != 0);
-    
-    GExpr   n_d_1  = numer_denom(exp1);
-    GNumber k1_num = GiNaC::ex_to<GiNaC::numeric>(n_d_1.op(0));
-    GNumber k1_den = GiNaC::ex_to<GiNaC::numeric>(n_d_1.op(1));
-    GExpr   n_d_2  = numer_denom(exp2);
-    GNumber k2_num = GiNaC::ex_to<GiNaC::numeric>(n_d_2.op(0));
-    GNumber k2_den = GiNaC::ex_to<GiNaC::numeric>(n_d_2.op(1));
-    
-    base1 = pow(base1, k1_num);
-    base2 = pow(base2, k2_num);
-    
-    GNumber g  = gcd(k1_den, k2_den);
-    GNumber k  = k1_den * k2_den / g;
-    GNumber b1 = GiNaC::ex_to<GiNaC::numeric>(pow(base1, k2_den / g));
-    GNumber b2 = GiNaC::ex_to<GiNaC::numeric>(pow(base2, k1_den / g));
-    GNumber b = b1 * b2;
-    q = reduce_to_standard_form(k, b);
-  }
-  else q = pow(base1, exp1) * pow(base2, exp2);
-  return q;
+  base_1 = pow(base_1, k1_num);
+  base_2 = pow(base_2, k2_num);
+  
+  GNumber g  = gcd(k1_den, k2_den);
+  GNumber k  = k1_den * k2_den / g;
+  GNumber b1 = GiNaC::ex_to<GiNaC::numeric>(pow(base_1, k2_den / g));
+  GNumber b2 = GiNaC::ex_to<GiNaC::numeric>(pow(base_2, k1_den / g));
+  GNumber b = b1 * b2;
+  return reduce_to_standard_form(k, b);
 }
 
+// FIXME: rifare ricorsivamente...
 static GExpr
 reduce_product(const GExpr& a) {
-  
   GExpr tmp = a;
   GList substitution;
   clear(substitution);
@@ -554,7 +640,16 @@ reduce_product(const GExpr& a) {
     GExpr base_2 = get_binding(substitution, 2);
     GExpr exp_2  = get_binding(substitution, 3);
     GExpr factor = get_binding(substitution, 4);
-    tmp = factor * red_prod(base_1, exp_1, base_2, exp_2);
+    if (GiNaC::is_a<GiNaC::numeric>(base_1) && 
+	GiNaC::is_a<GiNaC::numeric>(base_2) &&
+	GiNaC::is_a<GiNaC::numeric>(exp_1)  &&
+	GiNaC::is_a<GiNaC::numeric>(exp_2)) {
+      GNumber base1 = GiNaC::ex_to<GiNaC::numeric>(base_1);
+      GNumber exp1  = GiNaC::ex_to<GiNaC::numeric>(exp_1);
+      GNumber base2 = GiNaC::ex_to<GiNaC::numeric>(base_2);
+      GNumber exp2  = GiNaC::ex_to<GiNaC::numeric>(exp_2);
+      tmp = factor * red_prod(base1, exp1, base2, exp2);
+    }
   }
   else if (clear(substitution), match(tmp, pow(wild(0), wild(1)), 
 				      substitution)) {
@@ -590,27 +685,76 @@ reduce_product(const GExpr& a) {
     }
   }
   return tmp;
+
+  // DIFFERENT VERSION OF reduce_product()
+  //
+//   GExpr tmp = a;
+//   GExpr factors_simpl;
+//   GExpr non_numerica = 1;
+//   GNumber base_1 = 1;
+//   GNumber exp_1 = 1;
+//   for (unsigned i = tmp.nops(); i-- > 0; ) {
+//     std::cout << tmp.op(i) << " <- factor" << std::endl;
+//     if (is_a<power>(tmp.op(i)))
+//       if (GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(0)) &&
+// 	  GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(1))) {
+// 	GNumber base_2 = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(0));
+// 	GNumber exp_2 = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(1));
+// 	std::cout << "base_1  " << base_1 << "    " << "base_2  " << base_2 << std::endl;
+// 	std::cout << "exp_1   " << exp_1 << "    " << "exp_2   " << exp_2 << std::endl;
+// 	std::cout << std::endl;
+// 	factors_simpl = red_prod(base_1, exp_1, base_2, exp_2);
+// 	// red_prod restituisce 
+// 	// numerico            oppure
+// 	// numerico^numerico   oppure
+// 	// numerico * numerico^numerico
+// 	// es. 3^(1/4)*6^(3/4) restituisce 3*8^(1/4)
+// 	// FIXME: giusto?
+// 	if (is_a<mul>(factors_simpl)) {
+// 	  assert(factors_simpl.nops() == 2);
+// 	  for (unsigned j = 2; j-- > 0; )
+// 	    if (is_a<power>(factors_simpl.op(j))) {
+// 	      assert(is_a<numeric>(factors_simpl.op(j).op(0)));
+// 	      assert(is_a<numeric>(factors_simpl.op(j).op(1)));
+// 	      base_1 = GiNaC::ex_to<GiNaC::numeric>(factors_simpl.op(j).op(0));
+// 	      exp_1 = GiNaC::ex_to<GiNaC::numeric>(factors_simpl.op(j).op(1));
+// 	    }
+// 	    else {
+// 	      assert(is_a<numeric>(factors_simpl.op(j)));
+// 	      non_numerica *= tmp.op(j);
+// 	    }
+// 	}
+// 	else if (is_a<power>(factors_simpl)) {
+// 	  assert(is_a<numeric>(factors_simpl.op(0)));
+// 	  assert(is_a<numeric>(factors_simpl.op(1)));
+// 	  base_1 = GiNaC::ex_to<GiNaC::numeric>(factors_simpl.op(0));
+// 	  exp_1 = GiNaC::ex_to<GiNaC::numeric>(factors_simpl.op(1));
+// 	}
+// 	else {
+// 	  assert(is_a<numeric>(factors_simpl));
+// 	  base_1 = GiNaC::ex_to<GiNaC::numeric>(factors_simpl);
+// 	  exp_1 = 1;
+// 	}
+//       }
+//       else
+// 	non_numerica *= tmp.op(i);
+//     else
+//       non_numerica *= tmp.op(i);
+//   }
+//   tmp = factors_simpl * non_numerica;
+//   return factors_simpl * non_numerica;
+// }
+
+
 }
 
- // These routines simplify expressions that GiNaC leaves alone: 
- // for instance, they simplify 9^(1/4)*sqrt(3) to 3, which is correct, 
- // while GiNaC leaves it unchanged, and evalf(9^(1/4)*sqrt(3)) produces 
- // an approximate answer which is slightly too large. 
- // Actually, evalf(9^(1/4)*sqrt(3) - 3) yields the answer 
- // 2.168404344971008868E-19
-
-
 GExpr
-simplify_roots(const GExpr& e){
+simplify_roots(const GExpr& e) {
   GExpr ris;
   if (is_a<add>(e)) {
     ris = 0;
-    for (unsigned i = e.nops(); i-- > 0; ) {
-#if NOISY
-      cout << "e(add) " << e.op(i) << endl;
-#endif
+    for (unsigned i = e.nops(); i-- > 0; )
       ris += simplify_roots(e.op(i));
-    }
   }
   else if (is_a<function>(e)) {
     ris = 1;
@@ -618,9 +762,16 @@ simplify_roots(const GExpr& e){
     GExpr tmp = simplify_roots(e.op(0));
     ris *= f.subs(f.op(0) == tmp);
   }
-  else if (is_a<mul>(e))
-    return reduce_product(e);
+  else if (is_a<mul>(e)) {
+    ris = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      ris *= simplify_roots(reduce_product(e.op(i)));
+    // FIXME: vedere il modo migliore e piu' efficiente...
+    // Questo non lo e'!
+    //ris = reduce_product(ris);
+  }
   else if (is_a<power>(e)) {
+    // FIXME: non e' corretto chiamarlo cosi'!
     ris = 1;
     ris *= pow(simplify_roots(e.op(0)), simplify_roots(e.op(1)));
   }
