@@ -684,12 +684,12 @@ red_prod(const Number& base1, const Number& exp1,
     k2_num *= -1;
     k2_den *= -1;
   }
-  base_1 = pwr(base_1, k1_num);
-  base_2 = pwr(base_2, k2_num);
+  base_1 = exact_pwr(base_1, k1_num);
+  base_2 = exact_pwr(base_2, k2_num);
   Number g = gcd(k1_den, k2_den);
   Number k = k1_den * k2_den / g;
-  Number b1 = pwr(base_1, k2_den / g);
-  Number b2 = pwr(base_2, k1_den / g);
+  Number b1 = exact_pwr(base_1, k2_den / g);
+  Number b2 = exact_pwr(base_2, k1_den / g);
   Number b = b1 * b2;
   return reduce_to_standard_form(k, b);
 }

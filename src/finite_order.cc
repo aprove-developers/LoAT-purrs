@@ -396,8 +396,8 @@ PURRS::solve_system(bool all_distinct,
   else
     for (unsigned h = 0; h < coefficients_size - 1; ++h)
       for (unsigned i = roots.size(); i-- > 0; ) {
-	for (Number j = roots[i].multiplicity(); j-- > 1; )
-	  coeff_equations.append(pwr(h, j) * pwr(roots[i].value(), h));
+	for (unsigned j = roots[i].multiplicity(); j-- > 1; )
+	  coeff_equations.append(exact_pwr(h, j) * pwr(roots[i].value(), h));
 	coeff_equations.append(pwr(roots[i].value(), h));
       }
 
