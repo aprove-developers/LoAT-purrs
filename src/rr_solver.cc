@@ -392,17 +392,14 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     GNumber decrement;
     if (!get_constant_decrement(i, n, decrement))
       return HAS_NON_INTEGER_DECREMENT;
-    
     if (decrement == 0)
       return HAS_NULL_DECREMENT;
-    
     if (decrement < 0)
       return HAS_NEGATIVE_DECREMENT;
-
     // Make sure that (1) we can represent `decrement' as a long, and
-    // (2) we will be able to store the coefficient into the appropriate
-    // position of the `coefficients' vector.
-    if (decrement <= LONG_MAX || decrement >= coefficients.max_size())
+    // (2) we will be able to store the coefficient into the
+    // appropriate position of the `coefficients' vector.
+    if (decrement >= LONG_MAX || decrement >= coefficients.max_size())
       return HAS_HUGE_DECREMENT;
 
     // Detect non-constant coefficients, i.e., those with occurrences of `n'.
@@ -490,7 +487,6 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   else {
   // Check if the vector `coefficients' contains only numeric
   // elements and in this case use a vector of GNumber.
-    //    for (int i = 1; i <= order; ++i)
     for (unsigned i = coefficients.size(); i--> 0; )
       if (is_a<numeric>(coefficients[i]))
 	num_coefficients[i] = ex_to<numeric>(coefficients[i]);
