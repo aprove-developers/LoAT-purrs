@@ -627,7 +627,6 @@ PURRS::Expr::is_a_constant_function(const Symbol& x) const {
     return false;
 }
 
-/*! \relates Parma_Recurrence_Realtion_Solver::Expr */
 PURRS::Expr
 PURRS::Expr::substitute(const Expr& s, const Expr& r) const {
   const Expr& e = *this;
