@@ -38,6 +38,12 @@ http://www.cs.unipr.it/purrs/ . */
 #include <memory>
 #endif
 
+#define PROFILE_VERIFICATION 1
+
+#if PROFILE_VERIFICATION
+#include "tsc.hh"
+#endif
+
 using namespace std;
 using namespace Parma_Recurrence_Relation_Solver;
 
@@ -682,6 +688,31 @@ result_of_the_verification(unsigned type,
   }  
 }
 
+#if PROFILE_VERIFICATION
+class TSC_Profiler {
+private:
+  tsc_t accumulator;
+  std::string name;
+
+public:
+  TSC_Profiler(const std::string& n)
+    : name(n) {
+  }
+
+  void accumulate(tsc_t i) {
+    accumulator += i;
+  }
+
+  ~TSC_Profiler() {
+    std::cerr << "Time spent in " << name
+	      << ": " << tsc_to_msecs(accumulator) << " ms"
+	      << std::endl;
+  }
+};
+
+TSC_Profiler ves_profiler("verify_exact_solution()");
+#endif
+
 int
 main(int argc, char *argv[]) try {
   program_name = argv[0];
@@ -809,7 +840,14 @@ main(int argc, char *argv[]) try {
           if (expect_provably_correct_result
               || expect_provably_wrong_result
               || expect_inconclusive_verification) {
+#if PROFILE_VERIFICATION
+	    tsc_t tsc_begin = read_tsc();
+#endif
             Recurrence::Verify_Status status = rec.verify_exact_solution();
+#if PROFILE_VERIFICATION
+	    tsc_t tsc_end = read_tsc(); 
+	    ves_profiler.accumulate(tsc_end-tsc_begin);
+#endif
             result_of_the_verification(0, status,
                                        unexpected_failures_to_verify,
                                        unexpected_failures_to_disprove,
