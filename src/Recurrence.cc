@@ -211,8 +211,8 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
   else {
     // Step 1: validation of initial conditions.
     for (unsigned i = order_rec; i-- > 0; ) {
-      Expr solution_evaluated = rec.exact_solution_.expression()
-	.substitute(n, first_i_c + i);
+      Expr solution_evaluated
+	= rec.exact_solution_.expression().substitute(n, first_i_c + i);
       solution_evaluated = rec.blackboard.rewrite(solution_evaluated);
       solution_evaluated = simplify_all(solution_evaluated);
       D_VAR(solution_evaluated);
@@ -249,6 +249,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
     for (unsigned i = order_rec; i-- > 0; ) {
       terms_to_sub[i] = simplify_all(partial_solution.substitute
 				     (n, n - (i + 1)));
+      terms_to_sub[i] = simplify_sum(terms_to_sub[i]);
       substituted_rhs = substituted_rhs
 	.substitute(x(n - (i + 1)), terms_to_sub[i]);
     }
@@ -301,12 +302,11 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_bound(const Recurrence& rec, bool upper) {
   assert(rec.is_functional_equation());
-  D_VAR(rec.applicability_condition()); 
   Expr bound;
   if (upper)
-    bound = rec.upper_bound_.expression();
+    bound = simplify_sum(rec.upper_bound_.expression());
   else
-    bound = rec.lower_bound_.expression();
+    bound = simplify_sum(rec.lower_bound_.expression());
   
   // Step 1: validation of initial conditions.
   if (!validation_initial_conditions_in_bound(upper, bound,
