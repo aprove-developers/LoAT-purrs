@@ -17,13 +17,15 @@ SUBDIRS =
 
 INCLUDES = -I$(top_builddir)/src -I$(top_srcdir)/CoStLy @extra_includes@
 
-LDADD = $(top_builddir)/src/libpurrs.a $(top_builddir)/CoStLy/libCoStLy.a -lstdc++ @extra_libraries@ -lntl @readline_libraries@
+LDADD = $(top_builddir)/src/libpurrs.a ehandlers.o $(top_builddir)/CoStLy/libCoStLy.a -lstdc++ @extra_libraries@ -lntl @readline_libraries@
 
 CPPFLAGS = @extra_cpp_flags@
 
 TESTS =
 
-# noinst_HEADERS = ehandlers.hh print.hh
+noinst_HEADERS = ehandlers.hh
+
+EXTRA_DIST = ehandlers.cc
 
 BUGS =
 
