@@ -648,3 +648,37 @@ PURRS::substitute_x_function(const Expr& e, const Expr& k, bool do_power) {
     return e;
   return e_rewritten;
 }
+
+bool
+PURRS::has_symbolic_initial_conditions(const Expr& e) {
+  if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned int i = e.nops(); i-- > 0; )
+      if (!has_symbolic_initial_conditions(e.op(i)))
+	return false;
+  }
+  else if (e.is_a_power()) {
+    if (!has_symbolic_initial_conditions(e.arg(0))
+	|| !has_symbolic_initial_conditions(e.arg(1)))
+      return false;
+  }
+  else if (e.is_a_function())
+    if (e.is_the_x_function()) {
+      const Expr& argument = e.arg(0);
+      Number arg;
+      if (!(argument.is_a_number(arg) && arg.is_nonnegative_integer())
+	  && !(argument.is_the_mod_function()
+	       && argument.arg(0) == Recurrence::n
+	       && argument.arg(1).is_a_number(arg)
+	       && arg.is_positive_integer())
+	  && !(argument.is_a_add() && argument.nops() == 2
+	       && (argument.op(0).is_the_mod_function()
+		   || argument.op(1).is_the_mod_function())))
+	return false;
+    }
+    else
+      for (unsigned int i = e.nops(); i-- > 0; )
+	if (!has_symbolic_initial_conditions(e.arg(i)))
+	  return false;
+  return true;
+}
+

@@ -31,7 +31,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "util.hh"
 #include "Blackboard.defs.hh"
 #include "Expr.defs.hh"
-#include "Recurrence.defs.hh"
 #include "simplify.hh"
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
@@ -888,40 +887,6 @@ PURRS::Expr::has_x_function(const Expr& y) const {
 	if (e.arg(i).has_x_function(y))
 	  return true;
   return false;
-}
-
-bool
-PURRS::Expr::has_symbolic_initial_conditions() const {
-  const Expr& e = *this;
-  if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned int i = e.nops(); i-- > 0; )
-      if (!e.op(i).has_symbolic_initial_conditions())
-	return false;
-  }
-  else if (e.is_a_power()) {
-    if (!e.arg(0).has_symbolic_initial_conditions()
-	|| !e.arg(1).has_symbolic_initial_conditions())
-      return false;
-  }
-  else if (e.is_a_function())
-    if (e.is_the_x_function()) {
-      const Expr& argument = e.arg(0);
-      Number arg;
-      if (!(argument.is_a_number(arg) && arg.is_nonnegative_integer())
-	  && !(argument.is_the_mod_function()
-	       && argument.arg(0) == Recurrence::n
-	       && argument.arg(1).is_a_number(arg)
-	       && arg.is_positive_integer())
-	  && !(argument.is_a_add() && argument.nops() == 2
-	       && (argument.op(0).is_the_mod_function()
-		   || argument.op(1).is_the_mod_function())))
-	return false;
-    }
-    else
-      for (unsigned int i = e.nops(); i-- > 0; )
-	if (!e.arg(i).has_symbolic_initial_conditions())
-	  return false;
-  return true;
 }
 
 Expr

@@ -229,13 +229,13 @@ PURRS::Recurrence::verify_finite_order() const {
   if (exact_solution.is_a_add())
     for (unsigned int i = exact_solution.nops(); i-- > 0; ) {
       const Expr& addend_exact_solution = exact_solution.op(i);
-      if (addend_exact_solution.has_symbolic_initial_conditions())
+      if (has_symbolic_initial_conditions(addend_exact_solution))
 	summands_with_i_c += addend_exact_solution;
       else
 	summands_without_i_c += addend_exact_solution;
     }
   else
-    if (exact_solution.has_symbolic_initial_conditions())
+    if (has_symbolic_initial_conditions(exact_solution))
       summands_with_i_c = exact_solution;
     else
       summands_without_i_c = exact_solution;
@@ -699,11 +699,11 @@ PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
   Expr partial_bound = 0;
   if (bound.is_a_add())
     for (unsigned int i = bound.nops(); i-- > 0; ) {
-      if (!bound.op(i).has_symbolic_initial_conditions())
+      if (!has_symbolic_initial_conditions(bound.op(i)))
 	partial_bound += bound.op(i);
     }
   else
-    if (!bound.has_symbolic_initial_conditions())
+    if (!has_symbolic_initial_conditions(bound))
       partial_bound = bound;
   D_VAR(partial_bound);
   // The recurrence is homogeneous.

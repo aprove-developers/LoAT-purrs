@@ -729,8 +729,8 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
   Expr remainder_solution = 0;
   if (rec.exact_solution_.expression().is_a_add())
     for (unsigned int i = rec.exact_solution_.expression().nops(); i-- > 0; )
-      if (rec.exact_solution_.expression()
-	  .op(i).has_symbolic_initial_conditions())
+      if (has_symbolic_initial_conditions
+	  (rec.exact_solution_.expression().op(i)))
 	term_with_ic += rec.exact_solution_.expression().op(i);
       else
 	remainder_solution += rec.exact_solution_.expression().op(i);
