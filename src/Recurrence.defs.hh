@@ -252,6 +252,7 @@ public:
                                      and the classification's process
 				     called by this method fails.
   */
+  // FIXME: It now just returns `first_valid_index'.
   index_type first_valid_initial_condition() const;
 
   //! \brief

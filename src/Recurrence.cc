@@ -54,6 +54,14 @@ PURRS::Recurrence::throw_invalid_argument(const char* method,
   throw std::invalid_argument(s.str());
 }
 
+PURRS::index_type
+PURRS::Recurrence::first_valid_initial_condition() const {
+  // FIXME: Temporary. Add support for exceptions. Actually compute
+  // the first valid index for initial conditions instead of just
+  // returning `first_valid_index'.
+  return first_valid_index;
+}
+
 void
 PURRS::Recurrence::
 set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
