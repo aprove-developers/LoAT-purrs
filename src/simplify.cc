@@ -274,6 +274,7 @@ simplify_powers(const Expr& e, bool input) {
       return return_power(false, base, num_exponent, not_num_exponent, input);
 }
 
+//! Applies the rule \f$ \textbf{C3} \f$ of the set of rules <EM>Collect</EM>.
 /*!
   Applies the rule \f$ \textbf{C3} \f$ of the set of rules
   <EM>Collect</EM> to the expression \p e under the condition
@@ -349,6 +350,9 @@ substitute_factor(const Expr& e, const Expr& old_factor, const Expr& new_factor)
   return e_subs;
 }
 
+//! \brief
+//! Applies the rules \f$ \textbf{C1} \f$ and \f$ \textbf{C2} \f$ of the
+//! set of rules <EM>Collect</EM>.
 /*!
   Applies the rules \f$ \textbf{C1} \f$ and \f$ \textbf{C2} \f$ of the set
   of rules <EM>Collect</EM> to the <CODE>Expr</CODE> \p e that is
@@ -430,6 +434,7 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
   return e_rewritten;
 }
 
+//! Applies the rules of the set of rules <EM>Collect</EM>.
 /*!
   Applies the rules of the set <EM>Collect</EM> to an expression
   \p e that is certainly a <CODE>mul</CODE>.
