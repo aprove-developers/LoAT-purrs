@@ -47,9 +47,6 @@ PURRS::simplify_on_output_ex(const Expr& e, const Symbol& n, bool input);
 namespace {
 using namespace PURRS;
 
-static const unsigned
-FACTOR_THRESHOLD = 100;
-
 //! Applies the rule `E2' of the set <EM>Expand</EM>.
 /*!
   If \f$ e = e_1 \cdots e_k \f$ and
@@ -435,46 +432,6 @@ collect_base_exponent(const Expr& e) {
     e_rewritten = collect_same_base(e_rewritten, bases, exponents);
   D_MSGVAR("e_rewritten dopo same base: ", e_rewritten);
   return e_rewritten;
-}
-
-/*!
-  Construct a partial factorization of the integer \p n.
-  \p n is tested for divisibility by 2 and by odd integers between 3
-  and <CODE>FACTOR_THRESHOLD</CODE>.
-  The partially factored form is returned in the pair of vectors 
-  \p bases and \p exponents, of <CODE>Number</CODE>s
-  and <CODE>int</CODE>s respectively.
-*/
-void 
-partial_factor(const Number& n, std::vector<Number>& bases,
-	       std::vector<int>& exponents) {
-  assert(n.is_integer());
-  Number m = abs(n);
-  assert(m != 0);
-  int k = 0;
-  while (mod(m, 2) == 0) { // the case 2 is handled separately 
-    m /= 2;
-    ++k;
-  }
-  if (k > 0) {
-    bases.push_back(2);
-    exponents.push_back(k);
-  }
-  for (unsigned i = 3; (i < FACTOR_THRESHOLD) && (i * i <= m); i += 2) {
-    k = 0;
-    while (mod(m, i) == 0) { // test for divisibility by the odd integer i
-      m /= i;
-      ++k;
-    }
-    if (k > 0) {
-      bases.push_back(i);
-      exponents.push_back(k);
-    }
-  }
-  if (m > 1) { // here n has not necessarily been factored completely 
-    bases.push_back(m);
-    exponents.push_back(1);
-  }
 }
 
 /*!

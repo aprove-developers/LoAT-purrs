@@ -33,6 +33,9 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
+static const unsigned
+FACTOR_THRESHOLD = 100;
+
 bool
 PURRS::vector_not_all_zero(const std::vector<PURRS::Expr>& v) {
   for (unsigned i = v.size(); i-- > 0; )
@@ -81,6 +84,46 @@ PURRS::Expr
 PURRS::cubic_root(const Expr& e) {
   static Expr one_third = Expr(1)/3;
   return pwr(e, one_third);
+}
+
+/*!
+  Construct a partial factorization of the integer \p n.
+  \p n is tested for divisibility by 2 and by odd integers between 3
+  and <CODE>FACTOR_THRESHOLD</CODE>.
+  The partially factored form is returned in the pair of vectors 
+  \p bases and \p exponents, of <CODE>Number</CODE>s
+  and <CODE>int</CODE>s respectively.
+*/
+void 
+PURRS::partial_factor(const Number& n, std::vector<Number>& bases,
+		      std::vector<int>& exponents) {
+  assert(n.is_integer());
+  Number m = abs(n);
+  assert(m != 0);
+  int k = 0;
+  while (mod(m, 2) == 0) { // the case 2 is handled separately 
+    m /= 2;
+    ++k;
+  }
+  if (k > 0) {
+    bases.push_back(2);
+    exponents.push_back(k);
+  }
+  for (unsigned i = 3; (i < FACTOR_THRESHOLD) && (i * i <= m); i += 2) {
+    k = 0;
+    while (mod(m, i) == 0) { // test for divisibility by the odd integer i
+      m /= i;
+      ++k;
+    }
+    if (k > 0) {
+      bases.push_back(i);
+      exponents.push_back(k);
+    }
+  }
+  if (m > 1) { // here n has not necessarily been factored completely 
+    bases.push_back(m);
+    exponents.push_back(1);
+  }
 }
 
 void

@@ -53,6 +53,11 @@ general_gcd(const Expr& p, const Expr& q, const Symbol& x);
 Number
 lcm(const std::vector<Number>& numbers);
 
+//! Construct a partial factorization of the integer \p n.
+void 
+partial_factor(const Number& n, std::vector<Number>& bases,
+	       std::vector<int>& exponents);
+
 //! Computes the cubic root of \f$e\f$.
 Expr
 cubic_root(const Expr& e);
