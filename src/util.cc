@@ -126,13 +126,6 @@ PURRS::partial_factor(const Number& n, std::vector<Number>& bases,
   }
 }
 
-void
-PURRS::clear(Expr_List& l) {
-  for (unsigned n = l.nops(); n-- > 0; )
-    l.remove_first();
-  assert(l.nops() == 0);
-}
-
 //! \brief
 //! Isolates a polynomial part of \p e and assigns it to \p polynomial,
 //! assigning the corresponding possibly non-polynomial part of \p e
@@ -145,7 +138,7 @@ PURRS::clear(Expr_List& l) {
 */
 void
 PURRS::isolate_polynomial_part(const Expr& e, const Symbol& x,
-			Expr& polynomial, Expr& rest) {
+			       Expr& polynomial, Expr& rest) {
   if (e.is_a_add()) {
     polynomial = 0;
     rest = 0;

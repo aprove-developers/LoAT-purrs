@@ -41,7 +41,7 @@ namespace Parma_Recurrence_Relation_Solver {
 bool
 vector_not_all_zero(const std::vector<Expr>& v);
 
-//! Computes the gcd between \f$n\f$ and \f$m\f$.
+//! Computes the gcd between \p n and \p m.
 int
 gcd(int n, int m);
 
@@ -49,22 +49,18 @@ gcd(int n, int m);
 Expr
 general_gcd(const Expr& p, const Expr& q, const Symbol& x);
 
-//! Computes the lcm among the integers in the vector \f$numbers\f$.
+//! Computes the lcm among the integers in the vector \p v.
 Number
-lcm(const std::vector<Number>& numbers);
+lcm(const std::vector<Number>& v);
 
 //! Construct a partial factorization of the integer \p n.
 void 
 partial_factor(const Number& n, std::vector<Number>& bases,
 	       std::vector<int>& exponents);
 
-//! Computes the cubic root of \f$e\f$.
+//! Computes the cubic root of \p e.
 Expr
 cubic_root(const Expr& e);
-
-//! Removes all the elements from \p l.
-void
-clear(Expr_List& l);
 
 void
 isolate_polynomial_part(const Expr& p, const Symbol& var,
