@@ -30,7 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 // TEMPORARY
 #include <iostream>
 
-using namespace GiNaC;
+using namespace Parma_Recurrence_Relation_Solver;
 
 #define NOISY 0
 
@@ -71,7 +71,7 @@ split_exponent(GExpr& num, GExpr& not_num, const GExpr& e) {
 static GExpr
 found_and_erase_n(const GExpr& not_num_exponent, const GSymbol& n) {
  bool found = false;
- if (is_a<mul>(not_num_exponent)) {
+ if (not_num_exponent.is_a_mul()) {
    for (unsigned i = not_num_exponent.nops(); i-- > 0; )
      if (not_num_exponent[i].is_equal(n))
        found = true;
@@ -82,7 +82,7 @@ found_and_erase_n(const GExpr& not_num_exponent, const GSymbol& n) {
 
  GExpr not_num_exp_minus_n = 1;
  if (found) {
-   if (is_a<mul>(not_num_exponent)) {
+   if (not_num_exponent.is_a_mul()) {
      for (unsigned i = not_num_exponent.nops(); i-- > 0; )
        if (!not_num_exponent[i].is_equal(n))
 	 not_num_exp_minus_n *= not_num_exponent[i];
@@ -104,7 +104,7 @@ perfect_root(const GExpr& base, const GNumber& exp_num) {
   if (exp_num.is_rational()) {
     GExpr pow_base_num_exp = pow(base, exp_num);
     if (pow_base_num_exp.is_a_number()) {
-      GNumber tmp = GiNaC::ex_to<GiNaC::numeric>(pow_base_num_exp);
+      GNumber tmp = pow_base_num_exp.ex_to_number();
       if (tmp.is_rational())
 	return true;
     }
@@ -168,11 +168,11 @@ simpl_powers_base(const GExpr& base, const GExpr& num_exponent,
     vect_not_num_exp[i] = not_num_exponent;
   }
   for (unsigned i = base.nops(); i-- > 0; )
-    if (is_a<power>(base.op(i))) {
+    if (base.op(i).is_a_power()) {
       GExpr tmp = base.op(i);
       while (is_a<power>(tmp)) {
         // The exponent of the factor `base.op(i)' is a multiplication.
-        if (is_a<mul>(tmp.op(1)))
+        if (tmp.op(1).is_a_mul())
           for (unsigned j = tmp.op(1).nops(); j-- > 0; )
             split_exponent(vect_num_exp[i], vect_not_num_exp[i],
                            tmp.op(1).op(j));
@@ -245,7 +245,7 @@ pow_simpl(const GExpr& e, const GSymbol& n, const bool& input) {
   // i.e., call the function `simpl_powers_base'.
   else {
     if (base.is_a_number()) {
-      GNumber num_exp = GiNaC::ex_to<GiNaC::numeric>(num_exponent);
+      GNumber num_exp = num_exponent.ex_to_number();
       // The function `perfect_root' allows to apply the rule `E1'.
       if (num_exp.is_integer() || perfect_root(base, num_exp))
 	return return_power(true, input, num_exp, not_num_exponent,
@@ -361,14 +361,14 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 	  if (!bases[j].is_a_number() || !exponents[j].is_a_number())
 	    exponents[j] = exponents[j] + 1;
 	  else {
-	    GNumber base = GiNaC::ex_to<GiNaC::numeric>(bases[j]);
+	    GNumber base = bases[j].ex_to_number();
 	    if (!base.is_integer() || base.is_equal(-1))
 	      exponents[j] = exponents[j] + 1;
 	  }
 	}
       // Applies rule `C1'.
       if (to_sum)
-	ris = ris.subs(pow(e.op(i), wild()) == pow(e.op(i), wild() + 1));
+	ris = ris.subs(pow(e.op(i), wild(0)), pow(e.op(i), wild(0) + 1));
       else
 	ris *= e.op(i);
     }
@@ -552,8 +552,8 @@ reduce_to_standard_form(const GNumber root_index, const GNumber r) {
     if (r == 0)
       return 0;
   GExpr   n_d = numer_denom(r);
-  GNumber num = GiNaC::ex_to<GiNaC::numeric>(n_d.op(0));
-  GNumber den = GiNaC::ex_to<GiNaC::numeric>(n_d.op(1));
+  GNumber num = n_d.op(0).ex_to_number();
+  GNumber den = n_d.op(1).ex_to_number();
   // FIXME: deal with complex numbers
   if (!r.is_real()) {
     GExpr index = 1 / root_index;
@@ -632,19 +632,19 @@ red_prod(const GNumber& base1, const GNumber& exp1,
   assert(exp2 != 0);
   
   GExpr   n_d_1  = numer_denom(exp1);
-  GNumber k1_num = GiNaC::ex_to<GiNaC::numeric>(n_d_1.op(0));
-  GNumber k1_den = GiNaC::ex_to<GiNaC::numeric>(n_d_1.op(1));
+  GNumber k1_num = n_d_1.op(0).ex_to_number();
+  GNumber k1_den = n_d_1.op(1).ex_to_number();
   GExpr   n_d_2  = numer_denom(exp2);
-  GNumber k2_num = GiNaC::ex_to<GiNaC::numeric>(n_d_2.op(0));
-  GNumber k2_den = GiNaC::ex_to<GiNaC::numeric>(n_d_2.op(1));
+  GNumber k2_num = n_d_2.op(0).ex_to_number();
+  GNumber k2_den = n_d_2.op(1).ex_to_number();
   
   base_1 = pow(base_1, k1_num);
   base_2 = pow(base_2, k2_num);
   
   GNumber g  = gcd(k1_den, k2_den);
   GNumber k  = k1_den * k2_den / g;
-  GNumber b1 = GiNaC::ex_to<GiNaC::numeric>(pow(base_1, k2_den / g));
-  GNumber b2 = GiNaC::ex_to<GiNaC::numeric>(pow(base_2, k1_den / g));
+  GNumber b1 = pow(base_1, k2_den / g).ex_to_number();
+  GNumber b2 = pow(base_2, k1_den / g).ex_to_number();
   GNumber b = b1 * b2;
   return reduce_to_standard_form(k, b);
 }
@@ -668,8 +668,8 @@ reduce_product(const GExpr& e) {
 	// Base and exponent of `tmp.op(i)' are both numerics.
 	if (GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(0)) &&
 	    GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(1))) {
-	  GNumber base_2 = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(0));
-	  GNumber exp_2  = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(1));
+	  GNumber base_2 = tmp.op(i).op(0).ex_to_number();
+	  GNumber exp_2  = tmp.op(i).op(1).ex_to_number();
 	  GExpr to_reduce = red_prod(base_1, exp_1, base_2, exp_2);
 	  // red_prod returns `numeric' or `numeric^numeric' or
 	  // `numeric * numeric^numeric'.
@@ -679,8 +679,8 @@ reduce_product(const GExpr& e) {
 	      if (is_a<power>(to_reduce.op(j))) {
 		assert(is_a<numeric>(to_reduce.op(j).op(0)));
 		assert(is_a<numeric>(to_reduce.op(j).op(1)));
-		base_1 = GiNaC::ex_to<GiNaC::numeric>(to_reduce.op(j).op(0));
-		exp_1  = GiNaC::ex_to<GiNaC::numeric>(to_reduce.op(j).op(1));
+		base_1 = to_reduce.op(j).op(0).ex_to_number();
+		exp_1  = to_reduce.op(j).op(1).ex_to_number();
 		factor_to_reduce = pow(to_reduce.op(j).op(0),
 				       to_reduce.op(j).op(1));
 	      }
@@ -690,13 +690,13 @@ reduce_product(const GExpr& e) {
 	  else if (is_a<power>(to_reduce)) {
 	    assert(to_reduce.op(0).is_a_number());
 	    assert(to_reduce.op(1).is_a_number());
-	    base_1 = GiNaC::ex_to<GiNaC::numeric>(to_reduce.op(0));
-	    exp_1 = GiNaC::ex_to<GiNaC::numeric>(to_reduce.op(1));
+	    base_1 = to_reduce.op(0).ex_to_number();
+	    exp_1 = to_reduce.op(1).ex_to_number();
 	    factor_to_reduce = pow(to_reduce.op(0), to_reduce.op(1));
 	  }
 	  else {
 	    assert(to_reduce.is_a_number());
-	    base_1 = GiNaC::ex_to<GiNaC::numeric>(to_reduce);
+	    base_1 = to_reduce.ex_to_number();
 	    exp_1 = 1;
 	    factor_to_reduce = pow(to_reduce, 1);
 	  }
@@ -713,8 +713,8 @@ reduce_product(const GExpr& e) {
   else if (is_a<power>(e))
     if (GiNaC::is_a<GiNaC::numeric>(e.op(0)) &&
 	GiNaC::is_a<GiNaC::numeric>(e.op(1))) {
-      GNumber base = GiNaC::ex_to<GiNaC::numeric>(e.op(0));
-      GNumber exp  = GiNaC::ex_to<GiNaC::numeric>(e.op(1));
+      GNumber base = e.op(0).ex_to_number();
+      GNumber exp  = e.op(1).ex_to_number();
       return red_prod(base, exp, 1, 1);
     }
   return e;
@@ -755,7 +755,7 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
     for (unsigned i = tmp.nops(); i-- > 0; )
       if (is_a<function>(tmp.op(i))) {
 	GExpr argument = simplify_on_output_ex(tmp.op(i).op(0), n, input);
-	factor_function *= tmp.op(i).subs(tmp.op(i).op(0) == argument);
+	factor_function *= tmp.op(i).subs(tmp.op(i).op(0), argument);
       }
       else
 	factor_no_function *= tmp.op(i);
@@ -763,7 +763,7 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
   }
   else if (is_a<function>(tmp)) {
     GExpr argument = simplify_on_output_ex(tmp.op(0), n, input);
-    tmp = tmp.subs(tmp.op(0) == argument);
+    tmp = tmp.subs(tmp.op(0), argument);
   }
 #if NOISY
   std::cout << "tmp dopo function... " << tmp << std::endl << std::endl;
@@ -838,7 +838,7 @@ simplify_on_input_ex(const GExpr& e, const GSymbol& n, const bool& input) {
   else if (is_a<function>(e)) {
     GExpr f = e;
     GExpr tmp = simplify_on_input_ex(e.op(0), n, input);
-    ris = f.subs(f.op(0) == tmp);
+    ris = f.subs(f.op(0), tmp);
   }
   else
     ris += e;
@@ -884,7 +884,7 @@ simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input) {
   else if (is_a<function>(e)) {
     GExpr f = e;
     GExpr tmp = simplify_on_output_ex(e.op(0), n, input);
-    ris = f.subs(f.op(0) == tmp);
+    ris = f.subs(f.op(0), tmp);
   }
   else
     ris += e;

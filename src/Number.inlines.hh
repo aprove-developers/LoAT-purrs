@@ -59,6 +59,26 @@ operator-(const Number& lh) {
   return -lh;
 }
 
+Number&
+operator++(Number& rh) {
+  return ++rh;
+}
+
+Number&
+operator--(Number& rh) {
+  return --rh;
+}
+
+Number
+operator++(Number& lh, int i) {
+  return lh++;
+}
+
+Number
+operator--(Number& lh, int i) {
+  return lh--;
+}
+
 inline bool
 Number::operator==(const Number& num) const {
   return n == num.n;
@@ -121,6 +141,36 @@ Number::Number(const GiNaC::numeric& gn)
 
 inline
 Number::~Number() {
+}
+
+inline Number
+Number::numer_denom() const {
+  return n.numer_denom();
+}
+
+inline Number
+Number::real() const {
+  return n.real();
+}
+
+inline Number
+Number::imag() const {
+  return n.imag();
+}
+
+inline Number
+Number::numer() const {
+  return n.numer();
+}
+
+inline Number
+Number::denom() const {
+  return n.denom();
+}
+
+inline Number
+irem(const Number& a, const Number& b) {
+return irem(s, b);
 }
 
 inline Number

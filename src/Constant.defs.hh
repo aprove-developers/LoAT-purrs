@@ -51,10 +51,12 @@ private:
 
   friend class Expr;
 
+public:
   Constant(const GiNaC::constant& gc);
 };
 
 extern const Constant Pi;
+extern const Constant Euler;
 
 } // namespace Parma_Recurrence_Relation_Solver
 

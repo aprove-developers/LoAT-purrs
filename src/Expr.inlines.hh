@@ -32,6 +32,16 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+// std::ostream&
+// operator<<(std::ostream & os, const Expr& e) {
+//   return ;  
+// };
+
+// std::istream&
+// operator>>(std::istream & is, Expr& e) {
+//   return ;
+// };
+
 Expr
 operator+(const Expr& lh, const Expr& rh) {
   return lh + rh;
@@ -117,6 +127,11 @@ Expr::Expr(const Constant& k)
 }
 
 inline
+Expr::Expr(const Expr_List& lst)
+  : e(lst.l) {
+}
+
+inline
 Expr::Expr(const Expr& exp)
   : e(exp.e) {
 };
@@ -186,8 +201,39 @@ Expr::is_a_relational() const {
   return GiNaC::is_a<GiNaC::relational>(e);
 }
 
+inline bool
+Expr::is_exactly_a_number() const {
+  return GiNaC::is_exactly_a<GiNaC::numeric>(e);
+}
+
+inline bool
+Expr::is_exactly_a_constant() const {
+  return GiNaC::is_exactly_a<GiNaC::constant>(e);
+}
+
+inline bool
+Expr::is_exactly_a_add() const {
+  return GiNaC::is_exactly_a<GiNaC::add>(e);
+}
+
+inline bool
+Expr::is_exactly_a_mul() const {
+  return GiNaC::is_exactly_a<GiNaC::mul>(e);
+}
+
+inline bool
+Expr::is_exactly_a_power() const {
+  return GiNaC::is_exactly_a<GiNaC::power>(e);
+}
+
+inline bool
+Expr::is_exactly_a_function() const {
+  return GiNaC::is_exactly_a<GiNaC::function>(e);
+}
+
+
 inline Number
-Expr::ex_to_number() {
+Expr::ex_to_number() const {
   return GiNaC::ex_to<GiNaC::numeric>(e);
 }
 
@@ -228,9 +274,9 @@ Expr::subs(const Symbol& s, const Expr& exp) const {
 }
 
 inline Expr
-Expr::subs(const Expr_List& symbols,
+Expr::subs(const Expr_List& to_replace,
 	   const Expr_List& replacements) const {
-  return e.subs(symbols.l, replacements.l);
+  return e.subs(to_replace.l, replacements.l);
 }
 
 inline bool
@@ -254,8 +300,8 @@ Expr::expand() const {
 }
 
 inline Expr
-Expr::collect(const Expr& exp) const {
-  return e.collect(exp.e);
+Expr::collect(const Expr_List& lst) const {
+  return e.collect(lst.l);
 }
 
 inline int
@@ -309,6 +355,11 @@ Expr::to_rational(Expr_List& lst) {
 }
 
 inline Expr
+wild(unsigned label) {
+  return wild(label);
+}
+
+inline Expr
 pow(const Expr& b, const Expr& e) {
   return pow(b, e);
 }
@@ -336,6 +387,21 @@ cos(const Expr& e) {
 inline Expr
 acos(const Expr& e) {
   return acos(e);
+};
+
+inline Expr
+tan(const Expr& e) {
+  return tan(e);
+};
+
+inline Expr
+exp(const Expr& e) {
+  return exp(e);
+};
+
+inline Expr
+ln(const Expr& e) {
+  return ln(e);
 };
 
 inline Expr

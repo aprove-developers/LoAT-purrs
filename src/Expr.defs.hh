@@ -35,6 +35,10 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+// input/output stream operators
+std::ostream & operator<<(std::ostream & os, const Expr& e);
+std::istream & operator>>(std::istream & is, Expr& e);
+
 // binary arithmetic operators Expr with Expr
 Expr operator+(const Expr& lh, const Expr& rh);
 Expr operator-(const Expr& lh, const Expr& rh);
@@ -68,8 +72,11 @@ public:
   //! Builds the symbolic expression \p s.
   Expr(const Symbol& s);
 
-  //! Builds the constant expression \p s.
+  //! Builds the constant expression \p k.
   Expr(const Constant& k);
+
+  //! Builds the list expression \p lst.
+  Expr(const Expr_List& lst);
 
   //! Copy-constructor.
   Expr(const Expr& exp);
@@ -80,7 +87,7 @@ public:
   //! Assignment operator.
   Expr& operator=(const Expr& exp);
 
-   bool is_a_symbol() const;
+  bool is_a_symbol() const;
   bool is_a_number() const;
   bool is_a_constant() const;
   bool is_a_add() const;
@@ -90,8 +97,15 @@ public:
   bool is_a_matrix() const;
   bool is_a_Expr_List() const;
   bool is_a_relational() const;
+  bool is_exactly_a_number() const;
+  bool is_exactly_a_constant() const;
+  bool is_exactly_a_add() const;
+  bool is_exactly_a_mul() const;
+  bool is_exactly_a_power() const;
+  bool is_exactly_a_function() const;
 
-  Number ex_to_number();
+  // FIXME: const?
+  Number ex_to_number() const;
 
   // info
   bool is_integer_polynomial() const;
@@ -102,13 +116,13 @@ public:
   bool is_equal(const Expr& e) const;
   bool is_zero() const;
   Expr subs(const Symbol& s, const Expr& e) const;
-  Expr subs(const Expr_List& symbols, const Expr_List& replacements) const;
+  Expr subs(const Expr_List& to_replace, const Expr_List& replacements) const;
   bool match(const Expr& pattern) const;
   bool match(const Expr& pattern, Expr_List& replacements) const;
   bool has(const Expr& pattern) const;
 
   Expr expand() const;
-  Expr collect(const Expr& lst) const;
+  Expr collect(const Expr_List& lst) const;
   int degree(const Symbol& symb) const;
   int ldegree(const Symbol& symb) const;
   Expr coeff(const Symbol& symb, int k) const;
@@ -127,9 +141,15 @@ private:
   GiNaC::ex e;
 
   friend class Number;
+  friend class Constant;
+  friend class Expr_List;
+  friend class Matrix;
 
   Expr(const GiNaC::ex& ge);
 };
+
+// FIXME: meglio con argomento di default `unsigned label = 0'?
+Expr wild(unsigned label);
 
 Expr pow(const Expr& b, const Expr& e);
 Expr pow(const Symbol& b, const unsigned i);
@@ -137,6 +157,9 @@ Expr sqrt(const Expr& e);
 Expr sin(const Expr& e);
 Expr cos(const Expr& e);
 Expr acos(const Expr& e);
+Expr tan(const Expr& e);
+Expr exp(const Expr& e);
+Expr ln(const Expr& e);
 
 Expr quo(const Expr& a, const Expr& b, const Symbol& x);
 Expr quo(const Expr& a, const Symbol& x, const Symbol& y);

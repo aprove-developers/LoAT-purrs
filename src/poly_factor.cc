@@ -29,6 +29,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <NTL/ZZXFactoring.h>
 
 using namespace NTL;
+using namespace Parma_Recurrence_Relation_Solver;
 
 static long
 ZZ_to_long(const ZZ& zz) {
@@ -44,12 +45,12 @@ ZZ_to_long(const ZZ& zz) {
 
 int
 poly_factor(const GExpr& p, const GSymbol& x, std::vector<GExpr>& factors) {
-  assert(p.info(GiNaC::info_flags::integer_polynomial));
+  assert(p.is_integer_polynomial());
   ZZX ntl_p;
   for (int i = p.ldegree(x), d = p.degree(x); i<= d; ++i) {
     GExpr e_i = p.coeff(x, i);
     assert(e_i.is_a_number());
-    GNumber a_i = GiNaC::ex_to<GiNaC::numeric>(e_i);
+    GNumber a_i = e_i.ex_to_number();
     if (a_i < LONG_MIN || a_i > LONG_MAX)
       return 1;
     SetCoeff(ntl_p, i, to_long(a_i));

@@ -26,6 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Matrix_defs_hh 1
 
 #include "Matrix.types.hh"
+#include "Expr_List.types.hh"
 #include "Expr.defs.hh"
 
 namespace Parma_Recurrence_Relation_Solver {
@@ -34,6 +35,10 @@ class Parma_Recurrence_Relation_Solver::Matrix {
 public:
   //! Ordinary copy-constructor.
   Matrix();
+
+  Matrix(unsigned i, unsigned j);
+
+  Matrix(unsigned i, unsigned j, const Expr_List& lst);
 
   //! Copy-constructor.
   Matrix(const Matrix& x);
@@ -44,9 +49,13 @@ public:
   //! Assignment operator.
   Matrix& operator=(const Matrix& x);
 
+  Expr& operator()(unsigned r, unsigned c) const;
+
   Matrix solve(const Matrix& vars, const Matrix& rhs) const;
 private:
   GiNaC::matrix m;
+
+  friend class Expr;
 
   Matrix(const GiNaC::matrix& gm);
 };

@@ -1,6 +1,8 @@
 
 #include "globals.hh"
 
+using namespace Parma_Recurrence_Relation_Solver;
+
 GExpr
 x_eval(const GExpr& e) {
   return x(e).hold();

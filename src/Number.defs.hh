@@ -38,8 +38,16 @@ Number operator-(const Number& lh, const Number& rh);
 Number operator*(const Number& lh, const Number& rh);
 Number operator/(const Number& lh, const Number& rh);
 
+// unary operators
 Number operator+(const Number &lh);
 Number operator-(const Number &lh);
+
+// increment / decrement operators
+Number& operator++(Number& rh);
+Number& operator--(Number& rh);
+// FIXME: int i e' superflua? Ma se la tolgo c'e' ambiguita' con quella sopra
+Number operator++(Number& lh, int i);
+Number operator--(Number& lh, int i);
 
 class Parma_Recurrence_Relation_Solver::Number {
 public:
@@ -67,17 +75,25 @@ public:
 
   //  relational operator==(const Symbol& lh, const Number& rh);
 
-  bool is_positive();
-  bool is_integer();
-  bool is_pos_integer();
-  bool is_nonneg_integer();
-  bool is_even();
-  bool is_odd();
-  bool is_prime();
-  bool is_rational();
-  bool is_real();
-  bool is_cinteger();
-  bool is_crational();
+  bool is_positive() const;
+  bool is_integer() const;
+  bool is_pos_integer() const;
+  bool is_nonneg_integer() const;
+  bool is_even() const;
+  bool is_odd() const;
+  bool is_prime() const;
+  bool is_rational() const;
+  bool is_real() const;
+  bool is_cinteger() const;
+  bool is_crational() const;
+
+  Number numer_denom() const;
+
+  Number real() const;
+  Number imag() const;
+  Number numer() const;
+  Number denom() const;
+
 private:
   friend class Expr;
 
@@ -94,6 +110,7 @@ int to_int(const Number& n);
 long to_long(const Number& n);
 
 Number abs(const Number& n);
+Number irem(const Number& a, const Number& b);
 
 } // namespace Parma_Recurrence_Relation_Solver
 

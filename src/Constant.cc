@@ -27,5 +27,6 @@ site: http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
-const PURRS::Constant PURRS::Pi = GiNac::Pi;
+const PURRS::Constant PURRS::Pi = GiNaC::Pi;
+const PURRS::Constant PURRS::Euler = GiNaC::Euler;
 

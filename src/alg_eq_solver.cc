@@ -570,7 +570,7 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   D_MSGVAR("Before: ", r); 
 
   r = simplify_on_output_ex(r, n, false);
-  GExpr s = numeric(a1)/4;
+  GExpr s = a1/4;
 
   D_VAR(r); 
   D_VAR(s); 

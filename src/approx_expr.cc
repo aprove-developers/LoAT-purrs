@@ -29,7 +29,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <ginac/ginac.h>
 #include "cimath.h"
 
-using namespace GiNaC;
+using namespace Parma_Recurrence_Relation_Solver;
 
 Interval
 approximate_integer(const GNumber& n) {
@@ -42,7 +42,7 @@ approximate_rational(const GNumber& n) {
   if (n.is_integer())
     return approximate_integer(n);
   else if (n.is_rational())
-    return approximate_integer(numer(n)) / approximate_integer(denom(n));
+    return approximate_integer(n.numer()) / approximate_integer(n.denom());
   else
     abort();
 }
@@ -50,29 +50,29 @@ approximate_rational(const GNumber& n) {
 CInterval
 approximate(const GNumber& n) {
   if (n.is_real())
-    return CInterval(approximate_rational(real(n)),
+    return CInterval(approximate_rational(n.real()),
 		     0);
   else
-    return CInterval(approximate_rational(real(n)),
-		     approximate_rational(imag(n)));
+    return CInterval(approximate_rational(n.real()),
+		     approximate_rational(n.imag()));
 }
 
 CInterval
 approximate(const GExpr& e) {
   CInterval r;
-  if (GiNaC::is_exactly_a<GiNaC::numeric>(e))
-    return approximate(GiNaC::ex_to<GiNaC::numeric>(e));
-  else if (GiNaC::is_exactly_a<GiNaC::add>(e)) {
+  if (e.is_exactly_a_number())
+    return approximate(e.ex_to_number());
+  else if (e.is_exactly_a_add()) {
     r = CInterval(0, 0);
     for (unsigned i = 0, n = e.nops(); i < n; ++i)
       r += approximate(e.op(i));
   }
-  else if (GiNaC::is_exactly_a<GiNaC::mul>(e)) {
+  else if (e.is_exactly_a_mul()) {
     r = CInterval(1, 0);
     for (unsigned i = 0, n = e.nops(); i < n; ++i)
       r *= approximate(e.op(i));
   }
-  else if (GiNaC::is_exactly_a<GiNaC::power>(e)) {
+  else if (e.is_exactly_a_power()) {
     static GExpr one_half = GNumber(1)/2;
     const GExpr& base = e.op(0);
     const GExpr& exponent = e.op(1);
@@ -88,7 +88,7 @@ approximate(const GExpr& e) {
     return result;
 #endif
   }
-  else if (GiNaC::is_exactly_a<GiNaC::function>(e)) {
+  else if (e.is_exactly_a_function()) {
     const GExpr& arg = e.op(0);
     CInterval aarg = approximate(arg);
 #if 0
@@ -111,8 +111,8 @@ approximate(const GExpr& e) {
     else
       abort();
   }
-  else if (GiNaC::is_exactly_a<constant>(e)) {
-    if (e == Pi)
+  else if (e.is_exactly_a_constant()) {
+    if (e.is_equal(Pi))
       return CInterval(Interval::PI(), Interval::ZERO());
 #if 0
     else if (e == Euler)

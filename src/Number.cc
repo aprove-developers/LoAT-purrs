@@ -41,56 +41,56 @@ PURRS::to_long(const Number& n) {
 
 
 bool
-PURRS::Number::is_positive() {
+PURRS::Number::is_positive() const {
   return n.is_positive();
 }
 
 bool
-PURRS::Number::is_integer() {
+PURRS::Number::is_integer() const {
   return n.is_integer();
 }
 
 bool
-PURRS::Number::is_pos_integer() {
+PURRS::Number::is_pos_integer() const {
   return n.is_pos_integer();
 }
 
 bool
-PURRS::Number::is_nonneg_integer() {
+PURRS::Number::is_nonneg_integer() const {
   return n.is_nonneg_integer();
 }
 
 bool
-PURRS::Number::is_even() {
+PURRS::Number::is_even() const {
   return n.is_even();
 }
 
 bool
-PURRS::Number::is_odd() {
+PURRS::Number::is_odd() const {
   return n.is_odd();
 }
 
 bool
-PURRS::Number::is_prime() {
+PURRS::Number::is_prime() const {
   return n.is_prime();
 }
 
 bool
-PURRS::Number::is_rational() {
+PURRS::Number::is_rational() const {
   return n.is_rational();
 }
 
 bool
-PURRS::Number::is_real() {
+PURRS::Number::is_real() const {
   return n.is_real();
 }
 
 bool
-PURRS::Number::is_cinteger() {
+PURRS::Number::is_cinteger() const {
   return n.is_cinteger();
 }
 
 bool
-PURRS::Number::is_crational() {
+PURRS::Number::is_crational() const {
   return n.is_crational();
 }

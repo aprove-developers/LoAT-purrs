@@ -24,7 +24,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "util.hh"
 
-using namespace GiNaC;
+using namespace Parma_Recurrence_Relation_Solver;
 
 /*!
   Computes the gcd between the integers \p n and \p m.
@@ -105,18 +105,18 @@ get_binding(const GList& substitution, unsigned wild_index) {
 */
 bool
 is_scalar_representation(const GExpr& e, const GSymbol& x) {
-  if (is_a<numeric>(e))
+  if (e.is_a_number())
     return true;
-  else if (is_a<constant>(e))
+  else if (e.is_a_constant())
     return true;
-  else if (is_a<symbol>(e) && !e.is_equal(x))
+  else if (e.is_a_symbol() && !e.is_equal(x))
     return true;
-  else if (is_a<power>(e))
+  else if (e.is_a_power())
     return is_scalar_representation(e.op(0), x)
       && is_scalar_representation(e.op(1), x);
-  else if (is_a<function>(e))
+  else if (e.is_a_function())
     return is_scalar_representation(e.op(0), x);
-  else if (is_a<add>(e) || is_a<mul>(e)) {
+  else if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned i = e.nops(); i-- > 0; )
       if (!is_scalar_representation(e.op(i), x))
 	return false;
@@ -145,15 +145,15 @@ is_polynomial(const GExpr& e, const GSymbol& x) {
     return true;
   else if (e.is_equal(x))
     return true;
-  else if (is_a<power>(e)) {
+  else if (e.is_a_power()) {
     if (is_polynomial(e.op(0), x))
-      if (is_a<numeric>(e.op(1))) {
-	GNumber exponent = GiNaC::ex_to<GiNaC::numeric>(e.op(1));
+      if (e.op(1).is_a_number()) {
+	GNumber exponent = e.op(1).ex_to_number();
 	if (exponent.is_pos_integer())
 	  return true;
       }
   }
-  else if (is_a<add>(e) || is_a<mul>(e)) {
+  else if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned i = e.nops(); i-- > 0; )
       if (!is_polynomial(e.op(i), x))
 	return false;
@@ -174,7 +174,7 @@ is_polynomial(const GExpr& e, const GSymbol& x) {
 void
 isolate_polynomial_part(const GExpr& e, const GSymbol& x,
 			GExpr& polynomial, GExpr& rest) {
-  if (is_a<add>(e)) {
+  if (e.is_a_add()) {
     polynomial = 0;
     rest = 0;
     for (unsigned i = e.nops(); i-- > 0; ) {
@@ -207,11 +207,11 @@ convert_to_integer_polynomial(const GExpr& p, const GSymbol& x) {
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
-  GNumber t_lcm = denom(ex_to<GiNaC::numeric>(p.coeff(x, deg_p)));
+  GNumber t_lcm = denom(p.coeff(x, deg_p).ex_to_number());
   for (unsigned i = 0; i <= deg_p; ++i) {
     GExpr t_coeff = p.coeff(x, i);
-    assert(is_a<GiNaC::numeric>(t_coeff));
-    t_lcm = lcm(t_lcm, denom(ex_to<GiNaC::numeric>(t_coeff)));
+    assert(t_coeff.is_a_number());
+    t_lcm = lcm(t_lcm, denom(t_coeff.ex_to_number()));
   }
   return (p * t_lcm).primpart(x);
 }
@@ -230,16 +230,16 @@ convert_to_integer_polynomial(const GExpr& p, const GSymbol& x,
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
-  GNumber t_lcm = denom(ex_to<GiNaC::numeric>(p.coeff(x, deg_p)));
+  GNumber t_lcm = denom(p.coeff(x, deg_p).ex_to_number());
   for (unsigned i = 0; i <= deg_p; ++i) {
     GExpr t_coeff = p.coeff(x, i);
     assert(is_a<GiNaC::numeric>(t_coeff));
-    t_lcm = lcm(t_lcm, denom(ex_to<GiNaC::numeric>(t_coeff)));
+    t_lcm = lcm(t_lcm, denom(t_coeff.ex_to_number()));
   }
 
   GExpr q = (p * t_lcm).primpart(x);
-  factor  = ex_to<GiNaC::numeric>(p.lcoeff(x));
-  factor *= ex_to<GiNaC::numeric>(pow(q.lcoeff(x), -1));
+  factor  = p.lcoeff(x).ex_to_number();
+  factor *= pow(q.lcoeff(x), -1).ex_to_number();
   return q;
 }
 

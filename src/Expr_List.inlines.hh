@@ -26,6 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Expr_List_inlines_hh
 
 #include "Symbol.defs.hh"
+#include "Expr.defs.hh"
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -36,6 +37,11 @@ Expr_List::Expr_List() {
 inline
 Expr_List::Expr_List(const Symbol& symb)
   : l(symb.s) {
+};
+
+inline
+Expr_List::Expr_List(const Expr& exp1, const Expr& exp2)
+  : l(exp1.e, exp2.e) {
 };
 
 inline
@@ -50,7 +56,26 @@ Expr_List::operator=(const Expr_List& lst) {
 };
 
 inline
+Expr_List::Expr_List(const GiNaC::lst& gl)
+  : l(gl) {
+}
+
+inline
 Expr_List::~Expr_List() {
+}
+
+inline Expr
+Expr_List::op(unsigned i) const {
+  return l.op(i);
+
+inline Expr_List
+Expr_List::append(const Expr& exp) {
+  return l.append(exp.e);
+}
+
+inline Expr_List
+Expr_List::prepend(const Expr& exp) {
+  return l.prepend(exp.e);
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

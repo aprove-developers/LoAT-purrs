@@ -40,19 +40,30 @@ public:
 
   explicit Expr_List(const Symbol& symb);
 
+  explicit Expr_List(const Expr& exp1, const Expr& exp2);
+
   //! Copy-constructor.
-  Expr_List(const Expr_List& l);
+  Expr_List(const Expr_List& lst);
 
   //! Destructor.
   ~Expr_List();
 
   //! Assignment operator.
-  Expr_List& operator=(const Expr_List& l);
+  Expr_List& operator=(const Expr_List& lst);
+
+  Expr op(unsigned i) const;
+
+  Expr_List append(const Expr& exp);
+  Expr_List prepend(const Expr& exp);
 
 private:
   GiNaC::lst l;
 
   friend class Expr;
+  friend class Matrix;
+
+public:
+  Expr_List(const GiNaC::lst& gl);
 };
 
 } // namespace Parma_Recurrence_Relation_Solver
