@@ -60,14 +60,14 @@ static bool
 gosper_step_one(const Expr& t, const Symbol& n, Expr& r_n) {
   Expr t_plus_one = t.subs(n, n+1); 
   r_n = simplify_factorials_and_exponentials(t_plus_one, n)
-    * Parma_Recurrence_Relation_Solver::power(simplify_factorials_and_exponentials(t, n), -1);
+    * pwr(simplify_factorials_and_exponentials(t, n), -1);
   // The following use of `numerator_denominator()' simplify ulteriorly
   // `r_n' (we can not to call `simplify_numer_denom()' because it expandes
   // the expressions).
   Expr r_n_num;
   Expr r_n_den;
   r_n.numerator_denominator(r_n_num, r_n_den);
-  r_n = r_n_num * Parma_Recurrence_Relation_Solver::power(r_n_den, -1);
+  r_n = r_n_num * pwr(r_n_den, -1);
 #if NOISY
   std::cout << std::endl << "r_n =  " << r_n << std::endl;
 #endif
@@ -147,9 +147,9 @@ gosper_step_two(const Expr& r_n, const Symbol& n,
   // normalize f and g, and store conversion factor in Z
   Expr lead_f = f.lcoeff(n);
   Expr lead_g = g.lcoeff(n);
-  Expr Z = lead_f * Parma_Recurrence_Relation_Solver::power(lead_g, -1);
-  a_n = f * Parma_Recurrence_Relation_Solver::power(lead_f, -1);
-  b_n = g * Parma_Recurrence_Relation_Solver::power(lead_g, -1);
+  Expr Z = lead_f * pwr(lead_g, -1);
+  a_n = f * pwr(lead_f, -1);
+  b_n = g * pwr(lead_g, -1);
   // Computation of the output polynomials.
   c_n = 1;
   unsigned integer_roots_size = integer_roots.size();
@@ -212,7 +212,7 @@ find_polynomial_solution(const Symbol& n, const Number& deg_x,
   // Builds the generic polynomial `p' of degree `deg_x'.
   x_n = 0;
   for (unsigned i = 0; i < number_of_coeffs; ++i)
-    x_n += Parma_Recurrence_Relation_Solver::power(n, i) * unknowns.op(i);
+    x_n += pwr(n, i) * unknowns.op(i);
 
   Expr x_n_shift = x_n.subs(n, n+1);
   Expr b_shift = b_n.subs(n, n-1);
@@ -277,7 +277,7 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
     Expr shift_b = b_n.subs(n, n - 1);
     Expr A = a_n.coeff(n, deg_a - 1);
     Expr B = shift_b.coeff(n, deg_a - 1);
-    Expr B_A_e = (B - A) * Parma_Recurrence_Relation_Solver::power(lead_a, -1);
+    Expr B_A_e = (B - A) * pwr(lead_a, -1);
     Number B_A = B_A_e.ex_to_number();
     Number possible_deg = Number(deg_c) - Number(deg_a) + 1;
     if (B_A.is_nonnegative_integer())
@@ -305,7 +305,7 @@ gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
 		 const Number& lower_bound, const Expr& upper_bound,
 		 Expr solution) {
   Expr shift_b = b_n.subs(n, n-1);
-  Expr z_n = shift_b * x_n * t * Parma_Recurrence_Relation_Solver::power(c_n, -1);
+  Expr z_n = shift_b * x_n * t * pwr(c_n, -1);
   z_n = simplify_numer_denom(z_n);
   // The Gosper's algorithm computes summation with the lower bound `0'
   // and the upper bound `n - 1': in this case, once we have `z_n',

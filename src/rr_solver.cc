@@ -118,13 +118,13 @@ build_characteristic_equation(const Symbol& x,
     for (unsigned i = coefficients.size(); i-- > 1; )
       int_coefficients[i] *= least_com_mul;
     for (unsigned i = coefficients.size() - 1; i-- > 0; )
-      p += Parma_Recurrence_Relation_Solver::power(x, i) * (-int_coefficients[coefficients.size() - 1 - i]);
-    p += least_com_mul * Parma_Recurrence_Relation_Solver::power(x, coefficients.size() - 1);
+      p += pwr(x, i) * (-int_coefficients[coefficients.size() - 1 - i]);
+    p += least_com_mul * pwr(x, coefficients.size() - 1);
   }
   else {
     for (unsigned i = coefficients.size() - 1; i-- > 0; )
-      p += Parma_Recurrence_Relation_Solver::power(x, i) * (-coefficients[coefficients.size() - 1 - i]);
-    p += Parma_Recurrence_Relation_Solver::power(x, coefficients.size() - 1);
+      p += pwr(x, i) * (-coefficients[coefficients.size() - 1 - i]);
+    p += pwr(x, coefficients.size() - 1);
   }
   return p;
 }
@@ -157,10 +157,10 @@ return_sum(const bool distinct, const Symbol& n, const Number& order,
   // we want it to start from `order'.
   symbolic_sum -= q_k.subs(k, 0);
   for (Number j = 1; j < order; ++j)
-    symbolic_sum -= q_k.subs(k, j) * Parma_Recurrence_Relation_Solver::power(alpha, j) * Parma_Recurrence_Relation_Solver::power(lambda, -j);
+    symbolic_sum -= q_k.subs(k, j) * pwr(alpha, j) * pwr(lambda, -j);
   if (distinct)
     symbolic_sum = symbolic_sum.subs(x, alpha/lambda);
-  symbolic_sum *= Parma_Recurrence_Relation_Solver::power(lambda, n);
+  symbolic_sum *= pwr(lambda, n);
   symbolic_sum = simplify_on_output_ex(symbolic_sum.expand(), n, false);
 
   return symbolic_sum;
@@ -688,7 +688,7 @@ eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs,
   new_rhs = rhs.subs(n, n-max_decrement);
   new_rhs *= -1;
   new_rhs = new_rhs.subs(x(n), - x(n-max_decrement)
-			 * Parma_Recurrence_Relation_Solver::power(coefficient, -1));
+			 * pwr(coefficient, -1));
   new_rhs /= coefficient;
 }
 
@@ -755,7 +755,7 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs,
       }
     else {
       // Case 3.
-      new_rhs = b * Parma_Recurrence_Relation_Solver::power(1 - a, -1);
+      new_rhs = b * pwr(1 - a, -1);
     }
   }
   // Let `rhs = a*x(n)'.
@@ -862,7 +862,7 @@ exp_poly_decomposition_summand(const Expr& e, const Symbol& n,
 			       std::vector<Expr>& alpha,
 			       std::vector<Expr>& p,
 			       std::vector<Expr>& q) {
-  static Expr exponential = Parma_Recurrence_Relation_Solver::power(wild(0), n);
+  static Expr exponential = pwr(wild(0), n);
   Expr_List substitution;
   unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
   if (num_factors == 1) {
@@ -986,8 +986,8 @@ gosper(const int order, const Symbol& n,
       // FIXME: this is a temporary assert untile he generalization of
       // this function.
       assert(order == 1);
-      Expr t = Parma_Recurrence_Relation_Solver::power(base_of_exps[i], n) * exp_no_poly_coeff[i]
-	* Parma_Recurrence_Relation_Solver::power(roots[0].value(), -n);
+      Expr t = pwr(base_of_exps[i], n) * exp_no_poly_coeff[i]
+	* pwr(roots[0].value(), -n);
       //std::cout << "t(n) = " << t << std::endl;
       if (!gosper(t, n, Number(order), n, tmp))
 	return false;
@@ -1059,7 +1059,7 @@ solve_constant_coeff_order_1(const Symbol& n, const int order,
   // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
   // add_initial_conditions(g_n, n, coefficients, initial_conditions,
   //		              solution);
-  solution += initial_conditions[0] * Parma_Recurrence_Relation_Solver::power(roots[0].value(), n);
+  solution += initial_conditions[0] * pwr(roots[0].value(), n);
 
   return solution;
 }
@@ -1114,13 +1114,13 @@ solve_system(const bool all_distinct,
   if (all_distinct)
     for (unsigned i = coefficients_size - 1; i-- > 0; )
       for (unsigned j = coefficients_size - 1; j-- > 0; )
-	coeff_equations.prepend(Parma_Recurrence_Relation_Solver::power(roots[j].value(), i));
+	coeff_equations.prepend(pwr(roots[j].value(), i));
   else
     for (unsigned h = 0; h < coefficients_size - 1; ++h)
       for (unsigned i = roots.size(); i-- > 0; ) {
 	for (Number j = roots[i].multiplicity(); j-- > 1; )
-	  coeff_equations.append(Parma_Recurrence_Relation_Solver::power(h, j) * Parma_Recurrence_Relation_Solver::power(roots[i].value(), h));
-	coeff_equations.append(Parma_Recurrence_Relation_Solver::power(roots[i].value(), h));
+	  coeff_equations.append(pwr(h, j) * pwr(roots[i].value(), h));
+	coeff_equations.append(pwr(roots[i].value(), h));
       }
 
   // Define the matrices and solve the system.
@@ -1145,12 +1145,12 @@ find_g_n(const Symbol& n, const bool all_distinct, const Matrix sol,
   Expr g_n = 0;
   if (all_distinct)
     for (unsigned i = 0; i < order; ++i)
-      g_n += sol(i, 0) * Parma_Recurrence_Relation_Solver::power(roots[i].value(), n);
+      g_n += sol(i, 0) * pwr(roots[i].value(), n);
   else
     for (unsigned i = roots.size(); i-- > 0; ) {
       unsigned h = 0;
       for (Number j = roots[i].multiplicity(); j-- > 0 && h < order; ) {
-	g_n += sol(h, 0) * Parma_Recurrence_Relation_Solver::power(n, j) * Parma_Recurrence_Relation_Solver::power(roots[i].value(), n);
+	g_n += sol(h, 0) * pwr(n, j) * pwr(roots[i].value(), n);
 	++h;
       }
     }
@@ -1236,8 +1236,8 @@ compute_non_homogeneous_part(const Symbol& n, const Expr& g_n,
       solution -= (g_n_coeff_k * exp_poly_coeff_k).subs(k, 0);
       for (int h = 1; h < order; ++h)
 	solution -= (g_n_coeff_k * exp_poly_coeff_k).subs(k, h)
-	  * Parma_Recurrence_Relation_Solver::power(1/bases_exp_g_n[i] * base_of_exps[j], h);
-      solution *= Parma_Recurrence_Relation_Solver::power(bases_exp_g_n[i], n);
+	  * pwr(1/bases_exp_g_n[i] * base_of_exps[j], h);
+      solution *= pwr(bases_exp_g_n[i], n);
       solution_tot += solution;
     }
   return solution_tot;
@@ -1324,7 +1324,7 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, const int order,
 					     base_of_exps,
 					     symbolic_sum_distinct,
 					     symbolic_sum_no_distinct);
-      g_n = (Parma_Recurrence_Relation_Solver::power(root_1, n+1) - Parma_Recurrence_Relation_Solver::power(root_2, n+1)) / diff_roots;
+      g_n = (pwr(root_1, n+1) - pwr(root_2, n+1)) / diff_roots;
       // FIXME: forse conviene semplificare g_n
 #if NOISY
       D_VAR(g_n);
@@ -1459,7 +1459,7 @@ compute_alpha_factorial(const Expr& e, const Symbol& n,
   Expr alpha_factorial = 1;
   if (!e.has(n))
     // `e' is_a_number or is_a_constant or is_a_symbol different to `n'...
-    alpha_factorial *= Parma_Recurrence_Relation_Solver::power(e, n);
+    alpha_factorial *= pwr(e, n);
   else if (e.is_equal(n))
     alpha_factorial *= factorial(e);
   if (e.is_a_power())
@@ -1469,8 +1469,7 @@ compute_alpha_factorial(const Expr& e, const Symbol& n,
       if (e.op(0).has(n)) {
 	// FIXME!!
 	// Base of the power contain `n'.
-	alpha_factorial *= Parma_Recurrence_Relation_Solver::power
-	  (compute_alpha_factorial(e.op(0), n, sum_first_n), e.op(1));
+	alpha_factorial *= pwr(compute_alpha_factorial(e.op(0), n, sum_first_n), e.op(1));
       }
       else {
 	// Exponent of the power contain `n'.

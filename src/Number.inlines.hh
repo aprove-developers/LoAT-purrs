@@ -243,7 +243,7 @@ lcm(const Number& x, const Number& y) {
 }
 
 inline Number
-power(const Number& x, const Number& y) {
+pwr(const Number& x, const Number& y) {
   return GiNaC::pow(x.n, y.n);
 }
 

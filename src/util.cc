@@ -69,7 +69,7 @@ lcm(const std::vector<Number>& v) {
 Expr
 cubic_root(const Expr& e) {
   static Expr one_third = Expr(1)/3;
-  return Parma_Recurrence_Relation_Solver::power(e, one_third);
+  return pwr(e, one_third);
 }
 
 void
@@ -244,7 +244,7 @@ convert_to_integer_polynomial(const Expr& p, const Symbol& x,
 
   Expr q = (p * t_lcm).primpart(x);
   factor  = p.lcoeff(x).ex_to_number();
-  factor *= Parma_Recurrence_Relation_Solver::power(q.lcoeff(x), -1).ex_to_number();
+  factor *= pwr(q.lcoeff(x), -1).ex_to_number();
   return q;
 }
 
@@ -273,7 +273,7 @@ resultant(const Expr& p, const Expr& q, const Symbol& x) {
   // Special case: `f' or `g' is a constant polynomial. By definition
   // `Res(f, g) = f.lcoeff(n)^g.degree(n) * g.lcoeff(n)^f.degree(n)'. 
   if (deg_f == 0 || deg_g == 0)
-    res = Parma_Recurrence_Relation_Solver::power(f.lcoeff(x), deg_g) * Parma_Recurrence_Relation_Solver::power(g.lcoeff(x), deg_f);
+    res = pwr(f.lcoeff(x), deg_g) * pwr(g.lcoeff(x), deg_f);
   else {
     // Modified Euclid's algorithm starts here.
     while (deg_f > 0) {
@@ -282,14 +282,14 @@ resultant(const Expr& p, const Expr& q, const Symbol& x) {
       // quozient of `g' and `f' and
       // `factor = f.lcoeff(x)^(g.degree(x) - f.degree(x) + 1)'.
       Expr r = prem(g, f, x);
-      Expr factor = Parma_Recurrence_Relation_Solver::power(f.lcoeff(x), g.degree(x) - f.degree(x) + 1);
+      Expr factor = pwr(f.lcoeff(x), g.degree(x) - f.degree(x) + 1);
       // The rest of euclidean's division is given by the ratio
       // `pseudo-remainder / factor'.
-      r *= Parma_Recurrence_Relation_Solver::power(factor, -1);
+      r *= pwr(factor, -1);
       unsigned deg_r = r.degree(x);
       Expr a = f.lcoeff(x);
       // Using rule two.
-      res *= Parma_Recurrence_Relation_Solver::power(a, deg_g - deg_r);
+      res *= pwr(a, deg_g - deg_r);
       // Using rule one.
       if ((deg_f * deg_r) & 1 != 0)
 	// `deg_f * deg_r' is odd.
@@ -300,7 +300,7 @@ resultant(const Expr& p, const Expr& q, const Symbol& x) {
       deg_g = g.degree(x);
     }
     // Here `f' is a constant: use rule three.
-    res *= Parma_Recurrence_Relation_Solver::power(f, deg_g);
+    res *= pwr(f, deg_g);
   }
 #if NOISY
   std::cout << "Resultant(f(x), g(x)) = " << res << std::endl;

@@ -114,7 +114,7 @@ Number lcm(const Number& x, const Number& y);
   \exception std::logic_error   thrown if \f$ x = 0 \f$ and \f$ y \f$
                                 is not a positive rational number.
 */
-Number power(const Number& x, const Number& y);
+Number pwr(const Number& x, const Number& y);
 
 //! If \f$ x \f$ and \f$ y \f$ are integer and \f$ y \neq 0 \f$,
 //! returns the remainder of the division of \f$ x \f$ by \f$ y \f$.
@@ -283,7 +283,7 @@ private:
   friend Number factorial(const Number& x);
   friend Number gcd(const Number& x, const Number& y);
   friend Number lcm(const Number& x, const Number& y);
-  friend Number power(const Number& x, const Number& y);
+  friend Number pwr(const Number& x, const Number& y);
   friend Number mod(const Number& x, const Number& y);
 
 

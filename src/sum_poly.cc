@@ -62,13 +62,13 @@ static void
 sum_falling_prod_times_exp(const Symbol& n, const Number& k, 
 			   const Symbol& x, Expr& q) {
   
-  q = Parma_Recurrence_Relation_Solver::power(1-x, -k-1);
+  q = pwr(1-x, -k-1);
   Expr r;
   for (Number i = 0; i <= k; ++i) {
     falling_product(n + 1, i, r);
-    q -= r / factorial(i) * Parma_Recurrence_Relation_Solver::power(x, n+1-i) * Parma_Recurrence_Relation_Solver::power(1-x, i-k-1);
+    q -= r / factorial(i) * pwr(x, n+1-i) * pwr(1-x, i-k-1);
   }
-  q *= factorial(k) * Parma_Recurrence_Relation_Solver::power(x, k);
+  q *= factorial(k) * pwr(x, k);
 }
 
 /*!
@@ -175,10 +175,10 @@ sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x,
   poly_dec(p, x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
-    Expr r = Parma_Recurrence_Relation_Solver::power(x, n+2) * cos(n*theta) - Parma_Recurrence_Relation_Solver::power(x, n+1) * cos((n+1)*theta);
+    Expr r = pwr(x, n+2) * cos(n*theta) - pwr(x, n+1) * cos((n+1)*theta);
     r += 1 - x * cos(theta);
-    r /= Parma_Recurrence_Relation_Solver::power(x,2) - 2* x * cos(theta) + 1;
-    r = Parma_Recurrence_Relation_Solver::power(x,i) * r.diff(x,i);
+    r /= pwr(x,2) - 2* x * cos(theta) + 1;
+    r = pwr(x,i) * r.diff(x,i);
     r = r.expand();
     q += r * summands[i];
   }
@@ -206,10 +206,10 @@ sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x,
   poly_dec(p, x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
-    Expr r = Parma_Recurrence_Relation_Solver::power(x, n+2) * sin(n*theta) - Parma_Recurrence_Relation_Solver::power(x, n+1) * sin((n+1)*theta);
+    Expr r = pwr(x, n+2) * sin(n*theta) - pwr(x, n+1) * sin((n+1)*theta);
     r -= x * sin(theta);
-    r /= Parma_Recurrence_Relation_Solver::power(x,2) - 2* x * cos(theta) + 1;
-    r = Parma_Recurrence_Relation_Solver::power(x,i) * r.diff(x,i);
+    r /= pwr(x,2) - 2* x * cos(theta) + 1;
+    r = pwr(x,i) * r.diff(x,i);
     r = r.expand();
     q += r * summands[i];
   }

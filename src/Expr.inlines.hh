@@ -386,7 +386,7 @@ wild(unsigned label) {
 }
 
 inline Expr
-power(const Expr& x, const Expr& y) {
+pwr(const Expr& x, const Expr& y) {
   return GiNaC::pow(static_cast<const Expr::Base>(x),
 		    static_cast<const Expr::Base>(y));
 }

@@ -95,7 +95,7 @@ Expr wild(unsigned label);
   \exception std::logic_error thrown if \f$ x = 0 \f$ and \f$ y \f$
                               is not a positive rational number.
 */
-Expr power(const Expr& x, const Expr& y);
+Expr pwr(const Expr& x, const Expr& y);
 
 //! \brief
 //! If \f$ x \f$ is an exact number, returns the number \f$ y \f$ such that
@@ -605,7 +605,7 @@ private:
   friend Expr& operator/=(Expr& x, const Expr& y);
 
   friend Expr wild(unsigned label);
-  friend Expr power(const Expr& x, const Expr& y);
+  friend Expr pwr(const Expr& x, const Expr& y);
   friend Expr sqrt(const Expr& x);
   friend Expr sin(const Expr& x);
   friend Expr cos(const Expr& x);

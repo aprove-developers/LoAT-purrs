@@ -91,7 +91,7 @@ erase_factor(Expr& e, const Symbol& n) {
 static bool
 perfect_root(const Expr& base, const Number& exponent) {
   if (exponent.is_rational()) {
-    Expr pow_base_num_exp = Parma_Recurrence_Relation_Solver::power(base, exponent);
+    Expr pow_base_num_exp = pwr(base, exponent);
     if (pow_base_num_exp.is_a_number()) {
       Number tmp = pow_base_num_exp.ex_to_number();
       if (tmp.is_rational())
@@ -119,15 +119,15 @@ return_power(bool is_numeric_base, const Expr& base,
   // not in `not_num_exp'.
   if (!input || !n_removed)
     if (is_numeric_base)
-      return Parma_Recurrence_Relation_Solver::power(Parma_Recurrence_Relation_Solver::power(base, num_exp), not_num_exp);
+      return pwr(pwr(base, num_exp), not_num_exp);
     else
-      return Parma_Recurrence_Relation_Solver::power(base, num_exp * not_num_exp);
+      return pwr(base, num_exp * not_num_exp);
   // We put in evidence the special symbol `n'. 
   else
     if (is_numeric_base)
-      return Parma_Recurrence_Relation_Solver::power(Parma_Recurrence_Relation_Solver::power(Parma_Recurrence_Relation_Solver::power(base, num_exp), not_num_exp_minus_n), n);
+      return pwr(pwr(pwr(base, num_exp), not_num_exp_minus_n), n);
     else
-      return Parma_Recurrence_Relation_Solver::power(Parma_Recurrence_Relation_Solver::power(base, num_exp * not_num_exp_minus_n), n);
+      return pwr(pwr(base, num_exp * not_num_exp_minus_n), n);
 }
 
 /*!
@@ -298,8 +298,7 @@ collect_same_exponents(const Expr& e, std::vector<Expr>& bases,
 	  bases[i] *= bases[j];
 	  exponents[j] = 0;
 	}
-      e_rewritten *= Parma_Recurrence_Relation_Solver::power(bases[i],
-							     exponents[i]);
+      e_rewritten *= pwr(bases[i], exponents[i]);
     }
   }
   // FIXME: si potrebbe migliorare togliendo da `exponents'
@@ -344,7 +343,7 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
 	  exponents[i] += exponents[j];
 	  exponents[j] = 0;
 	}
-      e_rewritten *= Parma_Recurrence_Relation_Solver::power(bases[i], exponents[i]);
+      e_rewritten *= pwr(bases[i], exponents[i]);
     }
   }
   // FIXME: si potrebbe migliorare togliendo da `exponents'
@@ -376,7 +375,7 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
 	}
       // Applies rule `C1'.
       if (to_sum)
-	e_rewritten = e_rewritten.subs(Parma_Recurrence_Relation_Solver::power(e.op(i), wild(0)), Parma_Recurrence_Relation_Solver::power(e.op(i), wild(0) + 1));
+	e_rewritten = e_rewritten.subs(pwr(e.op(i), wild(0)), pwr(e.op(i), wild(0) + 1));
       else
 	e_rewritten *= e.op(i);
     }
@@ -497,7 +496,7 @@ to_std_form(const Number& k, const std::vector<Number>& bases,
       remainder = abs_k - remainder;
     }
     exponents[i] = remainder;
-    m *= Parma_Recurrence_Relation_Solver::power(bases[i], quotient);
+    m *= pwr(bases[i], quotient);
   }
   return m;
 }
@@ -565,7 +564,7 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
   // FIXME: deal with complex numbers
   if (!r.is_real()) {
     Expr index = 1 / root_index;
-    return Parma_Recurrence_Relation_Solver::power(r, index);
+    return pwr(r, index);
   }
   Number sign = r > 0 ? 1 : -1;
   Number g = gcd(num, den);
@@ -581,7 +580,7 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
   } // now, num, den and k are all positive.
   
   if (k == 1)
-    return sign * num * Parma_Recurrence_Relation_Solver::power(den, -1);
+    return sign * num * pwr(den, -1);
   
   std::vector<Number> num_bases;
   std::vector<int> num_exponents;
@@ -619,15 +618,15 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
   // because otherwise the number, since it is irrational, is rounded.
   Expr irr_part = 1;
   for (unsigned i = 0; i < num_size; ++i)
-    irr_part *= Parma_Recurrence_Relation_Solver::power(num_bases[i],
+    irr_part *= pwr(num_bases[i],
 							num_exponents[i]);
   for (unsigned i = 0; i < den_size; ++i)
-    irr_part *= Parma_Recurrence_Relation_Solver::power(den_bases[i],
+    irr_part *= pwr(den_bases[i],
 							den_exponents[i]);
-  Expr q = sign * reduced_num * Parma_Recurrence_Relation_Solver::power(reduced_den,
+  Expr q = sign * reduced_num * pwr(reduced_den,
 									-1);
   if (irr_part.ex_to_number() > 1)
-    q *= Parma_Recurrence_Relation_Solver::power(irr_part, Number(1, k));
+    q *= pwr(irr_part, Number(1, k));
   return q;
 }
 
@@ -647,13 +646,13 @@ red_prod(const Number& base1, const Number& exp1,
   Number k2_num = exp2.numerator();
   Number k2_den = exp2.denominator();
   
-  base_1 = Parma_Recurrence_Relation_Solver::power(base_1, k1_num);
-  base_2 = Parma_Recurrence_Relation_Solver::power(base_2, k2_num);
+  base_1 = pwr(base_1, k1_num);
+  base_2 = pwr(base_2, k2_num);
   
   Number g = gcd(k1_den, k2_den);
   Number k = k1_den * k2_den / g;
-  Number b1 = Parma_Recurrence_Relation_Solver::power(base_1, k2_den / g);
-  Number b2 = Parma_Recurrence_Relation_Solver::power(base_2, k1_den / g);
+  Number b1 = pwr(base_1, k2_den / g);
+  Number b2 = pwr(base_2, k1_den / g);
   Number b = b1 * b2;
 
   return reduce_to_standard_form(k, b);
@@ -690,7 +689,7 @@ reduce_product(const Expr& e) {
 		base_1 = to_reduce.op(j).op(0).ex_to_number();
 		exp_1  = to_reduce.op(j).op(1).ex_to_number();
 		factor_to_reduce
-		  = Parma_Recurrence_Relation_Solver::power(to_reduce.op(j).op(0),
+		  = pwr(to_reduce.op(j).op(0),
 							    to_reduce.op(j).op(1));
 	      }
 	      else
@@ -700,13 +699,13 @@ reduce_product(const Expr& e) {
 	    base_1 = to_reduce.op(0).ex_to_number();
 	    exp_1 = to_reduce.op(1).ex_to_number();
 	    factor_to_reduce
-	      = Parma_Recurrence_Relation_Solver::power(to_reduce.op(0),
+	      = pwr(to_reduce.op(0),
 							to_reduce.op(1));
 	  }
 	  else {
 	    base_1 = to_reduce.ex_to_number();
 	    exp_1 = 1;
-	    factor_to_reduce = Parma_Recurrence_Relation_Solver::power(to_reduce,
+	    factor_to_reduce = pwr(to_reduce,
 								       1);
 	  }
 	}
@@ -744,10 +743,10 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
       Expr base = simplify_on_output_ex(e.op(i).op(0), n, input);
       Expr exp = simplify_on_output_ex(e.op(i).op(1), n, input);
       if (base.is_a_number() && exp.is_a_number())
-	e_rewritten *= reduce_product(Parma_Recurrence_Relation_Solver::power(base,
+	e_rewritten *= reduce_product(pwr(base,
 									      exp));
       else
-	e_rewritten *= pow_simpl(Parma_Recurrence_Relation_Solver::power(base, exp),
+	e_rewritten *= pow_simpl(pwr(base, exp),
 				 n, input);
     }
     else
@@ -889,10 +888,10 @@ simplify_on_output_ex(const Expr& e, const Symbol& n, bool input) {
     Expr exp = simplify_on_output_ex(e.op(1), n, input);
     if (base.is_a_number() && exp.is_a_number())
       e_rewritten
-	= reduce_product(Parma_Recurrence_Relation_Solver::power(base, exp));
+	= reduce_product(pwr(base, exp));
     else
       e_rewritten
-	= pow_simpl(Parma_Recurrence_Relation_Solver::power(base, exp), n, input);
+	= pow_simpl(pwr(base, exp), n, input);
     // Necessary for l'output: for example if `e = sqrt(18)^a' then
     // `e_rewritten = sqrt(2)^a*3^a'.
     if (e_rewritten.is_a_mul())
@@ -924,7 +923,7 @@ simplify_numer_denom(const Expr& e) {
   e.numerator_denominator(numer_e, denom_e);
   Expr num = numer_e.expand();
   Expr den = denom_e.expand();
-  return num * Parma_Recurrence_Relation_Solver::power(den, -1);
+  return num * pwr(den, -1);
 }
 
 
@@ -944,7 +943,7 @@ decompose_factorial(const Expr& a, const Expr& b, const Expr& c,
 	prod *= a*n + j; 
     else
       for (Number j = 0; j < abs(tmp_b); ++j)
-	prod *= Parma_Recurrence_Relation_Solver::power(a*n - j, -1);
+	prod *= pwr(a*n - j, -1);
   }
   return prod;
 }
@@ -1038,17 +1037,17 @@ simpl_exponentials(const Expr& e, const Symbol& n) {
     e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
       if (e.op(i)
-	  .match(Parma_Recurrence_Relation_Solver::power(wild(0), n + wild(1)))
+	  .match(pwr(wild(0), n + wild(1)))
 	  || e.op(i)
-	  .match(Parma_Recurrence_Relation_Solver::power(wild(0),
+	  .match(pwr(wild(0),
 							 wild(2) * n + wild(1))))
 	e_rewritten *= e.op(i).expand();
       else
 	e_rewritten *= e.op(i);
   }
   else
-    if (e.match(Parma_Recurrence_Relation_Solver::power(wild(0), n + wild(1)))
-	|| e.match(Parma_Recurrence_Relation_Solver::power(wild(0),
+    if (e.match(pwr(wild(0), n + wild(1)))
+	|| e.match(pwr(wild(0),
 							   wild(2) * n + wild(1))))
       e_rewritten += e.expand();
     else

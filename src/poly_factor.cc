@@ -77,7 +77,7 @@ poly_factor(const Expr& p, const Symbol& x, std::vector<Expr>& factors) {
     assert(d > 0);
     for (long i = d; i >= 0; --i)
       if (long a_i = ZZ_to_long(coeff(ntl_factor, i)))
-	factor += a_i * Parma_Recurrence_Relation_Solver::power(x, i);
+	factor += a_i * pwr(x, i);
     factors.push_back(factor);
   }
   return num_factors;
