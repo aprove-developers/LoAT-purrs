@@ -48,6 +48,33 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
+namespace {
+using namespace PURRS;
+
+bool
+has_x_function(const Expr& e) {
+  if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (has_x_function(e.op(i)))
+	return true;
+    return false;
+  }
+  else if (e.is_a_power()) {
+    if (has_x_function(e.arg(0)) || has_x_function(e.arg(1)))
+      return true;
+    return false;
+  }
+  else if (e.is_a_function()) {
+    if (e.is_the_x_function())
+      return true;
+    return false;
+  }
+  else
+    return false;
+} 
+
+} // anonymous namespace
+
 /*!
   Adds to the sum already computed those corresponding to the initial
   conditions:
@@ -68,10 +95,17 @@ add_term_with_initial_conditions(const Expr& g_n,
   Expr solution = exact_solution_.expression();
   for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
     Expr g_n_i = g_n.substitute(n, n - i);
-    Expr tmp = get_initial_condition(first_initial_condition() + i);
+    Expr tmp;
+    if (order_reduction_p)
+      tmp = x(first_initial_condition() + i);
+    else
+      tmp = get_initial_condition(first_initial_condition() + i);
     for (unsigned j = i; j > 0; j--)
-      tmp -= coefficients[j]
-	* get_initial_condition(first_initial_condition() + i - j);
+      if (order_reduction_p)
+	tmp -= coefficients[j] * x(first_initial_condition() + i - j);
+      else
+	tmp -= coefficients[j]
+	  * get_initial_condition(first_initial_condition() + i - j);
     solution += tmp * g_n_i;
   }
   exact_solution_.set_expression(solution);
@@ -527,6 +561,50 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
   return solution;
 }
 
+PURRS::Expr
+PURRS::Recurrence::write_expanded_solution(const Recurrence& rec) {
+  // We first rewrite the part of the solution depending on the initial
+  // conditions.
+  Expr part_depending_on_ic = 0;
+  Expr theta = 2*Constant::Pi/rec.gcd_decrements_old_rhs();
+  for (unsigned i = rec.gcd_decrements_old_rhs(); i-- > 0; ) {
+    Expr tmp = 0;
+    for (unsigned j = rec.gcd_decrements_old_rhs()+1; j-- > 1; ) {	  
+      Expr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
+      tmp += pwr(root_of_unity, n - i);
+    }
+    tmp *= rec.get_initial_condition(i) * 1/rec.gcd_decrements_old_rhs();
+    part_depending_on_ic += tmp;
+  }
+  part_depending_on_ic = simplify_ex_for_input(part_depending_on_ic, true);
+  D_VAR(part_depending_on_ic);
+
+  // Now we rewrite the part of the solution not depending on the initial
+  // conditions.
+  Expr to_sub_in_solution = 0;
+  for (unsigned j = rec.gcd_decrements_old_rhs()+1; j-- > 1; ) {
+    Expr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
+    // Skip the contribution of the root of unity equal to `1'.
+    if (root_of_unity != 1)
+      to_sub_in_solution += root_of_unity * pwr(1 - root_of_unity, -1)
+	* pwr(root_of_unity, n);
+  }
+  // Add the contribution of the root of unity equal to `1'.
+  to_sub_in_solution += Number(1, 2) * (rec.gcd_decrements_old_rhs() - 1);
+  Expr remainder_solution = 0;
+  if (rec.exact_solution_.expression().is_a_add()) {
+    for (unsigned i = rec.exact_solution_.expression().nops(); i-- > 0; )
+      if (!has_x_function(rec.exact_solution_.expression().op(i)))
+	remainder_solution += rec.exact_solution_.expression().op(i);
+  }
+  remainder_solution
+    = remainder_solution.substitute(mod(n, rec.gcd_decrements_old_rhs()),
+					to_sub_in_solution);
+  D_VAR(remainder_solution);
+  return simplify_ex_for_output(part_depending_on_ic + remainder_solution,
+				false);
+}
+
 /*!
   Solves the linear recurrence of finite order (we have already considered
   the banal case of order zero recurrence), i. e., linear finite
@@ -643,8 +721,11 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
       // add_term_with_initial_conditions(g_n, coefficients, solution);
       Expr solution = exact_solution_.expression();
-      solution += get_initial_condition(first_initial_condition())
-	* pwr(coefficients()[1], n);
+      if (order_reduction_p)
+	solution += x(first_initial_condition()) * pwr(coefficients()[1], n);
+      else
+	solution += get_initial_condition(first_initial_condition())
+	  * pwr(coefficients()[1], n);
       exact_solution_.set_expression(solution);
     }
     else
@@ -663,7 +744,20 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 				    get_auxiliary_definition
 				    (symbol_for_mod()),
 				    gcd_decrements_old_rhs()));
+
+    // If there are defined initial conditions in the map `initial_conditions'
+    // and we had applied the order reduction then we must to deduce the
+    // exact form of the solution and substitute to it the defined initial
+    // conditions.
+    if (!initial_conditions.empty()) {
+      exact_solution_.set_expression
+	(simplify_ex_for_output(exact_solution_.expression(), false));
+      Expr expanded_solution = write_expanded_solution(*this);
+      D_VAR(expanded_solution);
+      exact_solution_.set_expression(expanded_solution);
+    }
   }
+
 
   D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
   exact_solution_.set_expression

@@ -490,6 +490,8 @@ private:
   static Solver_Status
   compute_order(const Number& decrement, unsigned int& order,
 		unsigned long& index, unsigned long max_size);
+  static Expr
+  write_expanded_solution(const Recurrence& rec);
 };
 
 } // namespace Parma_Recurrence_Relation_Solver
