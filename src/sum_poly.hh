@@ -27,8 +27,18 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "globals.hh"
 
-void
+GExpr
 sum_poly_times_exponentials(const GExpr&, const GSymbol&, 
-			    const GSymbol&, const GExpr&, GExpr&);
+			    const GSymbol&, const GExpr&);
+
+GExpr
+sum_poly_times_exponentials_times_cos(const GExpr&, const GSymbol&, 
+				      const GSymbol&, const GExpr&, 
+				      const GExpr&);
+
+GExpr
+sum_poly_times_exponentials_times_sin(const GExpr&, const GSymbol&, 
+				      const GSymbol&, const GExpr&, 
+				      const GExpr&);
 
 #endif

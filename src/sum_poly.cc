@@ -129,9 +129,11 @@ sum_poly(const GExpr& p, const GSymbol& x, const GSymbol& n, GExpr& q) {
   The closed formula is returned in the expression <CODE> q </CODE>. 
 */
 
-void
+GExpr 
 sum_poly_times_exponentials(const GExpr& p, const GSymbol& x, 
-			    const GSymbol& n, const GExpr& alpha, GExpr& q) {
+			    const GSymbol& n, const GExpr& alpha) {
+
+  GExpr q;
   if (alpha == 1) 
     sum_poly(p, x, n, q);
   // we just have to compute the sum of the values of the polynomial 
@@ -148,4 +150,68 @@ sum_poly_times_exponentials(const GExpr& p, const GSymbol& x,
     }
   }
   q = expand(q.subs(x == alpha));
+  return q;
+}
+
+/*!
+  This routine computes the closed formula for 
+  \f$\sum_{j=0}^n p(j) \alpha^j \cos(j\theta) \f$, 
+  where \f$ p \f$ is a polynomial (possibly constant),  
+  \f$ \alpha \f$ and \f$ \theta \f$ are GExpr.
+*/
+
+GExpr
+sum_poly_times_exponentials_times_cos(const GExpr& p, const GSymbol& x, 
+				      const GSymbol& n, const GExpr& alpha, 
+				      const GExpr& theta) {
+  GExpr q = 0;
+  if (theta == 0) {
+    q = sum_poly_times_exponentials(p, x, n, alpha);
+    return q;
+  } 
+  unsigned d = p.degree(x);
+  std::vector<GExpr> summands(d+1);
+  poly_dec(p, x, summands);
+  q = 0;
+  for (unsigned i = 0; i <= d; ++i) {
+    GExpr r = pow(x, n+2) * cos(n*theta) - pow(x, n+1) * cos((n+1)*theta);
+    r += 1 - x * cos(theta);
+    r /= pow(x,2) - 2* x * cos(theta) + 1;
+    r = pow(x,i) * r.diff(x,i);
+    r = r.expand();
+    q += r * summands[i];
+  }
+  q = expand(q.subs(x == alpha));
+  return q;
+}
+
+/*!
+  This routine computes the closed formula for 
+  \f$\sum_{j=0}^n p(j) \alpha^j \sin(j\theta) \f$, 
+  where \f$ p \f$ is a polynomial (possibly constant),  
+  \f$ \alpha \f$ and \f$ \theta \f$ are GExpr.
+*/
+
+GExpr
+sum_poly_times_exponentials_times_sin(const GExpr& p, const GSymbol& x, 
+				      const GSymbol& n, const GExpr& alpha, 
+				      const GExpr& theta) {
+  GExpr q = 0;
+  if (theta == 0) {
+    return q;
+  } 
+  unsigned d = p.degree(x);
+  std::vector<GExpr> summands(d+1);
+  poly_dec(p, x, summands);
+  q = 0;
+  for (unsigned i = 0; i <= d; ++i) {
+    GExpr r = pow(x, n+2) * sin(n*theta) - pow(x, n+1) * sin((n+1)*theta);
+    r -= x * sin(theta);
+    r /= pow(x,2) - 2* x * cos(theta) + 1;
+    r = pow(x,i) * r.diff(x,i);
+    r = r.expand();
+    q += r * summands[i];
+  }
+  q = expand(q.subs(x == alpha));
+  return q;
 }
