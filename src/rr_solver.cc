@@ -297,50 +297,42 @@ verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
 		const GSymbol& n);
 
 /*!
+  Returns an expression that is equivalent to \p e and that is
+  "maximally expanded" with respect to addition.  This amounts,
+  among other things, to distribute multiplication over addition.
+*/
+GExpr
+additive_form(const GExpr& e) {
+  return e.expand();
+}
+
+/*!
 ...
 */
 bool
 solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
-  static GExpr x_i = x(wild(0));
-  static GExpr x_i_plus_r = x_i + wild(1);
-  static GExpr a_times_x_i = wild(1)*x_i;
-  static GExpr a_times_x_i_plus_r = a_times_x_i + wild(2);
+  // The following code depends on the possibility of recovering
+  // the various parts of `rhs' as summands of an additive expression.
+  GExpr e = additive_form(rhs);
 
+  // Initialize the computation of the order of the linear part of the
+  // recurrence.  This works like the computation of a maximum: it is
+  // the maximum `k' such that `rhs = a*x(n-k) + b' where `a' is not
+  // syntactically 0.
   int order = -1;
+
+  // We will store here the coefficients of linear part of the recurrence.
   std::vector<GExpr> coefficients;
-  // 'expand()' is necessary to simplify expressions, to find coefficients
-  // and to decompose the inhomogeneous term of the recurrence relation.  
-  GExpr e = rhs.expand();
 
-  // Special case: 'e' is only a function in 'n' or a constant.
-  // If there is not in 'e' 'x(argument)' or there is but with
-  // 'argument' that not contains the variable 'n', then the solution
-  // is obviously 'e'.
-  GList occurrences;
-  bool finished = true;
-  if (e.find(x_i, occurrences)) {
-    unsigned occurrences_nops = occurrences.nops();
-    if (occurrences_nops != 0)
-      for (unsigned i = 0; i < occurrences_nops; ++i) {
-	GExpr argument = occurrences.op(i).subs(x(wild(0)) == wild(0));
-	if (argument.has(n)) {
-	  finished = false;
-	  break;
-	}
-      }
-  }
-
-  if (finished) {
-    solution = e; 
-
-    D_VAR(solution);
-
-    return true;
-  }
-
-  static GList substitution;
   bool failed = false;
   do {
+    static GExpr x_i = x(wild(0));
+    static GExpr x_i_plus_r = x_i + wild(1);
+    static GExpr a_times_x_i = wild(1)*x_i;
+    static GExpr a_times_x_i_plus_r = a_times_x_i + wild(2);
+
+    GList substitution;
+
     GExpr i;
     GExpr a;
     // The following matches are attempted starting from the most common,
@@ -428,6 +420,13 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   if (failed)
     return false;
 
+  // Special case: `e' is a function of `n', the parameters and of
+  // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
+  // non-negative integers.
+  if (order < 0) {
+    solution = e;
+    return true;
+  }
 
   D_VAR(order);
   D_VEC(coefficients, 1, order);
