@@ -114,7 +114,7 @@ factorize.cc \
 poly_factor.cc \
 finite_order.cc \
 functional_equation.cc \
-rr_solver.cc \
+rr_classifier.cc \
 simplify.cc \
 compute_prod.cc \
 ep_decomp.cc \
