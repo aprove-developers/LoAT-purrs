@@ -185,7 +185,7 @@ find_roots(const GExpr& p, const GSymbol& x,
 	   std::vector<Polynomial_Root>& roots,
 	   bool& all_distinct) {
   assert(p.info(info_flags::integer_polynomial));
-  assert(!p.info(info_flags::numeric));
+  assert(!is_a<numeric>(p));
   // Compute a square-free decomposition for p.
   GExpr q = sqrfree(p.expand(), lst(x));
   // There are now 4 cases depending on the principal functor of `q':
