@@ -149,7 +149,7 @@ do_not_mix_modes() {
 
 static void
 error_message(const char* msg) {
-  cerr << program_name << ": " << msg << "'" << endl;
+  cerr << program_name << ": " << msg << endl;
   my_exit(1);
 }
 
@@ -253,6 +253,9 @@ process_options(int argc, char* argv[]) {
       
     case 'I':
       {
+	cerr << program_name << ": Initial conditions are not supported yet." << endl;
+	my_exit(1);
+	/*
         production_mode = true;
         do_not_mix_modes();
         // Here `optarg' points to the beginning of the initial condition.
@@ -283,6 +286,7 @@ process_options(int argc, char* argv[]) {
 	// condition `x(index) = r', in the map `initial_conditions'.
 	initial_conditions.insert(std::map<index_type, Expr>
 				  ::value_type(index.to_unsigned_int(), r));
+	*/
       }
       break;
 
@@ -841,6 +845,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
   Recurrence rec;
   Recurrence::Solver_Status outcome;
   bool constant_difference = false;
+  bool constant_sum = false;
     
   if (real_var_index.size() == 1) {
     for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
@@ -894,8 +899,11 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
     // We can solve the recurrence even if we have two true parameters
     // provided that their difference is constant.
     
-    // Check whether the difference is constant.
+    // Check whether the difference or sum is constant.
     constant_difference = true;
+    bool invalid_constant_difference = false;
+    constant_sum = true;
+    bool invalid_constant_sum = false;
     
     Expr real_var_expr_0;
     Expr real_var_expr_1;
@@ -910,73 +918,124 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
       real_var_symbol_1 = lhs.arg(1).op(real_var_index[1]);
       if (real_var_expr_0 - real_var_expr_1 != real_var_symbol_0 - real_var_symbol_1)
 	constant_difference = false;
+      if (real_var_expr_0 + real_var_expr_1 != real_var_symbol_0 + real_var_symbol_1)
+	constant_sum = false;
+      if (real_var_expr_0.substitute(real_var_symbol_0, different_symbol) !=  
+	  real_var_expr_1.substitute(real_var_symbol_1, different_symbol)) {
+	invalid_constant_difference = true;
+      }
+      // FIXME: Write a similar check for invalid_constant_sum.
     }
 
-    //  if (!real_var_expr_0.substitute(real_var_symbol_0, 0).is_a_number() 
-    //    || !real_var_expr_1.substitute(real_var_symbol_1, 0).is_a_number()) {
-    if (real_var_expr_0.substitute(real_var_symbol_0, different_symbol) !=  
-	real_var_expr_1.substitute(real_var_symbol_1, different_symbol)) {
-      error_message("Too complex. Terms on the right hand side depend on too many terms on the left hand side.");
+    if (!constant_difference && !constant_sum)
+      error_message("Too complex. Neither difference nor sum is constant");
+    if ((constant_difference && invalid_constant_difference) ||
+	(constant_sum && invalid_constant_sum)) {
+	error_message("Too complex. Terms on the right hand side depend on too many terms on the left hand side.");
     }
-    if (!constant_difference)
-      error_message("Too complex. Difference is not constant");
+    if (constant_difference) {
 #if DEBUG
-    cout << "Constant difference." << endl;
+      cout << "Constant difference." << endl;
 #endif
     
-    // Pick one of the two variables and solve the recurrence with respect to it.
-    for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
-      const Expr& this_term = (*i);
-      const Expr& real_var_expr_0 = this_term.arg(1).op(real_var_index[0]);
-      real_var_symbol_0 = lhs.arg(1).op(real_var_index[0]);
-      rhs = rhs.substitute(this_term, x(real_var_expr_0.substitute(real_var_symbol_0, Recurrence::n)));
+      // Pick one of the two variables and solve the recurrence with respect to it.
+      for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
+	const Expr& this_term = (*i);
+	const Expr& real_var_expr_0 = this_term.arg(1).op(real_var_index[0]);
+	real_var_symbol_0 = lhs.arg(1).op(real_var_index[0]);
+	rhs = rhs.substitute(this_term, x(real_var_expr_0.substitute(real_var_symbol_0, Recurrence::n)));
+      }
+      
+      rec.replace_recurrence(rhs);
+      
+      outcome = compute_exact_solution_wrapper(rec);
+      
+      if (outcome == Recurrence::SUCCESS) {
+	rec.exact_solution(solution);
+	
+	if (verbose)
+	  cout << "Auxiliary recurrence solution: " << solution << endl;
+	
+	// FIXME: The recurrence must not have been rewritten for this to succeed.
+	
+	// The final solution will be given as a combination of two possibile solutions.
+	Expr solution_0 = solution;
+	Expr solution_1 = solution;
+	// Restore original arity and symbol names.
+	for (unsigned int i = 0; i < solution.nops(); ++i) {
+	  const Expr& this_term = solution.op(i);
+	  if (this_term.is_the_x1_function()) {
+	    solution_0 = solution_0.substitute(this_term, 
+					       lhs.substitute(real_var_symbol_0, this_term.arg(0)));
+	    solution_1 = solution_1.substitute(this_term, 
+					       lhs.substitute(real_var_symbol_0, this_term.arg(0)));
+	    //	  cout << this_term << " - " << solution << endl;
+	  }
+	}
+	
+	//      cout << solution << " - " << rendl;
+	
+	// Replace the substituted symbols back to their place.
+	solution_0 = solution_0.substitute(Recurrence::n, real_var_symbol_0);
+	solution_0 = solution_0.substitute(n_replacement, Recurrence::n);
+	solution_1 = solution_1.substitute(Recurrence::n, real_var_symbol_1);
+	solution_1 = solution_1.substitute(n_replacement, Recurrence::n);
+	Expr zero = 0;
+	// FIXME: Handle the case m = n as well.
+	solution = max(real_var_symbol_0 - real_var_symbol_1, zero) / 
+	  (real_var_symbol_0 - real_var_symbol_1) * solution_0 +
+	  max(real_var_symbol_1 - real_var_symbol_0, zero) / 
+	  (real_var_symbol_1 - real_var_symbol_0) * solution_1;
+      }
     }
+    else {
+      if (constant_sum) {
+#if DEBUG
+	cout << "Constant sum." << endl;
+#endif
     
-    rec.replace_recurrence(rhs);
-    
-    outcome = compute_exact_solution_wrapper(rec);
-    
-    if (outcome == Recurrence::SUCCESS) {
-      rec.exact_solution(solution);
-      
-      if (verbose)
-	cout << "Auxiliary recurrence solution: " << solution << endl;
-      
-      // FIXME: The recurrence must not have been rewritten for this to succeed.
-      
-      // The final solution will be given as a combination of two possibile solutions.
-      Expr solution_0 = solution;
-      Expr solution_1 = solution;
-      // Restore original arity and symbol names.
-      for (unsigned int i = 0; i < solution.nops(); ++i) {
-	const Expr& this_term = solution.op(i);
-	if (this_term.is_the_x1_function()) {
-	  solution_0 = solution_0.substitute(this_term, 
-					     lhs.substitute(real_var_symbol_0, this_term.arg(0)));
-	  solution_1 = solution_1.substitute(this_term, 
-					     lhs.substitute(real_var_symbol_0, this_term.arg(0)));
-	  //	  cout << this_term << " - " << solution << endl;
+	// FIXME: Determine the decreasing variable.
+	size_t decreasing_variable = real_var_index[0];
+	size_t increasing_variable = real_var_index[1];
+	// Solve the recurrence with respect to the decreasing variable.
+	for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
+	  const Expr& this_term = (*i);
+	  const Expr& real_var_expr_0 = this_term.arg(1).op(decreasing_variable);
+	  real_var_symbol_0 = lhs.arg(1).op(decreasing_variable);
+	  rhs = rhs.substitute(this_term, x(real_var_expr_0.substitute(real_var_symbol_0, Recurrence::n)));
+	}
+	
+	rec.replace_recurrence(rhs);
+	
+	outcome = compute_exact_solution_wrapper(rec);
+	
+	if (outcome == Recurrence::SUCCESS) {
+	  rec.exact_solution(solution);
+	  
+	  if (verbose)
+	    cout << "Auxiliary recurrence solution: " << solution << endl;
+	  
+	  // Restore original arity and symbol names.
+	  real_var_symbol_1 = lhs.arg(1).op(increasing_variable);
+	  for (unsigned int i = 0; i < solution.nops(); ++i) {
+	    const Expr& this_term = solution.op(i);
+	    if (this_term.is_the_x1_function()) {
+	      solution = solution.substitute(this_term, 
+					     lhs.substitute(real_var_symbol_0, this_term.arg(0))
+					     .substitute(real_var_symbol_1, real_var_symbol_1 - real_var_symbol_0));
+	      //	      cout << this_term << " - " << solution << endl;
+	    }
+	  }
+	  
+	  //      cout << solution << " - " << rendl;
+	  
+	  // Replace the substituted symbols back to their place.
+	  solution = solution.substitute(Recurrence::n, real_var_symbol_0);
+	  solution = solution.substitute(n_replacement, Recurrence::n);
 	}
       }
-
-      //      cout << solution << " - " << rendl;
-      
-      // Replace the substituted symbols back to their place.
-      solution_0 = solution_0.substitute(Recurrence::n, real_var_symbol_0);
-      solution_0 = solution_0.substitute(n_replacement, Recurrence::n);
-      solution_1 = solution_1.substitute(Recurrence::n, real_var_symbol_1);
-      solution_1 = solution_1.substitute(n_replacement, Recurrence::n);
-      //      GiNaC::ex difference;
-      //      difference = static_cast<const GiNaC::ex>(real_var_symbol_0 - real_var_symbol_1);
-      //      GiNaC::ex difference_ginac = static_cast<const GiNaC::ex> difference;
-      Expr zero = 0;
-      // FIXME: Handle the case m = n as well.
-      solution = max(real_var_symbol_0 - real_var_symbol_1, zero) / 
-	(real_var_symbol_0 - real_var_symbol_1) * solution_0 +
-	max(real_var_symbol_1 - real_var_symbol_0, zero) / 
-	(real_var_symbol_1 - real_var_symbol_0) * solution_1;
     }
-  } 
+  }
   else
     error_message("Internal error while finding true parameters");
 
