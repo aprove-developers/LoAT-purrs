@@ -581,15 +581,15 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
     }
     else {
 #if 1
-      throw
-	"PURRS error: today we only solve recurrence"
-	"relations with constant coefficients.\n"
-	"Please come back tomorrow.";
+      // For the time being, we only solve recurrence relations
+      // with constant coefficients.
+      return TOO_COMPLEX;
 #else
       solution = solve_variable_coeff_order_1(n, e, coefficients[1]);
 #endif
     }
     break;
+
   case 2:
     if (!has_non_constant_coefficients) {
       Expr characteristic_eq;
@@ -606,11 +606,11 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
 					      num_coefficients, roots);
     }
     else
-      throw
-	"PURRS error: today we only solve second order "
-	"recurrence relations with constant coefficients.\n"
-	"Please come back tomorrow.";
+      // For the time being, we only solve second order
+      // recurrence relations with constant coefficients.
+      return TOO_COMPLEX;
     break;
+
   default:
     if (!has_non_constant_coefficients) {
       Expr characteristic_eq;
@@ -627,10 +627,9 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
 					      num_coefficients, roots);
     }
     else
-      throw
-	"PURRS error: today we only solve recurrence"
-	"relations with constant coefficients.\n"
-	"Please come back tomorrow.";
+      // For the time being, we only solve recurrence relations
+      // of order 3 and more only if they have constant coefficients.
+      return TOO_COMPLEX;
     break;
   }
   
@@ -865,15 +864,14 @@ solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
       exit_anyway = true;
       break;
     case NOT_LINEAR_RECURRENCE:
-      // Next we will solve also non-linear recurrence and we will
-      // call an opportune function.
-      throw
-	"PURRS error: today only solve linear recurrences. \n"
-	"Please come back tomorrow.";
+      // FIXME: can we do something here to try to linearize the recurrence?
+      status = TOO_COMPLEX;
+      exit_anyway = true;
       break;
+
     default:
       throw std::runtime_error("PURRS internal error: "
-			       "solve_try_hard.");
+			       "solve_try_hard().");
       break;
     }
   } while (!exit_anyway && status != OK);
