@@ -217,7 +217,7 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
 		      transform_in_single_fraction(coefficients[1]
 						   .substitute(n, index)));
   product_factor
-    = simplify_factorials_and_exponentials(product_factor);
+    = simplify_binomials_factorials_exponentials(product_factor);
   set_product_factor(product_factor);
 
   // Build the recurrence with constant coefficient of the first order
@@ -525,8 +525,8 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     exact_solution_.set_expression(inhomogeneous_term);
     exact_solution_.set_expression
       (simplify_ex_for_output(exact_solution_.expression(), false));
-    exact_solution_.set_expression
-      (simplify_factorials_and_exponentials(exact_solution_.expression()));
+    exact_solution_.set_expression(simplify_binomials_factorials_exponentials
+				   (exact_solution_.expression()));
     exact_solution_.set_expression
       (simplify_logarithm(exact_solution_.expression()));
     return SUCCESS;
@@ -635,7 +635,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   exact_solution_.set_expression
     (simplify_ex_for_output(exact_solution_.expression(), false));
   exact_solution_.set_expression
-    (simplify_factorials_and_exponentials(exact_solution_.expression()));
+    (simplify_binomials_factorials_exponentials(exact_solution_.expression()));
   exact_solution_.set_expression
     (simplify_logarithm(exact_solution_.expression()));
 

@@ -67,8 +67,8 @@ using namespace PURRS;
 bool
 gosper_step_one(const Symbol& m, const Expr& t_m, Expr& r_m) {
   D_VAR(t_m);
-  r_m = simplify_factorials_and_exponentials(t_m.substitute(m, m+1))
-    * pwr(simplify_factorials_and_exponentials(t_m), -1);
+  r_m = simplify_binomials_factorials_exponentials(t_m.substitute(m, m+1))
+    * pwr(simplify_binomials_factorials_exponentials(t_m), -1);
   // FIXME: we must understand the better simplification to use in this case.
   r_m = simplify_numer_denom(r_m);
   D_VAR(r_m);

@@ -1109,6 +1109,74 @@ rewrite_factorials_and_exponentials(const Expr& e) {
   return e_rewritten;
 }
 
+/*!
+  Applies the following rewrite rules:
+  \f[
+    \binom(n, k)
+    \begin{cases}
+      \frac{n!}{(n-k)! k!},
+        \quad \text{if } n \text{ and } k \text{ are not both numerics or }
+	n \in \Zset, n \geq 0 \text{ or } k \in \Zset, k \geq 0; \\
+      (-1)^k \frac{(k-n-1)!}{(-n-1)! k!},
+        \quad \text{if } n \in \Zset, n < 0; \\
+      \binom(n, k),
+      \quad \text{otherwise}.
+    \end{cases}
+  \f]
+  Note that it is not possible that both the arguments of the function
+  \f$ \binom() \f$ are numerics.
+*/
+Expr
+rewrite_binomials(const Expr& e) {
+  Expr e_rewritten;
+  if (e.is_a_add()) {
+    e_rewritten = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten += rewrite_binomials(e.op(i));
+  }
+  else if (e.is_a_mul()) {
+    e_rewritten = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten *= rewrite_binomials(e.op(i));
+  }
+  else if (e.is_a_power())
+    return pwr(rewrite_binomials(e.arg(0)), rewrite_binomials(e.arg(1)));
+  else if (e.is_a_function())
+    if (e.is_the_binom_function()) {
+      const Expr& m = e.arg(0);
+      const Expr& k = e.arg(1);
+      assert(!(m.is_a_number() && k.is_a_number()));
+      Number num_m;
+      Number num_k;
+      if (!m.is_a_number() && !k.is_a_number())
+	return factorial(m) / (factorial(m-k)*factorial(k));
+      else if (m.is_a_number(num_m) && num_m.is_integer())
+	if (num_m >= 0)
+	  return factorial(num_m) / (factorial(m-k)*factorial(k));
+	else
+	  return pwr(-1, k)*factorial(k-num_m-1)
+	    / (factorial(-num_m-1)*factorial(k));
+      else if (k.is_a_number(num_k) && num_k.is_nonnegative_integer())
+	return factorial(m) / (factorial(m-num_k)*factorial(num_k));
+      else
+	return e;
+    }
+    else
+      if (e.nops() == 1)
+	return apply(e.functor(),
+		     rewrite_binomials(e.arg(0)));
+      else {
+	unsigned num_argument = e.nops();
+	std::vector<Expr> argument(num_argument);
+	for (unsigned i = 0; i < num_argument; ++i)
+	  argument[i] = rewrite_binomials(e.arg(i));
+	return apply(e.functor(), argument);
+      }
+  else
+    return e;
+  return e_rewritten;
+}
+
 Expr
 factorize_base_arg_log(const Number& base, const Expr& exponent = 1) {
   std::vector<Number> bases;
@@ -1250,9 +1318,9 @@ is_perfect_power(const Number& c, const Number& a, Number& b) {
     \begin{cases}
       a^{c log b} = b^{c log a},
         \quad \text{if } b { contains the special symbol Recurrence::n or if }
-	a \in \Rset_+ \wedge b \text{ not a number}, \\
+	a \in \Rset_+ \wedge b \text{ not a number}; \\
       (a^b)^{log c / log a} = c^b, \quad \text{where } a \in \Rset, a > 0
-        \quad \text{and } b \in \Nset, \\
+        \quad \text{and } b \in \Nset; \\
       (a^{-1})^{log c / log a} = c^{-1},
         \quad \text{where } a \in \Rset, a > 0.
     \end{cases}
@@ -1713,7 +1781,7 @@ PURRS::simplify_numer_denom(const Expr& e) {
   Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
 */
 PURRS::Expr
-PURRS::simplify_factorials_and_exponentials(const Expr& e) {
+PURRS::simplify_binomials_factorials_exponentials(const Expr& e) {
 #if 0
   Expr e_numerator;
   Expr e_denominator;
@@ -1722,7 +1790,8 @@ PURRS::simplify_factorials_and_exponentials(const Expr& e) {
   e_denominator = rewrite_factorials_and_exponentials(e_denominator);
   return e_numerator / e_denominator;
 #else
-  return rewrite_factorials_and_exponentials(e);
+  Expr e_rewritten = rewrite_binomials(e);
+  return rewrite_factorials_and_exponentials(e_rewritten);
 #endif
 }
 
@@ -1742,7 +1811,7 @@ PURRS::simplify_sum(const Expr& e,
 /*!
   Executes consecutively all simplifications described in the comment
   of the functions <CODE>simplify_numer_denom()</CODE>,
-  <CODE>simplify_factorials_and_exponentials()</CODE>,
+  <CODE>simplify_binomials_factorials_exponentials()</CODE>,
   <CODE>simplify_ex_for_output()</CODE> and
   <CODE>simplify_logarithm()</CODE>.
 */
@@ -1750,7 +1819,7 @@ PURRS::Expr
 PURRS::simplify_all(const Expr& e) {
   Expr e_rewritten = e;
   e_rewritten = simplify_numer_denom(e_rewritten);
-  e_rewritten = simplify_factorials_and_exponentials(e_rewritten);
+  e_rewritten = simplify_binomials_factorials_exponentials(e_rewritten);
   e_rewritten = simplify_ex_for_output(e_rewritten, false);
   e_rewritten = simplify_logarithm(e_rewritten);
   return e_rewritten;

@@ -39,7 +39,7 @@ Expr
 simplify_numer_denom(const Expr& e);
 
 Expr
-simplify_factorials_and_exponentials(const Expr& e);
+simplify_binomials_factorials_exponentials(const Expr& e);
 
 Expr
 simplify_sum(const Expr& e,
