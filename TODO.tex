@@ -47,7 +47,7 @@ Find suitable notations in \texttt{GiNaC} for formal sums, formal products
 and hypergeometric functions.
 Also, give rules to combine and simplify sums and products.
 
-\item (Added om 20.9.2002)
+\item (Added on 20.9.2002)
 In order to apply the ``transcendental'' methods of summation contained
 in the book by Petkov\v sek, Wilf and Zeilberger, we
 need to be able to simplify ratios of factorials.
@@ -55,7 +55,7 @@ Of course the same remark holds for binomial coefficients.
 \texttt{GiNaC} shows no ability at that (just try
 \texttt{factorial$(n+1)$/factorial$(n)$}).
 
-\item (Added om 9.10.2002)
+\item (Added on 9.10.2002)
 We have the following problem with Gosper's algorithm, in particular when
 we compute the resultant's roots:
 given the recurrence
@@ -92,6 +92,20 @@ and the constant term
   4 + 2a^2 + 6a.
 \]
 How we compute the roots for the resultant is not right in this case.
+
+\item (Added on 10.10.2002)
+Modify \texttt{simplify.cc} so that only one call to the
+function \texttt{simplify\_on\_output\_ex()} is necessary to arrive
+at the maximum simplification of the expression in input. 
+For example, consider the recurrence:
+\[
+  x(n) = (n-2)^2+x(n-2);
+\]
+when we try to verify the solution of the recurrence, we have to compute
+the difference $x(n) - (n-2)^2 - x(n-2)$, which is simplified to  
+$5/2+((-1)^n)^2*n-n-5/2*((-1)^n)^2$, and not to $0$.
+We remark that the expression $5/2+((-1)^n)^2*n-n-5/2*((-1)^n)^2$ is
+simplified to $0$ on a further call to \texttt{simplify\_on\_output\_ex()}.
 
 \end{enumerate}
 
