@@ -25,8 +25,6 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_Recurrence_inlines_hh
 #define PURRS_Recurrence_inlines_hh
 
-#include "rr_solver.hh"
-
 #include <iostream>
 
 namespace Parma_Recurrence_Relation_Solver {
@@ -78,11 +76,12 @@ Recurrence::replace_recurrence(unsigned k, const Expr& e) {
     stat.first->second = e;
 }
 
-inline bool
+inline Recurrence::Solver_Status
 Recurrence::solve(const Symbol& n) const {
-  if (!solved && solve_try_hard(recurrence_rhs, n, solution) == OK)
+  Solver_Status status = OK;
+  if (!solved && (status = solve_try_hard(recurrence_rhs, n, solution)) == OK)
     solved = true;
-  return solved;
+  return status;
 }
 
 inline Expr

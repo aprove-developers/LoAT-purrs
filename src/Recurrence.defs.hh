@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Recurrence.types.hh"
 #include "Expr.defs.hh"
+#include "alg_eq_solver.hh"
 #include <map>
 
 namespace Parma_Recurrence_Relation_Solver {
@@ -63,7 +64,55 @@ public:
   //! 
   Symbol insert_auxiliary_equation(const Expr& e);
 
-  bool solve(const Symbol& n) const;
+  enum Solver_Status {
+    /*!
+      Solution was successful.
+    */
+    OK,
+
+    /*!
+      The right-hand side of the recurrence contains at least an occurrence
+      of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is not an integer.
+    */
+    HAS_NON_INTEGER_DECREMENT,
+
+    /*!
+      The right-hand side of the recurrence contains at least an occurrence
+      of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is a negative integer.
+    */
+    HAS_NEGATIVE_DECREMENT,
+
+    /*!
+      The right-hand side of the recurrence contains at least an occurrence
+      of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is too big to be handled
+      by the standard solution techniques.
+    */
+    HAS_HUGE_DECREMENT,
+
+    /*!
+      The right-hand side of the recurrence contains at least an occurrence
+      of <CODE>x(n)</CODE>.
+    */
+    HAS_NULL_DECREMENT,
+
+    /*!
+      The recurrence is not linear.
+    */
+    NON_LINEAR_RECURRENCE,
+
+    /*!
+      The recurrence is not unsolvable.
+    */
+    UNSOLVABLE_RECURRENCE,
+
+    /*!
+      Catchall: the recurrence is generically too complex for the solver.
+    */
+    TOO_COMPLEX
+  };
+
+
+  Solver_Status solve(const Symbol& n) const;
   Expr exact_solution(const Symbol& n) const;
   bool verify_solution(const Symbol& n) const;
 
@@ -84,6 +133,32 @@ private:
   mutable bool solved;
 
   mutable Expr solution;
+
+private:
+  static Solver_Status
+  check_powers_and_functions(const Expr& e, const Symbol& n);
+  static Solver_Status
+  find_non_linear_recurrence(const Expr& e, const Symbol& n);
+  static Solver_Status
+  compute_order(const Expr& argument, const Symbol& n, 
+		int& order, unsigned long& index,
+		unsigned long max_size);
+  static Solver_Status
+  classification_summand(const Expr& r, const Symbol& n, Expr& e,
+			 std::vector<Expr>& coefficients, int& order,
+			 bool& has_non_constant_coefficients);
+  static Solver_Status
+  solve(const Expr& rhs, const Symbol& n, Expr& solution);
+  static Solver_Status
+  solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution);
+  static Solver_Status
+  solve_constant_coeff_order_1(const Symbol& n,
+			       const std::vector<Expr>& base_of_exps,
+			       const std::vector<Expr>& exp_poly_coeff,
+			       const std::vector<Expr>& exp_no_poly_coeff,
+			       const std::vector<Polynomial_Root>& roots,
+			       const std::vector<Expr>& initial_conditions,
+			       Expr& solution);
 
 #if 0
     Expr poly_char;

@@ -244,6 +244,7 @@ main() try {
   Symbol d;
   Expr_List symbols(n, a, b, c, d);
   Expr rhs = Expr(**expr, symbols);
+  Recurrence recurrence(rhs);
 
 #if HAVE_GETRUSAGE
   timeval start;
@@ -256,7 +257,8 @@ main() try {
 
   Expr solution;
   try {
-    if (!solve(rhs, n, solution))
+    if (!recurrence.solve(n))
+      solution = recurrence.exact_solution(n);
       error("sorry, this is too difficult");
   }
   catch (const char* s) {

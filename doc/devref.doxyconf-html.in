@@ -338,7 +338,6 @@ WARN_LOGFILE           =
 
 INPUT                  = @srcdir@/../src/alg_eq_solver.hh \
                          @srcdir@/../src/alg_eq_solver.cc \
-                         @srcdir@/../src/rr_solver.hh \
                          @srcdir@/../src/rr_solver.cc \
                          @srcdir@/../src/approx_expr.hh \
                          @srcdir@/../src/approx_expr.cc \

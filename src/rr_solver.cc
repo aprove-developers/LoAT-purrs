@@ -28,7 +28,6 @@ http://www.cs.unipr.it/purrs/ . */
 #define NOISY 0
 #endif
 
-#include "rr_solver.hh"
 #include "gosper.hh"
 #include "alg_eq_solver.hh"
 #include "simplify.hh"
@@ -39,6 +38,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Symbol.defs.hh"
 #include "Number.defs.hh"
 #include "Matrix.defs.hh"
+#include "Recurrence.defs.hh"
 
 #include <climits>
 #include <algorithm>
@@ -347,15 +347,6 @@ add_initial_conditions(const Expr& g_n, const Symbol& n,
 		       const std::vector<Expr>& initial_conditions,
 		       Expr& solution);
 
-static Solver_Status
-solve_constant_coeff_order_1(const Symbol& n,
-			     const std::vector<Expr>& base_of_exps,
-			     const std::vector<Expr>& exp_poly_coeff,
-			     const std::vector<Expr>& exp_no_poly_coeff,
-			     const std::vector<Polynomial_Root>& roots,
-			     const std::vector<Expr>& initial_conditions,
-			     Expr& solution);
-
 static Expr
 solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
 			     bool all_distinct,
@@ -383,12 +374,12 @@ compute_alpha_factorial(const Expr& alpha, const Symbol& n,
 			const Number& lower, const Expr& upper,
 			bool is_denominator = false);
 
-static bool
+bool
 verify_solution(const Expr& solution, int order, const Expr& rhs,
 		const Symbol& n);
 
-static Solver_Status
-check_powers_and_functions(const Expr& e, const Symbol& n) {
+Recurrence::Solver_Status
+Recurrence::check_powers_and_functions(const Expr& e, const Symbol& n) {
   if (e.is_a_function()) {
     Expr operand = e.op(0);
     if (operand.is_the_x_function())
@@ -408,8 +399,8 @@ check_powers_and_functions(const Expr& e, const Symbol& n) {
   return OK;
 }
 
-static Solver_Status
-find_non_linear_recurrence(const Expr& e, const Symbol& n) {
+Recurrence::Solver_Status
+Recurrence::find_non_linear_recurrence(const Expr& e, const Symbol& n) {
   Solver_Status status;
   unsigned num_summands = e.is_a_add() ? e.nops() : 1;
   if (num_summands > 1)
@@ -445,9 +436,10 @@ find_non_linear_recurrence(const Expr& e, const Symbol& n) {
   return OK;
 }
 
-static Solver_Status
-compute_order(const Expr& argument, const Symbol& n, 
-	      int& order, unsigned long& index, unsigned long max_size) {
+Recurrence::Solver_Status
+Recurrence::compute_order(const Expr& argument, const Symbol& n, 
+			  int& order, unsigned long& index,
+			  unsigned long max_size) {
   Number decrement;
   if (!get_constant_decrement(argument, n, decrement))
     return HAS_NON_INTEGER_DECREMENT;
@@ -481,10 +473,10 @@ insert_coefficients(const Expr& coeff, unsigned long index,
     coefficients[index] += coeff;
 }
 
-static Solver_Status
-classification_summand(const Expr& r, const Symbol& n, Expr& e,
-		       std::vector<Expr>& coefficients, int& order,
-		       bool& has_non_constant_coefficients) {
+Recurrence::Solver_Status
+Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
+				   std::vector<Expr>& coefficients, int& order,
+				   bool& has_non_constant_coefficients) {
   Solver_Status status;
   unsigned long index;  
   unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
@@ -571,8 +563,8 @@ additive_form(const Expr& e) {
   This function solves recurrences of SOME TYPE provided they are
   supplied in SOME FORM. (Explain.)
 */
-Solver_Status
-solve(const Expr& rhs, const Symbol& n, Expr& solution) {
+Recurrence::Solver_Status
+Recurrence::solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   D_VAR(rhs);
   // The following code depends on the possibility of recovering
   // the various parts of `rhs' as summands of an additive expression.
@@ -1015,8 +1007,8 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs,
   It does that by repeatedly calling solve() and handling
   the errors that may arise.
 */
-Solver_Status
-solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
+Recurrence::Solver_Status
+Recurrence::solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
   bool exit_anyway = false;
   Solver_Status status;
   do {
@@ -1048,8 +1040,7 @@ solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
 	  status = solve(new_rhs, n, solution);
 	}
 	else
-	  throw std::logic_error("PURRS error: "
-				 "impossible recurrence");
+	  status = UNSOLVABLE_RECURRENCE;
       }
       exit_anyway = true;
       break;
@@ -1280,7 +1271,8 @@ gosper_algorithm(const Symbol& n, Expr& t_n, Number lower, const Expr& upper,
           + \sum_{k=1}^n \lambda^{n-k} p(k).
   \f]
 */
-static Solver_Status
+Recurrence::Solver_Status
+Recurrence::
 solve_constant_coeff_order_1(const Symbol& n,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff,
@@ -2074,7 +2066,7 @@ print_bad_exp(const Expr& e, const Expr rhs, bool conditions) {
   FIXME: In the latter case, we will need more powerful tools to
   decide whether the solution is right or it is really wrong.
 */
-static bool
+bool
 verify_solution(const Expr& solution, int order, const Expr& rhs,
 		const Symbol& n) {
   // FIXME: the initial conditions can not start always from 0:

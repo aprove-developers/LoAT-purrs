@@ -144,16 +144,20 @@ error(const string& s) {
   my_exit(1);
 }
 
+static bool explodes;
 static bool expect_exactly_solved;
 static bool expect_not_exactly_solved;
-static bool explodes;
+static bool expect_diagnose_unsolvable;
+static bool expect_not_diagnose_unsolvable;
 
 void
 set_expectations(const string& s) {
   // No expectations by default.
-  expect_exactly_solved
+  explodes
+    = expect_exactly_solved
     = expect_not_exactly_solved
-    = explodes
+    = expect_diagnose_unsolvable
+    = expect_not_diagnose_unsolvable
     = false;
 
   const char* p = s.c_str();
@@ -170,6 +174,12 @@ set_expectations(const string& s) {
     case 'n':
       expect_not_exactly_solved = true;
       break;
+    case 'U':
+      expect_diagnose_unsolvable = true;
+      break;
+    case 'u':
+      expect_not_diagnose_unsolvable = true;
+      break;
     case '*':
       break;
     default:
@@ -182,7 +192,7 @@ set_expectations(const string& s) {
   }
 }
 
-bool
+Recurrence::Solver_Status
 solve_wrapper(const Recurrence& rec, const Symbol& n) {
   try {
     return rec.solve(n);
@@ -198,7 +208,7 @@ solve_wrapper(const Recurrence& rec, const Symbol& n) {
     if (verbose)
       message(s);
   }
-  return false;
+  return Recurrence::TOO_COMPLEX;
 }
 
 bool
@@ -332,7 +342,7 @@ main(int argc, char *argv[]) try {
     Recurrence rec(rhs);
 
     Expr solution;
-    if (solve_wrapper(rec, n)) {
+    if (solve_wrapper(rec, n) == Recurrence::OK) {
       if (regress_test) {
 	if (expect_not_exactly_solved) {
 	  if (verbose)

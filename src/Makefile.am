@@ -49,7 +49,6 @@ initializer.hh \
 approx_expr.hh \
 alg_eq_solver.hh \
 poly_factor.hh \
-rr_solver.hh \
 gosper.hh \
 simplify.hh \
 sum_poly.hh \
