@@ -737,7 +737,8 @@ PURRS::Recurrence::compute_order(const Number& decrement, unsigned int& order,
 }
 
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
+PURRS::Recurrence::classification_summand(const Expr& addend,
+					  Expr& inhomogeneous,
 					  unsigned int& order,
 					  std::vector<Expr>& coefficients_lfo,
 					  int& gcd_among_decrements,
@@ -745,10 +746,10 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 					  unsigned int& rank,
 					  std::vector<Expr>& coefficients_fe,
 					  std::vector<Number>& divisors) const {
-  unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
+  unsigned num_factors = addend.is_a_mul() ? addend.nops() : 1;
   if (num_factors == 1)
-    if (r.is_the_x_function()) {
-      const Expr& argument = r.arg(0);
+    if (addend.is_the_x_function()) {
+      const Expr& argument = addend.arg(0);
       if (argument == n)
 	return HAS_NULL_DECREMENT;
       else if (has_parameters(argument))
@@ -763,6 +764,10 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 			    coefficients_lfo.max_size());
 	  if (status != SUCCESS)
 	    return status;
+	  if (is_order_zero() || is_unknown())
+	    set_linear_finite_order_const_coeff();
+	  else if (is_functional_equation())
+	    return TOO_COMPLEX;
 	  // `num_term == 0' if `r' is the unique term of `recurrence_rhs'
 	  // or if it is the first term of `recurrence_rhs' (i.e. is the
 	  // first time that the system entry in this function).
@@ -771,10 +776,6 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	  else
 	    gcd_among_decrements = gcd(gcd_among_decrements, index);
 	  insert_coefficients_lfo(1, index, coefficients_lfo);
-	  if (is_order_zero() || is_unknown())
-	    set_linear_finite_order_const_coeff();
-	  else if (is_functional_equation())
-	    return TOO_COMPLEX;
 	}
 	else
 	  return HAS_NON_INTEGER_DECREMENT;
@@ -783,6 +784,10 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
       else if (argument.is_a_mul() && argument.nops() == 2) {
 	Number divisor;
 	if (get_constant_divisor(argument, divisor)) {
+	  if (is_order_zero() || is_unknown())
+	    set_functional_equation();
+	  else if (is_linear_finite_order())
+	    return TOO_COMPLEX;
 	  ++rank;
 	  unsigned position;
 	  insert_divisors(divisor, divisors, position);
@@ -790,25 +795,21 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	}
 	else
 	  return TOO_COMPLEX;
-	if (is_order_zero() || is_unknown())
-	  set_functional_equation();
-	else if (is_linear_finite_order())
-	  return TOO_COMPLEX;
       }
       else if (argument.has(n))
 	return TOO_COMPLEX;
       else
-	e += r;
-    } // end case of r `x' function.
+	inhomogeneous += addend;
+    } // ended case of `addend' `x' function.
   // Check if the summand has the `x' function with the argument
   // dependently from the index of the sum.
-    else if (r.is_the_sum_function() && r.arg(2) == n
-	     && r.arg(3).has_x_function(false, r.arg(0))) {
+    else if (addend.is_the_sum_function() && addend.arg(2) == n
+	     && addend.arg(3).has_x_function(false, addend.arg(0))) {
       D_MSG("infinite order");
       return TOO_COMPLEX;
     }
     else
-      e += r;
+      inhomogeneous += addend;
   else {
     Expr possibly_coeff = 1;
     unsigned position;
@@ -816,7 +817,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
     bool found_n = false;
     unsigned long index;
     for (unsigned i = num_factors; i-- > 0; ) {
-      const Expr& factor = r.op(i);
+      const Expr& factor = addend.op(i);
       if (factor.is_the_x_function()) {
 	const Expr& argument = factor.arg(0);
 	if (argument == n)
@@ -826,12 +827,15 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	else if (argument.is_a_add() && argument.nops() == 2) {
 	  Number decrement;
 	  if (get_constant_decrement(argument, decrement)) {
+	    // The non linear terms have already been considered before.
 	    assert(!found_function_x);
 	    Solver_Status status
 	      = compute_order(decrement, order, index,
 			      coefficients_lfo.max_size());
 	    if (status != SUCCESS)
 	      return status;
+	    if (is_functional_equation())
+	      return TOO_COMPLEX;
 	    if (num_term == 0)
 	      gcd_among_decrements = index;
 	    else
@@ -844,13 +848,15 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	else if (argument.is_a_mul() && argument.nops() == 2) {
 	  Number divisor;
 	  if (get_constant_divisor(argument, divisor)) {
-	    ++rank;
-	    found_function_x = true;
-	    insert_divisors(divisor, divisors, position);
+	    // The non linear terms have already been considered before.
+	    assert(!found_function_x);
 	    if (is_order_zero() || is_unknown())
 	      set_functional_equation();
 	    else if (is_linear_finite_order())
 	      return TOO_COMPLEX;
+	    ++rank;
+	    insert_divisors(divisor, divisors, position);
+	    found_function_x = true;
 	  }
 	  else
 	    return TOO_COMPLEX;
@@ -859,16 +865,13 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	  return TOO_COMPLEX;
 	else
 	  possibly_coeff *= factor;
-      }
-      else if (factor.is_the_sum_function() && factor.arg(2) == n) {
-	// Check if the summand has the `x' function with the argument
-	// dependently from the index of the sum.
-	if (factor.arg(3).has_x_function(false, factor.arg(0))) {
-	  D_MSG("infinite order");
-	  return TOO_COMPLEX;
-	}
-	else
-	  possibly_coeff *= factor;
+      } // ended case of `factor' `x' function.
+      // Check if the summand has the `x' function with the argument
+      // dependently from the index of the sum.
+      else if (factor.is_the_sum_function() && factor.arg(2) == n
+	       && factor.arg(3).has_x_function(false, factor.arg(0))) {
+	D_MSG("infinite order");
+	return TOO_COMPLEX;
       }
       else {
 	if (factor.has(n))
@@ -889,7 +892,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
       }
     }
     else
-      e += possibly_coeff;
+      inhomogeneous += possibly_coeff;
   }
   return SUCCESS;
 }
