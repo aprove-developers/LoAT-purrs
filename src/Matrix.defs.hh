@@ -59,6 +59,10 @@ public:
   //! Assignment operator.
   Matrix& operator=(const Matrix& y);
 
+  unsigned num_rows() const;
+
+  unsigned num_columns() const;
+
   //! Accesses to element in \p r row and \p c column of \p *this for reading.
   /*!
     \exception std::range_error thrown if \p r is bigger or equal to
@@ -91,6 +95,8 @@ public:
                                      inconsistent. 
   */
   Matrix solve(const Matrix& vars, const Matrix& rhs) const;
+
+  int size_norm_matrix() const;
 
 private:
   friend class Expr;

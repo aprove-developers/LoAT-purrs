@@ -64,6 +64,17 @@ inline
 Matrix::~Matrix() {
 }
 
+inline unsigned
+Matrix::num_rows() const {
+  return m.rows();
+};
+
+inline unsigned
+Matrix::num_columns() const {
+  return m.cols();
+};
+
+
 inline const Expr&
 Matrix::operator()(unsigned r, unsigned c) const {
   return static_cast<const Expr&>(m(r, c));

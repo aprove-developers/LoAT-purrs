@@ -24,6 +24,18 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Matrix.defs.hh"
 
+#include "Expr.defs.hh"
+
 #include <config.h>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
+
+int
+PURRS::Matrix::size_norm_matrix() const {
+  const Matrix& m = *this;
+  int count = 0;
+  for (unsigned i = num_rows(); i-- > 0; )
+    for (unsigned j = num_columns(); j-- > 0; )
+      count += m(i, j).size_norm();
+  return count;
+}
