@@ -46,9 +46,6 @@ FIND_DIVISORS_THRESHOLD = FIND_DIVISORS_MAX*FIND_DIVISORS_MAX;
 
 static GExpr zero = 0;
 
-// FIXME: always call 'simplify_on_output_ex()' when solving equations of
-// degree two or more.
-
 /*!
   This routine inserts into \p divisors all the positive divisors of
   the strictly positive integer \p n which is also less than
@@ -80,9 +77,9 @@ find_divisors(GNumber n, std::vector<GNumber>& divisors) {
   the largest integer \f$n\f$ such that there is a polynomial \f$q\f$
   such that \f$p(x) = q(x^n)\f$ and the polynomial \f$q\f$ itself.
 */
-static int
+static unsigned
 is_nested_polynomial(const GExpr& p, const GSymbol& x, GExpr& q) {
-  int degree = p.degree(x);  
+  unsigned degree = p.degree(x);  
   if (degree == 0) {
     // The constant polynomial.
     q = p;
@@ -96,21 +93,21 @@ is_nested_polynomial(const GExpr& p, const GSymbol& x, GExpr& q) {
   }
   // Here the degree is at least 2 and the polynomial does not have a
   // linear term.  Look for the first non-zero coefficient (apart from
-  // constant term).
-  int i = 2;
+  // the constant term).
+  unsigned i = 2;
   while(p.coeff(x, i) == 0)
     ++i;
 
   // Here i >= 2 and the polynomial has the form a_0 + a_i x^i + ... 
 
-  // Check whether all exponents are multiple of some integer n.
+  // Check whether all exponents are multiple of some integer `n'.
   // We first set n = i, and update its value every time that we 
   // find a non-zero coefficient.
-  // The routine ends as soon as n reaches the value of 1
+  // The routine ends as soon as `n' reaches the value of 1
   // (this means that the gcd of all exponents of non-zero 
   // monomials is 1) or when the polynomial has been entirely processed.
-  int n = i;
-  for (int j = i+1; j <= degree && n > 1; ++j)
+  unsigned n = i;
+  for (unsigned j = i+1; j <= degree && n > 1; ++j)
     // If n ==1 there is no need to read the rest of the polynomial.
     if (p.coeff(x, j) !=0)
       n = gcd(n, j);
@@ -121,7 +118,7 @@ is_nested_polynomial(const GExpr& p, const GSymbol& x, GExpr& q) {
   if (n > 1) {
     q = p.coeff(x, 0);
     // Note that `n' divides `degree'.
-    for (int j = 1, m = degree/n; j <= m; ++j)
+    for (unsigned j = 1, m = degree/n; j <= m; ++j)
       q += p.coeff(x, n*j) * pow(x, j); 
   }
   else
@@ -514,7 +511,7 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   // auxiliary equation
   // y^2 +  f/2*y + (f*f - 4*h)/16 = 0.
   GExpr p, q;
-  if (g.is_zero()) {
+  if (g == 0) {
     solve_equation_2(f*numeric(1)/2,
 		     (f*f - 4*h)*numeric(1)/16,
 		     y1, y2);
