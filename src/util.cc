@@ -621,9 +621,9 @@ PURRS::has_parameters(const Expr& e) {
 
 /*!
   If \p do_power is true this function substitutes every occurrence
-  of the function \f$ x() \f$ with \f$ k^{x()} \f$.
-  If \p do_power is false substitutes every occurrence
-  of the function \f$ x() \f$ with \f$ log_k x() \f$.
+  in \p e of the function \f$ x() \f$ with \f$ k^{x()} \f$.
+  If \p do_power is false this function substitutes every occurrence
+  in \p e of the function \f$ x() \f$ with \f$ log_k x() \f$.
 */
 Expr
 PURRS::substitute_x_function(const Expr& e, const Expr& k, bool do_power) {
