@@ -38,6 +38,7 @@ namespace GiNaC {
 DECLARE_FUNCTION_1P(x);
 DECLARE_FUNCTION_4P(sum);
 DECLARE_FUNCTION_4P(prod);
+DECLARE_FUNCTION_2P(mod);
 
 } // namespace GiNaC
 
@@ -646,6 +647,12 @@ prod(const Expr& index, const Expr& lower, const Expr& upper,
 	      static_cast<const Expr::Base>(factor));
 }
 
+inline Expr
+mod(const Expr& x, const Expr& y) {
+  return mod(static_cast<const Expr::Base>(x),
+	     static_cast<const Expr::Base>(y));
+}
+
 inline bool
 Expr::is_the_abs_function() const {
   return is_ex_the_function(*this, abs);
@@ -699,6 +706,11 @@ Expr::is_the_sum_function() const {
 inline bool
 Expr::is_the_prod_function() const {
   return is_ex_the_function(*this, prod);
+}
+
+inline bool
+Expr::is_the_mod_function() const {
+  return is_ex_the_function(*this, mod);
 }
 
 inline void

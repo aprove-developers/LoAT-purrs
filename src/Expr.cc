@@ -284,7 +284,32 @@ REGISTER_FUNCTION(prod,
 		  evalf_func(prod_evalf).
 		  derivative_func(prod_deriv));
 
+//! ...
+ex
+mod_eval(const ex& x, const ex& y) {
+  return mod(x, y).hold();
+}
+
+ex
+mod_evalf(const ex& x, const ex& y) {
+  if (is_a<numeric>(x) && is_a<numeric>(y))
+    return mod(ex_to<numeric>(x), ex_to<numeric>(y));
+  else
+    return mod(x, y).hold();
+}
+
+ex
+mod_deriv(const ex&, const ex&, unsigned int) {
+  abort();
+}
+
+REGISTER_FUNCTION(mod,
+		  eval_func(mod_eval).
+		  evalf_func(mod_evalf).
+		  derivative_func(mod_deriv));
+
 } // namespace GiNaC
+
 
 static PURRS::Expr
 distribute_mul_over_add_factor(const PURRS::Expr& e) {

@@ -318,6 +318,9 @@ Expr sum(const Expr& index, const Expr& lower, const Expr& upper,
 Expr prod(const Expr& index, const Expr& lower, const Expr& upper,
 	  const Expr& factor);
 
+//! Returns the function \f$ mod(x, y) \f$.
+Expr mod(const Expr& x, const Expr& y);
+
 class Expr : private GiNaC::ex {
 private:
   typedef GiNaC::ex Base;
@@ -484,6 +487,11 @@ public:
   //! Returns <CODE>true</CODE> if and only if \p *this is the function
   //! <CODE>prod()</CODE>.
   bool is_the_prod_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>mod()</CODE>.
+  bool is_the_mod_function() const;
 
   //! If \p *this is a number, returns the corresponding value.
   Number ex_to_number() const;
@@ -819,6 +827,7 @@ private:
 		  const Expr& summand);
   friend Expr prod(const Expr& index, const Expr& lower, const Expr& upper,
 		   const Expr& factor);
+  friend Expr mod(const Expr& x, const Expr& y);
 
   //! Builds the expression corresponding to \p ge.
   Expr(const GiNaC::ex& ge);
