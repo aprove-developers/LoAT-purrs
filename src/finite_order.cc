@@ -725,7 +725,6 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
   // `term_with_ic' will contain the term of the solution relative to
   // the initial condition; `remainder_solution' will contain the
   // rest of the solution.
-  D_VAR(rec.exact_solution_.expression());
   Expr term_with_ic = 0;
   Expr remainder_solution = 0;
   if (rec.exact_solution_.expression().is_a_add())
@@ -764,9 +763,11 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
       Expr tmp = 0;
       for (unsigned int j = 1; j <= gcd_among_decrements; ++j) {	  
 	const Expr& root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
-	tmp += pwr(root_of_unity, Recurrence::n - (i + h));
+	tmp += pwr(root_of_unity,
+		   Recurrence::n - (i + h * gcd_among_decrements));
       }
       D_VAR(i + h * gcd_among_decrements);
+      D_VAR(tmp);
       initial_condition += tmp * x(i + h * gcd_among_decrements)
 	/ gcd_among_decrements;
     }
