@@ -1,0 +1,46 @@
+\documentclass[a4paper]{article}
+\usepackage{amsmath}
+
+\begin{document}
+
+\begin{enumerate}
+
+\item (Added on 4.9.2002)
+In \texttt{simplify.cc}, emphasize the fact that $n$  is an integer variable:
+for example, the expression $(1-(-1)^n) \cdot (1+(-1)^n)$ simplifies to 
+0 only if n is an integer.
+
+\item (Added on 4.9.2002)
+Use \texttt{numer\_denom()} as a default simplification of expressions?
+Consider the example
+\[
+  \begin{aligned}
+  &-(1-a^{-1})^{-1}*a^{-1}
+  -
+  3*(1-a^{-1})^{-2}*a^{-2}
+  +
+  (1-a^{-1})^{-2}*a^{-1} \\
+  &+
+  2*(1-a^{-1})^{-3}*a^{-2}
+  -
+  2*(1-a^{-1})^{-3}*a^{-3},
+  \end{aligned}
+\]
+which \texttt{GiNaC} does not simplify. After calling 
+\texttt{numer\_denom()} on this
+expression, we get the list $\{\, 0$, $1\,\}$.
+This arises from the recurrence $x_n = a*x_{n-1} + n^2$ in the
+file \texttt{recurrences}.
+
+\item (Added on 4.9.2002)
+\texttt{purrs} fails to check that Binet's formula holds for the Fibonacci
+sequence because it does not simplify the formula as much as it should.
+Consider the possibility of introducing formal parameters to perform the
+simplifications on expressions that do not contain irrational quantities.
+
+\item (Added on 4.9.2002)
+Give conditions on parameters when solving parametric recurrences.
+
+\end{enumerate}
+
+\end{document}
