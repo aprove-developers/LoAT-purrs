@@ -540,23 +540,24 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 }
 
 /*!
-  Let \f$ e(n) \f$ be the expression over \p n in \p e, which is assumed
-  to be already expanded.  This function computes a decomposition
+  Let \f$ e(n) \f$ be the expression in \p n contained in \p e,
+  which is assumed to be already expanded.
+  This function computes a decomposition
   \f$ e(n) = \sum_{i=0}^k \alpha_i^n \bigl(p_i(n) + q_i(n)\bigr) \f$, where
   - \f$ \alpha_i \f$ is a ground expression
     (syntactically different from \p 0);
   - \f$ \alpha_i \neq \alpha_j \f$ if \f$ i \neq j \f$;
-  - \f$ p_i \f$ is (syntactically) a polynomial in \f$ n \f$.
+  - \f$ p_i(n) \f$ is (syntactically) a polynomial in \f$ n \f$.
 
   The expressions corresponding to \f$ \alpha_i \f$, \f$ p_i \f$ and
   \f$ q_i \f$ are stored in the \f$ i \f$-th position of the vectors
   \p alpha, \p p and \p q, respectively.
 */
-static GMatrix
-decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n
-				 std::vector<GExpr> alpha,
-				 std::vector<GExpr> p,
-				 std::vector<GExpr> q) {
+static void
+exp_poly_decomposition(const GExpr& e, const GSymbol& n
+		       std::vector<GExpr>& alpha,
+		       std::vector<GExpr>& p,
+		       std::vector<GExpr>& q) {
   GExpr p, q;
   GList(lst_of_exp);
   p = e;
