@@ -462,8 +462,7 @@ largest_positive_int_zero_on_expanded_ex(const Expr& e, const Symbol& x,
 	if (e.is_the_log_function()) {
 	  if (e.arg(0).is_polynomial(x)) {
 	    ok = true;
-	    largest_positive_int_zero_on_expanded_ex(e.arg(0), x, z);
-	    ++z;
+	    largest_positive_int_zero_on_expanded_ex(e.arg(0) - 1, x, z);
 	  }
 	  else if (e.arg(0).is_the_log_function()) {
 	    ok = true;
