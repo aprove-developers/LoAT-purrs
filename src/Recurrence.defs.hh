@@ -28,6 +28,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Recurrence.types.hh"
 #include "Cached_Expr.defs.hh"
 #include "Order_Reduction_Info.defs.hh"
+#include "Non_Linear_Info.defs.hh"
 #include "Blackboard.defs.hh"
 #include "Finite_Order_Info.defs.hh"
 #include "Functional_Equation_Info.defs.hh"
@@ -357,6 +358,7 @@ private:
   mutable Finite_Order_Info* finite_order_p;
   mutable Functional_Equation_Info* functional_eq_p;
   mutable Order_Reduction_Info* order_reduction_p;
+  mutable Non_Linear_Info* non_linear_p;
 
   //! \brief
   //! Returns <CODE>true</CODE> if the recurrence's type is unknown;
@@ -457,6 +459,8 @@ private:
   //! \f$ x_n = a x_{n/b} + p(n)..
   unsigned& divisor_arg();
 
+  // Method to access to private data of `Order_Reduction_Info'.
+
   Expr old_recurrence_rhs() const;
   Expr& old_recurrence_rhs();
 
@@ -474,6 +478,15 @@ private:
   bool verified_one_time() const;
   void not_verified_one_time() const; 
   
+  // Method to access to private data of `Non_Linear_Info'.
+
+  Expr original_recurrence_rhs() const;
+  Expr& original_recurrence_rhs();
+
+  Expr base_exp_log() const;
+  Expr& base_exp_log();
+
+
   mutable Cached_Expr exact_solution_;
   mutable Cached_Expr lower_bound_;
   mutable Cached_Expr upper_bound_;
@@ -485,8 +498,6 @@ private:
   std::map<unsigned, Expr> initial_conditions;
 
 private:
-  static Solver_Status
-  find_non_linear_recurrence(const Expr& e);
   static Solver_Status
   compute_order(const Number& decrement, unsigned int& order,
 		unsigned long& index, unsigned long max_size);
