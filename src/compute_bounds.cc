@@ -904,15 +904,8 @@ compute_term_about_initial_condition(Type_Bound type, unsigned int condition,
     if (index_initial_condition.ex_to_number() < condition)
       index_initial_condition = condition;
   }
-  else {
-//     index_initial_condition
-//       = simplify_logarithm(Recurrence::n / pwr(divisor, q));
-//     index_initial_condition = simplify_ex_for_output(index_initial_condition,
-// 						     false);
-//     index_initial_condition = floor(index_initial_condition);
+  else
     index_initial_condition = Sc(Recurrence::n, divisor);
-    D_VAR(index_initial_condition);
-  }
   
   // Compute `a^q' removing the function `floor' from `q':
   // in the case of "upper bound" consider `a^(log(n)/log(b))';
