@@ -34,10 +34,9 @@ namespace Parma_Recurrence_Relation_Solver {
 class Finite_Order_Info {
 public:
   //! \brief
-  //! Constructor: sets \f$ order = k \f$, \f$ decrements = decs \f$ and
-  //! \f$ coefficients = coeffs \f$.
-  Finite_Order_Info(int k, const std::vector<unsigned>& decs,
-		    const std::vector<Expr>& coeffs);
+  //! Constructor: sets \f$ order_ = k \f$, \f$ first_initial_condition_ = i_c \f$
+  //! \f$ coefficients_ = coeffs \f$.
+  Finite_Order_Info(int k, unsigned i_c, const std::vector<Expr>& coeffs);
 
   //! Copy-constructor.
   Finite_Order_Info(const Finite_Order_Info& y);
@@ -48,57 +47,35 @@ public:
   //! Assignment operator.
   Finite_Order_Info& operator=(const Finite_Order_Info& y);
 
-  //! Returns the order of the recurrence.
-  int get_order() const;
+  //! Returns <CODE>order_</CODE>.
+  unsigned int order() const;
 
-  //! Returns the vector <CODE>decrements</CODE>.
-  const std::vector<unsigned>& get_decrements() const;
+  //! Returns <CODE>order_</CODE>.
+  unsigned int& order();
 
-  //! Returns the vector <CODE>initial_conditions</CODE>.
-  const std::vector<unsigned>& get_initial_conditions() const;
+  //! Returns <CODE>first_initial_condition_</CODE>.
+  unsigned first_initial_condition() const;
 
-  //! \brief
-  //! Returns the element in the position \p position of the vector
-  //! <CODE>initial_conditions</CODE>.
-  unsigned get_one_initial_condition(unsigned position) const;
+  //! Returns <CODE>first_initial_condition_</CODE>.
+  unsigned& first_initial_condition();
 
-  //! Returns the vector <CODE>coefficients</CODE>.
-  const std::vector<Expr>& get_coefficients() const;
+  //! Returns <CODE>coefficients_</CODE>.
+  const std::vector<Expr>& coefficients() const;
 
-  //! Sets the vector <CODE>decrements</CODE> from \p decs.
-  void set_decrements(const std::vector<unsigned> decs);
-
-  //! Sets the vector <CODE>initial_conditions</CODE> from \p i_c.
-  void set_initial_conditions(const std::vector<unsigned> i_c);
-
-  //! Sets the vector <CODE>coefficients</CODE> from \p coeffs.
-  void set_coefficients(const std::vector<Expr> coeffs);
-
-  //! Adds \p d to the vector <CODE>decrements</CODE>.
-  void add_decrement(unsigned d);
-
-  //! Adds \p i to the vector <CODE>initial_conditions</CODE>.
-  void add_initial_condition(unsigned i);
-
-  //! Adds \p c to the vector <CODE>coefficients</CODE>.
-  void add_coefficient(const Expr& c);
+  //! Returns <CODE>coefficients_</CODE>.
+  std::vector<Expr>& coefficients();
 
 private:
   //! The order of the recurrence. 
-  int order;
+  unsigned int order_;
 
   //! \brief
-  //! Stores the positive integers \f$ d \f$ of all the \f$ x(n-d) \f$
-  //! contained in the right hand side of the recurrence.
-  std::vector<unsigned> decrements;
-
-  //! \brief
-  //! Stores the positive integers that represent the initial conditions
-  //! for the recurrences. For these integers the recurrence is well defined.
-  std::vector<unsigned> initial_conditions;
+  //! The smallest positive integer for which the recurrence is
+  //! well-defined: the initial conditions will start from it.
+  unsigned first_initial_condition_;
 
   //! Stores the coefficients of the recurrence.
-  std::vector<Expr> coefficients;
+  std::vector<Expr> coefficients_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

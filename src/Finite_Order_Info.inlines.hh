@@ -33,19 +33,18 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
-Finite_Order_Info::Finite_Order_Info(int k, const std::vector<unsigned>& decs,
+Finite_Order_Info::Finite_Order_Info(int k, unsigned i_c,
 				     const std::vector<Expr>& coeffs)
-  : order(k),
-    decrements(decs),
-    coefficients(coeffs) {
+  : order_(k),
+    first_initial_condition_(i_c),
+    coefficients_(coeffs) {
 }
 
 inline
 Finite_Order_Info::Finite_Order_Info(const Finite_Order_Info& y) 
-  : order(y.order),
-    decrements(y.decrements),
-    initial_conditions(y.initial_conditions),
-    coefficients(y.coefficients) {
+  : order_(y.order_),
+    first_initial_condition_(y.first_initial_condition_),
+    coefficients_(y.coefficients_) {
 }
 
 inline
@@ -54,68 +53,40 @@ Finite_Order_Info::~Finite_Order_Info() {
 
 inline Finite_Order_Info&
 Finite_Order_Info::operator=(const Finite_Order_Info& y) { 
-  order = y.order;
-  decrements = y.decrements;
-  initial_conditions = y.initial_conditions;
-  coefficients = y.coefficients;
+  order_ = y.order_;
+  first_initial_condition_ = y.first_initial_condition_;
+  coefficients_ = y.coefficients_;
   return *this;
 }
 
-inline int
-Finite_Order_Info::get_order() const {
-  return order;
+inline unsigned int
+Finite_Order_Info::order() const {
+  return order_;
 }
 
-inline const std::vector<unsigned>&
-Finite_Order_Info::get_decrements() const {
-  return decrements; 
-}
-
-inline const std::vector<unsigned>&
-Finite_Order_Info::get_initial_conditions() const {
-  return initial_conditions;
+inline unsigned int&
+Finite_Order_Info::order() {
+  return order_;
 }
 
 inline unsigned
-Finite_Order_Info::get_one_initial_condition(unsigned position) const {
-  return initial_conditions[position];
+Finite_Order_Info::first_initial_condition() const {
+  return first_initial_condition_;
+}
+
+inline unsigned&
+Finite_Order_Info::first_initial_condition() {
+  return first_initial_condition_;
 }
 
 inline const std::vector<Expr>&
-Finite_Order_Info::get_coefficients() const {
-  return coefficients;
+Finite_Order_Info::coefficients() const {
+  return coefficients_;
 }
 
-inline void
-Finite_Order_Info::set_decrements(const std::vector<unsigned> decs) {
-  copy(decs.begin(), decs.end(), inserter(decrements, decrements.begin()));
-}
-
-inline void
-Finite_Order_Info::set_initial_conditions(const std::vector<unsigned> i_c) {
-  copy(i_c.begin(), i_c.end(),
-       inserter(initial_conditions, initial_conditions.begin()));
-}
-
-inline void
-Finite_Order_Info::set_coefficients(const std::vector<Expr> coeffs) {
-  copy(coeffs.begin(), coeffs.end(),
-       inserter(coefficients, coefficients.begin()));
-}
-
-inline void
-Finite_Order_Info::add_decrement(unsigned d) {
-  decrements.push_back(d);
-}
-
-inline void
-Finite_Order_Info::add_initial_condition(unsigned i) {
-  initial_conditions.push_back(i);
-}
-
-inline void
-Finite_Order_Info::add_coefficient(const Expr& c) {
-  coefficients.push_back(c);
+inline std::vector<Expr>&
+Finite_Order_Info::coefficients() {
+  return coefficients_;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver
