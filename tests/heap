@@ -19,10 +19,10 @@
 % * no expectations
 
 E	2*x(n-1)+n^100
+E	3*x(n/2)+n*log(n)+x(n)
 I	x(n)
 K	x(n)+n!
 K	x(n)-2
-k	2^x(n)
 M	1.01*x(n-1)*(20000)-b
 M	1.01*x(n-1)*20000-b
 M	1.1*(3000+x(n-1))
@@ -30,6 +30,7 @@ M	1.1*x(n)
 M	1.1*x(n-1)+2000
 M	16*(1.5)^n
 M	x(n-1)*1.005-599.55
+k	2^x(n)
 n	((n + 2)*(n - a)*(4*n^3  + 4*n^2*a - 2*n*a^2  + 10*n*a*b - 10*n*b^2  - 2*a^3  + 8*a^2*b - 8*a*b^2 + 26*n^2  + 19*n*a - 5*n*b - 3*a^2  + 20*a*b - 24*b^2  + 57*n + 23*a - 12*b + 42)*x(n - 1)-(2*n + 3)*(n + 2)*(n + 1)*(n - a + 2*b + 2)*(n + a - 2*b + 1)*x(n - 2))/((n + b + 3)*(n + a + 3)*(n - a + 1)*(n - a)*(2*n + 2*a - 2*b + 5))
 n	(1/2)*(x(n-1)+2/x(n-1))
 n	(1/n)*((2*n+a-1))*x(n-1)^a-(n-1+a)*x(n-2)^a
@@ -37,6 +38,7 @@ n	(4*x(n-2))/((n+1)*(n+2))
 n	(n+3)*x(n-1)-n*x(n-2)
 n	(n-3)*x(n-3)+(1/3)
 n	(n-3)*x(n-3)+(1/3)^n
+n	(n^(1/2))*x(n^(1/2))+n
 n	-(n+a-4)*x(n-1)/((n+a)*(n+a-7))
 n	1/(n*a)*x(n-1)
 n	1/x(n-1)
@@ -63,9 +65,12 @@ n	3*x(n+5)-x(3*n-9)+a
 n	3*x(n-8)+x(n-1)
 n	3*x(n-a)
 n	3*x(n/2)+n*log(a)
+n	3*x(n/2)+n*log(n)+n
+n	3*x(n/2)+n*log(n)+x(n-1)
 n	3*x(n/2)+n*log(n*n*a)
 n	3*x(n/2)+n*log(n*n/a)
 n	3*x(n/2)+n*log(n-n/a)
+n	3*x(n/2)+n*x(log(n))
 n	3*x(n/2)+x(n-3)+3*n
 n	3+(1/(x(n-1)))
 n	5*x(n/4)+n*log(log(n))
@@ -75,8 +80,10 @@ n	a*x(n/2)+2*n
 n	a+2*x(n/2)
 n	a/n*x(n-1)
 n	c*n+x(n/2)
+n	log(x(n))-log(n)
 n	log(x(n-1))
 n	log(x(n-1))+x(n-2)
+n	log(x(n-1))-log(n)
 n	log(x(n-2))+x(n-1)
 n	n*(n-2)*x(n-2)-(n-1)*x(n-1)
 n	n*x(n-1)+n*x(n-2)
@@ -89,6 +96,7 @@ n	n*x(n-3)
 n	n*x(n-3)+(1/3)
 n	n*x(n/3)+n*n*n
 n	n+x(n*2)
+n	n^(1/2)*x(n^(1/2))+n
 n	n^2*x(n-1)-6*x(n/2)
 n	n^2*x(n-1)-x(n/2)
 n	sqrt(n)*x(sqrt(n))+n
@@ -106,14 +114,19 @@ n	x(n-1)*x(n-2)+x(n-3)
 n	x(n-1)+3*n*x(n-3)
 n	x(n-1)+3*x(n/3)
 n	x(n-1)+4*x(n-5)
+n	x(n-1)+log(x(n-2))
+n	x(n-1)+log(x(n-3))
 n	x(n-1)+x(n-2)*a
 n	x(n-1)+x(n-2)+x(n-3)+x(n-4)+x(n-5)
 n	x(n-1)+x(n-3)-3*x(n-2)+7*x(n-5)
+n	x(n-1)+x(n/2)
 n	x(n-1)/((n+a)*(n+a+2))
 n	x(n-1)^2+a
 n	x(n-1)^2+x(n-2)
 n	x(n-1)^2-1
 n	x(n-2)*n!
+n	x(n-2)-log(x(n-1))
+n	x(n-2)-x(n-1)*n
 n	x(n-3)+x(n-7)
 n	x(n-3)+x(n-7.6)
 n	x(n/2)+(1-(-1)^n)/2
@@ -126,6 +139,7 @@ n	x(n/3)+x(n/5)+x(n/7)+x(n/11)+x(n/13)+n
 n	x(n^(1/2))+1
 n	x(n^.5)+1
 n	x(n^5)
+n	x(sqrt(n))+1
 n	x(x(n-1))
 n	x(x(n-1))+x(x(n-2))
 ul	(n/2)^2-1+2*x(n/2)
@@ -145,6 +159,7 @@ ul	2+x(n/2)
 ul	3*x(n/2)+n
 ul	3*x(n/2)+n*log(n)
 ul	3*x(n/2)+n*log(n*n)
+ul	3*x(n/2)+n*n*log(n)
 ul	3*x(n/3)+(2*n-1)
 ul	3*x(n/3)+2*n
 ul	3*x(n/3)+n*n*n
@@ -161,8 +176,10 @@ ul	n+x(n/2)
 ul	n+x(n/5)+7*n/10
 ul	n/2+x(n/2)
 ul	x(n/2)*2+n-1
+ul	x(n/2)*x(n/2)
 ul	x(n/2)+1
 ul	x(n/5)+3
+y	(x(n-3)+x(n-4))/2
 y	2*x(n-1)*x(n-2)
 y	2*x(n-1)+3*x(n-3)
 y	2*x(n-1)+x(n-2)+n^3
@@ -175,7 +192,6 @@ y	3/4-5/4*x(n-2)+1/4*x(n-1)
 y	4*x(n+1)+5*x(n-1)-3
 y	n+x(n-1)+x(n-2)+x(n-3)+x(n-4)+1
 y	x(n+1)+5*x(n-1)-3
-y	x(n-1)^2*x(n-2)
 y	x(n-1)*x(n-2)
 y	x(n-1)+7*x(n-4)
 y	x(n-1)+x(n-2)+n^18
@@ -188,6 +204,9 @@ y	x(n-1)+x(n-3)-3*x(n-2)
 y	x(n-1)+x(n-3)-3*x(n-2)+7*x(n-4)
 y	x(n-1)-3*x(n-3)
 y	x(n-1)-4*x(n-2)+2^n+1
+y	x(n-1)/x(n-3)
+y	x(n-1)^2*x(n-2)
+y	x(n-2)*x(n-1)
 y	x(n/2)
 yv	((9*n)/10)+n
 yv	((n+1)*x(n-1)+(2*n-2))/n
@@ -212,6 +231,7 @@ yv	-2*x(n-1)+15*x(n-2)
 yv	-2*x(n-1)-x(n-2)+2^n
 yv	-3*x(n-1)
 yv	-3*x(n-1)+4*x(n-2)
+yv	-n^2*exp(-n)
 yv	-x(n-1)-x(n-2)
 yv	0
 yv	1
@@ -261,7 +281,6 @@ yv	2*x(n-1)+2*x(n-2)+2^n
 yv	2*x(n-1)+2*x(n-2)-n
 yv	2*x(n-1)+2^(n-1)
 yv	2*x(n-1)+2^(n-1)+n+1
-yv	2*x(n-1)+2^(n-1)+n+1
 yv	2*x(n-1)+2^a
 yv	2*x(n-1)+2^n
 yv	2*x(n-1)+2^n-1
@@ -304,6 +323,7 @@ yv	2*x(n-2)+4*(n-1)
 yv	2*x(n-2)+a
 yv	2*x(n-2)-15
 yv	2*x(n-3)
+yv	2*x(n-5)
 yv	2+x(n+1)
 yv	2+x(n-1)
 yv	2+x(n-10)
@@ -315,10 +335,11 @@ yv	25*x(n-5)-58*x(n-2)+106*x(n-3)+13*x(n-1)-85*x(n-4)+5*n^2
 yv	2^(n-1)+3*x(n-1)-2*x(n-2)
 yv	2^n
 yv	2^n*x(n-1)
+yv	3*(n/2)+n*log(n)
+yv	3*n
 yv	3*x(n)+n
 yv	3*x(n+1)
 yv	3*x(n-1)
-yv	3*x(n-1)^2*x(n-2)^3
 yv	3*x(n-1)+2
 yv	3*x(n-1)+2*4^n
 yv	3*x(n-1)+2*n
@@ -333,6 +354,7 @@ yv	3*x(n-1)-2*x(n-2)+5
 yv	3*x(n-1)-3*x(n-2)
 yv	3*x(n-1)-4*n+3*2^n
 yv	3*x(n-1)^2
+yv	3*x(n-1)^2*x(n-2)^3
 yv	3*x(n-2)-2*x(n-3)
 yv	3*x(n-8)
 yv	3*x(n-8)+n^2
@@ -382,11 +404,13 @@ yv	a*x(n-2)+mod(n,b)
 yv	a+(1-a)*x(n-1)
 yv	a^2+a*2^c*b+3^c*b
 yv	a^3+2^c*a^2*b+3^c*a*b+4^c*b
+yv	exp(n)
+yv	log(n-2)-log(n)
 yv	n
 yv	n!
+yv	n*(n-1)+x(n-1)
 yv	n*n
 yv	n*x(n-1)
-yv	n*x(n-1)^2
 yv	n*x(n-1)*2
 yv	n*x(n-1)+(1/3)
 yv	n*x(n-1)+(1/3)^(n+1)
@@ -405,7 +429,9 @@ yv	n*x(n-1)+n!
 yv	n*x(n-1)+n*n*n
 yv	n*x(n-1)+n^n
 yv	n*x(n-1)-1/(n+1)
+yv	n*x(n-1)^2
 yv	n+1
+yv	n+x(n-1)
 yv	n^2
 yv	n^2*x(n-1)
 yv	n^3-(n+x(n-1))
@@ -429,7 +455,6 @@ yv	x(n+1)+n
 yv	x(n+1)-x(n-1)
 yv	x(n+3)+4
 yv	x(n-1)
-yv	x(n-1)^2
 yv	x(n-1)*0
 yv	x(n-1)*2
 yv	x(n-1)*a
@@ -499,6 +524,7 @@ yv	x(n-1)-n^1
 yv	x(n-1)-x(n-2)
 yv	x(n-1)-x(n-2)+1
 yv	x(n-1)/2
+yv	x(n-1)^2
 yv	x(n-2)
 yv	x(n-2)*6-5*x(n-1)
 yv	x(n-2)+(n-2)^2
@@ -507,10 +533,16 @@ yv	x(n-2)+3
 yv	x(n-2)+n
 yv	x(n-2)+n!
 yv	x(n-2)+n^2+4-4*n
+yv	x(n-2)-log(n)
+yv	x(n-2)-x(n-1)
 yv	x(n-2)-x(n-1)+1
+yv	x(n-2)-x(n-1)+log(n)
+yv	x(n-2)-x(n-1)+n
+yv	x(n-2)-x(n-1)+x(n-3)
 yv	x(n-2)/2
 yv	x(n-3)
 yv	x(n-3)+3*n
+yv	x(n-3)+n^2
 yv	x(n-4)
 yv 	144*x(n-3)+56*x(n-2)+x(n-1)
 yv 	144*x(n-3)+56*x(n-2)+x(n-1)+3^n*n+4
