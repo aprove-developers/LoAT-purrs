@@ -191,7 +191,8 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
-solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
+solve_variable_coeff_order_1(const std::vector<Expr>& coefficients,
+			     Expr& solution) const {
   assert(is_linear_finite_order_var_coeff());
   assert(order() == 1);
   // `product_factor' is `alpha!(n)'.
@@ -215,11 +216,9 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
   rec_const_coeff.set_type(LINEAR_FINITE_ORDER_CONST_COEFF);
   rec_const_coeff.set_inhomogeneous_term(inhomogeneous_term/product_factor);
   rec_const_coeff.set_first_valid_index(first_valid_index); 
-
-  exact_solution_
-    .set_expression(product_factor
-		    * (rec_const_coeff.solve_constant_coeff_order_1(new_roots)
-		       + x(first_valid_index)));
+  solution = product_factor
+    * (rec_const_coeff.solve_constant_coeff_order_1(new_roots)
+       + x(first_valid_index));
   return SUCCESS;
 }
 
@@ -663,6 +662,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   D_VEC(coefficients(), 1, order());
   D_VAR(inhomogeneous_term);
 
+  Expr solution;
   // We call recurrences of `order zero' special recurrences of the
   // form `x(n) = rhs', where `rhs' contains only functions of `n',
   // parameters and `x(k_1)', ..., `x(k_m)' where `m >= 0' and
@@ -670,7 +670,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   // In this case `*this' is not a proper recurrence and the solution
   // is simply `rhs' (now equal to `inhomogeneous_term').
   if (order() == 0) {
-    Expr solution = inhomogeneous_term;
+    solution = inhomogeneous_term;
     solution = simplify_ex_for_output(solution, false);
     solution = simplify_binomials_factorials_exponentials(solution);
     solution = simplify_logarithm(solution);
@@ -701,11 +701,12 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   case 1:
     {
       if (is_linear_finite_order_const_coeff())
-	exact_solution_
-	  .set_expression(solve_constant_coeff_order_1(roots));
+	// Compute the non-homogeneous part of the solution.
+	solution = solve_constant_coeff_order_1(roots);
       else {
 	Solver_Status status;
-	if ((status = solve_variable_coeff_order_1(coefficients()))
+	// Compute the complete solution.
+	if ((status = solve_variable_coeff_order_1(coefficients(), solution))
 	    != SUCCESS)
 	  return status;
       }
@@ -717,9 +718,9 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       // If there is some root not rational then, for efficiency, we substitute
       // it with an arbitrary symbol.
       substitute_non_rational_roots(*this, roots);
-      exact_solution_
-	.set_expression(solve_constant_coeff_order_2(g_n, all_distinct,
-						     num_coefficients, roots));
+      // Compute the non-homogeneous part of the solution.
+      solution = solve_constant_coeff_order_2(g_n, all_distinct,
+					      num_coefficients, roots);
     }
     else
       // For the time being, we only solve second order
@@ -732,9 +733,9 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       // If there is some root not rational then, for efficiency, we substitute
       // it with an arbitrary symbol.
       substitute_non_rational_roots(*this, roots);
-      exact_solution_.
-	set_expression(solve_constant_coeff_order_k(g_n, all_distinct,
-						    num_coefficients, roots));
+      // Compute the non-homogeneous part of the solution.
+      solution = solve_constant_coeff_order_k(g_n, all_distinct,
+					      num_coefficients, roots);
     }
     else
       // For the time being, we only solve recurrence relations
@@ -744,12 +745,9 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   }
 
   D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
-  exact_solution_.set_expression
-    (simplify_ex_for_output(exact_solution_.expression(), false));
-  exact_solution_.set_expression
-    (simplify_binomials_factorials_exponentials(exact_solution_.expression()));
-  exact_solution_.set_expression
-    (simplify_logarithm(exact_solution_.expression()));
+  solution = simplify_ex_for_output(solution, false);
+  solution = simplify_binomials_factorials_exponentials(solution);
+  solution = simplify_logarithm(solution);
 
   if (is_linear_finite_order_const_coeff())
     if (order() == 1 )
@@ -758,16 +756,19 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       // vettore di `Number' come `coefficients' e voglio risolvere anche
       // le parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
       // compute_term_about_initial_conditions(g_n, coefficients, solution);
-      exact_solution_.set_expression(exact_solution_.expression()
-				     + x(first_valid_index)
+      exact_solution_.set_expression(x(first_valid_index)
 				     * pwr(coefficients()[1],
-					   n-(first_valid_index
-					      -order()+1)));
+					   n-(first_valid_index-order()+1))
+				     + solution);
     else
-      exact_solution_.set_expression(exact_solution_.expression()
-				     + compute_term_about_initial_conditions
-				     (g_n, num_coefficients,
-				      first_valid_index));
+      exact_solution_.set_expression(compute_term_about_initial_conditions
+				     (g_n, num_coefficients, first_valid_index)
+				     + solution);
+  else
+    // In the case of variable coefficients the expression contained in
+    // `solution' is already the sum of the homogeneous part and the
+    // non-homogeneous part of the solution of the recurrence.
+    exact_solution_.set_expression(solution);
   
   // Resubstitutes eventually auxiliary definitions contained in
   // the solution with their original values.
