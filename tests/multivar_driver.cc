@@ -1095,8 +1095,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
 	    if (this_term.is_the_x1_function()) {
 	      solution = solution.substitute(this_term, 
 					     lhs.substitute(real_var_symbol_0, this_term.arg(0))
-					     .substitute(real_var_symbol_1, real_var_symbol_1 - real_var_symbol_0));
-	      //	      cout << this_term << " - " << solution << endl;
+					     .substitute(real_var_symbol_1, real_var_symbol_1 + real_var_symbol_0));
 	    }
 	  }
 	  
