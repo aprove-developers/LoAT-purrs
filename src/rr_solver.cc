@@ -69,7 +69,7 @@ get_constant_decrement(const Expr& e, const Symbol& n, Number& decrement) {
   }
   else if (e.is_equal(n)) {
     decrement = 0;
-    return true;
+     return true;
   }
   return false;
 }
@@ -597,6 +597,11 @@ void
 impose_condition(const std::string&) {
 }
 
+/*!
+  If \p possibly_dec is greater than \p max_decrement then \p possibly_dec
+  becomes the new maximum decrement and it is assigned to \p max_decrement,
+  in this case \p possibly_coeff becomes the new \p coefficient.
+*/
 void
 assign_max_decrement_and_coeff(const Expr& possibly_dec,
 			       const Expr& possibly_coeff, const Symbol& n,
@@ -611,6 +616,40 @@ assign_max_decrement_and_coeff(const Expr& possibly_dec,
 }
 
 /*!
+  Let \p e be the right hand side of a linear recurrence.
+  This functions seeks the largest positive integer \f$ j \f$ such that
+  \f$ x(n+j) \f$ occurs in \p e and its coefficient.
+  These two values are stored in \p max_decrement and \p coefficient,
+  respectively.
+*/
+void
+find_max_decrement_and_coeff(const Expr& e, const Symbol& n,
+			     const Expr& x_i, const Expr& a_times_x_i,
+			     int& max_decrement, Expr& coefficient) {
+  Expr_List substitution;
+  if (e.is_a_add()) {
+    for (unsigned j = e.nops(); j-- > 0; )
+      if (clear(substitution), e.op(j).match(a_times_x_i, substitution))
+	assign_max_decrement_and_coeff(get_binding(substitution, 0),
+				       get_binding(substitution, 1),
+				       n, max_decrement, coefficient);
+      else if (clear(substitution), e.op(j).match(x_i, substitution))
+	assign_max_decrement_and_coeff(get_binding(substitution, 0), 1,
+				       n, max_decrement, coefficient);
+  }
+  else if (e.is_a_mul()) {
+    if (clear(substitution), e.match(a_times_x_i, substitution))
+      assign_max_decrement_and_coeff(get_binding(substitution, 0),
+				     get_binding(substitution, 1),
+				     n, max_decrement, coefficient);
+  }
+  else
+    if (clear(substitution), e.match(x_i, substitution))
+      assign_max_decrement_and_coeff(get_binding(substitution, 0), 1,
+				     n, max_decrement, coefficient);
+}
+
+/*!
   Assuming that \p rhs contains occurrences of <CODE>x(n-k)</CODE>
   where <CODE>k</CODE> is a negative integer, this function
   performs suitable changes of variables that preserve the meaning of
@@ -622,34 +661,18 @@ assign_max_decrement_and_coeff(const Expr& possibly_dec,
 static void
 eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs,
 			      const Symbol& n) {
-  // Seeks `max_decrement', i.e., the largest positive integer such that
+  // Seeks `max_decrement', i.e., the largest positive integer `j' such that
   // `x(n+j)' occurs in `rhs' with a coefficient `coefficient' which is not
   // syntactically 0.
-  int max_decrement = 0;
   Expr x_i = x(wild(0));
   Expr a_times_x_i = x_i * wild(1);
-  Expr_List substitution;
+  int max_decrement = INT_MIN;
   Expr coefficient;
-  if (rhs.is_a_add()) {
-    for (unsigned j = rhs.nops(); j-- > 0; )
-      if (clear(substitution), rhs.op(j).match(a_times_x_i, substitution))
-	assign_max_decrement_and_coeff(get_binding(substitution, 0),
-				       get_binding(substitution, 1),
-				       n, max_decrement, coefficient);
-      else if (clear(substitution), rhs.op(j).match(x_i, substitution))
-	assign_max_decrement_and_coeff(get_binding(substitution, 0), 1,
-				       n, max_decrement, coefficient);
-  }
-  else if (rhs.is_a_mul()) {
-    if (clear(substitution), rhs.match(a_times_x_i, substitution))
-      assign_max_decrement_and_coeff(get_binding(substitution, 0),
-				     get_binding(substitution, 1),
-				     n, max_decrement, coefficient);
-  }
-  else
-    if (clear(substitution), rhs.match(x_i, substitution))
-      assign_max_decrement_and_coeff(get_binding(substitution, 0), 1,
-				     n, max_decrement, coefficient);
+  find_max_decrement_and_coeff(rhs, n, x_i, a_times_x_i,
+			       max_decrement, coefficient);
+#if NOISY
+  D_MSGVAR("max_decrement: ", max_decrement);
+#endif
   // The changes of variables includes replacing `n' by `n-max_decrement',
   // changing sign, and division by `coefficient'.
   new_rhs = rhs.subs(n, n-max_decrement);
@@ -668,9 +691,10 @@ eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs,
   <CODE>true</CODE>.
 */
 static bool
-eliminate_null_decrements(const Expr& /*rhs*/, Expr& /*new_rhs*/,
-			  const Symbol& /*n*/) {
-  // Assume that `rhs = a*x(n) + b' and that `b' does different to zero
+eliminate_null_decrements(const Expr& rhs, Expr& new_rhs,
+			  const Symbol& n) {
+  Expr_List substitution;
+  // Let `rhs = a*x(n) + b' and that `b' does different to zero
   // and does not contain `x(n)'.  The following cases are possible:
   // 1. If `a = 1' and `b' does not contain any occurrence of `x(n-k)'
   //    where `k' is a positive integer, the recurrence is impossible.
@@ -681,8 +705,62 @@ eliminate_null_decrements(const Expr& /*rhs*/, Expr& /*new_rhs*/,
   // 3. If `a != 1' we move `a*x(n)' to the left-hand side, and divide
   //    through by `1 - a', obtaining the standard form, which is 
   //    `(rhs - a*x(n)) / (1-a)'.
-
-  return false;
+  if (rhs.is_a_add()) {
+    // Tries `a' and `b'.
+    Expr a;
+    Expr b = rhs;
+    for (unsigned j = rhs.nops(); j-- > 0; )
+      if (clear(substitution), rhs.op(j).match(x(n)*wild(0), substitution)) {
+	a = get_binding(substitution, 0);
+	b -= rhs.op(j);
+      }
+      else if (clear(substitution), rhs.op(j).match(x(n), substitution)) {
+	a = 1;
+	b -= rhs.op(j);
+      }
+    Expr x_i = x(wild(0));
+    Expr a_times_x_i = x_i * wild(1);
+    if (a.is_equal(1))
+      // Case 1.
+      if (!b.has(x_i) && !b.has(a_times_x_i))
+	return false;
+    // Case 2.
+      else {
+	// Seeks `max_decrement', i.e., the largest integer `j' (it may be
+	// non positive) such that `x(n+j)' occurs in `b' with a coefficient
+	// `coefficient' which is not syntactically 0.
+	int max_decrement = INT_MIN;
+	Expr coefficient;
+	find_max_decrement_and_coeff(b, n, x_i, a_times_x_i,
+				     max_decrement, coefficient);
+#if NOISY
+	D_MSGVAR("max_decrement: ", max_decrement);
+#endif
+	// Rewrites the recurrence into its standard form:
+	// removes from `b' the term that will be the right hand side of the
+	// recurrence, i.e. `x(n+max_decrement)'; changes variable replacing
+	// `n+max_decrement' by `n', changes sign and divides for the
+	// coefficient of `x(n+max_decrement)'.
+	new_rhs = b - coefficient * x(n+max_decrement);
+	new_rhs = new_rhs.subs(n, n-max_decrement);
+	new_rhs *= -1;
+	new_rhs /= coefficient;
+      }
+    else {
+      // Case 3.
+      new_rhs = b * Parma_Recurrence_Relation_Solver::power(1 - a, -1);
+    }
+  }
+  // Let `rhs = a*x(n)'.
+  else if (rhs.is_a_mul()) {
+    if (clear(substitution), rhs.match(x(n)*wild(1), substitution))
+      new_rhs = 0;
+  }
+  // Let `rhs = x(n)'.
+  else if (rhs.is_equal(x(n)))
+    return false;
+  
+  return true;
 }
 
 /*!
@@ -720,9 +798,8 @@ solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
 	  status = solve(new_rhs, n, solution);
 	}
 	else
-	  throw
-	    "PURRS error: "
-	    "impossible recurrence";
+	  throw std::logic_error("PURRS error: "
+				 "impossible recurrence");
       }
       exit_anyway = true;
       break;
