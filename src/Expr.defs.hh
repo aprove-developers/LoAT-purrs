@@ -229,6 +229,10 @@ Expr lsolve(const Expr_List& x, const Expr_List& y);
 //! Returns the function \f$ x(y) \f$.
 Expr x(const Expr& y);
 
+//! Returns the function \f$ sum(index,lower,upper,summand) \f$.
+Expr sum(const Expr& index, const Expr& lower, const Expr& upper,
+	 const Expr& summand);
+
 class Expr : private GiNaC::ex {
 private:
   typedef GiNaC::ex Base;
@@ -618,6 +622,8 @@ private:
   friend Expr sqrfree(const Expr& x, const Expr_List& y);
   friend Expr lsolve(const Expr_List& x, const Expr_List& y);
   friend Expr x(const Expr& y);
+  friend Expr sum(const Expr& index, const Expr& lower, const Expr& upper,
+		  const Expr& summand);
 
   //! Builds the expression corresponding to \p ge.
   Expr(const GiNaC::ex& ge);

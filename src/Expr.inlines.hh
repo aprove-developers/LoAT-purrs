@@ -34,11 +34,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace GiNaC {
 
-ex x_eval(const ex& e);
-ex x_evalf(const ex& e);
-ex x_deriv(const ex&, unsigned int);
-
 DECLARE_FUNCTION_1P(x);
+DECLARE_FUNCTION_4P(sum);
 
 } // namespace GiNaC
 
@@ -472,6 +469,15 @@ lsolve(const Expr_List& x, const Expr_List& y) {
 inline Expr
 x(const Expr& y) {
   return x(static_cast<const Expr::Base>(y));
+}
+
+inline Expr
+sum(const Expr& index, const Expr& lower, const Expr& upper,
+    const Expr& summand) {
+  return sum(static_cast<const Expr::Base>(index),
+	     static_cast<const Expr::Base>(lower),
+	     static_cast<const Expr::Base>(upper),
+	     static_cast<const Expr::Base>(summand));
 }
 
 inline bool
