@@ -74,13 +74,11 @@ exp_poly_decomposition_summand(const Expr& e,
 			       std::vector<Expr>& alpha,
 			       std::vector<Expr>& p,
 			       std::vector<Expr>& q) {
-  static Expr exponential = pwr(wild(0), Recurrence::n);
-  Expr_List substitution;
   unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
   if (num_factors == 1) {
-    if (e.match(exponential, substitution)) {
+    if (e.is_a_power() && e.arg(1) == Recurrence::n) {
       // We have found something of the form `power(base, n)'.
-      Expr base = get_binding(substitution, 0);
+      Expr base = e.arg(0);
       assert(!base.is_zero());
       if (base.is_scalar_representation(Recurrence::n)) {
 	// We have found something of the form `power(base, n)'
@@ -92,9 +90,10 @@ exp_poly_decomposition_summand(const Expr& e,
   }
   else
     for (unsigned i = num_factors; i-- > 0; ) {
-      if (clear(substitution), e.op(i).match(exponential, substitution)) {
+      const Expr& e_i = e.op(i);
+      if (e_i.is_a_power() && e_i.arg(1) == Recurrence::n) {
 	// We have found something of the form `power(base, n)'.
-	Expr base = get_binding(substitution, 0);
+	Expr base = e_i.arg(0);
 	assert(!base.is_zero());
 	if (base.is_scalar_representation(Recurrence::n)) {
 	  // We have found something of the form `power(base, n)'
@@ -109,7 +108,7 @@ exp_poly_decomposition_summand(const Expr& e,
 	}
       }
     }
-  // No proper exponential found: this is treated like `power(1, n)*e'.
+  // No proper exponential found: this is treated like `power(1, n) * e'.
   exp_poly_decomposition_factor(1, e, alpha, p, q);
 }
 
