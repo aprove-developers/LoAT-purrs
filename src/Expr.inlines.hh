@@ -399,6 +399,11 @@ Expr::expand() const {
   return Base::expand();
 }
 
+inline bool
+Expr::is_expanded() const {
+  return *this == expand();
+}
+
 inline Expr
 Expr::collect(const Expr_List& x) const {
   return Base::collect(x.l);
@@ -406,6 +411,8 @@ Expr::collect(const Expr_List& x) const {
 
 inline unsigned
 Expr::degree(const Symbol& x) const {
+  assert(is_expanded());
+  assert(is_polynomial(x.s));
   int d = Base::degree(x.s);
   assert(d >= 0);
   return unsigned(d);
@@ -413,6 +420,8 @@ Expr::degree(const Symbol& x) const {
 
 inline unsigned
 Expr::ldegree(const Symbol& x) const {
+  assert(is_expanded());
+  assert(is_polynomial(x.s));
   int d = Base::ldegree(x.s);
   assert(d >= 0);
   return unsigned(d);
@@ -420,26 +429,36 @@ Expr::ldegree(const Symbol& x) const {
 
 inline Expr
 Expr::coeff(const Symbol& x, int k) const {
+  assert(is_expanded());
+  assert(is_polynomial(x.s));
   return Base::coeff(x.s, k);
 }
 
 inline Expr
 Expr::lcoeff(const Symbol& x) const {
+  assert(is_expanded());
+  assert(is_polynomial(x.s));
   return Base::lcoeff(x.s);
 }
 
 inline Expr
 Expr::tcoeff(const Symbol& x) const {
+  assert(is_expanded());
+  assert(is_polynomial(x.s));
   return Base::tcoeff(x.s);
 }
 
 inline Expr
 Expr::primpart(const Symbol& x) const {
+  assert(is_expanded());
+  assert(is_polynomial(x.s));
   return Base::primpart(x.s);
 }
 
 inline Expr
 Expr::content(const Symbol& x) const {
+  assert(is_expanded());
+  assert(is_polynomial(x.s));
   return Base::content(x.s);
 }
 

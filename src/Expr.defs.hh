@@ -562,6 +562,11 @@ public:
   Expr expand() const;
 
   //! \brief
+  //! Returns <CODE>true</CODE> if the expression \p *this is expanded;
+  //! returns <CODE>false</CODE> otherwise.
+  bool is_expanded() const;
+
+  //! \brief
   //! Sorts expanded expression \p *this collecting, or, in other words,
   //! putting in evidence, the expressions in \p x.
   Expr collect(const Expr_List& x) const;
