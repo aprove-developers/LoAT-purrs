@@ -767,6 +767,7 @@ yv	2+x(n-3)
 yv	2+x(n-4)
 yv	2/(n-1)*sum(k,1,n-1,x(k))
 yv	2/(n-1)*sum(k,4,n-1,x(k))
+yv	2/(n-8)*sum(k,10,n-1,x(k))
 yv	2/3*(-2)^n+1/3*4^n
 yv	2/x(n-1)
 yv	24*x(n-1)-7*x(n-2)+x(n-2)
