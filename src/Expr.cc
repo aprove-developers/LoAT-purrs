@@ -43,24 +43,52 @@ namespace GiNaC {
 /* x() function */
 
 ex
-x_eval(const ex& e) {
+x1_eval(const ex& e) {
   return x(e).hold();
 }
 
 ex
-x_evalf(const ex& e) {
+x1_evalf(const ex& e) {
   return x(e).hold();
 }
 
 ex
-x_deriv(const ex&, unsigned int) {
+x1_deriv(const ex&, unsigned int) {
   abort();
 }
 
-REGISTER_FUNCTION(x,
-		  eval_func(x_eval).
-		  evalf_func(x_evalf).
-		  derivative_func(x_deriv));
+ex
+x2_eval(const ex& index, const ex& arg_list) {
+  return x(index, arg_list).hold();
+}
+
+ex
+x2_evalf(const ex& index, const ex& arg_list) {
+  return x(index, arg_list).hold();
+}
+
+ex
+x2_deriv(const ex&, const ex&, unsigned int) {
+  abort();
+}
+
+  // We can't use the standard REGISTER_FUNCTION macro since we are
+  // overloading x().
+
+  unsigned x1_SERIAL::serial =
+  function::register_new(function_options("x", 1).
+			 eval_func(x1_eval).
+			 evalf_func(x1_evalf).
+			 derivative_func(x1_deriv).
+			 overloaded(2));
+
+  unsigned x2_SERIAL::serial =
+  function::register_new(function_options("x", 2).
+			 eval_func(x2_eval).
+			 evalf_func(x2_evalf).
+			 derivative_func(x2_deriv).
+			 overloaded(2));
+
 
 
 /* floor() function */

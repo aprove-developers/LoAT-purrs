@@ -35,7 +35,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace GiNaC {
 
-DECLARE_FUNCTION_1P(x);
 DECLARE_FUNCTION_1P(floor);
 DECLARE_FUNCTION_2P(Sc);
 DECLARE_FUNCTION_2P(mod);
@@ -43,6 +42,27 @@ DECLARE_FUNCTION_2P(binom);
 DECLARE_FUNCTION_4P(sum);
 DECLARE_FUNCTION_4P(prod);
 DECLARE_FUNCTION_2P(max);
+
+// Use overloading to allow for multiple arguments in x().
+class x1_SERIAL { public: static unsigned serial; };
+template<typename T1>
+inline function x(const T1& p1) {
+  return function(x1_SERIAL::serial, ex(p1));
+}
+
+class x2_SERIAL { public: static unsigned serial; };
+  template<typename T1, typename T2>
+  inline function x(const T1& p1, const T2& p2) {
+    return function(x2_SERIAL::serial, ex(p1), ex(p2));
+  }
+
+template<> inline bool is_the_function<class x_SERIAL>(const ex& e)
+  {
+    return is_the_function<x1_SERIAL>(e) || is_the_function<x2_SERIAL>(e);
+  }
+                                                                                                                             
+
+
 
 } // namespace GiNaC
 
