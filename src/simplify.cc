@@ -322,7 +322,7 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 	    exponents[j] = exponents[j] + 1;
 	  else {
 	    GNumber base = GiNaC::ex_to<GiNaC::numeric>(bases[j]);
-	    if (!base.is_integer())
+	    if (!base.is_integer() || base.is_equal(-1))
 	      exponents[j] = exponents[j] + 1;
 	  }
 	}
