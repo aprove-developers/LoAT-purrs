@@ -1281,8 +1281,10 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 PURRS::Recurrence::Classifier_Status
 PURRS::Recurrence::classify() const {
   Expr& rhs = const_cast<Expr&>(recurrence_rhs);
-  // Simplifies expanded expressions, in particular rewrites nested powers.
-  rhs = simplify_ex_for_input(recurrence_rhs, true);
+  // Simplifies expanded expressions, in particular simplifies
+  // expression containing logarithms and rewrites nested powers.
+  rhs = simplify_logarithm(recurrence_rhs);
+  rhs = simplify_ex_for_input(rhs, true);
   // Splits the sum in many sums how many are the addends of the summand
   // and computes, when possible, symbolic sums.
   rhs = simplify_sum(rhs, COMPUTE_SUM);
