@@ -79,9 +79,6 @@ public:
 //   //! Returns <CODE>infinite_order_fwdr_</CODE>.
 //   unsigned infinite_order_fwdr() const;
 
-//   //! Returns <CODE>infinite_order_fwdr_</CODE>.
-//   unsigned& infinite_order_fwdr();
-
 //   //! Sets <CODE>infinite_order_fwdr_</CODE> with \p i_c
 //   void set_infinite_order_fwdr(unsigned i_c);
 

@@ -97,11 +97,6 @@ Non_Linear_Info::order_if_linear() const {
   return order_if_linear_;
 }
 
-inline unsigned int&
-Non_Linear_Info::order_if_linear() {
-  return order_if_linear_;
-}
-
 inline void
 Non_Linear_Info::set_order_if_linear(unsigned int x) {
   order_if_linear_ = x;
@@ -109,11 +104,6 @@ Non_Linear_Info::set_order_if_linear(unsigned int x) {
 
 inline unsigned
 Non_Linear_Info::non_linear_to_linear_fwdr() const {
-  return non_linear_to_linear_fwdr_;
-}
-
-inline unsigned&
-Non_Linear_Info::non_linear_to_linear_fwdr() {
   return non_linear_to_linear_fwdr_;
 }
 

@@ -511,18 +511,10 @@ private:
   //! Returns the order of the finite order recurrence.
   unsigned int order() const;
 
-  //! Returns the order of the finite order recurrence.
-  unsigned int& order();
-
   //! \brief
   //! Returns the smallest positive integer for which the finite order
   //! recurrence is well-defined: the initial conditions will start from it.
   unsigned first_well_defined_rhs_linear() const;
-
-  //! \brief
-  //! Returns the smallest positive integer for which the finite order
-  //! recurrence is well-defined: the initial conditions will start from it.
-  unsigned& first_well_defined_rhs_linear();
 
   //! \brief
   //! Sets to \p i_c is the smallest positive integer for which the finite
@@ -541,12 +533,6 @@ private:
   //! of the terms \f$ x(n-k) \f$ of a linear finite order recurrence.
   //! Returns \f$ 0 \f$ if the order of the recurrence is \f$ 0 \f$.
   unsigned gcd_among_decrements() const;
-
-  //! \brief
-  //! Returns the greatest common divisor among the decrements \f$ k \f$
-  //! of the terms \f$ x(n-k) \f$ of a linear finite order recurrence.
-  //! Returns \f$ 0 \f$ if the order of the recurrence is \f$ 0 \f$.
-  unsigned& gcd_among_decrements();
 
   //! \brief
   //! Returns the expression \f$ \prod_{i}^n a(k)\f$,
@@ -591,11 +577,6 @@ private:
   //! Returns the positive integer starting from which the inhomogeneous term
   //! of a functional equation is a non negative, non decreasing function.
   unsigned applicability_condition() const;
-
-  //! \brief
-  //! Returns the positive integer starting from which the inhomogeneous term
-  //! of a functional equation is a non negative, non decreasing function.
-  unsigned& applicability_condition();
 
   //! \p c is the positive integer starting from which the inhomogeneous term
   //! of a functional equation is a non negative, non decreasing function.
@@ -652,11 +633,6 @@ private:
   unsigned int order_if_linear() const;
 
   //! \brief
-  //! Returns the order of the finite order recurrence associated to
-  //! the non-linear recurrence.
-  unsigned int& order_if_linear();
-
-  //! \brief
   //! Sets to \p x the order of the linear recurrence associated to
   //! the non linear. 
   void set_order_if_linear(unsigned int x) const;
@@ -667,13 +643,6 @@ private:
   //! integer for which the finite order recurrence is well-defined:
   //! the initial conditions will start from it.
   unsigned non_linear_to_linear_fwdr() const;
-
-  //! \brief
-  //! When the non-linear recurrence is rewritable in a linear recurrence
-  //! of finite order then this method returns the smallest positive
-  //! integer for which the finite order recurrence is well-defined:
-  //! the initial conditions will start from it.
-  unsigned& non_linear_to_linear_fwdr();
 
   //! \brief
   //! When the non-linear recurrence is rewritable in a linear recurrence
@@ -738,12 +707,6 @@ private:
 //   //! order recurrence is well-defined: the initial conditions will
 //   //! start from it.
 //   unsigned infinite_order_fwdr() const;
-
-//   //! \brief
-//   //! Stores the smallest positive integer for which the infinite
-//   //! order recurrence is well-defined: the initial conditions will
-//   //! start from it.
-//   unsigned& infinite_order_fwdr();
 
 //   //! \brief
 //   //! Stores the smallest positive integer for which the infinite

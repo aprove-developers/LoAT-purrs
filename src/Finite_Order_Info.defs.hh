@@ -54,14 +54,8 @@ public:
   //! Returns <CODE>order_</CODE>.
   unsigned int order() const;
 
-  //! Returns <CODE>order_</CODE>.
-  unsigned int& order();
-
   //! Returns <CODE>first_well_defined_rhs_linear_</CODE>.
   unsigned first_well_defined_rhs_linear() const;
-
-  //! Returns <CODE>first_well_defined_rhs_linear_</CODE>.
-  unsigned& first_well_defined_rhs_linear();
 
   //! Sets <CODE>first_well_defined_rhs_linear_</CODE> with \p i_c
   void set_first_well_defined_rhs_linear(unsigned i_c);
@@ -74,9 +68,6 @@ public:
 
   //! Returns <CODE>gcd_among_decrements_</CODE>.
   unsigned gcd_among_decrements() const;
-
-  //! Returns <CODE>gcd_among_decrements_</CODE>.
-  unsigned& gcd_among_decrements();
 
   //! Returns <CODE>product_factor_</CODE>.
   Expr& product_factor();

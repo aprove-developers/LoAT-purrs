@@ -71,17 +71,11 @@ public:
   //! Returns <CODE>order_if_linear_</CODE>.
   unsigned int order_if_linear() const;
 
-  //! Returns <CODE>order_if_linear_</CODE>.
-  unsigned int& order_if_linear();
-
   //! Sets <CODE>order_if_non_linear_</CODE> with \p x.
   void set_order_if_linear(unsigned int x);
 
   //! Returns <CODE>non_linear_to_linear_fwdr_</CODE>.
   unsigned non_linear_to_linear_fwdr() const;
-
-  //! Returns <CODE>non_linear_to_linear_fwdr_</CODE>.
-  unsigned& non_linear_to_linear_fwdr();
 
   //! Sets <CODE>non_linear_to_linear_fwdr_</CODE> with \p i_c
   void set_non_linear_to_linear_fwdr(unsigned i_c);

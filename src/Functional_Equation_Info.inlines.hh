@@ -60,11 +60,6 @@ Functional_Equation_Info::applicability_condition() const {
   return applicability_condition_;
 }
 
-inline unsigned&
-Functional_Equation_Info::applicability_condition() {
-  return applicability_condition_;
-}
-
 inline void
 Functional_Equation_Info::set_applicability_condition(unsigned c) {
   applicability_condition_ = c;

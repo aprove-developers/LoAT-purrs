@@ -52,9 +52,6 @@ public:
   //! Returns <CODE>applicability_condition_</CODE>.
   unsigned applicability_condition() const;
 
-  //! Returns <CODE>applicability_condition_</CODE>.
-  unsigned& applicability_condition();
-
   //! Sets <CODE>applicability_condition_</CODE> with \p c.
   void set_applicability_condition(unsigned c);
 

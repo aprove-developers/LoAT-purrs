@@ -108,11 +108,6 @@ Infinite_Order_Info::weight_inf_order() {
 //   return infinite_order_fwdr_;
 // }
 
-// inline unsigned&
-// Infinite_Order_Info::infinite_order_fwdr() {
-//     return infinite_order_fwdr_;
-// }
-
 // inline void
 // Infinite_Order_Info::set_infinite_order_fwdr(unsigned i_c) {
 //   infinite_order_fwdr_ = i_c;

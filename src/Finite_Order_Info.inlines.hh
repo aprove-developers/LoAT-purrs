@@ -71,18 +71,8 @@ Finite_Order_Info::order() const {
   return order_;
 }
 
-inline unsigned int&
-Finite_Order_Info::order() {
-  return order_;
-}
-
 inline unsigned
 Finite_Order_Info::first_well_defined_rhs_linear() const {
-  return first_well_defined_rhs_linear_;
-}
-
-inline unsigned&
-Finite_Order_Info::first_well_defined_rhs_linear() {
   return first_well_defined_rhs_linear_;
 }
 
@@ -103,11 +93,6 @@ Finite_Order_Info::coefficients() {
 
 inline unsigned
 Finite_Order_Info::gcd_among_decrements() const {
-  return gcd_among_decrements_;
-}
-
-inline unsigned&
-Finite_Order_Info::gcd_among_decrements() {
   return gcd_among_decrements_;
 }
 
