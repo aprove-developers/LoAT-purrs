@@ -1904,7 +1904,9 @@ compute_product_on_power(const Expr& e, const Symbol& n,
   - if \f$ e = e_1 \cdots e_m \f$, where \f$ e_i \f$,
     for \f$ i = 1, \dots, m \f$, is one of the previous case,
     then \f$ \prod_{k=lower}^upper e(k) =  \prod_{k=lower}^upper e_1(k) \cdots
-    \prod_{k=lower}^upper e_m(k) \f$.  
+    \prod_{k=lower}^upper e_m(k) \f$.
+
+  Note that \p e must be normalized.  
 */
 static Expr
 compute_product(const Expr& e, const Symbol& n,
@@ -2034,9 +2036,9 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
   bool shift_initial_conditions = domain_recurrence(n, tmp, i_c);
   Expr alpha_factorial;
   if (shift_initial_conditions)
-    alpha_factorial = compute_product(coefficient, n, i_c + 2, n);
+    alpha_factorial = compute_product(coefficient.normalize(), n, i_c + 2, n);
   else
-    alpha_factorial = compute_product(coefficient, n, 1, n);
+    alpha_factorial = compute_product(coefficient.normalize(), n, 1, n);
   D_VAR(alpha_factorial);
   // Compute the non-homogeneous term for the recurrence
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
@@ -2066,6 +2068,8 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
 					   new_roots, t_n, solution))
       // FIXME: the summand is not hypergeometric:
       // no chance of using Gosper's algorithm.
+      // vedere direttamente il rapporto p(k)/alpha!(k) se e' sommabile
+      // (forse prima di vedere gosper)
       return TOO_COMPLEX;
     // To do this cycle or to consider `c_i + 2' as the lower limit of
     // the sum is the same thing,  but so is better for the output.
