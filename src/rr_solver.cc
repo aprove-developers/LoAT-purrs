@@ -558,19 +558,17 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 
   D_MSGVAR("Before calling simplify: ", solution);  
   solution = simplify_on_output_ex(solution.expand(), n, false);
-  
+
+  // For the output and for a better functionality of 'verify_solution()'.
+  GList conditions;
+  for (unsigned i = order; i-- > 0; )
+    conditions.append(initial_conditions[i]);
+  solution = solution.collect(conditions);
+
   if (!verify_solution(solution, order, rhs, n))
     D_MSG("ATTENTION: the following solution can be wrong\n"
 	  "or not enough simplified.");
-  
-  // Only for the output.
-  if (order > 1) {
-    GList conditions;
-    for (unsigned i = order; i-- > 0; )
-      conditions.append(initial_conditions[i]);
-    solution = solution.collect(conditions);
-  }
-  
+
   return true;
 }
 
@@ -1127,13 +1125,14 @@ solve_linear_constant_coeff(const GSymbol& n, GExpr& g_n,
 }
 
 static void
-print_bad_exp(const GExpr& e) {
+print_bad_exp(const GExpr& e, const GExpr rhs, bool conditions) {
   std::ofstream outfile("not_verified.out", std::ios_base::app);
-  outfile << std::endl;
-  outfile << "EXPRESSION = ";
-  outfile << std::endl;
-  outfile << e;
-  outfile << std::endl;
+  if (conditions)
+    outfile << std::endl << "not verified initial conditions in x(n) = "
+	    << rhs << std::endl;
+  else
+    outfile << std::endl << "diff not zero in x(n) = " << rhs << std::endl;
+  outfile << e << std::endl;
 }
 
 /*!
@@ -1173,7 +1172,7 @@ verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
   for (int i = order; i-- > 0; ) {
     GExpr g_i = x(i);
     if (!g_i.is_equal(solution.subs(n == i))) {
-      print_bad_exp(solution.subs(n == i));
+      print_bad_exp(solution.subs(n == i), rhs, true);
       return false;
     }
   }
@@ -1192,10 +1191,11 @@ verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
   for (unsigned i = terms_to_sub.size(); i-- > 0; )
     substituted_rhs = substituted_rhs.subs(x(n - i - 1) == terms_to_sub[i]);
   GExpr diff = (partial_solution - substituted_rhs).expand();
+
   if (diff.is_zero())
     return true;
   else {
-    print_bad_exp(diff);
+    print_bad_exp(diff, rhs, false);
     return false;
   }
 }
