@@ -148,8 +148,9 @@ parse_expression(const string& s, Expr& expr) {
 static void
 do_not_mix_modes() {
   if (production_mode && test_mode) {
-    cerr << "Production mode options (-R, -I, -E, -L, -U, -T) and\n"
-	 << "test mode options (-i, -l, -r, -v) are mutually exclusive."
+    cerr << program_name
+	 << ": production mode options (-R, -I, -E, -L, -U, -T) and\n"
+	 << "test mode options (-i, -l, -r, -v) are mutually exclusive"
 	 << endl;
     my_exit(1);
   }
@@ -197,7 +198,7 @@ process_options(int argc, char* argv[]) {
 	production_mode = true;
 	do_not_mix_modes();
 	if (!optarg) {
-	  cerr << program_name << ": the rhs expression must follow `-R'"
+	  cerr << program_name << ": an expression must follow `-R'"
 	       << endl;
 	  my_exit(1);
 	}
@@ -476,39 +477,35 @@ main(int argc, char *argv[]) try {
 	case Recurrence::SUCCESS:
 	  // OK: get the exact solution and print it.
 	  production_recurrence->exact_solution(exact_solution);
-	  cout << endl << "x(n) = " << exact_solution << endl << endl;
+	  cout << "x(n) = " << exact_solution << "." << endl;
 	  goto exit;
 	  break;
 	case Recurrence::UNSOLVABLE_RECURRENCE:
-	  cout << endl << "Unsolvable" << endl << endl;
+	  cout << "unsolvable." << endl;
 	  goto exit;
 	  break;
 	case Recurrence::TOO_COMPLEX:
 	  if (!lower_bound_required && !upper_bound_required) {
-	    cout << endl << "Too complex" << endl << endl;
+	    cout << "exact(too_complex)." << endl;
 	    goto exit;
 	  }
 	  break;
 	default:
 	  break;
 	}
-      bool too_complex_printed = false;
       if (lower_bound_required)
 	switch (production_recurrence->compute_lower_bound()) {
 	case Recurrence::SUCCESS:
 	  // OK: get the lower bound and print it.
 	  production_recurrence->lower_bound(lower);
-	  cout << endl << "x(n) >= " << lower << endl << endl;
+	  cout << "x(n) >= " << lower << "." << endl;
 	  break;
 	case Recurrence::UNSOLVABLE_RECURRENCE:
-	  cout << endl << "Unsolvable" << endl << endl;
+	  cout << "unsolvable." << endl;
 	  goto exit;
 	  break;
 	case Recurrence::TOO_COMPLEX:
-	  if (!too_complex_printed) {
-	    cout << endl << "Too complex" << endl << endl;
-	    too_complex_printed = true;
-	  }
+	  cout << "lower_bound(too_complex)." << endl;
 	  break;
 	default:
 	  break;
@@ -518,15 +515,14 @@ main(int argc, char *argv[]) try {
 	case Recurrence::SUCCESS:
 	  // OK: get the upper bound and print it.
 	  production_recurrence->upper_bound(upper);
-	  cout << endl << "x(n) <= " << upper << endl << endl;
+	  cout << "x(n) =< " << upper << "." << endl;
 	  break;
 	case Recurrence::UNSOLVABLE_RECURRENCE:
-	  cout << endl << "Unsolvable" << endl << endl;
+	  cout << "unsolvable." << endl;
 	  goto exit;
 	  break;
 	case Recurrence::TOO_COMPLEX:
-	  if (!too_complex_printed)
-	    cout << endl << "Too complex" << endl << endl;
+	  cout << "upper_bound(too_complex)." << endl;
 	  break;
 	default:
 	  break;
@@ -534,7 +530,7 @@ main(int argc, char *argv[]) try {
     }
     else {
       cerr << program_name
-	   << ": the production mode requires the recurrence." << endl;
+	   << ": must specify a recurrence using the `-R' option" << endl;
       my_exit(1);
     }
   exit:
