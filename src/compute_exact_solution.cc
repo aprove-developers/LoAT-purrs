@@ -572,26 +572,28 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   set_first_i_c_for_linear(z.to_unsigned());
   D_VAR(first_i_c_for_linear());
 
+  std::vector<Number> num_coefficients(order() + 1);
+  std::vector<Polynomial_Root> roots;
+  bool all_distinct = true;
+  if (is_linear_finite_order_const_coeff()) {
+    Expr characteristic_eq;
+    if (!characteristic_equation_and_its_roots(order(), coefficients(),
+					       num_coefficients,
+					       characteristic_eq, roots,
+					       all_distinct))
+      return TOO_COMPLEX;
+  }
+
   // `g_n' is defined here because it is necessary in the function
   // `add_term_with_initial_conditions()' (at the end of function
   // `solve_linear_finite_order()').
-  std::vector<Number> num_coefficients(order() + 1);
   Expr g_n;
   switch (order()) {
   case 1:
     {
-      if (is_linear_finite_order_const_coeff()) {
-	Expr characteristic_eq;
-	std::vector<Polynomial_Root> roots;
-	bool all_distinct = true;
-	if (!characteristic_equation_and_its_roots(order(), coefficients(),
-						   num_coefficients,
-						   characteristic_eq, roots,
-						   all_distinct))
-	  return TOO_COMPLEX;
+      if (is_linear_finite_order_const_coeff())
 	exact_solution_
 	  .set_expression(solve_constant_coeff_order_1(roots));
-      }
       else {
 	Solver_Status status;
 	if ((status = solve_variable_coeff_order_1(coefficients()[1]))
@@ -603,14 +605,6 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 
   case 2:
     if (is_linear_finite_order_const_coeff()) {
-      Expr characteristic_eq;
-      std::vector<Polynomial_Root> roots;
-      bool all_distinct = true;
-      if (!characteristic_equation_and_its_roots(order(), coefficients(),
-						 num_coefficients,
-						 characteristic_eq, roots,
-						 all_distinct))
-	return TOO_COMPLEX;
       // If there is some root not rational then, for efficiency, we substitute
       // it with an arbitrary symbol.
       substitute_non_rational_roots(*this, roots);
@@ -626,16 +620,6 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 
   default:
     if (is_linear_finite_order_const_coeff()) {
-      Expr characteristic_eq;
-      std::vector<Polynomial_Root> roots;
-      bool all_distinct = true;
-      if (!characteristic_equation_and_its_roots(order(), coefficients(),
-						 num_coefficients,
-						 characteristic_eq, roots,
-						 all_distinct)) {
-	D_MSG("Not found roots");
-	return TOO_COMPLEX;
-      }
       // If there is some root not rational then, for efficiency, we substitute
       // it with an arbitrary symbol.
       substitute_non_rational_roots(*this, roots);
