@@ -280,7 +280,7 @@ subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
 	  = symbolic_sum_no_distinct[r]
 	  .subs(Expr_List(alpha, lambda),
 		Expr_List(base_exp, roots[j].value()));
-      if (order == 2 && j & 1 == 1)
+      if (order == 2 && (j & 1) == 1)
 	solution -= tmp;
       else
 	// order != 2 or j even.
