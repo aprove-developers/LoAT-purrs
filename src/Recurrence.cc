@@ -342,7 +342,30 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 	}
 	if (!done)
 	  coefficients_of_exponentials[0] += summand;
-      }      
+      }
+
+//        // Alternative solution
+//        if (summand.is_a_mul()) {
+//  	// Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
+//  	// `a' and `b' possibly 1).
+//  	bool done = false;
+//  	for (unsigned j = 0; (j < summand.nops()) && !done; ++j) {
+//  	  Expr factor = summand.op(j);
+//  	  if (factor == n) {
+//  	    coefficients_of_exponentials[1] += summand/factor;
+//              done = true;
+//            }
+//  	  else if (factor.is_a_power() && factor.arg(0) == n) {
+//  	    assert(factor.arg(1).is_a_number());
+//  	    unsigned k = factor.arg(1).ex_to_number().to_unsigned();
+//  	    coefficients_of_exponentials[k] += summand/factor;
+//              done = true;
+//  	  }
+//  	}
+//          // `done' is false if `factor' contains neither `n' nor `n^k'
+//  	if (!done)
+//  	  coefficients_of_exponentials[0] += summand;
+//        }
       else if (summand.is_a_power()) {
 	// Summand has the form `n^k' or `a^n'
 	if (summand.arg(0) == n) {
