@@ -970,8 +970,11 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
       //      difference = static_cast<const GiNaC::ex>(real_var_symbol_0 - real_var_symbol_1);
       //      GiNaC::ex difference_ginac = static_cast<const GiNaC::ex> difference;
       Expr zero = 0;
-      solution = max(real_var_symbol_0 - real_var_symbol_1, zero) * solution_0 +
-	max(real_var_symbol_1 - real_var_symbol_0, zero) * solution_1;
+      // FIXME: Handle the case m = n as well.
+      solution = max(real_var_symbol_0 - real_var_symbol_1, zero) / 
+	(real_var_symbol_0 - real_var_symbol_1) * solution_0 +
+	max(real_var_symbol_1 - real_var_symbol_0, zero) / 
+	(real_var_symbol_1 - real_var_symbol_0) * solution_1;
     }
   } 
   else
