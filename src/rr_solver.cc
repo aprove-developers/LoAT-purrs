@@ -115,19 +115,16 @@ build_characteristic_equation(const GSymbol& x,
   return p;
 }
 
-/*!
-  Returns <CODE>true</CODE> if and only if the inhomogeneous term
-  is a polynomial or the product of a polynomial and an exponential;
-  <CODE>false</CODE> otherwise.
-  The vector \p exp_no_poly_coeff contains the non polynomial part
-  (if it exists) of the inhomogeneous term.
-*/
+//! Returns <CODE>true</CODE> if at least one element of the vector \p v
+//! is different from \f$ 0 \f$.
+//! Returns <CODE>false</CODE> otherwise, i. e., all the elements of \p v
+//! are equal to \f$ 0 \f$. 
 static bool
-check_poly_times_exponential(const std::vector<GExpr>& exp_no_poly_coeff) {
-  for (unsigned i = exp_no_poly_coeff.size(); i-- > 0; )
-    if (!exp_no_poly_coeff[i].is_zero())
-      return false;
-  return true;
+vector_not_all_zero(const std::vector<GExpr>& v) {
+  for (unsigned i = v.size(); i-- > 0; )
+    if (!v[i].is_zero())
+      return true;
+  return false;
 }
 
 static GExpr
@@ -522,7 +519,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       // Calculates the solution of the first order recurrences when
       // the inhomogeneous term is a polynomial or the product of a
       // polynomial and an exponential.
-      if (check_poly_times_exponential(exp_no_poly_coeff)) {
+      if (!vector_not_all_zero(exp_no_poly_coeff)) {
 	std::vector<GExpr> symbolic_sum_distinct;
 	std::vector<GExpr> symbolic_sum_no_distinct;
 	compute_symbolic_sum(n, alpha, lambda, roots,
@@ -556,7 +553,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       // Calculates the solution of the second order recurrences when
       // the inhomogeneous term is a polynomial or the product of a
       // polynomial and an exponential.
-      if (check_poly_times_exponential(exp_no_poly_coeff))
+      if (!vector_not_all_zero(exp_no_poly_coeff))
 	solution = solve_order_2(n, g_n, order, all_distinct, alpha, lambda,
 				 base_of_exps, exp_poly_coeff,
 				 num_coefficients, roots);
@@ -572,7 +569,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     // Calculates the solution of the recurrences when
     // the inhomogeneous term is a polynomial or the product of a
     // polynomial and an exponential.
-    if (check_poly_times_exponential(exp_no_poly_coeff))
+    if (!vector_not_all_zero(exp_no_poly_coeff))
       solution = solve_linear_constant_coeff(n, g_n, order, all_distinct,
 					     alpha, lambda,
 					     base_of_exps, exp_poly_coeff,
@@ -966,8 +963,7 @@ prepare_for_symbolic_sum(const GSymbol& n, const GExpr& g_n,
   std::vector<GExpr> g_n_no_poly_coeff;
   exp_poly_decomposition(g_n, n, bases_exp_g_n,
 			 g_n_poly_coeff, g_n_no_poly_coeff);
-  // Devo controllare che bases_exp_g_n abbia stesso ordine rispetto
-  // a roots e, se non e' cosi', fare in modo che lo sia.
+  // `bases_of_exp_g_n' must have same elements of `roots' in the same order.
   bool equal = true;
   for (unsigned i = roots.size(); i-- > 0; )
     if (!roots[i].value().is_equal(bases_exp_g_n[i]))
