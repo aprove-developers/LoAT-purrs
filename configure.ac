@@ -1,3 +1,4 @@
+# Autoconf source file for the Parma Recurrence Relation Solver.
 # Copyright (C) 2001 Roberto Bagnara <bagnara@cs.unipr.it>
 #
 # This file is free software; as a special exception the author gives
@@ -8,16 +9,22 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-dnl Process this file with autoconf to produce a configure script.
+# Process this file with autoconf to produce a configure script.
 
-AC_INIT(README)
-dnl Minimum autoconf version required.
-AC_PREREQ(2.52e)
+# Every other copy of the package version number gets its value from here.
+AC_INIT([the Parma Recurrence Relation Solver], 0.1pre1, purrs-devel@cs.unipr.it, purrs)
 
-dnl Every other copy of the package version number gets its value from here
-AM_INIT_AUTOMAKE(purrs, 0.0)
+# Minimum autoconf version required.
+AC_PREREQ(2.52g)
+
+# Make sure the sources are there.
+AC_CONFIG_SRCDIR(src/rr_solver.cc)
+
+# Use Automake.
+AM_INIT_AUTOMAKE([foreign dist-bzip2 dist-zip 1.5])
 AC_SUBST(VERSION)
 
+# Generate a configuration header file.
 AM_CONFIG_HEADER(config.h)
 
 ISODATE=`date +%Y-%m-%d`
@@ -31,6 +38,7 @@ AH_TOP([
 ])
 
 AH_BOTTOM([
+
 // Neutralize relops for GCC 2.96.
 #ifndef __SGI_STL_INTERNAL_RELOPS
 #define __SGI_STL_INTERNAL_RELOPS
@@ -68,26 +76,34 @@ AH_BOTTOM([
 #endif
 ])
 
-dnl C compiler
+# C compiler
 
 AC_ARG_WITH(cc,
 [  --with-cc=xxx           use XXX as the C compiler],
 CC=$with_cc)
 
-AC_LANG_C
-AC_PROG_CC
+AC_LANG(C)
 
-dnl C++ compiler
+# Checks for typedefs, structures, and compiler characteristics.
+AC_C_CONST
+AC_C_INLINE
+
+# C++ compiler
 
 AC_ARG_WITH(cxx,
 [  --with-cxx=xxx          use XXX as the C++ compiler],
 CXX=$with_cxx)
 
-AC_LANG_CPLUSPLUS
+AC_LANG(C++)
+
+# Checks for programs.
+AC_PROG_CC
 AC_PROG_CXX
 AC_PROG_CXXCPP
+AC_PROG_MAKE_SET
+AC_PROG_INSTALL
 
-dnl GMP library
+# GMP library
 
 AC_CHECK_GMP
 
@@ -105,35 +121,27 @@ AC_CHECK_SIZEOF(mp_limb_t, 4, [#include <gmp.h>])
 extra_includes="${extra_includes} ${gmp_includes_option}"
 extra_libraries="${extra_libraries} ${gmp_library_option}"
 
-extra_includes="${extra_includes} ${gmp_includes_option}"
-
-dnl CLN library
+# CLN library
 
 AC_PATH_CLN(1.1.4, [
   extra_libraries="${extra_libraries} ${CLN_LIBS}"
   extra_includes="${extra_includes} $CLN_CPPFLAGS"  
 ], AC_MSG_ERROR([need to have the CLN library installed]))
 
-dnl GiNaC library
+# GiNaC library
 
 AC_PATH_GINAC(1.0.5, [
   extra_libraries="${extra_libraries} ${GINACLIB_LIBS}"
   extra_includes="${extra_includes} $GINACLIB_CPPFLAGS"  
 ], AC_MSG_ERROR([need to have the GiNaC library installed]))
 
-dnl FIXME: check for filib here!
+# FIXME: check for filib here!
 extra_libraries="${extra_libraries} -L/usr/local/filib/lib -lfi -lieee -lprim"
 extra_includes="${extra_includes} -I/usr/local/filib/include"
 
-dnl Compilation flags
+# Compilation flags
 
-if test x"$GXX" = xyes
-then
-  COMP_FLAGS="-W -Wall"
-else
-  COMP_FLAGS=""
-fi
-
+COMP_FLAGS=""
 OPT_FLAGS=""
 
 enableval=yes
@@ -189,7 +197,6 @@ no)
   ;;
 esac
 
-dnl enableval=no
 enableval=yes
 AC_MSG_CHECKING([whether to enable checking of run-time assertions])
 AC_ARG_ENABLE(assertions,
@@ -209,7 +216,6 @@ no)
 esac
 
 arch=no
-dnl enableval=standard
 enableval=no
 AC_MSG_CHECKING([whether to enable optimizations])
 AC_ARG_ENABLE(optimization,
@@ -247,7 +253,7 @@ no)
 esac
 
 enableval=$arch
-AC_MSG_CHECKING([for which archtitecture to optimize])
+AC_MSG_CHECKING([for which architecture to optimize])
 AC_ARG_ENABLE(arch,
 [  --enable-arch[=arch]      optimize for architecture arch])
 case "${enableval}" in
@@ -272,58 +278,56 @@ no)
   ;;
 esac
 
+CFLAGS="$COMP_FLAGS $OPT_FLAGS"
 CXXFLAGS="$COMP_FLAGS $OPT_FLAGS"
 
-dnl Allow the overriding of C and C++ compilation flags
+# Allow additions to C and C++ compilation flags
 
 AC_ARG_WITH(cflags,
-[  --with-cflags=xxx       use XXX as options for the C compiler],
-CXXFLAGS=$with_cflags)
+[  --with-cflags=xxx       add XXX to the options for the C compiler],
+CFLAGS="$CFLAGS $with_cflags")
 
 AC_ARG_WITH(cxxflags,
-[  --with-cxxflags=xxx     use XXX as options for the C++ compiler],
-CXXFLAGS=$with_cxxflags)
+[  --with-cxxflags=xxx     add XXX to the options for the C++ compiler],
+CXXFLAGS="$CXXFLAGS $with_cxxflags")
 
-dnl Checks for machine architecture features
+
+# Checks for machine architecture features
 AC_C_BIGENDIAN
 
-dnl Libtool.
+# Libtool.
 # Turn off shared libraries during beta-testing, since they
-# make debugging harder and the build process take too long.
+# make debugging harder and the build process takes too long.
 AC_DISABLE_SHARED
+AC_LIBTOOL_DLOPEN
+AC_LIBTOOL_WIN32_DLL
 AC_PROG_LIBTOOL
 
-dnl Checks for programs.
-AC_PROG_MAKE_SET
-AC_PROG_INSTALL
-AC_PROG_RANLIB
-#AC_CHECK_PROG(SICSTUS, sicstus, sicstus)
-#AM_CONDITIONAL(HAVE_SICSTUS, test x$SICSTUS = xsicstus)
-
-dnl Checks for header files.
-#AC_CHECK_HEADER(gprolog.h,
-#                extra_if_Prolog_subdirs="${extra_if_Prolog_subdirs} GNU")
-#AC_CHECK_HEADER(SWI-Prolog.h,
-#                extra_if_Prolog_subdirs="${extra_if_Prolog_subdirs} SWI")
-#AC_CHECK_HEADER(sicstus/sicstus.h,
-#                extra_if_Prolog_subdirs="${extra_if_Prolog_subdirs} SICStus")
-
-dnl Checks for typedefs, structures, and compiler characteristics.
+# Checks for typedefs, structures, and compiler characteristics.
 # Nothing for the time being.
 
-dnl Checks whether the readline library should be used.
+# Checks whether the readline library should be used.
 AC_CHECK_USE_READLINE
 
-dnl Checks for library functions.
+# Checks for library functions.
 AC_HEADER_TIME
 AC_CHECK_HEADERS(unistd.h sys/resource.h sys/time.h)
 AC_CHECK_FUNCS(nice getrusage getrlimit setrlimit)
+
+# If we are using GCC we want to compile with warnings enabled.
+if test x"$GCC" = xyes
+then
+  CFLAGS="$CFLAGS -W -Wall"
+fi
+if test x"$GXX" = xyes
+then
+  CXXFLAGS="$CXXFLAGS -W -Wall"
+fi
 
 AC_SUBST(extra_includes)
 AC_SUBST(extra_cpp_flags)
 AC_SUBST(extra_libraries)
 AC_SUBST(debug_flag)
-AC_SUBST(extra_if_Prolog_subdirs)
 
 AC_OUTPUT(Makefile
           CoStLy/Makefile
@@ -336,19 +340,16 @@ AC_OUTPUT(Makefile
           doc/user-print.doxyconf-latex  doc/devref-print.doxyconf-latex
           doc/user.doxyconf-html         doc/devref.doxyconf-html)
 #          purrs.lsm purrs.spec
-#          interfaces/Makefile
-#          interfaces/Prolog/Makefile
-#          interfaces/Prolog/SICStus/Makefile
 
 if test x"$gmp_supports_exceptions" = xno
 then
-  AC_MSG_WARN([*** CANNOT PROPAGATE EXCEPTIONS BACK FROM GMP:])
-  AC_MSG_WARN([*** MEMORY EXHAUSTION MAY RESULT IN ABRUPT TERMINATION.])
-  AC_MSG_WARN([*** If you are using g++, make sure you use version 3.0.1])
-  AC_MSG_WARN([*** or later and use a version of GMP compiled with])
-  AC_MSG_WARN([*** the option -fexceptions.])
+  AC_MSG_WARN([CANNOT PROPAGATE EXCEPTIONS BACK FROM GMP:
+*** MEMORY EXHAUSTION MAY RESULT IN ABRUPT TERMINATION.
+*** If you are using g++, make sure you use version 4.0.1 or higher
+*** and use a version of GMP compiled with the option -fexceptions.
+*** To build such a version, you can configure GMP as follows:
+*** CPPFLAGS=-fexceptions ./configure --enable-cxx --prefix=/usr/local])
 fi
-  AC_DEFINE(NDEBUG, 1, [Assertions are disabled when this is defined])
 
 if test x"${ac_cv_header_readline_readline_h}" = xno -o x"${ac_cv_header_readline_history_h}" = xno -o x"${ac_cv_lib_readline_readline}" = xno
 then
