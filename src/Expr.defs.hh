@@ -853,6 +853,9 @@ public:
   bool
   has_x_function(bool any_x_function, const Expr& x = 0) const;
 
+  //! Returns \p *this evaluated numerically. 
+  Expr unsafe_fp_approximation() const;
+
 private:
   friend class Number;
   friend class Symbol;

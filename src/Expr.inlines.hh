@@ -496,6 +496,11 @@ Expr::diff(const Symbol& x, unsigned nth) {
 }
 
 inline Expr
+Expr::unsafe_fp_approximation() const {
+  return Base::evalf();
+}
+
+inline Expr
 apply(Functor f, const Expr& x) {
   return GiNaC::function(f, static_cast<const Expr::Base>(x));
 }
