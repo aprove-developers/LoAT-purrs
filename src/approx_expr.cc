@@ -24,25 +24,9 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
-#define FILIB_NAMESPACES 1
-
 #include "globals.hh"
-#include "Interval.h"
-//#include <cmath>
-#include <complex>
 #include <cln/rational.h>
 #include <ginac/ginac.h>
-
-typedef filib::Interval Interval;
-typedef std::complex<Interval> CInterval;
-
-#if 0
-template<typename _Tp>
-inline complex<_Tp>
-tan(const complex<_Tp>& __z) {
-  return sin(__z) / cos(__z);
-}
-#endif
 
 using namespace GiNaC;
 
@@ -91,35 +75,73 @@ approximate(const GExpr& e) {
     static GExpr one_half = GNumber(1)/2;
     const GExpr& base = e.op(0);
     const GExpr& exponent = e.op(1);
-#if 0
+#ifdef CINT
     if (exponent == one_half)
       return sqrt(approximate(base));
     else
-#endif
       return pow(approximate(base), approximate(exponent));
+#else
+    CInterval abase = approximate(base);
+    if (abase.imag() != 0)
+      abort();
+    if (exponent == one_half)
+      return CInterval(sqrt(abase.real()), 0);
+    else {
+      CInterval aexponent = approximate(exponent);
+      if (aexponent.imag() != 0)
+	abort();
+      return CInterval(pow(abase.real(), aexponent.real()));
+    }
+#endif
   }
   else if (is_exactly_a<function>(e)) {
     const GExpr& arg = e.op(0);
-#if 0
-    if (is_ex_the_function(e, abs))
-      return abs(approximate(arg));
-    else
+    CInterval aarg = approximate(arg);
+    if (is_ex_the_function(e, abs)) {
+#ifdef CINT
+      return abs(aarg);
+#else
+      if (aarg.imag() != 0)
+	abort();
+      return CInterval(abs(aarg.real()), 0);
 #endif
-    if (is_ex_the_function(e, exp))
-      return exp(approximate(arg));
-#if 0
-    else if (is_ex_the_function(e, log))
-      return log(approximate(arg));
+    }
+    else if (is_ex_the_function(e, exp)) {
+#if CINT
+      return exp(aarg);
+#else
+      if (aarg.imag() != 0)
+	abort();
+      return CInterval(exp(aarg.real()), 0);
 #endif
+    }
+    else if (is_ex_the_function(e, log)) {
+#if CINT
+      return log(aarg);
+#else
+      if (aarg.imag() != 0)
+	abort();
+      return CInterval(log(aarg.real()), 0);
+#endif
+    }
     else if (is_ex_the_function(e, sin))
-      return sin(approximate(arg));
+      return sin(aarg);
     else if (is_ex_the_function(e, cos))
-      return cos(approximate(arg));
+      return cos(aarg);
     else if (is_ex_the_function(e, tan))
-      return std::tan(approximate(arg));
+      return std::tan(aarg);
+    else if (is_ex_the_function(e, acos)) {
+#ifdef CINT
+      return acos(aarg);
+#else
+      if (aarg.imag() != 0)
+	abort();
+      return CInterval(acos(aarg.real()), 0);
+#endif
+    }
     else
       abort();
-  }
+}
   else if (is_exactly_a<constant>(e)) {
     if (e == Pi)
       return Interval::PI();

@@ -15,7 +15,7 @@ VPATH = @srcdir@
 
 SUBDIRS =
 
-INCLUDES = -I$(top_builddir)/src @extra_includes@ #-I/usr/local/filib/include 
+INCLUDES = -I$(top_builddir)/src @extra_includes@ #-I/usr/local/filib/include
 
 LDADD = $(top_builddir)/src/libpurrs.a -lntl -lstdc++ @gmp_library_option@ @readline_libraries@ #-L/usr/local/filib/lib -lfi -lieee -lprim 
 

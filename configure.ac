@@ -31,10 +31,6 @@ AH_TOP([
 ])
 
 AH_BOTTOM([
-
-// All FI_LIB stuff should be placed in namespace `filib'.
-#define FILIB_NAMESPACES 1
-
 // Neutralize relops for GCC 2.96.
 #ifndef __SGI_STL_INTERNAL_RELOPS
 #define __SGI_STL_INTERNAL_RELOPS
