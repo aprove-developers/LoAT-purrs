@@ -25,6 +25,7 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_Finite_Order_Info_defs_hh
 #define PURRS_Finite_Order_Info_defs_hh 1
 
+#include "Finite_Order_Info.types.hh"
 #include <vector>
 
 namespace Parma_Recurrence_Relation_Solver {
