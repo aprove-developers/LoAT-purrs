@@ -144,7 +144,6 @@ public:
   bool is_the_tan_function() const;
   bool is_the_acos_function() const;
 
-  // FIXME: const?
   Number ex_to_number() const;
 
   // info
@@ -154,7 +153,6 @@ public:
 
   unsigned nops() const;
   Expr op(unsigned i) const;
-  // FIXME: are `is_equal()' and `is_zero()' necessary?
   bool is_equal(const Expr& e) const;
   bool is_zero() const;
   Expr subs(const Expr& exp1, const Expr& exp2) const;
@@ -173,7 +171,7 @@ public:
   Expr primpart(const Symbol& symb) const;
   Expr numer() const;
   Expr denom() const;
-  Expr numer_denom() const;
+  void numer_denom(Expr& numer, Expr& denom) const;
   Expr lhs() const;
   Expr rhs() const;
 

@@ -69,7 +69,9 @@ FACTOR_THRESHOLD = 100;
 static bool
 gosper_step_one(const GExpr&/*t*/, const GSymbol& /*n*/, GExpr& num_den_r_n) {
   // FIXME: general simplifications to be inserted here.
-  num_den_r_n = num_den_r_n.numer_denom();
+  Expr numer;
+  Expr denom;
+  num_den_r_n.numer_denom(numer, denom);
   return true;
 }
 
@@ -159,14 +161,12 @@ gosper_step_two(const GExpr& r_n, const GSymbol& n,
   // have integer coefficients. 
   GNumber a_n_factor;
   a_n = convert_to_integer_polynomial(a_n, n, a_n_factor);
-  GExpr a_n_d = a_n_factor.numer_denom();
-  a_n *= a_n_d.op(0);
-  b_n *= a_n_d.op(1);
+  a_n *= a_n_factor.numer();
+  b_n *= a_n_factor.denom();
   GNumber b_n_factor;
   b_n = convert_to_integer_polynomial(b_n, n, b_n_factor);
-  GExpr b_n_d = b_n_factor.numer_denom();
-  a_n *= b_n_d.op(1);
-  b_n *= b_n_d.op(0);
+  a_n *= b_n_factor.numer();
+  b_n *= b_n_factor.denom();
 #if NOISY
   std::cout << "a(n) = " << a_n << std::endl;
   std::cout << "b(n) = " << b_n << std::endl;

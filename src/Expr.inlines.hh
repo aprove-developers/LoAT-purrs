@@ -340,9 +340,10 @@ Expr::denom() const {
   return e.denom();
 }
 
-inline Expr
-Expr::numer_denom() const {
-  return e.numer_denom();
+inline void
+Expr::numer_denom(Expr& numer, Expr& denom) const {
+  numer =  e.numer_denom().op(0);
+  denom =  e.numer_denom().op(1);
 }
 
 inline Expr

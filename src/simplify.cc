@@ -551,9 +551,8 @@ reduce_to_standard_form(const GNumber root_index, const GNumber r) {
   if (k > 0)
     if (r == 0)
       return 0;
-  GExpr   n_d = r.numer_denom();
-  GNumber num = n_d.op(0).ex_to_number();
-  GNumber den = n_d.op(1).ex_to_number();
+  GNumber num = r.numer();
+  GNumber den = r.denom();
   // FIXME: deal with complex numbers
   if (!r.is_real()) {
     GExpr index = 1 / root_index;
@@ -631,12 +630,10 @@ red_prod(const GNumber& base1, const GNumber& exp1,
   assert(exp1 != 0);
   assert(exp2 != 0);
   
-  GExpr n_d_1 = exp1.numer_denom();
-  GNumber k1_num = n_d_1.op(0).ex_to_number();
-  GNumber k1_den = n_d_1.op(1).ex_to_number();
-  GExpr n_d_2 = exp2.numer_denom();
-  GNumber k2_num = n_d_2.op(0).ex_to_number();
-  GNumber k2_den = n_d_2.op(1).ex_to_number();
+  GNumber k1_num = exp1.numer();
+  GNumber k1_den = exp1.denom();
+  GNumber k2_num = exp2.numer();
+  GNumber k2_den = exp2.denom();
   
   base_1 = power(base_1, k1_num);
   base_2 = power(base_2, k2_num);
@@ -900,9 +897,11 @@ GExpr
 simplify_numer_denom(const GExpr& e) {
   // Since we need both numerator and denominator, to call 'numer_denom'
   // is faster than to use 'numer()' and 'denom()' separately.
-  GExpr num_den = e.numer_denom();
-  GExpr num = num_den.op(0).expand();
-  GExpr den = num_den.op(1).expand();
+  Expr numer_e;
+  Expr denom_e;
+  e.numer_denom(numer_e, denom_e);
+  GExpr num = numer_e.expand();
+  GExpr den = denom_e.expand();
   GExpr ris = num * power(den, -1);
   return ris;
 }
