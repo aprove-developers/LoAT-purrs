@@ -28,6 +28,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "numerator_denominator.hh"
 #include "util.hh"
+#include "factorize.hh"
 #include "Expr.defs.hh"
 #include <vector>
 
@@ -389,6 +390,10 @@ PURRS::numerator(const Expr& e) {
   Expr denominator;
   numerator_denominator_purrs(e.distribute_mul_over_add(),
 			      numerator, denominator);
+  Expr common_factor;
+  Expr rem;
+  factorize_no_ratio_ex(numerator, common_factor, rem);
+  numerator = common_factor * rem;
   return numerator;
 }
 
@@ -419,5 +424,9 @@ PURRS::transform_in_single_fraction(const Expr& e) {
   Expr denominator;
   numerator_denominator_purrs(e.distribute_mul_over_add(),
 			      numerator, denominator);
+  Expr common_factor;
+  Expr rem;
+  factorize_no_ratio_ex(numerator, common_factor, rem);
+  numerator = common_factor * rem;
   return numerator / denominator;
 }
