@@ -37,7 +37,19 @@ http://www.cs.unipr.it/purrs/ . */
 using namespace GiNaC;
 
 /*!
-  ...
+   We look for possible rational solutions of a polynomial with 
+   integer coefficients.  It is known that, if any such solution exists,
+   its numerator divides the polynomial's constant term, and its 
+   denominator divides the coefficient of the monomial of the 
+   highest degree.  Finding all such roots is not computationally 
+   feasible, so that we put a bound on the size of the denominators.
+   We only look for divisors that are strictly smaller than 
+   the constant <CODE>FIND_DIVISORS_THRESHOLD</CODE>, which we define as 
+   <CODE> FIND_DIVISORS_MAX * FIND_DIVISORS_MAX</CODE>.
+   This means that in the loop that looks for the divisors of a 
+   given positive integer in the function <CODE>find_divisors</CODE>, 
+   we only have to check for possible divisors that are strictly 
+   less than the constant <CODE>FIND_DIVISORS_MAX</CODE>
 */
 static const unsigned FIND_DIVISORS_MAX = 11;
 
@@ -108,7 +120,7 @@ is_nested_polynomial(const GExpr& p, const GSymbol& x, GExpr& q) {
   // monomials is 1) or when the polynomial has been entirely processed.
   unsigned n = i;
   for (unsigned j = i+1; j <= degree && n > 1; ++j)
-    // If n ==1 there is no need to read the rest of the polynomial.
+    // If n == 1 there is no need to read the rest of the polynomial.
     if (p.coeff(x, j) !=0)
       n = gcd(n, j);
 
