@@ -905,6 +905,8 @@ simplify_numer_denom(const GExpr& e) {
   // Since we need both numerator and denominator, to call 'numer_denom'
   // is faster than to use 'numer()' and 'denom()' separately.
   GExpr num_den = numer_denom(e);
-  GExpr ris = num_den.op(0) * pow(num_den.op(1), -1);
+  GExpr num = num_den.op(0).expand();
+  GExpr den = num_den.op(1).expand();
+  GExpr ris = num * pow(den, -1);
   return ris;
 }
