@@ -29,12 +29,13 @@ EXTRA_DIST = ehandlers.cc simpl_tests polynomials recurrences heap
 
 BUGS =
 
-noinst_PROGRAMS = simplify_driver eqs_driver rrs_driver gosper_driver
+noinst_PROGRAMS = simplify_driver eqs_driver rrs_driver gosper_driver rr_filter
 
 simplify_driver_SOURCES = simplify_driver.cc
 eqs_driver_SOURCES = eqs_driver.cc
 rrs_driver_SOURCES = rrs_driver.cc
 gosper_driver_SOURCES = gosper_driver.cc
+rr_filter_SOURCES = rr_filter.cc
 
 check_PROGRAMS = $(TESTS) $(BUGS)
 
