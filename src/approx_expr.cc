@@ -91,6 +91,10 @@ approximate(const Expr& e) {
 #endif
   }
   else if (e.is_a_function()) {
+    assert(e.nops() == 1 || e.is_the_sum_function() || e.is_the_prod_function());
+    // FIXME: temporary assertion until the decision about the behavior of
+    // the function `approximate()' in these cases.
+    assert(!(e.is_the_sum_function() || e.is_the_prod_function()));
     const Expr& arg = e.op(0);
     CInterval aarg = approximate(arg);
 #if 0
