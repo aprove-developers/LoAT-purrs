@@ -407,6 +407,33 @@ public:
   //! Returns the map containing the set of initial conditions.
   const std::map<index_type, Expr>& get_initial_conditions() const;
 
+  //! \brief
+  //! Returns the exact solution of \p *this, previously computed,
+  //! evaluated for \f$ n = num \f$.
+  /*!
+    \exception std::logic_error thrown if this method is called
+                                but no exact solution was computed.
+  */
+  Expr evaluate_exact_solution(const Number& num) const;
+
+  //! \brief
+  //! Returns the lower bound of \p *this, previously computed,
+  //! evaluated for \f$ n = num \f$.
+  /*!
+    \exception std::logic_error thrown if this method is called
+                                but no lower bound was computed.
+  */
+  Expr evaluate_lower_bound(const Number& num) const;
+
+  //! \brief
+  //! Returns the upper bound of \p *this, previously computed,
+  //! evaluated for \f$ n = num \f$.
+  /*!
+    \exception std::logic_error thrown if this method is called
+                                but no upper bound was computed.
+  */
+  Expr evaluate_upper_bound(const Number& num) const;
+
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Checks if all the invariants are satisfied.
   /*!
