@@ -1,4 +1,4 @@
-/* To be written.
+/* Complex_Interval class implementation (non-inline functions).
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -22,28 +22,8 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#ifndef PURRS_complint_hh
-#define PURRS_complint_hh 1
+#include <config.h>
 
-#include <ginac/ginac.h>
-#include "CInterval.types.hh"
+#include "Complex_Interval.defs.hh"
 
-namespace GiNaC {
-
-const unsigned TINFO_complint = 0x42420001U;
-
-class complint : public basic {
-  GINAC_DECLARE_REGISTERED_CLASS(complint, basic)
-
-public:
-  complint(const CInterval& i);
-
-  void complint::print(const print_context& c, unsigned level) const;
-
-private:
-  CInterval ci;
-};
-
-} // namespace GiNaC
-
-#endif // !defined(PURRS_complint_hh)
+namespace PURRS = Parma_Recurrence_Relation_Solver;

@@ -30,6 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr_List.types.hh"
 #include "Number.types.hh"
 #include "Constant.types.hh"
+#include "Complex_Interval.types.hh"
 
 #include <ginac/ginac.h>
 
@@ -346,6 +347,9 @@ public:
   //! Builds the constant expression \p y.
   Expr(const Constant& y);
 
+  //! Builds the complex interval expression \p y.
+  Expr(const Complex_Interval& y);
+
   //! Builds the expression from a string \p s and a list of symbol \p y.
   Expr(const std::string& s, const Expr_List& y);
 
@@ -387,6 +391,11 @@ public:
   //! Returns <CODE>true</CODE> if and only if \p *this is a constant
   //! expression.
   bool is_a_constant() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is a complex
+  //! interval expression.
+  bool is_a_complex_interval() const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is an addition

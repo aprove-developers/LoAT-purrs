@@ -1,4 +1,4 @@
-/* To be written.
+/* Complex_Interval class declaration.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -22,28 +22,47 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#ifndef PURRS_complint_hh
-#define PURRS_complint_hh 1
+#ifndef PURRS_Complex_Interval_defs_hh
+#define PURRS_Complex_Interval_defs_hh 1
+
+#include "Complex_Interval.types.hh"
+#include "Expr.types.hh"
+#include "CInterval.types.hh"
+#include "complint.hh"
 
 #include <ginac/ginac.h>
-#include "CInterval.types.hh"
+#include <string>
 
-namespace GiNaC {
+namespace Parma_Recurrence_Relation_Solver {
 
-const unsigned TINFO_complint = 0x42420001U;
-
-class complint : public basic {
-  GINAC_DECLARE_REGISTERED_CLASS(complint, basic)
-
+class Complex_Interval {
 public:
-  complint(const CInterval& i);
+  //! Builds a symbol with a unique name.
+  Complex_Interval();
 
-  void complint::print(const print_context& c, unsigned level) const;
+  //! Builds a symbol named \p n.
+  Complex_Interval(const CInterval& y);
+
+  //! Copy-constructor.
+  Complex_Interval(const Complex_Interval& y);
+
+  //! Destructor.
+  ~Complex_Interval();
+
+  //! Assignment operator.
+  Complex_Interval& operator=(const Complex_Interval& y);
 
 private:
-  CInterval ci;
+  friend class Expr;
+
+  GiNaC::complint i;
+
+  //! Builds the symbol corresponding to \p gi.
+  Complex_Interval(const GiNaC::complint& y);
 };
 
-} // namespace GiNaC
+} // namespace Parma_Recurrence_Relation_Solver
 
-#endif // !defined(PURRS_complint_hh)
+#include "Complex_Interval.inlines.hh"
+
+#endif // !defined(PURRS_Complex_Interval_defs_hh)

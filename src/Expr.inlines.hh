@@ -29,6 +29,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr_List.defs.hh"
 #include "Symbol.defs.hh"
 #include "Constant.defs.hh"
+#include "Complex_Interval.defs.hh"
 
 #include <stdexcept>
 
@@ -79,6 +80,11 @@ Expr::Expr(const Symbol& y)
 inline
 Expr::Expr(const Constant& y)
   : Base(y.c) {
+}
+
+inline
+Expr::Expr(const Complex_Interval& y)
+  : Base(y.i) {
 }
 
 inline
@@ -140,6 +146,11 @@ Expr::is_a_number(Number& n) const {
 inline bool
 Expr::is_a_constant() const {
   return GiNaC::is_a<GiNaC::constant>(*this);
+}
+
+inline bool
+Expr::is_a_complex_interval() const {
+  return GiNaC::is_a<GiNaC::complint>(*this);
 }
 
 inline bool

@@ -23,7 +23,9 @@ lib_LIBRARIES = libpurrs.a
 
 # The ordering of the following list *matters*!
 INCLUDE_FILES = \
+CInterval.types.hh \
 complint.hh \
+Complex_Interval.types.hh \
 Constant.types.hh \
 Expr.types.hh \
 Expr_List.types.hh \
@@ -32,6 +34,8 @@ Matrix.types.hh \
 Number.types.hh \
 Recurrence.types.hh \
 Symbol.types.hh \
+Complex_Interval.defs.hh \
+Complex_Interval.inlines.hh \
 Constant.defs.hh \
 Constant.inlines.hh \
 Number.defs.hh \
@@ -62,6 +66,7 @@ libpurrs_a_SOURCES = \
 Init.cc \
 Recurrence.cc \
 Expr.cc \
+Complex_Interval.cc \
 Constant.cc \
 Symbol.cc \
 Expr_List.cc \
