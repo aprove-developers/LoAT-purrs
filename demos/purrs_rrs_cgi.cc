@@ -485,8 +485,8 @@ main() try {
 
   time_unit_t start_time;
 
-  long solution_time_usecs = 0;
-  long verification_time_usecs = 0;
+  long solution_time_msecs = 0;
+  long verification_time_msecs = 0;
 
   try {
     start_time = get_time();
@@ -498,14 +498,14 @@ main() try {
         = recurrence.substitute_auxiliary_definitions(exact_solution);
       first_valid_index_for_solution
 	= recurrence.first_valid_index_for_solution();
-      solution_time_usecs += time_unit_to_usecs(get_time() - start_time);
+      solution_time_msecs += time_unit_to_msecs(get_time() - start_time);
 
       start_time = get_time();
       if (verify
 	  &&
 	  recurrence.verify_exact_solution() == Recurrence::PROVABLY_CORRECT) {
 	have_verified_exact_solution = true;
-	verification_time_usecs += time_unit_to_usecs(get_time() - start_time);
+	verification_time_msecs += time_unit_to_msecs(get_time() - start_time);
       }
       goto done;
       break;
@@ -536,14 +536,14 @@ main() try {
       first_valid_index_for_solution
 	= recurrence.first_valid_index_for_solution();
       Sc_function = recurrence.definition_Sc();
-      solution_time_usecs += time_unit_to_usecs(get_time() - start_time);
+      solution_time_msecs += time_unit_to_msecs(get_time() - start_time);
 
       start_time = get_time();
       if (verify
 	  &&
 	  recurrence.verify_lower_bound() == Recurrence::PROVABLY_CORRECT) {
 	have_verified_lower_bound = true;
-	verification_time_usecs += time_unit_to_usecs(get_time() - start_time);
+	verification_time_msecs += time_unit_to_msecs(get_time() - start_time);
       }
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
@@ -573,14 +573,14 @@ main() try {
       first_valid_index_for_solution
 	= recurrence.first_valid_index_for_solution();
       Sc_function = recurrence.definition_Sc();
-      solution_time_usecs += time_unit_to_usecs(get_time() - start_time);
+      solution_time_msecs += time_unit_to_msecs(get_time() - start_time);
 
       start_time = get_time();
       if (verify
 	  &&
 	  recurrence.verify_upper_bound() == Recurrence::PROVABLY_CORRECT) {
 	have_verified_upper_bound = true;
-	verification_time_usecs += time_unit_to_usecs(get_time() - start_time);
+	verification_time_msecs += time_unit_to_msecs(get_time() - start_time);
       }
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
@@ -727,7 +727,7 @@ main() try {
        << (have_exact_solution ? "exact solution"
 	   : ((have_lower_bound && have_upper_bound)
 	      ? "approximations" : "approximation"))
-       << " took about " << solution_time_usecs << " us of CPU time";
+       << " took about " << solution_time_msecs << " ms of CPU time";
   if (have_verified_exact_solution
       || have_verified_lower_bound || have_verified_upper_bound) {
   cout << ";"
@@ -735,7 +735,7 @@ main() try {
        << br()
        << "verifying "
        << ((have_lower_bound && have_upper_bound) ? "them" : "it")
-       << " took about " << verification_time_usecs << " us of CPU time.";
+       << " took about " << verification_time_msecs << " ms of CPU time.";
   }
   else {
     cout << "." << endl;
