@@ -841,11 +841,15 @@ simplify_on_input_ex(const Expr& e, const Symbol& n, bool input) {
   else if (e.is_a_power())
     return pow_simpl(e, n, input);
   else if (e.is_a_function()) {
-    // FIXME: evitare la copia e trovare come accedere al funtore.
-    // e_rewritten = functor(e)(simplify_on_input_ex(e.op(0), n, input));
-    Expr tmp = simplify_on_input_ex(e.op(0), n, input);
-    Expr f = e;
-    e_rewritten = f.subs(f.op(0), tmp);
+    if (e.is_the_sum_function())
+      e_rewritten = sum(e.op(0), e.op(1), e.op(2),
+			simplify_on_input_ex(e.op(3), n, input));
+    else if (e.is_the_prod_function())
+      e_rewritten = prod(e.op(0), e.op(1), e.op(2),
+			 simplify_on_input_ex(e.op(3), n, input));
+    else
+      e_rewritten = function_appl(e.functor(),
+				  simplify_on_input_ex(e.op(0), n, input));
   }
   else
     e_rewritten = e;
@@ -890,11 +894,15 @@ simplify_on_output_ex(const Expr& e, const Symbol& n, bool input) {
       e_rewritten = collect_base_exponent(e_rewritten);
   }
   else if (e.is_a_function()) {
-    // FIXME: evitare la copia e trovare come accedere al funtore.
-    // e_rewritten = functor(e)(simplify_on_input_ex(e.op(0), n, input));
-    Expr tmp = simplify_on_output_ex(e.op(0), n, input);
-    Expr f = e;
-    e_rewritten = f.subs(f.op(0), tmp);
+    if (e.is_the_sum_function())
+      e_rewritten = sum(e.op(0), e.op(1), e.op(2),
+			simplify_on_output_ex(e.op(3), n, input));
+    else if (e.is_the_prod_function())
+      e_rewritten = prod(e.op(0), e.op(1), e.op(2),
+			 simplify_on_output_ex(e.op(3), n, input));
+    else
+      e_rewritten = function_appl(e.functor(),
+				  simplify_on_output_ex(e.op(0), n, input));
   }
   else
     e_rewritten = e;

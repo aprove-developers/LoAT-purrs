@@ -54,11 +54,15 @@ PURRS::Recurrence::substitute_auxiliary_definitions(const Expr& e) const {
     e_after_subs = pwr(substitute_auxiliary_definitions(e.op(0)),
 		       substitute_auxiliary_definitions(e.op(1)));
   else if (e.is_a_function()) {
-    // FIXME: evitare la copia e trovare come accedere al funtore.
-    // e_after_subs = functor(e)(simplify_on_input_ex(e.op(0), n, input));
-    Expr tmp = substitute_auxiliary_definitions(e.op(0));
-    Expr f = e;
-    e_after_subs = f.subs(f.op(0), tmp);
+    if (e.is_the_sum_function())
+      e_after_subs = sum(e.op(0), e.op(1), e.op(2),
+			 substitute_auxiliary_definitions(e.op(3)));
+    else if (e.is_the_prod_function())
+      e_after_subs = prod(e.op(0), e.op(1), e.op(2),
+			  substitute_auxiliary_definitions(e.op(3)));
+    else
+      e_after_subs = function_appl(e.functor(),
+				   substitute_auxiliary_definitions(e.op(0)));
   }
   else if (e.is_a_symbol()) {
     Symbol s = e.ex_to_symbol();
