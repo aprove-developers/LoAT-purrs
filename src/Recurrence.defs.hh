@@ -36,7 +36,13 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 /*!
-  Explain...
+  An object of this class abstracts a (possibly infinite) set of
+  sequences of complex numbers.  Formally, an object of class
+  Recurrence is an element of \f$ \wp(\Nset \to \Cset) \f$.  Elements
+  of \f$ \wp(\Nset \to \Cset) \f$ can be specified by imposing a
+  recurrence relation (whence the class' name) that the sequences must
+  satisy, by imposing some initial conditions for such recurrences,
+  and by computing approximations of set union and intersection.
 */
 class Recurrence {
 public:
