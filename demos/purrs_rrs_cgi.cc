@@ -57,9 +57,10 @@ http://www.cs.unipr.it/purrs/ . */
 #error "We must have a way of limiting time and space!"
 #endif
 
+using std::string;
 using std::cout;
 using std::endl;
-using std::string;
+using std::vector;
 
 using namespace Parma_Recurrence_Relation_Solver;
 using namespace cgicc;
@@ -225,6 +226,15 @@ init_symbols() {
     }
 }
 
+void
+mark_verified_solution() {
+  cout << img()
+    .set("src", "http://www.cs.unipr.it/purrs/images/verified")
+    .set("alt", "Verified solution")
+    .set("border", "0")
+       << " ";
+}
+
 int
 main() try {
   // Limit the amount of resources we may consume.
@@ -248,6 +258,18 @@ main() try {
   // Get the expression, if any.
   const_form_iterator expr = cgi.getElement("expr");
 
+  // Get options, if any.
+  bool verify = false;
+  vector<FormEntry> options;
+  cgi.getElement("options", options);
+  for(string::size_type i = 0; i < options.size(); ++i) {
+    const string& option = options[i].getValue();
+    if (option == "verify")
+      verify = true;
+    else
+      error("internal error");
+  }
+
   if(expr == (*cgi).end() || expr->isEmpty())
     error("you did not type anything!!!");
 
@@ -269,6 +291,10 @@ main() try {
   bool have_lower_bound = false;
   bool have_upper_bound = false;
 
+  bool have_verified_exact_solution = false;
+  bool have_verified_lower_bound = false;
+  bool have_verified_upper_bound = false;
+
   Expr exact_solution;
   Expr lower_bound;
   Expr upper_bound;
@@ -280,6 +306,10 @@ main() try {
       recurrence.exact_solution(exact_solution);
       exact_solution
         = recurrence.substitute_auxiliary_definitions(exact_solution);
+      if (verify
+	  &&
+	  recurrence.verify_exact_solution() == Recurrence::PROVABLY_CORRECT)
+	have_verified_exact_solution = true;
       goto done;
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
@@ -305,6 +335,10 @@ main() try {
     case Recurrence::SUCCESS:
       have_lower_bound = true;
       recurrence.lower_bound(lower_bound);
+      if (verify
+	  &&
+	  recurrence.verify_lower_bound() == Recurrence::PROVABLY_CORRECT)
+	have_verified_lower_bound = true;
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
       error("this recurrence is unsolvable");
@@ -329,6 +363,10 @@ main() try {
     case Recurrence::SUCCESS:
       have_upper_bound = true;
       recurrence.upper_bound(upper_bound);
+      if (verify
+	  &&
+	  recurrence.verify_upper_bound() == Recurrence::PROVABLY_CORRECT)
+	have_verified_upper_bound = true;
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
       error("this recurrence is unsolvable");
@@ -420,13 +458,22 @@ main() try {
        << " for x(n) = " << rhs
        << h2() << endl;
 
-  if (have_exact_solution)
+  if (have_exact_solution) {
+    if (have_verified_exact_solution)
+      mark_verified_solution();
     cout << "x(n) = " << exact_solution << endl;
+  }
   else {
-    if (have_lower_bound)
+    if (have_lower_bound) {
+      if (have_verified_lower_bound)
+	mark_verified_solution();
       cout << "x(n) >= " << lower_bound << br() << endl;
-    if (have_upper_bound)
+    }
+    if (have_upper_bound) {
+      if (have_verified_upper_bound)
+	mark_verified_solution();
       cout << "x(n) <= " << upper_bound << endl;
+    }
   }
 
   // Get a pointer to the environment.
