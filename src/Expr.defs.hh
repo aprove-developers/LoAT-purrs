@@ -132,6 +132,17 @@ bool operator==(const Expr& x, const Expr& y);
 //! syntactically different.
 bool operator!=(const Expr& x, const Expr& y);
 
+//! Compares two numeric expressions.
+/*! \relates Expr
+  Compares the numeric expressions \p x and \p y and returns the following
+  values:
+  - -1, if \p x is smaller than \p y;
+  - 0,  if x and y are equal;
+  - +1, if \p y is smaller than \p x;
+  - +2, if the system is not able to compare \p x and \p y.
+*/
+int compare(const Expr& x, const Expr& y);
+
 //! \brief
 //! Returns the application of functor \f$ f \f$ to operand \f$ x \f$,
 //! i.e., the expression \f$ f(x) \f$.
@@ -560,6 +571,7 @@ public:
   //! \brief
   //! Substitutes every occurrence of the expression \p s in \p * this
   //! with the expression \p r.
+  /*! relates Expr */
   Expr substitute(const Expr& s, const Expr& r) const;
 
   //! \brief
@@ -920,6 +932,7 @@ private:
 
   friend bool operator==(const Expr& x, const Expr& y);
 
+  friend int compare(const Expr& x, const Expr& y);
   friend Expr apply(Functor f, const Expr& x);
   friend Expr apply(Functor f, const Expr& x1, const Expr& x2);
   friend Expr apply(Functor f, const Expr& x1, const Expr& x2, const Expr& x3);

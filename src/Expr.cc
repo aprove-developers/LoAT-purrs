@@ -457,6 +457,28 @@ PURRS::sqrfree(const Expr& x, const Expr_List& y) {
   return blackboard.rewrite(x_subs);
 }
 
+/*! \relates Parma_Recurrence_Realtion_Solver::Expr */
+int
+PURRS::compare(const Expr& x, const Expr& y) {
+  // FIXME: to be improved without using `Expr::unsafe_fp_approximation()'.
+  Expr diff = x - y;
+  if (diff == 0)
+    return 0;
+  else {
+    static const Number threshold = exact_pwr(10, -6); 
+    diff = diff.unsafe_fp_approximation();
+    assert(diff.is_a_number());
+    Number numeric_diff = diff.ex_to_number();
+    if (numeric_diff.is_positive() && numeric_diff > threshold)
+      return 1;
+    else if (numeric_diff.is_negative() && numeric_diff < -threshold)
+      return -1;
+    else
+      return 2;
+  }
+}
+
+/*! \relates Parma_Recurrence_Realtion_Solver::Expr */
 PURRS::Expr
 PURRS::Expr::substitute(const Expr& s, const Expr& r) const {
   const Expr& e = *this;
