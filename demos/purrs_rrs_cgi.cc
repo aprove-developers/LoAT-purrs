@@ -125,8 +125,8 @@ footer() {
 
   cout << cgicc::div() << br() << hr().set("class", "half") << endl;
   cout << cgicc::div().set("align", "center") << endl;
-  cout << a("PURRS ").set("href", "http://www.cs.unipr.it/purrs/")
-       << span("recurrence relation solver", set("class", "red")) << br()
+  cout << a("PURRS").set("href", "http://www.cs.unipr.it/purrs/")
+       << span(" recurrence relation solver", set("class", "red")) << br()
        << " by the "
        << a("PURRS development team")
     .set("href", "mailto:purrs-devel@cs.unipr.it") << "." << br() << br()
@@ -317,12 +317,10 @@ main() try {
     error(s);
   }
 
-#if 0
   if (!have_exact_solution
       && !have_lower_bound
       && !have_upper_bound)
     error("sorry, this is too difficult");
-#endif
 
  done:
 
@@ -380,7 +378,7 @@ main() try {
     .set("content", "PURRS development team") << endl;
 
   cout << head() << endl;
-    
+
   // Start the HTML body.
   cout << body() << endl
        << h1() << "PURRS Demo " << span("Results", set("class", "green"))
@@ -395,7 +393,7 @@ main() try {
     cout << "x(n) = " << exact_solution << endl;
   else {
     if (have_lower_bound)
-      cout << "x(n) >= " << lower_bound << endl;
+      cout << "x(n) >= " << lower_bound << br() << endl;
     if (have_upper_bound)
       cout << "x(n) <= " << upper_bound << endl;
   }
