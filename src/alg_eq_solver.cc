@@ -30,6 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "poly_factor.hh"
 #include "simplify.hh"
 #include "util.hh"
+#include "Expr.defs.hh"
 #include <cassert>
 #include <iostream>
 
@@ -244,7 +245,7 @@ static bool
 find_roots(const Expr& p, const Symbol& x,
 	   std::vector<Polynomial_Root>& roots,
 	   Number multiplicity) {
-  int ldegree = p.ldegree(x);
+  unsigned ldegree = p.ldegree(x);
   assert(ldegree <= 1);
   Expr q;
   if (ldegree == 1) {
@@ -256,7 +257,7 @@ find_roots(const Expr& p, const Symbol& x,
 
   Number lc = q.lcoeff(x).ex_to_number();
   Number tc = q.tcoeff(x).ex_to_number();
-  int degree = q.degree(x);
+  unsigned degree = q.degree(x);
   if (degree == 1) {
     roots.push_back(Polynomial_Root(-tc/lc, multiplicity));
     return true;
@@ -307,7 +308,7 @@ find_roots(const Expr& p, const Symbol& x,
   if (degree <= 4) {
     unsigned position = roots.size();
     // Insert `degree' elements at the end of roots.
-    roots.insert(roots.end(), degree, 0);
+    roots.insert(roots.end(), degree, Expr(0));
 
     switch (degree) {
     case 1:
