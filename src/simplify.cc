@@ -984,6 +984,42 @@ rewrite_factorials_and_exponentials(const Expr& e) {
   return e_rewritten;
 }
 
+Expr
+change_base_logarithm(const Expr& base, const Expr exponent,
+    const Number& new_base, const Number& new_exponent = 1) {
+  if (exponent.is_a_mul() && exponent.nops() == 2
+      && ((exponent.op(0) == log(Recurrence::n)
+	   && exponent.op(1) == 1 / log(new_base))
+	  || (exponent.op(1) == log(Recurrence::n)
+	      && exponent.op(0) == 1 / log(new_base))))
+    return pwr(Recurrence::n, new_exponent);
+  else
+    return pwr(simplify_logarithm(base),
+	       simplify_logarithm(exponent));
+}
+
+Expr
+prepare_change_base_logarithm(const Expr& base, const Expr& exponent) {
+  Number base_num;
+  if (base.is_a_number(base_num) && base_num.is_positive()) {
+    std::vector<Number> bases;
+    std::vector<int> exponents;
+    if (base_num.is_integer()) {
+      partial_factor(base_num, bases, exponents);
+      if (bases.size() == 1) {
+	Number new_base = bases[0];
+	return change_base_logarithm(base, exponent, new_base, exponents[0]);
+      }
+      else
+	return change_base_logarithm(base, exponent, base_num);
+    }
+    else
+      return change_base_logarithm(base, exponent, base_num);
+  }
+  else
+    return pwr(simplify_logarithm(base), simplify_logarithm(exponent));
+}
+
 } // anonymous namespace
 
 /*!
@@ -1150,12 +1186,14 @@ PURRS::simplify_factorials_and_exponentials(const Expr& e) {
   \f[
     \begin{cases}
       log(a^b) = b log(a), \\
-      a^{log n / log a} = n, \quad \text{where } a \in \Rset, a > 0.
+      (a^b)^{log n / log a} = n^b, \quad \text{where } a \in \Rset, a > 0
+        \text{and } b \in \Nset.
     \end{cases}
   \f]
 */
 PURRS::Expr
 PURRS::simplify_logarithm(const Expr& e) {
+  D_MSG("***LOGARITHM");
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
@@ -1167,23 +1205,13 @@ PURRS::simplify_logarithm(const Expr& e) {
     for (unsigned i = e.nops(); i-- > 0; )
       e_rewritten *= simplify_logarithm(e.op(i));
   }
-  else if (e.is_a_power()) {
-    const Expr& base = e.arg(0);
-    const Expr& exponent = e.arg(1);
-    Number base_num;
-    if (base.is_a_number(base_num) && base_num.is_positive()
-	&& exponent.is_a_mul() && exponent.nops() == 2
-	&& ((exponent.op(0) == log(Recurrence::n)
-	     && exponent.op(1) == 1 / log(base_num))
-	    || (exponent.op(1) == log(Recurrence::n)
-		&& exponent.op(0) == 1 / log(base_num))))
-      return Recurrence::n;
-    else
-      return pwr(simplify_logarithm(e.arg(0)), simplify_logarithm(e.arg(1)));
-  }
+  else if (e.is_a_power())
+    // Apply the second property.
+    return prepare_change_base_logarithm(e.arg(0), e.arg(1));
   else if (e.is_a_function()) {
     if (e.is_the_log_function()) {
       const Expr& arg_log = e.arg(0);
+      // Apply the first property.
       if (arg_log.is_a_power())
 	return arg_log.arg(1) * log(arg_log.arg(0));
       else
