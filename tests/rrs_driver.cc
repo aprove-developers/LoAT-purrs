@@ -218,9 +218,9 @@ set_expectations(const string& s) {
 }
 
 Recurrence::Solver_Status
-solve_wrapper(const Recurrence& rec) {
+compute_exact_solution_wrapper(const Recurrence& rec) {
   try {
-    return rec.solve();
+    return rec.compute_exact_solution();
   }
   catch (exception& e) {
     if (verbose) {
@@ -390,13 +390,13 @@ main(int argc, char *argv[]) try {
 
     Expr lower;
     Expr upper;
-    Expr solution;
-    switch (solve_wrapper(rec)) {
-    case Recurrence::SUCCESS:
-      if (regress_test) {
-	// FIXME: add the check about what kind of the solution the
-	// system has found.
-	if (expect_exactly_solved) {
+    Expr exact_solution;
+    // *** regress test
+    if (regress_test) {
+      if (expect_exactly_solved) {
+	if (compute_exact_solution_wrapper(rec) == Recurrence::SUCCESS) {
+	  // Get the exact solution.
+	  rec.exact_solution(exact_solution);
 	  if (expect_provably_correct_result
 	      || expect_provably_wrong_result
 	      || expect_inconclusive_verification) {
@@ -423,96 +423,186 @@ main(int argc, char *argv[]) try {
 	      ++unexpected_conclusive_verifications;
 	    }
 	  }
+	  if (interactive) {
+	    cout << "*** EXACT SOLUTION ***"
+		 << endl
+		 << exact_solution
+		 << endl
+		 << "****************"
+		 << endl << endl;
+#if 0
+	    cout << "*** APPROXIMATED SOLUTION ***"
+		 << endl
+		 << rec.approximated_solution()
+		 << endl
+		 << "*****************************"
+		 << endl << endl;
+#endif
+	  }
+	  if (latex) {
+	    cout << "\\medskip\\indent\n\\(\n x(n) = ";
+	    exact_solution.latex_print(cout);
+	  }
 	}
-	if (expect_not_to_be_solved) {
+	else
+	  // There is not the exact solution.
+	  if (verbose) {
+	    cerr << "*** unexpected failure to find exact solution" << endl;
+	    ++unexpected_exact_failures;
+	  }
+      }
+      if (expect_lower_bound)
+	if (rec.compute_lower_bound() == Recurrence::SUCCESS) {
+	  // Get the lower bound.
+	  rec.lower_bound(lower);
+	  if (interactive)
+	    cout << "*** LOWER BOUND ***"
+		 << endl
+		 << lower
+		 << endl
+		 << "*******************"
+		 << endl << endl;
+	  if (latex) {
+	    cout << "\\medskip\\indent\n\\(\n x(n) = ";
+	    lower.latex_print(cout);
+	  }
+	}
+	else {
+	  // There is not the lower bound.
+	  if (verbose)
+	    cerr << "*** unexpected failure to find lower bound for "
+		 << "the solution" << endl;
+	  ++unexpected_lower_failures;
+	}
+      if (expect_upper_bound)
+	if (rec.compute_upper_bound() == Recurrence::SUCCESS) {
+	  // Get the upper bound.
+	  rec.upper_bound(upper);
+	  if (interactive)
+	    cout << "*** UPPER BOUND ***"
+		 << endl
+		 << upper
+		 << endl
+		 << "*******************"
+		 << endl << endl;
+	  if (latex) {
+	    cout << "\\medskip\\indent\n\\(\n x(n) = ";
+	    upper.latex_print(cout);
+	  }
+	}
+	else {
+	  // There is not the upper bound.
+	  if (verbose)
+	    cerr << "*** unexpected failure to find upper bound for "
+		 << "the solution" << endl;
+	  ++unexpected_upper_failures;
+	}
+      if (expect_not_to_be_solved)
+	if (compute_exact_solution_wrapper(rec) == Recurrence::SUCCESS
+	    || rec.compute_lower_bound() == Recurrence::SUCCESS
+	    || rec.compute_upper_bound() == Recurrence::SUCCESS) {
 	  if (verbose)
 	    cerr << "*** unexpected solution or bounds for it" << endl;
 	  ++unexpected_solution_or_bounds_for_it;
 	}
-      }
-      if (interactive) {
-	if (rec.exact_solution(solution)) {
+      if (expect_not_diagnose_unsolvable)
+	if (compute_exact_solution_wrapper(rec)
+	    == Recurrence::UNSOLVABLE_RECURRENCE
+	    || rec.compute_lower_bound() == Recurrence::UNSOLVABLE_RECURRENCE
+	    || rec.compute_upper_bound()
+	    == Recurrence::UNSOLVABLE_RECURRENCE) {
+	  if (verbose)
+	    cerr << "*** unexpected unsolvability diagnosis" << endl;
+	  ++unexpected_unsolvability_diagnoses;
+	  if (interactive)
+	    cout << "Unsolvable." << endl;
+	}
+      if (expect_diagnose_unsolvable)
+	if (compute_exact_solution_wrapper(rec) == Recurrence::TOO_COMPLEX
+	    || rec.compute_lower_bound() == Recurrence::TOO_COMPLEX
+	    || rec.compute_upper_bound() == Recurrence::TOO_COMPLEX) {
+	  if (verbose)
+	    cerr << "*** unexpected failure to diagnose unsolvability" << endl;
+	  ++unexpected_failures_to_diagnose_unsolvability;
+	  if (interactive)
+	    cout << "Sorry, this is too difficult." << endl;
+	}
+    } // *** regress test
+    else {
+      bool solved_or_approximated = false;
+      // Try to solve the recurrence exactly.
+      if (compute_exact_solution_wrapper(rec) == Recurrence::SUCCESS) {
+	// OK: get the exact solution and print it.
+	rec.exact_solution(exact_solution);
+	solved_or_approximated = true;
+	if (interactive) {
 	  cout << "*** EXACT SOLUTION ***"
 	       << endl
-	       << solution
+	       << exact_solution
 	       << endl
-	       << "**********************"
+	       << "****************"
 	       << endl << endl;
+#if 0
 	  cout << "*** APPROXIMATED SOLUTION ***"
 	       << endl
 	       << rec.approximated_solution()
 	       << endl
 	       << "*****************************"
 	       << endl << endl;
-	}
-	else
-	  cout << "There is not an exact solution" << endl;
-	cout << "*** LOWER BOUND ***"
-	     << endl
-	     << rec.lower_bound_solution()
-	     << endl
-	     << "*******************"
-	     << endl << endl;
-	cout << "*** UPPER BOUND ***"
-	     << endl
-	     << rec.upper_bound_solution()
-	     << endl
-	     << "*******************"
-	     << endl << endl;
-	rec.dump(cout);
-      }
-      if (latex) {
-	cout << "\\medskip\\indent\n\\(\n x(n) = ";
-	rec.exact_solution(solution);
-	solution.latex_print(cout);
-	rec.lower_bound_solution().latex_print(cout);
-	rec.upper_bound_solution().latex_print(cout);
-	cout << "\n\\)\n" << endl;
-      }
-      break;
-
-    case Recurrence::UNSOLVABLE_RECURRENCE:
-      if (expect_not_diagnose_unsolvable) {
-	if (verbose)
-	  cerr << "*** unexpected unsolvability diagnosis" << endl;
-	++unexpected_unsolvability_diagnoses;
-      }
-      if (interactive)
-	cout << "Unsolvable." << endl;
-      goto failed;
-      break;
-
-    case Recurrence::TOO_COMPLEX:
-    default:
-      if (expect_diagnose_unsolvable) {
-	if (verbose)
-	  cerr << "*** unexpected failure to diagnose unsolvability" << endl;
-	++unexpected_failures_to_diagnose_unsolvability;
-      }
-      if (interactive)
-	cout << "Sorry, this is too difficult." << endl;
-
-    failed:
-      if (regress_test) {
-	if (expect_exactly_solved) {
-	  if (verbose)
-	    cerr << "*** unexpected failure to find exact solution" << endl;
-	  ++unexpected_exact_failures;
-	}
-	if (expect_lower_bound) {
-	  if (verbose)
-	    cerr << "*** unexpected failure to find lower bound for "
-		 << "the solution" << endl;
-	  ++unexpected_lower_failures;
-	}
-	if (expect_upper_bound) {
-	  if (verbose)
-	    cerr << "*** unexpected failure to find upper bound for "
-		 << "the solution" << endl;
-	  ++unexpected_upper_failures;
+#endif
 	}
       }
+      else {
+	// Cannot solve it exacly: try to get lower and upper bound.
+	if (rec.compute_lower_bound() == Recurrence::SUCCESS) {
+	  // OK: get the lower bound and print it.
+	  rec.lower_bound(lower);
+	  solved_or_approximated = true;
+	  if (interactive)
+	    cout << "*** LOWER BOUND ***"
+		 << endl
+		 << lower
+		 << endl
+		 << "*******************"
+		 << endl << endl;
+	}
+	if (rec.compute_upper_bound() == Recurrence::SUCCESS) {
+	  // OK: get the upper bound and print it.
+	  rec.upper_bound(upper);
+	  solved_or_approximated = true;
+	  if (interactive)
+	    cout << "*** UPPER BOUND ***"
+		 << endl
+		 << upper
+		 << endl
+		 << "*******************"
+		 << endl << endl;
+	}
+      }
+      bool unsolvable = false;
+      if (!solved_or_approximated)
+	if (compute_exact_solution_wrapper(rec)
+	    == Recurrence::UNSOLVABLE_RECURRENCE
+	    || rec.compute_lower_bound()
+	    == Recurrence::UNSOLVABLE_RECURRENCE
+	    || rec.compute_upper_bound()
+	    == Recurrence::UNSOLVABLE_RECURRENCE) {
+	  unsolvable = true;
+	  if (interactive)
+	    cout << "Unsolvable." << endl << endl;
+	}
+      if (!solved_or_approximated && !unsolvable)
+	if (compute_exact_solution_wrapper(rec)
+	    == Recurrence::TOO_COMPLEX
+	    || rec.compute_lower_bound()
+	    == Recurrence::TOO_COMPLEX
+	    || rec.compute_upper_bound()
+	    == Recurrence::TOO_COMPLEX)
+	  if (interactive)
+	    cout << "Sorry, this is too difficult." << endl << endl;
     }
+    if (interactive)
+      rec.dump(cout);
   } // while (input_stream)
 
   if (latex)
