@@ -425,3 +425,37 @@ PURRS::largest_positive_int_zero(const Expr& e, Number& z) {
     }
   }
 }
+
+//! Returns <CODE>true</CODE> if \p e contains parameters;
+//! returns <CODE>false</CODE> otherwise.
+/*!
+  The parameters are all symbols different from \p n and the initial
+  conditions \f$ x(k) \f$ with \f$ k \f$ a positive integer.
+  Note: \p e does not contain \f$ x(f) \f$ with \f$ f \f$ an expression
+  containig \p n.
+*/
+bool
+PURRS::find_parameters(const Expr& e) {
+  if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (find_parameters(e.op(i)))
+	return true;
+  }
+  else if (e.is_a_power()) {
+    if (find_parameters(e.arg(0)) || find_parameters(e.arg(1)))
+      return true;
+  }
+  else if (e.is_a_function()) {
+    // In this case the function `x' is surely an initial condition.
+    if (e.is_the_x_function())
+      return true;
+    else
+      for (unsigned i = e.nops(); i-- > 0; )
+	if (find_parameters(e.arg(i)))
+	  return true;
+  }
+  else
+    if (e.is_a_symbol() && e != Recurrence::n)
+      return true;
+  return false;
+}

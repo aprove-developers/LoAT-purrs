@@ -92,6 +92,9 @@ resultant(const Expr& p, const Expr& q, const Symbol& x);
 void
 largest_positive_int_zero(const Expr& e, Number& z);
 
+bool
+find_parameters(const Expr& e);
+
 #if defined(NOISY) && NOISY
 #define D_MSG(s) std::cout << s << std::endl
 #define D_VAR(x) std::cout << #x " = " << x << std::endl

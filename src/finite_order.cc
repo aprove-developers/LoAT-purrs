@@ -31,6 +31,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "finite_order.hh"
 
 #include "util.hh"
+#include "gosper.hh"
 #include "simplify.hh"
 #include "sum_poly.hh"
 #include "ep_decomp.hh"
@@ -528,6 +529,78 @@ PURRS::compute_non_homogeneous_part(const Expr& g_n, unsigned int order,
       solution_tot += solution;
     }
   return solution_tot;
+}
+
+/*!
+  Applies the Gosper's algorithm to express in closed form, if it is
+  possible, sum with the summand an hypergeometric term not polynomials
+  or polynomials times exponentials (these last sums are computed by the
+  functions <CODE>compute_symbolic_sum()</CODE> and
+  <CODE>subs_to_sum_roots_and_bases()</CODE>).  This function returns
+  <CODE>true</CODE> if the summand is an hypergeometric term,
+  independently if it is possible or not to express the sum in closed form.
+  Returns <CODE>false</CODE> otherwise.
+*/
+bool
+PURRS::
+compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
+				  const std::vector<Expr>& base_of_exps,
+				  const std::vector<Expr>& exp_no_poly_coeff,
+				  const std::vector<Polynomial_Root>& roots,
+				  Expr& solution) {
+  solution = 0;
+  for (unsigned i = exp_no_poly_coeff.size(); i-- > 0; ) {
+    Expr gosper_solution;
+    if (!exp_no_poly_coeff[i].is_zero()) {
+      // FIXME: for the moment use this function only when the `order'
+      // is one, then `roots' has only one elements.
+      Expr t_n = pwr(base_of_exps[i], Recurrence::n) * exp_no_poly_coeff[i]
+	* pwr(roots[0].value(), -Recurrence::n);
+      D_VAR(t_n);
+      if (!full_gosper(t_n, lower, upper, gosper_solution))
+	return false;
+    }
+    solution += gosper_solution;
+  }
+  return true;
+}
+
+/*!
+  Applies a partial version of the Gosper's algorithm to express in
+  closed form, if it is possible, sum with the summand an hypergeometric
+  term. 
+  This function returns <CODE>true</CODE> if the summand is an
+  hypergeometric term, independently if it is possible or not to express
+  the sum in closed form.
+  Returns <CODE>false</CODE> otherwise.
+*/
+bool
+PURRS::
+compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
+				  const std::vector<Expr>& base_of_exps,
+				  const std::vector<Expr>& exp_poly_coeff,
+				  const std::vector<Expr>& exp_no_poly_coeff,
+				  const std::vector<Polynomial_Root>& roots,
+				  const Expr& t_n, Expr& solution) {
+  solution = 0;
+  for (unsigned i = exp_poly_coeff.size(); i-- > 0; ) {
+    Expr gosper_solution;
+    Expr coefficient = 1;
+    if (!exp_poly_coeff[i].is_zero())
+      coefficient *= exp_poly_coeff[i];
+    if (!exp_no_poly_coeff[i].is_zero())
+      coefficient *= exp_no_poly_coeff[i];
+    // FIXME: for the moment use this function only when the `order'
+    // is one, then `roots' has only one elements.
+    Expr r_n = pwr(base_of_exps[i], Recurrence::n) * coefficient
+      * pwr(roots[0].value(), -Recurrence::n);
+    D_VAR(t_n);
+    D_VAR(r_n);
+    if (!partial_gosper(t_n, r_n, lower, upper, gosper_solution))
+      return false;
+    solution += gosper_solution;
+  }
+  return true;
 }
 
 /*!

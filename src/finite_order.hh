@@ -78,6 +78,21 @@ compute_non_homogeneous_part(const Expr& g_n, unsigned int order,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff);
 
+bool
+compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
+				  const std::vector<Expr>& base_of_exps,
+				  const std::vector<Expr>& exp_no_poly_coeff,
+				  const std::vector<Polynomial_Root>& roots,
+				  Expr& solution);
+
+bool
+compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
+				  const std::vector<Expr>& base_of_exps,
+				  const std::vector<Expr>& exp_poly_coeff,
+				  const std::vector<Expr>& exp_no_poly_coeff,
+				  const std::vector<Polynomial_Root>& roots,
+				  const Expr& t_n, Expr& solution);
+
 Expr
 rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
 				 int gcd_among_decrements);
