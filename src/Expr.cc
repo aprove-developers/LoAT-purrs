@@ -548,3 +548,29 @@ PURRS::Expr::is_rational_function(const Symbol& x) const {
     return true;
   return false;
 }
+
+bool
+PURRS::Expr::has_floating_point_numbers() const {
+  const Expr& e = *this;
+  if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (e.op(i).has_floating_point_numbers())
+	return true;
+  }
+  else if (e.is_a_power()) {
+    if (e.arg(0).has_floating_point_numbers()
+	|| e.arg(1).has_floating_point_numbers())
+      return true;
+  }
+  else if (e.is_a_function()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (e.arg(i).has_floating_point_numbers())
+	return true;
+  }
+  else {
+    Number num;
+    if (e.is_a_number(num) && !num.is_rational())
+      return true;
+  }
+  return false;
+}

@@ -743,6 +743,12 @@ public:
   */
   bool is_rational_function(const Symbol& x) const;
 
+  //! \brief
+  //! Returns <CODE>true</CODE> if \p *this contains floating point numbers;
+  //! returns <CODE>false</CODE> otherwise.
+  bool
+  has_floating_point_numbers() const ;
+
 private:
   friend class Number;
   friend class Symbol;
