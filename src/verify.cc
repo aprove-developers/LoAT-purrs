@@ -521,6 +521,28 @@ namespace {
 using namespace PURRS;
 
 void
+split_solution(bool is_symbolic_solution, const Expr& exact_solution,
+	       Expr& summands_with_i_c, Expr& summands_without_i_c) {
+  if (is_symbolic_solution)
+    if (exact_solution.is_a_add())
+      for (unsigned int i = exact_solution.nops(); i-- > 0; ) {
+	const Expr& addend_exact_solution = exact_solution.op(i);
+	if (has_at_least_a_symbolic_initial_condition(addend_exact_solution))
+	  summands_with_i_c += addend_exact_solution;
+	else
+	  summands_without_i_c += addend_exact_solution;
+      }
+    else
+      if (has_only_symbolic_initial_conditions(exact_solution))
+	summands_with_i_c = exact_solution;
+      else
+	summands_without_i_c = exact_solution;
+  else
+    summands_without_i_c = exact_solution;
+  D_VAR(summands_without_i_c);
+}
+
+void
 fill_vector_coefficients_i_c(const Expr& summands_with_i_c, unsigned int gcd,
 			     unsigned int first_valid_index,
 			     std::vector<Expr>& coefficients_i_c) {
@@ -777,26 +799,13 @@ PURRS::Recurrence::verify_finite_order() const {
   // Step 1: split the solution in 2 parts: terms with initial conditions
   // are stored in `summands_with_i_c', all the other terms are stored in
   // `summands_without_i_c'.
+  // In the case of not symbolic solution there are not symbolic initial
+  // conditions: all the solution is stored in `summands_without_i_c'.
   Expr summands_with_i_c = 0;
   Expr summands_without_i_c = 0;
-  if (is_symbolic_solution)
-    if (exact_solution.is_a_add())
-      for (unsigned int i = exact_solution.nops(); i-- > 0; ) {
-	const Expr& addend_exact_solution = exact_solution.op(i);
-	if (has_at_least_a_symbolic_initial_condition(addend_exact_solution))
-	  summands_with_i_c += addend_exact_solution;
-	else
-	  summands_without_i_c += addend_exact_solution;
-      }
-    else
-      if (has_only_symbolic_initial_conditions(exact_solution))
-	summands_with_i_c = exact_solution;
-      else
-	summands_without_i_c = exact_solution;
-  else
-    summands_without_i_c = exact_solution;
-  D_VAR(summands_without_i_c);
-  
+  split_solution(is_symbolic_solution, exact_solution,
+		 summands_with_i_c, summands_without_i_c);
+
   // Prepare a vector containing the coefficients of the symbolic
   // initial conditions occurring in the solution.
   std::vector<Expr> coefficients_i_c(order_rec);
@@ -813,8 +822,6 @@ PURRS::Recurrence::verify_finite_order() const {
 						     summands_without_i_c);
   if (status != PROVABLY_CORRECT)
     return status;
-  
-  
 
   // Step 3.
 #if NEW_VERIFICATION
