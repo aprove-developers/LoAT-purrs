@@ -76,6 +76,7 @@ factorize.hh \
 factorize_giac.hh \
 compute_prod.hh \
 ep_decomp.hh \
+fact_decomp.hh \
 sum_poly.hh \
 finite_order.hh \
 functional_equation.hh \
@@ -126,6 +127,7 @@ rr_classifier.cc \
 simplify.cc \
 compute_prod.cc \
 ep_decomp.cc \
+fact_decomp.cc \
 sum_poly.cc \
 compute_bounds.cc \
 compute_exact_solution.cc \
