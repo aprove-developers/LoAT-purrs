@@ -536,8 +536,7 @@ PURRS::Recurrence::verify_finite_order() const {
 
 //! Verify the exact solution of the infinite order recurrence \p *this.
 /*!
-  Consider the right hand side of a infinite ordr recurrence in
-  <EM>normal form</EM>
+  Consider the right hand side of a infinite order recurrence in
   \f$ f(n) \sum_{k=0}^{n-1} x(k) + g(n) \f$,
   which is stored in the expression \p recurrence_rhs.
   Assume that the system has produced the expression
@@ -545,7 +544,8 @@ PURRS::Recurrence::verify_finite_order() const {
   variable \f$ n \f$.
 
   The verification's process is divided in 2 steps:
-  -  Validation of \ref initial_conditions "symbolic initial condition".
+  -  Validation of the \ref initial_condition
+     "symbolic initial condition x(0)".
      Evaluate the expression \p exact_solution_.expression() for
      \f$ n = 0 \f$ and simplify as much as possible.
      If the final result is <EM>synctactically</EM> equal to \f$ x(0) \f$
@@ -554,7 +554,20 @@ PURRS::Recurrence::verify_finite_order() const {
      because the solution can be wrong or it is not enough simplified.
      FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
   -  Validation of the solution using substitution.
-// FIXME: to finish comment.
+     Consider the difference
+     \f$ d = x(n) - (f(n) sum(k, 0, n-1, x(k)) + g(n)) \f$, with
+     \f$ x(n) \f$ and \f$ x(k) \f$ replaced with the solution.
+     Since the closed formula for \f$ x(n) \f$ is guaranteed to hold for
+     \f$ n >= 1 \f$ only, the lower limit of the sum must start from
+     \f$ 1 \f$ and the term for \f$ n = 0 \f$ must be considered before.
+     Hence, the difference that we consider is
+     \f$ d = x(n) - (f(n) x(0) + f(n) sum(k, 1, n - 1, x(k)) + g(n)) \f$:
+     - if \f$ d = 0 \f$     -> returns <CODE>PROVABLY_CORRECT</CODE>:
+                               the solution is certainly right.
+     - if \f$ d \neq 0 \f$  -> returns <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
+ 			       the solution can be wrong or we failed to
+			       simplify it.
+     FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
 */
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_infinite_order() const {
@@ -580,19 +593,16 @@ PURRS::Recurrence::verify_infinite_order() const {
     return INCONCLUSIVE_VERIFICATION;
   
   // Step 2: validation of the solution.
-  // Let `x(n) = f(n) sum(k, 0, n-1, x(k)) + g(n)' be the infinite
-  // order recurrence. Now we must consider the expression
-  // `x(n) - f(n) x(0) - f(n) sum(k, 0 + 1, n - 1, x(k)) - g(n)',
-  // where `x(n)' and `x(k)' are substituted with the solution.
-  // If we are able to demonstrate that this expression is syntactically
-  // zero, then the solution is correct.
-  // FIXME: specificare perche' e' necessario tirare fuori il primo
-  // termine oppure lasciarlo dentro.
+  // Consider the `sum(k, 0, n-1, x(k)', with `x(k)' replaced by
+  // the solution, and tries to semplify it.
   Symbol h;
   Expr diff
     = PURRS::sum(h, 1, n - 1, exact_solution_.expression().substitute(n, h));
   diff = simplify_sum(diff, COMPUTE_SUM);
-  diff = exact_solution_.expression()
+  // Consider the difference
+  // `x(n) - (f(n) x(0) + f(n) sum(k, 1, n - 1, x(k)) + g(n))'
+  // and tries to simplify it.
+  Expr diff = exact_solution_.expression()
     - diff * weight - x(0) * weight - inhomogeneous_term;
   diff = simplify_all(diff);
   if (diff == 0)
