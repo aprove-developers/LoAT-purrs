@@ -19,7 +19,6 @@
 % * no expectations
 
 E	2*x(n-1)+n^100
-E	3*x(n/2)+n*log(n)+x(n)
 I	x(n)
 K	x(n)+n!
 K	x(n)-2
@@ -63,6 +62,7 @@ n	3*x(n+5)-x(3*n-9)+a
 n	3*x(n-8)+x(n-1)
 n	3*x(n-a)
 n	3*x(n/2)+n*log(a)
+n	3*x(n/2)+n*log(n)+x(n)
 n	3*x(n/2)+n*log(n)+x(n-1)
 n	3*x(n/2)+n*log(n*n*a)
 n	3*x(n/2)+n*log(n*n/a)
