@@ -248,37 +248,42 @@ power(const Number& x, const Number& y) {
 }
 
 inline bool
-Number::Number::is_positive() const {
+Number::is_zero() const {
+  return n.is_zero();
+}
+
+inline bool
+Number::is_positive() const {
   return n.is_positive();
 }
 
 inline bool
-Number::Number::is_integer() const {
+Number::is_integer() const {
   return n.is_integer();
 }
 
 inline bool
-Number::Number::is_positive_integer() const {
+Number::is_positive_integer() const {
   return n.is_pos_integer();
 }
 
 inline bool
-Number::Number::is_nonnegative_integer() const {
+Number::is_nonnegative_integer() const {
   return n.is_nonneg_integer();
 }
 
 inline bool
-Number::Number::is_even() const {
+Number::is_even() const {
   return n.is_even();
 }
 
 inline bool
-Number::Number::is_odd() const {
+Number::is_odd() const {
   return n.is_odd();
 }
 
 inline bool
-Number::Number::is_prime() const {
+Number::is_prime() const {
   // FIXME: this test is due to a problem in CLN 1.1.5 and/or GiNaC 1.0.11.
   // See http://www.cs.unipr.it/pipermail/purrs-devel/2002-October/000411.html.
   if (!is_positive_integer())
@@ -287,22 +292,22 @@ Number::Number::is_prime() const {
 }
 
 inline bool
-Number::Number::is_rational() const {
+Number::is_rational() const {
   return n.is_rational();
 }
 
 inline bool
-Number::Number::is_real() const {
+Number::is_real() const {
   return n.is_real();
 }
 
 inline bool
-Number::Number::is_complex_integer() const {
+Number::is_complex_integer() const {
   return n.is_cinteger();
 }
 
 inline bool
-Number::Number::is_complex_rational() const {
+Number::is_complex_rational() const {
   return n.is_crational();
 }
 
@@ -349,8 +354,12 @@ Number::denominator() const {
 }
 
 inline Number
-irem(const Number& a, const Number& b) {
-  return irem(a, b);
+irem(const Number& x, const Number& y) {
+  // FIXME: this test is due to a problem in CLN 1.1.5 and/or GiNaC 1.0.11.
+  // See http://www.cs.unipr.it/pipermail/purrs-devel/2002-October/000417.html.
+  if (y.is_zero())
+    throw std::runtime_error("Division by zero in PURRS::Number::irem()");
+  return irem(x, y);
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

@@ -115,10 +115,15 @@ Number lcm(const Number& x, const Number& y);
 */
 Number power(const Number& x, const Number& y);
 
-//! If \f$ x \f$ and \f$ y \f$ are integer, returns the reminder
-//! of the division of \f$ x \f$ by \f$ y \f$.
+//! If \f$ x \f$ and \f$ y \f$ are integer and \f$ y \neq 0 \f$,
+//! returns the reminder of the division of \f$ x \f$ by \f$ y \f$.
+//! If \f$ y = 0 \f$ an exception is thrown.
+//! Returns zero otherwise.
+//! If the result is not zero, its sign is the sign of \f$ x \f$
+/*!
+  \exception std::runtime_error thrown if \f$ y = 0 \f$.
+*/
 Number irem(const Number& x, const Number& y);
-
 
 class Number {
 public:
@@ -182,6 +187,9 @@ public:
 
   //! Post-decrement operator.
   Number operator--(int);
+
+  //! Returns <CODE>true</CODE> if and only if \p *this is zero.
+  bool is_zero() const;
 
   //! Returns <CODE>true</CODE> if and only if \p *this is positive.
   bool is_positive() const;
