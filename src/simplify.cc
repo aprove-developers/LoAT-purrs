@@ -1879,13 +1879,15 @@ simplify_collect_sums_in_expanded_ex(const Expr& e) {
     Expr e_without_sums = 0;
     Expr e_sum = 0;
     Symbol sum_variable;
+    // FIXME: Can this collide with existing symbols?
+    sum_variable = Symbol("a");
     unsigned int merged_sums=0;
     for (unsigned int i = e.nops(); i-- > 0; ) {
       addend = e.op(i);
       if (addend.is_the_sum_function()) {
 	if (addend.arg(1) == 1 && addend.arg(2) == Recurrence::n) {
 	  merged_sums++;
-	  // FIXME: add a coefficient when adding support for a*sum(...).
+	  // FIXME: add a coefficient when adding support for k*sum(...).
 	  e_sum += addend.arg(3).substitute(addend.arg(0), sum_variable);
 	}
 	else {
@@ -1894,12 +1896,15 @@ simplify_collect_sums_in_expanded_ex(const Expr& e) {
       }
       else e_without_sums += addend;
     }
-    // FIXME: Casting to Expr seems necessary.
-    e_sum = sum((Expr) sum_variable, (Expr) 1, (Expr) Recurrence::n, e_sum);
     // Return the original expression unless we actually managed to merge
     // some sums.
-    if (merged_sums > 1)
+    if (merged_sums > 1) {
+      // FIXME: Casting to Expr seems necessary.
+      e_sum = sum((Expr) sum_variable, (Expr) 1, (Expr) Recurrence::n, 
+		  e_sum.expand());
+      e_sum = simplify_sum_in_expanded_ex(e_sum, COMPUTE_SUM);
       return e_without_sums + e_sum;
+    }
     else
       return e;
   }

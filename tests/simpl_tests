@@ -1,11 +1,12 @@
 %
 % Some expressions that must be simplified 
 % 
-% Each expression is rewritten using four different functions:
+% Each expression is rewritten using five different functions:
 % - simplify_on_input_ex();
 % - simplify_on_output_ex();
 % - simplify_factorials_and_exponentials();
-% - simplify_logarithm().
+% - simplify_logarithm();
+% - simplify_collect_sums().
 % 
 % Each expression is marked with one or more characters
 % whose meaning is as follows:
@@ -1189,3 +1190,12 @@ sum(a,1,n,1+2*a+a^2)+sum(a,1,n,-2*a-a^2)
 sum(a,1,n,1+2*a+a^2)+sum(a,1,n,-2*a-a^2)
 sum(a,1,n,1+2*a+a^2)+sum(a,1,n,-2*a-a^2)
 n
+
+%%%%%%%%
+
+y	sum(a,1,n,(a+1)^2)+sum(a,1,n,-a^2-1)
+sum(a,1,n,-1-a^2)+sum(a,1,n,1+2*a+a^2)
+sum(a,1,n,-1-a^2)+sum(a,1,n,1+2*a+a^2)
+sum(a,1,n,-1-a^2)+sum(a,1,n,(1+a)^2)
+sum(a,1,n,-1-a^2)+sum(a,1,n,(1+a)^2)
+n^2+n
