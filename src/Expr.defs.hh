@@ -534,8 +534,12 @@ public:
   */
   Expr op(unsigned i) const;
 
+#ifdef UNSAFE_ARG
   const Expr& arg(unsigned i) const;
   Expr& arg(unsigned i);
+#else
+  Expr arg(unsigned i) const;
+#endif
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is sinctatically

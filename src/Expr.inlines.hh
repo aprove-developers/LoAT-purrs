@@ -372,6 +372,7 @@ Expr::op(unsigned i) const {
   return Base::op(i);
 }
 
+#ifdef UNSAFE_ARG
 inline Expr&
 Expr::arg(unsigned i) {
   assert(is_a_function() || is_a_power());
@@ -383,6 +384,13 @@ Expr::arg(unsigned i) const {
   assert(is_a_function() || is_a_power());
   return static_cast<Expr&>(const_cast<Expr&>(*this).let_op(i));
 }
+#else
+inline Expr
+Expr::arg(unsigned i) const {
+  assert(is_a_function() || is_a_power());
+  return Base::op(i);
+}
+#endif
 
 inline bool
 Expr::is_zero() const {
