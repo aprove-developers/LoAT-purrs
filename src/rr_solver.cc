@@ -546,7 +546,7 @@ Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
   return OK;
 }
 
-#if 0
+#if 1
 static void
 substitute_non_rational_roots_with_symbols(const Recurrence& rec,
 					   std::vector<Polynomial_Root>& roots) {
@@ -788,7 +788,7 @@ Recurrence::solve_easy_cases() const {
 	return TOO_COMPLEX;
       // If there is some root not rational then, for efficiency, we substitute
       // it with an arbitrary symbol.
-      //      substitute_non_rational_roots_with_symbols(*this, roots);
+      substitute_non_rational_roots_with_symbols(*this, roots);
       solution = solve_constant_coeff_order_2(n, g_n, order, all_distinct,
 					      base_of_exps, exp_poly_coeff,
 					      exp_no_poly_coeff, 
@@ -814,7 +814,7 @@ Recurrence::solve_easy_cases() const {
       }
       // If there is some root not rational then, for efficiency, we substitute
       // it with an arbitrary symbol.
-      //substitute_non_rational_roots_with_symbols(*this, roots);
+      substitute_non_rational_roots_with_symbols(*this, roots);
       solution = solve_constant_coeff_order_k(n, g_n, order, all_distinct,
 					      base_of_exps, exp_poly_coeff,
 					      exp_no_poly_coeff,
