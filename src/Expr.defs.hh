@@ -904,9 +904,9 @@ public:
 
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this contains the function
-  //! \f$ x() \f$ with its argument containing the expression \p x;
+  //! \f$ x() \f$ with its argument containing the expression \p e;
   //! returns <CODE>false</CODE> otherwise.
-  bool has_x_function(const Expr& x) const;
+  bool has_x_function(const Expr& y) const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if the functions \f$ x() \f$

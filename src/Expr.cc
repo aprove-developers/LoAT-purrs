@@ -825,28 +825,28 @@ PURRS::Expr::has_non_rational_numbers() const {
 }
 
 bool
-PURRS::Expr::has_x_function(const Expr& x) const {
+PURRS::Expr::has_x_function(const Expr& y) const {
   const Expr& e = *this;
   if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned i = e.nops(); i-- > 0; )
-      if (e.op(i).has_x_function(x))
+      if (e.op(i).has_x_function(y))
 	return true;
-    return false;
   }
   else if (e.is_a_power()) {
-    if (e.arg(0).has_x_function(x)
-	|| e.arg(1).has_x_function(x))
+    if (e.arg(0).has_x_function(y)
+	|| e.arg(1).has_x_function(y))
       return true;
-    return false;
   }
-  else if (e.is_a_function()) {
-    if (e.is_the_x_function())
-      if (e.arg(0).has(x))
+  else if (e.is_a_function())
+    if (e.is_the_x_function()) {
+      if (e.arg(0).has(y))
 	return true;
-    return false;
-  }
-  else
-    return false;
+    }
+    else
+      for (unsigned i = e.nops(); i-- > 0; )
+	if (e.arg(i).has_x_function(y))
+	  return true;
+  return false;
 }
 
 bool
@@ -876,6 +876,10 @@ PURRS::Expr::has_x_function_only_ic() const {
 		   || argument.op(1).is_the_mod_function())))
 	return false;
     }
+    else
+      for (unsigned i = e.nops(); i-- > 0; )
+	if (!e.arg(i).has_x_function_only_ic())
+	  return false;
   return true;
 }
 
