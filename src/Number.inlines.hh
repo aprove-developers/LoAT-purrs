@@ -338,6 +338,11 @@ Number::to_long() const {
   return n.to_long();
 }
 
+inline double
+Number::to_double() const {
+  return n.to_double();
+}
+
 inline Number
 Number::real() const {
   return n.real();

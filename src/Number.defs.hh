@@ -245,6 +245,13 @@ public:
   */
   long to_long() const;
 
+  //! Returns the <CODE>double</CODE> corresponding to \p *this, if any.
+  /*!
+    \exception std::domain_error thrown if \p *this is not convertible
+                                 to <CODE>double</CODE>.
+  */
+  double to_double() const;
+
   //! Returns the real part of \p *this, seen as a complex number.
   Number real() const;
 
