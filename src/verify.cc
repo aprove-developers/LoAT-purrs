@@ -891,10 +891,13 @@ PURRS::Recurrence::verify_finite_order(bool partial_verification) const {
  continue_with_step_4:
   // The recurrence is homogeneous.
   if (inhomogeneous_term == 0)
-    if (partial_verification)
-      return PARTIAL_PROVABLY_CORRECT;
+    if (summands_without_i_c == 0)
+      if (partial_verification)
+	return PARTIAL_PROVABLY_CORRECT;
+      else
+	return PROVABLY_CORRECT;
     else
-      return PROVABLY_CORRECT;
+      return INCONCLUSIVE_VERIFICATION;
   
 #if NEW_VERIFICATION
   // Step 4: the method of the paper
