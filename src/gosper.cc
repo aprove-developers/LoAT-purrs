@@ -95,7 +95,6 @@ compute_resultant_and_its_roots(const Expr& f, const Expr& g,
   R = R.primpart(h);
   if (!R.is_integer_polynomial())
     R = convert_to_integer_polynomial(R, h);
-  
   std::vector<Number> potential_roots;
   Number constant_term = abs(R.tcoeff(h).ex_to_number());
   // If `constant_term == 0', divide `R' by `h', and repeat.
@@ -133,10 +132,12 @@ gosper_step_two(const Expr& r_n, const Symbol& n,
   Expr f;
   Expr g;
   r_n.numerator_denominator(f, g);
-
+  // To do `expand()' is necessary in order to have right answers from
+  // `lcoeff()'.
+  f = f.expand();
+  g = g.expand();
   std::vector<Number> integer_roots;
   compute_resultant_and_its_roots(f, g, n, integer_roots);
-
   // Gosper's algorithm, step 2.2.
   // `a_n' and `b_n' are used below as starting values for a sequence
   // of polynomials.
@@ -147,7 +148,6 @@ gosper_step_two(const Expr& r_n, const Symbol& n,
   Expr Z = lead_f * Parma_Recurrence_Relation_Solver::power(lead_g, -1);
   a_n = f * Parma_Recurrence_Relation_Solver::power(lead_f, -1);
   b_n = g * Parma_Recurrence_Relation_Solver::power(lead_g, -1);
-
   // Computation of the output polynomials.
   c_n = 1;
   unsigned integer_roots_size = integer_roots.size();
@@ -171,8 +171,8 @@ gosper_step_two(const Expr& r_n, const Symbol& n,
   b_n *= a_n_factor.denominator();
   Number b_n_factor;
   b_n = convert_to_integer_polynomial(b_n, n, b_n_factor);
-  a_n *= b_n_factor.numerator();
-  b_n *= b_n_factor.denominator();
+  a_n *= b_n_factor.denominator();
+  b_n *= b_n_factor.numerator();
 #if NOISY
   std::cout << "a(n) = " << a_n << std::endl;
   std::cout << "b(n) = " << b_n << std::endl;
@@ -277,7 +277,7 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
     Expr B = shift_b.coeff(n, deg_a - 1);
     Expr B_A_e = (B - A) * Parma_Recurrence_Relation_Solver::power(lead_a, -1);
     Number B_A = B_A_e.ex_to_number();
-    Number possible_deg = deg_c - deg_a + 1;
+    Number possible_deg = Number(deg_c) - Number(deg_a) + 1;
     if (B_A.is_nonnegative_integer())
       if (B_A > possible_deg)
 	possible_deg = B_A;
