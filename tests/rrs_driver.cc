@@ -169,9 +169,9 @@ set_expectations(const string& s) {
 }
 
 bool
-solve_wrapper(const Recurrence& rec) {
+solve_wrapper(const Recurrence& rec, const Symbol& n) {
   try {
-    return rec.solve();
+    return rec.solve(n);
   }
   catch (exception& e) {
     if (verbose) {
@@ -275,14 +275,14 @@ main(int argc, char *argv[]) try {
     Recurrence rec(rhs);
 
     Expr solution;
-    if (!solve_wrapper(rec)) {
+    if (!solve_wrapper(rec, n)) {
       if (interactive)
 	cout << "Sorry, this is too difficult." << endl;
     }
     else if (interactive) {
       cout << "*** SOLUTION ***"
 	   << endl
-	   << rec.exact_solution()
+	   << rec.exact_solution(n)
 	   << endl
 	   << "****************"
 	   << endl << endl;
