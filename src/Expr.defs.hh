@@ -1267,6 +1267,7 @@ private:
 		  const Expr& summand);
   friend Expr prod(const Expr& index, const Expr& lower, const Expr& upper,
 		   const Expr& factor);
+  friend Expr max(const Expr& x, const Expr& y);
 
   //! Builds the expression corresponding to \p ge.
   Expr(const Base& ge);
