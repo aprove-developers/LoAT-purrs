@@ -12,7 +12,9 @@ ntl 5.2        (4)
 
 Just for the web-based demos:
 
-cgicc 3.2      (see http://www.gnu.org/software/cgicc/cgicc.html)
+cgicc 3.2      (see http://www.gnu.org/software/cgicc/cgicc.html
+                and configure with --enable-namespaces)
+ 
 
 (1)
 Your configure command should be something like
