@@ -524,7 +524,7 @@ PURRS::Recurrence::verify_finite_order() const {
     else
       summands_without_i_c = exact_solution;
 
-#if 0
+#if 1
   // Step 3: by substitution, verifies that `summands_with_i_c'
   // satisfies the homogeneous part of the recurrence.
   // Computes `substituted_homogeneous_rhs' by substituting, in the
@@ -592,7 +592,7 @@ PURRS::Recurrence::verify_finite_order() const {
     shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
     substituted_rhs = substituted_rhs.substitute(x(n - d), shifted_solution);
   }
-  Expr diff = summands_without_i_c - substituted_rhs;
+  /*Expr*/ diff = summands_without_i_c - substituted_rhs;
   // Differently from the step 1 (validation of symbolic initial condition)
   // the expression `diff' now contains `n' and is more difficult
   // to simplify it. For this motive we performed simplification also
