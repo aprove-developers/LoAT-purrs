@@ -118,7 +118,10 @@ exp_poly_decomposition_summand(const Expr& e, const Symbol& x,
   Let \f$ e(x) \f$ be the expression in \p x contained in \p e,
   which is assumed to be already expanded.
   This function computes a decomposition
-  \f$ e(x) = \sum_{i=0}^k \alpha_i^x \bigl(p_i(x) + q_i(x)\bigr) \f$, where
+  \f[
+    e(x) = \sum_{i=0}^k \alpha_i^x \bigl(p_i(x) + q_i(x)\bigr),
+  \f]
+  where
   - \f$ \alpha_i \f$ is a expression valid for to be an exponential's base.
     (syntactically different from \p 0);
   - \f$ \alpha_i \neq \alpha_j \f$ if \f$ i \neq j \f$;
