@@ -42,8 +42,8 @@ Expr
 simplify_factorials_and_exponentials(const Expr& e);
 
 Expr
-simplify_sum(const Expr& e, bool only_verification = false,
-	     bool only_to_the_beginning = false);
+simplify_sum(const Expr& e,
+	     bool only_verification = false, bool try_to_compute_sum = false);
 
 Expr
 simplify_logarithm(const Expr& e);

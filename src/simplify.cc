@@ -1590,9 +1590,9 @@ compute_sum(const Expr& e) {
 
 //! \brief
 //! If \p only_verification is <CODE>true</CODE> this function rewrites
-//! the sum with the upper limit of the form `m + j' or `m - j', with
-//! `m' a symbol and `j' an integer, so that the upper limit is `m'.
-//! If \p only_to_the_beginning is <CODE>true</CODE> this function
+//! the sum with the upper limit of the form `m + j' or `m - j'
+//! (`m' is a symbol and `j' is an integer), so that the upper limit is `m'.
+//! If \p try_to_compute_sum is <CODE>true</CODE> this function
 //! splits the sum in many sums how many are the addends of the summand
 //! and computes, when possible, symbolic sums.
 /*!
@@ -1610,7 +1610,7 @@ compute_sum(const Expr& e) {
     \end{cases}
   \f]
 
-  If \p only_to_the_beginning is <CODE>true</CODE> splits the sum in many
+  If \p try_to_compute_sum is <CODE>true</CODE> splits the sum in many
   sums how many are the addends of the summand and computes,when possible,
   symbolic sums using two different techniques: if the summand is
   polynomial, exponential or product of them uses the method exposed
@@ -1618,43 +1618,43 @@ compute_sum(const Expr& e) {
   exposed in <CODE>gosper.{hh, cc}</CODE>.
 */
 Expr
-simplify_sum_in_expanded_ex(const Expr& e, bool only_verification,
-			    bool only_to_the_beginning) {
+simplify_sum_in_expanded_ex(const Expr& e,
+			    bool only_verification, bool try_to_compute_sum) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
       e_rewritten += simplify_sum_in_expanded_ex(e.op(i), only_verification,
-						 only_to_the_beginning);
+						 try_to_compute_sum);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
       e_rewritten *= simplify_sum_in_expanded_ex(e.op(i), only_verification,
-						 only_to_the_beginning);
+						 try_to_compute_sum);
   }
   else if (e.is_a_power())
     return pwr(simplify_sum_in_expanded_ex(e.arg(0), only_verification,
-					   only_to_the_beginning),
+					   try_to_compute_sum),
 	       simplify_sum_in_expanded_ex(e.arg(1), only_verification,
-					   only_to_the_beginning));
+					   try_to_compute_sum));
   else if (e.is_a_function()) {
     if (e.nops() == 1)
       return apply(e.functor(),
 		   simplify_sum_in_expanded_ex(e.arg(0), only_verification,
-					       only_to_the_beginning));
+					       try_to_compute_sum));
     else {
       if (e.is_the_sum_function()) {
 	// Splits the sum in many sums how many are the addends of the
 	// summand.
-	if (only_to_the_beginning && e.arg(3).is_a_add()) {
+	if (try_to_compute_sum && e.arg(3).is_a_add()) {
 	  e_rewritten = 0;
 	  for (unsigned i = e.arg(3).nops(); i-- > 0; )
 	    e_rewritten
 	      += simplify_sum_in_expanded_ex(sum(e.arg(0), e.arg(1), e.arg(2),
 						 e.arg(3).op(i)),
 					     only_verification,
-					     only_to_the_beginning);
+					     try_to_compute_sum);
 	  return e_rewritten;
 	}
 	// If the summand does not contain `x' functions with `n' in the
@@ -1662,7 +1662,7 @@ simplify_sum_in_expanded_ex(const Expr& e, bool only_verification,
 	// visit to the expression, then the sum has been inserted by the
 	// user and we try to compute it.
 	if (!e.arg(3).has_x_function(false, e.arg(0))
-	    && only_to_the_beginning)
+	    && try_to_compute_sum)
 	  return compute_sum(e);
 	// `upper' is a sum of two addends: if we are at the point of
 	// recurrence's verification rewrite this sum so that the upper bound
@@ -1674,7 +1674,7 @@ simplify_sum_in_expanded_ex(const Expr& e, bool only_verification,
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
 	argument[i] = simplify_sum_in_expanded_ex(e.arg(i), only_verification,
-						  only_to_the_beginning);
+						  try_to_compute_sum);
       return apply(e.functor(), argument);
     }
   }
@@ -1757,9 +1757,9 @@ PURRS::simplify_logarithm(const Expr& e) {
 
 PURRS::Expr
 PURRS::simplify_sum(const Expr& e,
-		    bool only_verification, bool only_to_the_beginning) {
+		    bool only_verification, bool try_to_compute_sum) {
   return simplify_sum_in_expanded_ex(e.expand(), only_verification,
-				     only_to_the_beginning).expand();
+				     try_to_compute_sum).expand();
 }
 
 
