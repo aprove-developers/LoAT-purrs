@@ -1084,8 +1084,9 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
   <CODE>Finite_Order_Info</CODE> are stored the order, the coefficients,
   the greates common divisor among the positive integer \f$ k \f$
   of the terms of the form \f$ x(n-k) \f$ contained in the right hand side
-  and the first initial condition (i. e., the smallest positive integer for
-  which the recurrence is well-defined) setted to \f$ 0 \f$ by default.
+  and the first valid index (i. e., the least non-negative integer \f$ j \f$
+  such that the recurrence is well-defined for \f$ n \geq j \f$.)
+  setted to \f$ 0 \f$ by default.
 
   If the recurrence is <EM>linear of infinite order</EM> there is not
   a general method to solve it. At the moment we solve only recurrences

@@ -137,15 +137,15 @@ $(INCLUDE_FILES)
 # The ordering of the following list *matters*!
 DOC_FILES = \
 globals.hh \
-Expr.types.hh \
 Symbol.types.hh \
 Number.types.hh \
 Constant.types.hh \
+Expr.types.hh \
 Recurrence.types.hh \
-Expr.defs.hh \
 Symbol.defs.hh \
 Number.defs.hh \
 Constant.defs.hh \
+Expr.defs.hh \
 Recurrence.defs.hh
 
 libpurrs_a_LIBADD =

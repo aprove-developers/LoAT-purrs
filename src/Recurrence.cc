@@ -1001,8 +1001,9 @@ compute_non_linear_recurrence(Expr& solution_or_bound,
   Builds the recurrence of infinite order
   \f$ x(n) = f(n) \sum_{k=n_0}^{n-1} x(k) + g(n) \f$, where
   \f$ f(n) \f$ is stored in \p weight; \f$ g(n) \f$ is stored
-  in \p inhomogeneous and \p first_valid_index contains the smallest
-  positive integer starting from which the recurrence is well-defined.
+  in \p inhomogeneous and \p first_valid_index contains the least
+  non-negative integer \f$ j \f$ such that the recurrence is
+  well-defined for \f$ n \geq j \f$.
   If the system is able to solve the recurrence, then this function
   returns <CODE>SUCCESS</CODE> and the solution is stored in \p solution.
 */
@@ -1224,11 +1225,11 @@ compute_infinite_order_recurrence(Expr& solution) const {
 			    and with the arbitrary initial conditions
 			    substituted with the respective values.
 
-  We know the smallest positive integer \f$ s \f$ starting from which the
-  recurrence is well-defined. This function checks if in the map
-  \p initial_conditions there are some initial conditions
-  of the form \f$ x(i) = k \f$ with \f$ k > s \f$: in this case
-  the function shifts the solution or the bound.
+  We know the least non-negative integer \f$ s \f$ such that
+  the recurrence is well-defined for \f$ n \geq s \f$.
+  This function checks if in the map \p initial_conditions there are
+  some initial conditions of the form \f$ x(i) = k \f$ with \f$ k > s \f$:
+  in this case the function shifts the solution or the bound.
   Finally substitutes to the arbitrary initial conditions in the solution or
   in the bound the eventual values specified by the user.
 */
@@ -1272,8 +1273,9 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
       // The solution of `x(n) = a(n) x(n-1) + p(n)' is of the form
       // `x(n) = prod(k,i+1,n,a(k)) x(i)
       //         + prod(k,i+1,n,a(k)) sum(k,i,n,p(k)/a!(k))', where
-      // `i' is the smallest positive integer starting from which the
-      // recurrence is well-defined. If `max_i_c', `m' for short, is bigger
+      // `i' is the least non-negative integer such that the recurrence
+      // is well-defined for \f$ n \geq i \f$.
+      // If `max_i_c', `m' for short, is bigger
       // than `i', then the solution is:
       // `x(n) = prod(k,i+1,n,a(k)) / prod(k,i+1,m,a(k)) x(i)
       //         +prod(k,i+1,n,a(k))*[sum(k,i+1,n,p(k)/prod(j,i+1,k,a(j)))

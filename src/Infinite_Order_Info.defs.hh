@@ -147,8 +147,8 @@ private:
   Expr upper_bound_sum_;
 
   //! \brief
-  //! Stores the smallest positive integer for which the recurrence is
-  //! well-defined: the initial conditions will start from it.
+  //! Stores the least non-negative integer \f$ j \f$ such that
+  //! the recurrence is well-defined for \f$ n \geq j \f$.
   index_type first_valid_index_inf_order_;
 };
 

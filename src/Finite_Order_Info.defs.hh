@@ -103,8 +103,8 @@ private:
   unsigned int gcd_among_decrements_;
 
   //! \brief
-  //! The smallest positive integer for which the recurrence is
-  //! well-defined: the initial conditions will start from it.
+  //! The least non-negative integer \f$ j \f$ such that the recurrence
+  //! is well-defined for \f$ n \geq j \f$.
   index_type first_valid_index_;
 
   //! \brief

@@ -119,14 +119,14 @@ Number abs(const Number& x);
 /*! \relates Number */
 Number gcd(const Number& x, const Number& y);
 
-//! \brief;
+//! \brief
 //! If \f$ x \f$ and \f$ y \f$ are integer, returns the least common
 //! multiple of \f$ x \f$ and \f$ y \f$.
 //! Returns \f$ x \cdot y \f$ otherwise.
 /*! \relates Number */
 Number lcm(const Number& x, const Number& y);
 
-//! \brief;
+//! \brief
 //! Computes \f$ x^y \f$ assuming that the numerical computation
 //! will not introduce approximation errors.
 /*!
@@ -141,7 +141,7 @@ Number lcm(const Number& x, const Number& y);
 */
 Number exact_pwr(const Number& x, const Number& y);
 
-//! \brief;
+//! \brief
 //! If \f$ x \f$ and \f$ y \f$ are integer and \f$ y \neq 0 \f$,
 //! returns the remainder of the division of \f$ x \f$ by \f$ y \f$.
 //! If \f$ y = 0 \f$ an exception is thrown.

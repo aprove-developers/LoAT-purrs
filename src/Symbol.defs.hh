@@ -69,7 +69,9 @@ public:
   */
   bool is_system_generated() const;
 
-  //! Binary predicate defining the total ordering on the names of symbols.
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+ //! Binary predicate defining the total ordering on the names of symbols.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   struct NameCompare {
     //! \brief
     //! Returns <CODE>true</CODE> if the name of \p x comes before

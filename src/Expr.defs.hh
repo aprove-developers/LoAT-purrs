@@ -38,9 +38,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 //! Type of a functor object.
-#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 typedef unsigned int Functor;
 
 //! Output operator.
@@ -227,33 +225,32 @@ Expr pwr(const Expr& x, const Expr& y);
 
 //! \brief
 //! If \f$ x \f$ is an exact number, returns the number \f$ y \f$ such that
-//! \f$ y^2 = x \f$; otherwise, only for the output, returns the expression
-//! \f$ sqrt(x) \f$ not valued.
+//! \f$ y^2 = x \f$; returns the symbolic expression \f$ sqrt(x) \f$ otherwise.
 /*! \relates Expr */
 Expr sqrt(const Expr& x);
 
 //! \brief
-//! Returns \f$ \sin(x) \f$ if the numerical computation not introduce
-//! approximation errors; returns \f$ sin(x) \f$ not valued otherwise.
+//! Returns \f$ \sin(x) \f$ if the numerical computation does not introduce
+//! approximation errors; returns the symbolic \f$ sin(x) \f$ otherwise.
 /*! \relates Expr */
 Expr sin(const Expr& x);
 
 //! \brief
-//! Returns \f$ \cos(x) \f$ if the numerical computation not introduce
-//! approximation errors; returns \f$ cos(x) \f$ not valued otherwise.
+//! Returns \f$ \cos(x) \f$ if the numerical computation does not introduce
+//! approximation errors; returns the symbolic \f$ cos(x) \f$ otherwise.
 /*! \relates Expr */
 Expr cos(const Expr& x);
 
 //! \brief
 //! Returns \f$ \arccos(x) \f$, the inverse cosine, if the numerical
-//! computation not introduce approximation errors; returns \f$ acos(x) \f$
-//! not valued otherwise.
+//! computation does not introduce approximation errors; returns the
+//! symbolic \f$ acos(x) \f$ otherwise.
 /*! \relates Expr */
 Expr acos(const Expr& x);
 
 //! \brief
-//! Returns \f$ \tan(x) \f$ if the numerical computation not introduce
-//! approximation errors; returns \f$ tan(x) \f$ not valued otherwise.
+//! Returns \f$ \tan(x) \f$ if the numerical computation does not introduce
+//! approximation errors; returns the symbolic \f$ tan(x) \f$ otherwise.
 /*!
   \relates Expr
   \exception std::pole_error thrown if \f$ x = \pi / 2 + k \pi \f$,
@@ -262,15 +259,15 @@ Expr acos(const Expr& x);
 Expr tan(const Expr& x);
 
 //! \brief
-//! Returns \f$ \exp(x) \f$ if the numerical computation not introduce
-//! approximation errors; returns \f$ exp(x) \f$ not valued otherwise.
+//! Returns \f$ \exp(x) \f$ if the numerical computation does not introduce
+//! approximation errors; returns the symbolic \f$ exp(x) \f$ otherwise.
 /*! \relates Expr */
 Expr exp(const Expr& x);
 
 //! \brief
 //! Returns \f$ \log(x) \f$ (natural logarithm) if the numerical
-//! computation not introduce approximation errors; returns \f$ log(x) \f$
-//! not valued otherwise.
+//! computation does not introduce approximation errors; returns the
+//! symbolic \f$ log(x) \f$ otherwise.
 /*!
   \relates Expr
   If \f$ x \f$ is a negative rational number, then
@@ -281,8 +278,8 @@ Expr exp(const Expr& x);
 Expr log(const Expr& x);
 
 //! \brief
-//! If \f$ x \f$ is a natural number number, returns \f$ x! \f$;
-//! if \f$ x \f$ is a not a numeric expression, return \f$ x! \f$ not valued.
+//! If \f$ x \f$ is a natural number, returns \f$ x! \f$;
+//! returns \f$ x! \f$ symbolically otherwise.
 /*!
   \relates Expr
   \exception std::range_error thrown if \f$ x \f$ is not a natural number.
@@ -290,9 +287,8 @@ Expr log(const Expr& x);
 Expr factorial(const Expr& x);
 
 //! \brief
-//! If \f$ x \f$ is a natural number, returns \f$ x! \f$;
-//! if \f$ x \f$ is a not a numeric expression, return \f$ \Gamma(x) \f$
-//! not valued.
+//! If \f$ x \f$ is a natural number, returns \f$ (x-1)! \f$;
+//! returns \f$ \Gamma(x) \f$ symbolically otherwise.
 /*!
   \relates Expr
   \exception std::pole_error thrown if \f$ x \f$ is non-positive integer
@@ -564,13 +560,13 @@ public:
   bool is_a_constant_power(const Symbol& x) const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is a function
-  //! with like argument an expression.
+  //! Returns <CODE>true</CODE> if and only if \p *this is a
+  //! symbolic function.
   bool is_a_function() const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is a constant
-  //! function with respect to the variable \p x.
+  //! symbolic function with respect to the variable \p x.
   bool is_a_constant_function(const Symbol& x) const;
 
   //! Returns <CODE>true</CODE> if and only if \p *this is a matrix expression.
@@ -587,48 +583,48 @@ public:
   bool is_a_relational() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>abs()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>abs()</CODE>.
   bool is_the_abs_function() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>exp()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>exp()</CODE>.
   bool is_the_exp_function() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>log()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>log()</CODE>.
   bool is_the_log_function() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>sin()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>sin()</CODE>.
   bool is_the_sin_function() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>cos()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>cos()</CODE>.
   bool is_the_cos_function() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>tan()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>tan()</CODE>.
   bool is_the_tan_function() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>acos()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>acos()</CODE>.
   bool is_the_acos_function() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>factorial()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>factorial()</CODE>.
   bool is_the_factorial_function() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>gamma()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>gamma()</CODE>.
   /*!
     Note that the method <CODE>tgamma</CODE> of <CODE>GiNaC</CODE> does
     not work on number, it aborts! When we call this method with a
@@ -638,28 +634,28 @@ public:
   bool is_the_gamma_function() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>binom()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>binom()</CODE>.
   bool is_the_binom_function() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>x()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>x()</CODE>.
   bool is_the_x_function() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>sum()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>sum()</CODE>.
   bool is_the_sum_function() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>prod()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>prod()</CODE>.
   bool is_the_prod_function() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is the function
-  //! <CODE>mod()</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>mod()</CODE>.
   bool is_the_mod_function() const;
 
   //! If \p *this is a number, returns the corresponding value.
@@ -690,7 +686,7 @@ public:
 
   //! Returns the operand's number of \p *this.
   /*!
-    If \p *this is an addiction or a multiplication of expressions
+    If \p *this is an addition or a multiplication of expressions
     returns the terms'number or the factors'number, respectively.
     If \p *this is a power returns \f$ 2 \f$.
     If \p *this is a function returns the number of its arguments.
@@ -702,7 +698,7 @@ public:
   //! Returns the \f$ i \f$-th (\f$ i = 0, \dotsc, nops()-1 \f$) operand
   //! of \p *this.
   /*!
-    If \p *this is an addiction or a multiplication of expressions
+    If \p *this is an addition or a multiplication of expressions
     returns \f$ i \f$-th term or factor, respectively.
     
     \exception std::out_of_range thrown if
@@ -732,7 +728,7 @@ public:
   bool is_zero() const;
 
   //! \brief
-  //! Substitutes every occurrence of the expression \p s in \p * this
+  //! Substitutes every occurrence of the expression \p s in \p *this
   //! with the expression \p r.
   /*! relates Expr */
   Expr substitute(const Expr& s, const Expr& r) const;
@@ -781,10 +777,10 @@ public:
   unsigned int degree(const Symbol& x) const;
 
   //! \brief
-  //! If \p *this is a polynomial or a rational function, returns the degree
-  //! of the polynomial or the asymptotic degree of the rational function,
-  //! respectively; otherwise the behavior of <CODE>degree()</CODE>
-  //! is undefined.
+  //! If \p *this is a polynomial or a rational function, returns the low
+  //! degree of the polynomial or the low asymptotic degree of the rational
+  //! function, respectively; otherwise the behavior of
+  //! <CODE>degree()</CODE> is undefined.
   //! The behavior of <CODE>ldegree()</CODE> is undefined also if \p x is not
   //! contained in \p *this.
   /*!
@@ -800,9 +796,8 @@ public:
   unsigned int ldegree(const Symbol& x) const;
 
   //! \brief
-  //! Returns coefficient of the term of degree equal to \p k, i. e.,
-  //! the coefficient of the power in the expanded polynomial \p *this
-  //! with base equal to \p x and degree equal to \p k.
+  //! If \p *this is a polynomial returns the coefficient of the term
+  //! of degree equal to \p k.
   //! The behavior of <CODE>coeff()</CODE> is undefined if \p *this
   //! is not a polynomial or \p x is not contained in \p *this or there
   //! is not a term of \p k's degree.
@@ -810,10 +805,9 @@ public:
   Expr coeff(const Symbol& x, int k) const;
 
   //! \brief
-  //! Returns coefficient of the term with highest degree, i. e., the
-  //! coefficient of the highest power in the expanded polynomial \p *this
-  //! with base equal to \p x.
-  //! It is equivalent to <CODE>coeff(x, degree(x))</CODE>.
+  //! If \p *this is a polynomial returns the leading coefficient
+  //! (the term with highest degree, it is equivalent to
+  //! <CODE>coeff(x, degree(x))</CODE>).
   //! The behavior of <CODE>lcoeff()</CODE> is undefined if \p *this
   //! is not a polynomial or \p x is not contained in \p *this or there
   //! is not a term of \p k's degree.
@@ -821,10 +815,9 @@ public:
   Expr lcoeff(const Symbol& x) const;
 
   //! \brief
-  //! Returns coefficient of the term with lowest degree, i. e., the
-  //! coefficient of the lowest power in the expanded polynomial \p *this
-  //! with base equal to \p x.
-  //! It is equivalent to <CODE>coeff(x, ldegree(x))</CODE>.
+  //! If \p *this is a polynomial returns the trailing coefficient
+  //! (the term with lowest degree, it is equivalent to
+  //! <CODE>coeff(x, degree(x))</CODE>).
   //! The behavior of <CODE>tcoeff()</CODE> is undefined if \p *this
   //! is not a polynomial or \p x is not contained in \p *this or there
   //! is not a term of \p k's degree.
@@ -860,7 +853,7 @@ public:
   */
   Expr content(const Symbol& x) const;
 
-  //! Returns numerator \p x and denominator \p y of \p *this.
+  //! Returns the numerator \p x and the denominator \p y of \p *this.
   /*!
     If the expression is not of the normal form `numerator/denominator'
     (where numerator and denominator are relatively prime) polynomials,
@@ -870,14 +863,14 @@ public:
   // FIXME: what is a polynomial?
   void numerator_denominator(Expr& x, Expr& y) const;
 
-  //! Returns left hand side of relational expression \p *this.
+  //! Returns the left hand side of the relational expression \p *this.
   /*!
     \exception std::runtime_error thrown if \p *this is not a relational
                                   expression.
   */
   Expr lhs() const;
 
-  //! Returns right hand side of relational expression \p *this.
+  //! Returns the right hand side of the relational expression \p *this.
   /*!
     \exception std::runtime_error thrown if \p *this is not a relational
                                   expression.

@@ -595,14 +595,13 @@ private:
   index_type order() const;
 
   //! \brief
-  //! Returns the smallest positive integer for which the finite order
-  //! recurrence is well-defined: the initial conditions will start from it.
+  //! Returns the least non-negative integer \f$ j \f$ such that
+  //! the recurrence is well-defined for \f$ n \geq j \f$.
   index_type first_valid_index() const;
 
   //! \brief
-  //! Sets to \p i_c is the smallest positive integer for which the finite
-  //! order recurrence is well-defined: the initial conditions will start
-  //! from it. 
+  //! Sets to \p i_c is the least non-negative integer \f$ j \f$ such that
+  //! the recurrence is well-defined for \f$ n \geq j \f$.
   void set_first_valid_index(index_type i_c) const;
 
   //! Returns the coefficients of the linear finite order recurrence.
@@ -798,15 +797,13 @@ private:
   Expr& upper_bound_sum();
 
   //! \brief
-  //! Stores the smallest positive integer for which the infinite
-  //! order recurrence is well-defined: the initial conditions will
-  //! start from it.
+  //! Stores the least non-negative integer \f$ j \f$ such that
+  //! the recurrence is well-defined for \f$ n \geq j \f$.
   index_type first_valid_index_inf_order() const;
 
   //! \brief
-  //! Stores the smallest positive integer for which the infinite
-  //! order recurrence is well-defined: the initial conditions will
-  //! start from it.
+  //! Sets to \p i_c the least non-negative integer \f$ j \f$ such that
+  //! the recurrence is well-defined for \f$ n \geq j \f$.
   void set_first_valid_index_inf_order(index_type i_c) const;
 
 

@@ -33,9 +33,8 @@ namespace Parma_Recurrence_Relation_Solver {
   Are <CODE>index_type</CODE> the following elements:
   - the order of a recurrence;
   - the rank of a functional equation;
-  - the smallest positive integer starting from which the recurrence,
-    or the functional equation, is well-defined (the initial
-    conditions will start from it).
+  - the least non-negative integer \f$ j \f$ such that
+    the recurrence is well-defined for \f$ n \geq j \f$.
 */
 typedef unsigned int index_type;
 

@@ -19,7 +19,8 @@
 //  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 //  for more details.
 //
-//  For the most up-to-date information see the Parma Polyhedra Library
+//  For the most up-to-date information see the Parma University's
+//  Recurrence Relation Solver
 //  site: http://www.cs.unipr.it/purrs/
 
 /*!
@@ -36,6 +37,8 @@
 FIXME: Abstract to be written.
 
 \section introduction An Introduction to Recurrence Relation
+
+homogeneous
 
 order
 

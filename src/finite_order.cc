@@ -247,8 +247,9 @@ characteristic_equation_and_its_roots(index_type order,
         = \lambda^n * \sum_{k=h}^n p_i(k).
     \f]
   The lower bound `h' of the sums is the order of the recurrence
-  shifted forward of a positive integer that indicates the smallest
-  positive integer starting from which the recurrence is well-defined.
+  shifted forward of a positive integer that indicates the least
+  non-negative integer \f$ j \f$ such that the recurrence is
+  well-defined for \f$ n \geq j \f$.
   We put \f$ 0 \f$ in the i-th position of \p symbolic_sum_no_distinct,
   in the first case, and of \p symbolic_sum_distinct, in the second case,
   so that the two vectors have always the same dimensions.
