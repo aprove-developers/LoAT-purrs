@@ -540,23 +540,23 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 }
 
 /*!
-  This function makes a matrix with three rows and a number of columns
-  does not exceed the number of exponentials in the inhomogeneous term
-  plus one.
-  The function gives the decomposition
-  \f$ e(n) = \sum_{i=0}^k \alpha_i^j \cdot p_i(n) \f$ with
-  - \f$ \alpha_i \f$ is a complex number (different from 0);
-  - \f$ \alpha_i \ne \alpha_j \f$ if \f$ i \ne j \f$;
-  - \p p does not contains exponentials.
+  Let \f$ e(n) \f$ be the expression over \p n in \p e, which is assumed
+  to be already expanded.  This function computes a decomposition
+  \f$ e(n) = \sum_{i=0}^k \alpha_i^n \bigl(p_i(n) + q_i(n)\bigr) \f$, where
+  - \f$ \alpha_i \f$ is a ground expression
+    (syntactically different from \p 0);
+  - \f$ \alpha_i \neq \alpha_j \f$ if \f$ i \neq j \f$;
+  - \f$ p_i \f$ is (syntactically) a polynomial in \f$ n \f$.
 
-  It returns the matrix whose \f$ i\f$-th column, for \f$ i = 1, \ldots, k \f$,
-  contains \f$ \alpha_i^n \f$ in the first row and \f$ p_i(n) \f$
-  in the second and third row: the polynomial part of \f$ p_i(n) \f$ in the
-  second row and the non polynomial part in the third row.
-  The <CODE>GExpr</CODE> \p e must be expanded. 
+  The expressions corresponding to \f$ \alpha_i \f$, \f$ p_i \f$ and
+  \f$ q_i \f$ are stored in the \f$ i \f$-th position of the vectors
+  \p alpha, \p p and \p q, respectively.
 */
 static GMatrix
-decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
+decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n
+				 std::vector<GExpr> alpha,
+				 std::vector<GExpr> p,
+				 std::vector<GExpr> q) {
   GExpr p, q;
   GList(lst_of_exp);
   p = e;
@@ -744,7 +744,7 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
     //             a = 1
     //             (a + b) * \lambda = \alpha.
     GExpr g_n = (a + b * n) * pow(root, n);
-    // Solved the system with the inverse matrix'method.
+    // Solved the system with the inverse matrix method.
     GMatrix vars(2, 2, lst(1, 0, root, root));
     GMatrix rhs(2, 1, lst(1, coefficients[1]));
     GMatrix sol(2, 1);
