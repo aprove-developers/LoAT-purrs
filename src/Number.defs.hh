@@ -48,6 +48,13 @@ Number& operator--(Number& rh);
 Number operator++(Number& lh, int);
 Number operator--(Number& lh, int);
 
+bool operator==(long x, const Number& y);
+bool operator!=(long x, const Number& y);
+bool operator>(long x, const Number& y);
+bool operator<(long x, const Number& y);
+bool operator>=(long x, const Number& y);
+bool operator<=(long x, const Number& y);
+
 Number power(const Number& b, const Number& e);
 Number lcm(const Number& x, const Number& y);
 Number factorial(const Number& n);
@@ -59,6 +66,15 @@ public:
 
   //! Builds the integer number \p i.
   Number(int i);
+
+  //! Builds the integer number \p i.
+  Number(unsigned int i);
+
+  //! Builds the integer number \p i.
+  Number(long i);
+
+  //! Builds the integer number \p i.
+  Number(unsigned long i);
 
   //! Builds the number \p numer / denom.
   Number(long numer, long denom);
@@ -72,8 +88,8 @@ public:
   //! Assignment operator.
   Number& operator=(const Number& s);
 
-  bool operator==(const Number &num) const;
-  bool operator!=(const Number &num) const;
+  bool operator==(const Number& num) const;
+  bool operator!=(const Number& num) const;
   bool operator>(const Number& num) const;
   bool operator<(const Number& num) const;
   bool operator>=(const Number& num) const;

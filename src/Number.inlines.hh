@@ -109,12 +109,57 @@ Number::operator<=(const Number& num) const {
   return n <= num.n;
 }
 
+inline bool
+operator==(long x, const Number& y) {
+  return y == x;
+}
+
+inline bool
+operator!=(long x, const Number& y) {
+  return y != x;
+}
+
+inline bool
+operator>(long x, const Number& y) {
+  return y < x;
+}
+
+inline bool
+operator<(long x, const Number& y) {
+  return y > x;
+}
+
+inline bool
+operator>=(long x, const Number& y) {
+  return y <= x;
+}
+
+inline bool
+operator<=(long x, const Number& y) {
+  return y >= x;
+}
+
 inline
 Number::Number() {
 }
 
 inline
 Number::Number(int i)
+  : n(i) {
+}
+
+inline
+Number::Number(unsigned int i)
+  : n(i) {
+}
+
+inline
+Number::Number(long i)
+  : n(i) {
+}
+
+inline
+Number::Number(unsigned long i)
   : n(i) {
 }
 

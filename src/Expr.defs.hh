@@ -56,8 +56,10 @@ Expr operator+(const Expr& lh);
 Expr operator-(const Expr& lh);
 
 //! Binary operators Expr with Expr
+#if 0
 bool operator==(const Expr& lh, const Expr& rh);
 bool operator!=(const Expr& lh, const Expr& rh);
+#endif
 
 // FIXME: meglio con argomento di default `unsigned label = 0'?
 Expr wild(unsigned label);
@@ -170,6 +172,24 @@ public:
   
 private:
   GiNaC::ex e;
+
+  friend std::ostream& operator<<(std::ostream& os, const Expr& exp);
+
+  friend Expr operator+(const Expr& lh, const Expr& rh);
+  friend Expr operator-(const Expr& lh, const Expr& rh);
+  friend Expr operator*(const Expr& lh, const Expr& rh);
+  friend Expr operator/(const Expr& lh, const Expr& rh);
+  friend Expr operator+(const Expr& lh);
+  friend Expr operator-(const Expr& lh);
+  friend Expr& operator+=(const Expr& lh, const Expr& rh);
+  friend Expr& operator-=(const Expr& lh, const Expr& rh);
+  friend Expr& operator*=(const Expr& lh, const Expr& rh);
+  friend Expr& operator/=(const Expr& lh, const Expr& rh);
+
+#if 0
+  friend Expr& operator==(const Expr& lh, const Expr& rh);
+  friend Expr& operator!=(const Expr& lh, const Expr& rh);
+#endif
 
   friend Expr power(const Expr& b, const Expr& e);
   friend Expr sqrt(const Expr& e);
