@@ -229,12 +229,26 @@ possible moment when the expressions involving $\phi^2$, \dots, arise.
 
 \item (Added on 19.1.2003)
 Complete the part dealing with finite-order recurrences with variable
-coefficnents.
+coefficients.
 
 \item (Added on 19.1.2003)
 Upper and lower bounds for exact solutions, when they are written as
 symbolic sums or symbolic products.
 Examples: $x(n) = x(n-1) + 1/n$, $x(n) = (3n+1) x(n-1)$, \dots
+
+\item (Added on 8-3-2003)
+To check if it is possible to improve the part of the computation of the
+symbolic sums (when the inhomogeneous term is polynomial, exponential or
+product of them) removing the two vectors \texttt{symbolic\_sum\_distinct} and
+\texttt{symbolic\_sum\_no\_distinct}.
+Now the Gosper's algorithm is applied only when the order of the recurrences
+with constant coefficients is $1$: extend it! 
+
+\item (Added on 8-3-2003)
+In the function \texttt{solve\_variable\_coeff\_order\_1()} before use of the
+Gosper's algorithm to try to use the method for polynomials and
+exponentials (maybe this method is more efficient than the
+Gosper's algorithm?)
 
 \end{enumerate}
 
