@@ -169,16 +169,6 @@ Recurrence::approximated_solution() const {
     return blackboard.approximate(recurrence_rhs);
 }
 
-inline bool
-Recurrence::verify_solution() const {
-  if (solved || solve()) {
-    // Verify the solution.
-    return false;
-  }
-  // Well, if the client insists...
-  return true;
-}
-
 inline Symbol
 Recurrence::insert_auxiliary_definition(const Expr& e) const {
   return blackboard.insert_definition(e);
