@@ -311,7 +311,6 @@ private:
 
   friend Number abs(const Number& x);
   friend Number factorial(const Number& x);
-  friend Number gamma(const Number& x);
   friend Number gcd(const Number& x, const Number& y);
   friend Number lcm(const Number& x, const Number& y);
   friend Number exact_pwr(const Number& x, const Number& y);
