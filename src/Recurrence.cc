@@ -209,20 +209,11 @@ PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_finite_order() const {
   // We will store here the order of the recurrence.
   index_type order_rec;
-  // We will store here the the least non-negative integer `j'
-  // such that the recurrence is well-defined for `n >= j':
-  // the index `k' of the symbolic initial condition `x(k)'
-  // will start from it.
-  index_type first_i_c;
   // FIXME: chiarire discorso dell'ordine con le non lineari.
-  if (is_non_linear_finite_order()) {
+  if (is_non_linear_finite_order())
     order_rec = associated_linear_rec().order();
-    first_i_c = associated_linear_rec().first_valid_index;
-  }
-  else {
+  else
     order_rec = order();
-    first_i_c = first_valid_index;
-  }
   
   if (order_rec == 0)
     // We call recurrence of `order zero' special recurrences of the
@@ -235,7 +226,8 @@ PURRS::Recurrence::verify_finite_order() const {
     return PROVABLY_CORRECT;
   
   // Step 1: validation of symbolic initial conditions.
-  Verify_Status status = validate_initial_conditions(order_rec, first_i_c);
+  Verify_Status status = validate_initial_conditions(order_rec,
+						     first_valid_index);
   if (status == INCONCLUSIVE_VERIFICATION || status == PROVABLY_INCORRECT)
     return status;
   
