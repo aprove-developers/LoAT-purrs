@@ -133,6 +133,7 @@ PURRS::exp_poly_decomposition(const Expr& e, const Symbol& x,
 			      std::vector<Expr>& alpha,
 			      std::vector<Expr>& p,
 			      std::vector<Expr>& q) {
+  assert(e.is_expanded());
   // This simplification is necessary because rewrite eventual
   // nested powers.
   Expr e_simpl = simplify_ex_for_input(e, true);
