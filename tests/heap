@@ -84,6 +84,7 @@ n	n^2*x(n-1)-x(n/2)
 n	sqrt(n)*x(sqrt(n))+n
 n	sqrt(n)*x(sqrt(n))+n/2+x(3*n/4)
 n	sum(a,0,n-1,x(a))+1
+n	x((n+1)/2)+x((n-1)/2)
 n	x(abs(log(n)))+1
 n	x(n)
 n	x(n)*x(n)
@@ -260,6 +261,7 @@ yv	2*x(n-1)+2*x(n-2)+2^n
 yv	2*x(n-1)+2*x(n-2)-n
 yv	2*x(n-1)+2^(n-1)
 yv	2*x(n-1)+2^(n-1)+n+1
+yv	2*x(n-1)+2^(n-1)+n+1
 yv	2*x(n-1)+2^a
 yv	2*x(n-1)+2^n
 yv	2*x(n-1)+2^n-1
@@ -390,6 +392,7 @@ yv	n*x(n-1)+(1/3)^(n+3)
 yv	n*x(n-1)+(1/3)^2
 yv	n*x(n-1)+(1/3)^n
 yv	n*x(n-1)+2
+yv	n*x(n-1)+2*n+1
 yv	n*x(n-1)+3
 yv	n*x(n-1)+4
 yv	n*x(n-1)+a
@@ -443,6 +446,7 @@ yv	x(n-1)+1/(3*(n-3)!)
 yv	x(n-1)+1/n
 yv	x(n-1)+2
 yv	x(n-1)+2*n
+yv	x(n-1)+2*n*a^n+a^n+1
 yv	x(n-1)+2*n-1
 yv	x(n-1)+2*x(n-2)
 yv	x(n-1)+2*x(n-2)+mod(n,b)
