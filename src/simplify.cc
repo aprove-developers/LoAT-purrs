@@ -1332,6 +1332,119 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
   return e_rewritten;
 }
 
+/*!
+  Let \f$ e(x) \f$ be the expression in \p x contained in \p e.
+  This function computes two expressions \f$ e_1 \f$ and \f$ e_2 \f$
+  such that \f$ e = e_1 \cdot e_2 \f$: \f$ e_1 \f$ contains all factors of
+  \f$ e \f$ that do not depend from the symbol \p x; \f$ e_2 \f$
+  contains all factors of \f$ e \f$ that depend from the symbol \p x.
+*/
+void
+get_out_factors_from_argument(const Expr& e, const Expr& x,
+			      Expr& in, Expr& out) {
+  if (e.is_a_mul())
+    for (unsigned i = e.nops(); i-- > 0; ) {
+      const Expr& factor = e.op(i);
+      if (factor.has(x))
+	in *= factor;
+      else
+	out *= factor;
+    }
+  else
+    if (e.has(x))
+      in *= e;
+    else
+      out *= e;
+}
+
+/*!
+  Applies the following property for the function representing finite sums:
+  \f[
+    \begin{cases}
+      \sum_{k = a}^b f(k) =
+      \sum_{k = a}^n f(k) - f(n) - f(n-1) - \cdots - f(n-j+1),
+        \quad \text{if } b = n + j \text{and j is a positive integer}; \\
+      \sum_{k = a}^b f(k) = \sum_{k = a}^n f(k) + f(n+1) + \cdots + f(n+j),
+        \quad \text{if } b = n + j \text{and j is a negative integer}.
+    \end{cases}
+  \f]
+ */
+Expr
+simplify_sum_in_expanded_ex(const Expr& e) {
+  Expr e_rewritten;
+  D_MSGVAR("*** ", e);
+  if (e.is_a_add()) {
+    e_rewritten = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten += simplify_sum_in_expanded_ex(e.op(i));
+  }
+  else if (e.is_a_mul()) {
+    e_rewritten = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten *= simplify_sum_in_expanded_ex(e.op(i));
+  }
+  else if (e.is_a_power())
+    return pwr(simplify_sum_in_expanded_ex(e.arg(0)),
+	       simplify_sum_in_expanded_ex(e.arg(1)));
+  else if (e.is_a_function()) {
+    if (e.is_the_sum_function()
+	&& e.arg(2).is_a_add() && e.arg(2).nops() == 2) {
+      // `upper' is a sum of two addends.
+      const Expr& first_term = e.arg(2).op(0);
+      const Expr& second_term = e.arg(2).op(1);
+      Number numeric_term;
+      Symbol symbolic_term;
+      if (first_term.is_a_number() && second_term.is_a_symbol()) {
+	numeric_term = first_term.ex_to_number();
+	symbolic_term = second_term.ex_to_symbol();
+      }
+      else if (first_term.is_a_symbol() && second_term.is_a_number()) {
+	numeric_term = second_term.ex_to_number();
+	symbolic_term = first_term.ex_to_symbol();
+      }
+      else {
+	Expr factors_in = 1;
+	Expr factors_out = 1;
+	get_out_factors_from_argument(e.arg(3), e.arg(0),
+				      factors_in, factors_out);
+	if (factors_in == 1)
+	  return factors_out * (e.arg(2) - e.arg(1) + 1);
+	else
+	  return factors_out * sum(e.arg(0), e.arg(1), e.arg(2), factors_in);
+      }
+      if (numeric_term.is_integer()) {
+	Expr factors_in = 1;
+	Expr factors_out = 1;
+	get_out_factors_from_argument(e.arg(3), e.arg(0),
+				      factors_in, factors_out);
+	if (factors_in == 1)
+	  e_rewritten += factors_out * (symbolic_term - e.arg(1) + 1);
+	else
+	  e_rewritten += factors_out
+	    * sum(e.arg(0), e.arg(1), Expr(symbolic_term), factors_in);
+	if (numeric_term.is_positive_integer())
+	  for (Number j = 1; j <= numeric_term; ++j)
+	    e_rewritten += e.arg(3).substitute(e.arg(0), symbolic_term + j);
+	else
+	  for (Number j = numeric_term + 1; j <= 0 ; ++j)
+	    e_rewritten -= e.arg(3).substitute(e.arg(0), symbolic_term + j);
+      }
+    }
+    else if (e.nops() == 1)
+      return apply(e.functor(), simplify_sum_in_expanded_ex(e.arg(0)));
+    else {
+      unsigned num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned i = 0; i < num_argument; ++i)
+	argument[i] = simplify_sum_in_expanded_ex(e.arg(i));
+      return apply(e.functor(), argument);
+    }
+  }
+  else 
+    e_rewritten = e;
+  return e_rewritten;
+}
+
 } // anonymous namespace
 
 
@@ -1399,6 +1512,12 @@ PURRS::Expr
 PURRS::simplify_logarithm(const Expr& e) {
   return simplify_logarithm_in_expanded_ex(e.expand()).expand();
 }
+
+PURRS::Expr
+PURRS::simplify_sum(const Expr& e) {
+  return simplify_sum_in_expanded_ex(e.expand()).expand();
+}
+
 
 /*!
   Executes consecutively all simplifications described in the comment

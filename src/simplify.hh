@@ -42,6 +42,9 @@ Expr
 simplify_factorials_and_exponentials(const Expr& e);
 
 Expr
+simplify_sum(const Expr& e);
+
+Expr
 simplify_logarithm(const Expr& e);
 
 Expr
