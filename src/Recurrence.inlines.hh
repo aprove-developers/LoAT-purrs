@@ -145,8 +145,8 @@ Recurrence::get_initial_conditions() const {
 
 inline Recurrence::Solver_Status
 Recurrence::solve() const {
-  Solver_Status status = OK;
-  if (!solved && (status = solve_try_hard()) == OK)
+  Solver_Status status = RECURRENCE_OK;
+  if (!solved && (status = solve_try_hard()) == RECURRENCE_OK)
     solved = true;
   return status;
 }

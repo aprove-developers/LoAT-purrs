@@ -258,7 +258,7 @@ main() try {
   Expr solution;
   try {
     switch (recurrence.solve()) {
-    case Recurrence::OK:
+    case Recurrence::RECURRENCE_OK:
       solution = recurrence.exact_solution();
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:

@@ -73,7 +73,7 @@ public:
     In case invariants are violated error messages are written on
     <CODE>std::cerr</CODE>.
   */
-  bool Ok() const; 
+  bool OK() const; 
 
 private:
   //! \brief
@@ -87,7 +87,7 @@ public:
     /*!
       Solution was successful.
     */
-    OK,
+    RECURRENCE_OK,
 
     /*!
       The right-hand side of the recurrence contains at least an occurrence

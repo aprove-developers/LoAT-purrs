@@ -344,7 +344,7 @@ main(int argc, char *argv[]) try {
 
     Expr solution;
     switch (solve_wrapper(rec)) {
-    case Recurrence::OK:
+    case Recurrence::RECURRENCE_OK:
       if (regress_test) {
 	if (expect_not_exactly_solved) {
 	  if (verbose)
