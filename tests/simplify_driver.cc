@@ -86,6 +86,20 @@ my_exit(int status) {
   exit(status);
 }
 
+Expr_List symbols;
+
+static void
+init_symbols() {
+  symbols.append(Recurrence::n);
+  char a[2];
+  a[1] = '\0';
+  for (char c = 'a'; c <= 'z'; ++c)
+    if (c != 'e' && c != 'n' && c != 'x') {
+      a[0] = c;
+      symbols.append(Symbol(a));
+    }
+}
+
 static void
 process_options(int argc, char* argv[]) {
   int option_index;
@@ -255,6 +269,8 @@ main(int argc, char *argv[]) try {
 
   set_handlers();
 
+  init_symbols();
+
   process_options(argc, argv);
 
   readlinebuf* prdlb = 0;
@@ -271,12 +287,6 @@ main(int argc, char *argv[]) try {
 #endif
   istream& input_stream = *pinput_stream;
 
-  Symbol x("x");
-  Symbol a("a");
-  Symbol b("b");
-  Symbol c("c");
-  Symbol d("d");
-  Expr_List symbols(Recurrence::n, a, b, c, d, x);
   while (input_stream) {
     ++line_number;
 
