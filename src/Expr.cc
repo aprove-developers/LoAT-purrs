@@ -501,6 +501,31 @@ PURRS::Expr::is_scalar_representation(const Symbol& x) const {
 }
 
 bool
+PURRS::Expr::is_scalar_representation() const {
+  const Expr& e = *this;
+  if (e.is_a_number())
+    return true;
+  else if (e.is_a_constant())
+    return true;
+  else if (e.is_a_power())
+    return e.arg(0).is_scalar_representation()
+      && e.arg(1).is_scalar_representation();
+  else if (e.is_a_function()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!e.arg(i).is_scalar_representation())
+	return false;
+    return true;
+  }
+  else if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!e.op(i).is_scalar_representation())
+	return false;
+    return true;
+  }
+  return false;
+}
+
+bool
 PURRS::Expr::is_polynomial(const Symbol& x) const {
   const Expr& e = *this;
   if (e.is_scalar_representation(x))
@@ -517,6 +542,29 @@ PURRS::Expr::is_polynomial(const Symbol& x) const {
   else if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned i = e.nops(); i-- > 0; )
       if (!e.op(i).is_polynomial(x))
+	return false;
+    return true;
+  }
+  return false;
+}
+
+bool
+PURRS::Expr::is_multivariate_polynomial() const {
+  const Expr& e = *this;
+  if (e.is_scalar_representation())
+    return true;
+  else if (e.is_a_symbol())
+    return true;
+  else if (e.is_a_power()) {
+    if (e.arg(0).is_multivariate_polynomial()) {
+      Number exponent;
+      if (e.arg(1).is_a_number(exponent) && exponent.is_positive_integer()) 
+	return true;
+    }
+  }
+  else if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!e.op(i).is_multivariate_polynomial())
 	return false;
     return true;
   }

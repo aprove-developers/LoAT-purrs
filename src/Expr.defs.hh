@@ -724,6 +724,22 @@ public:
   bool is_scalar_representation(const Symbol& x) const;
 
   //! \brief
+  //! Returns <CODE>true</CODE> if \p *this is a scalar rapresentation;
+  //! returns <CODE>false</CODE> otherwise.
+  /*!
+    This function realizes the definition of <EM>scalar representation</EM>,
+    defined inductively as follows:
+    - every number is a scalar representation;
+    - every symbolic constant is a scalar representation;
+    - if \f$ f \f$ is any function and \f$ x_1, \dots, x_k \f$ are scalar
+      representations, then \f$ f(x_1, \dots, x_k) \f$ is a scalar
+      representation;
+    - if \f$ a \f$ and \f$ b \f$ are scalar representations, then
+      \f$ a+b \f$, \f$ a*b \f$, and \f$ a^b \f$ are scalar representations.
+  */
+  bool is_scalar_representation() const;
+
+  //! \brief
   //! Returns <CODE>true</CODE> if \p *this is a polynomial in \p x;
   //! returns <CODE>false</CODE> otherwise.
   /*!
@@ -739,6 +755,21 @@ public:
       \f$ a + b \f$ and \f$ a * b \f$ are polynomials.
   */
   bool is_polynomial(const Symbol& x) const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if \p *this is a multivariate polynomial;
+  //! returns <CODE>false</CODE> otherwise.
+  /*!
+    This function realizes the definition of
+    <EM>multivariate polynomial\f$</EM>, defined inductively as follows:
+    - every scalar representation is a multivariate polynomial;
+    - every parameter is a multivariate polynomial;
+    - if \f$ a \f$ is a multivariate polynomial and \f$ b \f$ is a positive
+      integer, then \f$ a^b \f$ is a multivariate polynomial;
+    - if \f$ a \f$ and \f$ b \f$ are multivariate polynomials then
+      \f$ a + b \f$ and \f$ a * b \f$ are multivariate polynomials.
+  */
+  bool is_multivariate_polynomial() const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this is a rational function in \p x;
