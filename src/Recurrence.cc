@@ -1008,10 +1008,10 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 void
 PURRS::Recurrence::check_number_for_evaluation(const char* method,
 					       const char* name,
-					       const Number& num) const {
-  // Check that `num' is non-negative.
+					       const Number& x) const {
+  // Check that `x' is non-negative.
   std::ostringstream s;
-  if (num.is_negative()) {
+  if (x.is_negative()) {
     s << "the " << name << " can be evaluated on non-negative numbers";
     throw_invalid_argument(method, s.str().c_str());
   }
@@ -1020,23 +1020,47 @@ PURRS::Recurrence::check_number_for_evaluation(const char* method,
   case LINEAR_FINITE_ORDER_CONST_COEFF:
   case LINEAR_FINITE_ORDER_VAR_COEFF:
     {
-      // Check that the number `num' is bigger than
-      // `first_valid_index - order() + 1'.
+      // Check the number `x' is bigger than
+      // `first_valid_index - order() + 1' or
+      // is equal to the index of a initial condition.
       unsigned int min_index = first_valid_index + 1 >= order()
 	? first_valid_index - order() + 1 : 0;
-      if (num < min_index) {
-	s << "*this is a recurrence of order " << order() << ";\n"
-	  << "the least non-negative integer `j' such that the\n"
-	  << "recurrence is well-defined for `n >= j' is "
-	  << first_valid_index
-	  << ". Hence, you can not to evaluate the solution\n"
-	  << "for number smaller than " << min_index;
-	throw_invalid_argument(method, s.str().c_str());
+      if (x < min_index) {
+	std::map<index_type, Expr>::const_iterator i
+	  = initial_conditions_.find(x.to_unsigned_int());
+	if (i == initial_conditions_.end()) {
+	  s << "*this is a recurrence of order " << order() << ";\n"
+	    << "the least non-negative integer `j' such that the\n"
+	    << "recurrence is well-defined for `n >= j' is "
+	    << first_valid_index
+	    << ".\nThe solution (or the bound) can be evaluated\n"
+	    << "for n >= " << min_index << " or must exist an initial\n"
+	    << "condition with index equal to " << x;
+	  throw_invalid_argument(method, s.str().c_str());
+	}
       }
     }
     break;
   case ORDER_ZERO:
   case WEIGHTED_AVERAGE:
+    // Check the number `x' is bigger than
+    // `first_valid_index' or is equal to the
+    // index of a initial condition.
+    if (x <= first_valid_index) {
+      std::map<index_type, Expr>::const_iterator i
+	= initial_conditions_.find(x.to_unsigned_int());
+      if (i == initial_conditions_.end()) {
+	s << "*this is a weighted-average recurrence and\n"
+	  << "the solution (or the bound) is valid from n = "
+	  << first_valid_index + 1 << ", \n"
+	  << "i.e. from the least non-negative integer `j'\n"
+	  << "such that the recurrence is well-defined for `n >= j' plus 1.\n"
+	  << "The solution (or the bound) can be evaluated\n"
+	  << "for n > " << first_valid_index << " or must exist an initial\n"
+	  << "condition with index equal to " << x;
+	throw_invalid_argument(method, s.str().c_str());
+      }
+    }
     break;
   case NON_LINEAR_FINITE_ORDER:
   case FUNCTIONAL_EQUATION:
@@ -1081,6 +1105,11 @@ PURRS::Recurrence::evaluate(unsigned int kind, const Number& x) const {
   // recurrence.
   check_number_for_evaluation(method, name, x);
 
+  // The solution or the bound is valid for the non-negative integer
+  // `n' such that `n > first_valid_index'; for `n <= first_valid_index'
+  //  the solution is represented by the initial condition with index
+  // equal to `x'.
+  unsigned int max_index = get_max_index_initial_condition();
   switch (type_) {
   case ORDER_ZERO:
     // If the recurrence has order zero, the solution is simply the
@@ -1089,23 +1118,9 @@ PURRS::Recurrence::evaluate(unsigned int kind, const Number& x) const {
     break;
   case LINEAR_FINITE_ORDER_CONST_COEFF:
   case LINEAR_FINITE_ORDER_VAR_COEFF:
-    // The solution or the bound is valid for the non-negative integer
-    // `n' such that `n > first_valid_index'; for `n <= first_valid_index'
-    //  the solution is represented by the initial condition with index
-    // equal to `x'.
-    if (x < first_valid_index + 1)
-      evaluated = get_initial_condition(x.to_unsigned_int());
-    else
-      evaluated = evaluated.substitute(n, x);
-    break;
   case WEIGHTED_AVERAGE:
-    // RIFARE!!!!
-
-    // The solution or the bound is valid for the non-negative integer
-    // `n' such that `n > 0'; for `n == 0' the solution is represented
-    // by the initial condition `x(0)'.
-    if (x == 0)
-      evaluated = get_initial_condition(0);
+    if (x <= max_index)
+      evaluated = get_initial_condition(x.to_unsigned_int());
     else
       evaluated = evaluated.substitute(n, x);
     break;
