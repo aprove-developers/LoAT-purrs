@@ -33,12 +33,14 @@ namespace Parma_Recurrence_Relation_Solver {
 inline
 Recurrence::Recurrence()
   : recurrence_rhs(0),
+    tdip(0),
     solved(false) {
 }
 
 inline
 Recurrence::Recurrence(const Expr& e)
   : recurrence_rhs(e),
+    tdip(0),
     solved(false) {
 }
 
@@ -46,18 +48,21 @@ inline
 Recurrence::Recurrence(const Recurrence& y)
   : recurrence_rhs(y.recurrence_rhs),
     system_rhs(y.system_rhs),
+    tdip(y.tdip),    
     solved(y.solved),
     solution(y.solution) {
 }
 
 inline
 Recurrence::~Recurrence() {
+  delete tdip;
 }
 
 inline Recurrence&
 Recurrence::operator=(const Recurrence& y) {
   recurrence_rhs = y.recurrence_rhs;
   system_rhs = y.system_rhs;
+  tdip = y.tdip;
   solved = y.solved;
   solution = y.solution;
   return *this;
@@ -75,6 +80,36 @@ Recurrence::replace_recurrence(unsigned k, const Expr& e) {
   if (!stat.second)
     // There was already something associated to `k': overwrite it.
     stat.first->second = e;
+}
+
+inline bool
+Recurrence::is_linear_finite_order_const_coeff() const {
+  return type == LINEAR_FINITE_ORDER_CONST_COEFF;
+}
+
+inline void
+Recurrence::set_linear_finite_order_const_coeff() {
+  type = LINEAR_FINITE_ORDER_CONST_COEFF;
+}
+
+inline bool
+Recurrence::is_linear_finite_order_var_coeff() const {
+  return type == LINEAR_FINITE_ORDER_VAR_COEFF;
+}
+
+inline void
+Recurrence::set_linear_finite_order_var_coeff() {
+  type = LINEAR_FINITE_ORDER_VAR_COEFF;
+}
+
+inline bool
+Recurrence::is_non_linear_finite_order() const {
+  return type == NON_LINEAR_FINITE_ORDER;
+}
+
+inline void
+Recurrence::set_non_linear_finite_order() {
+  type = NON_LINEAR_FINITE_ORDER;
 }
 
 inline Recurrence::Solver_Status

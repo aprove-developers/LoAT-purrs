@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Recurrence.types.hh"
 #include "Blackboard.defs.hh"
+#include "Finite_Order_Info.defs.hh"
 #include "Expr.defs.hh"
 #include "alg_eq_solver.hh"
 #include <map>
@@ -154,6 +155,60 @@ private:
   //! <CODE>x(k,n) = (*i).second()</CODE>
   //! is one of the equations of the system.
   std::map<unsigned, Expr> system_rhs;
+
+  enum Type {
+    /*!
+      Linear recurrence of finite order with constant coefficient.
+    */
+    LINEAR_FINITE_ORDER_CONST_COEFF,
+    
+    /*!
+      Linear recurrence of finite order with variable coefficient.
+    */
+    LINEAR_FINITE_ORDER_VAR_COEFF,
+    
+    /*!
+      Non-linear recurrence of finite order.
+    */
+    NON_LINEAR_FINITE_ORDER,
+    
+    /*!
+      Linear recurrence of infinite order. 
+    */
+    LINEAR_INFINITE_ORDER,
+    
+    /*!
+      Special recurrence of the form \f$ x(n) = a x(n / b) + d n^e \f$ . 
+    */
+    FUNCTIONAL_EQUATION
+  };
+
+  Type type;
+
+  Finite_Order_Info* tdip;
+
+  //! Returns <CODE>true</CODE> if the recurrence is linear
+  //! of finite order with constant coefficient;
+  //! returns <CODE>false</CODE> otherwise.
+  bool is_linear_finite_order_const_coeff() const;
+
+  //! Sets <CODE>type_recurrence = LINEAR_FINITE_ORDER_CONST_COEFF</CODE>.
+  void set_linear_finite_order_const_coeff();
+
+  //! Returns <CODE>true</CODE> if the recurrence is linear
+  //! of finite order with variable coefficient;
+  //! returns <CODE>false</CODE> otherwise.
+  bool is_linear_finite_order_var_coeff() const;
+
+  //! Sets <CODE>type_recurrence = LINEAR_FINITE_ORDER_VAR_COEFF</CODE>.
+  void set_linear_finite_order_var_coeff();
+
+  //! Returns <CODE>true</CODE> if the recurrence is non linear
+  //! of finite order; returns <CODE>false</CODE> otherwise.
+  bool is_non_linear_finite_order() const;
+
+  //! Sets <CODE>type_recurrence = NON_LINEAR_FINITE_ORDER</CODE>.
+  void set_non_linear_finite_order();
 
   mutable bool solved;
 
