@@ -158,7 +158,6 @@ ul	n+3*x(n/3)
 ul	n+x(n/2)
 ul	n+x(n/5)+7*n/10
 ul	n/2+x(n/2)
-ul	x(n/2)
 ul	x(n/2)*2+n-1
 ul	x(n/2)+1
 ul	x(n/5)+3
@@ -185,7 +184,7 @@ y	x(n-1)+x(n-3)-3*x(n-2)
 y	x(n-1)+x(n-3)-3*x(n-2)+7*x(n-4)
 y	x(n-1)-3*x(n-3)
 y	x(n-1)-4*x(n-2)+2^n+1
-yul	x(n/2)
+y	x(n/2)
 yv	((9*n)/10)+n
 yv	((n+1)*x(n-1)+(2*n-2))/n
 yv	((n+1)^5)-n^5
