@@ -44,6 +44,7 @@ using namespace Parma_Recurrence_Relation_Solver;
 static struct option long_options[] = {
   {"help",              no_argument,       0, 'h'},
   {"interactive",       no_argument,       0, 'i'},
+  {"latex",             no_argument,       0, 'l'},
   {"regress-test",      no_argument,       0, 'r'},
   {"verbose",           no_argument,       0, 'v'},
   {0, 0, 0, 0}
@@ -56,15 +57,19 @@ print_usage() {
   cerr << "Usage: " << program_name << " [OPTION]...\n\n"
     "  -h, --help              prints this help text\n"
     "  -i, --interactive       sets interactive mode on\n"
+    "  -l, --latex             output LaTeX code\n"
     "  -r, --regress-test      sets regression-testing mode on\n"
     "  -v, --verbose           be verbose"
        << endl;
 }
 
-#define OPTION_LETTERS "hirv"
+#define OPTION_LETTERS "hilrv"
 
 // Interactive mode is on when true.
 static bool interactive = false;
+
+// LaTeX mode is on when true.
+static bool latex = false;
 
 // Regression-testing mode is on when true.
 static bool regress_test = false;
@@ -101,6 +106,10 @@ process_options(int argc, char* argv[]) {
 
     case 'i':
       interactive = true;
+      break;
+
+    case 'l':
+      latex = true;
       break;
 
     case 'r':
@@ -222,6 +231,9 @@ main(int argc, char *argv[]) try {
 #endif
   istream& input_stream = *pinput_stream;
 
+  if (latex)
+    cout << "\\documentclass{article}\n\\begin{document}" << endl;
+
   Symbol n("n");
   Symbol a("a");
   Symbol b("b");
@@ -289,9 +301,22 @@ main(int argc, char *argv[]) try {
     }
 
     if (verbose) {
+      if (latex)
+	cout << "\\bigskip\n\n\\noindent\n\\textbf{Line";
       if (!interactive)
-	cerr << line_number << ": ";
-      cerr << "trying to solve x(n) = " << rhs << endl;
+	cout << line_number << ": ";
+      if (latex)
+	cout << "} $";
+      cout << "x(n) = ";
+      if (latex) {
+	rhs.latex_print(cout);
+	cout << "$";
+      }
+      else
+	cout << rhs;
+      cout << endl;
+      if (latex)
+	cout << endl;
     }
 
     Recurrence rec(rhs);
@@ -313,6 +338,11 @@ main(int argc, char *argv[]) try {
 	     << "****************"
 	     << endl << endl;
       }
+      if (latex) {
+	cout << "\\medskip\\indent\n\\(\n x(n) = ";
+	rec.exact_solution(n).latex_print(cout);
+	cout << "\n\\)\n" << endl;
+      }
     }
     else {
       if (regress_test) {
@@ -326,6 +356,9 @@ main(int argc, char *argv[]) try {
 	cout << "Sorry, this is too difficult." << endl;
     }
   }
+
+  if (latex)
+    cout << "\\end{document}" << endl;
 
   if (regress_test) {
     bool failed = false;
