@@ -34,6 +34,13 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+//! \brief
+//! Returns <CODE>true</CODE> if at least one element of the vector \p v
+//! is different from \f$ 0 \f$.
+//! Returns <CODE>false</CODE> otherwise.
+bool
+vector_not_all_zero(const std::vector<Expr>& v);
+
 //! Computes the gcd between \f$n\f$ and \f$m\f$.
 int
 gcd(int n, int m);

@@ -33,6 +33,14 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
+bool
+PURRS::vector_not_all_zero(const std::vector<PURRS::Expr>& v) {
+  for (unsigned i = v.size(); i-- > 0; )
+    if (!v[i].is_zero())
+      return true;
+  return false;
+}
+
 /*!
   Computes the gcd between the integers \p n and \p m.
 */

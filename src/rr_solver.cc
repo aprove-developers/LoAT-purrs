@@ -193,19 +193,6 @@ characteristic_equation_and_its_roots(int order,
   return true;
 }
 
-//! \brief
-//! Returns <CODE>true</CODE> if at least one element of the vector \p v
-//! is different from \f$ 0 \f$.
-//! Returns <CODE>false</CODE> otherwise, i. e., all the elements of \p v
-//! are equal to \f$ 0 \f$. 
-static bool
-vector_not_all_zero(const std::vector<Expr>& v) {
-  for (unsigned i = v.size(); i-- > 0; )
-    if (!v[i].is_zero())
-      return true;
-  return false;
-}
-
 static Expr
 return_sum(bool distinct, const Number& order, const Expr& coeff,
 	   const Symbol& alpha, const Symbol& lambda) {
