@@ -166,6 +166,16 @@ Recurrence::first_initial_condition() {
   return tdip -> first_initial_condition();
 }
 
+inline void
+Recurrence::set_first_initial_condition(unsigned i_c) const {
+  assert(is_order_zero()
+	 || is_linear_finite_order_const_coeff()
+	 || is_linear_finite_order_var_coeff()
+	 || is_non_linear_finite_order());
+  assert(tdip);
+  tdip -> set_first_initial_condition(i_c);
+}
+
 inline const std::vector<Expr>&
 Recurrence::coefficients() const {
   assert(is_order_zero()

@@ -170,7 +170,9 @@ private:
   solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
 			       const std::vector<Polynomial_Root>& roots,
 			       Expr& solution) const;
-
+  Solver_Status
+  solve_variable_coeff_order_1(const Expr& inhomogeneous_term,
+			       const Expr& coefficient, Expr& solution) const;
   //! \brief
   //! Holds the right-hand side of the global recurrence to be solved.
   //! This may have been set directly by the constructor or it may be the
@@ -280,6 +282,11 @@ private:
   //! recurrence is well-defined: the initial conditions will start from it.
   unsigned& first_initial_condition();
 
+  //! \brief
+  //! \p i_c is the smallest positive integer for which the finite order
+  //! recurrence is well-defined: the initial conditions will start from it. 
+  void set_first_initial_condition(unsigned i_c) const;
+
   //! Returns the coefficients of the finite order recurrence.
   const std::vector<Expr>& coefficients() const;
 
@@ -300,9 +307,6 @@ private:
   static Solver_Status
   compute_order(const Number& decrement, unsigned int& order, unsigned long& index,
 		unsigned long max_size);
-  static Solver_Status
-  solve_variable_coeff_order_1(const Expr& inhomogeneous_term,
-			       const Expr& coefficient, Expr& solution);
 
 #if 0
     Expr poly_char;
