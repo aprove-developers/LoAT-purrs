@@ -860,7 +860,7 @@ PURRS::Recurrence::verify_upper_bound() const {
 void
 PURRS::Recurrence::replace_initial_condition(unsigned int k, const Expr& e) {
   std::pair<std::map<index_type, Expr>::iterator, bool> stat
-    = initial_conditions.insert(std::map<index_type, Expr>::value_type(k, e));
+    = initial_conditions_.insert(std::map<index_type, Expr>::value_type(k, e));
   if (!stat.second)
     // There was already something associated to `i': overwrite it.
     stat.first->second = e;
@@ -883,9 +883,9 @@ PURRS::Recurrence::replace_initial_condition(unsigned int k, const Expr& e) {
 }
 
 void
-PURRS::Recurrence::set_initial_conditions(const std::map<index_type, Expr>&
-					  map_initial_conditions) {
-  if (!initial_conditions.empty())
+PURRS::Recurrence::
+set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
+  if (!initial_conditions_.empty())
     reset_initial_conditions();
 
   if (classifier_status_ == NOT_CLASSIFIED_YET)
@@ -908,7 +908,7 @@ PURRS::Recurrence::set_initial_conditions(const std::map<index_type, Expr>&
   case LINEAR_FINITE_ORDER_VAR_COEFF:
     {
       // Check the number of initial conditions.
-      if (map_initial_conditions.size() < order()) {
+      if (initial_conditions.size() < order()) {
 	s << "*this is a recurrence of order " << order()
 	  << " and are necessary at least \n" << order()
 	  << " initial conditions to uniquely identify it";
@@ -917,7 +917,7 @@ PURRS::Recurrence::set_initial_conditions(const std::map<index_type, Expr>&
       // Check that the lowest index among the indexes of the
       // initial conditions is bigger than
       // `first_valid_index() - order() + 1'.
-      index_type lowest = map_initial_conditions.begin()->first;
+      index_type lowest = initial_conditions.begin()->first;
       unsigned int min_index = first_valid_index() + 1 >= order()
 	? first_valid_index() - order() + 1 : 0;
       if (lowest < min_index) {
@@ -932,8 +932,8 @@ PURRS::Recurrence::set_initial_conditions(const std::map<index_type, Expr>&
       // Check if the indexes are all consequent.
       unsigned j = 0;
       for (std::map<index_type, Expr>::const_iterator i
-	     = map_initial_conditions.begin(),
-	     iend = map_initial_conditions.end(); i != iend; ++i, ++j)
+	     = initial_conditions.begin(),
+	     iend = initial_conditions.end(); i != iend; ++i, ++j)
 	if (i->first != lowest + j)
 	  throw_invalid_argument(method,
 				 "the indexes of the initial conditions "
@@ -942,8 +942,8 @@ PURRS::Recurrence::set_initial_conditions(const std::map<index_type, Expr>&
     break;
   case WEIGHTED_AVERAGE:
     {
-      if (map_initial_conditions.size() != 1
-	  || map_initial_conditions.begin()->first != 0)
+      if (initial_conditions.size() != 1
+	  || initial_conditions.begin()->first != 0)
 	throw_invalid_argument(method,
 			       "*this is a weighted-average recurrence and,\n"
 			       "by definition, there is only the\n"
@@ -963,7 +963,7 @@ PURRS::Recurrence::set_initial_conditions(const std::map<index_type, Expr>&
   }
 
   // Set the private data `initial_conditions' with the map given.
-  initial_conditions = map_initial_conditions;
+  initial_conditions_ = initial_conditions;
 }
 
 void
@@ -1083,52 +1083,6 @@ PURRS::Recurrence::evaluate(unsigned int kind, const Number& num) const {
   return evaluated;
 }
 
-Expr
-PURRS::Recurrence::evaluate_recurrence_rhs(const Number& num) const {
-  if (classifier_status_ == NOT_CLASSIFIED_YET)
-    classify_and_catch_special_cases();
-
-  // FIXME: exception?
-  if (classifier_status_ != CL_SUCCESS)
-    throw std::logic_error("PURRS::Recurrence::evaluate_recurrence_rhs():\n"
-			   "impossible to evaluate because *this is not\n"
-			   "in the class that the system is able to handle.");
-  // Check that the number `num' is in agreement with the type of the
-  // recurrence.
-  check_number_for_evaluation("PURRS::Recurrence::evaluate_exact_solution()",
-			      "recurrence", num);
-  
-  Expr evaluated;
-  switch (type_) {
-  case ORDER_ZERO:
-    evaluated = recurrence_rhs.substitute(n, num);
-    break;
-  case LINEAR_FINITE_ORDER_CONST_COEFF:
-  case LINEAR_FINITE_ORDER_VAR_COEFF:
-    {
-      std::vector<Expr> rec_evaluated(order()+1);
-      for (unsigned int i = first_valid_index(); i < num; i++) {
-	;      
-      }
-    }
-    break;
-  case WEIGHTED_AVERAGE:
-    break;
-  case NON_LINEAR_FINITE_ORDER:
-  case FUNCTIONAL_EQUATION:
-    // FIXME: to do!
-    throw
-      "PURRS error: today the evaluation of the right-hand side\n"  
-      "is allowed only for linear finite order recurrences and\n"  
-      "weighted-average recurrences.";
-    break;
-  default:
-    throw std::runtime_error("PURRS internal error: "
-			     "evaluate_exact_solution().");
-  }
-  return evaluated;
-}
-
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::apply_order_reduction() const {
   set_order_reduction();
@@ -1171,7 +1125,7 @@ PURRS::Recurrence::apply_order_reduction() const {
     // `initial_conditions' then we must to deduce the exact form
     // of the solution and substitute to it the defined initial
     // conditions.
-    if (!initial_conditions.empty()) {
+    if (!initial_conditions_.empty()) {
       Expr expanded_solution
 	= write_expanded_solution(*this, gcd_among_decrements());
       exact_solution_.set_expression(expanded_solution);
@@ -1492,7 +1446,7 @@ get_max_index_symbolic_i_c(const Expr& e, unsigned int& max_index) {
 Expr
 PURRS::Recurrence::
 substitute_i_c_shifting(const Expr& solution_or_bound) const {
-  assert(!initial_conditions.empty());
+  assert(!initial_conditions_.empty());
   assert(has_at_least_a_symbolic_ic(solution_or_bound));
   assert(is_linear_finite_order()
 	 || is_functional_equation()
@@ -1586,8 +1540,8 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
   // Substitute symbolic initial conditions with the values in the map
   // `initial_conditions'.
   for (std::map<index_type, Expr>::const_iterator i
-	 = initial_conditions.begin(),
-	 iend = initial_conditions.end(); i != iend; ++i)
+	 = initial_conditions_.begin(),
+	 iend = initial_conditions_.end(); i != iend; ++i)
     sol_or_bound = sol_or_bound.substitute(x(i->first),
 					   get_initial_condition(i->first));
   sol_or_bound = simplify_numer_denom(sol_or_bound);
@@ -1630,7 +1584,7 @@ PURRS::Recurrence::compute_exact_solution_finite_order() const {
   // symbolic initial conditions `x(i)'.
   // If the order of the recurrence is `0' no initial conditions
   // must be substituted.
-  if (!initial_conditions.empty() && order() > 0) {
+  if (!initial_conditions_.empty() && order() > 0) {
     evaluated_exact_solution_.set_expression
       (substitute_i_c_shifting(exact_solution_.expression()));
     evaluated_lower_bound_.set_expression
@@ -1653,7 +1607,7 @@ PURRS::Recurrence::compute_exact_solution_functional_equation() const {
     // eventually shift the solution in according with them before to
     // substitute the values of the initial conditions to the
     // symbolic initial condition `x(i)'.
-    if (!initial_conditions.empty()) {
+    if (!initial_conditions_.empty()) {
       evaluated_lower_bound_.set_expression
 	(substitute_i_c_shifting(lower_bound_.expression()));
       evaluated_upper_bound_.set_expression
@@ -1686,7 +1640,7 @@ PURRS::Recurrence::compute_exact_solution_non_linear() const {
   // eventually shift the solution in according with them before to
   // substitute the values of the initial conditions to the
   // symbolic initial condition `x(i)'.
-  if (!initial_conditions.empty()) {
+  if (!initial_conditions_.empty()) {
     evaluated_exact_solution_.set_expression
       (substitute_i_c_shifting(solution));
     evaluated_lower_bound_.set_expression
@@ -1709,7 +1663,7 @@ PURRS::Recurrence::compute_exact_solution_weighted_average() const {
   lower_bound_.set_expression(solution);
   upper_bound_.set_expression(solution);
 
-  if (!initial_conditions.empty()) {
+  if (!initial_conditions_.empty()) {
     solution = solution.substitute(x(0), get_initial_condition(0));
     evaluated_exact_solution_.set_expression(solution);
     evaluated_lower_bound_.set_expression(solution);
@@ -1734,7 +1688,7 @@ PURRS::Recurrence::compute_exact_solution() const {
     // eventually shift the solution in according with them before to
     // substitute the values of the initial conditions to the
     // symbolic initial conditions `x(i)'.
-    if (!initial_conditions.empty()
+    if (!initial_conditions_.empty()
 	&& !evaluated_exact_solution_.has_expression()) {
       evaluated_exact_solution_.set_expression
 	(substitute_i_c_shifting(exact_solution_.expression()));
@@ -1812,7 +1766,7 @@ compute_bound_functional_equation(Bound kind_of_bound) const {
   // eventually shift the solution in according with them before to
   // substitute the values of the initial conditions to the
   // symbolic initial condition `x(i)'.
-  if (!initial_conditions.empty())
+  if (!initial_conditions_.empty())
     if (kind_of_bound == LOWER)
       evaluated_lower_bound_.set_expression
 	(substitute_i_c_shifting(lower_bound_.expression()));
@@ -1848,7 +1802,7 @@ PURRS::Recurrence::compute_lower_bound() const {
     // eventually shift the solution in according with them before to
     // substitute the values of the initial conditions to the
     // symbolic initial conditions `x(i)'.
-    if (!initial_conditions.empty()
+    if (!initial_conditions_.empty()
 	&& !evaluated_lower_bound_.has_expression())
       evaluated_lower_bound_.set_expression
 	(substitute_i_c_shifting(lower_bound_.expression()));
@@ -1862,7 +1816,7 @@ PURRS::Recurrence::compute_lower_bound() const {
     // eventually shift the solution in according with them before to
     // substitute the values of the initial conditions to the
     // symbolic initial conditions `x(i)'.
-    if (!initial_conditions.empty()
+    if (!initial_conditions_.empty()
 	&& !evaluated_lower_bound_.has_expression()) {
       evaluated_exact_solution_.set_expression
 	(substitute_i_c_shifting(exact_solution_.expression()));
@@ -1908,7 +1862,7 @@ PURRS::Recurrence::compute_upper_bound() const {
     // eventually shift the solution in according with them before to
     // substitute the values of the initial conditions to the
     // symbolic initial conditions `x(i)'.
-    if (!initial_conditions.empty()
+    if (!initial_conditions_.empty()
 	&& !evaluated_upper_bound_.has_expression())
       evaluated_upper_bound_.set_expression
 	(substitute_i_c_shifting(upper_bound_.expression()));
@@ -1922,7 +1876,7 @@ PURRS::Recurrence::compute_upper_bound() const {
     // eventually shift the solution in according with them before to
     // substitute the values of the initial conditions to the
     // symbolic initial conditions `x(i)'.
-    if (!initial_conditions.empty()
+    if (!initial_conditions_.empty()
 	&& !evaluated_upper_bound_.has_expression()) {
       evaluated_exact_solution_.set_expression
 	(substitute_i_c_shifting(exact_solution_.expression()));
@@ -2053,11 +2007,11 @@ PURRS::Recurrence::dump(std::ostream& s) const {
   s << "auxiliary_definitions:" << std::endl;
   blackboard.dump(s);
   
-  if (!initial_conditions.empty()) {
+  if (!initial_conditions_.empty()) {
     s << "Initial conditions:" << std::endl;
     for (std::map<index_type, Expr>::const_iterator i
-	   = initial_conditions.begin(),
-	   initial_conditions_end = initial_conditions.end();
+	   = initial_conditions_.begin(),
+	   initial_conditions_end = initial_conditions_.end();
 	 i != initial_conditions_end; ++i)
       s << "  x(" << i->first << ")"
 	<< " = " << i->second << std::endl;

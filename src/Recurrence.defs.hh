@@ -316,45 +316,51 @@ public:
   */
   unsigned int first_valid_initial_condition() const;
 
-  //! Stores the initial conditions specified in \p map_initial_conditions.
+  //! \brief
+  //! Defines initial conditions of the recurrence that have been stored
+  //! in the map \p initial_conditions.
   /*!
-    The \p map_initial_conditions contains a set of initial
-    conditions \f$ x(k) = e \f$, where \f$ k \f$ is of the type
-    <CODE>index_type</CODE> and \f$ e \f$ is a generic expression.
+    The map \p initial_conditions represents a set of initial
+    conditions \f$ x(i) = e \f$, corresponding to a pair \f$ (i, e) \f$
+    in the map.
     This set of initial conditions must be sufficient to uniquely
-    identify the recurrence \p *this and must be in agreement
-    with the type of the recurrence.
-    
-    If \p *this is
-    - a \ref linear_finite_order "linear finite order recurrence"
-      or a \ref non_linear "non linear finite order recurrences":
-                                     the initial conditions in the map must
-                                     be at least as many as the order of the
-				     recurrence.
-				     The indexes of the initial conditions
-				     must be consequent and in agreement
-				     with <CODE>first_valid_index</CODE>
-				     (the least non-negative integer \f$ j \f$
-				     such that the recurrence is well-defined
-				     for \f$ n \geq j \f$).
+    determine, together with the recurrence and given an assignment
+    of values to the parameters, a sequence of complex numbers.
+    In this context, the notion of <EM>sufficient</EM> depends
+    on the type of the recurrence.
+    In particular:
+    - let \p *this be a
+      \ref linear_finite_order "linear finite order recurrence"
+      or a
+      \ref non_linear "non linear finite order recurrence" of order \f$ k \f$.
+      Let also \f$ j \f$ be the least non-negative integer \f$ j \f$
+      such that the recurrence is well-defined for \f$ n \geq j \f$
+      (this is obtainable with the method <CODE>first_valid_index()</CODE>.
+      Then the initial conditions in the map must include the \f$ k \f$ pairs
+      \f[
+           (j-k+p, e_1), (j-k+p+1, e_2), (j-k+p+2, e_3), \ldots, (j+p-1, e_k)
+      \f]
+      for \f$ p \geq 1 \f$.  If \p initial_conditions contains such a sequence
+      for more than one value of \f$ p \f$ the biggest of such values is used.
+      Conditions in  \p initial_conditions for indexes less than \f$ j-k+p \f$,
+      if any, are interpreted as special cases.
 
-    - a \ref weighted_average "weighted-average recurrence":
-                                     by definition and since the recurrence is
-				     rewritten so that the lower limit of
-				     the sum is equal to \f$ 0 \f$ and
-				     upper limit is equal to \f$ n-1 \f$,
-				     there is only the initial condition
-				     \f$ x_0 \f$.
+    - Let \p *this be a \ref weighted_average "weighted-average recurrence".
+      Then the map must contain only one initial condition of the form
+      \f$ (0, e) \f$.  Notice that the recurrence may have been rewritten
+      by shifting the index back to \f$ 0 \f$: this happens when the domain
+      of the functions occurring in the definition is not the whole set of
+      positive integers, or when the summation lower and upper limit are
+      different from \f$ 0 \f$ and \f$ n-1 \f$ respectively.
 
     - a \ref generalized_recurrence "functional equation":         
                                      to be written.
  
-    To call this method when the set of initial conditions is already
-    set provokes the overwriting of the previous set of initial
+    Calling this method overrides any previously given set of initial
     conditions.
 
-    It is always possible to come back to the symbolic solution
-    calling the method <CODE>reset_initial_conditions()</CODE>.
+    Initial conditions can be forgotten by means of the method
+    <CODE>reset_initial_conditions()</CODE>.
 
     \par Example 1
     We consider the second order recurrence relation with constant
@@ -422,26 +428,22 @@ public:
 				     called by this method fails.
     
     \exception std::invalid_argument thrown if the initial conditions
-                                     in the map \p map_initial_conditions
+                                     in the map \p initial_conditions
 				     are not a sufficient set to uniquely
 				     identify the recurrence or these initial
 				     conditions are not in agreement with
 				     the type of the recurrence.
   */
-  void set_initial_conditions(const std::map<index_type, Expr>&
-			      map_initial_conditions);
+  void
+  set_initial_conditions(const std::map<index_type, Expr>& initial_conditions);
 
-  //! \brief
-  //! Removed eventual initial conditions and restored the
-  //! solution or bound with the symbolic initial conditions.
+  //! Resets initial conditions, if any.
   void reset_initial_conditions();
 
   //! Returns the map containing the set of initial conditions.
   const std::map<index_type, Expr>& get_initial_conditions() const;
 
-  //! \brief
-  //! Returns the exact solution of \p *this, previously computed,
-  //! evaluated for \f$ n = num \f$.
+  //! Returns the exact solution of \p *this evaluated for \f$ n = num \f$.
   /*!
     This method replaces <CODE>Recurrence::n</CODE> with \p num in
     the expression containing the exact solution.
@@ -480,7 +482,7 @@ public:
   Expr evaluate_exact_solution(const Number& num) const;
 
   //! \brief
-  //! Evaluates the exact solution, previously computed, for \f$ n = i \f$,
+  //! Evaluates the exact solution for \f$ n = i \f$,
   //! where \f$ i \f$ assumes all the values of the interval \f$ [l, r] \f$.
   //! Puts the results in a container marked by \p oi.
   /*!
@@ -509,8 +511,7 @@ public:
 			  OutputIterator oi) const;
   
   //! \brief
-  //! Returns the lower bound of \p *this, previously computed,
-  //! evaluated for \f$ n = num \f$.
+  //! Returns the lower bound of \p *this evaluated for \f$ n = num \f$.
   /*!
     This method replaces <CODE>Recurrence::n</CODE> with \p num in
     the expression containing the lower bound.
@@ -532,7 +533,7 @@ public:
   Expr evaluate_lower_bound(const Number& num) const;
 
   //! \brief
-  //! Evaluates the lower bound, previously computed, for \f$ n = i \f$,
+  //! Evaluates the lower bound for \f$ n = i \f$,
   //! where \f$ i \f$ assumes all the values of the interval \f$ [l, r] \f$.
   //! Puts the results in a container marked by \p oi.
   /*!
@@ -560,9 +561,7 @@ public:
   evaluate_lower_bound(const Number& l, const Number& r,
 		       OutputIterator oi) const;
 
-  //! \brief
-  //! Returns the upper bound of \p *this, previously computed,
-  //! evaluated for \f$ n = num \f$.
+  //! Returns the upper bound of \p *this evaluated for \f$ n = num \f$.
   /*!
     This method replaces <CODE>Recurrence::n</CODE> with \p num in
     the expression containing the upper bound.
@@ -584,7 +583,7 @@ public:
   Expr evaluate_upper_bound(const Number& num) const;
 
   //! \brief
-  //! Evaluates the upper bound, previously computed, for \f$ n = i \f$,
+  //! Evaluates the upper bound for \f$ n = i \f$,
   //! where \f$ i \f$ assumes all the values of the interval \f$ [l, r] \f$.
   //! Puts the results in a container marked by \p oi.
   /*!
@@ -624,7 +623,7 @@ public:
 				      that the recurrence is valid for
 				      \f$ n \geq j \f$.
   */
-  Expr evaluate_recurrence_rhs(const Number& num) const;
+  Expr evaluate_rhs(const Number& num) const;
 
   //! \brief
   //! Evaluates the right-hand side of \p *this for \f$ n = i \f$,
@@ -644,8 +643,7 @@ public:
   */
   template <class OutputIterator>
   void
-  evaluate_recurrence_rhs(const Number& l, const Number& r,
-			  OutputIterator oi) const;
+  evaluate_rhs(const Number& l, const Number& r, OutputIterator oi) const;
 
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Checks if all the invariants are satisfied.
@@ -1571,7 +1569,7 @@ private:
 
   mutable Blackboard blackboard;
 
-  std::map<index_type, Expr> initial_conditions;
+  std::map<index_type, Expr> initial_conditions_;
 
 private:
   static Classifier_Status

@@ -81,7 +81,7 @@ Recurrence::Recurrence(const Recurrence& y)
     upper_bound_(y.upper_bound_),
     tried_to_compute_exact_solution(y.tried_to_compute_exact_solution),
     blackboard(y.blackboard),
-    initial_conditions(y.initial_conditions) {
+    initial_conditions_(y.initial_conditions_) {
 }
 
 inline Recurrence&
@@ -101,7 +101,7 @@ Recurrence::operator=(const Recurrence& y) {
   upper_bound_ = y.upper_bound_;
   tried_to_compute_exact_solution = y.tried_to_compute_exact_solution;
   blackboard = y.blackboard;
-  initial_conditions = y.initial_conditions;
+  initial_conditions_ = y.initial_conditions_;
   return *this;
 }
 
@@ -131,7 +131,7 @@ Recurrence::replace_recurrence(unsigned int k, const Expr& e) {
 /*!
   The \f$ 3 \$ <CODE>Cached_Expr</CODE> that contain the exact solution,
   the lower bound and the upper bound evaluated on the initial conditions
-  stored in the map <CODE>initial_conditions</CODE> are unset.
+  stored in the map <CODE>initial_conditions_</CODE> are unset.
   This technique allows to know if the user wants the solution (or the bound)
   with symbolic initial conditions or the solution (or the bounds)
   evaluated simply checking if the expression containing the solution
@@ -139,7 +139,7 @@ Recurrence::replace_recurrence(unsigned int k, const Expr& e) {
 */
 inline void
 Recurrence::reset_initial_conditions() {
-  initial_conditions.clear();
+  initial_conditions_.clear();
   evaluated_exact_solution_.unset_expression();
   evaluated_lower_bound_.unset_expression();
   evaluated_upper_bound_.unset_expression();
@@ -147,13 +147,13 @@ Recurrence::reset_initial_conditions() {
 
 inline const std::map<index_type, Expr>&
 Recurrence::get_initial_conditions() const {
-  return initial_conditions;
+  return initial_conditions_;
 }
 
 inline Expr
 Recurrence::get_initial_condition(unsigned int k) const {
-  std::map<index_type, Expr>::const_iterator i = initial_conditions.find(k);
-  if (i != initial_conditions.end())
+  std::map<index_type, Expr>::const_iterator i = initial_conditions_.find(k);
+  if (i != initial_conditions_.end())
     return (*i).second;
   else
     return x(k);
@@ -163,8 +163,8 @@ inline unsigned int
 Recurrence::get_max_index_initial_condition() const {
   unsigned int max_index = 0;
   for (std::map<index_type, Expr>::const_iterator i
-	 = initial_conditions.begin(),
-	 iend = initial_conditions.end(); i != iend; ++i)
+	 = initial_conditions_.begin(),
+	 iend = initial_conditions_.end(); i != iend; ++i)
     if (i->first > max_index)
       max_index = i->first;
   return max_index;
