@@ -132,9 +132,13 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
       if (exponent_interval_result) {
 	// Kludge to get around what is likely to be a CoStLy bug: see
 	// http://www.cs.unipr.it/pipermail/purrs-devel/2002-November/000724.html
-	if (exponent_aci.re() == -Interval::ONE()
-	    && exponent_aci.im() == Interval::ZERO())
-	  aci = CInterval(Interval::ONE(), Interval::ONE()) / base_aci;
+	if (exponent_aci.im() == Interval::ZERO()) {
+	  if (exponent_aci.re() == -Interval::ONE())
+	    aci = CInterval(Interval::ONE(), Interval::ZERO()) / base_aci;
+	  else if (exponent_aci.re().sup() < 0.0)
+	    aci = CInterval(Interval::ONE(), Interval::ZERO())
+	      / pow(base_aci, -exponent_aci);
+	}
 	else
 	  aci = pow(base_aci, exponent_aci);
       }
