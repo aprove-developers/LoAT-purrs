@@ -74,7 +74,7 @@ main() try {
   while (input_stream) {
     cout << endl;
     cout << "What kind of expression do you want to simplify?" << endl;
-    cout << "1. For the input (to put in evidence the symbol `n')" << endl;
+    cout << "1. For the input (to collect the symbol `n')" << endl;
     cout << "2. For the output" << endl;
     cout << "3. Containing factorials" << endl;
     int choice = 0;
