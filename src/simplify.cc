@@ -1147,6 +1147,55 @@ PURRS::simplify_factorials_and_exponentials(const Expr& e) {
 }
 
 /*!
+  Applies the following logarithm's property:
+  \f[
+    a^{log n / log a} = n, \quad \text{where } a \in \Rset, a > 0. 
+  \f]
+*/
+PURRS::Expr
+PURRS::simplify_logarithm(const Expr& e) {
+  Expr e_rewritten;
+  if (e.is_a_add()) {
+    e_rewritten = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten += simplify_logarithm(e.op(i));
+  }
+  else if (e.is_a_mul()) {
+    e_rewritten = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten *= simplify_logarithm(e.op(i));
+  }
+  else if (e.is_a_power()) {
+    const Expr& base = e.arg(0);
+    const Expr& exponent = e.arg(1);
+    Number base_num;
+    if (base.is_a_number(base_num) && base_num.is_positive()
+	&& exponent.is_a_mul() && exponent.nops() == 2
+	&& ((exponent.op(0) == log(Recurrence::n)
+	     && exponent.op(1) == 1 / log(base_num))
+	    || (exponent.op(1) == log(Recurrence::n)
+		&& exponent.op(0) == 1 / log(base_num))))
+      return Recurrence::n;
+    else
+      return pwr(simplify_logarithm(e.arg(0)), simplify_logarithm(e.arg(1)));
+  }
+  else if (e.is_a_function()) {
+    if (e.nops() == 1)
+      e_rewritten = apply(e.functor(), simplify_logarithm(e.arg(0)));
+    else {
+      unsigned num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned i = 0; i < num_argument; ++i)
+	argument[i] = simplify_logarithm(e.arg(i));
+      e_rewritten = apply(e.functor(), argument);
+    }
+  }
+  else
+    e_rewritten = e;
+  return e_rewritten;
+}
+
+/*!
   Executes consecutively all simplifications described in the comment
   of the functions <CODE>simplify_numer_denom()</CODE>,
   <CODE>simplify_factorials_and_exponentials()</CODE> and
