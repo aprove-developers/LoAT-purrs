@@ -65,12 +65,10 @@ using namespace PURRS;
   Returns <CODE>false</CODE> otherwise.
 */
 bool
-gosper_step_one(const Symbol& m, const Expr& t_m, Expr& r_m, bool full) {
+gosper_step_one(const Symbol& m, const Expr& t_m, Expr& r_m) {
   D_VAR(t_m);
-  // Not is the case of variable coefficient.
-  if (full) 
-    r_m = simplify_factorials_and_exponentials(t_m.substitute(m, m+1))
-      * pwr(simplify_factorials_and_exponentials(t_m), -1);
+  r_m = simplify_factorials_and_exponentials(t_m.substitute(m, m+1))
+    * pwr(simplify_factorials_and_exponentials(t_m), -1);
   // FIXME: we must understand the better simplification to use in this case.
   r_m = simplify_numer_denom(r_m);
   D_VAR(r_m);
@@ -367,7 +365,7 @@ PURRS::gosper_algorithm(const Symbol& m, const Expr& t_m,
 			const Number& lower, const Expr& upper,
 			Expr& solution) {
   Expr r_m;
-  if (!gosper_step_one(m, t_m, r_m, true))
+  if (!gosper_step_one(m, t_m, r_m))
     // `t_m' is not hypergeometric: no chance of using Gosper's algorithm.
     return false;
   Expr a_m;
