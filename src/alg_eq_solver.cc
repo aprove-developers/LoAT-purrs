@@ -22,6 +22,8 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
+#include <config.h>
+
 #include "globals.hh"
 #include "alg_eq_solver.hh"
 #include <cassert>
@@ -44,7 +46,7 @@ static GExpr zero = 0;
   <CODE>FIND_DIVISORS_THRESHOLD</CODE>.
 */
 static void
-find_divisors(GNumber n, vector<GNumber>& divisors) {
+find_divisors(GNumber n, std::vector<GNumber>& divisors) {
   assert(n.is_pos_integer());
   assert(n > 0 && n < FIND_DIVISORS_THRESHOLD);
   unsigned m = n.to_int();
@@ -66,11 +68,11 @@ find_divisors(GNumber n, vector<GNumber>& divisors) {
 
 static bool
 find_roots(const GExpr& p, const GSymbol& x,
-	   vector<Polynomial_Root>& roots, GNumber multiplicity = 1);
+	   std::vector<Polynomial_Root>& roots, GNumber multiplicity = 1);
 
 static bool
 find_power_roots(const GExpr& p, const GSymbol& x,
-		 vector<Polynomial_Root>& roots);
+		 std::vector<Polynomial_Root>& roots);
 
 static void
 solve_equation_2(const GExpr& b, const GExpr& c,
@@ -107,7 +109,7 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
 */
 bool
 find_roots(const GExpr& p, const GSymbol& x,
-	   vector<Polynomial_Root>& roots,
+	   std::vector<Polynomial_Root>& roots,
 	   bool& all_distinct) {
   assert(p.info(info_flags::integer_polynomial));
   assert(!p.info(info_flags::numeric));
@@ -155,7 +157,7 @@ find_roots(const GExpr& p, const GSymbol& x,
 
 static bool
 find_power_roots(const GExpr& p, const GSymbol& x,
-		 vector<Polynomial_Root>& roots) {
+		 std::vector<Polynomial_Root>& roots) {
   assert(is_a<power>(p));
   GExpr base = p.op(0);
   assert(is_a<numeric>(p.op(1)));
@@ -169,7 +171,7 @@ find_power_roots(const GExpr& p, const GSymbol& x,
 
 static bool
 find_roots(const GExpr& p, const GSymbol& x,
-	   vector<Polynomial_Root>& roots,
+	   std::vector<Polynomial_Root>& roots,
 	   GNumber multiplicity) {
   int ldegree = p.ldegree(x);
   assert(ldegree <= 1);
@@ -196,8 +198,8 @@ find_roots(const GExpr& p, const GSymbol& x,
   GNumber abs_tc = abs(tc);
   if (abs_lc < FIND_DIVISORS_THRESHOLD && abs_tc < FIND_DIVISORS_THRESHOLD) {
     bool coefficients_changed = false;
-    vector<GNumber> abs_lc_divisors;
-    vector<GNumber> abs_tc_divisors;
+    std::vector<GNumber> abs_lc_divisors;
+    std::vector<GNumber> abs_tc_divisors;
     find_divisors(abs_lc, abs_lc_divisors);
     find_divisors(abs_tc, abs_tc_divisors);
     for (unsigned l = 0, ml = abs_lc_divisors.size(); l < ml; ++l) 

@@ -125,9 +125,16 @@ Interval::Interval(Boundary::Value x)
   flag(lower.is_integer()?INTEGER:REAL)
 { }
 
+// Constructs an interval containing an integer value.
+INLINE
+Interval::Interval(int x)
+: lower(LBoundary((Boundary::Value) x, LBoundary::CLOSED)),
+  upper(UBoundary((Boundary::Value) x, UBoundary::CLOSED)),
+  flag(INTEGER)
+{ }
+
 #ifdef Integer_INTERFACE
 // Constructs an interval containing an integer value.
-// NOTE: This is called implicitly to convert a Boundary::Value to an interval.
 INLINE
 Interval::Interval(const Integer& x)
   // KLUDGE!!!

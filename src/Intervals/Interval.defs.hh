@@ -52,13 +52,14 @@ site: http://www.cs.unipr.it/pil/ . */
 // The Interval Class.
 class Interval {
 public:
-  // This is the type of flag we use for discriminating
-  // between integral and "real" intervals.
+  // This is the type of the flag we use for discriminating
+  // between integer and "real" intervals.
   enum Type { REAL=0, INTEGER=1 };
 
   // Construction Operations
   Interval();
   Interval(Boundary::Value x);
+  Interval(int x);
 #ifdef Integer_INTERFACE
   Interval(const Integer& x);
 #endif
@@ -159,7 +160,7 @@ private:
   void set_maybe_real();
   void set_integer();
   bool contains_multiple(Boundary::Value offset,
-				Boundary::Value period);
+			 Boundary::Value period);
 };
 
 Bool3 lt3(const Interval& x, const Interval& y);

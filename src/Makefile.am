@@ -15,7 +15,7 @@ VPATH = @srcdir@
 
 SUBDIRS = . Intervals
 
-INCLUDES = -I$(top_builddir) -I$(top_srcdir)/src @extra_includes@
+INCLUDES = -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/src/Intervals @extra_includes@
 
 CPPFLAGS = -DPURRS_INTERNAL=public @extra_cpp_flags@
 
@@ -30,6 +30,7 @@ rr_solver.hh
 libpurrs_a_SOURCES = \
 alg_eq_solver.cc \
 rr_solver.cc \
+approx_expr.cc \
 globals.cc \
 util.cc \
 util.hh \

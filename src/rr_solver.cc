@@ -22,9 +22,14 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
+#include <config.h>
+
 #include "globals.hh"
 #include "util.hh"
 #include "alg_eq_solver.hh"
+
+// TEMPORARY
+#include <iostream>
 
 using namespace GiNaC;
 
@@ -60,7 +65,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
   static GList substitution;
 
   int degree = -1;
-  vector<GNumber> coefficients;
+  std::vector<GNumber> coefficients;
   GExpr e = rhs;
   bool failed = false;
   do {
@@ -96,7 +101,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
       failed = true;
       break;
     }
-    cout << "decrement = " << decrement << endl;
+    std::cout << "decrement = " << decrement << std::endl;
     if (!decrement.is_integer()
 	|| decrement < 0
 	|| decrement >= coefficients.max_size()) {
@@ -136,12 +141,12 @@ solve(const GExpr& rhs, const GSymbol& n) {
   if (failed)
     return false;
 
-  cout << "Degree = " << degree << endl;
-  cout << "Coefficients = ";
+  std::cout << "Degree = " << degree << std::endl;
+  std::cout << "Coefficients = ";
   for (int i = 1; i <= degree; ++i)
-    cout << coefficients[i] << " ";
-  cout << endl;
-  cout << "Inhomogeneous term = " << e << endl;
+    std::cout << coefficients[i] << " ";
+  std::cout << std::endl;
+  std::cout << "Inhomogeneous term = " << e << std::endl;
 
   // Build the expression here.
   static GSymbol x("x");
@@ -154,6 +159,6 @@ solve(const GExpr& rhs, const GSymbol& n) {
   if (!find_roots(p, x, roots, all_distinct))
     return false;
 
-  cout << degree << " " << roots.size() << " " << all_distinct << endl;
+  std::cout << degree << " " << roots.size() << " " << all_distinct << std::endl;
   return true;
 }

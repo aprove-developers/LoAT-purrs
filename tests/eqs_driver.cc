@@ -30,6 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "purrs_install.hh"
 
+using namespace std;
 using namespace GiNaC;
 
 #define NOISY 1

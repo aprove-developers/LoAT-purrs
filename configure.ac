@@ -62,6 +62,8 @@ AH_BOTTOM([
 #endif
 #endif
 
+#define BOUNDARY_TYPE_IS_DOUBLE 1
+
 #define INLINE inline
 
 #endif
