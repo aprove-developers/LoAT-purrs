@@ -1153,9 +1153,7 @@ compute_weighted_average_recurrence(Expr& solution) const {
 		    x(associated_first_order_rec().first_valid_index()+1));
       // If there is the initial condition `x(1)' specified then
       // the system substitute it with the respective value; otherwise
-      // the system does the substitution `x(1) = 2*x(0)+1'.
-      // FIXME: At the moment we substitute here only the initial
-      // condition `x(1)'.
+      // the system performs the substitution `x(1) = 2*x(0)+1'.
       std::map<unsigned int, Expr>::const_iterator i
 	= initial_conditions.find(1);
       if (i != initial_conditions.end())
@@ -1175,17 +1173,17 @@ compute_weighted_average_recurrence(Expr& solution) const {
 //! \brief
 //! Let \p solution_or_bound be the expression that represent the
 //! solution or the bound computed for the recurrence \p *this.
-//! This function substitutes eventual initial conditions specified
-//! by the user shifting the solution or the bound if necessary.
+//! This function substitutes eventual symbolic initial conditions
+//! specified by the user shifting the solution or the bound if necessary.
 /*!
   \param solution_or_bound  Contains the solution or the bound computed
                             for the recurrence \p *this in function of
-			    arbitrary initial conditions.
+			    arbitrary symbolic initial conditions.
 
-  \return                   The solution or the bounds shifted in agreement
+  \return                   The solution or the bound shifted in agreement
                             with the initial conditions inserted by the user
-			    and with the arbitrary initial conditions
-			    substituted with the respective values.
+			    and with the eventual remaining symbolic initial
+			    conditions.
 
   We know the least non-negative integer \f$ s \f$ such that
   the recurrence is well-defined for \f$ n \geq s \f$.
@@ -1210,71 +1208,85 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
     first_valid_index_rhs = applicability_condition();
     order_or_rank = rank();
   }
+  else {
+    assert(is_non_linear_finite_order() || is_weighted_average());
+    // FIXME: we must again understand how to work in these cases.
+    return sol_or_bound;
+  }
 
-  // If the order of linear recurrences is zero than it does not go made
-  // no shifts (the rank of functional equations can not to be zero, it is
+  // If the order of linear recurrences is zero than it does not perform
+  // shifts (the rank of functional equations can not to be zero, it is
   // greater or equal to one).
   if (order_or_rank != 0) {
     // Consider the maximum index of `x' function in the map
-    // `initial_conditions'.
-    unsigned int max_i_c = 0;
+    // `initial_conditions', i.e. the largest index of the initial
+    // conditions inserted by the user.
+    unsigned int max_index_user_i_c = 0;
     for (std::map<unsigned int, Expr>::const_iterator i
 	   = initial_conditions.begin(),
 	   iend = initial_conditions.end(); i != iend; ++i)
-      if (i->first > max_i_c)
-	max_i_c = i->first;
+      if (i->first > max_index_user_i_c)
+	max_index_user_i_c = i->first;
     
-    // Shift initial conditions.
-    if (first_valid_index_rhs + order_or_rank - 1 < max_i_c) {
-      unsigned int shift_forward = max_i_c - first_valid_index_rhs;
-      for (index_type i = order_or_rank; i-- > 0; )
-	sol_or_bound
-	  = sol_or_bound.substitute(x(i + first_valid_index_rhs),
-				    x(i + first_valid_index_rhs
-				      + shift_forward - order_or_rank + 1));
-      // The solution of `x(n) = a(n) x(n-1) + p(n)' is of the form
-      // `x(n) = prod(k,i+1,n,a(k)) x(i)
-      //         + prod(k,i+1,n,a(k)) sum(k,i,n,p(k)/a!(k))', where
-      // `i' is the least non-negative integer such that the recurrence
-      // is well-defined for \f$ n \geq i \f$.
-      // If `max_i_c', `m' for short, is bigger
-      // than `i', then the solution is:
-      // `x(n) = prod(k,i+1,n,a(k)) / prod(k,i+1,m,a(k)) x(i)
-      //         +prod(k,i+1,n,a(k))*[sum(k,i+1,n,p(k)/prod(j,i+1,k,a(j)))
-      //                              - sum(k,i+1,m,p(k)/prod(j,i+1,k,a(j)))]'.
+    // `max_index_symb_i_c' represents the largest
+    // index of the symbolic initial conditions.
+    unsigned int max_index_symb_i_c
+      = first_valid_index_rhs + order_or_rank - 1;
+    // If `max_index_user_i_c' is bigger than `max_index_symb_i_c',
+    // then we must shift the solution or the bound.
+    // There are two different steps:
+    // - 1. shift the index of the symbolic initial conditions;
+    // - 2. shift the index of the recurrence `n'.
+    if (max_index_user_i_c > max_index_symb_i_c) {
+      // Step 1.
+      for (index_type i = 0; i < order_or_rank; ++i)
+	sol_or_bound = sol_or_bound.substitute(x(i + first_valid_index_rhs),
+					       x(i + max_index_user_i_c
+						 - order_or_rank + 1));
+      // Step 2..
       if (is_linear_finite_order_var_coeff()) {
-	const Expr& homogeneous_term = product_factor()
-	  * x(first_valid_index_rhs + shift_forward);
+	// The solution of `x(n) = a(n) x(n-1) + p(n)' is of the form
+	// `x(n) = prod(k, i+1, n, a(k)) x(i)
+	//         + prod(k, i+1, n, a(k)) sum(k, i, n, p(k)/a!(k))', where
+	// `i' is the least non-negative integer such that the recurrence
+	// is well-defined for `n >= i'.
+	// If `max_index_user_i_c', `m' for short, is bigger
+	// than `i', then the solution is:
+	// `x(n) = prod(k, i+1, n, a(k)) / prod(k, i+1, m, a(k)) x(i)
+	//         + prod(k, i+1, n, a(k))
+	//         * [sum(k, i+1, n, p(k) / prod(j, i+1, k, a(j)))
+	//            - sum(k, i+1, m, p(k) / prod(j, i+1, k, a(j)))]'.
+	const Expr& homogeneous_term
+	  = product_factor() * x(max_index_user_i_c);
 	const Expr& non_homogeneous_term = sol_or_bound - homogeneous_term;
 	Symbol index;
 	sol_or_bound = homogeneous_term
-	  / PURRS::prod(index, first_valid_index_rhs+1, max_i_c,
+	  / PURRS::prod(index, first_valid_index_rhs+1, max_index_user_i_c,
 			coefficients()[1].substitute(n, index)).ex_to_number()
 	  + non_homogeneous_term - product_factor()
-	  * PURRS::sum(index, first_valid_index_rhs + 1, max_i_c,
+	  * PURRS::sum(index, first_valid_index_rhs + 1, max_index_user_i_c,
 		       (inhomogeneous_term / product_factor())
 		       .substitute(n, index));
       }
       else
-	// Shift the index of the recurrence `n'.
 	// FIXME: this technique is surely valid in the case of
 	// linear recurrences with constant coefficients of finite order.
 	// To check if it is valid also in the case of functional equations
 	// and weighted-average recurrences.
 	sol_or_bound
-	  = sol_or_bound.substitute(n,
-				    n - (shift_forward - order_or_rank + 1));
+	  = sol_or_bound.substitute(n, n - (max_index_user_i_c
+					    - first_valid_index_rhs
+					    - order_or_rank + 1));
     }
   }
 
-  // Substitute initial conditions with the values in the map
+  // Substitute symbolic initial conditions with the values in the map
   // `initial_conditions'.
   for (std::map<unsigned int, Expr>::const_iterator i
 	 = initial_conditions.begin(),
 	 iend = initial_conditions.end(); i != iend; ++i)
     sol_or_bound = sol_or_bound.substitute(x(i->first),
 					   get_initial_condition(i->first));
-
   sol_or_bound = simplify_numer_denom(sol_or_bound);
   sol_or_bound = simplify_ex_for_output(sol_or_bound, false);
   return sol_or_bound;
@@ -1340,37 +1352,48 @@ PURRS::Recurrence::compute_exact_solution_functional_equation() const {
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_exact_solution_non_linear() const {
-  Solver_Status status;
   Expr solution;
-  if ((status = compute_non_linear_recurrence(solution, 0))
-      == SUCCESS) {
-    exact_solution_.set_expression(solution);
-    lower_bound_.set_expression(solution);
-    upper_bound_.set_expression(solution);
-    return SUCCESS;
-  }
-  else
-    return status;
+  Solver_Status status  = compute_non_linear_recurrence(solution, 0);
+  if (status != SUCCESS)
+    return status;  
+
+  exact_solution_.set_expression(solution);
+  lower_bound_.set_expression(solution);
+  upper_bound_.set_expression(solution);
+  return SUCCESS;
 }
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_exact_solution_weighted_average() const {
-  Solver_Status status;
   Expr solution;
-  if ((status = compute_weighted_average_recurrence(solution)) == SUCCESS) {
-    // FIXME: At the moment we substitute here only the initial
-    // condition `x(0)'.
-    std::map<unsigned int, Expr>::const_iterator i
-      = initial_conditions.find(0);
-    if (i != initial_conditions.end())
-      solution = solution.substitute(x(0), get_initial_condition(0));
-    exact_solution_.set_expression(solution);
-    lower_bound_.set_expression(solution);
-    upper_bound_.set_expression(solution);
-    return SUCCESS;
-  }
-  else
+  Solver_Status status = compute_weighted_average_recurrence(solution);
+  if (status != SUCCESS)
     return status;
+
+#if 0
+  // FIXME: to improve the function `substitute_i_c_shifting()'
+  // so that to accept also weighted-average recurrences.
+  // Check if there are specified initial conditions and in this case
+  // eventually shift the solution in according with them before to
+  // substitute the values of the initial conditions to the
+  // symbolic initial condition `x(i)'.
+  if (!initial_conditions.empty())
+    exact_solution_.set_expression
+      (substitute_i_c_shifting(exact_solution_.expression()));
+  lower_bound_.set_expression(exact_solution_.expression());
+  upper_bound_.set_expression(exact_solution_.expression());
+#else
+  // FIXME: At the moment we substitute here only the initial
+  // condition `x(0)'.
+  std::map<unsigned int, Expr>::const_iterator i
+    = initial_conditions.find(0);
+  if (i != initial_conditions.end())
+    solution = solution.substitute(x(0), get_initial_condition(0));
+  exact_solution_.set_expression(solution);
+  lower_bound_.set_expression(solution);
+  upper_bound_.set_expression(solution);
+#endif
+  return SUCCESS;
 }
 
 PURRS::Recurrence::Solver_Status
