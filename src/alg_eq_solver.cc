@@ -385,7 +385,7 @@ find_roots(const Expr& p, const Symbol& x,
     roots_r.reserve(r.degree(x));
     if (find_roots(r, x, roots_r, 1)) {
       size_t num_r_roots = roots_r.size();
-      Expr theta = 2*Pi/nested_degree;
+      Expr theta = 2*Constant::Pi/nested_degree;
       for (int j = 0; j < nested_degree; ++j) {
 	Expr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
 	for (size_t i = 0; i < num_r_roots; ++i)
@@ -455,8 +455,8 @@ solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
     Expr sqrt_minus_Q = sqrt(-Q);
     Expr theta = acos(-R/(Q*sqrt_minus_Q));
     x1 = -a1_div_3 + 2*sqrt_minus_Q*cos(theta/3);
-    x2 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+2*Pi)/3);
-    x3 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+4*Pi)/3);
+    x2 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+2 * Constant::Pi)/3);
+    x3 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+4 * Constant::Pi)/3);
   }
   else {
     // When d > 0 there is one real and two complex conjugate roots.

@@ -46,18 +46,16 @@ public:
   //! Assignment operator.
   Constant& operator=(const Constant& k);
 
+  static const Constant Pi;
+  static const Constant Euler;
+
 private:
   GiNaC::constant c;
 
   friend class Expr;
 
-public:
-  // Made public only to initialize the constant Pi.
   Constant(const GiNaC::constant& gc);
 };
-
-extern const Constant Pi;
-extern const Constant Euler;
 
 } // namespace Parma_Recurrence_Relation_Solver
 

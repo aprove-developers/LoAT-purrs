@@ -114,7 +114,7 @@ approximate(const Expr& e) {
       abort();
   }
   else if (e.is_a_constant()) {
-    if (e.is_equal(Pi))
+    if (e.is_equal(Constant::Pi))
       return CInterval(Interval::PI(), Interval::ZERO());
 #if 0
     else if (e == Euler)
