@@ -538,6 +538,7 @@ PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::solve_linear_finite_order() const {
   D_VAR(order());
   D_VEC(coefficients(), 1, order());
+  D_VAR(inhomogeneous_term);
 
   if (is_order_zero()) {
     exact_solution_.set_expression(inhomogeneous_term);
