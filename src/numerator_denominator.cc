@@ -352,22 +352,14 @@ find_numerator(const std::vector<Expr>& numerators,
   return numerator;
 }
 
-/*!
-  Let \f$ e(n) = \frac{n_1}{d_1} + \dots + \frac{n_k}{d_k} \f$.
-  This function returns \f$ e(n) = \frac{n}{d} \f$ where
-  \f$ d \f$ is the product of common and not common factors of
-  \f$ d_1, \cdots, d_k \f$ with maximum exponent and
-  \f$ n = \sum_{i = 1}^k \frac{d}{d_i} n_i \f$.
-*/
-Expr
-transform_in_single_fraction(const Expr& e) {
+static void
+transform_in_single_fraction(const Expr& e, Expr& numerator, Expr& denominator) {
   D_MSGVAR("INPUT", e);
   // The dimension of `numerators' and `denominators' is terms'number of `e'
   // and will contain the numerator and the denominator of each term of `e'.  
   std::vector<Expr> numerators;
   std::vector<Expr> denominators;
-  Expr numerator;
-  Expr denominator = 1;
+  denominator = 1;
   if (e.is_a_add()) {
     numerators.insert(numerators.begin(), e.nops(), Number(1));
     denominators.insert(denominators.begin(), e.nops(), Number(1));
@@ -392,7 +384,20 @@ transform_in_single_fraction(const Expr& e) {
   D_VEC(denominators, 0 , denominators.size()-1);
   D_VAR(numerator);
   D_VAR(denominator);
-  
+}
+
+/*!
+  Let \f$ e = \frac{n_1}{d_1} + \dots + \frac{n_k}{d_k} \f$.  This
+  function returns an expression equivalent to \f$ e \f$ of the form
+  \f$ \frac{n}{d} \f$.  Moreover, \f$ d \f$ is the product of common
+  and not common factors of \f$ d_1, \cdots, d_k \f$ with maximum
+  exponent and \f$ n = \sum_{i = 1}^k \frac{d}{d_i} n_i \f$.
+*/
+Expr
+transform_in_single_fraction(const Expr& e) {
+  Expr numerator;
+  Expr denominator;
+  transform_in_single_fraction(e, numerator, denominator);
   return numerator / denominator;
 }
 
@@ -404,38 +409,9 @@ transform_in_single_fraction(const Expr& e) {
 */
 Expr
 numerator(const Expr& e) {
-  D_MSGVAR("INPUT", e);
-    // The dimension of `numerators' and `denominators' is terms'number of `e'
-  // and will contain the numerator and the denominator of each term of `e'.  
-  std::vector<Expr> numerators;
-  std::vector<Expr> denominators;
   Expr numerator;
-  Expr denominator = 1;
-  if (e.is_a_add()) {
-    numerators.insert(numerators.begin(), e.nops(), Number(1));
-    denominators.insert(denominators.begin(), e.nops(), Number(1));
-    for (unsigned i = e.nops(); i-- > 0; ) {
-      Expr factor_denominator = find_denominator_single_term(e.op(i), i,
- 							     numerators,
-							     denominators);
-      Expr old_denominator = denominator;
-      denominator = take_common_factors(old_denominator, factor_denominator);
-    }
-    numerator = find_numerator(numerators, denominators, denominator);
-  }
-  else {
-    numerators.push_back(1);
-    denominators.push_back(1);
-    denominator = find_denominator_single_term(e, 0, numerators, denominators);
-    numerator = numerators[0];
-  }
-
-  D_MSG("");
-  D_VEC(numerators, 0 , numerators.size()-1);
-  D_VEC(denominators, 0 , denominators.size()-1);
-  D_VAR(numerator);
-  D_VAR(denominator);
-  
+  Expr denominator;
+  transform_in_single_fraction(e, numerator, denominator);
   return numerator;
 }
 
@@ -446,34 +422,9 @@ numerator(const Expr& e) {
 */
 Expr
 denominator(const Expr& e) {
-  D_MSGVAR("INPUT", e);
-  // The dimension of `numerators' and `denominators' is terms'number of `e'
-  // and will contain the numerator and the denominator of each term of `e'.  
-  std::vector<Expr> numerators;
-  std::vector<Expr> denominators;
-  Expr denominator = 1;
-  if (e.is_a_add()) {
-    numerators.insert(numerators.begin(), e.nops(), Number(1));
-    denominators.insert(denominators.begin(), e.nops(), Number(1));
-    for (unsigned i = e.nops(); i-- > 0; ) {
-      Expr factor_denominator = find_denominator_single_term(e.op(i), i,
- 							     numerators,
-							     denominators);
-      Expr old_denominator = denominator;
-      denominator = take_common_factors(old_denominator, factor_denominator);
-    }
-  }
-  else {
-    numerators.push_back(1);
-    denominators.push_back(1);
-    denominator = find_denominator_single_term(e, 0, numerators, denominators);
-  }
-
-  D_MSG("");
-  D_VEC(numerators, 0 , numerators.size()-1);
-  D_VEC(denominators, 0 , denominators.size()-1);
-  D_VAR(denominator);
-  
+  Expr numerator;
+  Expr denominator;
+  transform_in_single_fraction(e, numerator, denominator);
   return denominator;
 }
 
