@@ -46,7 +46,7 @@ using namespace Parma_Recurrence_Relation_Solver;
 
 static struct option long_options[] = {
   {"recurrences",       required_argument, 0, 'R'},
-  //  {"initial-condition", required_argument, 0, 'I'},
+  {"initial-condition", required_argument, 0, 'I'},
   {"help",              no_argument,       0, 'h'},
   {"format",            required_argument, 0, 'f'},
   {"version",           no_argument,       0, 'V'},
@@ -228,33 +228,20 @@ process_options(int argc, char* argv[]) {
         production_mode = true;
         do_not_mix_modes();
         if (!optarg) {
-          cerr << program_name << ": a recurrence with initial conditions must follow `-R'"
+          cerr << program_name << ": a recurrence must follow `-R'"
                << endl;
           my_exit(1);
         }
         // Here `optarg' points to the beginning of the rhs.
         assert(optarg);
         Expr rec;
+	// FIXME: Pre-parse as string to allow using `=' instead of `=='.
         if (!parse_expression(optarg, rec))
           invalid_recurrence(optarg);
-	if (!rec.is_a_Expr_List() || rec.nops() != 2 ) {
-	  invalid_recurrence(optarg);
-	}
-	Expr rec_list = rec.op(0);
-	Expr cond_list = rec.op(1);
-	for (size_t i = 0; i < rec_list.nops(); ++i) {
-	  recs.push_back(rec_list.op(i));
-	}
-	for (size_t i = 0; i < cond_list.nops(); ++i) {
-	  conds.push_back(rec_list.op(i));
-	}
-	// cerr << recs[0] << "." << rec_list << "." << cond_list;
         have_recurrence = true;
         init_production_recurrence();
-        // precp->replace_recurrence(rec);
-	// We need to also save the rhs in case it is detected 
-	// as a multivariate recurrence.
-	// prhs=rec;
+        precp->replace_recurrence(rec);
+	// FIXME: Save lhs as well.
       }
       break;
       
@@ -789,8 +776,9 @@ bool find_terms_with_x(const Expr& this_term, vector<Expr>& terms_with_x) {
 }
 
       
-Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const int num_param, const vector<Expr>& terms_with_x, 
+Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr>& terms_with_x, 
 		    const Symbol& n_replacement, Expr& real_var_symbol, Expr& solution) {
+  const int num_param = lhs.arg(1).nops();
   vector<int> dummy(num_param);
 
   // We need a symbol different from any used symbol.
@@ -798,29 +786,30 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const int num_par
 
   for (int i = num_param - 1 ; i >= 0; --i) {
     dummy[i] = true;
-    for (vector<Expr>::const_iterator j = terms_with_x.begin(); j != terms_with_x.end(); ++j) {
-      if (!dummy[i])
-	break;
-      for (int k = j->arg(1).nops() - 1; k >= 0; --k) {
-	const Expr& examined_arg = lhs.arg(1).op(i);
-	const Expr& this_arg = j->arg(1).op(k);
-	// An argument can be neglected if it always occurs as itself or as a number...
-	if (k==i) {
-	  // FIXME: Can we afford to have greater flexibility here?
-	  if (!this_arg.is_a_number() && this_arg != examined_arg) {
-	    dummy[i] = false;
-	    break;
+    for (vector<Expr>::const_iterator j = terms_with_x.begin(); j != terms_with_x.end(); ++j) 
+      if (lhs.arg(0) == j->arg(0)) {
+	if (!dummy[i])
+	  break;
+	for (int k = j->arg(1).nops() - 1; k >= 0; --k) {
+	  const Expr& examined_arg = lhs.arg(1).op(i);
+	  const Expr& this_arg = j->arg(1).op(k);
+	  // An argument can be neglected if it always occurs as itself or as a number...
+	  if (k==i) {
+	    // FIXME: Can we afford to have greater flexibility here?
+	    if (!this_arg.is_a_number() && this_arg != examined_arg) {
+	      dummy[i] = false;
+	      break;
+	    }
+	  }
+	  else {
+	    // ... but it mustn't appear anywhere else as well.
+	    if (this_arg != this_arg.substitute(examined_arg, different_symbol)) {
+	      dummy[i] = false;
+	      break;
+	    }
 	  }
 	}
-	else {
-	// ... but it mustn't appear anywhere else as well.
-	  if (this_arg != this_arg.substitute(examined_arg, different_symbol)) {
-	    dummy[i] = false;
-	    break;
-	  }
-	}	
       }
-    }
   }
   const int real_var_index_unassigned = -1;
   int real_var_index = real_var_index_unassigned;
@@ -844,7 +833,6 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const int num_par
   for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
     const Expr& this_term = (*i);
     Expr real_var_expr = this_term.arg(1).op(real_var_index);
-    // FIXME: Assert that the considered parameter contains at most one symbol.
     bool symbol_found = false;
     for (int j = real_var_expr.nops() - 1; j >=0; --j) {
       if (real_var_expr.op(j).is_a_symbol()) {
@@ -868,9 +856,11 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const int num_par
   if (outcome == Recurrence::SUCCESS) {
     rec.exact_solution(solution);
     
-#ifdef DEBUG
-    std::cerr << solution << endl;
-#endif
+    if (verbose)
+      std::cerr << solution << endl;
+
+
+    // FIXME: The recurrence must not have been rewritten for this to succeed.
 
     // Restore original arity and symbol names.
     for (unsigned int i = 0; i < solution.nops(); ++i) {
@@ -923,11 +913,9 @@ main(int argc, char *argv[]) try {
   if (!param_list.is_a_Expr_List())
     error_message("Invalid lhs: must be in the form `x(index, {arg_list})'");
 
-  unsigned int index=index_expr.ex_to_number().to_unsigned_int();
+  unsigned int index = index_expr.ex_to_number().to_unsigned_int();
 
   function_args.insert(std::map<index_type, Expr>::value_type(index, param_list));
-
-  int num_param;
 
   std::vector<Expr> terms_with_x;
 
@@ -937,15 +925,11 @@ main(int argc, char *argv[]) try {
     abort();
   }
 
-  if (terms_with_x.size() != 0) {
-    num_param = terms_with_x[0].arg(1).nops();
-  }
-  
   Expr exact_solution;
   
   Recurrence::Solver_Status solve;
 
-  solve = multivar_solve(lhs, rhs, num_param, terms_with_x, n_replacement, real_var_symbol, exact_solution);
+  solve = multivar_solve(lhs, rhs, terms_with_x, n_replacement, real_var_symbol, exact_solution);
   
 #ifdef DEBUG
   cout << rhs;
