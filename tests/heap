@@ -343,6 +343,7 @@ y	4*x(n+1)+5*x(n-1)-3
 y	factorial(n)-x(n-3)+3*x(n-2)+n*log(n)+a
 y	factorial(n)-x(n-3)+3*x(n-2)+n*log(n)+a+x(n-1)
 y	factorial(n)-x(n-3)+x(n-2)+n*log(n)
+y	n+2/n*sum(k,0,n-1,x(k))
 y	n+x(n-1)+x(n-2)+x(n-3)+x(n-4)+1
 y	x(n+1)+5*x(n-1)-3
 y	x(n-1)*x(n-2)*x(n-3)
@@ -375,6 +376,7 @@ yv	((n+1)/n)*x(n-1)+2
 yv	((n+1)^5)-n^5
 yv	((n-1)/n)*x(n-1)+1/n
 yv	(1+(n^-1))*(n-1)+2
+yv	(1+1/n)*x(n-1)+2-1/n
 yv	(1+n^-1)*(n-1)+2
 yv	(1-a)*x(n-1)+a*b
 yv	(1-a)*x(n-1)+b*(1-x(n-1))
