@@ -95,8 +95,8 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
       // Check the number of initial conditions.
       if (initial_conditions.size() < k) {
 	s << "*this is a recurrence of order " << k
-	  << " and are necessary at least \n" << k
-	  << " initial conditions to uniquely determine it";
+	  << " and at least " << k << " initial conditions\n"
+	  << "are necessary to uniquely determine it";
 	throw_invalid_argument(method, s.str().c_str());
       }
       // Check if the largest index of the initial conditions in the
@@ -105,7 +105,7 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
       index_type largest = initial_conditions.rbegin()->first;
       if (largest < first) {
 	s << "*this is a recurrence of order " << k
-	  << " and it is well-defined for `n >= " << first << "'.\n"
+	  << " and it is well-defined only for `n >= " << first << "'.\n"
 	  << "Hence, the largest index can not to be smaller than " << first;
 	throw_invalid_argument(method, s.str().c_str());
       }
@@ -120,7 +120,7 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 	if (i->first != largest - j) {
 	  s << "*this is a recurrence of order " << k
 	    << " and the " << k << " largest initial conditions\n"
-	    << " must be ``consecutive''";
+	    << " must be consecutive";
 	  throw_invalid_argument(method, s.str().c_str());
 	}
       }
@@ -147,20 +147,21 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
       if (initial_conditions.empty())
 	throw_invalid_argument(method,
 			       "*this is a weighted-average recurrence "
-			       "and we need of 1 initial condition\n"
+			       "and we need one initial condition\n"
 			       "to uniquely determine it");
       if (initial_conditions.rbegin()->first < first_valid_index) {
 	s << "*this is well-defined for `n >= " << first_valid_index
-	  << "', then must be present at least an\n"
-	  << "initial condition with index larger or equal to "
-	  << first_valid_index;
+	  << "'.\n At least an initial condition with index "
+	  << "larger than or equal to " << first_valid_index
+	  << " must be present.";
 	throw_invalid_argument(method, s.str().c_str());
       }
     }
     break;
   case FUNCTIONAL_EQUATION:
     throw
-      "PURRS error: today the susbtitution of the initial conditions\n"  
+      "PURRS error: "
+      "for the moment the susbtitution of the initial conditions\n"  
       "is not allowed for functional equations. Sorry.";  
     break;
   default:
