@@ -217,43 +217,17 @@ private:
   Expr get_initial_condition(unsigned int k) const;
 
 public:
-  //! The possible classification of the recurrence.
-  enum Classifier_Status {
+  //! The possible states of the recurrence.
+  enum Solver_Status {
     /*!
-      The classification's process was successful: the type of the
-      recurrence is known and the solver is able to work with it
+      Solution, or approximation, was successful.
     */
-    CLASSIFICATION_OK,
+    SUCCESS,
 
     /*!
       The recurrence is indeterminate, hence it has infinite solutions.
     */
     INDETERMINATE_RECURRENCE,
-
-    /*!
-      The right-hand side of the recurrence contains at least an occurrence
-      of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is not an integer.
-    */
-    HAS_NON_INTEGER_DECREMENT,
-
-    /*!
-      The right-hand side of the recurrence contains at least an occurrence
-      of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is a negative integer.
-    */
-    HAS_NEGATIVE_DECREMENT,
-
-    /*!
-      The right-hand side of the recurrence contains at least an occurrence
-      of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is too big to be handled
-      by the standard solution techniques.
-    */
-    HAS_HUGE_DECREMENT,
-
-    /*!
-      The right-hand side of the recurrence contains at least an occurrence
-      of <CODE>x(n)</CODE>.
-    */
-    HAS_NULL_DECREMENT,
 
     /*!
       The recurrence is not solvable.
@@ -271,35 +245,22 @@ public:
     DOMAIN_ERROR,
 
     /*!
-      Catchall: the recurrence is generically too complex for the solver.
+      The right-hand side of the recurrence contains at least an occurrence
+      of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is not an integer.
     */
-    CLASSIFICATION_COMPLEX,
+    HAS_NON_INTEGER_DECREMENT,
 
     /*!
-      The recurrence is not yet classified.
+      The right-hand side of the recurrence contains at least an occurrence
+      of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is too big to be handled
+      by the standard solution techniques.
     */
-    NOT_CLASSIFIED_YET
-  };
-
-  mutable Classifier_Status classifier_status_;
-
-  //! The possible states of the recurrence.
-  enum Solver_Status {
-    /*!
-      Solution, or approximation, was successful.
-    */
-    SUCCESS,
+    HAS_HUGE_DECREMENT,
 
     /*!
       Catchall: the recurrence is generically too complex for the solver.
     */
-    TOO_COMPLEX,
-
-    /*!
-      The classification's process is failed and then the system can not
-      to solve, or approximate, the recurrence.
-    */
-    CLASSIFICATION_FAIL
+    TOO_COMPLEX
   };
 
   //! \brief
@@ -442,6 +403,77 @@ public:
   void dump(std::ostream& s) const;
 
 private:
+  //! The possible classification of the recurrence.
+  enum Classifier_Status {
+    /*!
+      The classification's process was successful: the type of the
+      recurrence is known and the solver is able to work with it
+    */
+    CL_SUCCESS,
+
+    /*!
+      The recurrence is indeterminate, hence it has infinite solutions.
+    */
+    CL_INDETERMINATE_RECURRENCE,
+
+    /*!
+      The recurrence is not solvable.
+    */
+    CL_UNSOLVABLE_RECURRENCE,
+
+    /*!
+      The recurrence does not have any sense.
+    */
+    CL_MALFORMED_RECURRENCE,
+
+    /*!
+      The recurrence is not well-defined.
+    */
+    CL_DOMAIN_ERROR,
+
+    /*!
+      The right-hand side of the recurrence contains at least an occurrence
+      of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is not an integer.
+    */
+    CL_HAS_NON_INTEGER_DECREMENT,
+
+    /*!
+      The right-hand side of the recurrence contains at least an occurrence
+      of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is too big to be handled
+      by the standard solution techniques.
+    */
+    CL_HAS_HUGE_DECREMENT,
+
+    /*!
+      Catchall: the recurrence is generically too complex for the solver.
+    */
+    CL_TOO_COMPLEX,
+
+    /*!
+      The right-hand side of the recurrence contains at least an occurrence
+      of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is a negative integer.
+    */
+    HAS_NEGATIVE_DECREMENT,
+
+    /*!
+      The right-hand side of the recurrence contains at least an occurrence
+      of <CODE>x(n)</CODE>.
+    */
+    HAS_NULL_DECREMENT,
+
+    /*!
+      The recurrence is not yet classified.
+    */
+    NOT_CLASSIFIED_YET
+  };
+
+  mutable Classifier_Status classifier_status_;
+
+  //! \brief
+  //! Returns the status of <CODE>Solver_Status</CODE> associated
+  //! to \p \p classifier_status.
+  static Solver_Status map_status(Classifier_Status classifier_status);
+
   //! \brief
   //! Classifies the recurrence \p *this calling the method
   //! <CODE>classify()</CODE>. 

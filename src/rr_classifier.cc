@@ -850,13 +850,13 @@ PURRS::Recurrence::compute_order(const Number& decrement, index_type& order,
   // (2) we will be able to store the coefficient into the
   // appropriate position of the `coefficients' vector.
   if (decrement >= LONG_MAX || decrement >= max_size)
-    return HAS_HUGE_DECREMENT;
+    return CL_HAS_HUGE_DECREMENT;
   
   // The `order' is defined as the maximum value of `index'.
   index = decrement.to_long();
   if (order == 0 || index > unsigned(order))
     order = index;
-  return CLASSIFICATION_OK;
+  return CL_SUCCESS;
 }
 
 /*!
@@ -897,26 +897,26 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
       set_non_linear_finite_order();
       non_linear_p = new Non_Linear_Info(Recurrence(new_rhs), coeff_and_base,
 					 auxiliary_symbols);
-      return CLASSIFICATION_OK;
+      return CL_SUCCESS;
     }
     else
-      return CLASSIFICATION_COMPLEX;
+      return CL_TOO_COMPLEX;
   }
   // This is the case of nested `x' function with argument containing `n'.
   else if (non_linear_term == 1)
-    return MALFORMED_RECURRENCE;
+    return CL_MALFORMED_RECURRENCE;
 
   unsigned int num_factors = addend.is_a_mul() ? addend.nops() : 1;
   Number num;
   if (num_factors == 1)
     if (addend.has_non_rational_numbers())
-      return MALFORMED_RECURRENCE;
+      return CL_MALFORMED_RECURRENCE;
     else if (addend.is_the_x_function()) {
       const Expr& argument = addend.arg(0);
       if (argument == n)
 	return HAS_NULL_DECREMENT;
       else if (has_parameters(argument))
-	return CLASSIFICATION_COMPLEX;
+	return CL_TOO_COMPLEX;
       // Check if this term has the form `x(n + d)'.
       else if (argument.is_a_add() && argument.nops() == 2) {
 	Number decrement;
@@ -925,12 +925,12 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	  Classifier_Status status
 	    = compute_order(decrement, order, index,
 			    coefficients.max_size());
-	  if (status != CLASSIFICATION_OK)
+	  if (status != CL_SUCCESS)
 	    return status;
 	  if (classifier_status_ == NOT_CLASSIFIED_YET || is_order_zero())
 	    set_linear_finite_order_const_coeff();
 	  else if (is_functional_equation())
-	    return CLASSIFICATION_COMPLEX;
+	    return CL_TOO_COMPLEX;
 	  // `num_term == 0' if `r' is the unique term of `rhs'
 	  // or if it is the first term of `rhs' (i.e. is the
 	  // first time that the system entry in this function).
@@ -941,7 +941,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	  insert_coefficients(1, index, coefficients);
 	}
 	else
-	  return HAS_NON_INTEGER_DECREMENT;
+	  return CL_HAS_NON_INTEGER_DECREMENT;
       }
       // Check if this term has the form `x(n / d)'.
       else if (argument.is_a_mul() && argument.nops() == 2) {
@@ -950,15 +950,15 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	  if (classifier_status_ == NOT_CLASSIFIED_YET || is_order_zero())
 	    set_functional_equation();
 	  else if (is_linear_finite_order())
-	    return CLASSIFICATION_COMPLEX;
+	    return CL_TOO_COMPLEX;
 	  homogeneous_terms
 	    .insert(std::map<Number, Expr>::value_type(divisor, 1));
 	}
 	else
-	  return CLASSIFICATION_COMPLEX;
+	  return CL_TOO_COMPLEX;
       }
       else if (argument.has(n))
-	return CLASSIFICATION_COMPLEX;
+	return CL_TOO_COMPLEX;
       else {
 	inhomogeneous += addend;
 	if (classifier_status_ == NOT_CLASSIFIED_YET)
@@ -983,7 +983,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 					      inhomogeneous, rhs_first_order,
 					      first_valid_index, rewritten)) { 
 	  if (first_valid_index > 0)
-	    return DOMAIN_ERROR;
+	    return CL_DOMAIN_ERROR;
 	  infinite_order_p
 	    = new Infinite_Order_Info(Recurrence(rhs_first_order), weight);
 	  set_linear_infinite_order();
@@ -994,13 +994,13 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	    Symbol h;
 	    rhs = weight * PURRS::sum(h, 0, n-1, x(h)) + inhomogeneous;
 	  }
-	  return CLASSIFICATION_OK;
+	  return CL_SUCCESS;
 	}
 	else
-	  return CLASSIFICATION_COMPLEX;
+	  return CL_TOO_COMPLEX;
       }
       else
-	return CLASSIFICATION_COMPLEX;
+	return CL_TOO_COMPLEX;
     }
     else {
       inhomogeneous += addend;
@@ -1016,13 +1016,13 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
     for (unsigned int i = num_factors; i-- > 0; ) {
       const Expr& factor = addend.op(i);
       if (factor.has_non_rational_numbers())
-	return MALFORMED_RECURRENCE;
+	return CL_MALFORMED_RECURRENCE;
       else if (factor.is_the_x_function()) {
 	const Expr& argument = factor.arg(0);
 	if (argument == n)
 	  return HAS_NULL_DECREMENT;
 	else if (has_parameters(argument))
-	  return CLASSIFICATION_COMPLEX;
+	  return CL_TOO_COMPLEX;
 	else if (argument.is_a_add() && argument.nops() == 2) {
 	  Number decrement;
 	  if (get_constant_decrement(argument, decrement)) {
@@ -1031,11 +1031,11 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	    Classifier_Status status
 	      = compute_order(decrement, order, index,
 			      coefficients.max_size());
-	    if (status != CLASSIFICATION_OK)
+	    if (status != CL_SUCCESS)
 	      return status;
 	    if (classifier_status_ != NOT_CLASSIFIED_YET
 		&& is_functional_equation())
-	      return CLASSIFICATION_COMPLEX;
+	      return CL_TOO_COMPLEX;
 	    if (num_term == 0)
 	      gcd_among_decrements = index;
 	    else
@@ -1043,7 +1043,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	    has_x = true;
 	  }
 	  else
-	    return HAS_NON_INTEGER_DECREMENT;
+	    return CL_HAS_NON_INTEGER_DECREMENT;
 	}
 	else if (argument.is_a_mul() && argument.nops() == 2) {
 	  if (get_constant_divisor(argument, divisor)) {
@@ -1052,14 +1052,14 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	    if (classifier_status_ == NOT_CLASSIFIED_YET || is_order_zero())
 	      set_functional_equation();
 	    else if (is_linear_finite_order())
-	      return CLASSIFICATION_COMPLEX;
+	      return CL_TOO_COMPLEX;
 	    has_x = true;
 	  }
 	  else
-	    return CLASSIFICATION_COMPLEX;
+	    return CL_TOO_COMPLEX;
 	}
 	else if (argument.has(n))
-	  return CLASSIFICATION_COMPLEX;
+	  return CL_TOO_COMPLEX;
 	else
 	  no_x_factor *= factor;
       } // ended case of `factor' `x' function.
@@ -1087,7 +1087,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 						first_valid_index,
 						rewritten)) { 
 	    if (first_valid_index > 0)
-	      return DOMAIN_ERROR;
+	      return CL_DOMAIN_ERROR;
 	    infinite_order_p
 	      = new Infinite_Order_Info(Recurrence(rhs_first_order), weight);
 	    set_linear_infinite_order();
@@ -1098,13 +1098,13 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	      Symbol h;
 	      rhs = weight * PURRS::sum(h, 0, n-1, x(h)) + inhomogeneous;
 	    }
-	    return CLASSIFICATION_OK;
+	    return CL_SUCCESS;
 	  }
 	  else
-	    return CLASSIFICATION_COMPLEX;
+	    return CL_TOO_COMPLEX;
 	}
 	else
-	  return CLASSIFICATION_COMPLEX;
+	  return CL_TOO_COMPLEX;
       }
       else {
 	if (factor.has(n))
@@ -1134,17 +1134,17 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	set_order_zero();
     }
   }
-  return CLASSIFICATION_OK;
+  return CL_SUCCESS;
 }
 
 /*!
   Classifies the recurrence \p *this.
   Returns:
-  - <CODE>CLASSIFICATION_OK</CODE>         if the recurrence is linear of
+  - <CODE>CL_SUCCESS</CODE>         if the recurrence is linear of
                                            finite or infinite order;
 					   non-linear of finite order;
 					   in the case of functional equation;
-  - <CODE>HAS_NON_INTEGER_DECREMENT</CODE> if the right-hand side of the
+  - <CODE>CL_HAS_NON_INTEGER_DECREMENT</CODE> if the right-hand side of the
                                            recurrence contains at least an
 					   occurrence of <CODE>x(n-k)</CODE>,
 					   where <CODE>k</CODE> is not an
@@ -1157,23 +1157,23 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
   - <CODE>HAS_NULL_DECREMENT</CODE>        if the right-hand side of the
                                            recurrence contains at least an
 					   occurrence of <CODE>x(n)</CODE>;
-  - <CODE>HAS_HUGE_DECREMENT</CODE>        if the right-hand side of the
+  - <CODE>CL_HAS_HUGE_DECREMENT</CODE>        if the right-hand side of the
                                            recurrence contains at least an
 					   occurrence of <CODE>x(n-k)</CODE>,
 					   where <CODE>k</CODE> is too big to
 					   be handled by the standard
 					   solution techniques;
-  - <CODE>MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
+  - <CODE>CL_MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
                                            any sense;
-  - <CODE>DOMAIN_ERROR</CODE>              if the recurrence is not
+  - <CODE>CL_DOMAIN_ERROR</CODE>              if the recurrence is not
                                            well-defined;
-  - <CODE>UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not solvable;
-  - <CODE>INDETERMINATE_RECURRENCE</CODE>  if the recurrence is indeterminate,
+  - <CODE>CL_UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not solvable;
+  - <CODE>CL_INDETERMINATE_RECURRENCE</CODE>  if the recurrence is indeterminate,
                                            hence it has infinite solutions.
-  - <CODE>CLASSIFICATION_COMPLEX</CODE>    in all the other cases.
+  - <CODE>CL_TOO_COMPLEX</CODE>    in all the other cases.
 
   For each class of recurrences for which the system returns
-  <CODE>CLASSIFICATION_OK</CODE>, it is initialized a pointer to an opportune
+  <CODE>CL_SUCCESS</CODE>, it is initialized a pointer to an opportune
   class containing all necessary informations about the recurrence
   of which the system it will have need during the computations of the
   solution or of the bounds, or during the verification of the obtained
@@ -1262,7 +1262,7 @@ PURRS::Recurrence::classify() const {
 					   order, coefficients,
 					   gcd_among_decrements, i,
 					   homogeneous_terms))
-	  != CLASSIFICATION_OK)
+	  != CL_SUCCESS)
 	return status;
       // As soon as the system notices the this is recurrences
       // of infinite order, stops the classification because already
@@ -1275,7 +1275,7 @@ PURRS::Recurrence::classify() const {
 					 order, coefficients,
 					 gcd_among_decrements, 0,
 					 homogeneous_terms))
-	!= CLASSIFICATION_OK)
+	!= CL_SUCCESS)
       return status;
 
   set_inhomogeneous_term(inhomogeneous);
@@ -1292,7 +1292,7 @@ PURRS::Recurrence::classify() const {
   assert(is_linear_finite_order() || is_functional_equation()
 	 || is_non_linear_finite_order() || is_linear_infinite_order());
 
-  return CLASSIFICATION_OK;
+  return CL_SUCCESS;
 }
 
 /*!
@@ -1306,32 +1306,32 @@ PURRS::Recurrence::classify() const {
   is not a positive integer.
 
   Returns:
-  - <CODE>CLASSIFICATION_OK</CODE>         if the recurrence is linear of
+  - <CODE>CL_SUCCESS</CODE>         if the recurrence is linear of
                                            finite or infinite order;
 					   non-linear of finite order;
 					   in the case of functional equation;
-  - <CODE>HAS_NON_INTEGER_DECREMENT</CODE> if the right-hand side of the
+  - <CODE>CL_HAS_NON_INTEGER_DECREMENT</CODE> if the right-hand side of the
                                            recurrence contains at least an
 					   occurrence of <CODE>x(n-k)</CODE>,
 					   where <CODE>k</CODE> is not an
 					   integer;
-  - <CODE>HAS_HUGE_DECREMENT</CODE>        if the right-hand side of the
+  - <CODE>CL_HAS_HUGE_DECREMENT</CODE>        if the right-hand side of the
                                            recurrence contains at least an
 					   occurrence of <CODE>x(n-k)</CODE>,
 					   where <CODE>k</CODE> is too big to
 					   be handled by the standard
 					   solution techniques;
-  - <CODE>MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
+  - <CODE>CL_MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
                                            any sense;
-  - <CODE>DOMAIN_ERROR</CODE>              if the recurrence is not
+  - <CODE>CL_DOMAIN_ERROR</CODE>              if the recurrence is not
                                            well_defined;
-  - <CODE>UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not solvable;
-  - <CODE>INDETERMINATE_RECURRENCE</CODE>  if the recurrence is indeterminate,
+  - <CODE>CL_UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not solvable;
+  - <CODE>CL_INDETERMINATE_RECURRENCE</CODE>  if the recurrence is indeterminate,
                                            hence it has infinite solutions.
-  - <CODE>CLASSIFICATION_COMPLEX</CODE>    in all the other cases. 
+  - <CODE>CL_TOO_COMPLEX</CODE>    in all the other cases. 
   
   For each class of recurrences for which the system returns
-  <CODE>CLASSIFICATION_OK</CODE>, it is initialized a pointer to an opportune
+  <CODE>CL_SUCCESS</CODE>, it is initialized a pointer to an opportune
   class containing all necessary informations about the recurrence
   of which the system it will have need during the computations of the
   solution or of the bounds, or during the verification of the obtained
@@ -1348,13 +1348,13 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
   do {
     status = classify();
     switch (status) {
-    case CLASSIFICATION_OK:
+    case CL_SUCCESS:
       break;
-    case HAS_NON_INTEGER_DECREMENT:
-    case HAS_HUGE_DECREMENT:
-    case MALFORMED_RECURRENCE:
-    case DOMAIN_ERROR:
-    case CLASSIFICATION_COMPLEX:
+    case CL_HAS_NON_INTEGER_DECREMENT:
+    case CL_HAS_HUGE_DECREMENT:
+    case CL_MALFORMED_RECURRENCE:
+    case CL_DOMAIN_ERROR:
+    case CL_TOO_COMPLEX:
       exit_anyway = true;
       break;
     case HAS_NEGATIVE_DECREMENT:
@@ -1385,11 +1385,11 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	  status = classify_and_catch_special_cases();
 	}
 	else if (result == 1)
-	  status = UNSOLVABLE_RECURRENCE;
+	  status = CL_UNSOLVABLE_RECURRENCE;
 	else if (result == 2)
-	  status = INDETERMINATE_RECURRENCE;
+	  status = CL_INDETERMINATE_RECURRENCE;
 	else
-	  status = CLASSIFICATION_COMPLEX;
+	  status = CL_TOO_COMPLEX;
 	exit_anyway = true;
       }
       break;
@@ -1399,7 +1399,7 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 			       "catch_special_cases().");
       break;
     }
-  } while (!exit_anyway && status != CLASSIFICATION_OK);
+  } while (!exit_anyway && status != CL_SUCCESS);
 
   classifier_status_ = status;
   return status;

@@ -132,9 +132,9 @@ footer() {
     .set("href", "mailto:purrs-devel@cs.unipr.it") << "." << br() << br()
        << "A free service brought to you by " << br()
        << a(img()
-	    .set("src", "http://www.cs.unipr.it/images/cs_at_parma")
-	    .set("alt", "cs@parma")
-	    .set("border", "0"))
+            .set("src", "http://www.cs.unipr.it/images/cs_at_parma")
+            .set("alt", "cs@parma")
+            .set("border", "0"))
     .set("href", "http://www.cs.unipr.it/") << br()
        << endl;
 
@@ -146,11 +146,11 @@ static void
 error(const string& message) {
   // Reset all the HTML elements that might have been used
   // to their initial state, so that we get valid output.
-  html::reset(); 	head::reset(); 		body::reset();
-  title::reset(); 	h1::reset(); 		h4::reset();
-  comment::reset(); 	td::reset(); 		tr::reset(); 
-  table::reset();	cgicc::div::reset();	p::reset(); 
-  a::reset();		h2::reset(); 		colgroup::reset();
+  html::reset();        head::reset();                 body::reset();
+  title::reset();       h1::reset();                 h4::reset();
+  comment::reset();     td::reset();                 tr::reset(); 
+  table::reset();       cgicc::div::reset();        p::reset(); 
+  a::reset();           h2::reset();                 colgroup::reset();
 
   // Output the HTTP headers for an HTML document, and the HTML 4.0 DTD info.
   cout << HTTPHTMLHeader() << HTMLDoctype(HTMLDoctype::eStrict) << endl
@@ -279,31 +279,20 @@ main() try {
       have_exact_solution = true;
       recurrence.exact_solution(exact_solution);
       exact_solution
-	= recurrence.substitute_auxiliary_definitions(exact_solution);
+        = recurrence.substitute_auxiliary_definitions(exact_solution);
       goto done;
       break;
-
-    case Recurrence::CLASSIFICATION_FAIL:
-      switch (recurrence.classifier_status_) {
-      case Recurrence::UNSOLVABLE_RECURRENCE:
-	error("this recurrence is unsolvable");
-	break;
-
-      case Recurrence::INDETERMINATE_RECURRENCE:
-	error("this recurrence has infinitely many solutions");
-	break;
-
-      case Recurrence::MALFORMED_RECURRENCE:
-	error("this recurrence is malformed");
-	break;
-
-      case Recurrence::HAS_NON_INTEGER_DECREMENT:
-      case Recurrence::HAS_HUGE_DECREMENT:
-      case Recurrence::CLASSIFICATION_COMPLEX:
-      default:
-	;
-      }
-      
+    case Recurrence::UNSOLVABLE_RECURRENCE:
+      error("this recurrence is unsolvable");
+      break;
+    case Recurrence::INDETERMINATE_RECURRENCE:
+      error("this recurrence has infinitely many solutions");
+      break;
+    case Recurrence::MALFORMED_RECURRENCE:
+      error("this recurrence is malformed");
+      break;
+    case Recurrence::HAS_NON_INTEGER_DECREMENT:
+    case Recurrence::HAS_HUGE_DECREMENT:
     case Recurrence::TOO_COMPLEX:
     default:
       ;
@@ -319,28 +308,17 @@ main() try {
       have_lower_bound = true;
       recurrence.lower_bound(lower_bound);
       break;
-
-    case Recurrence::CLASSIFICATION_FAIL:
-      switch (recurrence.classifier_status_) {
-      case Recurrence::UNSOLVABLE_RECURRENCE:
-	error("this recurrence is unsolvable");
-	break;
-	
-      case Recurrence::INDETERMINATE_RECURRENCE:
-	error("this recurrence has infinitely many solutions");
-	break;
-
-      case Recurrence::MALFORMED_RECURRENCE:
-	error("this recurrence is malformed");
-	break;
-
-      case Recurrence::HAS_NON_INTEGER_DECREMENT:
-      case Recurrence::HAS_HUGE_DECREMENT:
-      case Recurrence::CLASSIFICATION_COMPLEX:
-      default:
-	;
-      }
-      
+    case Recurrence::UNSOLVABLE_RECURRENCE:
+      error("this recurrence is unsolvable");
+      break;
+    case Recurrence::INDETERMINATE_RECURRENCE:
+      error("this recurrence has infinitely many solutions");
+      break;
+    case Recurrence::MALFORMED_RECURRENCE:
+      error("this recurrence is malformed");
+      break;
+    case Recurrence::HAS_NON_INTEGER_DECREMENT:
+    case Recurrence::HAS_HUGE_DECREMENT:
     case Recurrence::TOO_COMPLEX:
     default:
       ;
@@ -356,28 +334,17 @@ main() try {
       have_upper_bound = true;
       recurrence.upper_bound(upper_bound);
       break;
-
-    case Recurrence::CLASSIFICATION_FAIL:
-      switch (recurrence.classifier_status_) {
-      case Recurrence::UNSOLVABLE_RECURRENCE:
-	error("this recurrence is unsolvable");
-	break;
-
-      case Recurrence::INDETERMINATE_RECURRENCE:
-	error("this recurrence has infinitely many solutions");
-	break;
-
-      case Recurrence::MALFORMED_RECURRENCE:
-	error("this recurrence is malformed");
-	break;
-
-      case Recurrence::HAS_NON_INTEGER_DECREMENT:
-      case Recurrence::HAS_HUGE_DECREMENT:
-      case Recurrence::CLASSIFICATION_COMPLEX:
-      default:
-	;
-      }
-      
+    case Recurrence::UNSOLVABLE_RECURRENCE:
+      error("this recurrence is unsolvable");
+      break;
+    case Recurrence::INDETERMINATE_RECURRENCE:
+      error("this recurrence has infinitely many solutions");
+      break;
+    case Recurrence::MALFORMED_RECURRENCE:
+      error("this recurrence is malformed");
+      break;
+    case Recurrence::HAS_NON_INTEGER_DECREMENT:
+    case Recurrence::HAS_HUGE_DECREMENT:
     case Recurrence::TOO_COMPLEX:
     default:
       ;

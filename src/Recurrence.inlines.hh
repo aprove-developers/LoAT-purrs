@@ -38,7 +38,7 @@ namespace Parma_Recurrence_Relation_Solver {
 
 inline
 Recurrence::Recurrence()
-  : classifier_status_(CLASSIFICATION_OK),
+  : classifier_status_(CL_SUCCESS),
     recurrence_rhs(0),
     recurrence_rewritten(false),
     inhomogeneous_term(0),
@@ -178,7 +178,7 @@ Recurrence::type() {
 inline void
 Recurrence::set_type(const Type& t) const {
   type_ = t;
-  classifier_status_ = CLASSIFICATION_OK;
+  classifier_status_ = CL_SUCCESS;
 }
 
 inline bool
@@ -190,7 +190,7 @@ Recurrence::is_order_zero() const {
 inline void
 Recurrence::set_order_zero() const {
   type_ = ORDER_ZERO; 
-  classifier_status_ = CLASSIFICATION_OK;
+  classifier_status_ = CL_SUCCESS;
 }
 
 inline bool
@@ -202,7 +202,7 @@ Recurrence::is_linear_finite_order_const_coeff() const {
 inline void
 Recurrence::set_linear_finite_order_const_coeff() const {
   type_ = LINEAR_FINITE_ORDER_CONST_COEFF;
-  classifier_status_ = CLASSIFICATION_OK;
+  classifier_status_ = CL_SUCCESS;
 }
 
 inline bool
@@ -214,7 +214,7 @@ Recurrence::is_linear_finite_order_var_coeff() const {
 inline void
 Recurrence::set_linear_finite_order_var_coeff() const {
   type_ = LINEAR_FINITE_ORDER_VAR_COEFF;
-  classifier_status_ = CLASSIFICATION_OK;
+  classifier_status_ = CL_SUCCESS;
 }
 
 inline bool
@@ -234,7 +234,7 @@ Recurrence::is_non_linear_finite_order() const {
 inline void
 Recurrence::set_non_linear_finite_order() const {
   type_ = NON_LINEAR_FINITE_ORDER;
-  classifier_status_ = CLASSIFICATION_OK;
+  classifier_status_ = CL_SUCCESS;
 }
 
 inline bool
@@ -246,7 +246,7 @@ Recurrence::is_functional_equation() const {
 inline void
 Recurrence::set_functional_equation() const {
   type_ = FUNCTIONAL_EQUATION;
-  classifier_status_ = CLASSIFICATION_OK;
+  classifier_status_ = CL_SUCCESS;
 }
 
 inline bool
@@ -258,7 +258,7 @@ Recurrence::is_linear_infinite_order() const {
 inline void
 Recurrence::set_linear_infinite_order() const {
   type_ = LINEAR_INFINITE_ORDER;
-  classifier_status_ = CLASSIFICATION_OK;
+  classifier_status_ = CL_SUCCESS;
 }
 
 inline index_type
