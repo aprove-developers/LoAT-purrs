@@ -559,29 +559,8 @@ PURRS::Recurrence::approximate_functional_equation() const {
   Expr q_upper = log(n) / log(divisor_arg());
   Expr q_lower = q_upper - 1;
   
-  Expr index_initial_condition
-    = simplify_logarithm(n / pwr(divisor_arg(), q_upper));
-  Number index = 0;
-  if (index_initial_condition.is_a_number()) {
-    index = index_initial_condition.ex_to_number();
-    assert(index.is_positive_integer());
-  }
-  
-  Expr ub;
-  Expr lb;
-  // The index of the initial condition is not a number.
-  if (index == 0) {
-    ub = pwr(coefficient(), q_upper) * index_initial_condition;
-    lb = pwr(coefficient(), q_lower) * index_initial_condition;
-  }
-  // The index of the initial condition is a number.
-  else {
-    ub = pwr(coefficient(), q_upper)
-      * get_initial_condition(index.to_unsigned());
-    lb = pwr(coefficient(), q_lower)
-      * get_initial_condition(index.to_unsigned());
-  }
-
+  Expr ub = 0;
+  Expr lb = 0;
   D_VAR(inhomogeneous_term);
   if (!inhomogeneous_term.is_zero()) {
     std::vector<Expr> bases_of_exp;
@@ -673,6 +652,30 @@ PURRS::Recurrence::approximate_functional_equation() const {
       else
 	return TOO_COMPLEX;
     }  
+  }
+
+  Expr index_initial_condition
+    = simplify_logarithm(n / pwr(divisor_arg(), q_upper));
+  Number index = 0;
+  if (index_initial_condition.is_a_number()) {
+    index = index_initial_condition.ex_to_number();
+    D_VAR(index);
+    D_VAR(applicability_condition());
+    if (index < applicability_condition())
+      index = applicability_condition();
+    assert(index.is_positive_integer());
+  }
+  // The index of the initial condition is not a number.
+  if (index == 0) {
+    ub += pwr(coefficient(), q_upper) * index_initial_condition;
+    lb += pwr(coefficient(), q_lower) * index_initial_condition;
+  }
+  // The index of the initial condition is a number.
+  else {
+    ub += pwr(coefficient(), q_upper)
+      * get_initial_condition(index.to_unsigned());
+    lb += pwr(coefficient(), q_lower)
+      * get_initial_condition(index.to_unsigned());
   }
 
   // The functional equation for which the system has found lower and upper
