@@ -95,11 +95,20 @@ has_parameters(const Expr& e);
 Expr
 substitute_x_function(const Expr& e, const Expr& k, bool do_power);
 
+#define DD_MSG(s) std::cout << s << std::endl
+#define DD_VAR(x) std::cout << #x " = " << x << std::endl
+#define DD_MSGVAR(s, x) std::cout << s << #x " = " << x << std::endl
+#define DD_VEC(vec, first, last) \
+do { \
+  for (int i = (int) first; i <= (int) last; ++i) \
+    std::cout << #vec << "[" << i << "] = " << vec[i] << std::endl; \
+} while (0)
+
 #if defined(NOISY) && NOISY
-#define D_MSG(s) std::cout << s << std::endl
-#define D_VAR(x) std::cout << #x " = " << x << std::endl
-#define D_MSGVAR(s, x) std::cout << s << #x " = " << x << std::endl
-#define D_VEC(vec, first, last) \
+#define D_MSG(s) DD_MSG(s)
+#define D_VAR(x) DD_VAR(x) 
+#define D_MSGVAR(s, x) DD_MSGVAR(s, x) 
+#define D_VEC(vec, first, last) DD_VEC(vec, first, last)
 do { \
   for (int i = (int) first; i <= (int) last; ++i) \
     std::cout << #vec << "[" << i << "] = " << vec[i] << std::endl; \
