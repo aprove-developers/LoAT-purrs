@@ -146,6 +146,9 @@ error(const string& s) {
 
 static bool explodes;
 static bool expect_exactly_solved;
+static bool expect_provably_correct_result;
+static bool expect_provably_wrong_result;
+static bool expect_inconclusive_verification;
 static bool expect_not_exactly_solved;
 static bool expect_diagnose_unsolvable;
 static bool expect_not_diagnose_unsolvable;
@@ -155,6 +158,9 @@ set_expectations(const string& s) {
   // No expectations by default.
   explodes
     = expect_exactly_solved
+    = expect_provably_correct_result
+    = expect_provably_wrong_result
+    = expect_inconclusive_verification
     = expect_not_exactly_solved
     = expect_diagnose_unsolvable
     = expect_not_diagnose_unsolvable
@@ -170,6 +176,15 @@ set_expectations(const string& s) {
       break;
     case 'y':
       expect_exactly_solved = true;
+      break;
+    case 'v':
+      expect_provably_correct_result = true;
+      break;
+    case 'w':
+      expect_provably_wrong_result = true;
+      break;
+    case 'd':
+      expect_inconclusive_verification = true;
       break;
     case 'n':
       expect_not_exactly_solved = true;
@@ -219,6 +234,22 @@ all_space(const string& s) {
   return true;
 }
 
+ostream&
+operator<<(ostream& s, Recurrence::VERIFY_STATUS v) {
+  switch (v) {
+  case Recurrence::CORRECT:
+    s << "CORRECT";
+    break;
+  case Recurrence::INCORRECT:
+    s << "INCORRECT";
+    break;
+  case Recurrence::DONT_KNOW:
+    s << "DONT_KNOW";
+    break;
+  }
+  return s;
+}
+
 int
 main(int argc, char *argv[]) try {
   program_name = argv[0];
@@ -232,7 +263,10 @@ main(int argc, char *argv[]) try {
   unsigned unexpected_exact_solutions = 0;
   unsigned unexpected_exact_failures = 0;
   unsigned unexpected_unsolvability_diagnoses = 0;
-  unsigned unexpected_failures_do_diagnose_unsolvability = 0;
+  unsigned unexpected_failures_to_diagnose_unsolvability = 0;
+  unsigned unexpected_failures_to_verify = 0;
+  unsigned unexpected_failures_to_disprove = 0;
+  unsigned unexpected_conclusive_verifications = 0;
 
   readlinebuf* prdlb = 0;
   istream* pinput_stream;
@@ -343,9 +377,37 @@ main(int argc, char *argv[]) try {
     Recurrence rec(rhs);
 
     Expr solution;
+
     switch (solve_wrapper(rec)) {
     case Recurrence::RECURRENCE_OK:
       if (regress_test) {
+	if (expect_exactly_solved
+	    && (expect_provably_correct_result
+		|| expect_provably_wrong_result
+		|| expect_inconclusive_verification)) {
+	  Recurrence::VERIFY_STATUS status = rec.verify_solution();
+	  if (expect_provably_correct_result
+	      && status != Recurrence::CORRECT) {
+	    if (verbose)
+	      cerr << "*** unexpected failure to verify solution: gave "
+		   << status << endl;
+	    ++unexpected_failures_to_verify;
+	  }
+	  if (expect_provably_wrong_result
+	      && status != Recurrence::INCORRECT) {
+	    if (verbose)
+	      cerr << "*** unexpected failure to disprove solution: gave "
+		   << status << endl;
+	    ++unexpected_failures_to_disprove;
+	  }
+	  if (expect_inconclusive_verification
+	      && status != Recurrence::DONT_KNOW) {
+	    if (verbose)
+	      cerr << "*** unexpected conclusive verification: gave "
+		   << status << endl;
+	    ++unexpected_conclusive_verifications;
+	  }
+	}
 	if (expect_not_exactly_solved) {
 	  if (verbose)
 	    cerr << "*** unexpected exact solution" << endl;
@@ -390,7 +452,7 @@ main(int argc, char *argv[]) try {
       if (expect_diagnose_unsolvable) {
 	if (verbose)
 	  cerr << "*** unexpected failure to diagnose unsolvability" << endl;
-	++unexpected_failures_do_diagnose_unsolvability;
+	++unexpected_failures_to_diagnose_unsolvability;
       }
       if (interactive)
 	cout << "Sorry, this is too difficult." << endl;
@@ -411,6 +473,24 @@ main(int argc, char *argv[]) try {
 
   if (regress_test) {
     bool failed = false;
+    if (unexpected_failures_to_verify > 0) {
+      failed = true;
+      cerr << unexpected_failures_to_verify
+	   << " unexpected failures to verify solutions"
+	   << endl;
+    }
+    if (unexpected_failures_to_disprove > 0) {
+      failed = true;
+      cerr << unexpected_failures_to_disprove
+	   << "unexpected failures to disprove "
+	   << endl;
+    }
+    if (unexpected_conclusive_verifications > 0) {
+      failed = true;
+      cerr << unexpected_conclusive_verifications
+	   << "unexpected conclusive verifications "
+	   << endl;
+    }
     if (unexpected_exact_solutions > 0) {
       failed = true;
       cerr << unexpected_exact_solutions
@@ -429,9 +509,9 @@ main(int argc, char *argv[]) try {
 	   << " unexpected unsolvability diagnoses"
 	   << endl;
     }
-    if (unexpected_failures_do_diagnose_unsolvability > 0) {
+    if (unexpected_failures_to_diagnose_unsolvability > 0) {
       failed = true;
-      cerr << unexpected_failures_do_diagnose_unsolvability
+      cerr << unexpected_failures_to_diagnose_unsolvability
 	   << " unexpected failures to diagnose unsolvability"
 	   << endl;
     }
