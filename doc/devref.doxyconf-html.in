@@ -360,9 +360,6 @@ WARN_LOGFILE           =
 INPUT                  = @srcdir@/definitions.dox \
 			 @srcdir@/../src/alg_eq_solver.cc \
                          @srcdir@/../src/alg_eq_solver.hh \
-                         @srcdir@/../src/approximate.cc \
-                         @srcdir@/../src/approximate.hh \
-                         @srcdir@/../src/approximate_impl.hh \
                          @srcdir@/../src/Blackboard.defs.hh \
                          @srcdir@/../src/Blackboard.types.hh \
                          @srcdir@/../src/Blackboard.inlines.hh \
@@ -375,13 +372,6 @@ INPUT                  = @srcdir@/definitions.dox \
                          @srcdir@/../src/Cached_Expr.types.hh \
                          @srcdir@/../src/Cached_Expr.inlines.hh \
                          @srcdir@/../src/Cached_Expr.cc \
-                         @srcdir@/../src/CInterval.types.hh \
-                         @srcdir@/../src/Complex_Interval.defs.hh \
-                         @srcdir@/../src/Complex_Interval.types.hh \
-                         @srcdir@/../src/Complex_Interval.inlines.hh \
-                         @srcdir@/../src/Complex_Interval.cc \
-                         @srcdir@/../src/complint.cc \
-                         @srcdir@/../src/complint.hh \
                          @srcdir@/../src/compute_bounds.cc \
                          @srcdir@/../src/compute_exact_solution.cc \
                          @srcdir@/../src/compute_prod.cc \
@@ -439,11 +429,11 @@ INPUT                  = @srcdir@/definitions.dox \
                          @srcdir@/../src/Recurrence.types.hh \
                          @srcdir@/../src/Recurrence.inlines.hh \
                          @srcdir@/../src/Recurrence.cc \
+                         @srcdir@/../src/rr_classifier.cc \
                          @srcdir@/../src/Weighted_Average_Info.defs.hh \
                          @srcdir@/../src/Weighted_Average_Info.types.hh \
                          @srcdir@/../src/Weighted_Average_Info.inlines.hh \
                          @srcdir@/../src/Weighted_Average_Info.cc \
-                         @srcdir@/../src/rr_classifier.cc \
                          @srcdir@/../src/simplify.cc \
                          @srcdir@/../src/simplify.hh \
                          @srcdir@/../src/size_norm.cc \
