@@ -61,7 +61,7 @@ FACTOR_THRESHOLD = 100;
   For all the other cases returns <CODE>false</CODE> and \f$ e \f$
   does not change.
 */
-static bool
+bool
 erase_factor(Expr& e, const Symbol& n) {
   if (e.is_a_mul()) {
     unsigned num_factors = e.nops();
@@ -92,7 +92,7 @@ erase_factor(Expr& e, const Symbol& n) {
   Returns <CODE>false</CODE> otherwise (for example \f$ base = 3 \f$ and
   \f$ exponent = 1/2 \f$).
 */
-static bool
+bool
 perfect_root(const Expr& base, const Number& exponent) {
   if (exponent.is_rational()) {
     Number num;
@@ -114,7 +114,7 @@ perfect_root(const Expr& base, const Number& exponent) {
   explicitly \f$ base^{num\_exp} \f$, and then raises the result to
   the power \f$ not\_num\_exp \f$.
 */
-static Expr
+Expr
 return_power(bool is_numeric_base, const Expr& base,
 	     const Expr& num_exp, const Expr& not_num_exp,
 	     const Symbol& n, bool input) {
@@ -140,7 +140,7 @@ return_power(bool is_numeric_base, const Expr& base,
 /*!
   Separates numeric factors and non-numeric factors of an expression \p e. 
 */
-static void
+void
 split_exponent(const Expr& e, Expr& num, Expr& not_num) {
   if (e.is_a_number())
     num *= e;
@@ -154,7 +154,7 @@ split_exponent(const Expr& e, Expr& num, Expr& not_num) {
   same time, build the exponent that will be obtained from the product of
   \p numeric_exponent and \p not_numeric_exponent.
 */
-static void
+void
 find_real_base_and_build_exponent(Expr& base, Expr& numeric_exponent,
 				  Expr& not_numeric_exponent) {
   assert(base.is_a_power());
@@ -186,7 +186,7 @@ find_real_base_and_build_exponent(Expr& base, Expr& numeric_exponent,
   which collect the special symbol \p n; otherwise, i. e. if \p input
   is <CODE>false</CODE>, \p n is like the other parameters.
 */
-static Expr
+Expr
 simpl_powers_base(const Expr& base, const Expr& num_exponent,
 		  const Expr& not_num_exponent, const Symbol& n,
 		  bool input) {
@@ -241,7 +241,7 @@ simpl_powers_base(const Expr& base, const Expr& num_exponent,
   which collect the special symbol \p n; otherwise, i. e. \p input
   is <CODE>false</CODE>, \p n is like the other parameters.
 */
-static Expr
+Expr
 pow_simpl(const Expr& e, const Symbol& n, bool input) {
   assert(e.is_a_power());
   // Accumulate here the numerical part of the exponent.
@@ -289,7 +289,7 @@ pow_simpl(const Expr& e, const Symbol& n, bool input) {
   exponents will be used by the function
   <CODE>collect_same_exponent()</CODE> called immediately after this.
 */
-static Expr
+Expr
 collect_same_exponents(const Expr& e, std::vector<Expr>& bases,
 		       std::vector<Expr>& exponents) {
   assert(e.is_a_mul());
@@ -337,7 +337,7 @@ collect_same_exponents(const Expr& e, std::vector<Expr>& bases,
   It returns a new <CODE>Expr</CODE> \p e_rewritten containing the modified
   expression \p e.
 */
-static Expr
+Expr
 collect_same_base(const Expr& e, std::vector<Expr>& bases,
 		  std::vector<Expr>& exponents) {
   assert(e.is_a_mul());
@@ -407,7 +407,7 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
   \p e, that is certainly a <CODE>mul</CODE>.
   Returns a new <CODE>Expr</CODE> containing the modified expression \p e. 
 */
-static Expr
+Expr
 collect_base_exponent(const Expr& e) {
   assert(e.is_a_mul());
   Expr e_rewritten = e;
@@ -445,7 +445,7 @@ collect_base_exponent(const Expr& e) {
   \p bases and \p exponents, of <CODE>Number</CODE>s
   and <CODE>int</CODE>s respectively.
 */
-static void 
+void 
 partial_factor(const Number& n, std::vector<Number>& bases,
 	       std::vector<int>& exponents) {
   assert(n.is_integer());
@@ -496,7 +496,7 @@ partial_factor(const Number& n, std::vector<Number>& bases,
   \f$ b_1^{1 + [e_1/|k|]} \f$ and replace the exponent by 
   \f$ |k| - (e_1 \mod |k|) \f$. 
 */
-static Expr
+Expr
 to_std_form(const Number& k, const std::vector<Number>& bases, 
 	    std::vector<int>& exponents) {
   
@@ -564,7 +564,7 @@ to_std_form(const Number& k, const std::vector<Number>& bases,
     \f]
     where the sign is chosen according to the sign of \p k.
 */
-static Expr 
+Expr 
 reduce_to_standard_form(const Number& root_index, const Number& r) {
   assert(root_index.is_integer());
   assert(root_index != 0);
@@ -648,7 +648,7 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
   irrational numbers with the same denominator in the exponents
   (reduction to same index of two roots).
 */
-static Expr
+Expr
 red_prod(const Number& base1, const Number& exp1, 
 	 const Number& base2, const Number& exp2) {
   assert(exp1 != 0);
@@ -686,7 +686,7 @@ red_prod(const Number& base1, const Number& exp1,
   each \p e's factor which is a <CODE>power</CODE> if \p e is a
   <CODE>mul</CODE>.
 */
-static Expr
+Expr
 reduce_product(const Expr& e) {
   assert(e.is_a_mul());
   Expr factor_to_reduce = 1;
@@ -748,7 +748,7 @@ reduce_product(const Expr& e) {
   are applicable on factors.
   Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
 */
-static Expr
+Expr
 manip_factor(const Expr& e, const Symbol& n, bool input) {
   assert(e.is_a_mul());
   Expr e_rewritten = 1;
@@ -869,7 +869,7 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
   return e_rewritten;
 }
 
-static Expr
+Expr
 rewrite_factorial(const Symbol& n, const Number& a, const Number& b) {
   Expr prod = factorial(a*n);
   if (b > 0)
@@ -881,7 +881,7 @@ rewrite_factorial(const Symbol& n, const Number& a, const Number& b) {
   return prod;
 }
 
-static bool
+bool
 check_form_of_mul(const Symbol& n, const Expr& e, Number& a) {
   assert(e.is_a_mul() && e.nops() == 2);
   const Expr& first = e.op(0);
@@ -899,7 +899,7 @@ check_form_of_mul(const Symbol& n, const Expr& e, Number& a) {
   We use the rewrite rule explained in the comment for
   <CODE>rewrite_factorials()</CODE>
 */
-static Expr
+Expr
 decompose_factorial(const Expr& e, const Symbol& n) {
   assert(e.is_the_factorial_function());
   const Expr& argument = e.arg(0);
@@ -950,7 +950,7 @@ decompose_factorial(const Expr& e, const Symbol& n) {
       \end{cases}
     \f]
 */
-static Expr
+Expr
 rewrite_factorials_and_exponentials(const Expr& e, const Symbol& n) {
   Expr e_rewritten;
   if (e.is_a_add()) {
