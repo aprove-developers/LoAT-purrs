@@ -1148,9 +1148,16 @@ rewrite_factor(const Expr& e, const Symbol& r, int gcd_among_decrements) {
 	|| argument.op(1).is_a_number(decrement);
       return x(Recurrence::n + decrement / gcd_among_decrements);
     }
-    else
-      for (unsigned i = e.nops(); i-- > 0; )
-	return rewrite_factor(e.arg(i), r, gcd_among_decrements);
+    else if (e.nops() == 1)
+      return apply(e.functor(),
+		   rewrite_factor(e.arg(0), r, gcd_among_decrements));
+    else {
+      unsigned num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned i = 0; i < num_argument; ++i)
+	argument[i] = rewrite_factor(e.arg(i), r, gcd_among_decrements);
+      return apply(e.functor(), argument);
+    }
   else if (e == Recurrence::n)
     return gcd_among_decrements * Recurrence::n + r;
   return e;
@@ -1213,6 +1220,10 @@ come_back_to_original_variable(const Expr& e, const Symbol& r, const Expr& m,
   else if (e.is_a_function())
     if (e.is_the_x_function())
       return x(m);
+    else if (e.nops() == 1)
+      return apply(e.functor(),
+		   come_back_to_original_variable(e.arg(0), r,
+						  m, gcd_among_decrements));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
