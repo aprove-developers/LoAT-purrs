@@ -92,8 +92,8 @@ private:
   //! \p coeff_and_base_ is used in two different ways:
   //! In the case of simple non-linear recurrence of the form
   //! \f$ x(n) = c x(n-1)^{\alpha} \f$ it contains the pair \f$ c, \alpha \f$;
-  //! in all the other cases the numeric value of the pair holds \f$ 0 \f$
-  //! while the second element contains the value that will be the
+  //! in all the other cases the numeric value of the first element holds
+  //! \f$ 0 \f$ while the second element contains the value that will be the
   //! logarithm's base or the exponential's base used in the rewriting
   //! of the non-linear recurrence in the correspondent linear recurrence.
   std::pair<Number, Expr> coeff_and_base_;
