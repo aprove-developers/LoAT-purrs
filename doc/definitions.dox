@@ -271,6 +271,10 @@ then lets \f$ x_1 = f(1) x_0 + g(1) \f$, using the
 It is quite important to remark that the closed formula for \f$ x_n \f$ is
 guaranteed to hold for \f$ n \ge 1 \f$ only.
 
+Notice that for these recurrences the value
+\ref first_valid_index "first valid index" is different from the value
+\ref first_valid_index_for_solution "first valid index for solution":
+in particular, the second is one more than the first.
 
 
 \section non_linear Non Linear Recurrences of Finite Order
