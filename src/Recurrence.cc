@@ -534,9 +534,9 @@ PURRS::Recurrence::verify_finite_order() const {
   }
 }
 
-//! Verify the exact solution of the infinite order recurrence \p *this.
+//! Verify the exact solution of the weighted-average recurrence \p *this.
 /*!
-  Consider the right hand side of a infinite order recurrence in
+  Consider the right hand side of a weighted-average recurrence in
   \f$ f(n) \sum_{k=0}^{n-1} x(k) + g(n) \f$,
   which is stored in the expression \p recurrence_rhs.
   Assume that the system has produced the expression
@@ -571,14 +571,14 @@ PURRS::Recurrence::verify_finite_order() const {
 */
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_weighted_average() const {
-  Expr weight = infinite_order_weight();
+  Expr weight_rec = weight();
   
   // The case `f(n) = -1', i.e. the recurrence has the form
   // `x(n) = - sum(k, 0, n-1, x(k)) + g(n)', is special:
   // the solution is simply `x(n) = g(n) - g(n-1)'.
   // FIXME: the traditional validation' process does not work,
   // is it true?
-  if (weight == -1)
+  if (weight_rec == -1)
     // FIXME: verify!!!
     return PROVABLY_CORRECT;
   
@@ -587,7 +587,7 @@ PURRS::Recurrence::verify_weighted_average() const {
   // Step 1: validation of the initial condition.
   Expr e = exact_solution_.expression().substitute(n, 1);
   e = simplify_all(e);
-  if (e != weight.substitute(n, 1) * x(0)
+  if (e != weight_rec.substitute(n, 1) * x(0)
       + inhomogeneous_term.substitute(n, 1))
     // FIXME: provably_incorrect...
     return INCONCLUSIVE_VERIFICATION;
@@ -603,7 +603,7 @@ PURRS::Recurrence::verify_weighted_average() const {
   // `x(n) - (f(n) x(0) + f(n) sum(k, 1, n - 1, x(k)) + g(n))'
   // and tries to simplify it.
   diff = exact_solution_.expression()
-    - diff * weight - x(0) * weight - inhomogeneous_term;
+    - diff * weight_rec - x(0) * weight_rec - inhomogeneous_term;
   diff = simplify_all(diff);
   if (diff == 0)
     return PROVABLY_CORRECT;
@@ -767,8 +767,8 @@ PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
 
 //! \brief
 //! Verify the exact solution of recurrence \p *this, where the recurrence
-//! can be linear of finite order, non-linear of finite order, linear of
-//! infinite order or a functional equation.
+//! can be linear of finite order, non-linear of finite order,
+//! weighted-average or a functional equation.
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_exact_solution() const {
   if (!exact_solution_.has_expression())
@@ -778,8 +778,8 @@ PURRS::Recurrence::verify_exact_solution() const {
   // and non-linear recurrences of finite order. 
   if (is_linear_finite_order() || is_non_linear_finite_order())
     return verify_finite_order();
-  // Case 3: linear recurrence of infinite order.
-  else if (is_linear_infinite_order())
+  // Case 3: weighted-average recurrence.
+  else if (is_weighted_average())
     return verify_weighted_average();
   else {
     assert(is_functional_equation());
@@ -1034,7 +1034,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound,
 }
 
 /*!
-  Builds the recurrence of infinite order
+  Builds the weighted-average recurrence
   \f$ x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n) \f$, where
   \f$ f(n) \f$ is stored in \p weight; \f$ g(n) \f$ is stored
   in \p inhomogeneous and \p first_valid_index contains the least
@@ -1060,7 +1060,7 @@ PURRS::Recurrence::solve_new_weighted_average_rec(const Expr& weight,
   rec_rewritten.weighted_average_p
     = new Weighted_Average_Info(Recurrence(coeff_first_order*x(n-1)
 					   +inhomog_first_order), weight);
-  rec_rewritten.set_linear_infinite_order();
+  rec_rewritten.set_weighted_average();
   associated_first_order_rec().set_first_valid_index(first_valid_index);
   rec_rewritten.set_inhomogeneous_term(inhomogeneous);
   return rec_rewritten.compute_weighted_average_recurrence(solution);
@@ -1106,7 +1106,7 @@ increase_argument_x_function(const Expr& e, unsigned int num) {
 } // anonymous namespace
 
 //! \brief
-//! Solve the infinite order recurrence in \ref normal_form "normal form"
+//! Solve the weighted-average recurrence in \ref normal_form "normal form"
 //! \f[
 //!   x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n)
 //! \f]
@@ -1130,7 +1130,7 @@ increase_argument_x_function(const Expr& e, unsigned int num) {
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
 compute_weighted_average_recurrence(Expr& solution) const {
-  if (infinite_order_weight() == -1) {
+  if (weight() == -1) {
     // Special case: `f(n) = -1'.
     // In this case the solution of the recurrence is simply
     // `x(n) = g(n) - g(n-1)' and is not necessary all the normal procedure.
@@ -1140,7 +1140,7 @@ compute_weighted_average_recurrence(Expr& solution) const {
   }
   else {
     // Classify the first order recurrence relation associated to that
-    // one of infinite order.
+    // one of type weighted-average.
     associated_first_order_rec().classify_and_catch_special_cases();
     Solver_Status status;
     if ((status = associated_first_order_rec().solve_linear_finite_order())
@@ -1163,8 +1163,7 @@ compute_weighted_average_recurrence(Expr& solution) const {
       else
 	solution = solution
 	  .substitute(x(associated_first_order_rec().first_valid_index()+1),
-		      (infinite_order_weight()*x(0)+inhomogeneous_term)
-		      .substitute(n, 1));
+		      (weight()*x(0)+inhomogeneous_term).substitute(n, 1));
       //	solution = simplify_ex_for_output(solution, false);
       return SUCCESS;
     }
@@ -1261,7 +1260,7 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
 	// FIXME: this technique is surely valid in the case of
 	// linear recurrences with constant coefficients of finite order.
 	// To check if it is valid also in the case of functional equations
-	// and infinite order recurrences.
+	// and weighted-average recurrences.
 	sol_or_bound
 	  = sol_or_bound.substitute(n,
 				    n - (shift_forward - order_or_rank + 1));

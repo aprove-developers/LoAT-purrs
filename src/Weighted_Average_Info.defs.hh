@@ -1,5 +1,5 @@
 /* A class for containing all informations necessary for to solve
-   infinite order recurrences.
+   weighted-average recurrences.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -38,9 +38,9 @@ public:
   //! \brief
   //! Constructor: sets
   //! \f$ associated_first_order_rec_ = associated_first_order_rec \f$,
-  //! \f$ infinite_order_weight_ = infinite_order_weight \f$.
+  //! \f$ weight_ = weight \f$.
   Weighted_Average_Info(const Recurrence& associated_first_order_rec,
-			const Expr& infinite_order_weight);
+			const Expr& weight);
 
   //! Copy-constructor.
   Weighted_Average_Info(const Weighted_Average_Info& y);
@@ -60,11 +60,11 @@ public:
   //! Sets <CODE>original_rhs__</CODE> with \p original_rhs
   void set_original_rhs(const Expr& original_rhs);
 
-  //! Returns <CODE>infinite_order_weight_</CODE>.
-  const Expr& infinite_order_weight() const;
+  //! Returns <CODE>weight_</CODE>.
+  const Expr& weight() const;
 
-  //! Returns <CODE>infinite_order_weight_</CODE>.
-  Expr& infinite_order_weight();
+  //! Returns <CODE>weight_</CODE>.
+  Expr& weight();
 
   //! Returns <CODE>first_valid_index_inf_order_</CODE>.
   index_type first_valid_index_inf_order() const;
@@ -74,11 +74,11 @@ public:
 
 private:
   //! \brief
-  //! In the case which the system is able to rewrite the infinite order
+  //! In the case which the system is able to rewrite the weighted-average
   //! recurrence \p *this in a first order recurrence, this method stores
   //! the first order recurrence computed (in order to know the cases of
-  //! rewritable infinite order recurrences see the function
-  //! <CODE>rewrite_infinite_order_recurrence()</CODE>).
+  //! rewritable weighted-average recurrences see the function
+  //! <CODE>rewrite_weighted_average_recurrence()</CODE>).
   Recurrence associated_first_order_rec_;
 
   //! \brief
@@ -88,11 +88,11 @@ private:
   Expr original_rhs_;
 
   //! \brief
-  //! Contains the factor \f$ f(n) \f$ of the infinite order recurrence
+  //! Contains the factor \f$ f(n) \f$ of the weighted-average recurrence
   //! \f[
   //!   x(n) = f(n) \sum_{k=n_0}^{u(n)} x(k) + g(n).
   //! \f]
-  Expr infinite_order_weight_;
+  Expr weight_;
 
   //! \brief
   //! Stores the least non-negative integer \f$ j \f$ such that

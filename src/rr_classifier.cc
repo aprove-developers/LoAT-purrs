@@ -665,34 +665,34 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 }
 
 //! \brief
-//! Returns <CODE>true</CODE> if the linear infinite order recurrence,
+//! Returns <CODE>true</CODE> if the weighted-average recurrence,
 //! whose right-hand-side is stored in \p rhs,
 //! belongs to the class the system is able to compute, i.e. is in
 //! \ref normal_form "normal form" or is possible to rewrite it in
 //! normal form \f[ x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n) \f];
 //! returns <CODE>false</CODE> otherwise.
 /*!
-  \param rhs                  the right hand side of a infinite order
+  \param rhs                  the right hand side of a weighted-average
                               recurrence.
   \param term_sum             the term of \p rhs containing the sum.  
   \param weight               the expression multiplied for the sum
                               (\f$ f(n) \f$).
-  \param inhomogeneous        the inhomogeneous term of the infinite
-                              order recurrence (\f$ g(n) \f$).
+  \param inhomogeneous        the inhomogeneous term of the
+                              weighted-average recurrence (\f$ g(n) \f$).
   \param rhs_first_order      the right hand side of the first order
-                              recurrence associated to the infinite
-			      order recurrence.
+                              recurrence associated to the weighted-average
+			      recurrence.
   \param first_valid_index    the least non-negative integer \f$ j \f$
-                              such that the infinite order recurrence
+                              such that the weighted-average recurrence
 			      is well-defined for \f$ n \geq j \f$.
 
-  \return                     <CODE>true</CODE> if the infinite order
+  \return                     <CODE>true</CODE> if the weighted-average
                               recurrence is in <EM>normal form</EM> or
 			      is possible to rewrite it in normal form
 			      <EM>normal form</EM>; returns
 			      <CODE>false</CODE> otherwise.
 
-  The system is able to compute linear infinite order recurrence
+  The system is able to compute weighted-average recurrence
   in normal form
   \f[
     x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n).
@@ -705,7 +705,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
   \f]
   For \f$ n = 1 \f$ it must consider \f$ x(1) = f(1) x(0) + g(1) \f$.
 
-  Moreover, this function transform, when possible, infinite order
+  Moreover, this function transform, when possible, weighted-average
   recurrence in normal form.
   This transformation is performed in the following way:
   - If the upper limit of the sum is \f$ n \f$ and \f$ f(n) \neq 1 \f$
@@ -740,7 +740,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
     \f]
 
   In conclusion the algorithm for classifying and for finding the solution
-  of the infinite order recurrence previews the following steps:
+  of the weighted-average recurrence previews the following steps:
   - eventual rewriting in the normal form of the recurrence;
   - computation of the right hand side of the associated first order
     recurrence;
@@ -750,11 +750,11 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
   - substitution of the initail condition \f$ x(1) = f(1) x(0) + g(1) \f$.
 */
 bool
-rewrite_infinite_order_recurrence(const Expr& rhs, const Expr& term_sum,
-				  Expr& weight, Expr& inhomogeneous,
-				  Expr& rhs_first_order,
-				  index_type& first_valid_index,
-				  bool& rewritten) {
+rewrite_weighted_average_recurrence(const Expr& rhs, const Expr& term_sum,
+				    Expr& weight, Expr& inhomogeneous,
+				    Expr& rhs_first_order,
+				    index_type& first_valid_index,
+				    bool& rewritten) {
   Expr upper = term_sum.arg(2);
   int lower = term_sum.arg(1).ex_to_number().to_int();
   inhomogeneous = rhs - weight * term_sum;
@@ -972,21 +972,22 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
       if (classifier_status_ == NOT_CLASSIFIED_YET || type_ == ORDER_ZERO) {
 	// If there are many terms equal to the sum stored in `addend'
 	// we must collect them in order to find the weight `f(n)' of
-	// the recurrence of infinite order
+	// the weighted-average recurrence
 	// `x(n) = f(n) sum(k, n_0, u(n), x(k)) + g(n)'.
 	Expr weight;
 	Expr rhs_rewritten = rhs.collect_term(addend, weight);
 	Expr rhs_first_order;
 	bool rewritten;
 	index_type first_valid_index;
-	if (rewrite_infinite_order_recurrence(rhs_rewritten, addend, weight,
-					      inhomogeneous, rhs_first_order,
-					      first_valid_index, rewritten)) { 
+	if (rewrite_weighted_average_recurrence(rhs_rewritten, addend, weight,
+						inhomogeneous, rhs_first_order,
+						first_valid_index,
+						rewritten)) { 
 	  if (first_valid_index > 0)
 	    return CL_DOMAIN_ERROR;
 	  weighted_average_p
 	    = new Weighted_Average_Info(Recurrence(rhs_first_order), weight);
-	  set_linear_infinite_order();
+	  set_weighted_average();
 	  if (rewritten) {
 	    bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	    rec_rewritten = true;
@@ -1071,7 +1072,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	if (classifier_status_ == NOT_CLASSIFIED_YET || type_ == ORDER_ZERO) {
 	  // If there are many terms equal to the sum in `factor' stored
 	  // in `rhs', we must collect them in order to find the weight
-	  // `f(n)' of the recurrence of infinite order
+	  // `f(n)' of the weighted-average recurrence
 	  // `x(n) = f(n) sum(k, n_0, u(n), x(k)) + g(n)'.
 	  Expr weight;
 	  Expr rhs_rewritten = rhs.collect_term(factor, weight);
@@ -1083,15 +1084,16 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	  Expr rhs_first_order;
 	  bool rewritten;
 	  index_type first_valid_index;
-	  if (rewrite_infinite_order_recurrence(rhs_rewritten, factor, weight,
-						inhomogeneous, rhs_first_order,
-						first_valid_index,
-						rewritten)) { 
+	  if (rewrite_weighted_average_recurrence(rhs_rewritten, factor,
+						  weight, inhomogeneous,
+						  rhs_first_order,
+						  first_valid_index,
+						  rewritten)) { 
 	    if (first_valid_index > 0)
 	      return CL_DOMAIN_ERROR;
 	    weighted_average_p
 	      = new Weighted_Average_Info(Recurrence(rhs_first_order), weight);
-	    set_linear_infinite_order();
+	    set_weighted_average();
 	    if (rewritten) {
 	      bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	      rec_rewritten = true;
@@ -1141,37 +1143,41 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 /*!
   Classifies the recurrence \p *this.
   Returns:
-  - <CODE>CL_SUCCESS</CODE>         if the recurrence is linear of
-                                           finite or infinite order;
-					   non-linear of finite order;
-					   in the case of functional equation;
+  - <CODE>CL_SUCCESS</CODE>                   if the recurrence is linear of
+                                              finite order; weighted-average;
+					      non-linear of finite order; in
+					      the case of functional equation;
   - <CODE>CL_HAS_NON_INTEGER_DECREMENT</CODE> if the right-hand side of the
-                                           recurrence contains at least an
-					   occurrence of <CODE>x(n-k)</CODE>,
-					   where <CODE>k</CODE> is not an
-					   integer;
-  - <CODE>HAS_NEGATIVE_DECREMENT</CODE>    if the right-hand side of the
-                                           recurrence contains at least an
-					   occurrence of <CODE>x(n-k)</CODE>,
-					   where <CODE>k</CODE> is a negative
-					   integer;
-  - <CODE>HAS_NULL_DECREMENT</CODE>        if the right-hand side of the
-                                           recurrence contains at least an
-					   occurrence of <CODE>x(n)</CODE>;
+                                              recurrence contains at least an
+					      occurrence of
+					      <CODE>x(n-k)</CODE>, where
+					      <CODE>k</CODE> is not an integer;
+  - <CODE>HAS_NEGATIVE_DECREMENT</CODE>       if the right-hand side of the
+                                              recurrence contains at least an
+					      occurrence of
+					      <CODE>x(n-k)</CODE>, where
+					      <CODE>k</CODE> is a negative
+					      integer;
+  - <CODE>HAS_NULL_DECREMENT</CODE>           if the right-hand side of the
+                                              recurrence contains at least an
+					      occurrence of <CODE>x(n)</CODE>;
   - <CODE>CL_HAS_HUGE_DECREMENT</CODE>        if the right-hand side of the
-                                           recurrence contains at least an
-					   occurrence of <CODE>x(n-k)</CODE>,
-					   where <CODE>k</CODE> is too big to
-					   be handled by the standard
-					   solution techniques;
+                                              recurrence contains at least an
+					      occurrence of
+					      <CODE>x(n-k)</CODE>, where
+					      <CODE>k</CODE> is too big to
+					      be handled by the standard
+					      solution techniques;
   - <CODE>CL_MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
-                                           any sense;
+                                              any sense;
   - <CODE>CL_DOMAIN_ERROR</CODE>              if the recurrence is not
-                                           well-defined;
-  - <CODE>CL_UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not solvable;
-  - <CODE>CL_INDETERMINATE_RECURRENCE</CODE>  if the recurrence is indeterminate,
-                                           hence it has infinite solutions.
-  - <CODE>CL_TOO_COMPLEX</CODE>    in all the other cases.
+                                              well-defined;
+  - <CODE>CL_UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not
+                                              solvable;
+  - <CODE>CL_INDETERMINATE_RECURRENCE</CODE>  if the recurrence is
+                                              indeterminate, hence it has
+					      infinite solutions.
+  - <CODE>CL_TOO_COMPLEX</CODE>               in all the other cases.
 
   For each class of recurrences for which the system returns
   <CODE>CL_SUCCESS</CODE>, it is initialized a pointer to an opportune
@@ -1188,9 +1194,9 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
   such that the recurrence is well-defined for \f$ n \geq j \f$.)
   setted to \f$ 0 \f$ by default.
 
-  If the recurrence is <EM>linear of infinite order</EM> there is not
-  a general method to solve it. At the moment we solve only recurrences
-  of infinite order of the shape
+  For the <EM>weighted average</EM> recurrences there is not
+  a general method to solve it. At the moment we solve weighted average
+  recurrences of the shape
   \f[
     T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n)
   \f]
@@ -1265,10 +1271,10 @@ PURRS::Recurrence::classify() const {
 					   homogeneous_terms))
 	  != CL_SUCCESS)
 	return status;
-      // As soon as the system notices the this is recurrences
-      // of infinite order, stops the classification because already
+      // As soon as the system notices the this is a weighted-average
+      // recurrences, stops the classification because already
       // have all necessary information in order to continue.
-      if (is_linear_infinite_order())
+      if (is_weighted_average())
 	break;
     }
   else
@@ -1282,7 +1288,7 @@ PURRS::Recurrence::classify() const {
   set_inhomogeneous_term(inhomogeneous);
   D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
 
-  // In the case of non linear recurrence or infinite order recurrence
+  // In the case of non linear recurrence or weighted-average recurrence
   // we have already done the operation `new ...'.
   if (is_functional_equation())
     functional_eq_p = new Functional_Equation_Info(homogeneous_terms);
@@ -1291,7 +1297,7 @@ PURRS::Recurrence::classify() const {
 					   gcd_among_decrements);
 
   assert(is_linear_finite_order() || is_functional_equation()
-	 || is_non_linear_finite_order() || is_linear_infinite_order());
+	 || is_non_linear_finite_order() || is_weighted_average());
 
   return CL_SUCCESS;
 }
@@ -1307,29 +1313,33 @@ PURRS::Recurrence::classify() const {
   is not a positive integer.
 
   Returns:
-  - <CODE>CL_SUCCESS</CODE>         if the recurrence is linear of
-                                           finite or infinite order;
-					   non-linear of finite order;
-					   in the case of functional equation;
+  - <CODE>CL_SUCCESS</CODE>                   if the recurrence is linear of
+                                              finite; weighted-average;
+					      non-linear of finite order; in
+					      the case of functional equation;
   - <CODE>CL_HAS_NON_INTEGER_DECREMENT</CODE> if the right-hand side of the
-                                           recurrence contains at least an
-					   occurrence of <CODE>x(n-k)</CODE>,
-					   where <CODE>k</CODE> is not an
-					   integer;
+                                              recurrence contains at least an
+					      occurrence of
+					      <CODE>x(n-k)</CODE>,
+					      where <CODE>k</CODE> is not an
+					      integer;
   - <CODE>CL_HAS_HUGE_DECREMENT</CODE>        if the right-hand side of the
-                                           recurrence contains at least an
-					   occurrence of <CODE>x(n-k)</CODE>,
-					   where <CODE>k</CODE> is too big to
-					   be handled by the standard
-					   solution techniques;
+                                              recurrence contains at least an
+					      occurrence of
+					      <CODE>x(n-k)</CODE>,
+					      where <CODE>k</CODE> is too big
+					      to be handled by the standard
+					      solution techniques;
   - <CODE>CL_MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
-                                           any sense;
+                                              any sense;
   - <CODE>CL_DOMAIN_ERROR</CODE>              if the recurrence is not
-                                           well_defined;
-  - <CODE>CL_UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not solvable;
-  - <CODE>CL_INDETERMINATE_RECURRENCE</CODE>  if the recurrence is indeterminate,
-                                           hence it has infinite solutions.
-  - <CODE>CL_TOO_COMPLEX</CODE>    in all the other cases. 
+                                              well_defined;
+  - <CODE>CL_UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not
+                                              solvable;
+  - <CODE>CL_INDETERMINATE_RECURRENCE</CODE>  if the recurrence is
+                                              indeterminate, hence it has
+					      infinite solutions.
+  - <CODE>CL_TOO_COMPLEX</CODE>               in all the other cases. 
   
   For each class of recurrences for which the system returns
   <CODE>CL_SUCCESS</CODE>, it is initialized a pointer to an opportune

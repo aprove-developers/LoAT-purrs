@@ -247,13 +247,13 @@ Recurrence::set_functional_equation() const {
 }
 
 inline bool
-Recurrence::is_linear_infinite_order() const {
+Recurrence::is_weighted_average() const {
   assert(classifier_status_ != NOT_CLASSIFIED_YET);
   return type_ == WEIGHTED_AVERAGE;
 }
 
 inline void
-Recurrence::set_linear_infinite_order() const {
+Recurrence::set_weighted_average() const {
   type_ = WEIGHTED_AVERAGE;
   classifier_status_ = CL_SUCCESS;
 }
@@ -421,46 +421,46 @@ Recurrence::auxiliary_symbols() {
 
 inline const Recurrence&
 Recurrence::associated_first_order_rec() const {
-  assert(is_linear_infinite_order());
+  assert(is_weighted_average());
   return weighted_average_p -> associated_first_order_rec();
 }
 
 inline Recurrence&
 Recurrence::associated_first_order_rec() {
-  assert(is_linear_infinite_order());
+  assert(is_weighted_average());
   return weighted_average_p -> associated_first_order_rec();
 }
 
 inline void
 Recurrence::set_original_rhs(const Expr& original_rhs) const {
-  assert(is_linear_infinite_order());
+  assert(is_weighted_average());
   weighted_average_p -> set_original_rhs(original_rhs);
 }
 
 inline const Expr&
-Recurrence::infinite_order_weight() const {
-  assert(is_linear_infinite_order());
+Recurrence::weight() const {
+  assert(is_weighted_average());
   assert(weighted_average_p);
-  return weighted_average_p -> infinite_order_weight();
+  return weighted_average_p -> weight();
 }
 
 inline Expr&
-Recurrence::infinite_order_weight() {
-  assert(is_linear_infinite_order());
+Recurrence::weight() {
+  assert(is_weighted_average());
   assert(weighted_average_p);
-  return weighted_average_p -> infinite_order_weight();
+  return weighted_average_p -> weight();
 }
 
 inline index_type
 Recurrence::first_valid_index_inf_order() const {
-  assert(is_linear_infinite_order());
+  assert(is_weighted_average());
   assert(weighted_average_p);
   return weighted_average_p -> first_valid_index_inf_order();
 }
 
 inline void
 Recurrence::set_first_valid_index_inf_order(index_type i_c) const {
-  assert(is_linear_infinite_order());
+  assert(is_weighted_average());
   assert(weighted_average_p);
   weighted_average_p -> set_first_valid_index_inf_order(i_c);
 }

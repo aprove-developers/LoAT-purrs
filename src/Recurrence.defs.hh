@@ -878,10 +878,10 @@ private:
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this is a weighted-average
   //! recurrence; returns <CODE>false</CODE> otherwise.
-  bool is_linear_infinite_order() const;
+  bool is_weighted_average() const;
 
   //! Sets <CODE>type_recurrence = WEIGHTED_AVERAGE</CODE>.
-  void set_linear_infinite_order() const;
+  void set_weighted_average() const;
 
 
   // Methods to access to private data of `Finite_Order_Info'.
@@ -1027,7 +1027,7 @@ private:
   //! recurrence \p *this in first order recurrence, this method returns
   //! the first order recurrence computed (in order to know the cases of
   //! rewritable weighted-average recurrences see the function
-  //! <CODE>rewrite_infinite_order_recurrence()</CODE>).
+  //! <CODE>rewrite_weighted_average_recurrence()</CODE>).
   const Recurrence& associated_first_order_rec() const;
 
   //! \brief
@@ -1035,7 +1035,7 @@ private:
   //! recurrence \p *this in first order recurrence, this method returns
   //! the first order recurrence computed (in order to know the cases of
   //! rewritable weighted-average recurrence see the function
-  //! <CODE>rewrite_infinite_order_recurrence()</CODE>).
+  //! <CODE>rewrite_weighted_average_recurrence()</CODE>).
   Recurrence& associated_first_order_rec();
 
   //! \brief
@@ -1049,14 +1049,14 @@ private:
   //! \f[
   //!   T(n) = f(n) \sum_{k=0}^n T(k) + g(n).
   //! \f]
-  const Expr& infinite_order_weight() const;
+  const Expr& weight() const;
 
   //! \brief
   //! Returns the factor \f$ f(n) \f$ of the weighted-average recurrence
   //! \f[
   //!   T(n) = f(n) \sum_{k=0}^n T(k) + g(n).
   //! \f]
-  Expr& infinite_order_weight();
+  Expr& weight();
 
   //! \brief
   //! Stores the least non-negative integer \f$ j \f$ such that
