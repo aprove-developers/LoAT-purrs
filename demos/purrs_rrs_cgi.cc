@@ -255,23 +255,77 @@ main() try {
     start = rsg.ru_utime;
 #endif
 
+  bool have_exact_solution = false;
+  bool have_lower_bound = false;
+  bool have_upper_bound = false;
+
   Expr exact_solution;
+  Expr lower_bound;
+  Expr upper_bound;
+
   try {
     switch (recurrence.compute_exact_solution()) {
     case Recurrence::SUCCESS:
+      have_exact_solution = true;
       recurrence.exact_solution(exact_solution);
+      goto done;
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
       error("this recurrence is unsolvable");
       break;
     case Recurrence::TOO_COMPLEX:
     default:
-      error("sorry, this is too difficult");
+      ;
     }
   }
   catch (const char* s) {
     error(s);
   }
+
+  try {
+    switch (recurrence.compute_lower_bound()) {
+    case Recurrence::SUCCESS:
+      have_lower_bound = true;
+      recurrence.lower_bound(lower_bound);
+      break;
+    case Recurrence::UNSOLVABLE_RECURRENCE:
+      error("this recurrence is unsolvable");
+      break;
+    case Recurrence::TOO_COMPLEX:
+    default:
+      ;
+    }
+  }
+  catch (const char* s) {
+    error(s);
+  }
+
+  try {
+    switch (recurrence.compute_upper_bound()) {
+    case Recurrence::SUCCESS:
+      have_upper_bound = true;
+      recurrence.upper_bound(upper_bound);
+      break;
+    case Recurrence::UNSOLVABLE_RECURRENCE:
+      error("this recurrence is unsolvable");
+      break;
+    case Recurrence::TOO_COMPLEX:
+    default:
+      ;
+    }
+  }
+  catch (const char* s) {
+    error(s);
+  }
+
+#if 0
+  if (!have_exact_solution
+      && !have_lower_bound
+      && !have_upper_bound)
+    error("sorry, this is too difficult");
+#endif
+
+ done:
 
 #if HAVE_GETRUSAGE
   timeval end;
@@ -333,9 +387,19 @@ main() try {
        << h1() << "PURRS Demo " << span("Results", set("class", "green"))
        << h1() << endl;
 
-  cout << h2() << "Random formula for x(n) = " << rhs << h2() << endl;
+  cout << h2()
+       << (have_exact_solution ? "Exact solution" : "Bounds")
+       << " for x(n) = " << rhs
+       << h2() << endl;
 
-  cout << "x(n) = " << exact_solution << endl;
+  if (have_exact_solution)
+    cout << "x(n) = " << exact_solution << endl;
+  else {
+    if (have_lower_bound)
+      cout << "x(n) >= " << lower_bound << endl;
+    if (have_upper_bound)
+      cout << "x(n) <= " << upper_bound << endl;
+  }
 
   // Get a pointer to the environment.
   const CgiEnvironment& env = cgi.getEnvironment();
