@@ -918,8 +918,17 @@ compute_term_about_initial_condition(Type_Bound type, unsigned int condition,
   // in the case of "lower bound" consider `a^(log(n)/log(b)-1)';
   assert(q.is_the_floor_function());
   Expr tmp = q.arg(0);
-  if (type == LOWER_BOUND)
-    tmp -= 1;
+  Number num;
+  if (coefficient.is_a_number(num)) {
+    assert(num > 0);
+    if (num < 1 && type == UPPER_BOUND)
+      tmp -= 1;
+    if (num > 1 && type == LOWER_BOUND)
+      tmp -= 1;
+  }
+  else
+    if (type == LOWER_BOUND)
+      tmp -= 1;
   bound += pwr(coefficient, tmp) * x(index_initial_condition);
 }
 					     
