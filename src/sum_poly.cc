@@ -42,29 +42,29 @@ namespace Parma_Recurrence_Relation_Solver {
   \f$ x \cdot (x - 1) \cdots (x - k + 1) \f$. 
   If \f$ k\le 0 \f$, the routine returns 1, which is the usual 
   convention for an empty product. 
-  The result is returned in the expression <CODE> q </CODE>. 
+  The result is returned in the expression <CODE>q</CODE>. 
 */
 
 static void
-falling_product(const Expr& x, unsigned k, Expr& q) {
+falling_product(const Expr& x, const Number& k, Expr& q) {
   q = 1;
-  for (unsigned i = 0; i < k; ++i) 
+  for (Number i = 0; i < k; ++i) 
     q *= (x-i);
 }
 
 /*!
   This routine computes \f$\sum_{j=0}^n j_{(k)} x^j \f$ for a non negative 
   integer \f$ k \f$ by means of a formula explained in purrs.tex, \S4.3.2. 
-  The closed formula is returned in the expression <CODE> q </CODE>. 
+  The closed formula is returned in the expression <CODE>q</CODE>. 
 */
 
 static void 
-sum_falling_prod_times_exp(const Symbol& n, Number k, 
+sum_falling_prod_times_exp(const Symbol& n, const Number& k, 
 			   const Symbol& x, Expr& q) {
   
   q = Parma_Recurrence_Relation_Solver::power(1-x, -k-1);
   Expr r;
-  for (unsigned i = 0; i < k + 1; ++i) {
+  for (Number i = 0; i <= k; ++i) {
     falling_product(n + 1, i, r);
     q -= r / factorial(i) * Parma_Recurrence_Relation_Solver::power(x, n+1-i) * Parma_Recurrence_Relation_Solver::power(1-x, i-k-1);
   }
