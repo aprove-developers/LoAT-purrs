@@ -338,7 +338,45 @@ WARN_LOGFILE           =
 
 INPUT                  = @srcdir@/../src/alg_eq_solver.hh \
                          @srcdir@/../src/alg_eq_solver.cc \
-                         @srcdir@/../src/rr_solver.cc
+                         @srcdir@/../src/rr_solver.hh \
+                         @srcdir@/../src/rr_solver.cc \
+                         @srcdir@/../src/Expr.defs.hh \
+                         @srcdir@/../src/Expr.types.hh \
+                         @srcdir@/../src/Expr.inlines.hh \
+                         @srcdir@/../src/Expr.cc \
+			 @srcdir@/../src/Expr_List.defs.hh \
+                         @srcdir@/../src/Expr_List.types.hh \
+                         @srcdir@/../src/Expr_List.inlines.hh \
+                         @srcdir@/../src/Expr_List.cc \
+			 @srcdir@/../src/Matrix.defs.hh \		
+                         @srcdir@/../src/Matrix.types.hh \
+                         @srcdir@/../src/Matrix.inlines.hh \
+                         @srcdir@/../src/Matrix.cc \
+			 @srcdir@/../src/Number.defs.hh \
+                         @srcdir@/../src/Number.types.hh \
+                         @srcdir@/../src/Number.inlines.hh \
+                         @srcdir@/../src/Number.cc \
+			 @srcdir@/../src/Symbol.defs.hh \
+                         @srcdir@/../src/Symbol.types.hh \
+                         @srcdir@/../src/Symbol.inlines.hh \
+                         @srcdir@/../src/Symbol.cc \
+			 @srcdir@/../src/Recurrence.defs.hh \
+                         @srcdir@/../src/Recurrence.types.hh \
+                         @srcdir@/../src/Recurrence.inlines.hh \
+                         @srcdir@/../src/Recurrence.cc \
+                         @srcdir@/../src/globals.hh \
+                         @srcdir@/../src/globals.cc \
+                         @srcdir@/../src/gosper.hh \
+                         @srcdir@/../src/gosper.cc \
+                         @srcdir@/../src/gosper.cc \
+                         @srcdir@/../src/poly_factor.hh \
+                         @srcdir@/../src/poly_factor.cc \
+                         @srcdir@/../src/simplify.hh \
+                         @srcdir@/../src/simplify.cc \
+                         @srcdir@/../src/sum_poly.hh \
+                         @srcdir@/../src/sum_poly.cc \
+                         @srcdir@/../src/util.hh \
+                         @srcdir@/../src/util.cc
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
