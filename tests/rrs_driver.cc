@@ -170,12 +170,12 @@ invalid_initial_condition(const char* culprit) {
   my_exit(1);
 }
 
-static Recurrence* production_recurrence = 0;
+static Recurrence* precp = 0;
 
 static void
 init_production_recurrence() {
-  if (production_recurrence == 0)
-    production_recurrence = new Recurrence();
+  if (precp == 0)
+    precp = new Recurrence();
 }
 
 static void
@@ -209,7 +209,7 @@ process_options(int argc, char* argv[]) {
 	  invalid_recurrence(optarg);
 	have_recurrence = true;
 	init_production_recurrence();
-	production_recurrence->replace_recurrence(rec);
+	precp->replace_recurrence(rec);
       }
       break;
       
@@ -241,8 +241,7 @@ process_options(int argc, char* argv[]) {
 	if (!r.is_a_number())
 	  invalid_initial_condition(optarg);
 	init_production_recurrence();
-	production_recurrence
-	  ->replace_initial_condition(index.to_unsigned(), r);
+	precp->replace_initial_condition(index.to_unsigned(), r);
       }
       break;
 
@@ -478,10 +477,12 @@ main(int argc, char *argv[]) try {
 	upper_bound_required = true;
       }
       if (exact_solution_required)
-	switch (compute_exact_solution_wrapper(*production_recurrence)) {
+	switch (compute_exact_solution_wrapper(*precp)) {
 	case Recurrence::SUCCESS:
 	  // OK: get the exact solution and print it.
-	  production_recurrence->exact_solution(exact_solution);
+	  precp->exact_solution(exact_solution);
+	  exact_solution
+	    = precp->substitute_auxiliary_definitions(exact_solution);
 	  cout << "x(n) = " << exact_solution << "." << endl;
 	  goto exit;
 	  break;
@@ -503,10 +504,10 @@ main(int argc, char *argv[]) try {
 	  break;
 	}
       if (lower_bound_required)
-	switch (production_recurrence->compute_lower_bound()) {
+	switch (precp->compute_lower_bound()) {
 	case Recurrence::SUCCESS:
 	  // OK: get the lower bound and print it.
-	  production_recurrence->lower_bound(lower);
+	  precp->lower_bound(lower);
 	  cout << "x(n) >= " << lower << "." << endl;
 	  break;
 	case Recurrence::UNSOLVABLE_RECURRENCE:
@@ -524,10 +525,10 @@ main(int argc, char *argv[]) try {
 	  break;
 	}
       if (upper_bound_required)
-	switch (production_recurrence->compute_upper_bound()) {
+	switch (precp->compute_upper_bound()) {
 	case Recurrence::SUCCESS:
 	  // OK: get the upper bound and print it.
-	  production_recurrence->upper_bound(upper);
+	  precp->upper_bound(upper);
 	  cout << "x(n) =< " << upper << "." << endl;
 	  break;
 	case Recurrence::UNSOLVABLE_RECURRENCE:
