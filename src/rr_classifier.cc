@@ -899,6 +899,7 @@ PURRS::Recurrence::classify() const {
     Expr new_rhs;
     Expr base;
     if (rewrite_non_linear_recurrence(rhs, new_rhs, base)) {
+      set_unknown();
       recurrence_rhs_rewritten = true;
       non_linear_p = new Non_Linear_Info(recurrence_rhs, base);
       recurrence_rhs = new_rhs;
