@@ -201,6 +201,7 @@ traditional_step_3(index_type order_rec, const Expr& e) const {
     max_polynomial_degree
       =\max\{ r_1, ..., r_m \} - 1 + \max \{ \deg(p_1), ..., \deg(p_j) \}.
   \f]
+*/
 bool
 PURRS::Recurrence::
 verify_new_method_const_coeff(index_type order_rec, const Expr& e,
