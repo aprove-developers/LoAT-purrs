@@ -922,6 +922,7 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 
   const char* method = "PURRS::Recurrence::set_initial_conditions()";
   std::ostringstream s;
+  index_type first = first_valid_index();
   switch (type_) {
   case ORDER_ZERO:
     // If the recurrence has order zero, the solution is simply the
@@ -930,47 +931,51 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
   case LINEAR_FINITE_ORDER_CONST_COEFF:
   case LINEAR_FINITE_ORDER_VAR_COEFF:
     {
+      index_type k = order();
       // Check the number of initial conditions.
-      if (initial_conditions.size() < order()) {
-	s << "*this is a recurrence of order " << order()
-	  << " and are necessary at least \n" << order()
-	  << " initial conditions to uniquely identify it";
+      if (initial_conditions.size() < k) {
+	s << "*this is a recurrence of order " << k
+	  << " and are necessary at least \n" << k
+	  << " initial conditions to uniquely determine it";
 	throw_invalid_argument(method, s.str().c_str());
       }
-      // Check that the lowest index among the indexes of the
-      // initial conditions is bigger than
-      // `first_valid_index() - order() + 1'.
-      index_type lowest = initial_conditions.begin()->first;
-      unsigned int min_index = first_valid_index() + 1 >= order()
-	? first_valid_index() - order() + 1 : 0;
-      if (lowest < min_index) {
-	s << "*this is a recurrence of order " << order() << ";\n"
-	  << "the least non-negative integer `j' such that the\n"
-	  << "recurrence is well-defined for `n >= j' is "
-	  << first_valid_index()
-	  << ". Hence, the smallest index of the initial conditions\n"
-	  << " does not have to be smaller than " << min_index;
+      // Check if the largest index of the initial conditions in the
+      // map `initial_conditions' is not smaller than `first_valid_index()'.
+      assert(!initial_conditions.empty());
+      index_type largest = initial_conditions.rbegin()->first;
+      if (largest < first) {
+	s << "*this is a recurrence of order " << k
+	  << " and it is well-defined for `n >= " << first << "'.\n"
+	  << "Hence, the largest index can not to be smaller than " << first;
 	throw_invalid_argument(method, s.str().c_str());
       }
-      // Check if the indexes are all consequent.
-      unsigned j = 0;
-      for (std::map<index_type, Expr>::const_iterator i
-	     = initial_conditions.begin(),
-	     iend = initial_conditions.end(); i != iend; ++i, ++j)
-	if (i->first != lowest + j)
-	  throw_invalid_argument(method,
-				 "the indexes of the initial conditions "
-				 "must be consequent");
+      // Check if the indexes of the last `k' initial conditions are
+      // all consecutive (the `k'-th condition is already ok for the
+      // previous check).
+      unsigned int j = 1;
+      for (std::map<index_type, Expr>::const_reverse_iterator i 
+	     = initial_conditions.rbegin(); j < k; j++) {
+	// Skip the check on the largest initial condition.
+	i++;
+	if (i->first != largest - j) {
+	  s << "*this is a recurrence of order " << k
+	    << " and the " << k << " largest initial conditions\n"
+	    << " must be ``consecutive''";
+	  throw_invalid_argument(method, s.str().c_str());
+	}
+      }
     }
     break;
   case WEIGHTED_AVERAGE:
     {
+#if 1
       if (initial_conditions.size() != 1
 	  || initial_conditions.begin()->first != 0)
 	throw_invalid_argument(method,
 			       "*this is a weighted-average recurrence and,\n"
 			       "by definition, there is only the\n"
 			       "initial condition `x(0)'");
+#endif
     }
     break;
   case NON_LINEAR_FINITE_ORDER:
