@@ -127,9 +127,9 @@ check_poly_times_exponential(const GMatrix& decomposition) {
   \f$ p(n) = \sum_{i=0}^decomposition.cols() q(n)_i alpha_i^{n} \f$ and the
   vector \p roots of the characteristic equation's roots and we call
   \p \lambda the generic root.
-  This function fills the two <CODE>vector<GExpr></CODE>, with dimension
-  equal to \p decomposition.cols(), \p symbolic_sum_distinct and
-  \p symbolic_sum_no_distinct with two different sum:
+  This function fills the two <CODE>vector<GExpr></CODE>
+  \p symbolic_sum_distinct and \p symbolic_sum_no_distinct, with dimension
+  equal to \p decomposition.cols(), with two different sum:
   for \f$ j = 0, \dotsc, roots.size() \f$ and for
   \f$ i = 0, \dotsc, decomposition.cols() \f$
   -  if \f$ alpha_i \neq \lambda_j \f$ then
@@ -157,38 +157,40 @@ compute_symbolic_sum(const int order, const GSymbol& n,
       else
 	if (roots[j].value().is_equal(decomposition(0,i)))
 	  distinct = false;
+
       GSymbol k("k");
       GExpr q_k = decomposition(1, i).subs(n == k);
-      // The root is deifferent from the exponential's base.
+
+      // The root is different from the exponential's base.
       if (distinct) {
 	GSymbol x("x");
 	symbolic_sum_distinct[i] = sum_poly_times_exponentials(q_k, k, n,
-							       x);
+                                                               x);
 	// 'sum_poly_times_exponentials' calculates the sum from 0 while
-	// we want to start from 'order'.
-	symbolic_sum_distinct[i] -= q_k.subs(k == 0);
-	for (int j = 1; j < order; ++j)
-	  symbolic_sum_distinct[i] -= q_k.subs(k == j) * pow(lambda, -1);
-	
-	symbolic_sum_distinct[i] =
-	  symbolic_sum_distinct[i].subs(x == alpha/lambda);
-	symbolic_sum_distinct[i] *= pow(lambda, n);
-	symbolic_sum_distinct[i] =
-	  simplify_on_output_ex(symbolic_sum_distinct[i].expand(), n, false);
+        // we want to start from 'order'.
+        symbolic_sum_distinct[i] -= q_k.subs(k == 0);
+        for (int j = 1; j < order; ++j)
+          symbolic_sum_distinct[i] -= q_k.subs(k == j) * pow(lambda, -1);
+        
+        symbolic_sum_distinct[i] =
+          symbolic_sum_distinct[i].subs(x == alpha/lambda);
+        symbolic_sum_distinct[i] *= pow(lambda, n);
+        symbolic_sum_distinct[i] =
+          simplify_on_output_ex(symbolic_sum_distinct[i].expand(), n, false);
       }
       // The root is equal to the exponential's base.
       else {
 	symbolic_sum_no_distinct[i] = sum_poly_times_exponentials(q_k, k, n,
-								  1);
+                                                                  1);
 	// 'sum_poly_times_exponentials' calculates the sum from 0 while
-	// we want to start from 'order'.
-	symbolic_sum_no_distinct[i] -= q_k.subs(k == 0);
-	for (int j = 1; j < order; ++j)
-	  symbolic_sum_no_distinct[i] -= q_k.subs(k == j) * pow(lambda, -1);
-	symbolic_sum_no_distinct[i] *= pow(lambda, n);
-	symbolic_sum_no_distinct[i] =
-	  simplify_on_output_ex(symbolic_sum_no_distinct[i].expand(), n,
-				false);
+        // we want to start from 'order'.
+        symbolic_sum_no_distinct[i] -= q_k.subs(k == 0);
+        for (int j = 1; j < order; ++j)
+          symbolic_sum_no_distinct[i] -= q_k.subs(k == j) * pow(lambda, -1);
+        symbolic_sum_no_distinct[i] *= pow(lambda, n);
+        symbolic_sum_no_distinct[i] =
+          simplify_on_output_ex(symbolic_sum_no_distinct[i].expand(), n,
+                                false);
       }
     }
   }
@@ -268,7 +270,8 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     // The following matches are attempted starting from the most common,
     // then the second most common and so forth.
     // The check 'if (!i.has(n))' is necessary because otherwise do not
-    // accept 'x(i)' with 'i' numeric.
+    // accept 'x(i)' with 'i' numeric in a general recurrence relation
+    // (es. x(n) = x(n-1)+x(0)).
     if (clear(substitution), match(e, x_i_plus_r, substitution)) {
       i = get_binding(substitution, 0);
       if (!i.has(n))                                                
@@ -305,6 +308,11 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       failed = true;
       break;
     }
+
+    // FIXME: fare controllo sulle condizioni iniziali, cioe' verificare
+    // che se c'e' 'x(i)' con 'i' numerico allora 'i' sia un numero
+    // minore dell'ordine.
+
 #if NOISY
     std::cout << "decrement = " << decrement << std::endl;
 #endif
@@ -330,7 +338,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 
     // The vector 'coefficients' contains in the i-th position
     // the coefficient of x(n-i); in the first position and in the
-    // positions corresponding to x(n-i) absent, there is '0'.
+    // positions corresponding to x(n-i) absent there is '0'.
     if (index > coefficients.size())
       coefficients.insert(coefficients.end(),
 			  index - coefficients.size(),
@@ -374,8 +382,6 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 #endif
 
   // Creates the vector of initials conditions.
-  // FIXME: fare controllo sulle condizioni iniziali
-  // (numero minore dell'ordine).
   std::vector<GExpr> initial_conditions(order);
   for (int i = 0; i < order; ++i)
     initial_conditions[i] = x(i);
@@ -384,7 +390,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   GExpr characteristic_eq;
   GSymbol y("y");
   std::vector<Polynomial_Root> roots;
-  bool all_distinct;
+  bool all_distinct = true;
  
   // FIXME: il seguente if sull'ordine e' temporaneo perche' cosi' si
   // riescono a fare le parametriche del primo ordine almeno.
@@ -395,7 +401,6 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   if (order == 1) {
     characteristic_eq = y - coefficients[1];
     roots.push_back(coefficients[1]);
-    all_distinct = true;
   } 
   else {
     // Check that the vector 'coefficients' does not contains
@@ -471,6 +476,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     }
   case 2:
     {
+      // There are two roots with multiplicity equal to 1.
       if (all_distinct)
 	// Calculates the solution of the second order recurrences when
 	// the inhomogeneous term is a polynomial or the product of a
