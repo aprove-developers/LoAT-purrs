@@ -39,7 +39,6 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 namespace GiNaC {
 
-//! ...
 ex
 x_eval(const ex& e) {
   return x(e).hold();
@@ -395,6 +394,48 @@ REGISTER_FUNCTION(mod,
 		  eval_func(mod_eval).
 		  evalf_func(mod_evalf).
 		  derivative_func(mod_deriv));
+
+
+//! ...
+ex
+binom_eval(const ex& m, const ex& k) {
+  if (is_a<numeric>(m) && is_a<numeric>(k)) {
+    numeric num_k = ex_to<numeric>(k);;
+    if (num_k < 0 || !num_k.is_integer())
+      throw std::range_error("We do not know how to evaluate\n"
+			     "`binom(m, k)' with `k' not non-negative "
+			     "integer.");
+    else {
+      // If `k == 0' then `prod(h, m - num_k + 1, m, h) / factorial(num_k)'
+      // is equal to 1.
+      symbol h;
+      return prod(ex(h), m-num_k+1, m, ex(h)) / factorial(num_k);
+    }
+  }
+  else
+    return binom(m, k).hold();
+}
+
+ex
+binom_evalf(const ex& m, const ex& k) {
+  return binom(m, k).hold();
+}
+
+ex
+binom_deriv(const ex&, const ex&, unsigned int) {
+  abort();
+}
+
+/*!
+  We define the symbolic function
+  \f[
+    \binom(m, k), \text{for } m \in \Cset, k \in \Zset, k \geq 0.
+  \f]
+*/
+REGISTER_FUNCTION(binom,
+		  eval_func(binom_eval).
+		  evalf_func(binom_evalf).
+		  derivative_func(binom_deriv));
 
 } // namespace GiNaC
 

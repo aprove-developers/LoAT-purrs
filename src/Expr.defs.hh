@@ -247,22 +247,22 @@ Expr factorial(const Expr& x);
 */
 Expr gamma(const Expr& x);
 
-//! Returns the binomial coefficient \f$ \binom(n, k) \f$.
+//! Returns the binomial coefficient \f$ \binom(m, k) \f$.
 /*!
-  When \f$ n \in \Cset \f$ and \f$ k \in \Zset \f$, \f$ k \geq 0 \f$, use
+  When \f$ m \in \Cset \f$ and \f$ k \in \Zset \f$, \f$ k \geq 0 \f$, use
   the following definition:
   \f[
-    \binom(n, k) =
+    \binom(m, k) =
     \begin{cases}
       1, \quad \text{if } k = 0;\\
-      \frac{\prod_{i = n-k+1}^n i}{k!}, \quad \text{if } k > 0.
+      \frac{\prod_{i = m-k+1}^m i}{k!}, \quad \text{if } k > 0.
     \end{cases}
   \f]
 
   \exception std::range_error thrown if \f$ k \f$ is not a non-negative
                               integer number.
 */
-Expr binomial(const Expr& n, const Expr& k);
+Expr binom(const Expr& m, const Expr& k);
 
 // FIXME: what is a polynomial in a variable `x'?
 // The answer is necessary for the function quo(), rem(), prem(), gcd(),
@@ -565,6 +565,11 @@ public:
     in <CODE>Expr</CODE> by a constructor of the class <CODE>Expr</CODE>.
   */
   bool is_the_gamma_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>binom()</CODE>.
+  bool is_the_binom_function() const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is the function
@@ -1054,7 +1059,7 @@ private:
   friend Expr log(const Expr& x);
   friend Expr factorial(const Expr& x);
   friend Expr gamma(const Expr& x);
-  friend Expr binomial(const Expr& n, const Expr& k);
+  friend Expr binom(const Expr& m, const Expr& k);
   friend Expr quo(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr rem(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr prem(const Expr& a, const Expr& b, const Symbol& x);

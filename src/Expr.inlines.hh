@@ -40,6 +40,7 @@ DECLARE_FUNCTION_1P(x);
 DECLARE_FUNCTION_4P(sum);
 DECLARE_FUNCTION_4P(prod);
 DECLARE_FUNCTION_2P(mod);
+DECLARE_FUNCTION_2P(binom);
 
 } // namespace GiNaC
 
@@ -596,26 +597,6 @@ factorial(const Expr& x) {
 }
 
 inline Expr
-binomial(const Expr& n, const Expr& k) {
-  Number num_k;
-  if (n.is_a_number() && k.is_a_number(num_k))
-    if (num_k < 0 || !num_k.is_integer())
-      throw std::range_error("We do not know how to evaluate\n"
-			     "`binomial(n, k)' with `k' not non-negative "
-			     "integer.");
-    else {
-      // If `k == 0' then `prod(h, n - num_k + 1, n, h) / factorial(num_k)'
-      // is equal to 1.
-      Symbol h;
-      return Parma_Recurrence_Relation_Solver::prod(h, n - num_k + 1, n, h)
-	/ factorial(num_k);
-    }
-  else
-    return GiNaC::binomial(static_cast<const Expr::Base>(n),
-			   static_cast<const Expr::Base>(k));
-}
-
-inline Expr
 gamma(const Expr& x) {
   return GiNaC::tgamma(static_cast<const Expr::Base>(x));
 }
@@ -730,6 +711,16 @@ Expr::is_the_acos_function() const {
 inline bool
 Expr::is_the_factorial_function() const {
   return is_ex_the_function(*this, factorial);
+}
+
+inline bool
+Expr::is_the_gamma_function() const {
+  return is_ex_the_function(*this, tgamma);
+}
+
+inline bool
+Expr::is_the_binom_function() const {
+  return is_ex_the_function(*this, binom);
 }
 
 inline bool
