@@ -60,7 +60,7 @@ bounds_for_exp_function(const Number& coeff, const Number& divisor,
 
   // Upper bound.
   Expr tmp = pwr(base, pwr(divisor, 2));
-  Expr constant = coeff * tmp * pwr(tmp - pwr(coeff, divisor), -1);
+  Expr constant = coeff * tmp * pwr(tmp - coeff * pwr(base, divisor), -1);
   ub += pwr(base, Recurrence::n)
     + constant * pwr(base, Recurrence::n / divisor);
 }
