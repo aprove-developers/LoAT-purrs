@@ -285,8 +285,8 @@ Expr sum(const Expr& index, const Expr& lower, const Expr& upper,
 	 const Expr& summand);
 
 //! Returns the function \f$ prod(index,lower,upper,factor) \f$.
-Expr sum(const Expr& index, const Expr& lower, const Expr& upper,
-	 const Expr& factor);
+Expr prod(const Expr& index, const Expr& lower, const Expr& upper,
+	  const Expr& factor);
 
 class Expr : private GiNaC::ex {
 private:

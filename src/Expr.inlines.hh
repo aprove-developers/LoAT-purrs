@@ -557,10 +557,10 @@ sum(const Expr& index, const Expr& lower, const Expr& upper,
 inline Expr
 prod(const Expr& index, const Expr& lower, const Expr& upper,
      const Expr& factor) {
-  return sum(static_cast<const Expr::Base>(index),
-	     static_cast<const Expr::Base>(lower),
-	     static_cast<const Expr::Base>(upper),
-	     static_cast<const Expr::Base>(factor));
+  return prod(static_cast<const Expr::Base>(index),
+	      static_cast<const Expr::Base>(lower),
+	      static_cast<const Expr::Base>(upper),
+	      static_cast<const Expr::Base>(factor));
 }
 
 inline bool
