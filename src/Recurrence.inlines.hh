@@ -78,7 +78,9 @@ Recurrence::Recurrence(const Recurrence& y)
     exact_solution_(y.exact_solution_),
     lower_bound_(y.lower_bound_),
     upper_bound_(y.upper_bound_),
-    tested_exact_solution(y.tested_exact_solution) {
+    tested_exact_solution(y.tested_exact_solution),
+    blackboard(y.blackboard),
+    initial_conditions(y.initial_conditions) {
 }
 
 inline
@@ -106,6 +108,8 @@ Recurrence::operator=(const Recurrence& y) {
   lower_bound_ = y.lower_bound_;
   upper_bound_ = y.upper_bound_;
   tested_exact_solution = y.tested_exact_solution;
+  blackboard = y.blackboard;
+  initial_conditions = y.initial_conditions;
   return *this;
 }
 
