@@ -92,6 +92,18 @@ bool less_than(const Recurrence& x, const Recurrence& y);
   same. You can define <CODE>const Symbol& n = Recurrence::n</CODE>
   once for all or you must specify which is the symbol <CODE>n</CODE>
   you want to consider using every time <CODE>Recurrence::n</CODE>.
+
+  We say that a recurrence is
+  \anchor syntactically_correct <EM>syntactically correct</EM>
+  if it is sum, product and powers of the following object:
+  - numbers (no floating-point);
+  - symbols for parameters;
+  - mathematical functions (ex. \f$ \log() \f$, \dots);
+  - unary functions \f$ x() \f$ with argument of the following form:
+    \f$ n + k \f$ with \f$ k \in \Zset \f$,
+    \f$ n / k \f$ with \f$ k \in \Qset \f$,
+    a number (no floating point) or a symbol,
+    mathematical functions.
   
   The following examples show some different ways in order to build
   objects Recurrence:
@@ -669,13 +681,8 @@ public:
     UNSOLVABLE_RECURRENCE,
 
     /*!
-      The recurrence does not have any sense. We include in this status
-      three types of malformation:
-      - the recurrence contains floating point numbers;
-      - there is a function \f$ x() \f$ with another function \f$ x() \f$
-        as argument;
-      - the right-hand side of the recurrence contains at least an
-        occurrence of \f$ x(n-k) \f$, where \f$ k \f$ is not an integer.
+      The recurrence is not
+      \ref syntactically_correct "syntactically correct".
     */
     MALFORMED_RECURRENCE,
 
@@ -969,11 +976,8 @@ private:
     CL_UNSOLVABLE_RECURRENCE,
 
     /*!
-      The recurrence does not have any sense. We include in this status
-      two types of malformation:
-      - the recurrence contains floating point numbers;
-      - there is a function \f$ x() \f$ with another function \f$ x() \f$
-        as argument.
+      The recurrence is not
+      \ref syntactically_correct "syntactically correct".
     */
     CL_MALFORMED_RECURRENCE,
 
