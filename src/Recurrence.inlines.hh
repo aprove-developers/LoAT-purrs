@@ -56,8 +56,7 @@ Recurrence::Recurrence(const Expr& e)
     recurrence_rhs(e),
     recurrence_rewritten(false),
     inhomogeneous_term(0),
-    // Not meaningful because the recurrence is not yet classified.
-    type_(ORDER_ZERO),
+    type_(UNKNOWN),
     finite_order_p(0),
     functional_eq_p(0),
     non_linear_p(0),
@@ -184,11 +183,7 @@ Recurrence::set_type(const Type& t) const {
 
 inline bool
 Recurrence::is_order_zero() const {
-  // In this case we do not put the following assertion 
-  // `assert(classifier_status_ != NOT_CLASSIFIED_YET)'
-  // because the constructor `Recurrence(const Expr& e)'
-  // set `type_ = ORDER_ZERO' even if the recurrence
-  // is not yet classified. 
+  assert(classifier_status_ != NOT_CLASSIFIED_YET);
   return type_ == ORDER_ZERO; 
 }
 

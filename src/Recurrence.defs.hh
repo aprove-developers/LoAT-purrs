@@ -635,7 +635,13 @@ private:
     /*!
       Special recurrence of the form \f$ x(n) = a x(n / b) + d n^e \f$ . 
     */
-    FUNCTIONAL_EQUATION
+    FUNCTIONAL_EQUATION,
+
+    /*!
+      The recurrence is not yet classified, then the type of the
+      recurrence is unknown.
+    */
+    UNKNOWN
   };
 
   mutable Type type_;
