@@ -33,7 +33,7 @@ namespace Parma_Recurrence_Relation_Solver {
 inline
 Recurrence::Recurrence()
   : recurrence_rhs(0),
-    type(LINEAR_FINITE_ORDER_CONST_COEFF),
+    type(ZERO_ORDER),
     tdip(0),
     solved(false) {
 }
@@ -41,7 +41,7 @@ Recurrence::Recurrence()
 inline
 Recurrence::Recurrence(const Expr& e)
   : recurrence_rhs(e),
-    type(LINEAR_FINITE_ORDER_CONST_COEFF),
+    type(UNKNOWN),
     tdip(0),
     solved(false) {
 }

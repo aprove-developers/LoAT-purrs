@@ -67,6 +67,14 @@ public:
   //! Returns a new symbol \f$ z \f$ and records the equation \f$ z = e \f$.
   Symbol insert_auxiliary_definition(const Expr& e) const;
 
+  //! Checks if all the invariants are satisfied.
+  /*!
+    The check is performed so as to intrude as little as possible.
+    In case invariants are violated error messages are written on
+    <CODE>std::cerr</CODE>.
+  */
+  bool Ok() const; 
+
 private:
   //! \brief
   //! Returns the right-hand side of the auxiliary equation \f$ z = e \f$,
@@ -150,7 +158,9 @@ private:
   Solver_Status solve_try_hard() const;
   Solver_Status classification_summand(const Expr& r, Expr& e,
 				       std::vector<Expr>& coefficients,
-				       int& order, int& gcd_among_decrements,
+				       int& order,
+				       std::vector<unsigned>& decrements,
+				       int& gcd_among_decrements,
 				       int num_term) const;
 
   //! \brief
@@ -169,6 +179,19 @@ private:
   std::map<unsigned, Expr> system_rhs;
 
   enum Type {
+    /*!
+      The type of the recurrence is unknown.
+    */
+    UNKNOWN,
+
+    /*!
+      Special recurrence of the form \f$ x(n) = rhs \f$, where \f$ rhs \f$
+      contains only functions of  \f$ n \f$, parameters and
+      \f$ x(k_1), \dots, x(k_m) \f$ where \f$ m >= 0 \f$ and
+      \f$ k_1, \dots, k_m \f$ are non-negative integers.
+    */
+    ZERO_ORDER,
+
     /*!
       Linear recurrence of finite order with constant coefficient.
     */
@@ -197,7 +220,7 @@ private:
 
   mutable Type type;
 
-  Finite_Order_Info* tdip;
+  mutable Finite_Order_Info* tdip;
 
   //! \brief
   //! Returns <CODE>true</CODE> if the recurrence is linear
@@ -250,8 +273,10 @@ private:
   static Solver_Status
   find_non_linear_recurrence(const Expr& e);
   static Solver_Status
-  compute_order(const Number& decrement, int& order, unsigned long& index,
-		unsigned long max_size);
+  compute_order_inserting_decrement(const Number& decrement, int& order,
+				    unsigned long& index,
+				    std::vector<unsigned>& decrements,
+				    unsigned long max_size);
   static Solver_Status
   solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
 			       const std::vector<Polynomial_Root>& roots,
