@@ -29,10 +29,11 @@ http://www.cs.unipr.it/purrs/ . */
 #include <config.h>
 
 #include "Recurrence.defs.hh"
-#include "util.hh"
-#include "simplify.hh"
+#include "ep_decomp.hh"
 #include "factorize.hh"
 #include "finite_order.hh"
+#include "simplify.hh"
+#include "util.hh"
 #include "Expr.defs.hh"
 #include "Cached_Expr.defs.hh"
 #include "Non_Linear_Info.defs.hh"
@@ -201,11 +202,6 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
     first_i_c = rec.first_well_defined_rhs_linear();
   }
   
-  D_VAR(rec.recurrence_rhs);
-  D_VAR(rec.exact_solution_.expression());
-  D_VAR(order_rec);
-  D_VAR(first_i_c);
-  
   if (order_rec == 0)
     return PROVABLY_CORRECT;
   else {
@@ -215,8 +211,6 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 	= rec.exact_solution_.expression().substitute(n, first_i_c + i);
       solution_evaluated = rec.blackboard.rewrite(solution_evaluated);
       solution_evaluated = simplify_all(solution_evaluated);
-      D_VAR(solution_evaluated);
-      D_VAR(x(first_i_c + i));
       if (solution_evaluated != x(first_i_c + i))
 	return INCONCLUSIVE_VERIFICATION;
     }
@@ -230,34 +224,202 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 	if (!rec.exact_solution_.expression().op(i).has_x_function(true))
 	  partial_solution += rec.exact_solution_.expression().op(i);
       }
-    else
-      if (!rec.exact_solution_.expression().has_x_function(true))
+    else if (!rec.exact_solution_.expression().has_x_function(true))
 	partial_solution = rec.exact_solution_.expression();
-    D_VAR(partial_solution);
+
     // The recurrence is homogeneous.
     if (partial_solution == 0)
       return PROVABLY_CORRECT;
-    // Step 3: construct the vector `terms_to_sub': each element of it
-    // contains `partial_solution' with `n' substituted by `n - d'
-    // (the `d' are the decrements of the terms `x(n - d)').
-    // These new expressions contained in the vector `terms_to_sub' are
-    // substituted to the correspondenting values in `recurrence_rhs'.
-    Expr substituted_rhs;
-    std::vector<Expr> terms_to_sub(order_rec);
-    
-    substituted_rhs = rec.recurrence_rhs;
-    for (unsigned i = order_rec; i-- > 0; ) {
-      terms_to_sub[i] = simplify_all(partial_solution.substitute
-				     (n, n - (i + 1)));
-      terms_to_sub[i] = simplify_sum(terms_to_sub[i], true);
-      substituted_rhs = substituted_rhs
-	.substitute(x(n - (i + 1)), terms_to_sub[i]);
+
+#if 0
+  std::vector<Expr> bases_of_exp;
+  std::vector<Expr> exp_poly_coeff;
+  std::vector<Expr> exp_no_poly_coeff;
+  exp_poly_decomposition(rec.inhomogeneous_term, Recurrence::n,
+			 bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
+
+  assert(bases_of_exp.size() == exp_poly_coeff.size()
+	 && exp_poly_coeff.size() == exp_no_poly_coeff.size()
+	 && exp_no_poly_coeff.size() >= 1);
+
+  unsigned num_of_exponentials = bases_of_exp.size();
+  D_VEC(bases_of_exp, 0, num_of_exponentials-1);
+  D_VEC(exp_poly_coeff, 0, num_of_exponentials-1);
+  D_VEC(exp_no_poly_coeff, 0, num_of_exponentials-1);
+
+  unsigned max_polynomial_degree = 0;
+  for (unsigned i = 0; i < num_of_exponentials; ++i) {
+    if (!exp_no_poly_coeff[i].is_zero()) {
+      DD_MSGVAR("No poly: ", exp_no_poly_coeff[i]);
+      goto traditional;
     }
-    D_VEC(terms_to_sub, 0, terms_to_sub.size()-1);
-    D_VAR(substituted_rhs);
+    max_polynomial_degree = std::max(max_polynomial_degree,
+				     exp_poly_coeff[i].degree(n));
+  }
+
+  {
+  std::vector<Polynomial_Root> roots;
+  std::vector<Number> num_coefficients(order_rec + 1);
+  bool all_distinct = true;
+  if (rec.is_linear_finite_order_const_coeff()) {
+    Expr characteristic_eq;
+    if (!characteristic_equation_and_its_roots(order_rec,
+					       rec.coefficients(),
+					       num_coefficients,
+					       characteristic_eq, roots,
+					       all_distinct))
+      abort();
+  }
+
+  // Find the maximum degree of a polynomial that may occur in the solution.
+  for (unsigned i = 0, nroots = roots.size(); i < nroots; ++i) {
+    max_polynomial_degree += roots[i].multiplicity() - 1;
+    // FIXME: this may be inefficient!
+    for (unsigned j = 0; j < num_of_exponentials; ++j)
+      if (roots[i].value() == bases_of_exp[j])
+	++max_polynomial_degree;
+  }
+
+  Expr substituted_rhs = rec.recurrence_rhs;
+  for (unsigned i = order_rec; i-- > 0; ) {
+    Expr shifted_solution = partial_solution.substitute(n, n - (i + 1));
+    //shifted_solution = simplify_sum(shifted_solution, true);
+    substituted_rhs = substituted_rhs
+      .substitute(x(n - (i + 1)), shifted_solution);
+  }
+  Expr diff = rec.blackboard.rewrite(partial_solution - substituted_rhs);
+  diff = diff.expand();
+
+  std::vector<Expr> coefficients_of_exponentials(max_polynomial_degree + 1);
+  if (diff.is_a_add()) {
+    for (unsigned i = 0; i < diff.nops(); ++i) {
+      Expr summand = diff.op(i);
+      if (summand.is_a_mul()) {
+	// Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
+	// `a' and `b' possibly 1).
+	bool done = false;
+	for (unsigned j = 0; j < summand.nops(); ++j) {
+	  Expr factor = summand.op(j);
+	  unsigned k;
+	  if (factor == n)
+	    k = 1;
+	  else if (factor.is_a_power() && factor.arg(0) == n) {
+	    assert(factor.arg(1).is_a_number());
+	    k = factor.arg(1).ex_to_number().to_unsigned();
+	  }
+	  else
+	    continue;
+	  // FIXME: maybe can be implemented in a better way.
+	  // FIXME: k uninitialized here!
+	  coefficients_of_exponentials[k] += summand/factor;
+	  done = true;
+	  break;
+	}
+	if (!done)
+	  coefficients_of_exponentials[0] += summand;
+      }      
+      else if (summand.is_a_power()) {
+	// Summand has the form `n^k' or `a^n'
+	if (summand.arg(0) == n) {
+	  unsigned k = summand.arg(1).ex_to_number().to_unsigned();
+	  coefficients_of_exponentials[k] += 1;
+	}
+	else
+	  coefficients_of_exponentials[0] += summand;
+      }
+      else {
+	// Summand is a constant or the symbol `n'.
+	assert(summand.is_a_number() || summand == n);
+	Number k;
+	if (summand.is_a_number(k))
+	  coefficients_of_exponentials[0] += k;
+	else
+	  coefficients_of_exponentials[1] += 1;
+      }
+    }
+  }
+  else {
+      Expr summand = diff;
+      if (summand.is_a_mul()) {
+	// Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
+	// `a' and `b' possibly 1).
+	bool done = false;
+	for (unsigned j = 0; j < summand.nops(); ++j) {
+	  Expr factor = summand.op(j);
+	  unsigned k;
+	  if (factor == n)
+	    k = 1;
+	  else if (factor.is_a_power() && factor.arg(0) == n) {
+	    assert(factor.arg(1).is_a_number());
+	    k = factor.arg(1).ex_to_number().to_unsigned();
+	  }
+	  else
+	    continue;
+	  // FIXME: maybe can be implemented in a better way.
+	  coefficients_of_exponentials[k] += summand/factor;
+	  done = true;
+	  break;
+	}
+	if (!done)
+	  coefficients_of_exponentials[0] += summand;
+      }      
+      else if (summand.is_a_power()) {
+	// Summand has the form `n^k' or `a^n'
+	if (summand.arg(0) == n) {
+	  unsigned k = summand.arg(1).ex_to_number().to_unsigned();
+	  coefficients_of_exponentials[k] += 1;
+	}
+	else
+	  coefficients_of_exponentials[0] += summand;
+      }
+      else {
+	// Summand is a constant or the symbol `n'.
+	assert(summand.is_a_number() || summand == n);
+	Number k;
+	if (summand.is_a_number(k))
+	  coefficients_of_exponentials[0] += k;
+	else
+	  coefficients_of_exponentials[1] += 1;
+      }
+  }
+
+  D_VEC(coefficients_of_exponentials, 0, max_polynomial_degree);
+
+  Number num_tests = num_of_exponentials + order_rec;
+  for (unsigned i = 0; i < max_polynomial_degree; ++i) {
+    if (!coefficients_of_exponentials[i].is_zero()) {
+      // Not syntactically 0: try to prove that is it semantically 0.
+      Expr c = coefficients_of_exponentials[i];
+      for (Number r = 0; r < num_tests; ++r) {
+	Expr c_r = simplify_all(c.substitute(n, r));
+	if (!c_r.is_zero()) {
+	  DD_MSGVAR("Argh!!! ", i);
+	  DD_MSGVAR("Argh!!! ", r);
+	  DD_MSGVAR("Argh!!! ", c_r);
+	  goto traditional;
+	}
+      }
+    }
+  }
+  return PROVABLY_CORRECT;
+  }
+
+  
+  traditional:
+#endif
+    // Step 3: compute `substituted_rhs' by substituting, in the rhs
+    // of the recurrence, `n' by `n - d' (where the `d's are the decrements
+    //  of the terms `x(n - d)').
+    Expr substituted_rhs = rec.recurrence_rhs;
+    for (unsigned i = order_rec; i-- > 0; ) {
+      Expr shifted_solution = simplify_all(partial_solution.substitute
+					   (n, n - (i + 1)));
+      shifted_solution = simplify_sum(shifted_solution, true);
+      substituted_rhs = substituted_rhs
+	.substitute(x(n - (i + 1)), shifted_solution);
+    }
     Expr diff = rec.blackboard.rewrite(partial_solution - substituted_rhs);
     diff = simplify_all(diff);
-    D_VAR(diff);
     if (!diff.is_zero())
       if (rec.applied_order_reduction) {
 	rec.applied_order_reduction = false;
