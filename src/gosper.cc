@@ -177,9 +177,9 @@ static bool
 find_polynomial_solution(const Symbol& n, const Number& deg_x,
 			 const Expr& a_n, const Expr& b_n, const Expr& c_n,
 			 Expr& x_n) {
-  int deg_a = a_n.degree(n);
-  int deg_b = b_n.degree(n);
-  int deg_c = c_n.degree(n);
+  unsigned deg_a = a_n.degree(n);
+  unsigned deg_b = b_n.degree(n);
+  unsigned deg_c = c_n.degree(n);
   // `number_of_coeffs' is the number of coefficients of 
   // the polynomial `p', that is, 1 + deg_x.
   // FIXME: is it possible to convert a GiNaC integer to an int or an unsigned?
@@ -249,9 +249,9 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
 		  const Symbol& n, Expr& x_n) {
   // Gosper's algorithm, step 3.1.
   // Finds the degree of `x(n)'.
-  int deg_a = a_n.degree(n);
-  int deg_b = b_n.degree(n);
-  int deg_c = c_n.degree(n);
+  unsigned deg_a = a_n.degree(n);
+  unsigned deg_b = b_n.degree(n);
+  unsigned deg_c = c_n.degree(n);
   Expr lead_a = a_n.lcoeff(n);
   Expr lead_b = b_n.lcoeff(n);
   Number deg_x = -1;

@@ -208,7 +208,7 @@ isolate_polynomial_part(const Expr& e, const Symbol& x,
 Expr
 convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
   assert(p.is_rational_polynomial());
-  int deg_p = p.degree(x);
+  unsigned deg_p = p.degree(x);
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
@@ -230,7 +230,7 @@ Expr
 convert_to_integer_polynomial(const Expr& p, const Symbol& x,
                               Number& factor) {
   assert(p.is_rational_polynomial());
-  int deg_p = p.degree(x);
+  unsigned deg_p = p.degree(x);
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
@@ -265,8 +265,8 @@ resultant(const Expr& p, const Expr& q, const Symbol& x) {
   Expr f = p.expand();
   Expr g = q.expand();
   Expr res = 1;
-  int deg_f = f.degree(x);
-  int deg_g = g.degree(x);
+  unsigned deg_f = f.degree(x);
+  unsigned deg_g = g.degree(x);
 
   // Special case: `f' or `g' is a constant polynomial. By definition
   // `Res(f, g) = f.lcoeff(n)^g.degree(n) * g.lcoeff(n)^f.degree(n)'. 
@@ -284,7 +284,7 @@ resultant(const Expr& p, const Expr& q, const Symbol& x) {
       // The rest of euclidean's division is given by the ratio
       // `pseudo-remainder / factor'.
       r *= Parma_Recurrence_Relation_Solver::power(factor, -1);
-      int deg_r = r.degree(x);
+      unsigned deg_r = r.degree(x);
       Expr a = f.lcoeff(x);
       // Using rule two.
       res *= Parma_Recurrence_Relation_Solver::power(a, deg_g - deg_r);
