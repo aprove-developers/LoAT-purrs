@@ -544,11 +544,12 @@ PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::approximate_functional_equation() const {
   D_VAR(coefficient());
   D_VAR(divisor_arg());
-  // We want that `b' is a positive integer and we want also
-  // that `a' is a positive number.
+  assert(divisor_arg().is_rational() && divisor_arg().is_positive());
+  // We want that `a' is a positive number and `b' a rational number
+  // bigger than `1'.
   Number coeff;
-  if (!divisor_arg().is_positive_integer()
-      || !coefficient().is_a_number(coeff) || !coeff.is_positive())
+  if (!coefficient().is_a_number(coeff) || !coeff.is_positive()
+      || divisor_arg() < 1)
     return TOO_COMPLEX;
   if (has_parameters(inhomogeneous_term)) {
     D_MSG("Functional equation with parameters");
@@ -667,8 +668,8 @@ PURRS::Recurrence::approximate_functional_equation() const {
   }
   // The index of the initial condition is not a number.
   if (index == 0) {
-    ub += pwr(coefficient(), q_upper) * index_initial_condition;
-    lb += pwr(coefficient(), q_lower) * index_initial_condition;
+    ub += pwr(coefficient(), q_upper) * x(index_initial_condition);
+    lb += pwr(coefficient(), q_lower) * x(index_initial_condition);
   }
   // The index of the initial condition is a number.
   else {

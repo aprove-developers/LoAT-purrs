@@ -106,7 +106,8 @@ has_constant_decrement(const Expr& e) {
 
 /*!
   Returns <CODE>true</CODE> if \p e is of the form \f$ n / d \f$ with
-  \f$ d \f$ a positive integer: in this case assign \f$ d \f$ to \p divisor.
+  \f$ d \f$ a positive rational: in this case assign the inverse of
+  \f$ d \f$ to \p divisor.
   Returns <CODE>false</CODE> otherwise.
 */
 bool
@@ -117,15 +118,13 @@ get_constant_divisor(const Expr& e, Number& divisor) {
   const Expr& b = e.op(1);
   Number d;
   if (a == Recurrence::n && b.is_a_number(d) && d.is_rational()
-      && numerator(d) == 1) {
-    divisor = d.denominator();
-    assert(divisor.is_positive_integer());
+      && d.is_positive()) {
+    divisor = 1 / d;
     return true;
   }
   else if (b == Recurrence::n && a.is_a_number(d) && d.is_rational()
-	   && numerator(d) == 1) {
-    divisor = d.denominator();
-    assert(divisor.is_positive_integer());
+	   && d.is_positive()) {
+    divisor = 1 / d;
     return true;
   }
   else
@@ -635,7 +634,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 					  int& gcd_among_decrements,
 					  int num_term,
 					  Expr& coefficient,
-					  unsigned& divisor_arg) const {
+					  Number& divisor_arg) const {
   unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
   if (num_factors == 1)
     if (r.is_the_x_function()) {
@@ -671,7 +670,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	Number divisor;
 	if (get_constant_divisor(argument, divisor)) {
 	  coefficient = 1;
-	  divisor_arg = divisor.to_unsigned(); 
+	  divisor_arg = divisor; 
 	}
 	else
 	  return TOO_COMPLEX;
@@ -731,7 +730,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	else if (argument.is_a_mul() && argument.nops() == 2) {
 	  Number divisor;
 	  if (get_constant_divisor(argument, divisor)) {
-	    divisor_arg = divisor.to_unsigned();
+	    divisor_arg = divisor;
 	    found_function_x = true;
 	    if (is_order_zero() || is_unknown())
 	      set_functional_equation();
@@ -826,7 +825,7 @@ PURRS::Recurrence::classification_recurrence(const Expr& rhs,
   Expr coefficient;
   // We will store here the positive integer divisor of the argument of the
   // function `x' in the functional equation `x(n) = a x(n/b) + d n^e'.
-  unsigned divisor_arg;
+  Number divisor_arg;
 
   Expr inhomogeneous = 0;
 

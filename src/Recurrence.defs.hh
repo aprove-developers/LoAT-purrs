@@ -277,7 +277,7 @@ private:
 				       int& gcd_among_decrements,
 				       int num_term,
 				       Expr& coefficient,
-				       unsigned& divisor_arg) const;
+				       Number& divisor_arg) const;
   void
   add_term_with_initial_conditions(const Expr& g_n,
 				   const std::vector<Number>& coefficients) const;
