@@ -75,6 +75,12 @@ As an example, the left hand side of the identity
   2^n
 \f]
 is not in closed form, while the right hand side is.
+In general, these are expressions of the type
+\f[
+  \sum_{i=1}^r p_i(n) \alpha_i^n,
+\f]
+where \f$ p_i \in \Cset[n] \f$ and \f$ \alpha_i \in \Cset \setminus \{0\} \f$, for
+\f$ i=1 \f$, \f$ \dots \f$, \f$ r \f$.
 
 Generally speaking, we focus on effectively computable methods
 that can constitute the basis of practical, efficient algorithms.
@@ -137,17 +143,14 @@ statement
 \anchor order
 <B>Order of a recurrence</B>
 
-If there exists a <EM>fixed</EM> positive integer \f$ k \f$ and a function
+The order of a recurrence is the minimal possible value for the positive
+integer \f$ k \f$ (if it exists) such that there exists a function
 \f$ H_n \f$ of arity \f$ k+1 \f$ such that for \f$ n \ge k \f$
 \f[
   G_n(n, x_{n-1}, \dots, x_1, x_0)
   =
-  H_n(n, x_{n-1}, \dots, x_{n-k}),
+  H_n(n, x_{n-1}, \dots, x_{n-k}).
 \f]
-we say that the recurrence in normal form has <EM>order</EM> (at most)
-\f$ k \f$.
-We take the <EM>smallest</EM> possible value of \f$ k \f$ as the order
-of the recurrence.
 If no such \f$ k \f$ exists, then we do not assign an order to the
 recurrence.
 
@@ -163,16 +166,16 @@ A <EM>linear recurrence of order \f$ k \f$</EM> is a recurrence of the form
    x_n
    =
    \alpha_1(n) x_{n-1} + \alpha_2(n) x_{n-2} + \cdots
-	+ \alpha_k(n) x_{n-k} + p(n),
+	+ \alpha_k(n) x_{n-k} + g(n),
 \f]
 for \f$ n \geq k \f$.
 We implicitly assume that \f$ \alpha_k(n) \neq 0 \f$ "syntactically",
 for otherwise the order would be smaller.
 The <EM>coefficients</EM> \f$ \alpha_j(n) \f$, for \f$ j = 1, \dots, k \f$,
 are functions defined on \f$ \Nset \cap [k, +\infty) \f$.
-Also the function \f$ p \f$, called the <EM>non-homogeneous part</EM>
-of the recurrence, is defined on \f$ \Nset \cap [k, +\infty) \f$.
-If \f$ p \doteq 0 \f$ (that is, \f$ p \f$ vanishes identically from a
+The function \f$ g \f$, called the <EM>non-homogeneous part</EM>
+of the recurrence, is also defined on \f$ \Nset \cap [k, +\infty) \f$.
+If \f$ g \doteq 0 \f$ (that is, \f$ g \f$ vanishes identically from a
 syntactical point of view), we say that the recurrence is
 <EM>homogeneous</EM>.
 Every recurrence is given with a set of \f$ k \f$
@@ -205,9 +208,12 @@ We consider here a rather different set of recurrences from the previous
 ones, where we allow \f$ x_n \f$ to depend on <EM>all</EM> the previous
 values of \f$ x \f$, and not only the last \f$ k \f$ of them, \f$ k \f$
 being a fixed positive integer.
+We say that these recurrences are of <EM>infinite order</EM>.
+In the following we consider a subclass of infinite order recurrences
+where all the terms \f$ x_k \f$ have the same coefficient.
 
-We call <EM>``Weighted-Average''</EM> recurrence a recurrence in the
-form \anchor general_weighted_average
+We call <EM>``Weighted-Average''</EM> recurrence a infinite order recurrence
+in the form \anchor general_weighted_average
 \f[
   x_n = f(n) \sum_{k=0}^{n-1} x_k + g(n),
 \f]
@@ -221,8 +227,6 @@ Such recurrence is given together with the
 The user may define the initial condition; otherwise
 the initial condition will appear symbolically in the explicit form of
 the solution, and will be called <EM>symbolic initial condition</EM>.
-
-Sometimes we say that this type of recurrence is of <EM>infinite order</EM>.
 
 We show how to transform any recurrence of this form into a first order
 recurrence with variable coefficients.
@@ -274,7 +278,7 @@ A typical example of this is
   x_n = \alpha x_{n / \beta} + d n^e.
 \f]
 Here and in the sequel, we tacitly understand \f$ n / \beta \f$ as
-\f$ \bigl[ n / \beta \bigr] \f$, and write \f$ x(n / \beta) \f$ in place
+\f$ \bigl\lfloor n / \beta \bigr\rfloor \f$, and write \f$ x(n / \beta) \f$ in place
 of \f$ x_{n/\beta} \f$, as it would be customary when dealing with sequences,
 because the former is easier to read.
 The above quation requires \f$ \beta - 1 \f$ initial conditions
@@ -294,7 +298,7 @@ that we consider is
 \f[
   x(n) = \alpha x \Bigl( \frac n\beta \Bigr) + g(n),
 \f]
-where \f$ \alpha > 0 \f$, \f$ \beta \in \Nset \setminus \{0 \f$, \f$ 1 \} \f$,
+where \f$ \alpha > 0 \f$, \f$ \beta \in \Qset \cap (1, +\infty) \f$,
 and \f$ \fund{g}{\Nset \setminus \{ 0 \}}{\Rset} \f$ is a non-negative,
 non-decreasing function.
 
