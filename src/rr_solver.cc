@@ -31,6 +31,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "gosper.hh"
 #include "alg_eq_solver.hh"
 #include "simplify.hh"
+#include "numerator_denominator.hh"
 #include "sum_poly.hh"
 #include "util.hh"
 #include "Expr.defs.hh"
@@ -2033,9 +2034,11 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
   bool shift_initial_conditions = domain_recurrence(n, tmp, i_c);
   Expr alpha_factorial;
   if (shift_initial_conditions)
-    alpha_factorial = compute_product(coefficient.normalize(), n, i_c + 2, n);
+    alpha_factorial = compute_product(transform_in_single_fraction(coefficient),
+				      n, i_c + 2, n);
   else
-    alpha_factorial = compute_product(coefficient.normalize(), n, 1, n);
+    alpha_factorial = compute_product(transform_in_single_fraction(coefficient),
+ 				      n, 1, n);
   D_VAR(alpha_factorial);
   // Compute the non-homogeneous term for the recurrence
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
