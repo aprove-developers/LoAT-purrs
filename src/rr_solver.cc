@@ -436,6 +436,9 @@ order_1_sol_poly_times_exponentials(const GSymbol& n,
     solution_tot += solution;
   }
   solution_tot *= alpha_n;
+#if NOISY
+  std::cout << "Solution before to simplify: " << solution_tot << std::endl;
+#endif
   solution_tot = solution_tot.expand();
   solution_tot = simplify_on_output_ex(solution_tot);
   solution_tot = simplify_roots(solution_tot);
@@ -493,6 +496,7 @@ order_2_sol_roots_distinct(const GSymbol& n, const GMatrix& decomposition,
 #endif
   GExpr diff_roots = root_1 - root_2;
   GExpr g_n = (pow(root_1, n+1) - pow(root_2, n+1)) / diff_roots;
+  // FIXME: forse conviene semplificare g_n
 #if NOISY
   std::cout << "g_n " << g_n << std::endl;
 #endif
@@ -533,6 +537,9 @@ order_2_sol_roots_distinct(const GSymbol& n, const GMatrix& decomposition,
     solution_2 *= pow(root_2, n+1) / diff_roots;
     solution_tot += solution_1 - solution_2;
   }
+#if NOISY
+  std::cout << "Solution before simplify: " << solution_tot << std::endl;
+#endif
   solution_tot = solution_tot.expand();
   solution_tot = simplify_on_output_ex(solution_tot);
   solution_tot = simplify_roots(solution_tot);
@@ -640,6 +647,9 @@ order_2_sol_roots_no_distinct(const GSymbol& n, const GMatrix& decomposition,
       solution = solution.expand();
       solution_tot += solution;
     }
+#if NOISY
+    std::cout << "Solution before to simplify: " << solution_tot << std::endl;
+#endif
     solution_tot = solution_tot.expand();
     solution_tot = simplify_on_output_ex(solution_tot);
     solution_tot = simplify_roots(solution_tot);

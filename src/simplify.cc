@@ -689,52 +689,63 @@ reduce_product(const GExpr& a) {
   return tmp;
 }
 
-//    // DIFFERENT VERSION OF reduce_product()
-//    //
-//    GExpr tmp = a;
+  // DIFFERENT VERSION OF reduce_product()
+  //
+ //   GExpr tmp = a;
 //    GExpr factor_to_reduce = 1;
 //    GExpr factor_no_to_reduce = 1;
 //    GNumber base_1 = 1;
 //    GNumber exp_1 = 1;
 //    for (unsigned i = tmp.nops(); i-- > 0; )
-//      if (is_a<power>(tmp.op(i)))
+//      if (is_a<power>(tmp.op(i))) {
+//        //   FIXME: non trovo l'errore!! Questo pezzo servirebbe per gestire
+//        // es. 1/2*(-1/2*sqrt(8))^n
+//        //        if (is_a<mul>(tmp.op(i).op(0)) || is_a<add>(tmp.op(i).op(0)))
+//        //  	tmp.op(i) = tmp.op(i).subs(tmp.op(i).op(0)
+//        //  				   == simplify_roots(tmp.op(i).op(0));
 //        // Base and exponent of 'tmp.op(i)' are both numeric.
 //        if (GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(0)) &&
 //  	  GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(1))) {
 //  	GNumber base_2 = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(0));
 //  	GNumber exp_2 = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(1));
-//  	factor_to_reduce = red_prod(base_1, exp_1, base_2, exp_2);
+//  	GExpr to_reduce = red_prod(base_1, exp_1, base_2, exp_2);
 //  	// red_prod restituisce 
 //  	// numerico            oppure
 //  	// numerico^numerico   oppure
 //  	// numerico * numerico^numerico
 //  	// es. 3^(1/4)*6^(3/4) restituisce 3*8^(1/4)
 //  	// FIXME: giusto?
-//  	if (is_a<mul>(factor_to_reduce)) {
-//  	  assert(factor_to_reduce.nops() == 2);
+//  	if (is_a<mul>(to_reduce)) {
+//  	  assert(to_reduce.nops() == 2);
 //  	  for (unsigned j = 2; j-- > 0; )
-//  	    if (is_a<power>(factor_to_reduce.op(j))) {
-//  	      assert(is_a<numeric>(factor_to_reduce.op(j).op(0)));
-//  	      assert(is_a<numeric>(factor_to_reduce.op(j).op(1)));
-//  	      base_1 = GiNaC::ex_to<GiNaC::numeric>(factor_to_reduce.op(j).op(0));
-//  	      exp_1 = GiNaC::ex_to<GiNaC::numeric>(factor_to_reduce.op(j).op(1));
+//  	    if (is_a<power>(to_reduce.op(j))) {
+//  	      assert(is_a<numeric>(to_reduce.op(j).op(0)));
+//  	      assert(is_a<numeric>(to_reduce.op(j).op(1)));
+//  	      base_1 = GiNaC::ex_to<GiNaC::numeric>(to_reduce.op(j).op(0));
+//  	      exp_1 = GiNaC::ex_to<GiNaC::numeric>(to_reduce.op(j).op(1));
+//  	      factor_to_reduce = pow(to_reduce.op(j).op(0),
+//  				     to_reduce.op(j).op(1));
 //  	    }
 //  	}
-//  	else if (is_a<power>(factor_to_reduce)) {
-//  	  assert(is_a<numeric>(factor_to_reduce.op(0)));
-//  	  assert(is_a<numeric>(factor_to_reduce.op(1)));
-//  	  base_1 = GiNaC::ex_to<GiNaC::numeric>(factor_to_reduce.op(0));
-//  	  exp_1 = GiNaC::ex_to<GiNaC::numeric>(factor_to_reduce.op(1));
+//  	else if (is_a<power>(to_reduce)) {
+//  	  assert(is_a<numeric>(to_reduce.op(0)));
+//  	  assert(is_a<numeric>(to_reduce.op(1)));
+//  	  base_1 = GiNaC::ex_to<GiNaC::numeric>(to_reduce.op(0));
+//  	  exp_1 = GiNaC::ex_to<GiNaC::numeric>(to_reduce.op(1));
+//  	  factor_to_reduce = pow(to_reduce.op(0),
+//  				 to_reduce.op(1));
 //  	}
 //  	else {
-//  	  assert(is_a<numeric>(factor_to_reduce));
-//  	  base_1 = GiNaC::ex_to<GiNaC::numeric>(factor_to_reduce);
+//  	  assert(is_a<numeric>(to_reduce));
+//  	  base_1 = GiNaC::ex_to<GiNaC::numeric>(to_reduce);
 //  	  exp_1 = 1;
+//  	  factor_to_reduce = pow(to_reduce, 1);
 //  	}
 //        }
 //    // Base and exponent of 'tmp.op(i)' are not both numeric.
 //        else
 //  	factor_no_to_reduce *= tmp.op(i);
+//      }
 //    // 'tmp.op(i)' is not a 'GiNaC::power'.
 //      else
 //        factor_no_to_reduce *= tmp.op(i);
