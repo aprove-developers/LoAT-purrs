@@ -23,7 +23,7 @@ CPPFLAGS = @extra_cpp_flags@
 
 TESTS =
 
-noinst_HEADERS = ehandlers.hh
+noinst_HEADERS = ehandlers.hh readlinebuf.hh
 
 EXTRA_DIST = ehandlers.cc
 
