@@ -73,6 +73,7 @@ n	n^2*x(n-1)-6*x(n/2)
 n	n^2*x(n-1)-x(n/2)
 n	sqrt(n)*x(sqrt(n))+n
 n	sqrt(n)*x(sqrt(n))+n/2+x(3*n/4)
+n	sum(a,0,n-1,x(a))+1
 n	x(abs(log(n)))+1
 n	x(n)
 n	x(n)*x(n)
@@ -372,7 +373,6 @@ yv	n^2*x(n-1)
 yv	n^3-(n+x(n-1))
 yv	n^3-5*n^2+8*n-4
 yv	n^3-n-x(n-1)
-yv	sum(a,0,n-1,x(a))+1
 yv	x(0)
 yv	x(0)*n^2
 yv	x(0)+3*n
