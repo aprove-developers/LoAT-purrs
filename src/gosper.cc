@@ -50,7 +50,7 @@ FACTOR_THRESHOLD = 100;
   If this is the case, return also numerator and denominator.
 */
 // static bool
-// is_hypergeometric_term(const Expr& p, const GSymbol& n,
+// is_hypergeometric_term(const Expr& p, const Symbol& n("n"),
 // 		       Expr& num_den) {
 
 //   Expr q = (p.subs(n == n+1)) / p;
@@ -82,7 +82,7 @@ static void
 compute_resultant_and_its_roots(const Expr& f, const Expr& g, 
 				const Symbol& n,
 				std::vector<Number>& integer_roots) {
-  Symbol h;
+  Symbol h("h");
   Expr temp_g = g.subs(n, n + h);
   Expr R = resultant(f, temp_g, n);
   R = R.primpart(h);
@@ -124,8 +124,9 @@ static void
 gosper_step_two(const Expr& r_n, const Symbol& n,
 		Expr& a_n, Expr& b_n, Expr& c_n) {
   // Gosper's algorithm, step 2.1.
-  Expr f = r_n.op(0).expand(); // the numerator
-  Expr g = r_n.op(1).expand(); // the denominator
+  Expr f;
+  Expr g;
+  r_n.numerator_denominator(f, g);
 
   std::vector<Number> integer_roots;
   compute_resultant_and_its_roots(f, g, n, integer_roots);
