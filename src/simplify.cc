@@ -276,12 +276,12 @@ simplify_powers(const Expr& e, bool input) {
 
 /*!
   Applies the rule \f$ \textbf{C3} \f$ of the set of rules
-  <EM>Collect</EM> to the <CODE>Expr</CODE> \p e  under the condition
+  <EM>Collect</EM> to the expression \p e under the condition
   that the common exponent of the powers is not an integer
   because, in this case, the power is automatically decomposed,
   i. e., \f$ (a*b)^4 \f$ is automatically transformed in
   \f$ a^4*b^4 \f$.
-  Returns a new <CODE>Expr</CODE> \p e_rewritten containing the
+  Returns a new expression \p e_rewritten containing the
   modified expression \p e; the modified vectors \p bases and \p
   exponents will be used by the function
   <CODE>collect_same_exponent()</CODE> called immediately after this.
@@ -295,27 +295,25 @@ collect_same_exponents(const Expr& e, std::vector<Expr>& bases,
   // of `e' with the same exponents simplified in only one power with the
   // base equal to the previous bases multiplicated among themselves 
   // (rule `C3').
-  unsigned i = exponents.size();
-  while (i > 0) {
-    --i;
-    if (!exponents[i].is_zero()) {
-      for (unsigned j = i; j-- > 0; )	
-	// In the vector `bases' in position `i' we put the new base.
-	// In the vactor `exponents' in position `j' we put `0'.
-	if (exponents[j] == exponents[i]) {
-	  bases[i] *= bases[j];
-	  exponents[j] = 0;
-	}
-      e_rewritten *= pwr(bases[i], exponents[i]);
-    }
+  for (unsigned i = exponents.size(); i-- > 0; ) {
+    for (unsigned j = i; j-- > 0; )	
+      if (exponents[j] == exponents[i]) {
+	// We have found two equal exponents. We store in the i-th
+	// position of the vectors `bases' and `exponents' the new power
+	// with base equal to the product of the base in the i-th and in
+	// the j-th position and exponent unchanged.
+	// We mark with `0' the j-th position of the vector `exponents' in
+	// order to remember to us that it contains garbage and in the 
+	// function `collect_same_base()' we will skip these positions of
+	// the vectors.
+	bases[i] *= bases[j];
+	exponents[j] = 0;
+      }
+    e_rewritten *= pwr(bases[i], exponents[i]);
   }
-  // FIXME: si potrebbe migliorare togliendo da `exponents'
-  // gli elementi nulli e quelli nelle stesse posizioni da `bases'?
-  // Ne vale la pena?
-
-  // Now adds to `e_rewritten' the factor of `e' not considered in the
-  // previous simplifications, i.e., the factor which are not powers.
-  for (i = e.nops(); i-- > 0; ) {
+  // Now adds to `e_rewritten' the factors of `e' not considered in the
+  // previous cycle, i.e., the factors which are not powers.
+  for (unsigned i = e.nops(); i-- > 0; ) {
     const Expr& factor = e.op(i);
     if (!factor.is_a_power())
       e_rewritten *= factor;
@@ -324,14 +322,43 @@ collect_same_exponents(const Expr& e, std::vector<Expr>& bases,
 }
 
 /*!
+  Consider the expression \f$ e = e_1, \dotsc, e_k \f$ and two other expression
+  \f$ old \f$ and \f$ new \f$.
+  If \f$ \exists i \in i \in \{1, \dotsc , k\} \st e_i = old \f$
+  then this function returns
+  \f$ e_1, \dotsc, e_{i-1}, new, e_{i+1}, \dotsc, e_k \f$;
+  otherwise returns \f$ e \f$. 
+*/
+Expr
+substitute_factor(const Expr& e, const Expr& old_factor, const Expr& new_factor) {
+  assert(!e.is_a_add());
+  Expr e_subs = 1;
+  if (e.is_a_mul())
+    for (unsigned i = e.nops(); i-- > 0; ) {
+      const Expr& e_i = e.op(i);
+      if (e_i == old_factor)
+	e_subs *= new_factor;
+      else
+	e_subs *= e_i;
+    }
+  else
+    if (e == old_factor)
+      e_subs *= new_factor;
+    else
+      e_subs *= e;
+  return e_subs;
+}
+
+/*!
   Applies the rules \f$ \textbf{C1} \f$ and \f$ \textbf{C2} \f$ of the set
   of rules <EM>Collect</EM> to the <CODE>Expr</CODE> \p e that is
   certainly a <CODE>mul</CODE>.
   The vectors \p bases and \p exponents contain respectively all bases and
-  exponents of the powers that are in \p e and, at the end, will contain
-  the new bases and exponents of the powers in \p e after the simplification.
+  exponents of the powers that are in \p e and, at the end of this function,
+  will contain the new bases and exponents of the powers in \p e after the
+  application of the rules.
   This function is called after <CODE>collect_same_exponents()</CODE>.
-  It returns a new <CODE>Expr</CODE> \p e_rewritten containing the modified
+  It returns a new expression \p e_rewritten containing the modified
   expression \p e.
 */
 Expr
@@ -343,27 +370,28 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
   // with exponent equal to the sum of the previous powers' exponents
   // (rule `C2').
   Expr e_rewritten = 1;
-  unsigned i = bases.size();
-  while (i > 0) {
-    --i;
+  for (unsigned i = exponents.size(); i-- > 0; ) {
+    // We must skip the positions of the vectors where in `exponents'
+    // there is `0'.
     if (!exponents[i].is_zero()) {
       for (unsigned j = i; j-- > 0; )
-	// In the vector `exponents' in position `i' we put the new
-	// exponent while in opsition `j' we put `0'.	
 	if (bases[j] == bases[i]) {
+	  // We have found two equal bases. We store in the i-th
+	  // position of the vectors `bases' and `exponents' the new power
+	  // with exponent equal to the sum of the exponent in the i-th and in
+	  // the j-th position and base unchanged.
+	  // We mark with `0' the j-th position of the vector `exponents' in
+	  // order to remember to us that it contains garbage.
 	  exponents[i] += exponents[j];
 	  exponents[j] = 0;
 	}
       e_rewritten *= pwr(bases[i], exponents[i]);
     }
   }
-  // FIXME: si potrebbe migliorare togliendo da `exponents'
-  // gli elementi nulli e quelli nelle stesse posizioni da `bases'?
-  // Ne vale la pena?
-
-  // Now adds to `e_rewritten' the factor of `e' not considered in the
-  // previous simplification, i.e., the factor which are not powers .
-  for (i = e.nops(); i-- > 0; ) {
+  // Now adds to `e_rewritten' the factors of `e' not considered in the
+  // previous cycle, i.e., the factors which are not powers applying,
+  // when possible, the rule `C1'.
+  for (unsigned i = e.nops(); i-- > 0; ) {
     const Expr& factor_e = e.op(i);
     if (!factor_e.is_a_power()) {
       // We must consider those factors that are not powers but are equal
@@ -373,25 +401,28 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
       bool to_sum = false;
       Expr old_factor;
       Expr new_factor;
-      for (unsigned j = bases.size(); j-- > 0; )
-	if (bases[j] == factor_e && !exponents[j].is_zero()) {
+      for (unsigned j = bases.size(); j-- > 0; ) {
+	const Expr& bases_j = bases[j];
+	const Expr& exponents_j = exponents[j];
+	if (bases_j == factor_e && !exponents_j.is_zero()) {
 	  to_sum = true;
-	  // If the base is `integer' then automatically, for instance,
-	  // `2^(3/2)' is transformed in `2*sqrt(2)':
-	  // in this case we do not add 1 to the exponent.
-  	  old_factor = pwr(bases[j], exponents[j]);
+  	  old_factor = pwr(bases_j, exponents_j);
 	  Number base;
-	  if (bases[j].is_a_number(base)
+	  // If the base is an integer number then automatically the expression
+	  // is transformed, for instance, `2^(3/2)' is transformed in `2*sqrt(2)':
+	  // in this case we do not add 1 to the exponent.
+	  if (bases_j.is_a_number(base)
 	      && (!base.is_integer() || base == -1))
-	    new_factor = pwr(bases[j], exponents[j]+1);
-	  else if (!bases[j].is_a_number() || !exponents[j].is_a_number())
-	    new_factor = pwr(bases[j], exponents[j]+1);
+	    new_factor = pwr(bases_j, exponents_j+1);
+	  else if (!bases_j.is_a_number() || !exponents_j.is_a_number())
+	    new_factor = pwr(bases_j, exponents_j+1);
 	  else
-	    new_factor = pwr(bases[j], exponents[j]) * factor_e;
+	    new_factor = pwr(bases_j, exponents_j) * factor_e;
 	}
+      }
       // Applies rule `C1'.
       if (to_sum)
-	e_rewritten = e_rewritten.subs(old_factor, new_factor);
+	e_rewritten = substitute_factor(e_rewritten, old_factor, new_factor);
       else
 	e_rewritten *= factor_e;
     }
@@ -400,9 +431,9 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
 }
 
 /*!
-  Applies the rules of the set <EM>Collect</EM> to <CODE>Expr</CODE>
-  \p e, that is certainly a <CODE>mul</CODE>.
-  Returns a new <CODE>Expr</CODE> containing the modified expression \p e. 
+  Applies the rules of the set <EM>Collect</EM> to an expression
+  \p e that is certainly a <CODE>mul</CODE>.
+  Returns a new expression containing the modified expression \p e. 
 */
 Expr
 collect_base_exponent(const Expr& e) {
