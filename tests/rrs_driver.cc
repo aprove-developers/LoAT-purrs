@@ -56,6 +56,7 @@ static struct option long_options[] = {
   {"help",              no_argument,       0, 'h'},
   {"interactive",       no_argument,       0, 'i'},
   {"latex",             no_argument,       0, 'l'},
+  {"mathml",            no_argument,       0, 'm'},
   {"regress-test",      no_argument,       0, 'r'},
   {"verbose",           no_argument,       0, 'v'},
   {"version",           no_argument,       0, 'V'},
@@ -84,13 +85,14 @@ print_usage() {
     "  -h, --help               print this help text\n"
     "  -i, --interactive        set interactive mode on\n"
     "  -l, --latex              output LaTeX code\n"
+    "  -m, --mathml             output MathML code\n"
     "  -r, --regress-test       set regression-testing mode on\n"
     "  -v, --verbose            be verbose\n"
     "  -V, --version            show version number and exit"
        << endl;
 }
 
-#define OPTION_LETTERS "CEI:LPR:T:UhilrvV"
+#define OPTION_LETTERS "CEI:LPR:T:UhilmrvV"
 
 // To avoid mixing incompatible options.
 static bool production_mode = false;
@@ -122,6 +124,9 @@ static bool interactive = false;
 
 // LaTeX mode is on when true.
 static bool latex = false;
+
+// MathML mode is on when true.
+static bool mathml = false;
 
 // Regression-testing mode is on when true.
 static bool regress_test = false;
@@ -172,7 +177,7 @@ do_not_mix_modes() {
   if (production_mode && test_mode) {
     cerr << program_name
          << ": production mode options (-R, -I, -E, -L, -U, -C, -P, -T) and\n"
-         << "test mode options (-i, -l, -r, -v) are mutually exclusive"
+         << "test mode options (-i, -l, -m, -r, -v) are mutually exclusive"
          << endl;
     my_exit(1);
   }
@@ -355,8 +360,8 @@ process_options(int argc, char* argv[]) {
       do_not_mix_modes();
       break;
 
-    case 'l':
-      latex = true;
+    case 'm':
+      mathml = true;
       test_mode = true;
       do_not_mix_modes();
       break;
@@ -1165,11 +1170,16 @@ main(int argc, char *argv[]) try {
           }
           if (interactive) {
             cout << "*** EXACT SOLUTION ***"
-                 << endl
-                 << exact_solution
-                 << endl
-                 << "****************"
-                 << endl << endl;
+                 << endl;
+	    // FIXME: support LaTeX output here 
+	    // FIXME: this is for interactive non-verbose output
+	      if (mathml)
+		exact_solution.mathml_output(cout);
+	      else
+		cout << exact_solution;
+	      cout << endl
+		   << "**********************"
+		   << endl << endl;
 #if 0
             cout << "*** APPROXIMATED SOLUTION ***"
                  << endl
@@ -1336,11 +1346,15 @@ main(int argc, char *argv[]) try {
         rec.exact_solution(exact_solution);
         if (interactive) {
           cout << "*** EXACT SOLUTION ***"
-               << endl
-               << exact_solution
-               << endl
-               << "****************"
-               << endl << endl;
+               << endl;
+	    // FIXME: support LaTeX output here 
+	      if (mathml)
+		exact_solution.mathml_output(cout);
+	      else
+		cout << exact_solution;
+	      cout << endl
+		   << "**********************"
+		   << endl << endl;
 #if 0
           cout << "*** APPROXIMATED SOLUTION ***"
                << endl
