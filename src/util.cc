@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 #endif
 
 #include "util.hh"
+#include "factorize.hh"
 #include "alg_eq_solver.hh"
 #include "numerator_denominator.hh"
 #include "Expr.defs.hh"
@@ -260,7 +261,7 @@ PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
 */
 PURRS::Expr
 PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x,
-                              Number& factor) {
+				     Number& factor) {
   assert(p.is_rational_polynomial());
   unsigned deg_p = p.degree(x);
 
@@ -276,6 +277,14 @@ PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x,
   factor  = p.lcoeff(x).ex_to_number();
   factor *= pwr(q.lcoeff(x), -1).ex_to_number();
   return q;
+}
+
+Expr
+sylvester_matrix_resultant(const Expr& /*p*/, const Expr& /*q*/) {
+  throw
+    "PURRS error: function `compute_resultant_with_determinant()':\n"
+    "work in progress.\n"
+    "Please come back tomorrow.";
 }
 
 //! \brief
@@ -311,20 +320,40 @@ PURRS::resultant(const Expr& p, const Expr& q, const Symbol& x) {
       // `factor * g = factor * f * q + prem(g, f, x)' where `q' is the
       // quozient of `g' and `f' and
       // `factor = f.lcoeff(x)^(g.degree(x) - f.degree(x) + 1)'.
+      // `prem()' wants only rational polynomials. The expressions
+      // `f' and `g' are surely polynomials but in this point they could be
+      // not enough simplified so that the system could not recognize them.
+      if (!f.is_rational_polynomial()) {
+	Expr common_factor;
+	Expr rem;
+	factorize(f, common_factor, rem);
+	f = (common_factor * rem).expand();
+      }
+      if (!g.is_rational_polynomial()) {
+	Expr common_factor;
+	Expr rem;
+	factorize(g, common_factor, rem);
+	g = (common_factor * rem).expand();
+      }
+      if (!f.is_rational_polynomial() || !g.is_rational_polynomial())
+	// The last chanche to compute the resultant is to use the
+	// method of the Sylvester matrix
+	// (see http://mathworld.wolfram.com/SylvesterMatrix.html).
+	return sylvester_matrix_resultant(f.expand(), g.expand());
       Expr r = prem(g, f, x);
       Expr factor = pwr(f.lcoeff(x), deg_g - deg_f + 1);
       // The rest of euclidean's division is given by the ratio
       // `pseudo-remainder / factor'.
       r *= pwr(factor, -1);
-      unsigned deg_r = r.degree(x);
+      unsigned deg_r = r.expand().degree(x);
       // Using rule two.
       res *= pwr(f.lcoeff(x), deg_g - deg_r);
       // Using rule one.
       if ((deg_f * deg_r) & 1 != 0)
 	// `deg_f * deg_r' is odd.
 	res = -res;
-      g = f;
-      f = r;
+      g = f.expand();
+      f = r.expand();
       deg_f = f.degree(x);
       deg_g = g.degree(x);
     }
