@@ -26,6 +26,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+#define NOISY 0
+
 /*!
   Computes the gcd between the integers \p n and \p m.
 */
