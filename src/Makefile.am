@@ -30,7 +30,6 @@ Expr_List.types.hh \
 Number.types.hh \
 Matrix.types.hh \
 Recurrence.types.hh \
-Sum.types.hh \
 Constant.defs.hh \
 Constant.inlines.hh \
 Number.defs.hh \
@@ -45,8 +44,6 @@ Matrix.defs.hh \
 Matrix.inlines.hh \
 Recurrence.defs.hh \
 Recurrence.inlines.hh \
-Sum.defs.hh \
-Sum.inlines.hh \
 approx_expr.hh \
 alg_eq_solver.hh \
 poly_factor.hh \
@@ -65,7 +62,6 @@ Expr_List.cc \
 Number.cc \
 Matrix.cc \
 Recurrence.cc \
-Sum.cc \
 alg_eq_solver.cc \
 approx_expr.cc \
 poly_factor.cc \
