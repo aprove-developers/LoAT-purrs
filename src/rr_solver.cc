@@ -155,15 +155,15 @@ characteristic_equation_and_its_roots(int order,
     roots.push_back(coefficients[1]);
   }
   else {
-  // Check if the vector `coefficients' contains only numeric
-  // elements and in this case use a vector of Number.
+    // Check if the vector `coefficients' contains only numeric
+    // elements and in this case use a vector of Number.
     for (unsigned i = coefficients.size(); i--> 0; )
       if (coefficients[i].is_a_number())
 	num_coefficients[i] = coefficients[i].ex_to_number();
       else
 	throw
-	  "PURRS error: today the recurrence relation\n"
-	  "does not support irrationals coefficients.\n"
+	  "PURRS error: today the recurrence relation of order\n"
+	  "greater than one, does not support parametric coefficients.\n"
 	  "Please come back tomorrow.";
     characteristic_eq = build_characteristic_equation(y, num_coefficients);
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
