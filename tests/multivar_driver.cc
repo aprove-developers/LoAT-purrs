@@ -1026,8 +1026,9 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
 	if (verbose)
 	  cout << "Auxiliary recurrence solution: " << solution << endl;
 	
-	// FIXME: The recurrence must not have been rewritten for this to succeed.
-	
+// We have two resolution methods: the latter seems to be better when initial
+// conditions are not parametric.
+#if 0
 	// The final solution will be given as a combination of two possibile solutions.
 	Expr solution_0 = solution;
 	Expr solution_1 = solution;
@@ -1051,8 +1052,6 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
 	solution_1 = solution_1.substitute(Recurrence::n, real_var_symbol_1);
        
 	Expr zero = 0;
-	// FIXME: Use min if it is allowed.
-	// FIXME: Handle the case m = n as well.
 	solution = max(real_var_symbol_0 - real_var_symbol_1, zero) / 
 	  (real_var_symbol_0 - real_var_symbol_1) * solution_0 +
 	  max(real_var_symbol_1 - real_var_symbol_0, zero) / 
@@ -1061,6 +1060,33 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
 	// If 'n` was substituted, perform the inverse substitution.
 	solution = solution.substitute(n_replacement, Recurrence::n);
 	lhs = lhs.substitute(n_replacement, Recurrence::n);
+#else
+	// Restore original arity and symbol names.
+	for (unsigned int i = 0; i < solution.nops(); ++i) {
+	  const Expr& this_term = solution.op(i);
+	  if (this_term.is_the_x1_function()) {
+	    const Expr& arg = this_term.arg(0);
+	    Symbol real_var_symbol_0_replacement;
+	    solution = solution.substitute(this_term, 
+					   lhs.substitute(real_var_symbol_0, real_var_symbol_0_replacement).
+					   substitute(real_var_symbol_1, max(arg, real_var_symbol_0 - real_var_symbol_1)).
+					   substitute(real_var_symbol_0_replacement, max(real_var_symbol_1 - real_var_symbol_0, arg)));
+	  }
+	}
+	
+	// FIXME: Devise a new method to deal with initial conditions in this case.
+	//	insert_initial_conditions(solution_0);
+	//	insert_initial_conditions(solution_1);
+
+	// Replace the substituted symbols back to their place.
+	// 'n` must be replaced by the minimum of the two involved arguments.
+	solution = solution.substitute(Recurrence::n, min(real_var_symbol_0, real_var_symbol_1));
+
+	// If 'n` was substituted, perform the inverse substitution.
+	solution = solution.substitute(n_replacement, Recurrence::n);
+	lhs = lhs.substitute(n_replacement, Recurrence::n);
+#endif
+
 
       }
     }
