@@ -370,6 +370,7 @@ y	n+2/n*sum(k,0,n-1,x(k))
 y	n+x(n-1)+x(n-2)+x(n-3)+x(n-4)+1
 y	sum(a,0,n-1,x(a))
 y	sum(a,0,n-1,x(a))+1
+y	sum(k,0,n-1,x(k)+1)
 y	x(n+1)+5*x(n-1)-3
 y	x(n-1)*x(n-2)*x(n-3)
 y	x(n-1)*x(n-2)*x(n-3)*x(n-4)
