@@ -169,12 +169,35 @@ invalid_recurrence(const char* culprit) {
   my_exit(1);
 }
 
+static bool
+invalid_initial_condition(const Expr& e) {
+  Number value;
+  if (e.is_a_number(value) && !value.is_rational())
+    return true;
+  else if (e.is_a_power())
+    return invalid_initial_condition(e.arg(0))
+      || invalid_initial_condition(e.arg(1));
+  else if (e.is_a_function()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (invalid_initial_condition(e.arg(i)))
+	return true;
+  }
+  else if (e.is_a_add() || e.is_a_mul())
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (invalid_initial_condition(e.op(i)))
+	return true;
+  return false;
+}
+
 static void
 invalid_initial_condition(const char* culprit) {
   cerr << program_name << ": invalid initial condition `" << culprit << "';\n"
        << "must be of the form `x(i)=k'"
        << "for `i' a positive integer\n"
-       << "and `k' not a floating point number." << endl;
+       << "and `k' a number not floating point "
+       << "or a symbolic expression\n"
+       << "containing the parameters a, b,..., z"
+       << " different from `n', `x' and `e'." << endl;
   my_exit(1);
 }
 
@@ -246,8 +269,7 @@ process_options(int argc, char* argv[]) {
 	Expr r;
 	if (!parse_expression(rhs, r))
 	  invalid_initial_condition(optarg);
-	Number value;
-	if (!r.is_a_number(value) || !value.is_rational())
+	if (invalid_initial_condition(r))
 	  invalid_initial_condition(optarg);
 	init_production_recurrence();
 	precp->replace_initial_condition(index.to_unsigned(), r);
