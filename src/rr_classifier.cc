@@ -525,7 +525,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
       if (argument == n)
 	return HAS_NULL_DECREMENT;
       else if (has_parameters(argument))
-	return MALFORMED_RECURRENCE;
+	return TOO_COMPLEX;
       // Check if this term has the form `x(n + d)'.
       else if (argument.is_a_add() && argument.nops() == 2) {
 	Number decrement;
@@ -568,7 +568,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	return TOO_COMPLEX;
       else
 	e += r;
-    }
+    } // end case of r `x' function.
     else if (r.is_the_sum_function() && r.arg(2) == n) {
       // Check if the summand has the `x' function with the argument
       // dependently from the index of the sum.
@@ -591,7 +591,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	if (argument == n)
 	  return HAS_NULL_DECREMENT;
 	else if (has_parameters(argument))
-	  return MALFORMED_RECURRENCE;
+	  return TOO_COMPLEX;
 	else if (argument.is_a_add() && argument.nops() == 2) {
 	  Number decrement;
 	  if (get_constant_decrement(argument, decrement)) {
