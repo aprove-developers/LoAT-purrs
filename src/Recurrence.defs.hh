@@ -265,9 +265,9 @@ public:
   Verify_Status verify_upper_bound() const;
 
   //! \brief
-  //! Returns <CODE>false</CODE> if there are not undefined initial conditions;
-  //! returns <CODE>true</CODE> otherwise and stores its in the set
-  //! \p undefined.
+  //! Returns <CODE>false</CODE> if there are no undefined initial conditions;
+  //! otherwise returns <CODE>true</CODE> and adds the corresponding
+  //! indexes to \p undefined.
   bool undefined_initial_conditions(std::set<unsigned int>& undefined) const;
 
   //! The index of the recurrence.
