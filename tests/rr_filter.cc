@@ -42,17 +42,18 @@ http://www.cs.unipr.it/purrs/ . */
 using namespace std;
 using namespace Parma_Recurrence_Relation_Solver;
 
-// FIXME: capire
 static struct option long_options[] = {
   {"help",                            no_argument,       0, 'h'},
   {"interactive",                     no_argument,       0, 'i'},
   {"regress-test",                    no_argument,       0, 'r'},
   {"verbose",                         no_argument,       0, 'v'},
-  {"linear_finite_order_const_coeff", no_argument,       0, 'A'},
-  {"linear_finite_order_var_coeff",   no_argument,       0, 'B'},
-  {"non_linear_finite_order",         no_argument,       0, 'C'},
-  {"weighted_average",                no_argument,       0, 'D'},
-  {"functional_equation",             no_argument,       0, 'E'},
+  {"order_zero",                      no_argument,       0, 'A'},
+  {"linear_finite_order_const_coeff", no_argument,       0, 'B'},
+  {"linear_finite_order_var_coeff",   no_argument,       0, 'C'},
+  {"non_linear_finite_order",         no_argument,       0, 'D'},
+  {"weighted_average",                no_argument,       0, 'E'},
+  {"functional_equation",             no_argument,       0, 'F'},
+  {"recurrence_to_verify",            no_argument,       0, 'V'},
   {0, 0, 0, 0}
 };
 
@@ -61,24 +62,43 @@ const char* program_name = 0;
 void
 print_usage() {
   cerr << "Usage: " << program_name << " [OPTION]...\n\n"
-    "  -h, --help               print this help text\n"
-    "  -i, --interactive        set interactive mode on\n"
-    "  -r, --regress-test       set regression-testing mode on\n"
-    "  -v, --verbose            be verbose\n"
-    "  -A, --select A           select only linear finite order recurrences\n"
-                                "\t\t\t\twith constant coefficients\n"
-    "  -B, --select B           select only linear finite order recurrences\n"
-                                "\t\t\t\twith variable coefficients\n"
-    "  -C, --select C           select only non linear finite order recurrences\n"
-    "  -D, --select D           select only weighted-average recurrences\n"
-    "  -E, --select E           select only functional equations\n"
+    "  -h, --help                            print this help text\n"
+    "  -i, --interactive                     set interactive mode on\n"
+    "  -r, --regress-test                    set regression-testing mode on\n"
+    "  -v, --verbose                         be verbose\n"
+    "  -A, --order_zero                      select only order zero "
+                                             "recurrences\n"
+    "  -B, --linear_finite_order_const_coeff select linear finite order "
+                                             "recurrences\n"
+                                             "\t\t\t\t\twith constant "
+                                             "coefficients\n"
+    "  -C, --linear_finite_order_var_coeff   select linear finite order "
+                                             "recurrences\n"
+                                             "\t\t\t\t\twith variable "
+                                             "coefficients\n"
+    "  -D, --non_linear_finite_order         select non linear finite order\n"
+                                             "\t\t\t\t\trecurrences\n"
+    "  -E, --weighted_average                select weighted-average "
+                                             "recurrences\n"
+    "  -F, --functional_equation             select functional equations\n"
+    "  -V, --recurrence_to_verify            select recurrences marked "
+                                             "with `v'\n" 
        << endl;
 }
 
-#define OPTION_LETTERS "hirvABCDE"
+#define OPTION_LETTERS "hirvABCDEFV"
 
 // Interactive mode is on when true.
 static bool interactive = false;
+
+// Regression-testing mode is on when true.
+static bool regress_test = false;
+
+// Verbose mode is on when true.
+static bool verbose = false;
+
+// Order zero filter mode is on when true.
+static bool order_zero = false;
 
 // Linear finite order constant coefficients filter mode is on when true.
 static bool linear_finite_order_const_coeff = false;
@@ -95,11 +115,8 @@ static bool weighted_average = false;
 // Functional equation filter mode is on when true.
 static bool functional_equation = false;
 
-// Regression-testing mode is on when true.
-static bool regress_test = false;
-
-// Verbose mode is on when true.
-static bool verbose = false;
+// Recurrences marked with `v' filter mode is on when true.
+static bool recurrence_to_verify = false;
 
 static void
 my_exit(int status) {
@@ -176,23 +193,31 @@ process_options(int argc, char* argv[]) {
       break;
 
     case 'A':
-      linear_finite_order_const_coeff = true;
+      order_zero = true;
       break;
 
     case 'B':
-      linear_finite_order_var_coeff = true;
+      linear_finite_order_const_coeff = true;
       break;
 
     case 'C':
-      non_linear_finite_order = true;
+      linear_finite_order_var_coeff = true;
       break;
 
     case 'D':
-      weighted_average = true;
+      non_linear_finite_order = true;
       break;
 
     case 'E':
+      weighted_average = true;
+      break;
+
+    case 'F':
       functional_equation = true;
+      break;
+
+    case 'V':
+      recurrence_to_verify = true;
       break;
 
     default:
@@ -279,8 +304,15 @@ main(int argc, char *argv[]) try {
     line >> expectations;
     if (regress_test) {
       // Skip empty lines.
-      if (!line)
-        continue;
+      if (!line) {
+	cout << the_line << endl;
+	continue;
+      }
+
+      // Skip recurrences not marked with `v'.
+      if (recurrence_to_verify)
+	if (expectations.find("v") == string::npos)
+	  continue;
 
       getline(line, rhs_string);
       // Premature end of file?
@@ -308,6 +340,10 @@ main(int argc, char *argv[]) try {
       if (regress_test) {
 	switch (rec.type_) {
 	case Recurrence::ORDER_ZERO:
+	  if (order_zero)
+ 	    if (verbose)
+ 	      cout << expectations << "\t" << rhs << endl;
+	  break;
 	case Recurrence::LINEAR_FINITE_ORDER_CONST_COEFF:
 	  if (linear_finite_order_const_coeff)
  	    if (verbose)
@@ -340,6 +376,10 @@ main(int argc, char *argv[]) try {
       else {
 	switch (rec.type_) {
 	case Recurrence::ORDER_ZERO:
+	  if (order_zero)
+ 	    if (verbose)
+	      cout << expectations << "\t" << rhs << endl;
+	  break;
 	case Recurrence::LINEAR_FINITE_ORDER_CONST_COEFF:
 	  if (linear_finite_order_const_coeff)
 	    if (verbose)
