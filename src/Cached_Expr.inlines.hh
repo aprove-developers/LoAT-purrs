@@ -53,6 +53,7 @@ Cached_Expr::operator=(const Cached_Expr& y) {
   expression_ = y.expression_;
   has_size_ = y.has_size_;
   size_ = y.size_;
+  return *this;
 }
 
 inline bool
