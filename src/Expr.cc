@@ -350,8 +350,8 @@ REGISTER_FUNCTION(prod,
     \begin{cases}
       mod(x, y) = Number::mod(x, y),
         \quad \text{if x and y are both numerics}; \\
-      mod(x - y, y) = mod(x, y),
-          \quad \text{if y is integer}.
+      mod(x - h y, y) = mod(x, y),
+          \quad \text{if y and h are integers}.
     \end{cases}
   \f]
 */
@@ -363,10 +363,16 @@ mod_eval(const ex& x, const ex& y) {
     if (is_a<numeric>(y)) {
       numeric k = ex_to<numeric>(y);
       if (k.is_integer() && is_a<add>(x) && x.nops() == 2) {
-	if (is_a<symbol>(x.op(0)) && (x.op(1) == k || x.op(1) == -k))
-	  return mod(x.op(0), y).hold();
-	if (is_a<symbol>(x.op(1)) && (x.op(0) == k || x.op(0) == -k))
-	  return mod(x.op(1), y).hold();
+	if (is_a<symbol>(x.op(0)) && is_a<numeric>(x.op(1))) {
+	  numeric h = ex_to<numeric>(x.op(1));
+	  if (mod(h, k) == 0)
+	    return mod(x.op(0), y).hold();
+	}
+	if (is_a<symbol>(x.op(1)) && is_a<numeric>(x.op(0))) {
+	  numeric h = ex_to<numeric>(x.op(0));
+	  if (mod(h, k) == 0)
+	    return mod(x.op(1), y).hold();
+	}
       }
     }
   return mod(x, y).hold();
