@@ -36,9 +36,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr.defs.hh"
 #include "Recurrence.defs.hh"
 
-// TEMPORARY
-#include <iostream>
-
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 namespace {
@@ -89,9 +86,14 @@ try_special_cases(const Symbol& index, const Number& lower, const Expr& e_to_mul
       / factorial(Recurrence::n);
   else return false;
 
-  // Remove extra terms if the lower index is not 1.
-  if (lower > 1)
+  // Remove extra terms if the lower index is not 1. If the sign
+  // was adjusted, behave accordingly.
+  if (lower > 1) {
     e_prod = remove_extra_terms(index, lower, e, e_prod);
+    if ( negate && (lower.to_unsigned_int() % 2 == 0) )
+      e_prod *= -1;
+  }
+
   // Multiply by -1^n if we changed sign.
   if (negate)
     e_prod *= pwr(-1, Recurrence::n);
@@ -288,6 +290,8 @@ comp_prod(const Symbol& index, const Number& lower, const Expr& e,
     then \f$ \prod_{k=l}^n e(k) = \frac{(2*n + 1)!}{2^n * n!} \f$;
   - if \f$ e = 2*k-1 \f$ and \f$ l = 1 \f$,
     then \f$ \prod_{k=l}^n e(k) = \frac{(2*n)!}{2^n * n!} \f$;
+  - if \f$ e = (3*k-1)*(3*k-2) \f$ and \f$ l = 1 \f$,
+    then \f$ \prod_{k=l}^n e(k) = \frac{(3*n)!}{3^n * n!} \f$;
   - if \f$ e \f$ is a power there are two cases.
     We consider \f$ a \f$ and \f$ b \f$ so that \f$ e = a^b \f$, 
     - if \f$ a \f$ contains \f$ k \f$ and \f$ b \f$ is a number,
