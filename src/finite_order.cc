@@ -24,10 +24,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
-#ifndef NOISY
-#define NOISY 0
-#endif
-
 #include "finite_order.hh"
 
 #include "util.hh"
@@ -744,6 +740,16 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
   // function `mod()'.
   Expr to_sub_in_solution = 0;
   const Expr& theta = 2*Constant::Pi/gcd_among_decrements;
+  // FIXME: the commented code is probably better for the simplifications,
+  // but it is not clear which is more efficient.
+#if 0
+  const Expr& omega = cos(theta) + Number::I*sin(theta);
+  for (unsigned int j = 1; j < gcd_among_decrements; ++j) {
+    const Expr& root_of_unity = pwr(omega, j);
+    to_sub_in_solution += root_of_unity * pwr(1 - root_of_unity, -1)
+      * pwr(root_of_unity, Recurrence::n);
+  }
+#else
   for (unsigned int j = 1; j <= gcd_among_decrements; ++j) {
     const Expr& root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
     // Skip the contribution of the root of unity equal to `1'.
@@ -751,6 +757,7 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
       to_sub_in_solution += root_of_unity * pwr(1 - root_of_unity, -1)
 	* pwr(root_of_unity, Recurrence::n);
   }
+#endif
   // Add the contribution of the root of unity equal to `1'.
   to_sub_in_solution += Number(1, 2) * (gcd_among_decrements - 1);
   D_VAR(to_sub_in_solution);
@@ -761,11 +768,21 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
     Expr initial_condition = 0;
     for (unsigned int i = 0; i < gcd_among_decrements; ++i) {
       Expr tmp = 0;
+      // FIXME: the commented code is probably better for the simplifications,
+      // but it is not clear which is more efficient.
+#if 0
+      for (unsigned int j = 1; j <= gcd_among_decrements; ++j) {	  
+	const Expr& root_of_unity = pwr(omega, j);
+	tmp += pwr(root_of_unity,
+		   Recurrence::n - (i + h * gcd_among_decrements));
+      }
+#else
       for (unsigned int j = 1; j <= gcd_among_decrements; ++j) {	  
 	const Expr& root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
 	tmp += pwr(root_of_unity,
 		   Recurrence::n - (i + h * gcd_among_decrements));
       }
+#endif
       D_VAR(i + h * gcd_among_decrements);
       D_VAR(tmp);
       initial_condition += tmp * x(i + h * gcd_among_decrements)
