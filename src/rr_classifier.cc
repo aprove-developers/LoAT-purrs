@@ -666,36 +666,52 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 //! \brief
 //! Returns <CODE>true</CODE> if \p rhs is the right-hand side of a
 //! weighted-average recurrence or it is possible to rewrite it in
-//! the form of a weighted-average recurrence
+//! the form of weighted-average recurrence
 //! \f[
 //!   x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n).
 //! \f]
 //! Returns <CODE>false</CODE> otherwise.
 /*!
-  \param rhs                  the expression that we want to rewrite,
-                              if possible, in the right-hand side of
-			      a weighted-average recurrence.
-  \param term_sum             the term of \p rhs containing the sum.  
-  \param weight               the weight of the weighted-average recurrence,
-                              \f$ f(n) \f$, the expression multiplied by
-			      the sum.
-   \param inhomogeneous       the inhomogeneous term of the
-                              weighted-average recurrence (\f$ g(n) \f$).
-  \param rhs_first_order      the right hand side of the first order
-                              recurrence associated to the weighted-average
-			      recurrence.
-  \param first_valid_index    the least non-negative integer \f$ j \f$
-                              such that the weighted-average recurrence
-			      is well-defined for \f$ n \geq j \f$.
+  \param rhs                     the expression that we want to rewrite,
+                                 if possible, in the right-hand side of
+				 a weighted-average recurrence.
+  \param term_sum                the term of \p rhs containing the sum.  
+  \param weight                  the weight \f$ f(n) \f$ of the
+                                 weighted-average recurrence obtained
+				 rewriting, if necessary, \p rhs.
+  \param original_weight         the weight of the right-hand side of the
+                                 recurrence, initially stored in \p rhs,
+				 before the rewriting so that the lower
+				 limit of the sum is \f$ 0 \f$, but after
+				 the rewriting so that the upper limit of
+				 the sum is \f$ n-1 \f$.
+  \param inhomogeneous           the inhomogeneous term \f$ g(n) \f$ of the
+                                 weighted-average recurrence obtained
+				 rewriting, if necessary, \p rhs.
+  \param original_inhomogeneous  the inhomogeneous term  of the
+                                 recurrence, initially stored in \p rhs,
+				 before the rewriting so that the lower
+				 limit of the sum is \f$ 0 \f$, but after
+				 the rewriting so that the upper limit of
+				 the sum is \f$ n-1 \f$.
+  \param rhs_first_order         the right hand side of the first order
+                                 recurrence associated to the weighted-average
+				 recurrence.
+  \param first_valid_index       the least non-negative integer \f$ j \f$
+                                 such that the weighted-average recurrence
+				 is well-defined for \f$ n \geq j \f$.
+  \param rewritten               <CODE>true</CODE> if \p rhs is not in the
+                                 form of weighted-average recurrence
+				 and this function rewrite it in a
+				 weighted-average recurrence.
 
-  \return                     <CODE>true</CODE> if the weighted-average
-                              recurrence is in <EM>normal form</EM> or
-			      is possible to rewrite it in normal form
-			      <EM>normal form</EM>; returns
-			      <CODE>false</CODE> otherwise.
+  \return                        <CODE>true</CODE> if \p rhs is a
+                                 weighted-average recurrence or
+				 is possible to rewrite it in a
+				 weighted-average recurrence;
+				 returns <CODE>false</CODE> otherwise.
 
   The system is able to compute weighted-average recurrence
-  in normal form
   \f[
     x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n).
   \f]
@@ -707,8 +723,8 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
   \f]
   For \f$ n = 1 \f$ it must consider \f$ x(1) = f(1) x(0) + g(1) \f$.
 
-  Moreover, this function transform, when possible, weighted-average
-  recurrence in normal form.
+  Moreover, this function rewrite a recurrence, when possible, in the form
+  of weighted-average.
   This transformation is performed in the following way:
   - If the upper limit of the sum is \f$ n \f$ and \f$ f(n) \neq 1 \f$
     then, independently from the lower limit of the sum
@@ -740,20 +756,34 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
     \f[
       x(n) = f(n+n_0) \sum_{k=0}^{n-1} x(k) + g(n+n_0).
     \f]
+  Note that there is an important difference between the two rewritings:
+  the rewriting that works on the upper limit of the sum transform the
+  recurrence in normal form so that the right-hand side does not
+  contain terms \f$ x(n) \f$; the rewriting which works on the lower limit
+  of the sum is applied so that in the following computations will be
+  possible to work at the same mode on each weighted-average recurrence.
+  In the last case, once we have found the solution of the rewritten
+  recurrence, we have to come back to the solution of the original
+  recurrence.
 
   In conclusion the algorithm for classifying and for finding the solution
   of the weighted-average recurrence previews the following steps:
-  - eventual rewriting in the normal form of the recurrence;
+  - possible rewriting in the form of weighted-average recurrence;
   - computation of the right hand side of the associated first order
     recurrence;
   - shift forward of the first order recurence: \f$ n = n + 1 \f$;
   - computation of the solution of the first order recurrence;
   - shift backward of the solution: \f$ n = n - 1 \f$;
   - substitution of the initail condition \f$ x(1) = f(1) x(0) + g(1) \f$.
+  - Another possible shift if the original recurrence has had
+    the lower limit of the sum different from \f$ 0 \f$ in order
+    to come back to the solution of the original recurrence.
 */
 bool
 rewrite_weighted_average_recurrence(const Expr& rhs, const Expr& term_sum,
-				    Expr& weight, Expr& inhomogeneous,
+				    Expr& weight, Expr& original_weight,
+				    Expr& inhomogeneous,
+				    Expr& original_inhomogeneous,
 				    Expr& rhs_first_order,
 				    index_type& first_valid_index,
 				    bool& rewritten) {
@@ -776,20 +806,22 @@ rewrite_weighted_average_recurrence(const Expr& rhs, const Expr& term_sum,
   // Find the weight `f(n)' and the inhomogeneous term of the
   // recurrence transformed so that to have the upper limit of the
   // sum equal to `n'.
-  if (upper == Recurrence::n)
+  if (upper == Recurrence::n) {
     if (weight != 1) {
-      rewritten = true;
       const Expr& tmp = 1 - weight;
       weight /= tmp;
       inhomogeneous /= tmp;
     }
     else {
-      rewritten = true;
       weight *= -1;
       lower += 1;
       inhomogeneous = -inhomogeneous.substitute(Recurrence::n,
 						Recurrence::n + 1) ;
     }
+    rewritten = true;
+  }
+  original_weight = weight;
+  original_inhomogeneous = inhomogeneous;
   
   // Find the weight `f(n)' and the inhomogeneous term of the
   // recurrence transformed so that to have the lower limit of the
@@ -978,15 +1010,20 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	// we must collect them in order to find the weight `f(n)' of
 	// the weighted-average recurrence
 	// `x(n) = f(n) sum(k, n_0, u(n), x(k)) + g(n)'.
-	Expr weight;
-	Expr rhs_rewritten = rhs.collect_term(addend, weight);
+	Expr orig_weight;
+	const Expr& rhs_rewritten = rhs.collect_term(addend, orig_weight);
 	Expr rhs_first_order;
-	bool rewritten;
+	bool rewritten = false;
 	index_type first_valid_index;
+	Expr weight = orig_weight;
+	Expr orig_inhomogeneous;
 	// If it is possible, rewrites the recurrence in
-	//! the form of a weighted-average recurrence.
-	if (rewrite_weighted_average_recurrence(rhs_rewritten, addend, weight,
-						inhomogeneous, rhs_first_order,
+	// the form of weighted-average recurrence.
+	if (rewrite_weighted_average_recurrence(rhs_rewritten, addend,
+						weight, orig_weight,
+						inhomogeneous,
+						orig_inhomogeneous,
+						rhs_first_order,
 						first_valid_index,
 						rewritten)) { 
 	  if (first_valid_index > 0)
@@ -997,10 +1034,10 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	  if (rewritten) {
 	    bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	    rec_rewritten = true;
-	    set_original_rhs(rhs);
-	    set_lower_limit(addend.arg(1).ex_to_number().to_unsigned_int());
-	    Symbol h;
-	    rhs = weight * PURRS::sum(h, 0, n-1, x(h)) + inhomogeneous;
+	    // To save these informations is important in order to verify
+	    // the solution (or a bound) of the original recurrence.
+	    set_original_rhs(orig_weight, orig_inhomogeneous,
+			     addend.arg(1).ex_to_number().to_unsigned_int(),n);
 	  }
 	  return CL_SUCCESS;
 	}
@@ -1083,20 +1120,24 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	  // in `rhs', we must collect them in order to find the weight
 	  // `f(n)' of the weighted-average recurrence
 	  // `x(n) = f(n) sum(k, n_0, u(n), x(k)) + g(n)'.
-	  Expr weight;
-	  Expr rhs_rewritten = rhs.collect_term(factor, weight);
+	  Expr orig_weight;
+	  const Expr& rhs_rewritten = rhs.collect_term(factor, orig_weight);
 	  // There are not other sums equal to `factor'.
-	  if (weight == 1)
+	  if (orig_weight == 1)
 	    for (unsigned int j = num_factors; j-- > 0; )
 	      if (addend.op(j) != factor)
-		weight *= addend.op(j);
+		orig_weight *= addend.op(j);
 	  Expr rhs_first_order;
-	  bool rewritten;
+	  bool rewritten = false;
 	  index_type first_valid_index;
+	  Expr weight = orig_weight;
+	  Expr orig_inhomogeneous;
 	  // If it is possible, rewrites the recurrence in
-	  //! the form of a weighted-average recurrence.
+	  // the form of weighted-average recurrence.
 	  if (rewrite_weighted_average_recurrence(rhs_rewritten, factor,
-						  weight, inhomogeneous,
+						  weight, orig_weight,
+						  inhomogeneous,
+						  orig_inhomogeneous,
 						  rhs_first_order,
 						  first_valid_index,
 						  rewritten)) { 
@@ -1108,10 +1149,10 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	    if (rewritten) {
 	      bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	      rec_rewritten = true;
-	      set_original_rhs(rhs);
-	      set_lower_limit(factor.arg(1).ex_to_number().to_unsigned_int());
-	      Symbol h;
-	      rhs = weight * PURRS::sum(h, 0, n-1, x(h)) + inhomogeneous;
+	      // To save these informations is important in order to verify
+	      // the solution (or a bound) of the original recurrence.
+	      set_original_rhs(orig_weight, orig_inhomogeneous,
+			       factor.arg(1).ex_to_number().to_unsigned_int(),n);
 	    }
 	    return CL_SUCCESS;
 	  }

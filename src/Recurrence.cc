@@ -141,9 +141,6 @@ validate_initial_conditions(index_type order,
   return PROVABLY_CORRECT;
 }
 
-//! \brief
-//! Verify the exact solution of recurrence \p *this, where the recurrence
-//! can be linear of finite order or non-linear of finite order.
 /*!
   Case 1: linear recurrences of finite order.
   Consider the right hand side \p rhs of the order \f$ k \f$ recurrence
@@ -563,34 +560,44 @@ PURRS::Recurrence::verify_finite_order() const {
   }
 }
 
-//! Verify the exact solution of the weighted-average recurrence \p *this.
 /*!
-  Consider the right hand side of a weighted-average recurrence in
-  \f$ f(n) \sum_{k=0}^{n-1} x(k) + g(n) \f$,
-  which is stored in the expression \p recurrence_rhs.
+  Consider the right hand side of a weighted-average recurrence
+  (or of a recurrence transformable in a weighted-average recurrence)
+  \f[
+    x(n) = f(n) \sum_{k=n_0}^{n-1} x(k) + g(n),
+  \f]
+  where \f$ n_0 \in \Nset \cup \{ 0 \}.
+  Let \p recurrence_rhs be the variable containing the right-hand side
+  of the recurrence.
   Assume that the system has produced the expression
   \p exact_solution_.expression(), which is a function of the
   variable \f$ n \f$.
 
   The verification's process is divided in 2 steps:
   -  Validation of the \ref initial_condition
-     "symbolic initial condition x(0)".
+     "symbolic initial condition x(n_0)".
      Evaluate the expression \p exact_solution_.expression() for
-     \f$ n = 0 \f$ and simplify as much as possible.
-     If the final result is <EM>synctactically</EM> equal to \f$ x(0) \f$
+     \f$ n = n_0 \f$ simplify as much as possible.
+     If the final result is <EM>synctactically</EM> equal to \f$ x(n_0) \f$
      the symbolic initial conditions is verified and we can proceed to
      step 2; otherwise return <CODE>INCONCLUSIVE_VERIFICATION</CODE>
      because the solution can be wrong or it is not enough simplified.
      FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
   -  Validation of the solution using substitution.
      Consider the difference
-     \f$ d = x(n) - (f(n) sum(k, 0, n-1, x(k)) + g(n)) \f$, with
-     \f$ x(n) \f$ and \f$ x(k) \f$ replaced with the solution.
+     \f[
+       d = x(n) - \left( f(n) \sum_{k=n_0}^{n-1} x(k) + g(n) \right)
+     \f],
+     with \f$ x(n) \f$ and \f$ x(k) \f$ replaced with the solution.
      Since the closed formula for \f$ x(n) \f$ is guaranteed to hold for
-     \f$ n >= 1 \f$ only, the lower limit of the sum must start from
-     \f$ 1 \f$ and the term for \f$ n = 0 \f$ must be considered before.
-     Hence, the difference that we consider is
-     \f$ d = x(n) - (f(n) x(0) + f(n) sum(k, 1, n - 1, x(k)) + g(n)) \f$:
+     \f$ n >= n_0 + 1 \f$ only, the lower limit of the sum must start from
+     \f$ n_0 + 1 \f$ and the term for \f$ n = n_0 \f$ must be considered
+     before. Hence, the difference that we consider is
+     \f[
+       d = x(n) - \left( f(n) x(n_0) + f(n) \sum_{k=1}^{n-1} x(k)
+                   + g(n) \right).
+     \f]
+     There are 2 possibilities:
      - if \f$ d = 0 \f$     -> returns <CODE>PROVABLY_CORRECT</CODE>:
                                the solution is certainly right.
      - if \f$ d \neq 0 \f$  -> returns <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
@@ -600,10 +607,22 @@ PURRS::Recurrence::verify_finite_order() const {
 */
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_weighted_average() const {
-  Expr weight_rec = weight();
+  unsigned int lower;
+  Expr weight_rec;
+  Expr inhomogeneous;
+  if (recurrence_rewritten) {
+    weight_rec = original_weight();
+    inhomogeneous = original_inhomogeneous();
+    lower = lower_limit();
+  }
+  else {
+    weight_rec = weight();
+    inhomogeneous = inhomogeneous_term;
+    lower = 0;
+  }
   
   // The case `f(n) = -1', i.e. the recurrence has the form
-  // `x(n) = - sum(k, 0, n-1, x(k)) + g(n)', is special:
+  // `x(n) = - sum(k, n_0, n-1, x(k)) + g(n)', is special:
   // the solution is simply `x(n) = g(n) - g(n-1)'.
   // FIXME: the traditional validation' process does not work,
   // is it true?
@@ -611,7 +630,7 @@ PURRS::Recurrence::verify_weighted_average() const {
     // FIXME: verify!!!
     return PROVABLY_CORRECT;
   
-  // Note: the solution is valid only for `n > 0'.
+  // Note: the solution is valid only for `n > lower_limit()'.
   Expr exact_solution;
   if (evaluated_exact_solution_.has_expression())
     exact_solution = evaluated_exact_solution_.expression();
@@ -619,25 +638,24 @@ PURRS::Recurrence::verify_weighted_average() const {
     exact_solution = exact_solution_.expression();
 
   // Step 1: validation of the initial condition.
-  Expr e = exact_solution.substitute(n, 1);
+  Expr e = exact_solution.substitute(n, lower+1);
   e = simplify_all(e);
-  if (e != weight_rec.substitute(n, 1) * get_initial_condition(0)
-      + inhomogeneous_term.substitute(n, 1))
+  if (e != weight_rec.substitute(n, lower+1) * get_initial_condition(lower)
+      + inhomogeneous.substitute(n, lower+1))
     // FIXME: provably_incorrect...
     return INCONCLUSIVE_VERIFICATION;
   
   // Step 2: validation of the solution.
-  // Consider the `sum(k, 0, n-1, x(k)', with `x(k)' replaced by
+  // Consider the `sum(k, n_0, n-1, x(k)', with `x(k)' replaced by
   // the solution, and tries to semplify it.
   Symbol h;
-  Expr diff
-    = PURRS::sum(h, 1, n - 1, exact_solution.substitute(n, h));
+  Expr diff = PURRS::sum(h, lower+1, n - 1, exact_solution.substitute(n, h));
   diff = simplify_sum(diff, COMPUTE_SUM);
   // Consider the difference
-  // `x(n) - (f(n) x(0) + f(n) sum(k, 1, n - 1, x(k)) + g(n))'
+  // `x(n) - (f(n) x(n_0) + f(n) sum(k, n_0+1, n-1, x(k)) + g(n))'
   // and tries to simplify it.
   diff = exact_solution - diff * weight_rec
-    - get_initial_condition(0) * weight_rec - inhomogeneous_term;
+    - get_initial_condition(lower) * weight_rec - inhomogeneous;
   diff = simplify_all(diff);
   if (diff == 0)
     return PROVABLY_CORRECT;
@@ -799,10 +817,6 @@ PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
   return INCONCLUSIVE_VERIFICATION;
 }
 
-//! \brief
-//! Verify the exact solution of recurrence \p *this, where the recurrence
-//! can be linear of finite order, non-linear of finite order,
-//! weighted-average or a functional equation.
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_exact_solution() const {
   if (!exact_solution_.has_expression())
@@ -1380,12 +1394,16 @@ compute_weighted_average_recurrence(Expr& solution) const {
       // Shift backward: n -> n - 1.
       solution = solution.substitute(n, n - 1);
       solution = solution
-	.substitute(x(associated_first_order_rec().first_valid_index()),
-		    x(associated_first_order_rec().first_valid_index()+1));
-      solution = solution
-	.substitute(x(associated_first_order_rec().first_valid_index()+1),
-		    (weight()*x(0)+inhomogeneous_term).substitute(n, 1));
-      //	solution = simplify_ex_for_output(solution, false);
+	.substitute(x(0), (weight()*x(0)+inhomogeneous_term).substitute(n, 1));
+      // Compute the solution of the original recurrence.
+      if (recurrence_rewritten) {
+	unsigned int lower = lower_limit();
+	if (lower != 0) {
+	  solution = solution.substitute(n, n - lower);
+	  solution = solution.substitute(x(0), x(lower));
+	}
+      }
+      //        solution = simplify_ex_for_output(solution, false);
       return SUCCESS;
     }
     else
