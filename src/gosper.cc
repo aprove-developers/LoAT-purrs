@@ -97,6 +97,7 @@ compute_resultant_and_its_roots(const Expr& f, const Expr& g,
   Symbol h("h");
   Expr temp_g = g.substitute(Recurrence::n, Recurrence::n + h);
   Expr R = resultant(f, temp_g, Recurrence::n);
+  R = simplify_all(R);
   R = R.primpart(h);
   if (!R.is_integer_polynomial())
     R = convert_to_integer_polynomial(R, h);
@@ -370,7 +371,7 @@ PURRS::full_gosper(const Expr& t_n, const Number& lower, const Expr& upper,
     // Problem in the computation of the resultant and its roots.
     return false;
   Expr x_n;
-  if (gosper_step_three(a_n, b_n, c_n, x_n))
+  if (gosper_step_three(a_n.expand(), b_n.expand(), c_n.expand(), x_n))
     solution = gosper_step_four(t_n, b_n, c_n, x_n, lower, upper, solution);
   else {
     // `t' is not Gosper-summable, i. e., there is not hypergeometric
@@ -405,7 +406,7 @@ PURRS::partial_gosper(const Expr& t_n, Expr& r_n,
     // Problem in the computation of the resultant and its roots.
     return false;
   Expr x_n;
-  if (gosper_step_three(a_n, b_n, c_n, x_n))
+  if (gosper_step_three(a_n.expand(), b_n.expand(), c_n.expand(), x_n))
     solution = gosper_step_four(t_n, b_n, c_n, x_n, lower, upper, solution);
   else {
     // `t' is not Gosper-summable, i. e., there is not hypergeometric

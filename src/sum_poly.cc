@@ -92,7 +92,7 @@ sum_falling_prod_times_exp(const Number& k, const Symbol& x, Expr& q) {
 
 void 
 poly_dec(const Expr& p, const Symbol& x, std::vector<Expr>& summands) {
-
+  
   unsigned d = p.degree(x);
   Expr q = p;
   Expr r = p.coeff(x, 0);
@@ -151,13 +151,13 @@ PURRS::sum_poly_times_exponentials(const Expr& p, const Symbol& x,
   D_VAR(alpha);
   Expr q;
   if (alpha == 1)
-    sum_poly(p, x, q);
+    sum_poly(p.expand(), x, q);
   // we just have to compute the sum of the values of the polynomial 
   else {
     Expr r;
-    unsigned d = p.degree(x);
+    unsigned d = p.expand().degree(x);
     std::vector<Expr> summands(d+1);
-    poly_dec(p, x, summands);
+    poly_dec(p.expand(), x, summands);
     q = 0;
     for (unsigned i = 0; i <= d; ++i) {
       sum_falling_prod_times_exp(i, x, r);
@@ -185,10 +185,10 @@ PURRS::sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x,
   if (theta.is_zero()) {
     q = sum_poly_times_exponentials(p, x, alpha);
     return q;
-  } 
-  unsigned d = p.degree(x);
+  }
+  unsigned d = p.expand().degree(x);
   std::vector<Expr> summands(d + 1);
-  poly_dec(p, x, summands);
+  poly_dec(p.expand(), x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
     Expr r = pwr(x, Recurrence::n + 2) * cos(Recurrence::n * theta)
@@ -218,9 +218,9 @@ PURRS::sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x,
   if (theta.is_zero()) {
     return q;
   } 
-  unsigned d = p.degree(x);
+  unsigned d = p.expand().degree(x);
   std::vector<Expr> summands(d + 1);
-  poly_dec(p, x, summands);
+  poly_dec(p.expand(), x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
     Expr r = pwr(x, Recurrence::n + 2) * sin(Recurrence::n * theta)
