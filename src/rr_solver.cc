@@ -124,7 +124,7 @@ check_poly_times_exponential(const GMatrix& decomposition) {
 
 /*!
   We consider the recurrence relation's inhomogeneous term 
-  \f$ p(n) = sum_{i=0}^decomposition.cols() q(n)_i alpha_i^{n} \f$ and the
+  \f$ p(n) = \sum_{i=0}^decomposition.cols() q(n)_i alpha_i^{n} \f$ and the
   vector \p roots of the characteristic equation's roots and we call
   \p \lambda the generic root.
   This function fills the two <CODE>vector<GExpr></CODE>, with dimension
@@ -134,14 +134,14 @@ check_poly_times_exponential(const GMatrix& decomposition) {
   \f$ i = 0, \dotsc, decomposition.cols() \f$
   -  if \f$ alpha_i \neq \lambda_j \f$ then
      \f$ symbolic_sum_distinct[i] = f_n_i(\alpha / \lambda)
-           = \lambda^n * sum_{k=order}^n {\alpha / \lambda}^k \cdot q(k)_i \f$;
+          = \lambda^n * \sum_{k=order}^n {\alpha / \lambda}^k \cdot q(k)_i \f$;
   -  if \f$ alpha_i = \lambda_j \f$ then
      \f$ symbolic_sum_no_distinct[i] = f_n_i(\lambda)
-           = \lambda^n * sum_{k=order}^n q(k)_i \f$.
+          = \lambda^n * \sum_{k=order}^n q(k)_i \f$.
 */
 static void
-compute_symbolic_sum(const int order, const GSymbol& n, const GSymbol& alpha,
-		     const GSymbol& lambda,
+compute_symbolic_sum(const int order, const GSymbol& n,
+		     const GSymbol& alpha, const GSymbol& lambda,
 		     const std::vector<Polynomial_Root> roots,
 		     const GMatrix& decomposition,
 		     std::vector<GExpr>& symbolic_sum_distinct,
@@ -162,7 +162,8 @@ compute_symbolic_sum(const int order, const GSymbol& n, const GSymbol& alpha,
       // The root is deifferent from the exponential's base.
       if (distinct) {
 	GSymbol x("x");
-	symbolic_sum_distinct[i] = sum_poly_times_exponentials(q_k, k, n, x);
+	symbolic_sum_distinct[i] = sum_poly_times_exponentials(q_k, k, n,
+							       x);
 	// 'sum_poly_times_exponentials' calculates the sum from 0 while
 	// we want to start from 'order'.
 	symbolic_sum_distinct[i] -= q_k.subs(k == 0);
@@ -188,7 +189,7 @@ compute_symbolic_sum(const int order, const GSymbol& n, const GSymbol& alpha,
 	symbolic_sum_no_distinct[i] =
 	  simplify_on_output_ex(symbolic_sum_no_distinct[i].expand());
       }
-    }     
+    }
   }
 }
 
@@ -203,11 +204,20 @@ subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
 			    std::vector<GExpr>& symbolic_sum_no_distinct,
 			    GExpr& solution);
 
+static void
+add_initial_conditions(GExpr& g_n, const GSymbol& n,
+		       std::vector<GNumber>& coefficients,
+		       const std::vector<GExpr> initial_conditions,
+		       GExpr& solution);
+
 static GExpr
-order_2_sol_roots_no_distinct(const GSymbol& n, const GMatrix& decomposition,
+order_2_sol_roots_no_distinct(const GSymbol& n,
+			      const GMatrix& decomposition,
 			      const std::vector<GExpr> initial_conditions,
 			      const std::vector<GNumber>& coefficients,
 			      const std::vector<Polynomial_Root>& roots);
+
+
 
 /*!
 ...
@@ -426,7 +436,14 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	subs_to_sum_roots_and_bases(alpha, lambda, roots, decomposition,
 				    symbolic_sum_distinct,
 				    symbolic_sum_no_distinct, solution);
-	solution += initial_conditions[0] * pow(coefficients[1] ,n);
+	// FIXME: per ora non si puo' usare la funzione
+	// 'add_initial_conditions' perche' richiede un vettore di
+	// 'GNumber' come 'coefficients' e voglio risolvere anche le
+	// parametriche. 
+//  	GExpr g_n = pow(roots[0].value(), n);
+//  	add_initial_conditions(g_n, n, coefficients,
+//  			       initial_conditions, solution);
+	solution += initial_conditions[0] * pow(roots[0].value() ,n);
 #if NOISY
 	std::cout << "Solutions before calling simplify: " << std::endl;
 	std::cout << solution << std::endl;
@@ -454,11 +471,11 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	    symbolic_sum_no_distinct[j] *= lambda / diff_roots;
 	    symbolic_sum_distinct[j] *= lambda / diff_roots;
 	  }
-	  // Substitutes to the sums in the vector 'symbolic_sum_distinct' or
-	  // 'symbolic_sum_no_distinct' the corresponding values of the
-	  // characteristic equation's roots and of the bases of the eventual
-	  // exponentials and in 'solution' put the sum of all sums of the
-	  // vector after the substitution.
+	  // Substitutes to the sums in the vector 'symbolic_sum_distinct'
+	  // or 'symbolic_sum_no_distinct' the corresponding values of the
+	  // characteristic equation's roots and of the bases of the
+	  // eventual exponentials and in 'solution' put the sum of all
+	  // sums of the vector after the substitution.
 	  subs_to_sum_roots_and_bases(alpha, lambda, roots, decomposition,
 				      symbolic_sum_distinct,
 				      symbolic_sum_no_distinct, solution);
@@ -467,10 +484,12 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 #if NOISY
 	  std::cout << "g_n " << g_n << std::endl;
 #endif
-	  GExpr g_n_1 = g_n.subs(n == n - 1);
-	  GExpr g_n_2 = g_n.subs(n == n - 2);
-	  solution += initial_conditions[1] * g_n_1 + 
-	    initial_conditions[0] * g_n_2 * num_coefficients[2];
+	  add_initial_conditions(g_n, n, num_coefficients,
+				 initial_conditions, solution);
+#if NOISY
+	  std::cout << "Solutions before calling simplify: " << std::endl;
+	  std::cout << solution << std::endl;
+#endif        
 	  solution = simplify_on_output_ex(solution.expand());
 	  solution = solution.collect(lst(initial_conditions[0],
 					  initial_conditions[1]));
@@ -501,7 +520,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   does not exceed the number of exponentials in the inhomogeneous term
   plus one.
   The function gives the decomposition 
-  \f$ e(n) = sum_{i=0}^k \alpha_i^j \cdot p(n)_i \f$ with
+  \f$ e(n) = \sum_{i=0}^k \alpha_i^j \cdot p(n)_i \f$ with
   - \f$ \alpha_i \ne \alpha_j \f$ if \f$ i \ne j \f$
   - \p p does not contains exponentials.
   It returns the matrix whose \f$ i\f$-th column, for \f$ i = 1, \ldots, k \f$,
@@ -626,8 +645,36 @@ subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
     }
 }
 
+/*!
+  Adds to sum about the inhmogeneous terms the sum
+  \f$ \sum_{i=0}^{order - 1} g_{n-i}
+    \bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \bigr) \f$
+  corresponding to the initial conditions'part.
+*/
+// FIXME: il vettore 'coefficients' dovra' diventare di 'GExpr' quando
+// sapremo risolvere anche le eq. di grado superiore al primo con i
+// parametri.
+static void
+add_initial_conditions(GExpr& g_n, const GSymbol& n,
+		       std::vector<GNumber>& coefficients,
+		       const std::vector<GExpr> initial_conditions,
+		       GExpr& solution) {
+  // 'coefficients.size()' has 'order + 1' elements because in the first
+  // position there is the value 0. 
+  std::vector<GExpr> g_n_i(coefficients.size() - 1);
+  for (size_t i = g_n_i.size(); i-- > 0; )
+    g_n_i[i] = g_n.subs(n == n - i);
+  for (size_t i = g_n_i.size(); i-- > 0; ) {
+    GExpr tmp = initial_conditions[i];
+    for (size_t j = i; j > 0; j--)
+      tmp -= coefficients[j]*initial_conditions[i-j];
+    solution += tmp * g_n_i[i];
+  }
+}
+
 static GExpr
-order_2_sol_roots_no_distinct(const GSymbol& n, const GMatrix& decomposition,
+order_2_sol_roots_no_distinct(const GSymbol& n,
+			      const GMatrix& decomposition,
 			      const std::vector<GExpr> initial_conditions,
 			      const std::vector<GNumber>& coefficients,
 			      const std::vector<Polynomial_Root>& roots) {
