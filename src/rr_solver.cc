@@ -77,15 +77,16 @@ get_constant_decrement(const Expr& e, const Symbol& n, Number& decrement) {
 /*!
   Let
   \f$ x_n = a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$
-  the recurrence relation of order \f$ k \f$ and the coefficients \f$ a_j \f$
+  be a recurrence relation of order \f$ k \f$ whose coefficients \f$ a_j \f$
   (for \f$ i = 1, \dotsc, k \f$) are stored in the vector \p coefficients.
-  This function returns the characteristic equation
+  This function returns the left hand side of the characteristic equation
   \f$ x^k - ( a_1 * x^{k-1} + \dotsb + a^{k-1} * x + a_k ) \f$.
-  Since <CODE>find_roots()</CODE> solve equations only with integer
-  coefficients the \p coefficients' elements must be rationals and,
-  eventually, if are not integer, builds an other vector,
-  \p int_coefficients, with the element of \p coefficients multiplied for
-  the lcm among their denominators.
+  Since <CODE>find_roots()</CODE> only solves equations with integer
+  coefficients, the elements in the vector \p coefficients must be 
+  rational numbers.
+  Tf they are not integers, this function builds another vector,
+  \p int_coefficients, with the element of \p coefficients multiplied by
+  the least common multiple of their denominators.
 */
 static Expr
 build_characteristic_equation(const Symbol& x,
@@ -97,16 +98,16 @@ build_characteristic_equation(const Symbol& x,
 	"only with integer coefficients.\n"
 	"Please come back tomorrow.";
   std::vector<Number> denominators;
-  // Find the least common multiple among the denominators of the
+  // Find the least common multiple of the denominators of the
   // rational elements of `coefficients'.
   for (unsigned i = coefficients.size(); i-- > 0; )
     if (!coefficients[i].is_integer())
       denominators.push_back(coefficients[i].denominator());
   Expr p = 0;
   // Build the vector `int_coefficients' with the elements of
-  // `coefficients' multiplied for the least common multiple
+  // `coefficients' multiplied by the least common multiple
   // `least_com_mul'.
-  // There is no need to `order' because the order of the recurrence relation
+  // There is no need to know the `order' because the order of the recurrence relation
   // is equal to `coefficients.size() - 1'.
   if (denominators.size() != 0) {
     Number least_com_mul = lcm(denominators);
@@ -150,8 +151,8 @@ return_sum(const bool distinct, const Symbol& n, const Number& order,
     symbolic_sum = sum_poly_times_exponentials(q_k, k, n, x);
   else
     symbolic_sum = sum_poly_times_exponentials(q_k, k, n, 1);
-  // `sum_poly_times_exponentials' calculates the sum from 0 while
-  // we want to start from `order'.
+  // `sum_poly_times_exponentials' computes the sum from 0, while
+  // we want it to start from `order'.
   symbolic_sum -= q_k.subs(k, 0);
   for (Number j = 1; j < order; ++j)
     symbolic_sum -= q_k.subs(k, j) * Parma_Recurrence_Relation_Solver::power(alpha, j) * Parma_Recurrence_Relation_Solver::power(lambda, -j);
@@ -164,32 +165,33 @@ return_sum(const bool distinct, const Symbol& n, const Number& order,
 }
 
 /*!
-  Consider the inhomogeneous term \f$ e(n) \f$ in the form polynomials
-  times exponentials:
+  Consider an inhomogeneous term \f$ e(n) \f$ which is a sum of products of 
+  polynomials and exponentials:
   \f$ e(n) = \sum_{i=0}^k \alpha_i^{n} p_i(n) \f$ (where \f$ k \f$ is
-  the number of exponentials).
-  We call \p \lambda the generic root of the characteristic equation
-  and \p alpha the generic base of an exponential.
+  the number of exponentials, and we assume that the \f$ \alpha_j \f$'s
+  are distinct complex numbers).
+  We let \f$ \lambda \f$ denote the generic root of the characteristic 
+  equation and \$f \alpha \f$ the generic base of an exponential.
 
   This function fills the two vectors of <CODE>Expr</CODE>
   \p symbolic_sum_distinct and \p symbolic_sum_no_distinct,
-  with two different sums:
-  fixed tha base \p alpha_i, for each root \p lambda 
+  with two different sums: first fix the base \f$ \alpha_i \f$.
+  For each root \f$ \lambda \f$
   - if \f$ \alpha_i \neq \lambda \f$ then
     \f[
-      symbolic\_sum\_distinct[i]
+      symbolic{\_}sum{\_}distinct[i]
         = \lambda^n * f_i(\alpha_i / \lambda)
         = \lambda^n * \sum_{k=order}^n (\alpha_i / \lambda)^k \cdot p_i(k);
     \f]
   - if \f$ \alpha_i = \lambda \f$ then
     \f[
-      symbolic\_sum\_no\_distinct[i]
+      symbolic{\_}sum{\_}no{\_}distinct[i]
         = \lambda^n * f_i(1)
         = \lambda^n * \sum_{k=order}^n p_i(k).
     \f]
-    In the i-th position of \p symbolic_sum_no_distinct, in the first case,
-    and of \p symbolic_sum_distinct, in the second case, is put \f$ 0 \f$
-    so that the two vector have always the same dimensions.
+    We put \f$ 0 \f$ in the i-th position of \p symbolic_sum_no_distinct,
+    in the first case, and of \p symbolic_sum_distinct, in the second case,
+    so that the two vectors have always the same dimensions.
 */
 static void
 compute_symbolic_sum(const Symbol& n,
