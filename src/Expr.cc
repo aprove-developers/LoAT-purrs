@@ -852,23 +852,23 @@ PURRS::Expr::has_x_function(bool any_x_function, const Expr& x) const {
 }
 
 void
-PURRS::Expr::collect_symbols(Symbol::SymbolSet& bad_symbols,
-			     Symbol::SymbolSet& good_symbols) const {
+PURRS::Expr::collect_symbols(Symbol::SymbolSet& system_generated_symbols,
+			     Symbol::SymbolSet& new_symbols) const {
   const Expr& e = *this;
   Symbol s;
   if (e.is_a_add() || e.is_a_mul())
     for (unsigned i = e.nops(); i-- > 0; )
-      e.op(i).collect_symbols(bad_symbols, good_symbols);
+      e.op(i).collect_symbols(system_generated_symbols, new_symbols);
   else if (e.is_a_power()) {
-    e.arg(0).collect_symbols(bad_symbols, good_symbols);
-    e.arg(1).collect_symbols(bad_symbols, good_symbols);
+    e.arg(0).collect_symbols(system_generated_symbols, new_symbols);
+    e.arg(1).collect_symbols(system_generated_symbols, new_symbols);
   }
   else if (e.is_a_function())
     for (unsigned i = e.nops(); i-- > 0; )
-      e.arg(i).collect_symbols(bad_symbols, good_symbols);
+      e.arg(i).collect_symbols(system_generated_symbols, new_symbols);
   else if (e.is_a_symbol(s))
-    if (s.is_a_bad_symbol())
-      bad_symbols.insert(s);
+    if (s.is_system_generated())
+      system_generated_symbols.insert(s);
     else
-      good_symbols.insert(s);
+      new_symbols.insert(s);
 }
