@@ -294,6 +294,9 @@ private:
   solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
 			       const std::vector<Number>& coefficients,
 			       const std::vector<Polynomial_Root>& roots) const;
+  void
+  add_term_with_initial_condition(const Expr& q_upper, const Expr& q_lower,
+				  Expr& ub, Expr& lb) const;
   Solver_Status approximate_functional_equation() const;
 
   //! \brief

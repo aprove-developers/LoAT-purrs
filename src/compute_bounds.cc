@@ -417,7 +417,7 @@ sharper_bounds_for_no_polynomial_function(const Expr& no_poly_coeff,
   return computed_at_least_one_bound;
 }
 
-/*!
+/*!  
   g(n) = c^n, c > 1
 */
 bool
@@ -439,6 +439,13 @@ sharper_bounds_for_exponential(const Number& base, const Expr& poly_coeff,
   return computed_at_least_one_bound;
 }
 
+/*!
+  If \p for_lower is true then this function compute the sum
+  \f$ G(n) = sum_{k = 1}^n a^{n-k} p(b^k) \f$, otherwise
+  compute the sum \f$ H(n) = sum_{k = 2}^n a^{n-k} p(b^k-1) \f$,
+  where \f$ a \f$ is stored in \p coefficient, \f$ b \f$ is stored
+  in \p divisor and \f$ p(n) \f$ is stored in \p summand.
+*/
 bool
 compute_sum(const Expr& summand,
 	    const Number& coefficient, const Number& divisor,
@@ -450,7 +457,7 @@ compute_sum(const Expr& summand,
   Expr tmp;
   if (for_lower)
     tmp = summand.substitute(Recurrence::n,
-			       pwr(divisor, Recurrence::n));
+			     pwr(divisor, Recurrence::n));
   else
     tmp = summand.substitute(Recurrence::n,
 			     pwr(divisor, Recurrence::n) - 1);
@@ -495,13 +502,22 @@ compute_sum(const Expr& summand,
   return true;
 }
 
+/*!
+  Computes two different sums:
+  \f$ G(n) = sum_{k = 1}^n a^{n-k} p(b^k) \f$ and
+  \f$ H(n) = sum_{k = 2}^n a^{n-k} p(b^k-1) \f$,
+  where \f$ a \f$ is stored in \p coefficient, \f$ b \f$ is stored
+  in \p divisor and \f$ p(n) \f$ is stored in \p summand.
+  If we have already computed the upper bound computes only
+  \f$ G(n) \f$.
+*/
 void
 try_to_compute_sum(const Expr& summand,
 		   const Number& coefficient, const Number& divisor,
 		   bool computed_only_upper,
 		   Expr& sum_lower, Expr& sum_upper) {
   D_VAR(summand);
-  // `G(n)'.
+  // Compute `G(n)' used for the lower bound.
   if (!compute_sum(summand, coefficient, divisor, true, sum_lower))
     // We try to compute `H(n)' because `H(q) <= G(q)'.
     if (!compute_sum(summand, coefficient, divisor, false, sum_lower)) {
@@ -513,7 +529,7 @@ try_to_compute_sum(const Expr& summand,
     }
   
   if (!computed_only_upper) {
-    // `H(n)'.
+    // Compute `H(n)' used for the upper bound.
     if (!compute_sum(summand, coefficient, divisor, false, sum_upper))
       // We try to compute `G(n)' because `H(q+1) <= G(q+1)'.
       if (!compute_sum(summand, coefficient, divisor, true, sum_upper)) {
@@ -528,133 +544,21 @@ try_to_compute_sum(const Expr& summand,
 					     
 } // anonymous namespace
 
-
-/*
-  This function find a lower bound and an upper bound for special recurrences
-  that we call <EM>functional equations</EM>.
-  For the moment we consider a limited part of these recurrences, i. e.
-  equations of the form
+/*!
+  Computes
   \f[
-    x_n = a x_{n/b} + p(n)
+    \a^q x \left( \frac n{\b^q} \right)
   \f]
-  where \f$ a > 0 \f$, \f$ b \in \Nset \ setminus \{0, 1\} \f$ and
-  \f$ p : \Nset \setminus \{ 0 \} \rightarrow \Rset \f$.
+  where \f$ a \f$ is stored in <CODE>coefficient()</CODE>, \f$ b \f$
+  is stored <CODE>divisor_arg()</CODE>.
+  \f$ q \f$ is stored in \p q_upper if the value computed will be
+  added to \p ub or it is stored in \p q_lower if the value computed
+  will be added to \p lb.
 */
-PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::approximate_functional_equation() const {
-  D_VAR(coefficient());
-  D_VAR(divisor_arg());
-  assert(divisor_arg().is_rational() && divisor_arg().is_positive());
-  // We want that `a' is a positive number and `b' a rational number
-  // bigger than `1'.
-  Number coeff;
-  if (!coefficient().is_a_number(coeff) || !coeff.is_positive()
-      || divisor_arg() < 1)
-    return TOO_COMPLEX;
-  if (has_parameters(inhomogeneous_term)) {
-    D_MSG("Functional equation with parameters");
-    return TOO_COMPLEX;
-  }
-
-  // Consider an upper bound and a lower bound for `q = [log n / log b]'.
-  Expr q_upper = log(n) / log(divisor_arg());
-  Expr q_lower = q_upper - 1;
-  
-  Expr ub = 0;
-  Expr lb = 0;
-  D_VAR(inhomogeneous_term);
-  if (!inhomogeneous_term.is_zero()) {
-    std::vector<Expr> bases_of_exp;
-    std::vector<Expr> exp_poly_coeff;
-    std::vector<Expr> exp_no_poly_coeff;
-    exp_poly_decomposition(inhomogeneous_term,
-			   bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
-    D_VEC(bases_of_exp, 0, bases_of_exp.size()-1);
-    D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
-    D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
-
-    for (unsigned i = bases_of_exp.size(); i-- > 0; ) {
-      bool computed_only_upper = false;
-      const Expr& base = bases_of_exp[i];
-      const Expr& poly_coeff = exp_poly_coeff[i];
-      const Expr& no_poly_coeff = exp_no_poly_coeff[i];
-
-      Number num_base;
-      if (base.is_a_number(num_base) && num_base.is_positive_integer()) {
-	if (num_base == 1) {
-	  // Consider the eventual polynomial part.
-	  if (!poly_coeff.is_zero()
-	      && (!sharper_bounds_for_power_of_n(poly_coeff, 
-						 coeff, divisor_arg(),
-						 computed_only_upper, lb, ub)
-	      || computed_only_upper)) {
-	    // Check if the polynomial part is a non-negative,
-	    // non-decreasing function.
-	    Number condition = -1;
-	    if (!is_non_negative_non_decreasing(poly_coeff, 1,
-						poly_coeff, true,
-						n, condition))
-	      return TOO_COMPLEX ;
-	    if (condition > 1)
-	      set_applicability_condition(condition.to_unsigned());
-
-	    // If we do not have computed both bounds now compute two sum:
-	    // `G(n) = sum_{k = 1}^n a^{n-k} p(b^k)' and
-	    // `H(n) = sum_{k = 2}^n a^{n-k} p(b^k-1)'.
-	    // If we have already computed the upper bound now compute only
-	    // `G(n)'.
-	    Expr sum_lower = 0;
-	    Expr sum_upper = 0;
-	    try_to_compute_sum(poly_coeff, coeff, divisor_arg(),
-			       computed_only_upper, sum_lower, sum_upper);
-	    lb += sum_lower.substitute(n, q_lower);
-	    ub += sum_upper.substitute(n, q_upper + 1);
-	  }
-	  D_MSGVAR("dopo poly ****** ", ub);
-	  D_MSGVAR("dopo poly ****** ", lb);
-	  // Consider the eventual non-polynomial part.
-	  if (!no_poly_coeff.is_zero()
-	      && (!sharper_bounds_for_no_polynomial_function(no_poly_coeff,
-							     coeff,
-							     divisor_arg(),
-							     computed_only_upper,
-							     lb, ub)
-		  || computed_only_upper)) {
-	    // Check if the non-polynomial part is a non-negative,
-	    // non-decreasing function.
-	    Number condition = -1;
-	    if (!is_non_negative_non_decreasing(no_poly_coeff, 1,
-						no_poly_coeff, false,
-						n, condition))
-	      return TOO_COMPLEX ;
-	    if (condition > 1)
-	      set_applicability_condition(condition.to_unsigned());
-
-	    Expr sum_lower = 0;
-	    Expr sum_upper = 0;
-	    try_to_compute_sum(no_poly_coeff, coeff, divisor_arg(),
-			       computed_only_upper, sum_lower, sum_upper);
-	    lb += sum_lower.substitute(n, q_lower);
-	    ub += sum_upper.substitute(n, q_upper + 1);
-	  }
-	  D_MSGVAR("dopo no poly ****** ", ub);
-	  D_MSGVAR("dopo no poly ****** ", lb);
-	}
-	else {
-	  if (no_poly_coeff == 0)
-	    // Consider the exponential.
-	    if (!sharper_bounds_for_exponential(num_base, poly_coeff,
-						coeff, divisor_arg(),
-						lb, ub)) {
-	      ;
-	    }
-	}
-      }
-      else
-	return TOO_COMPLEX;
-    }  
-  }
-
+void
+PURRS::Recurrence::add_term_with_initial_condition(const Expr& q_upper,
+						   const Expr& q_lower,
+						   Expr& ub, Expr& lb) const {
   Expr index_initial_condition
     = simplify_logarithm(n / pwr(divisor_arg(), q_upper));
   Number index = 0;
@@ -678,6 +582,158 @@ PURRS::Recurrence::approximate_functional_equation() const {
     lb += pwr(coefficient(), q_lower)
       * get_initial_condition(index.to_unsigned());
   }
+}
+
+/*
+  This function find a lower bound and an upper bound for special recurrences
+  that we call <EM>functional equations</EM>.
+  For the moment we consider a limited part of these recurrences, i. e.
+  equations of the form
+  \f[
+    x_n = a x_{n/b} + p(n)
+  \f]
+  where \f$ a > 0 \f$, \f$ b \in \Nset \ setminus \{0, 1\} \f$ and
+  \f$ p : \Nset \setminus \{ 0 \} \rightarrow \Rset \f$.
+*/
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::approximate_functional_equation() const {
+  D_VAR(coefficient());
+  D_VAR(divisor_arg());
+  assert(divisor_arg().is_rational() && divisor_arg().is_positive());
+  // We want that `coefficient()' is a positive number and
+  // `divisor_arg()' a rational number bigger than `1'.
+  Number coeff;
+  if (!coefficient().is_a_number(coeff) || !coeff.is_positive()
+      || divisor_arg() < 1)
+    return TOO_COMPLEX;
+  if (has_parameters(inhomogeneous_term)) {
+    D_MSG("Functional equation with parameters");
+    return TOO_COMPLEX;
+  }
+
+  // Consider an upper bound and a lower bound for `q = [log n / log b]'.
+  Expr q_upper = log(n) / log(divisor_arg());
+  Expr q_lower = q_upper - 1;
+  Expr ub = 0;
+  Expr lb = 0;
+  D_VAR(inhomogeneous_term);
+  if (!inhomogeneous_term.is_zero()) {
+    std::vector<Expr> bases_of_exp;
+    std::vector<Expr> exp_poly_coeff;
+    std::vector<Expr> exp_no_poly_coeff;
+    exp_poly_decomposition(inhomogeneous_term,
+			   bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
+    D_VEC(bases_of_exp, 0, bases_of_exp.size()-1);
+    D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
+    D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
+    for (unsigned i = bases_of_exp.size(); i-- > 0; ) {
+      bool computed_only_upper = false;
+      const Expr& base = bases_of_exp[i];
+      const Expr& poly_coeff = exp_poly_coeff[i];
+      const Expr& no_poly_coeff = exp_no_poly_coeff[i];
+      Number num_base;
+      if (base.is_a_number(num_base) && num_base.is_positive_integer()) {
+	// Base of exponential is equal to `1'.
+	if (num_base == 1) {
+	  // Consider the eventual polynomial part.
+	  if (!poly_coeff.is_zero()
+	      && (!sharper_bounds_for_power_of_n(poly_coeff, 
+						 coeff, divisor_arg(),
+						 computed_only_upper, lb, ub)
+	      || computed_only_upper)) {
+	    // Check if the polynomial part is a non-negative,
+	    // non-decreasing function.
+	    Number condition = -1;
+	    if (!is_non_negative_non_decreasing(poly_coeff, 1,
+						poly_coeff, true,
+						n, condition))
+	      return TOO_COMPLEX ;
+	    if (condition > 1)
+	      set_applicability_condition(condition.to_unsigned());
+	    Expr sum_lower = 0;
+	    Expr sum_upper = 0;
+	    try_to_compute_sum(poly_coeff, coeff, divisor_arg(),
+			       computed_only_upper, sum_lower, sum_upper);
+	    lb += sum_lower.substitute(n, q_lower);
+	    ub += sum_upper.substitute(n, q_upper + 1);
+	  }
+	  // Consider the eventual non-polynomial part.
+	  if (!no_poly_coeff.is_zero()
+	      && (!sharper_bounds_for_no_polynomial_function(no_poly_coeff,
+							     coeff,
+							     divisor_arg(),
+							     computed_only_upper,
+							     lb, ub)
+		  || computed_only_upper)) {
+	    // Check if the non-polynomial part is a non-negative,
+	    // non-decreasing function.
+	    Number condition = -1;
+	    if (!is_non_negative_non_decreasing(no_poly_coeff, 1,
+						no_poly_coeff, false,
+						n, condition))
+	      return TOO_COMPLEX ;
+	    if (condition > 1)
+	      set_applicability_condition(condition.to_unsigned());
+	    Expr sum_lower = 0;
+	    Expr sum_upper = 0;
+	    try_to_compute_sum(no_poly_coeff, coeff, divisor_arg(),
+			       computed_only_upper, sum_lower, sum_upper);
+	    lb += sum_lower.substitute(n, q_lower);
+	    ub += sum_upper.substitute(n, q_upper + 1);
+	  }
+	}
+	// Base of exponential is a number different from `1'.
+	else {
+	  if (!poly_coeff.is_zero())
+	    // Apply, if it possible, the sharper bounds for the exponential.
+	    if (!sharper_bounds_for_exponential(num_base, poly_coeff,
+						coeff, divisor_arg(),
+						lb, ub)) {
+	      // Check if the polynomial part times esponential is a
+	      // non-negative, non-decreasing function.
+	      Number condition = -1;
+	      if (!is_non_negative_non_decreasing(pwr(base, n) * poly_coeff,
+						  num_base, poly_coeff, true,
+						  n, condition))
+		return TOO_COMPLEX ;
+	      if (condition > 1)
+		set_applicability_condition(condition.to_unsigned());
+	      Expr sum_lower = 0;
+	      Expr sum_upper = 0;
+	      try_to_compute_sum(pwr(base, n) * poly_coeff,
+				 coeff, divisor_arg(),
+				 computed_only_upper, sum_lower, sum_upper);
+	      lb += sum_lower.substitute(n, q_lower);
+	      ub += sum_upper.substitute(n, q_upper + 1);
+	    }
+	  if (!no_poly_coeff.is_zero()) {
+	    // In this case is not possible to apply the sharper
+	    // bounds for the exponential.
+	    // Check if the polynomial part times esponential is a
+	    // non-negative, non-decreasing function.
+	    Number condition = -1;
+	    if (!is_non_negative_non_decreasing(pwr(base, n) * no_poly_coeff,
+						num_base, no_poly_coeff, false,
+						n, condition))
+	      return TOO_COMPLEX ;
+	    if (condition > 1)
+	      set_applicability_condition(condition.to_unsigned());
+	    Expr sum_lower = 0;
+	    Expr sum_upper = 0;
+	    try_to_compute_sum(pwr(base, n) * no_poly_coeff,
+			       coeff, divisor_arg(),
+			       computed_only_upper, sum_lower, sum_upper);
+	    lb += sum_lower.substitute(n, q_lower);
+	    ub += sum_upper.substitute(n, q_upper + 1);
+	  }
+	}
+      }
+      // The base of the exponential is not a number.
+      else
+	return TOO_COMPLEX;
+    }  
+  }
+  add_term_with_initial_condition(q_upper, q_lower, ub, lb);
 
   // The functional equation for which the system has found lower and upper
   // bounds now has been deduced from a non linear recurrence.
@@ -690,8 +746,8 @@ PURRS::Recurrence::approximate_functional_equation() const {
     lb = substitute_x_function(lb, base_exp_log(), false);
     lb = simplify_ex_for_input(lb, true);
   }
-    upper_bound_.set_expression(simplify_logarithm(ub));
+
+  upper_bound_.set_expression(simplify_logarithm(ub));
   lower_bound_.set_expression(simplify_logarithm(lb));
   return SUCCESS;
 }
-
