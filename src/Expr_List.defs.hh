@@ -38,8 +38,11 @@ public:
   //! Default constructor.
   Expr_List();
 
-  //! Builds a list containing \p x.
+  //! Builds a list containing the symbol \p x.
   explicit Expr_List(const Symbol& x);
+
+  //! Builds a list containing the expression \p e.
+  explicit Expr_List(const Expr& e);
 
   //! Builds a list containing \p x1 and \p x2.
   Expr_List(const Expr& x1, const Expr& x2);
