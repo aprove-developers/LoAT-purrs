@@ -46,10 +46,10 @@ namespace Parma_Recurrence_Relation_Solver {
 */
 class Recurrence {
 public:
-  //! Default constructor: it builds the recurrence \f$ x(n) = 0 \f$.
+  //! Builds the singleton satisfying \f$ x(n) = 0 \f$.
   Recurrence();
 
-  //! Builds the recurrence \f$ x(n) = e \f$.
+  //! Builds the set of sequences satisfying \f$ x(n) = e \f$.
   explicit Recurrence(const Expr& e);
 
   //! Copy-constructor.
