@@ -627,6 +627,12 @@ PURRS::Recurrence::verify_weighted_average() const {
     lower = 0;
   }
   
+  unsigned int shift = 0;
+  if (!initial_conditions_.empty()) {
+    if (initial_conditions_.rbegin()->first > lower)
+      shift = initial_conditions_.rbegin()->first - lower;
+  }
+
   // The case `f(n) = -1', i.e. the recurrence has the form
   // `x(n) = - sum(k, n_0, n-1, x(k)) + g(n)', is special:
   // the solution is simply `x(n) = g(n) - g(n-1)'.
@@ -644,10 +650,10 @@ PURRS::Recurrence::verify_weighted_average() const {
     exact_solution = exact_solution_.expression();
 
   // Step 1: validation of the initial condition.
-  Expr e = exact_solution.substitute(n, lower+1);
+  Expr e = exact_solution.substitute(n, lower+1+shift);
   e = simplify_all(e);
-  if (e != weight_rec.substitute(n, lower+1) * get_initial_condition(lower)
-      + inhomogeneous.substitute(n, lower+1))
+  if (e != (weight_rec * get_initial_condition(lower)
+	    + inhomogeneous).substitute(n, lower+1+shift))
     // FIXME: provably_incorrect...
     return INCONCLUSIVE_VERIFICATION;
   
@@ -655,13 +661,14 @@ PURRS::Recurrence::verify_weighted_average() const {
   // Consider the `sum(k, n_0, n-1, x(k)', with `x(k)' replaced by
   // the solution, and tries to semplify it.
   Symbol h;
-  Expr diff = PURRS::sum(h, lower+1, n - 1, exact_solution.substitute(n, h));
+  Expr diff = PURRS::sum(h, lower+1+shift, n - 1,
+			 exact_solution.substitute(n, h));
   diff = simplify_sum(diff, COMPUTE_SUM);
   // Consider the difference
   // `x(n) - (f(n) x(n_0) + f(n) sum(k, n_0+1, n-1, x(k)) + g(n))'
   // and tries to simplify it.
   diff = exact_solution - diff * weight_rec
-    - get_initial_condition(lower) * weight_rec - inhomogeneous;
+    - get_initial_condition(lower+shift) * weight_rec - inhomogeneous;
   diff = simplify_all(diff);
   if (diff == 0)
     return PROVABLY_CORRECT;
@@ -922,7 +929,6 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 
   const char* method = "PURRS::Recurrence::set_initial_conditions()";
   std::ostringstream s;
-  index_type first = first_valid_index();
   switch (type_) {
   case ORDER_ZERO:
     // If the recurrence has order zero, the solution is simply the
@@ -932,6 +938,7 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
   case LINEAR_FINITE_ORDER_VAR_COEFF:
     {
       index_type k = order();
+      index_type first = first_valid_index();
       // Check the number of initial conditions.
       if (initial_conditions.size() < k) {
 	s << "*this is a recurrence of order " << k
@@ -968,14 +975,20 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
     break;
   case WEIGHTED_AVERAGE:
     {
-#if 1
-      if (initial_conditions.size() != 1
-	  || initial_conditions.begin()->first != 0)
+      if (initial_conditions.empty())
 	throw_invalid_argument(method,
-			       "*this is a weighted-average recurrence and,\n"
-			       "by definition, there is only the\n"
-			       "initial condition `x(0)'");
-#endif
+			       "*this is a weighted-average recurrence "
+			       "and we need of 1 initial condition\n"
+			       "to uniquely determine it");
+      unsigned int lower = 0;
+      if (recurrence_rewritten)
+	lower = lower_limit();
+      if (initial_conditions.rbegin()->first < lower) {
+	s << "*this is well-defined for `n >= " << lower
+	  << "', then must be present at least an\n"
+	  << "initial condition with index larger or equal to " << lower;
+	throw_invalid_argument(method, s.str().c_str());
+      }
     }
     break;
   case NON_LINEAR_FINITE_ORDER:
@@ -1405,17 +1418,26 @@ compute_weighted_average_recurrence(Expr& solution) const {
     if ((status = associated_first_order_rec().solve_linear_finite_order())
 	== SUCCESS) {
       solution = associated_first_order_rec().exact_solution_.expression();
-      // Shift backward: n -> n - 1.
-      solution = solution.substitute(n, n - 1);
-      solution = solution
-	.substitute(x(0), (weight()*x(0)+inhomogeneous_term).substitute(n, 1));
+
+      unsigned int lower;
+      Expr weight_rec;
+      Expr inhomogeneous;
       if (recurrence_rewritten) {
-	unsigned int lower = lower_limit();
-	if (lower != 0) {
-	  solution = solution.substitute(n, n - lower);
-	  solution = solution.substitute(x(0), x(lower));
-	}
+	weight_rec = original_weight();
+	inhomogeneous = original_inhomogeneous();
+	lower = lower_limit();
       }
+      else {
+	weight_rec = weight();
+	inhomogeneous = inhomogeneous_term;
+	lower = 0;
+      }
+      
+      // Shift backward: n -> n - 1 - lower.
+      solution = solution.substitute(n, n - 1 - lower);
+      solution = solution.substitute(x(0),
+				     (weight_rec*x(lower)+inhomogeneous)
+				     .substitute(n, lower+1));
       //        solution = simplify_ex_for_output(solution, false);
       return SUCCESS;
     }
@@ -1451,60 +1473,10 @@ get_max_index_symbolic_i_c(const Expr& e, unsigned int& max_index) {
 
 } // anonymous namespace
 
-//! \brief
-//! Let \p solution_or_bound be the expression that represent the
-//! solution or the bound computed for the recurrence \p *this.
-//! This function substitutes possible symbolic initial conditions
-//! specified by the user shifting the solution or the bound if necessary.
-/*!
-  \param solution_or_bound  Contains the solution or the bound computed
-                            for the recurrence \p *this in function of
-			    arbitrary symbolic initial conditions.
-
-  \return                   The solution or the bound shifted in agreement
-                            with the initial conditions inserted by the user
-			    and with the eventual remaining symbolic initial
-			    conditions.
-
-  We know the least non-negative integer \f$ s \f$ such that
-  the recurrence is well-defined for \f$ n \geq s \f$.
-  This function checks if in the map \p initial_conditions there are
-  some initial conditions of the form \f$ x(i) = k \f$ with \f$ k > s \f$:
-  in this case the function shifts the solution or the bound.
-  Finally replaces the possible symbolic initial conditions in the
-  solution or in the bound with the values specified by the user.
-*/
 Expr
 PURRS::Recurrence::
-substitute_i_c_shifting(const Expr& solution_or_bound) const {
-  assert(!initial_conditions_.empty());
-  assert(has_at_least_a_symbolic_initial_condition(solution_or_bound));
-
+subs_i_c_finite_order_and_functioanl_eq(const Expr& solution_or_bound) const {
   Expr sol_or_bound = solution_or_bound;
-  // Consider the maximum index of `x' function in the map
-  // `initial_conditions', i.e. the largest index of the initial
-  // conditions inserted by the user.
-  unsigned int max_index_user_i_c = get_max_index_initial_condition();
-
-  if (is_weighted_average()) {
-    unsigned int lower = 0;
-    if (recurrence_rewritten)
-      lower = lower_limit();
-    Expr sol_or_bound = solution_or_bound;
-    int diff = max_index_user_i_c - lower;
-    if (diff > 0) {
-      sol_or_bound = sol_or_bound.substitute(n, n - diff);
-      sol_or_bound = sol_or_bound
-	.substitute(x(lower),
-		    get_initial_condition(initial_conditions_.rbegin()->first));
-    }
-    else {
-      assert(diff == 0);
-      sol_or_bound
-	= sol_or_bound.substitute(x(lower), get_initial_condition(lower));
-    }
-    return sol_or_bound;
-  }
 
   index_type first_valid_index_rhs;
   index_type order_or_rank;
@@ -1532,6 +1504,11 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
     unsigned int max_index_symb_i_c = 0;
       //      = first_valid_index_rhs + order_or_rank - 1;
     get_max_index_symbolic_i_c(solution_or_bound, max_index_symb_i_c);
+
+    // Consider the maximum index of `x' function in the map
+    // `initial_conditions', i.e. the largest index of the initial
+    // conditions inserted by the user.
+    unsigned int max_index_user_i_c = get_max_index_initial_condition();
 
     // If `max_index_user_i_c' is bigger than `max_index_symb_i_c',
     // then we must shift the solution or the bound.
@@ -1594,7 +1571,99 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
   sol_or_bound = simplify_numer_denom(sol_or_bound);
   sol_or_bound = simplify_ex_for_output(sol_or_bound, false);
 
+  return sol_or_bound;  
+}
+
+Expr
+PURRS::Recurrence::
+subs_i_c_weighted_average(const Expr& solution_or_bound) const {
+  Expr weight_rec;
+  Expr inhomogeneous;
+  unsigned int lower;
+  if (recurrence_rewritten) {
+    weight_rec = original_weight();
+    inhomogeneous = original_inhomogeneous();
+    lower = lower_limit();
+  }
+  else {
+    weight_rec = weight();
+    inhomogeneous = inhomogeneous_term;
+    lower = 0;
+  }
+  Expr sol_or_bound = solution_or_bound;
+
+  // Consider the maximum index of `x' function in the map
+  // `initial_conditions', i.e. the largest index of the initial
+  // conditions inserted by the user.
+  unsigned int max_index_user_i_c = get_max_index_initial_condition();
+  int shift = max_index_user_i_c - lower;
+  if (shift > 0) {
+    // To solve `x(n) = f(n)*sum(k,n_0,n-1,x(k))+g(n)' with the
+    // initial condition `x(m) = h', where `m > n_0',
+    // is like to solve `x(n) = f(n)*sum(k,m,n-1,x(k))+g(n)'.
+    Symbol k;
+    Recurrence rec(weight_rec * PURRS::sum(k, max_index_user_i_c, n-1, x(k))
+		   + inhomogeneous);
+    // The following two methods called on the recurrence `rec'
+    // surely will return SUCCESS because they work always on the
+    // same recurrence (shifted backward).
+    rec.classify_and_catch_special_cases();
+    rec.compute_weighted_average_recurrence(sol_or_bound);
+    sol_or_bound
+      = sol_or_bound.substitute(x(max_index_user_i_c),
+				get_initial_condition(max_index_user_i_c));
+  }
+  else {
+    assert(shift == 0);
+    sol_or_bound
+      = sol_or_bound.substitute(x(lower), get_initial_condition(lower));
+  }
   return sol_or_bound;
+}
+
+/*!
+  \param solution_or_bound  Contains the solution or the bound computed
+                            for the recurrence \p *this in function of
+			    arbitrary symbolic initial conditions.
+
+  \return                   The solution or the bound shifted in agreement
+                            with the initial conditions inserted by the user
+			    and with the eventual remaining symbolic initial
+			    conditions.
+
+  We know the least non-negative integer \f$ s \f$ such that
+  the recurrence is well-defined for \f$ n \geq s \f$.
+  This function checks if in the map \p initial_conditions there are
+  some initial conditions of the form \f$ x(i) = k \f$ with \f$ k > s \f$:
+  in this case the function shifts the solution or the bound.
+  Finally replaces the possible symbolic initial conditions in the
+  solution or in the bound with the values specified by the user.
+*/
+Expr
+PURRS::Recurrence::
+substitute_i_c_shifting(const Expr& solution_or_bound) const {
+  assert(!initial_conditions_.empty());
+  assert(has_at_least_a_symbolic_initial_condition(solution_or_bound));
+
+  Expr solution_or_bound_shifted;
+  switch (type_) {
+  case ORDER_ZERO:
+  case LINEAR_FINITE_ORDER_CONST_COEFF:
+  case LINEAR_FINITE_ORDER_VAR_COEFF:
+  case FUNCTIONAL_EQUATION:
+  case NON_LINEAR_FINITE_ORDER:
+    solution_or_bound_shifted =
+      subs_i_c_finite_order_and_functioanl_eq(solution_or_bound);
+    break;
+  case WEIGHTED_AVERAGE:
+    solution_or_bound_shifted
+      = subs_i_c_weighted_average(solution_or_bound);
+    break;
+  default:
+    throw std::runtime_error("PURRS internal error: "
+			     "substitute_i_c_shifting().");
+  }
+  return solution_or_bound_shifted;
 }
 
 /*!

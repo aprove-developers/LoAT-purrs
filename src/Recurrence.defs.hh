@@ -1139,6 +1139,12 @@ private:
   //! <CODE>Recurrence</CODE>.
   Solver_Status compute_weighted_average_recurrence(Expr& solution) const;
 
+  Expr
+  subs_i_c_finite_order_and_functioanl_eq(const Expr& solution_or_bound) const;
+
+  Expr
+  subs_i_c_weighted_average(const Expr& solution_or_bound) const;
+
   //! \brief
   //! Let \p solution_or_bound be the expression that represent the
   //! solution or the bound computed for the recurrence \p *this.
