@@ -125,6 +125,31 @@ check_poly_times_exponential(const std::vector<GExpr>& exp_no_poly_coeff) {
   return true;
 }
 
+static GExpr
+return_sum(const bool distinct, const GSymbol& n, const int order,
+	   const GExpr& coeff, const GSymbol& alpha, const GSymbol& lambda) {
+  GSymbol k("k");
+  GSymbol x("x");
+  GExpr q_k = coeff.subs(n == k);
+  GExpr symbolic_sum;
+  
+  if (distinct)
+    symbolic_sum = sum_poly_times_exponentials(q_k, k, n, x);
+  else
+    symbolic_sum = sum_poly_times_exponentials(q_k, k, n, 1);
+  // 'sum_poly_times_exponentials' calculates the sum from 0 while
+  // we want to start from 'order'.
+  symbolic_sum -= q_k.subs(k == 0);
+  for (int j = 1; j < order; ++j)
+    symbolic_sum -= q_k.subs(k == j) * pow(lambda, -1);
+  if (distinct)
+    symbolic_sum = symbolic_sum.subs(x == alpha/lambda);
+  symbolic_sum *= pow(lambda, n);
+  symbolic_sum = simplify_on_output_ex(symbolic_sum.expand(), n, false);
+
+  return symbolic_sum;
+}
+
 /*!
   Let the recurrence relation with the inhomogeneous term \f$ e(n) \f$
   in the form polynomials times exponentials:
@@ -164,39 +189,16 @@ compute_symbolic_sum(const int order, const GSymbol& n,
       if (roots[j].value().is_equal(base_of_exps[i]))
 	distinct = false;
 
-      GSymbol k("k");
-      GExpr q_k = exp_poly_coeff[i].subs(n == k);
-
       // The root is different from the exponential's base.
-      if (distinct) {
-	GSymbol x("x");
-	symbolic_sum_distinct[i] = sum_poly_times_exponentials(q_k, k, n, x);
-	// 'sum_poly_times_exponentials' calculates the sum from 0 while
-        // we want to start from 'order'.
-        symbolic_sum_distinct[i] -= q_k.subs(k == 0);
-        for (int j = 1; j < order; ++j)
-          symbolic_sum_distinct[i] -= q_k.subs(k == j) * pow(lambda, -1);
-        
-        symbolic_sum_distinct[i] =
-          symbolic_sum_distinct[i].subs(x == alpha/lambda);
-        symbolic_sum_distinct[i] *= pow(lambda, n);
-        symbolic_sum_distinct[i] =
-          simplify_on_output_ex(symbolic_sum_distinct[i].expand(), n, false);
-      }
+      if (distinct)
+	symbolic_sum_distinct[i] = return_sum(true, n, order,
+					      exp_poly_coeff[i],
+					      alpha, lambda);
       // The root is equal to the exponential's base.
-      else {
-	symbolic_sum_no_distinct[i] = sum_poly_times_exponentials(q_k, k, n,
-                                                                  1);
-	// 'sum_poly_times_exponentials' calculates the sum from 0 while
-        // we want to start from 'order'.
-        symbolic_sum_no_distinct[i] -= q_k.subs(k == 0);
-        for (int j = 1; j < order; ++j)
-          symbolic_sum_no_distinct[i] -= q_k.subs(k == j) * pow(lambda, -1);
-        symbolic_sum_no_distinct[i] *= pow(lambda, n);
-        symbolic_sum_no_distinct[i] =
-          simplify_on_output_ex(symbolic_sum_no_distinct[i].expand(), n,
-                                false);
-      }
+      else
+	symbolic_sum_no_distinct[i] = return_sum(false, n, order,
+						 exp_poly_coeff[i],
+						 alpha, lambda);
     }
   }
 }
@@ -249,7 +251,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   // and to decompose the inhomogeneous term of the recurrence relation.  
   GExpr e = rhs.expand();
 
-  // Special case: 'e' is only a function in \p n or a constant.
+  // Special case: 'e' is only a function in 'n' or a constant.
   // If there is not in 'e' 'x(argument)' or there is but with
   // 'argument' that not contains the variable 'n', then the solution
   // is obviously 'e'.
@@ -408,7 +410,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
  
   // FIXME: il seguente if sull'ordine e' temporaneo perche' cosi' si
   // riescono a fare le parametriche del primo ordine almeno.
-  // Temporaneo fino a che 'find_roots' accettera' i parametri anche
+  // Temporaneo fino a che 'find_roots()' accettera' i parametri anche
   // per equazioni di grado superiore al primo. 
   std::vector<GNumber> num_coefficients(order+1);
 
@@ -417,14 +419,14 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     roots.push_back(coefficients[1]);
   } 
   else {
-    // Check that the vector 'coefficients' does not contains
-    // parameters and in this case uses a vector of GNumber.
+    // Check that the vector 'coefficients' contains only numeric
+    // elements and in this case uses a vector of GNumber.
     for (int i = 1; i <= order; ++i)
       if (is_a<numeric>(coefficients[i]))
 	num_coefficients[i] = ex_to<numeric>(coefficients[i]);
       else
 	throw("PURRS error: today the second order recurrence relations\n"
-	      "does not support parametric coefficients.\n"
+	      "does not support not rationals coefficients.\n"
 	      "Please come back tomorrow.");
     characteristic_eq = build_characteristic_equation(order, y,
 						      num_coefficients);
@@ -788,13 +790,16 @@ exp_poly_decomposition(const GExpr& e, const GSymbol& n,
 }
 
 /*!
-  Given a vector \p symbolic_sum that contains all the symbolic sums
-  of the inhomogeneous term's terms that are polynomial or the product
-  of a polynomial and an exponential, this function substitutes to the
-  sums the corresponding values of the characteristic equation's roots
-  and of the bases of the eventual exponentials.
+  Let the vectors \p symbolic_sum_distinct and \p symbolic_sum_no_distinct
+  that contain all the symbolic sums of the inhomogeneous term's terms that
+  are polynomial or the product of a polynomial and an exponential,
+  For each sum this function
+  - substitutes to \p lambda the corresponding value of the characteristic
+    equation's root;
+  - substitutes to \p alpha the corresponding base of the eventual
+    exponential.
   Returns a <CODE>GExpr</CODE> \p solution with the sum of all sums of the
-  vector.
+  vectors.
  */
 static void
 subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
@@ -809,8 +814,8 @@ subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
       GExpr base_exp = base_of_exps[j];
       GExpr tmp;
       if (base_exp.is_equal(roots[i].value()))
-      tmp = symbolic_sum_no_distinct[j].subs(lst(alpha == base_exp,
-						 lambda == roots[i].value()));
+	tmp = symbolic_sum_no_distinct[j].subs(lst(alpha == base_exp,
+						   lambda== roots[i].value()));
       else
 	tmp = symbolic_sum_distinct[j].subs(lst(alpha == base_exp,
 						lambda == roots[i].value()));
@@ -819,12 +824,12 @@ subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
 }
 
 /*!
-  Adds to sum related to the inhmogeneous terms the sum
+  Adds to the sum already computed those corresponding to the initial
+  conditions:
   \f[
     \sum_{i=0}^{order - 1} g_{n-i}
-      \bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \bigr)
+      \bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \bigr).
   \f]
-  corresponding to the initial conditions'part.
 */
 // FIXME: il vettore 'coefficients' dovra' diventare di 'GExpr' quando
 // sapremo risolvere anche le eq. di grado superiore al primo con i
@@ -842,7 +847,7 @@ add_initial_conditions(GExpr& g_n, const GSymbol& n,
   for (unsigned i = g_n_i.size(); i-- > 0; ) {
     GExpr tmp = initial_conditions[i];
     for (unsigned j = i; j > 0; j--)
-      tmp -= coefficients[j]*initial_conditions[i-j];
+      tmp -= coefficients[j] * initial_conditions[i-j];
     solution += tmp * g_n_i[i];
   }
 }
