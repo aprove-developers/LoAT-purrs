@@ -211,6 +211,20 @@ my_uncaught_exception() {
   error("uncaught exception");
 }
 
+Expr_List symbols;
+
+static void
+init_symbols() {
+  symbols.append(Recurrence::n);
+  char a[2];
+  a[1] = '\0';
+  for (char c = 'a'; c <= 'z'; ++c)
+    if (c != 'e' && c != 'n' && c != 'x') {
+      a[0] = c;
+      symbols.append(Symbol(a));
+    }
+}
+
 int
 main() try {
   // Limit the amount of resources we may consume.
@@ -237,11 +251,8 @@ main() try {
   if(expr == (*cgi).end() || expr->isEmpty())
     error("you did not type anything!!!");
 
-  Symbol a("a");
-  Symbol b("b");
-  Symbol c("c");
-  Symbol d("d");
-  Expr_List symbols(Recurrence::n, a, b, c, d);
+  init_symbols();
+
   Expr rhs = Expr(**expr, symbols);
   Recurrence recurrence(rhs);
 
