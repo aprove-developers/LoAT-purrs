@@ -26,6 +26,9 @@ http://www.cs.unipr.it/purrs/ . */
 
 using namespace GiNaC;
 
+/*!
+  Computes the gcd between the integers \p n and \p m.
+*/
 int
 gcd(int n, int m) {
   int r = m;
@@ -140,12 +143,12 @@ is_polynomial(const GExpr& e, const GSymbol& var) {
 
 /*!
   Give a <CODE>GiNaC::GExpr</CODE> \p p and a <CODE>GiNaC::GSymbol</CODE>
-  \p var, builds two other <CODE>GiNaC::GExpr</CODE> \p p_poly and \p p_no_poly
+  \p var, builds two other <CODE>GiNaC::GExpr</CODE> \p poly and \p no_poly
   that contain the polynomial part and the non-polynomial part of \p p
   regarding the variable \p var.
   The polynomial part of an expression is the sum of those terms that are
   polynomials in a variable in according to the following definition
-  in two steps (when the polynomial part lacks \p p_poly is zero and so
+  in two steps (when the polynomial part lacks \p poly is zero and so
   also for non polynomial part).
   Step 1
   We consider the variable \p var.
@@ -180,28 +183,28 @@ is_polynomial(const GExpr& e, const GSymbol& var) {
     \f$ a + b \f$ and \f$ a * b \f$ are <CODE>polynomial_in_var</CODE>.
 */
 void
-assign_poly_part_and_no_poly_part(const GExpr& p, const GSymbol& var,
-				  GExpr& p_poly, GExpr& p_no_poly) {
+assign_polynomial_part(const GExpr& p, const GSymbol& var,
+		       GExpr& poly, GExpr& no_poly) {
   if (is_a<add>(p)) {
-    p_poly = 0;
-    p_no_poly = 0;
+    poly = 0;
+    no_poly = 0;
     for (unsigned i = p.nops(); i-- > 0; ) {
       if (is_polynomial(p.op(i), var))
-	p_poly += p.op(i);
+	poly += p.op(i);
       else
-	p_no_poly += p.op(i);
+	no_poly += p.op(i);
     }
   }
   else {
-    p_poly = 1;
-    p_no_poly = 1;
+    poly = 1;
+    no_poly = 1;
     if (is_polynomial(p, var)) {
-      p_poly *= p;
-      p_no_poly = 0;
+      poly *= p;
+      no_poly = 0;
     }
     else {
-      p_no_poly *= p;
-      p_poly = 0;
+      no_poly *= p;
+      poly = 0;
     }
   }
 }

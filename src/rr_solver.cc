@@ -569,7 +569,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     GExpr p_poly; 
     GExpr p_no_poly;
     // In 'p' there are not nested powers.
-    assign_poly_part_and_no_poly_part(p, n, p_poly, p_no_poly);
+    assign_polynomial_part(p, n, p_poly, p_no_poly);
     return GMatrix (3, 1, lst(1, p_poly, p_no_poly));
   }
   else {
@@ -594,7 +594,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	GExpr coeff_poly;
 	GExpr coeff_no_poly;
 	// In 'coeff' there are not nested powers.
-	assign_poly_part_and_no_poly_part(coeff, n, coeff_poly, coeff_no_poly);
+	assign_polynomial_part(coeff, n, coeff_poly, coeff_no_poly);
 	row_coeff_poly.append(coeff_poly);
 	row_coeff_no_poly.append(coeff_no_poly);
 	q -= addendum.op(0);
@@ -613,7 +613,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       row_exp.append(1);
       GExpr q_poly;
       GExpr q_no_poly;
-      assign_poly_part_and_no_poly_part(q, n, q_poly, q_no_poly);
+      assign_polynomial_part(q, n, q_poly, q_no_poly);
       row_coeff_poly.append(q_poly);
       row_coeff_no_poly.append(q_no_poly);
 
@@ -663,7 +663,7 @@ exp_poly_decomposition_factor(const GExpr& base,
   // `p[position]' and `q[position]', respectively.
   GExpr polynomial;
   GExpr possibly_not_polynomial;
-  assign_poly_part_and_no_poly_part(e, n, polynomial, possibly_not_polynomial);
+  assign_polynomial_part(e, n, polynomial, possibly_not_polynomial);
   p[position] += polynomial;
   q[position] += possibly_not_polynomial;
 }
@@ -671,7 +671,7 @@ exp_poly_decomposition_factor(const GExpr& base,
 /*!
   Definition of a <CODE>valid_base</CODE> for an exponential in inductive way:
   - every <CODE>GiNaC::numeric</CODE> is a <CODE>valid_base</CODE>;
-  - every <CODE>GiNaC::costant</CODE> is a <CODE>valid_base</CODE>;
+  - every <CODE>GiNaC::constant</CODE> is a <CODE>valid_base</CODE>;
   - every <CODE>GiNaC::symbol</CODE> different from \p n is a
     <CODE>valid_base</CODE>;
   - given \f$ e \f$ a <CODE>GiNaC::power</CODE>,

@@ -50,8 +50,8 @@ GExpr
 get_binding(const GList& substitution, unsigned wild_index);
 
 void
-assign_poly_part_and_no_poly_part(const GExpr& p, const GSymbol& var,
-				  GExpr& p_poly, GExpr& p_no_poly);
+assign_polynomial_part(const GExpr& p, const GSymbol& var,
+		       GExpr& poly, GExpr& no_poly);
 
 #ifdef NOISY
 #define D_MSG(s) std::cout << s << std::endl
