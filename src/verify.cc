@@ -890,7 +890,7 @@ PURRS::Recurrence::verify_finite_order(bool partial_verification) const {
 
  continue_with_step_4:
   // The recurrence is homogeneous.
-  if (summands_without_i_c == 0)
+  if (inhomogeneous_term == 0)
     if (partial_verification)
       return PARTIAL_PROVABLY_CORRECT;
     else
