@@ -586,9 +586,8 @@ order_2_sol_roots_no_distinct(const GSymbol& n, const GMatrix& decomposition,
     GMatrix sol(2, 1);
     sol = vars.inverse();
     sol = sol.mul(rhs);
-    
-    solution_tot = solution_tot.subs(a == sol(0,0));
-    solution_tot = solution_tot.subs(b == sol(1,0));
+ 
+    solution_tot = solution_tot.subs(lst(a == sol(0,0), b == sol(1,0)));
   }
   else {
     // The binary recurrence is non-homogeneous.
@@ -657,8 +656,7 @@ order_2_sol_roots_no_distinct(const GSymbol& n, const GMatrix& decomposition,
     std::cout << "Solution before calling simplify: " << std::endl;
     std::cout << solution_tot << std::endl;
 #endif
-    solution_tot = solution_tot.expand();
-    solution_tot = simplify_on_output_ex(solution_tot);
+    solution_tot = simplify_on_output_ex(solution_tot.expand());
     solution_tot = solution_tot.collect(lst(initials_conditions[0],
 					    initials_conditions[1]));
   }

@@ -72,21 +72,23 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
   unsigned i = bases.size();
   while (i > 0) {
     --i;
-    GExpr exp = exponents[i];
-    GExpr base = bases[i];
-    for (unsigned j = i; j-- > 0; )
-      // In the vectors 'bases' and 'exponents' the base and the exponent
-      // considerated in the simplification, are substituded with
-      // the value '0' and with the base and the exponent of the new power.
-      if (bases[j].is_equal(base)) {
-	exp += exponents[j];
-	// FIXME: si puo' migliorare eliminando il j-esimo elemento sia
-	// da 'bases' che da 'exponents' invece che metterli a 0. 
-	bases[j] = 0;
-	exponents[j] = 0;
-	exponents[i] = 0;
-      }
-    ris *= pow(base, exp);
+    if (!exponents[i].is_zero()) {
+      GExpr exp = exponents[i];
+      GExpr base = bases[i];
+      for (unsigned j = i; j-- > 0; )
+	// In the vectors 'bases' and 'exponents' the base and the exponent
+	// considerated in the simplification, are substituded with
+	// the value '0' and with the base and the exponent of the new power.
+	if (bases[j].is_equal(base)) {
+	  exp += exponents[j];
+	  // FIXME: si puo' migliorare eliminando il j-esimo elemento sia
+	  // da 'bases' che da 'exponents' invece che metterli a 0. 
+	  bases[j] = 0;
+	  exponents[j] = 0;
+	  exponents[i] = 0;
+	}
+      ris *= pow(base, exp);
+    }
   }
   // Now adds to 'ris' the factor of 'e' not considered in the
   // previous simplification, i.e., the factor which are not powers .
