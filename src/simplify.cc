@@ -1764,6 +1764,5 @@ PURRS::simplify_all(const Expr& e) {
   e_rewritten = simplify_factorials_and_exponentials(e_rewritten);
   e_rewritten = simplify_ex_for_output(e_rewritten, false);
   e_rewritten = simplify_logarithm(e_rewritten);
-  e_rewritten = simplify_numer_denom(e_rewritten).expand();
   return e_rewritten;
 }
