@@ -562,14 +562,14 @@ compute_sum_with_transcendental_method(const Number& lower, const Expr& upper,
 	Number lower_sum = lower - 1 > 0 ? lower : 1;
 	gosper_solution += PURRS::sum(h, lower_sum,
 				      Recurrence::n,
-				      pwr(roots[0].value(), Recurrence::n - h)
+				      pwr(roots[0].value(), -h)
 				      * exp_no_poly_coeff[i]
 				      .substitute(Recurrence::n, h)
 				      * pwr(base_of_exps[i], Recurrence::n)
 				      .substitute(Recurrence::n, h));
       }
     }
-    solution += gosper_solution;
+    solution += pwr(roots[0].value(), Recurrence::n) * gosper_solution;
   }
   return solution;
 }
