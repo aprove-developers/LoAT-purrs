@@ -76,6 +76,11 @@ Finite_Order_Info::get_initial_conditions() const {
   return initial_conditions;
 }
 
+inline unsigned
+Finite_Order_Info::get_one_initial_condition(unsigned position) const {
+  return initial_conditions[position];
+}
+
 inline const std::vector<Expr>&
 Finite_Order_Info::get_coefficients() const {
   return coefficients;

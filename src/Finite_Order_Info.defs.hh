@@ -57,6 +57,11 @@ public:
   //! Returns the vector <CODE>initial_conditions</CODE>.
   const std::vector<unsigned>& get_initial_conditions() const;
 
+  //! \brief
+  //! Returns the element in the position \p position of the vector
+  //! <CODE>initial_conditions</CODE>.
+  unsigned get_one_initial_condition(unsigned position) const;
+
   //! Returns the vector <CODE>coefficients</CODE>.
   const std::vector<Expr>& get_coefficients() const;
 
