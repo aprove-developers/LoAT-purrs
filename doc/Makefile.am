@@ -1,7 +1,8 @@
 # Automake source file for the Parma University's Recurrence Relation Solver.
 # Copyright (C) 2001, 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 #
-# This file is part of the Parma Univ.'s Recurrence Relation Solver (PURRS).
+# This file is part of the Parma University's Recurrence Relation
+# Solver (PURRS).
 #
 # The PURRS is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -18,8 +19,8 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307,
 # USA.
 #
-# For the most up-to-date information see the Parma University's
-# Recurrence Relation Solver site: http://www.cs.unipr.it/ppl/ .
+# For the most up-to-date information see the PURRS site:
+# http://www.cs.unipr.it/purrs/ .
 
 srcdir = @srcdir@
 abs_srcdir = @abs_srcdir@

@@ -39,9 +39,9 @@ using namespace GiNaC;
 #define NOISY 0
 
 /*!
-  Returns <CODE>true</CODE> if and only if the <CODE>GExpr</CODE> \p e
-  is of the form \f$ n + d \f$ with \f$ d \f$ a <CODE>GiNaC::numeric</CODE>;
-  in this case \p decrement contains the opposite of \f$ d \f$.
+  Returns <CODE>true</CODE> if and only if \p e is of the form
+  \f$ n + d \f$ with \f$ d \f$ a <CODE>GiNaC::numeric</CODE>;
+  in this case the opposite of \f$ d \f$ is assigned to \p decrement.
 */
 static bool
 get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
