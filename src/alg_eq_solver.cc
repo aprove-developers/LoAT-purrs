@@ -465,40 +465,6 @@ find_power_roots(const Expr& p, const Symbol& x,
 
 } // anonymous namespace
 
-//! Finds all the positive divisors of the strictly positive integer \p n
-//! if it is less than <CODE>FIND_DIVISORS_THRESHOLD</CODE>.
-/*!
-  This routine inserts into \p divisors all the positive divisors of
-  the strictly positive integer \p n if it is less than
-  <CODE>FIND_DIVISORS_THRESHOLD</CODE>.
-  Returns <CODE>false</CODE> if \p n is bigger than
-  <CODE>FIND_DIVISORS_THRESHOLD</CODE> and, in this case, the function not
-  find the divisors of \p n; returns <CODE>true</CODE> otherwise.
-*/
-bool
-PURRS::find_divisors(Number n, std::vector<Number>& divisors) {
-  assert(n.is_positive_integer());
-  if (n < FIND_DIVISORS_THRESHOLD) {
-    unsigned m = n.to_unsigned();
-    // Once a divisor `i' is found, it is pushed onto the vector `divisors'
-    // along with its conjugate `j = n/i', provided that `j' is less than `i'.
-    if (m == 1)
-      divisors.push_back(1);
-    else
-      for (unsigned i = 1, j = m; i < FIND_DIVISORS_MAX && i < j; ++i) {
-	j = m / i;
-	unsigned r = m % i;
-	if (r == 0) {
-	  divisors.push_back(i);
-	  if (i < j)
-	    divisors.push_back(j);
-	}
-      }
-    return true;
-  }
-  return false;
-}
-
 //! Let \p p be a polynomial with integer coefficients in \p x. This
 //! function finds, when possible, all the roots of \p p with the respective
 //! multiplicity.

@@ -117,10 +117,6 @@ bool
 find_roots(const Expr& p, const Symbol& x,
 	   std::vector<Polynomial_Root>& roots, bool& all_distinct);
 
-//! Finds divisors of positive integer \p n.
-bool
-find_divisors(Number n, std::vector<Number>& divisors);
-
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_alg_eq_solver_hh)

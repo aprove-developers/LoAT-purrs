@@ -58,6 +58,10 @@ void
 partial_factor(const Number& n,
 	       std::vector<Number>& bases, std::vector<int>& exponents);
 
+//! Finds divisors of positive integer \p n.
+bool
+find_divisors(Number n, std::vector<Number>& divisors);
+
 //! \brief
 //! Returns bases and exponents of each factor of \p e in the pair of vectors
 //! \p bases and \p exponents.

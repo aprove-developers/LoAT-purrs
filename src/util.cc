@@ -45,6 +45,11 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
 static const unsigned
 FACTOR_THRESHOLD = 100;
 
+static const unsigned FIND_DIVISORS_MAX = 11;
+
+static const unsigned
+FIND_DIVISORS_THRESHOLD = FIND_DIVISORS_MAX*FIND_DIVISORS_MAX;
+
 bool
 PURRS::vector_not_all_zero(const std::vector<PURRS::Expr>& v) {
   for (unsigned i = v.size(); i-- > 0; )
@@ -138,6 +143,40 @@ PURRS::partial_factor(const Number& n,
     bases.push_back(1);
     exponents.push_back(1);
   }
+}
+
+//! Finds all the positive divisors of the strictly positive integer \p n
+//! if it is less than <CODE>FIND_DIVISORS_THRESHOLD</CODE>.
+/*!
+  This routine inserts into \p divisors all the positive divisors of
+  the strictly positive integer \p n if it is less than
+  <CODE>FIND_DIVISORS_THRESHOLD</CODE>.
+  Returns <CODE>false</CODE> if \p n is bigger than
+  <CODE>FIND_DIVISORS_THRESHOLD</CODE> and, in this case, the function not
+  find the divisors of \p n; returns <CODE>true</CODE> otherwise.
+*/
+bool
+PURRS::find_divisors(Number n, std::vector<Number>& divisors) {
+  assert(n.is_positive_integer());
+  if (n < FIND_DIVISORS_THRESHOLD) {
+    unsigned m = n.to_unsigned();
+    // Once a divisor `i' is found, it is pushed onto the vector `divisors'
+    // along with its conjugate `j = n/i', provided that `j' is less than `i'.
+    if (m == 1)
+      divisors.push_back(1);
+    else
+      for (unsigned i = 1, j = m; i < FIND_DIVISORS_MAX && i < j; ++i) {
+	j = m / i;
+	unsigned r = m % i;
+	if (r == 0) {
+	  divisors.push_back(i);
+	  if (i < j)
+	    divisors.push_back(j);
+	}
+      }
+    return true;
+  }
+  return false;
 }
 
 namespace {
