@@ -237,9 +237,11 @@ compute_bounds_for_power_of_n(const Number& coeff, const Number& divisor,
   a * n^k
 */
 bool
-sharper_bounds_for_power_of_n(const Expr& poly_coeff,
-			      const Number& coeff, const Number& divisor,
-			      bool& computed_only_upper, Expr& lb, Expr& ub) {
+sharper_bounds_for_polynomial_function(const Expr& poly_coeff,
+				       const Number& coeff,
+				       const Number& divisor,
+				       bool& computed_only_upper,
+				       Expr& lb, Expr& ub) {
   bool computed_at_least_one_bound = false;
   Number k;
   // Case `g(n) = a n^0' with `a' positive number.
@@ -255,7 +257,7 @@ sharper_bounds_for_power_of_n(const Expr& poly_coeff,
 				  computed_only_upper, lb, ub);
     computed_at_least_one_bound = true;
   }
-  // Case `g(n) = n^k' with `k != 1'.
+  // Case `g(n) = n^k' with `k > 1'.
   else if (poly_coeff.is_a_power()
 	   && poly_coeff.arg(0) == Recurrence::n
 	   && poly_coeff.arg(1).is_a_number(k)
@@ -334,13 +336,23 @@ sharper_bounds_for_no_polynomial_function(const Expr& no_poly_coeff,
 					  const Number& coeff,
 					  const Number& divisor,
 					  bool& computed_only_upper,
-					  Expr& /*lb*/, Expr& ub) {
+					  Expr& lb, Expr& ub) {
   bool computed_at_least_one_bound = false;
+  Number k;
   // Case `g(n) = log(n)'.
   if (no_poly_coeff.is_the_log_function()
       && no_poly_coeff.arg(0) == Recurrence::n) {
     compute_bounds_for_logarithm_function(coeff, divisor, 1, ub);
     computed_only_upper = true;
+    computed_at_least_one_bound = true;
+  }
+  // Case `g(n) = n^k' with `k' rational number.
+  else if (no_poly_coeff.is_a_power()
+	   && no_poly_coeff.arg(0) == Recurrence::n
+	   && no_poly_coeff.arg(1).is_a_number(k)
+	   && k.is_positive()) {
+    compute_bounds_for_power_of_n(coeff, divisor, 1, k,
+				  computed_only_upper, lb, ub);
     computed_at_least_one_bound = true;
   }
   else if (no_poly_coeff.is_a_mul()) {
@@ -648,7 +660,7 @@ PURRS::Recurrence::approximate_functional_equation() const {
 	  if (num_base == 1) {
 	    // Consider the eventual polynomial part.
 	    if (!poly_coeff.is_zero()
-		&& (!sharper_bounds_for_power_of_n(poly_coeff, 
+		&& (!sharper_bounds_for_polynomial_function(poly_coeff, 
 						   coeff, divisor_arg,
 						   computed_only_upper, lb, ub)
 		    || computed_only_upper)) {
