@@ -136,7 +136,7 @@ footer() {
             .set("src", "http://www.cs.unipr.it/images/cs_at_parma")
             .set("alt", "cs@parma")
             .set("border", "0"))
-    .set("href", "http://www.cs.unipr.it/") << br()
+    .set("href", "http://www.cs.unipr.it/details#verification") << br()
        << endl;
 
   // End of document.
@@ -228,10 +228,11 @@ init_symbols() {
 
 void
 mark_verified_solution() {
-  cout << img()
-    .set("src", "http://www.cs.unipr.it/purrs/images/verified")
-    .set("alt", "Verified solution")
-    .set("border", "0")
+  cout << a(img()
+	    .set("src", "http://www.cs.unipr.it/purrs/images/verified")
+	    .set("alt", "Verified solution")
+	    .set("border", "0"))
+    .set("href", "http://www.cs.unipr.it/") << br()
        << " ";
 }
 
@@ -453,10 +454,19 @@ main() try {
        << h1() << "PURRS Demo " << span("Results", set("class", "green"))
        << h1() << endl;
 
-  cout << h2()
-       << (have_exact_solution ? "Exact solution" : "Bounds")
-       << " for x(n) = " << rhs
-       << h2() << endl;
+  cout << h2();
+  if (have_exact_solution) {
+    if (have_verified_exact_solution)
+      cout << span("Verified", set("class", "green")) << " exact solution";
+    else
+      cout << "Exact solution";
+  }
+  else if (have_verified_lower_bound || have_verified_upper_bound)
+    cout << span("Verified", set("class", "green")) << " bounds";
+  else
+    cout << "Bounds";
+  cout<< " for x(n) = " << rhs
+      << h2() << endl;
 
   if (have_exact_solution) {
     if (have_verified_exact_solution)
