@@ -63,7 +63,7 @@ compute_product_on_add(const Expr& e, const Number& lower, const Expr& upper,
     Number num;
     // `e' is of the form n + p with p a number.
     if ((a == Recurrence::n && b.is_a_number(num))
-	|| (b == Recurrence::n && a.is_a_number(num)))
+	|| (b == Recurrence::n && a.is_a_number(num)) && num.is_integer())
       if (num.is_positive_integer()) {
 	e_prod = factorial(e) / factorial(lower + num - 1);
 	e_prod_computed = true;
