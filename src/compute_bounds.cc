@@ -77,7 +77,7 @@ compute_bounds_for_exp_function(bool lower, const Number& coeff,
   }
 }
 
-void
+bool
 compute_bounds_for_power_of_n(bool lower,
 			      const Number& coeff, const Number& divisor,
 			      const Number& k, Expr& bound) {
@@ -88,6 +88,9 @@ compute_bounds_for_power_of_n(bool lower,
   const Expr& frac_log = log(Recurrence::n) / log(divisor);
   // Lower bound.
   if (lower) {
+    // FIXME: for the moment use only the theorem in order to compute
+    // lower bound in the case `g(n) = n^k'. 
+#if 0
     Expr mu_b;
     Expr c_b;
     if (divisor.is_positive_integer()) {
@@ -168,6 +171,9 @@ compute_bounds_for_power_of_n(bool lower,
 	throw std::runtime_error("PURRS internal error: "
 				 "failure of the function `compare()'.");
     }
+#else
+    return false;
+#endif
   }
   // Upper bound.
   else
@@ -183,6 +189,7 @@ compute_bounds_for_power_of_n(bool lower,
       // diff_coeff_pow_div_k == 2.
       throw std::runtime_error("PURRS internal error: "
 			       "failure of the function `compare()'.");
+  return true;
 }
 
 bool
@@ -190,6 +197,9 @@ compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
 				      const Number& divisor, Expr& bound) {
   // Lower bound.
   if (lower)
+    // FIXME: for the moment use only the theorem in order to compute
+    // lower bound in the case `g(n) = log(n)'.
+#if 0
     if (divisor.is_positive_integer()) {
       const Expr& frac_log = log(Recurrence::n) / log(divisor);
       if (coeff < 1)
@@ -207,6 +217,7 @@ compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
       return true;
     }
     else
+#endif
       return false;
   // Upper bound.
   else {
@@ -232,6 +243,9 @@ compute_bounds_for_power_times_logarithm_function(bool lower,
   const Expr& pow_n_k = pwr(Recurrence::n, k);
   // Lower bound.
   if (lower)
+    // FIXME: for the moment use only the theorem in order to compute
+    // lower bound in the case `g(n) = n^k log(n)'.
+#if 0
     if (divisor.is_positive_integer()) {
       const Expr& frac_log = log(Recurrence::n) / log(divisor);
       if (diff_coeff_pow_div_k == -1)
@@ -252,6 +266,7 @@ compute_bounds_for_power_times_logarithm_function(bool lower,
       return true;
     }
     else
+#endif
       return false;
   // Upper bound.
   else {
@@ -286,12 +301,16 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
 	  && !has_parameters(poly_coeff))) {
     int cmp = compare(poly_coeff, 0);
     Expr tmp_bound;
-    if (cmp == 1)
+    if (cmp == 1) {
       // `a' positive number.
-      compute_bounds_for_power_of_n(lower, coeff, divisor, 0, tmp_bound);
-    else if (cmp == -1)
+      if (!compute_bounds_for_power_of_n(lower, coeff, divisor, 0, tmp_bound))
+	return false;
+    }
+    else if (cmp == -1) {
       // `a' negative number -> swap lower with upper or upper with lower.
-      compute_bounds_for_power_of_n(!lower, coeff, divisor, 0, tmp_bound);
+      if (!compute_bounds_for_power_of_n(!lower, coeff, divisor, 0, tmp_bound))
+	return false;
+    }
     else
       throw std::runtime_error("PURRS internal error: "
 			       "failure of the function `compare()'.");
@@ -301,14 +320,16 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
   // Case `g(n) = n^1'.
   else if (poly_coeff == Recurrence::n) {
     Expr tmp_bound;
-    compute_bounds_for_power_of_n(lower, coeff, divisor, 1, tmp_bound);
+    if (!compute_bounds_for_power_of_n(lower, coeff, divisor, 1, tmp_bound))
+      return false;
     bound += tmp_bound;
     return true;
   }
   // Case `g(n) = -n^1' -> swap lower with upper or upper with lower.
   else if (poly_coeff == -Recurrence::n) {
     Expr tmp_bound;
-    compute_bounds_for_power_of_n(!lower, coeff, divisor, 1, tmp_bound);
+    if (!compute_bounds_for_power_of_n(!lower, coeff, divisor, 1, tmp_bound))
+      return false;
     bound += tmp_bound;
     return true;
   }
@@ -319,7 +340,8 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
     Number k = poly_coeff.arg(1).ex_to_number();
     if (k.is_positive()) {
       Expr tmp_bound;
-      compute_bounds_for_power_of_n(lower, coeff, divisor, k, tmp_bound);
+      if (!compute_bounds_for_power_of_n(lower, coeff, divisor, k, tmp_bound))
+	return false;
       bound += tmp_bound;
       return true;
     }
@@ -349,11 +371,15 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
     int cmp = compare(factor, 0);
     Expr tmp_bound;
     // `a' positive number.
-    if (cmp == 1)
-      compute_bounds_for_power_of_n(lower, coeff, divisor, k, tmp_bound);
+    if (cmp == 1) {
+      if (!compute_bounds_for_power_of_n(lower, coeff, divisor, k, tmp_bound))
+	return false;
+    }
     // `a' negative number -> swap lower with upper or upper with lower.
-    else if (cmp == -1)
-      compute_bounds_for_power_of_n(!lower, coeff, divisor, k, tmp_bound);
+    else if (cmp == -1) {
+      if (!compute_bounds_for_power_of_n(!lower, coeff, divisor, k, tmp_bound))
+	return false;
+    }
     else
       throw std::runtime_error("PURRS internal error: "
 			       "failure of the function `compare()'.");
