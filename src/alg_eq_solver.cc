@@ -312,11 +312,6 @@ void
 solve_equation_4(const GNumber& a1, const GNumber& a2,
 		 const GNumber& a3, const GNumber& a4,
 		 GExpr& x1, GExpr& x2, GExpr& x3, GExpr& x4) {
-  cout << "a1 = " << a1 << endl;
-  cout << "a2 = " << a2 << endl;
-  cout << "a3 = " << a3 << endl;
-  cout << "a4 = " << a4 << endl;
-
   GExpr y1;
   GExpr y2;
   GExpr y3;
