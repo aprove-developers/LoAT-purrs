@@ -34,8 +34,8 @@ int
 PURRS::Matrix::size_norm_matrix() const {
   const Matrix& m = *this;
   int count = 0;
-  for (unsigned i = num_rows(); i-- > 0; )
-    for (unsigned j = num_columns(); j-- > 0; )
+  for (unsigned i = m.num_rows(); i-- > 0; )
+    for (unsigned j = m.num_columns(); j-- > 0; )
       count += m(i, j).size_norm();
   return count;
 }
