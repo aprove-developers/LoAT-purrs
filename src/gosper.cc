@@ -136,9 +136,9 @@ gosper_step_two(const GExpr& r_n, const GSymbol& n,
   // normalize f and g, and store conversion factor in Z
   GExpr lead_f = f.lcoeff(n);
   GExpr lead_g = g.lcoeff(n);
-  GExpr Z = lead_f * pow(lead_g, -1);
-  a_n = f * pow(lead_f, -1);
-  b_n = g * pow(lead_g, -1);
+  GExpr Z = lead_f * power(lead_g, -1);
+  a_n = f * power(lead_f, -1);
+  b_n = g * power(lead_g, -1);
 
   // Computation of the output polynomials.
   c_n = 1;
@@ -204,7 +204,7 @@ find_polynomial_solution(const GSymbol& n, const GNumber& deg_x,
   // Builds the generic polynomial `p' of degree `deg_x'.
   x_n = 0;
   for (unsigned i = 0; i < number_of_coeffs; ++i)
-    x_n += pow(n, i) * unknowns.op(i);
+    x_n += power(n, i) * unknowns.op(i);
 
   GExpr x_n_shift = x_n.subs(n, n+1);
   GExpr b_shift = b_n.subs(n, n-1);
@@ -269,7 +269,7 @@ gosper_step_three(const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
     GExpr shift_b = b_n.subs(n, n - 1);
     GExpr A = a_n.coeff(n, deg_a - 1);
     GExpr B = shift_b.coeff(n, deg_a - 1);
-    GExpr B_A_e = (B - A) * pow(lead_a, -1);
+    GExpr B_A_e = (B - A) * power(lead_a, -1);
     assert(B_A_e.is_a_number());
     GNumber B_A = B_A_e.ex_to_number();
     GNumber possible_deg = deg_c - deg_a + 1;
@@ -298,7 +298,7 @@ gosper_step_four(const GExpr& t, const GExpr& b_n, const GExpr& c_n,
 		 const int lower_bound, const GExpr& upper_bound,
 		 GExpr solution) {
   GExpr shift_b = b_n.subs(n, n-1);
-  GExpr z_n = shift_b * x_n * t * pow(c_n, -1);
+  GExpr z_n = shift_b * x_n * t * power(c_n, -1);
   z_n = simplify_numer_denom(z_n);
   // The Gosper's algorithm computes summation with the lower bound `0'
   // and the upper bound `n - 1': in this case, once we have `z_n',

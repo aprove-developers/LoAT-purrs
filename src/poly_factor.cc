@@ -75,7 +75,7 @@ poly_factor(const GExpr& p, const GSymbol& x, std::vector<GExpr>& factors) {
     assert(d > 0);
     for (long i = d; i >= 0; --i)
       if (long a_i = ZZ_to_long(coeff(ntl_factor, i)))
-	factor += a_i*pow(x, i);
+	factor += a_i*power(x, i);
     factors.push_back(factor);
   }
   return num_factors;

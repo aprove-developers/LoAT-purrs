@@ -63,6 +63,30 @@ bool operator>(const Expr& lh, const Expr& rh);
 bool operator<=(const Expr& lh, const Expr& rh);
 bool operator>=(const Expr& lh, const Expr& rh);
 
+// FIXME: meglio con argomento di default `unsigned label = 0'?
+Expr wild(unsigned label);
+
+Expr power(const Expr& b, const Expr& e);
+Expr sqrt(const Expr& e);
+Expr sin(const Expr& e);
+Expr cos(const Expr& e);
+Expr acos(const Expr& e);
+Expr tan(const Expr& e);
+Expr exp(const Expr& e);
+Expr log(const Expr& e);
+Expr factorial(const Expr& e);
+
+Expr quo(const Expr& a, const Expr& b, const Symbol& x);
+Expr rem(const Expr& a, const Expr& b, const Symbol& x);
+Expr prem(const Expr& a, const Expr& b, const Symbol& x);
+Expr gcd(const Expr& a, const Expr& b);
+Expr lcm(const Expr& a, const Expr& b);
+Expr sqrfree(const Expr& e, const Expr_List& lst);
+
+Expr lsolve(const Expr_List& lst1, const Expr_List& lst2);
+
+Expr x(const Expr& e);
+
 class Expr {
 public:
   //! Default constructor.
@@ -108,14 +132,6 @@ public:
   bool is_a_matrix() const;
   bool is_a_Expr_List() const;
   bool is_a_relational() const;
-  /*
-  bool is_exactly_a_number() const;
-  bool is_exactly_a_constant() const;
-  bool is_exactly_a_add() const;
-  bool is_exactly_a_mul() const;
-  bool is_exactly_a_power() const;
-  bool is_exactly_a_function() const;
-  */
 
   bool is_the_abs_function() const;
   bool is_the_exp_function() const;
@@ -165,39 +181,24 @@ public:
 private:
   GiNaC::ex e;
 
+  friend Expr power(const Expr& b, const Expr& e);
+  friend Expr sqrt(const Expr& e);
+  friend Expr sin(const Expr& e);
+  friend Expr cos(const Expr& e);
+  friend Expr acos(const Expr& e);
+  friend Expr tan(const Expr& e);
+  friend Expr exp(const Expr& e);
+  friend Expr log(const Expr& e);
+  friend Expr factorial(const Expr& e);
+
   friend class Number;
   friend class Constant;
   friend class Expr_List;
   friend class Matrix;
 
   Expr(const GiNaC::ex& ge);
+  Expr(const GiNaC::function& gf);
 };
-
-// FIXME: meglio con argomento di default `unsigned label = 0'?
-Expr wild(unsigned label);
-
-Expr pow(const Expr& b, const Expr& e);
-Expr sqrt(const Expr& e);
-Expr sin(const Expr& e);
-Expr cos(const Expr& e);
-Expr acos(const Expr& e);
-Expr tan(const Expr& e);
-Expr exp(const Expr& e);
-Expr ln(const Expr& e);
-Expr factorial(const Expr& e);
-// FIXME: ??
-Expr factorial(const unsigned i);
-
-Expr quo(const Expr& a, const Expr& b, const Symbol& x);
-Expr rem(const Expr& a, const Expr& b, const Symbol& x);
-Expr prem(const Expr& a, const Expr& b, const Symbol& x);
-Expr gcd(const Expr& a, const Expr& b);
-Expr lcm(const Expr& a, const Expr& b);
-Expr sqrfree(const Expr& e, const Expr_List& lst);
-
-Expr lsolve(const Expr_List& lst1, const Expr_List& lst2);
-
-Expr x(const Expr& e);
 
 } // namespace Parma_Recurrence_Relation_Solver
 

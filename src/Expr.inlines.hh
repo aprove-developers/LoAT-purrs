@@ -376,54 +376,48 @@ wild(unsigned label) {
 }
 
 inline Expr
-pow(const Expr& b, const Expr& e) {
-  return pow(b, e);
+power(const Expr& b, const Expr& e) {
+  return GiNaC::pow(b.e, e.e);
 }
 
 inline Expr
 sqrt(const Expr& e) {
-  return sqrt(e);
+  return GiNaC::sqrt(e.e);
 };
 
 inline Expr
 sin(const Expr& e) {
-  return sin(e);
+  return GiNaC::sin(e.e);
 };
 
 inline Expr
 cos(const Expr& e) {
-  return cos(e);
+  return GiNaC::cos(e.e);
 };
 
 inline Expr
 acos(const Expr& e) {
-  return acos(e);
+  return GiNaC::acos(e.e);
 };
 
 inline Expr
 tan(const Expr& e) {
-  return tan(e);
+  return GiNaC::tan(e.e);
 };
 
 inline Expr
 exp(const Expr& e) {
-  return exp(e);
+  return GiNaC::exp(e.e);
 };
 
 inline Expr
-ln(const Expr& e) {
-  return ln(e);
+log(const Expr& e) {
+  return GiNaC::log(e.e);
 };
 
 inline Expr
 factorial(const Expr& e) {
-  return factorial(e);
-};
-
-// FIXME: ??
-inline Expr
-factorial(const unsigned i) {
-  return factorial(i);
+  return GiNaC::factorial(e.e);
 };
 
 inline Expr

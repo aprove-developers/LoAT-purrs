@@ -248,6 +248,16 @@ abs(const Number& n) {
   return abs(n);
 }
 
+inline Number
+power(const Number& b, const Number& e) {
+  return GiNaC::pow(b.n, e.n);
+}
+
+inline Number
+factorial(const Number& n) {
+  return GiNaC::factorial(n.n);
+};
+
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_Number_inlines_hh)

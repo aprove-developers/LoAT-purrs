@@ -48,6 +48,9 @@ Number& operator--(Number& rh);
 Number operator++(Number& lh, int);
 Number operator--(Number& lh, int);
 
+Number power(const Number& b, const Number& e);
+Number factorial(const Number& n);
+
 class Number {
 public:
   //! Default constructor.
@@ -98,6 +101,8 @@ public:
 
 private:
   friend class Expr;
+  friend Number power(const Number& b, const Number& e);
+  friend Number factorial(const Number& n);
 
   GiNaC::numeric n;
 

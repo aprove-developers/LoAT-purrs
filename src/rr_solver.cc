@@ -107,13 +107,13 @@ build_characteristic_equation(const GSymbol& x,
     for (unsigned i = coefficients.size(); i-- > 1; )
       int_coefficients[i] *= least_com_mul;
     for (unsigned i = coefficients.size() - 1; i-- > 0; )
-      p += pow(x, i) * (-int_coefficients[coefficients.size() - 1 - i]);
-    p += least_com_mul * pow(x, coefficients.size() - 1);
+      p += power(x, i) * (-int_coefficients[coefficients.size() - 1 - i]);
+    p += least_com_mul * power(x, coefficients.size() - 1);
   }
   else {
     for (unsigned i = coefficients.size() - 1; i-- > 0; )
-      p += pow(x, i) * (-coefficients[coefficients.size() - 1 - i]);
-    p += pow(x, coefficients.size() - 1);
+      p += power(x, i) * (-coefficients[coefficients.size() - 1 - i]);
+    p += power(x, coefficients.size() - 1);
   }
   return p;
 }
@@ -145,10 +145,10 @@ return_sum(const bool distinct, const GSymbol& n, const GNumber& order,
   // we want to start from `order'.
   symbolic_sum -= q_k.subs(k, 0);
   for (int j = 1; j < order; ++j)
-    symbolic_sum -= q_k.subs(k, j) * pow(alpha, j) * pow(lambda, -j);
+    symbolic_sum -= q_k.subs(k, j) * power(alpha, j) * power(lambda, -j);
   if (distinct)
     symbolic_sum = symbolic_sum.subs(x, alpha/lambda);
-  symbolic_sum *= pow(lambda, n);
+  symbolic_sum *= power(lambda, n);
   symbolic_sum = simplify_on_output_ex(symbolic_sum.expand(), n, false);
 
   return symbolic_sum;
@@ -273,10 +273,11 @@ subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
 	  = symbolic_sum_no_distinct[r]
 	  .subs(Expr_List(alpha, lambda),
 		Expr_List(base_exp, roots[j].value()));
-      if (order == 2)
-	solution += tmp * pow(-1, j);
-      else
+      if (order != 2 || j & 1 == 0)
 	solution += tmp;
+      else
+	// `order' is 2 or `j' is odd.
+	solution -= tmp;
       ++r;
     }
   return solution;
@@ -641,7 +642,7 @@ eliminate_negative_decrements(const GExpr& /* rhs */, GExpr& /* new_rhs */,
 
 //   new_rhs /= coeff;
 //   new_rhs
-//     = new_rhs.subs(x(n-max_decrement), x(n-max_decrement)*pow(coeff, -1));
+//     = new_rhs.subs(x(n-max_decrement), x(n-max_decrement)*power(coeff, -1));
 
 //   std::cout << "NUOVA = " << new_rhs << std::endl; 
   return false;
@@ -756,16 +757,16 @@ exp_poly_decomposition_summand(const GExpr& e, const GSymbol& n,
 			       std::vector<GExpr>& alpha,
 			       std::vector<GExpr>& p,
 			       std::vector<GExpr>& q) {
-  static GExpr exponential = pow(wild(0), n);
+  static GExpr exponential = power(wild(0), n);
   GList substitution;
   unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
   if (num_factors == 1) {
     if (e.match(exponential, substitution)) {
-      // We have found something of the form `pow(base, n)'.
+      // We have found something of the form `power(base, n)'.
       GExpr base = get_binding(substitution, 0);
       assert(!base.is_zero());
       if (is_scalar_representation(base, n)) {
-	// We have found something of the form `pow(base, n)'
+	// We have found something of the form `power(base, n)'
 	// and `base' is good for the decomposition.
 	exp_poly_decomposition_factor(base, 1, n, alpha, p, q);
 	return;
@@ -775,13 +776,13 @@ exp_poly_decomposition_summand(const GExpr& e, const GSymbol& n,
   else
     for (unsigned i = num_factors; i-- > 0; ) {
       if (clear(substitution), e.op(i).match(exponential, substitution)) {
-	// We have found something of the form `pow(base, n)'.
+	// We have found something of the form `power(base, n)'.
 	GExpr base = get_binding(substitution, 0);
 	assert(!base.is_zero());
 	if (is_scalar_representation(base, n)) {
-	  // We have found something of the form `pow(base, n)'
+	  // We have found something of the form `power(base, n)'
 	  // and `base' is good for the decomposition: determine
-	  // `r = e/pow(base, n)'.
+	  // `r = e/power(base, n)'.
 	  GExpr r = 1;
 	  for (unsigned j = num_factors; j-- > 0; )
 	    if (i != j)
@@ -791,7 +792,7 @@ exp_poly_decomposition_summand(const GExpr& e, const GSymbol& n,
 	}
       }
     }
-  // No proper exponential found: this is treated like `pow(1, n)*e'.
+  // No proper exponential found: this is treated like `power(1, n)*e'.
   exp_poly_decomposition_factor(1, e, n, alpha, p, q);
 }
 
@@ -878,8 +879,8 @@ gosper(const int order, const GSymbol& n,
       // FIXME: `r_n' is temporary until the implementation
       // of the step one of gosper's algorithm.
       GExpr r_n =
-	exp_no_poly_coeff[i].subs(n, n + 1) * pow(base_of_exps[i], n+1)
-	* pow(exp_no_poly_coeff[i], -1) * pow(base_of_exps[i], -n);
+	exp_no_poly_coeff[i].subs(n, n + 1) * power(base_of_exps[i], n+1)
+	* power(exp_no_poly_coeff[i], -1) * power(base_of_exps[i], -n);
       r_n = simplify_on_output_ex(r_n.expand(), n, false);
       r_n = simplify_numer_denom(r_n);
       // FIXME: the lower bound for the sum is not `order'
@@ -887,8 +888,8 @@ gosper(const int order, const GSymbol& n,
       // FIXME: this is a temporary assert untile he generalization of
       // this function.
       assert(order == 1);
-      GExpr t = pow(base_of_exps[i], n) * exp_no_poly_coeff[i]
-	* pow(roots[0].value(), -n);
+      GExpr t = power(base_of_exps[i], n) * exp_no_poly_coeff[i]
+	* power(roots[0].value(), -n);
 //        std::cout << "t(n) = " << t << std::endl;
 //        std::cout << "r(n) = " << r_n << std::endl;
       if (!gosper(t, r_n, n, order, n, tmp))
@@ -961,7 +962,7 @@ solve_constant_coeff_order_1(const GSymbol& n, const int order,
   // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
   // add_initial_conditions(g_n, n, coefficients, initial_conditions,
   //		              solution);
-  solution += initial_conditions[0] * pow(roots[0].value(), n);
+  solution += initial_conditions[0] * power(roots[0].value(), n);
 
   return solution;
 }
@@ -1016,13 +1017,13 @@ solve_system(const bool all_distinct,
   if (all_distinct)
     for (unsigned i = coefficients_size - 1; i-- > 0; )
       for (unsigned j = coefficients_size - 1; j-- > 0; )
-	coeff_equations.prepend(pow(roots[j].value(), i));
+	coeff_equations.prepend(power(roots[j].value(), i));
   else
     for (unsigned h = 0; h < coefficients_size - 1; ++h)
       for (unsigned i = roots.size(); i-- > 0; ) {
 	for (GNumber j = roots[i].multiplicity(); j-- > 1; )
-	  coeff_equations.append(pow(h, j) * pow(roots[i].value(), h));
-	coeff_equations.append(pow(roots[i].value(), h));
+	  coeff_equations.append(power(h, j) * power(roots[i].value(), h));
+	coeff_equations.append(power(roots[i].value(), h));
       }
 
   // Define the matrices and solve the system.
@@ -1053,12 +1054,12 @@ find_g_n(const GSymbol& n, const bool all_distinct, const GMatrix sol,
   GExpr g_n = 0;
   if (all_distinct)
     for (int i = 0; i < order; ++i)
-      g_n += sol(i, 0) * pow(roots[i].value(), n);
+      g_n += sol(i, 0) * power(roots[i].value(), n);
   else
     for (unsigned i = roots.size(); i-- > 0; ) {
       int h = 0;
       for (GNumber j = roots[i].multiplicity(); j-- > 0 && h < order; ) {
-	g_n += sol(h, 0) * pow(n, j) * pow(roots[i].value(), n);
+	g_n += sol(h, 0) * power(n, j) * power(roots[i].value(), n);
 	++h;
       }
     }
@@ -1155,8 +1156,8 @@ compute_non_homogeneous_part(const GSymbol& n, const GExpr& g_n,
       solution -= (g_n_coeff_k * exp_poly_coeff_k).subs(k, 0);
       for (int h = 1; h < order; ++h)
 	solution -= (g_n_coeff_k * exp_poly_coeff_k).subs(k, h)
-	  * pow(1/bases_exp_g_n[i] * base_of_exps[j], h);
-      solution *= pow(bases_exp_g_n[i], n);
+	  * power(1/bases_exp_g_n[i] * base_of_exps[j], h);
+      solution *= power(bases_exp_g_n[i], n);
       solution_tot += solution;
     }
   return solution_tot;
@@ -1243,7 +1244,7 @@ solve_constant_coeff_order_2(const GSymbol& n, GExpr& g_n, const int order,
 					     base_of_exps,
 					     symbolic_sum_distinct,
 					     symbolic_sum_no_distinct);
-      g_n = (pow(root_1, n+1) - pow(root_2, n+1)) / diff_roots;
+      g_n = (power(root_1, n+1) - power(root_2, n+1)) / diff_roots;
       // FIXME: forse conviene semplificare g_n
       D_VAR(g_n);
     }

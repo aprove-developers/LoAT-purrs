@@ -131,7 +131,7 @@ is_nested_polynomial(const GExpr& p, const GSymbol& x, GExpr& q) {
     q = p.coeff(x, 0);
     // Note that `n' divides `degree'.
     for (unsigned j = 1, m = degree/n; j <= m; ++j)
-      q += p.coeff(x, n*j) * pow(x, j); 
+      q += p.coeff(x, n*j) * power(x, j); 
   }
   else
     // n == 1, the polynomial q is equal to the polynomial p.
@@ -390,8 +390,8 @@ find_roots(const GExpr& p, const GSymbol& x,
       for (int j = 0; j < nested_degree; ++j) {
 	GExpr root_of_unity = cos(j*theta) + I*sin(j*theta);
 	for (size_t i = 0; i < num_r_roots; ++i)
-	  roots.push_back(Polynomial_Root(pow(roots_r[i].value(),
-					      1/nested_degree)
+	  roots.push_back(Polynomial_Root(power(roots_r[i].value(),
+						1/nested_degree)
 					  * root_of_unity, multiplicity));
       }
       return true;

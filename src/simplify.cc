@@ -102,7 +102,7 @@ found_and_erase_n(const GExpr& not_num_exponent, const GSymbol& n) {
 static bool
 perfect_root(const GExpr& base, const GNumber& exp_num) {
   if (exp_num.is_rational()) {
-    GExpr pow_base_num_exp = pow(base, exp_num);
+    GExpr pow_base_num_exp = power(base, exp_num);
     if (pow_base_num_exp.is_a_number()) {
       GNumber tmp = pow_base_num_exp.ex_to_number();
       if (tmp.is_rational())
@@ -129,15 +129,15 @@ return_power(const bool& is_numeric_base, const bool& input,
   // not in `vect_not_num_exp[i]'.
   if (!input || not_num_exp_minus_n.is_equal(not_num_exp))
     if (is_numeric_base)
-      return pow(pow(base, num_exp), not_num_exp);
+      return power(power(base, num_exp), not_num_exp);
     else
-      return pow(base, num_exp * not_num_exp);
+      return power(base, num_exp * not_num_exp);
   // We put in evidence the special symbol `n'. 
   else
     if (is_numeric_base)
-      return pow(pow(pow(base, num_exp), not_num_exp_minus_n), n);
+      return power(power(power(base, num_exp), not_num_exp_minus_n), n);
     else
-      return pow(pow(base, num_exp * not_num_exp_minus_n), n);
+      return power(power(base, num_exp * not_num_exp_minus_n), n);
 }
 
 /*!
@@ -291,7 +291,7 @@ collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
 	  bases[i] *= bases[j];
 	  exponents[j] = 0;
 	}
-      ris *= pow(bases[i], exponents[i]);
+      ris *= power(bases[i], exponents[i]);
     }
   }
   // FIXME: si potrebbe migliorare togliendo da `exponents'
@@ -336,7 +336,7 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 	  exponents[i] += exponents[j];
 	  exponents[j] = 0;
 	}
-      ris *= pow(bases[i], exponents[i]);
+      ris *= power(bases[i], exponents[i]);
     }
   }
   // FIXME: si potrebbe migliorare togliendo da `exponents'
@@ -368,7 +368,7 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 	}
       // Applies rule `C1'.
       if (to_sum)
-	ris = ris.subs(pow(e.op(i), wild(0)), pow(e.op(i), wild(0) + 1));
+	ris = ris.subs(power(e.op(i), wild(0)), power(e.op(i), wild(0) + 1));
       else
 	ris *= e.op(i);
     }
@@ -488,7 +488,7 @@ to_std_form(const GNumber k, const std::vector<GNumber>& bases,
       remainder = abs_k - remainder;
     }
     exponents[i] = remainder;
-    m *= pow(bases[i], quotient);
+    m *= power(bases[i], quotient);
   }
   return m;
 }
@@ -557,7 +557,7 @@ reduce_to_standard_form(const GNumber root_index, const GNumber r) {
   // FIXME: deal with complex numbers
   if (!r.is_real()) {
     GExpr index = 1 / root_index;
-    return pow(r, index);
+    return power(r, index);
   }
   GNumber sign = r > 0 ? 1 : -1;
   GNumber g = gcd(num, den);
@@ -573,7 +573,7 @@ reduce_to_standard_form(const GNumber root_index, const GNumber r) {
   } // now, num, den and k are all positive
   
   if (k == 1)
-    return sign * num * pow(den, -1);
+    return sign * num * power(den, -1);
   
   std::vector<GNumber> num_bases;
   std::vector<int> num_exponents;
@@ -609,13 +609,13 @@ reduce_to_standard_form(const GNumber root_index, const GNumber r) {
   
   GExpr irr_part = 1;
   for (unsigned i=0; i < num_size; ++i)
-    irr_part *= pow(num_bases[i], num_exponents[i]);
+    irr_part *= power(num_bases[i], num_exponents[i]);
   for (unsigned i=0; i < den_size; ++i)
-    irr_part *= pow(den_bases[i], den_exponents[i]);
+    irr_part *= power(den_bases[i], den_exponents[i]);
   
-  GExpr q = sign * reduced_num * pow(reduced_den, -1);
+  GExpr q = sign * reduced_num * power(reduced_den, -1);
   if (irr_part > 1)
-    q *= pow(irr_part, 1/k);
+    q *= power(irr_part, 1/k);
   
   return q;
 }
@@ -638,13 +638,13 @@ red_prod(const GNumber& base1, const GNumber& exp1,
   GNumber k2_num = n_d_2.op(0).ex_to_number();
   GNumber k2_den = n_d_2.op(1).ex_to_number();
   
-  base_1 = pow(base_1, k1_num);
-  base_2 = pow(base_2, k2_num);
+  base_1 = power(base_1, k1_num);
+  base_2 = power(base_2, k2_num);
   
   GNumber g = gcd(k1_den, k2_den);
   GNumber k = k1_den * k2_den / g;
-  GNumber b1 = pow(base_1, k2_den / g).ex_to_number();
-  GNumber b2 = pow(base_2, k1_den / g).ex_to_number();
+  GNumber b1 = power(base_1, k2_den / g).ex_to_number();
+  GNumber b2 = power(base_2, k1_den / g).ex_to_number();
   GNumber b = b1 * b2;
   return reduce_to_standard_form(k, b);
 }
@@ -681,7 +681,7 @@ reduce_product(const GExpr& e) {
 		assert(to_reduce.op(j).op(1).is_a_number());
 		base_1 = to_reduce.op(j).op(0).ex_to_number();
 		exp_1  = to_reduce.op(j).op(1).ex_to_number();
-		factor_to_reduce = pow(to_reduce.op(j).op(0),
+		factor_to_reduce = power(to_reduce.op(j).op(0),
 				       to_reduce.op(j).op(1));
 	      }
 	      else
@@ -692,13 +692,13 @@ reduce_product(const GExpr& e) {
 	    assert(to_reduce.op(1).is_a_number());
 	    base_1 = to_reduce.op(0).ex_to_number();
 	    exp_1 = to_reduce.op(1).ex_to_number();
-	    factor_to_reduce = pow(to_reduce.op(0), to_reduce.op(1));
+	    factor_to_reduce = power(to_reduce.op(0), to_reduce.op(1));
 	  }
 	  else {
 	    assert(to_reduce.is_a_number());
 	    base_1 = to_reduce.ex_to_number();
 	    exp_1 = 1;
-	    factor_to_reduce = pow(to_reduce, 1);
+	    factor_to_reduce = power(to_reduce, 1);
 	  }
 	}
 	// Base and exponent of `tmp.op(i)' are not both numerics.
@@ -735,9 +735,9 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
       GExpr base = simplify_on_output_ex(e.op(i).op(0), n, input);
       GExpr exp = simplify_on_output_ex(e.op(i).op(1), n, input);
       if (base.is_a_number() && exp.is_a_number())
-	tmp *= reduce_product(pow(base, exp));
+	tmp *= reduce_product(power(base, exp));
       else
-	tmp *= pow_simpl(pow(base, exp), n, input);
+	tmp *= pow_simpl(power(base, exp), n, input);
     }
     else
       tmp *= e.op(i);
@@ -872,9 +872,9 @@ simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input) {
     GExpr base = simplify_on_output_ex(e.op(0), n, input);
     GExpr exp = simplify_on_output_ex(e.op(1), n, input);
     if (base.is_a_number() && exp.is_a_number())
-      ris = reduce_product(pow(base, exp));
+      ris = reduce_product(power(base, exp));
     else
-      ris = pow_simpl(pow(base, exp), n, input);
+      ris = pow_simpl(power(base, exp), n, input);
     // Necessary for l'output: for example if `e = sqrt(18)^a' then
     // `ris = sqrt(2)^a*3^a'.
     if (ris.is_a_mul())
@@ -903,6 +903,6 @@ simplify_numer_denom(const GExpr& e) {
   GExpr num_den = e.numer_denom();
   GExpr num = num_den.op(0).expand();
   GExpr den = num_den.op(1).expand();
-  GExpr ris = num * pow(den, -1);
+  GExpr ris = num * power(den, -1);
   return ris;
 }
