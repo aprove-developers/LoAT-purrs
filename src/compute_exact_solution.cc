@@ -542,6 +542,12 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 
   if (is_order_zero()) {
     exact_solution_.set_expression(inhomogeneous_term);
+    exact_solution_.set_expression
+      (simplify_ex_for_output(exact_solution_.expression(), false));
+    exact_solution_.set_expression
+      (simplify_factorials_and_exponentials(exact_solution_.expression()));
+    exact_solution_.set_expression
+      (simplify_logarithm(exact_solution_.expression()));
     return SUCCESS;
   }
   // Find the largest positive or null integer that cancel the denominator of
@@ -658,6 +664,8 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     (simplify_ex_for_output(exact_solution_.expression(), false));
   exact_solution_.set_expression
     (simplify_factorials_and_exponentials(exact_solution_.expression()));
+  exact_solution_.set_expression
+    (simplify_logarithm(exact_solution_.expression()));
 
   // Only for the output.
   if (exact_solution_.expression().is_a_add()) {
