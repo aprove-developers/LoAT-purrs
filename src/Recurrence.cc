@@ -31,6 +31,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Recurrence.defs.hh"
 #include "Recurrence.inlines.hh"
 #include "ep_decomp.hh"
+#include "fact_decomp.hh"
 #include "finite_order.hh"
 #include "simplify.hh"
 #include "util.hh"
@@ -142,8 +143,8 @@ validate_initial_conditions(index_type order,
 
 bool
 PURRS::Recurrence::
-verify_new_method_exp_poly(index_type order_rec,
-			   const Expr& summands_without_i_c) const {
+verify_new_method_const_coeff(index_type order_rec,
+			      const Expr& summands_without_i_c) const {
   std::vector<Expr> bases_of_exp;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
@@ -231,7 +232,7 @@ verify_new_method_exp_poly(index_type order_rec,
 	    k = 1;
 	  else if (factor.is_a_power() && factor.arg(0) == n) {
 	    assert(factor.arg(1).is_a_number());
-	    k = factor.arg(1).ex_to_number().to_unsigned int();
+	    k = factor.arg(1).ex_to_number().to_unsigned_int();
 	  }
 	  else
 	    continue;
@@ -357,6 +358,46 @@ verify_new_method_exp_poly(index_type order_rec,
     }
   }
   return true; 
+}
+
+bool
+PURRS::Recurrence::
+verify_new_method_var_coeff(index_type order_rec,
+			    const Expr& summands_without_i_c) const {
+  // If `summands_without_i_c' contains `sum()', `prod()'
+  // we do not apply this method.
+  if (summands_without_i_c.has_sum_or_prod_function())
+    return false;
+
+  Expr substituted_rhs = recurrence_rhs;
+  for (index_type i = order_rec; i-- > 0; ) {
+    const Expr& shifted_solution
+      = summands_without_i_c.substitute(n, n - (i + 1));
+    //shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
+    substituted_rhs = substituted_rhs
+      .substitute(x(n - (i + 1)), shifted_solution);
+  }
+  Expr diff = blackboard.rewrite(summands_without_i_c - substituted_rhs);
+  diff = diff.expand();
+  D_VAR(diff);
+  D_VAR(diff.numerator());
+  diff = diff.numerator();
+  if (diff == 0)
+    return true;
+
+  // FIXME: to be finished!
+  std::vector<Number> argument_factorials;
+  std::vector<Expr> coeff_factorials;
+  factorial_decomposition(diff, n, argument_factorials, coeff_factorials);
+  int position = 0;
+  for (unsigned int i = argument_factorials.size(); i-- > 0; )
+    if (argument_factorials[i] > position)
+      position = i;
+  Expr coeff_dominant = coeff_factorials[position];
+  // FIXME:
+  // To call the method `verify_new_method_const_coeff()' (only the
+  // necessary part) on `coeff_dominant'.
+  return false;
 }
 
 /*!
@@ -520,12 +561,24 @@ PURRS::Recurrence::verify_finite_order() const {
   
 #if 1
   // Step 4: the method of the paper
-  // "Checking and Confining the Solutions of Recurrence Realtions".
+  // "Checking and Confining the Solutions of Recurrence Realtions"
+  // for linear finite order with constant coefficients.
   // FIXME: is efficient the new method also in the case of order reduction?
   if (is_linear_finite_order_const_coeff()/* && !applied_order_reduction()*/)
-    if (verify_new_method_exp_poly(order_rec, summands_without_i_c))
+    if (verify_new_method_const_coeff(order_rec, summands_without_i_c))
       return PROVABLY_CORRECT;
 #endif
+
+#if 0
+  // Step 4: the method of the paper
+  // "Checking and Confining the Solutions of Recurrence Realtions"
+  // for linear finite order with variable coefficients.
+  if (is_linear_finite_order_var_coeff())
+    if (verify_new_method_var_coeff(order_rec, summands_without_i_c))
+      return PROVABLY_CORRECT;
+#endif
+
+  // Traditional way in order to verify exact solution of `*this'..
 
   // Step 4: by substitution, verifies that `summands_without_i_c'
   // satisfies the recurrence.
