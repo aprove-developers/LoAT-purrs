@@ -22,12 +22,10 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#ifndef PURRS_approx_expr_hh
-#define PURRS_approx_expr_hh 1
+#ifndef PURRS_approximate_hh
+#define PURRS_approximate_hh 1
 
 #include "Expr.types.hh"
-#include "Number.defs.hh"
-#include "complint.hh"
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -38,4 +36,4 @@ approximate(const Expr& e);
 
 } // namespace Parma_Recurrence_Relation_Solver
 
-#endif // !defined(PURRS_approx_expr_hh)
+#endif // !defined(PURRS_approximate_hh)
