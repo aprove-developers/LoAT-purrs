@@ -271,7 +271,7 @@ Configuring and building:
   cd your-path-to-download-dir
   mkdir obj-GiNaC
   cd obj-GiNaC
-  ../GiNaC/configure --prefix=/usr/local
+  ../GiNaC-1.0.13/configure --prefix=/usr/local
   make
 
 Installing (as root):
