@@ -121,6 +121,9 @@ AC_PATH_GINAC(1.0.5, [
   extra_includes="${extra_includes} $GINACLIB_CPPFLAGS"  
 ], AC_MSG_ERROR([need to have the GiNaC library installed]))
 
+dnl FIXME: check for filib here!
+extra_libraries="${extra_libraries} -L/usr/local/filib/lib -lfi -lieee -lprim"
+extra_includes="${extra_includes} -I/usr/local/filib/include"
 
 dnl Compilation flags
 
@@ -323,6 +326,7 @@ AC_SUBST(debug_flag)
 AC_SUBST(extra_if_Prolog_subdirs)
 
 AC_OUTPUT(Makefile
+          CoStLy/Makefile
           src/Makefile src/Intervals/Makefile src/Intervals/sysdep/Makefile
           m4/Makefile
           doc/Makefile

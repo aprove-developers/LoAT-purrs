@@ -1,4 +1,4 @@
-# Copyright (C) 2001 Roberto Bagnara <bagnara@cs.unipr.it>
+# Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without
@@ -13,8 +13,8 @@ AUTOMAKE_OPTIONS = foreign dist-bzip2 dist-zip 1.5
 srcdir = @srcdir@
 VPATH = @srcdir@
 
-EXTRA_DIST = configure # purrs.lsm.in purrs.spec.in acinclude.m4 BUGS CREDITS
-
 @SET_MAKE@
 
-SUBDIRS = src doc m4 tests demos #interfaces
+EXTRA_DIST = configure # purrs.lsm.in purrs.spec.in acinclude.m4 BUGS CREDITS
+
+SUBDIRS = CoStLy src doc m4 tests demos #interfaces
