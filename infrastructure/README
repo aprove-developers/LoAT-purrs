@@ -1,0 +1,13 @@
+Recommended tools and libraries:
+
+autoconf 2.52g
+automake 
+gcc 3.0.3
+gmp 4.0.1
+cln 1.1.4
+ginac 1.0.4    (apply patches *)
+fi_lib++ ???   (apply patches)
+
+(*)
+cd my/path/to/GiNaC-1.0.4/
+patch -p1 <my/patch/to/purrs/infrastructure/patch_ginac-1.0.4 
