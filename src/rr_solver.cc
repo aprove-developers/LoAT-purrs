@@ -592,12 +592,52 @@ impose_condition(const std::string&) {
   returns <CODE>false</CODE> otherwise.
 */
 static bool
-eliminate_negative_decrements(const GExpr& /* rhs */, GExpr& /* new_rhs */) {
-  // Let `j' be the largest positive integer such that `x(n+j)' occurs
-  // in `rhs' with a coefficient `a' which is not syntactically 0.
-  // Then the changes of variables include replacing `n' by `n-j',
-  // changing sign, and division by `a'.
+eliminate_negative_decrements(const GExpr& /* rhs */, GExpr& /* new_rhs */,
+			      const GSymbol& /* n */) {
+  // Let `max_decrement' be the largest positive integer such that `x(n+j)'
+  // occurs in `rhs' with a coefficient `a' which is not syntactically 0.
+//   int max_decrement = 0;
+//   GExpr coeff;
+//   for (unsigned j = rhs.nops(); j-- > 0; ) {
+//     static GExpr x_i = x(wild(0));
+//     static GExpr a_times_x_i = x_i * wild(1);
+//     GList substitution;
+//     GExpr i;
+//     GExpr a;
+//     bool found = false;
+//     if (clear(substitution), match(rhs.op(j), a_times_x_i, substitution)) {
+//       i = get_binding(substitution, 0);
+//       a = get_binding(substitution, 1);
+//       found = true;
+//     }
+//     else if (clear(substitution), match(rhs.op(j), x_i, substitution)) {
+//       i = get_binding(substitution, 0);
+//       a = 1;
+//       found = true;
+//     }
+//     if (found) {
+//       GNumber decrement;
+//       get_constant_decrement(i, n, decrement);
+//       int dec = -decrement.to_int();
+//       if (dec > max_decrement) {
+// 	  max_decrement = dec;
+// 	  coeff = a;
+//       }
+//     }
+//   }
+//   // The changes of variables include replacing `n' by `n-max_decrement',
+//   // changing sign, and division by `a'.
+//   new_rhs = rhs.subs(n == n-max_decrement);
+//   new_rhs = new_rhs.subs(x(n) == x(n-max_decrement));
 
+//   new_rhs *= -1;
+//   new_rhs = new_rhs.subs(x(n-max_decrement) == - x(n-max_decrement));
+
+//   new_rhs /= coeff;
+//   new_rhs
+//     = new_rhs.subs(x(n-max_decrement) == x(n-max_decrement)*pow(coeff, -1));
+
+//   std::cout << "NUOVA = " << new_rhs << std::endl; 
   return false;
 }
 
@@ -649,7 +689,7 @@ solve_try_hard(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     case HAS_NEGATIVE_DECREMENT:
       {
 	GExpr new_rhs;
-	if (eliminate_negative_decrements(rhs, new_rhs))
+	if (eliminate_negative_decrements(rhs, new_rhs, n))
 	    status = solve(new_rhs, n, solution);
 	else
 	  exit_anyway = true;
