@@ -621,7 +621,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
       if (common_exponent == 1) {
 	// Substitute any function `x()' with `exp(1)^{x()}'.
 	coeff_and_base.second = Napier;
-	Expr tmp = substitute_x_function(rhs, Napier, true);
+	Expr tmp = substitute_x_function(rhs, Napier, EXPONENT);
 	tmp = simplify_ex_for_input(tmp, true);
 	for (unsigned int i = tmp.nops(); i-- > 0; ) {
 	  Number num;
@@ -640,7 +640,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
       else {
 	// Substitute any function `x()' with `common_exponent^{x()}'.
 	coeff_and_base.second = common_exponent;
-	Expr tmp = substitute_x_function(rhs, abs(common_exponent), true);
+	Expr tmp = substitute_x_function(rhs, abs(common_exponent), EXPONENT);
 	tmp = simplify_ex_for_input(tmp, true);
 	for (unsigned int i = tmp.nops(); i-- > 0; ) {
 	  Number num;
