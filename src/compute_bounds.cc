@@ -152,14 +152,15 @@ compute_bounds_for_power_of_n(bool lower,
       const Expr& pow_c_b_k = pwr(c_b, k);
       if (coeff < pow_div_k_numeric)
 	tmp_lb = pow_n_k * pow_div_k / (pow_div_k - coeff)
-	  - pow_div_k / (pow_div_k - coeff) * pwr(pow_div_k / coeff, mu_b)
+	  - pow_div_k / (pow_div_k - coeff) * pwr(pow_div_k / coeff, 1 + mu_b)
 	  * pow_frac_log
 	  - pow_c_b_k * (log(Recurrence::n) / log(divisor) - 1);
       else if (coeff == pow_div_k_numeric)
 	tmp_lb = (log(Recurrence::n) / log(divisor) - mu_b)
 	  * (pow_n_k - pow_c_b_k) + pow_c_b_k;
       else
-	tmp_lb = pow_div_k / (coeff - pow_div_k) * pwr(pow_div_k / coeff, mu_b)
+	tmp_lb = pow_div_k / (coeff - pow_div_k)
+	  * pwr(pow_div_k / coeff, 1 + mu_b)
 	  * pow_frac_log
 	  - pow_div_k / (coeff - pow_div_k) * pow_n_k
 	  - pow_c_b_k * (log(Recurrence::n) / log(divisor) - 1);
@@ -187,18 +188,37 @@ compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
 				      Expr& bound) {
   // Lower bound.
   if (lower)
-    return false;
+    if (divisor.is_positive_integer()) {
+      const Expr& frac_log = log(Recurrence::n) / log(divisor);
+      Expr tmp_lb;
+      if (coeff < 1)
+	tmp_lb = log(divisor) * pwr(coeff - 1, -2)
+	  * ((1 - coeff) * frac_log - 1
+	     + pwr(Recurrence::n, log(coeff) / log(divisor)));
+      else if (coeff == 1)
+	tmp_lb = log(Recurrence::n) / (2 * coeff) * (frac_log - 1);
+      else {
+	assert(coeff > 1);
+	tmp_lb = log(divisor) * pwr(coeff - 1, -2)
+	  * (pwr(Recurrence::n, log(coeff) / log(divisor))
+	     - (coeff - 1) * frac_log + coeff);
+      }
+      bound =+ num * tmp_lb;
+      return true;
+    }
+    else
+      return false;
   // Upper bound.
   else {
-    Expr tmp_bound;
+    Expr tmp_ub;
     if (coeff == 1)
-      tmp_bound = Number(1, 2) * log(Recurrence::n)
+      tmp_ub = Number(1, 2) * log(Recurrence::n)
 	* (log(Recurrence::n) / log(divisor) + 1);
     else
-      tmp_bound = log(divisor) / pwr(coeff - 1, 2)
+      tmp_ub = log(divisor) / pwr(coeff - 1, 2)
 	* (coeff * pwr(Recurrence::n, log(coeff) / log(divisor))
 	   - (coeff - 1) * log(Recurrence::n) / log(divisor) - coeff);
-    bound =+ num * tmp_bound;
+    bound =+ num * tmp_ub;
     return true;
   }
 }
@@ -210,21 +230,47 @@ compute_bounds_for_power_times_logarithm_function(bool lower,
 						  const Number& num,
 						  const Number& k,
 						  Expr& bound) {
+  // FIXME: come si puo' fare per evitare che saltino fuori i numeri in
+  // virgola mobile? Usare tutte Expr non mi sembra una buona idea.
+  const Expr& divisor_ex = divisor;
+  const Expr& k_ex = k;
+  const Expr& pow_div_k = pwr(divisor_ex, k_ex);
+  Number pow_div_k_numeric = pwr(divisor, k);
+  
+  const Expr& pow_n_k = pwr(Recurrence::n, k);
   // Lower bound.
   if (lower)
-    return false;
+    if (divisor.is_positive_integer()) {
+      const Expr& frac_log = log(Recurrence::n) / log(divisor);
+      Expr tmp_lb;
+      if (coeff < pow_div_k_numeric)
+	tmp_lb = log(divisor) * pwr(coeff - pow_div_k, -2)
+	  * (((pow_div_k - coeff) * frac_log - pow_div_k) * pow_n_k
+	     + pow_div_k * pwr(Recurrence::n, log(coeff) / log(divisor)));
+      else if (coeff == pow_div_k_numeric)
+	tmp_lb = pow_n_k * log(Recurrence::n) / (2 * coeff)
+	  * (frac_log - 1);
+      else
+	tmp_lb = pow_div_k * log(divisor) * pwr(coeff - pow_div_k, -2)
+	  * (pwr(Recurrence::n, log(coeff) / log(divisor))
+	     - ((coeff - pow_div_k) * frac_log + coeff) * pow_n_k);
+      bound += num * tmp_lb;
+      return true;
+    }
+    else
+      return false;
   // Upper bound.
   else {
-    Expr tmp_bound;
-    Number pow_div_k = pwr(divisor, k);
-    const Expr& tmp = pwr(Recurrence::n, k) * log(Recurrence::n);
-    if (coeff == pow_div_k)
-      tmp_bound = Number(1, 2) * tmp * (log(Recurrence::n) / log(divisor) + 1);
+    Expr tmp_ub;
+    const Expr& pow_n_k_log = pow_n_k * log(Recurrence::n);
+    if (coeff == pow_div_k_numeric)
+      tmp_ub = Number(1, 2) * pow_n_k_log
+	* (log(Recurrence::n) / log(divisor) + 1);
     else
-      tmp_bound = (pow_div_k * log(divisor) / pwr(coeff - pow_div_k, 2)) 
+      tmp_ub = (pow_div_k * log(divisor) / pwr(coeff - pow_div_k, 2)) 
 	* (coeff * pwr(Recurrence::n, log(coeff) / log(divisor))
-	   - (coeff - pow_div_k) * tmp / log(divisor) - coeff);
-    bound += num * tmp_bound;
+	   - (coeff - pow_div_k) * pow_n_k_log / log(divisor) - coeff);
+    bound += num * tmp_ub;
     return true;
   }
 }
