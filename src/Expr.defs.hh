@@ -1152,6 +1152,14 @@ public:
 
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
+  //! Returns <CODE>true</CODE> if \p *this contains the function
+  //! \f$ sum() \f$ or the function \f$ prod() \f$;
+  //! returns <CODE>false</CODE> otherwise.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+  bool has_sum_or_prod_function() const;
+
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+  //! \brief
   //! Let \p x be a simple not numeric expression, i.e., it is not a sum or
   //! a product or a power, which is assumed to be already expanded.
   //! Returns a new expression obtained from \p *this collecting the

@@ -912,6 +912,29 @@ PURRS::Expr::has_x_function(const Expr& y) const {
   return false;
 }
 
+bool
+PURRS::Expr::has_sum_or_prod_function() const {
+  const Expr& e = *this;
+  if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned int i = e.nops(); i-- > 0; )
+      if (e.op(i).has_sum_or_prod_function())
+	return true;
+  }
+  else if (e.is_a_power()) {
+    if (e.arg(0).has_sum_or_prod_function()
+	|| e.arg(1).has_sum_or_prod_function())
+      return true;
+  }
+  else if (e.is_a_function())
+    if (e.is_the_sum_function() || is_the_prod_function())
+      return true;
+    else
+      for (unsigned int i = e.nops(); i-- > 0; )
+	if (e.arg(i).has_sum_or_prod_function())
+	  return true;
+  return false;
+}
+
 Expr
 PURRS::Expr::collect_term(const Expr& x, Expr& coeff_x) const {
   assert((*this).is_expanded());
