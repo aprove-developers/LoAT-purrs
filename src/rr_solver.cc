@@ -976,13 +976,6 @@ gosper(const int order, const Symbol& n,
   for (unsigned i = exp_no_poly_coeff.size(); i-- > 0; ) {
     Expr tmp;
     if (!exp_no_poly_coeff[i].is_zero()) {
-      // FIXME: `r_n' is temporary until the implementation
-      // of the step one of gosper's algorithm.
-      Expr r_n =
-	exp_no_poly_coeff[i].subs(n, n + 1) * Parma_Recurrence_Relation_Solver::power(base_of_exps[i], n+1)
-	* Parma_Recurrence_Relation_Solver::power(exp_no_poly_coeff[i], -1) * Parma_Recurrence_Relation_Solver::power(base_of_exps[i], -n);
-      r_n = simplify_on_output_ex(r_n.expand(), n, false);
-      r_n = simplify_numer_denom(r_n);
       // FIXME: the lower bound for the sum is not `order'
       // ex. \sum 1/(n^2-1) must be start from 2.
       // FIXME: this is a temporary assert untile he generalization of
@@ -991,8 +984,7 @@ gosper(const int order, const Symbol& n,
       Expr t = Parma_Recurrence_Relation_Solver::power(base_of_exps[i], n) * exp_no_poly_coeff[i]
 	* Parma_Recurrence_Relation_Solver::power(roots[0].value(), -n);
 //        std::cout << "t(n) = " << t << std::endl;
-//        std::cout << "r(n) = " << r_n << std::endl;
-      if (!gosper(t, r_n, n, order, n, tmp))
+      if (!gosper(t, n, order, n, tmp))
 	return false;
     }
     solution += tmp;

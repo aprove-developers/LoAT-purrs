@@ -44,34 +44,41 @@ FACTOR_THRESHOLD = 100;
   M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
 */
 
-/*!
-  By definition, an expression \p p is a <EM>hypergeometric term</EM>
-  if \f$ p(n+1) / p(n) \f$ is a rational function of \f$ n \f$.
-  If this is the case, return also numerator and denominator.
-*/
-// static bool
-// is_hypergeometric_term(const Expr& p, const Symbol& n("n"),
-// 		       Expr& num_den) {
-
-//   Expr q = (p.subs(n == n+1)) / p;
-
-//   q.expand(); // FIXME: simplify factorials here!
-//   if (!q.info(info_flags::rational_function))
-//     return false;
-// //    here GiNaC guarantees that numerator and denominator are coprime
-//   num_den = q.numer_denom();
-//   return true;
-// }
-
 //! Gosper's algorithm, step 1: see Chapter 5 of \f$ A = B \f$, by 
 //! M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
+/*!
+  By definition, an expression \f$ t(n) \f$ is an
+  <EM>hypergeometric term</EM> if \f$ t(n+1) / t(n) \f$ is a rational
+  function of \f$ n \f$.
+  This function returns <CODE>true</CODE> if \p t is an hypergeometric term
+  and in this case \p r_n stores the ratio \f$ t.subs(n, n+1) / t \f$.
+  Returns <CODE>false</CODE> otherwise.
+*/
 static bool
-gosper_step_one(const Expr& /*t*/, const Symbol& /*n*/, Expr& num_den_r_n) {
-  // FIXME: general simplifications to be inserted here.
-  Expr numer;
-  Expr denom;
-  num_den_r_n.numerator_denominator(numer, denom);
-  return true;
+gosper_step_one(const Expr& t, const Symbol& n, Expr& r_n) {
+  Expr t_plus_one = t.subs(n, n+1); 
+  r_n = simplify_factorials_and_exponentials(t_plus_one, n)
+    * Parma_Recurrence_Relation_Solver::power(simplify_factorials_and_exponentials(t, n), -1);
+  // The following use of `numerator_denominator()' simplify ulteriorly
+  // `r_n' (we can not to call `simplify_numer_denom()' because it expandes
+  // the expressions).
+  Expr r_n_num;
+  Expr r_n_den;
+  r_n.numerator_denominator(r_n_num, r_n_den);
+  r_n = r_n_num * Parma_Recurrence_Relation_Solver::power(r_n_den, -1);
+#if NOISY
+  cout << endl << "r_n =  " << r_n << endl;
+#endif
+  // FIXME: is_rational_function() is temporary until we build a PURRS
+  // function for this.
+  if (r_n.is_rational_function())
+    return true;
+  else {
+#if NOISY
+    cout << "r_n not rational function" << endl;
+#endif
+    return false;
+  }
 }
 
 /*!
@@ -341,11 +348,11 @@ gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
   -  it is not possible to express \f$ S_n \f$ in closed form and returns
      in \p solution the initially sum \f$ \sum_{k=0}^{n-1} t_k \f$.
 */
-// FIXME: `r_n' is temporary until the implementation of step one that
-// will build `r_n' starting from `t'.
+// FIXME: We have to decide the notation for the sum if returns false 
 bool
-gosper(const Expr& t, Expr& r_n, const Symbol& n,
+gosper(const Expr& t, const Symbol& n,
        const int lower_bound, const Expr& upper_bound, Expr& solution) {
+  Expr r_n;
   if (!gosper_step_one(t, n, r_n))
     // `t' is not hypergeometric: no chance of using Gosper's algorithm.
     return false;
@@ -354,12 +361,8 @@ gosper(const Expr& t, Expr& r_n, const Symbol& n,
   Expr c_n;
   gosper_step_two(r_n, n, a_n, b_n, c_n);
   Expr x_n;
-  // FIXME: once we have decided the notation for the sum the print
-  // will be substitute with the appropriate notation 
-  if (!gosper_step_three(a_n, b_n, c_n, n, x_n)) {
-    std::cout << "No non-zero polynomial solution" << std::endl;
+  if (!gosper_step_three(a_n, b_n, c_n, n, x_n))
     return true;
-  }
   solution = gosper_step_four(t, b_n, c_n, x_n, n, lower_bound, upper_bound,
 			      solution);
 #if NOISY
