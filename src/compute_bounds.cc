@@ -78,47 +78,8 @@ compute_bounds_for_power_of_n(bool lower,
 			      Expr& bound) {
   assert(!k.is_negative());
   // Lower bound.
-  // FIXME: check the lower!!
-  if (lower) {
-    if ((k == 0)
-	|| ((coeff == pwr(divisor, k-1) || coeff == pwr(divisor, k))
-	    &&  k >= 1)) {
-      Expr tmp_lb;
-      assert(k == 0 || k >= 1);
-      const Expr& log_log = log(Recurrence::n) / log(divisor);
-      if (k == 0) {
-	const Expr& n_log_log = pwr(Recurrence::n, log(coeff) / log(divisor));
-	if (coeff < 1)
-	  tmp_lb = (coeff - n_log_log) / (coeff * (1 - coeff));
-	else if (coeff == 1)
-	  if (divisor.is_integer())
-	    tmp_lb = log_log - 1;
-	  else // `divisor' is a rational (non-integer) number.  
-	    tmp_lb = log_log
-	      + log((divisor - 1) / (2 * divisor - 1)) / log(divisor); 
-	else
-	  tmp_lb = (n_log_log - coeff) / (coeff * (coeff - 1));
-      }
-      else {
-	assert(k >= 1);
-	const Expr& inv_div_minus_one = pwr(divisor - 1, -1);
-	if (coeff == pwr(divisor, k-1))
-	  tmp_lb = divisor * inv_div_minus_one * pwr(Recurrence::n, k)
-	    - (pwr(divisor, 2) * inv_div_minus_one + k * log_log - k)
-	    * pwr(Recurrence::n, k-1);
-	else {
-	  assert(coeff == pwr(divisor, k));
-	  tmp_lb = (log_log - 1 - k * inv_div_minus_one)
-	    * pwr(Recurrence::n, k)
-	    + k * pwr(Recurrence::n, k-1) * divisor * inv_div_minus_one;
-	}
-      }
-      bound += num * tmp_lb;
-      return true;
-    }
-    else
-      return false;
-  }
+  if (lower)
+    return false;
   // Upper bound.
   else {
     // FIXME: come si puo' fare per evitare che saltino fuori i numeri in
@@ -152,19 +113,13 @@ compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
   // Upper bound.
   else {
     Expr tmp_bound;
-    if (coeff < 1)
-      return false;
     if (coeff == 1)
       tmp_bound = Number(1, 2) * log(Recurrence::n)
 	* (log(Recurrence::n) / log(divisor) + 1);
-    else {
-      assert(coeff > 1);
-      const Expr& ratio_log = log(coeff) / log(divisor);
-      tmp_bound = (1 / (coeff - 1)) * log(Recurrence::n)
-	* (pwr(Recurrence::n, ratio_log) - 1)
-	+ log(divisor) * pwr(coeff - 1, -2)
-	* ((coeff + 1) * pwr(Recurrence::n, ratio_log) - coeff);
-    }
+    else
+      tmp_bound = log(divisor) / pwr(coeff - 1, 2)
+	* (coeff * pwr(Recurrence::n, log(coeff) / log(divisor))
+	   - (coeff - 1) * log(Recurrence::n) / log(divisor) - coeff);
     bound =+ num * tmp_bound;
     return true;
   }
@@ -185,14 +140,12 @@ compute_bounds_for_power_times_logarithm_function(bool lower,
     Expr tmp_bound;
     Number div_k = pwr(divisor, k);
     const Expr& tmp = pwr(Recurrence::n, k) * log(Recurrence::n);
-    if (coeff < div_k)
-      tmp_bound = (div_k * tmp) / (div_k - coeff);
-    else if (coeff == div_k)
-      tmp_bound = tmp * log(Recurrence::n) / log(divisor);
+    if (coeff == div_k)
+      tmp_bound = Number(1, 2) * tmp * (log(Recurrence::n) / log(divisor) + 1);
     else
-      tmp_bound = (div_k / (coeff - div_k)) 
-	* (pwr(Recurrence::n, log(coeff) / log(divisor)) * log(Recurrence::n)
-	   - tmp);
+      tmp_bound = (div_k * log(divisor) / pwr(coeff - div_k, 2)) 
+	* (coeff * pwr(Recurrence::n, log(coeff) / log(divisor))
+	   - (coeff - div_k) * tmp / log(divisor) - coeff);
     bound += num * tmp_bound;
     return true;
   }
