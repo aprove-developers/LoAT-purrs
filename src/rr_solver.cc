@@ -264,10 +264,6 @@ subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
     for (unsigned j = roots.size(); j-- > 0; ) {
       Expr base_exp = base_of_exps[i];
       Expr tmp;
-      ///
-      Expr_List cac(alpha, lambda);
-      Expr_List cacd(base_exp, roots[j].value());
-      ////
       if (!base_exp.is_equal(roots[j].value()))
 	tmp = symbolic_sum_distinct[r]
 	  .subs(Expr_List(alpha, lambda),
@@ -643,7 +639,6 @@ eliminate_negative_decrements(const Expr& /* rhs */, Expr& /* new_rhs */,
 
 //   new_rhs *= -1;
 //   new_rhs = new_rhs.subs(x(n-max_decrement), - x(n-max_decrement));
-
 //   new_rhs /= coeff;
 //   new_rhs
 //     = new_rhs.subs(x(n-max_decrement), x(n-max_decrement)*Parma_Recurrence_Relation_Solver::power(coeff, -1));
