@@ -98,16 +98,16 @@ validate_initial_conditions(bool is_symbolic_solution, index_type order,
 			    const Expr& summands_with_i_c,
 			    const Expr& summands_without_i_c) const {
   if (!is_symbolic_solution) {
+    index_type index = first_valid_index;
+    if (get_max_index_initial_condition() > first_valid_index + order - 1)
+      index = get_max_index_initial_condition() - order + 1;
     for (index_type i = 0; i < order; ++i) {
-      index_type index =
-	get_max_index_initial_condition() > first_valid_index + i
-	? get_max_index_initial_condition() : first_valid_index + i;
-      Expr e = simplify_all(summands_without_i_c.substitute(n, index));
+      Expr e = simplify_all(summands_without_i_c.substitute(n, index+i));
       e = blackboard.rewrite(e);
       e = simplify_all(e);
       // Get from the map `initial_conditions_' the value associated
-      // to the symbolic initial conditions `x(index)'.
-      if (e != get_initial_condition(index))
+      // to the symbolic initial conditions `x(index+i)'.
+      if (e != get_initial_condition(index+i))
 	// FIXME: provably_incorrect nei casi semplici.
 	return INCONCLUSIVE_VERIFICATION;
     }
@@ -889,8 +889,8 @@ PURRS::Recurrence::verify_finite_order(bool partial_verification) const {
   }
 
  continue_with_step_4:
-  // The recurrence is homogeneous.
-  if (inhomogeneous_term == 0)
+  // Symbolic solution of homogeneous recurrence.
+  if (is_symbolic_solution && inhomogeneous_term == 0)
     if (summands_without_i_c == 0)
       if (partial_verification)
 	return PARTIAL_PROVABLY_CORRECT;
