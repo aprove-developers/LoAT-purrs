@@ -550,7 +550,7 @@ find_non_linear_term(const Expr& e) {
       if (factor.is_the_x_function())
 	// We have found legal non-linear term product of two ore more
 	// `x' functions.
-	if (found_function_x)
+	if (found_function_x && factor.arg(0).has(Recurrence::n))
 	  term = LEGAL_NON_LINEAR_TERM;
 	else
 	  if (factor.arg(0).has(Recurrence::n))
