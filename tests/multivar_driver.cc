@@ -1265,7 +1265,13 @@ main(int argc, char *argv[]) try {
 
     //    std::cerr << "terms with x = " << terms_with_x.size() << "\n";
     //    std::cerr << "num_param: " << num_param << "\n";
-
+    
+    // If 'n' happens to be among the arguments, it will be temporary 
+    // replaced by a new symbol.
+    // Global scope is needed because these symbols will be used troughout
+    // the program.
+    Symbol n_replacement;
+    Expr real_var_symbol;
 
     // Find and eliminate dummy variables.
     if (multivar_mode) {
@@ -1299,61 +1305,16 @@ main(int argc, char *argv[]) try {
 	    else
 	      real_var_index = i;
 	  }
-	  /*
-	    DEAD CODE  
-	    else {
-	    // It is a dummy variable: remove all its occurrencies.
-	    for (list<int>::const_iterator j = terms_with_x.begin(); j != terms_with_x.end(); ++j) {
-	      // FIXME: Implement pop_back() for Expr_List.
-	      GiNaC::lst tmp_list;
-	      for (int k = 0; k < rhs.op(*j).arg(0).nops(); ++k) {
-		if (k != i)
-		  tmp_list.append(rhs.op(*j).arg(0).op(k));
-	      }
-	      //	      Expr& tmp2= tmp_list;
-	      //	      Expr new_arg = x(tmp2);
-	      rhs.op(*j) = x(tmp_list); //new_arg; //rhs.op(*j).substitute(rhs.op(*j).arg(0), (Expr) tmp_list);
-	    }
-	  }
-	  */
 	}
 	//	std::cerr << "real_var_index: " << real_var_index << std::endl;
 
-	/* REWRITTEN CODE
-	  // We now know which parameter is the real one. Throw away the others.
-	  for (int i = rhs.nops() - 1; i >= 0; --i) {
-	    // FIXME: why do we use different names for the op() and arg() functions?
-	    // Write a generalized op().
-	    Expr this_term=(rhs.is_a_function() || rhs.is_a_power()?rhs.arg(i):rhs.op(i));
-	    if (this_term.is_the_x_function()) {
-	      std::cerr << "Before: " << this_term << " - ";
-	      Expr real_expr = this_term.arg(0).op(real_var_index);
-	      // Assert that the considered parameter contains at most one symbol.
-	      bool symbol_found = false;
-	      Expr real_var_symbol;
-	      for (int j = real_expr.nops() - 1; j >=0; --j) {
-		if (real_expr.op(j).is_a_symbol()) {
-		  if (symbol_found) {
-		    assert (real_var_symbol == real_expr.op(j));
-		  }
-		  else
-		    real_var_symbol = real_expr.op(j);
-		}
-	      }
-	      // rhs.op(i) = x(real_expr.substitute(real_var_symbol, Recurrence::n));
-	      rhs = rhs.substitute(this_term, x(real_expr.substitute(real_var_symbol, Recurrence::n)));
-	      std::cerr << real_expr << " - " << real_expr.substitute(real_var_symbol, Recurrence::n)
-			<< " - After: " << this_term << "\n";
-	    }
-	  }
-	  std::cout << "rhs: " << rhs << std::endl;
-	*/
+	rhs=rhs.substitute(Recurrence::n, n_replacement);
+
 	for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
 	  const Expr& this_term = (*i);
 	  Expr real_var_expr = this_term.arg(0).op(real_var_index);
-	  // Assert that the considered parameter contains at most one symbol.
+	  // FIXME: Assert that the considered parameter contains at most one symbol.
 	  bool symbol_found = false;
-	  Expr real_var_symbol;
 	  for (int j = real_var_expr.nops() - 1; j >=0; --j) {
 	    if (real_var_expr.op(j).is_a_symbol()) {
 	      if (symbol_found) {
@@ -1609,6 +1570,11 @@ main(int argc, char *argv[]) try {
 	case Recurrence::SUCCESS:
 	  // OK: get the exact solution and print it.
 	  rec.exact_solution(exact_solution);
+
+	  // Multivar mode: replace the substituted symbols back to their place.
+	  exact_solution=exact_solution.substitute(Recurrence::n, real_var_symbol);
+	  exact_solution=exact_solution.substitute(n_replacement, Recurrence::n);
+
 	  if (interactive) {
 	    if (output==MATHML)
 	      cout << "<p>\n";
