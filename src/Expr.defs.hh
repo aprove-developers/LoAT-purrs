@@ -1025,12 +1025,6 @@ public:
   void collect_symbols(Symbol::SymbolSet& system_generated_symbols,
 		       Symbol::SymbolSet& new_symbols) const;
 
-  //! \brief
-  //! Collects all symbols contained in \p *this, except for those
-  //! by the system (i.e., symbols with the name of the shape "symbol"
-  //! followed by a number).
-  void collect_symbols(Symbol::SymbolSet& symbols) const;
-
 private:
   friend class Number;
   friend class Symbol;
