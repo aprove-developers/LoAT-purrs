@@ -191,7 +191,6 @@ characteristic_equation_and_its_roots(int order,
       return false;
   }
   D_VEC(roots, 0, roots.size()-1);
-  D_MSG("");
   return true;
 }
 
@@ -986,26 +985,51 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
   return solution;
 }
 
+/*!
+  Let \f$ e(n) \f$ be the expression in \p n contained in \p e,
+  which is assumed to be already expanded.
+  This function returns <CODE>true</CODE> if exist a positive integer
+  that cancel the numerator or the denominator of \f$ e(n) \f$;
+  returns <CODE>false</CODE> otherwise.
+  In the first case \p i_c is equal to the biggest positive integer that
+  cancel the numerator or the denominator of \f$ e(n) \f$; in the second
+  case \f$ i_c = 0 \f$.
+  Note: this function works only if \f$ e(n) \f$ is a rational function
+  in \p n.
+*/
 static bool
 domain_recurrence(const Symbol& n, const Expr& e, Number& i_c) {
   bool shift_initial_conditions = false;
-  Expr denom = denominator(e).expand();
-  i_c = 0;
-  if (denom != 1) {
-    std::vector<Number> potential_roots;
-    unsigned lower_degree = denom.ldegree(n);
-    while (lower_degree > 0) {
-      denom = quo(denom, n, n);
-      lower_degree = denom.ldegree(n);
-      shift_initial_conditions = true;
-    }
-    find_divisors(abs(denom.tcoeff(n).ex_to_number()), potential_roots);
-    // Find non-negative integral roots of the denominator.
-    for(unsigned i = potential_roots.size(); i-- > 0; ) {
-      Number temp = denom.subs(n, potential_roots[i]).ex_to_number();
-      if (temp == 0 &&  potential_roots[i] > i_c) {
-	i_c = potential_roots[i];
+  if (e.is_rational_function(n)) {
+    Expr numerator;
+    Expr denominator;
+    numerator_denominator_purrs(e, numerator, denominator); 
+    for (unsigned i = 0; i < 2; ++i) {
+      Expr partial_e;
+      if (i == 0)
+	partial_e = numerator;
+      else
+	partial_e = denominator;
+      unsigned lower_degree = partial_e.ldegree(n);
+      while (lower_degree > 0) {
+	partial_e = quo(partial_e, n, n);
+	lower_degree = partial_e.ldegree(n);
 	shift_initial_conditions = true;
+      }
+      std::vector<Number> potential_roots;
+      D_VAR(partial_e);
+      Number constant_term = abs(partial_e.tcoeff(n).ex_to_number());
+      D_VAR(constant_term);
+      // Find the divisors of the constant term.
+      if (constant_term.is_positive_integer())
+	find_divisors(constant_term, potential_roots);
+      // Find non-negative integral roots of the denominator.
+      for(unsigned i = potential_roots.size(); i-- > 0; ) {
+	Number temp = partial_e.subs(n, potential_roots[i]).ex_to_number();
+	if (temp == 0 &&  potential_roots[i] > i_c) {
+	  i_c = potential_roots[i];
+	  shift_initial_conditions = true;
+	}
       }
     }
   }
@@ -1230,6 +1254,8 @@ compute_product(const Expr& e, const Symbol& n,
 /*!
   The parameters are all symbols different from \p n and the initial
   conditions \f$ x(k) \f$ with \f$ k \f$ a positive integer.
+  Note: \p e does not contain \f$ x(f) \f$ with \f$ f \f$ an expression
+  containig \p n.
 */
 static bool
 find_parameters(const Expr& e, const Symbol& n) {
@@ -1243,6 +1269,7 @@ find_parameters(const Expr& e, const Symbol& n) {
       return true;
   }
   else if (e.is_a_function()) {
+    // In this case the function `x' is surely an initial condition.
     if (e.is_the_x_function())
       return true;
     else
@@ -2200,19 +2227,27 @@ PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
 solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
 			     const Expr& coefficient, Expr& solution) {
-  if (find_parameters(denominator(coefficient), n)) {
-    D_MSG("Variable coefficient with parameters in the denominator");
+  if (find_parameters(coefficient, n)) {
+    D_MSG("Variable coefficient with parameters");
     return TOO_COMPLEX;
   }
-  Expr tmp;
-  if (p_n == 0)
-    tmp = coefficient;
-  else
-    tmp = p_n * coefficient;
-  // `i_c' is the positive integer, if exists, that cancels the common
-  // denominator of the recurrence; 0 otherwise.
-  Number i_c;
-  bool shift_initial_conditions = domain_recurrence(n, tmp, i_c);
+  D_VAR(coefficient);
+  D_VAR(p_n);
+  // `shift_initial_conditions' is true if exist a positive integer
+  // that cancel the numerator or the denominator of the coefficient.
+  // In this case `i_c' contains the biggest positive integer found.
+  // If `shift_initial_conditions' is false then `i_c = 0'.
+  Number i_c = 0;
+  bool shift_initial_conditions = domain_recurrence(n, coefficient.expand(),
+						    i_c);
+  // Consider the biggest positive integer that cancel the denominator of
+  // `p_n' if it is bigger than `i_c'.
+  if (!(p_n == 0))
+    if (shift_initial_conditions)
+      domain_recurrence(n, denominator(p_n).expand(), i_c);
+    else
+      shift_initial_conditions
+	= domain_recurrence(n, denominator(p_n).expand(), i_c);
   Expr alpha_factorial;
   if (shift_initial_conditions)
     alpha_factorial
