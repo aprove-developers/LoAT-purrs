@@ -502,25 +502,6 @@ Recurrence::associated_first_order_rec() {
   return weighted_average_p->associated_first_order_rec();
 }
 
-inline void
-Recurrence::set_original_rhs(const Expr& original_rhs) const {
-  assert(is_weighted_average());
-  weighted_average_p->set_original_rhs(original_rhs);
-}
-
-inline unsigned int
-Recurrence::lower_limit() const {
-  assert(is_weighted_average());
-  assert(weighted_average_p);
-  return weighted_average_p->lower_limit();
-}
-
-inline void
-Recurrence::set_lower_limit(unsigned int lower) const {
-  assert(is_weighted_average());
-  weighted_average_p->set_lower_limit(lower);
-}
-
 inline const Expr&
 Recurrence::weight() const {
   assert(is_weighted_average());
@@ -533,6 +514,45 @@ Recurrence::weight() {
   assert(is_weighted_average());
   assert(weighted_average_p);
   return weighted_average_p->weight();
+}
+
+inline const Expr&
+Recurrence::original_weight() const {
+  assert(is_weighted_average());
+  return weighted_average_p->original_weight();
+}
+
+inline Expr&
+Recurrence::original_weight() {
+  assert(is_weighted_average());
+  return weighted_average_p->original_weight();
+}
+
+inline const Expr&
+Recurrence::original_inhomogeneous() const {
+  assert(is_weighted_average());
+  return weighted_average_p->original_inhomogeneous();
+}
+
+inline Expr&
+Recurrence::original_inhomogeneous() {
+  assert(is_weighted_average());
+  return weighted_average_p->original_inhomogeneous();
+}
+
+inline unsigned int
+Recurrence::lower_limit() const {
+  assert(is_weighted_average());
+  assert(weighted_average_p);
+  return weighted_average_p->lower_limit();
+}
+
+inline void
+Recurrence::set_original_rhs(const Expr& weight, const Expr& inhomogeneous,
+			     unsigned int lower, const Expr& upper) const {
+  assert(is_weighted_average());
+  assert(weighted_average_p);
+  weighted_average_p->set_original_rhs(weight, inhomogeneous, lower, upper);
 }
 
 inline Expr
