@@ -534,24 +534,40 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   x2 = p - q - r - s;
   x3 = -p + q - r - s;
   x4 = -p - q + r - s;
-
-//  old routine
+}
+// The old method used to solve equation of degree 4 was wrong, like you
+// can see by the following examples:
+// 1. Trying to solve 2+x^4-x = 0
+//    The four solutions, estimated, are
+//    x_1= -0.849848 + 0.654272*I
+//    x_2= -0.849848 - 0.654272*I
+//    x_3= 0.849848 + 1.008172*I
+//    x_4= 0.849848 - 1.008172*I
+//    Instead those correcting are
+//    x_1= -0.849848 + 1.00817*I
+//    x_2= -0.849848 - 1.00817*I
+//    x_3= 0.849848 + 0.654272*I
+//    x_4= 0.849848 - 0.654272*I
+// 2. Trying to solve (1+x)^4+4 = 0
+//    x_1 = -2+1/2*sqrt(12)    <- real!! 
+//    x_2 = -2-1/2*sqrt(12)    <- real!!
+//    x_3 = 1/2*sqrt(-20)
+//    x_4 = -1/2*sqrt(-20)
+//    Instead those correcting are
+//    x_1 = I
+//    x_2 = -I
+//    x_3 = -2+I
+//    x_4 = -2-I
+// 
+// OLD CODE:
 //
-//     std::cout << " ---- " << a1.evalf() << "   " << a2.evalf() << "  ";
-//   std::cout << a3.evalf() <<"   " << a4.evalf() << std::endl; 
-//     solve_equation_3(-a2,
-// 		     a1*a3 - 4*a4,
-// 		     4*a2*a4 - a3*a3 - a1*a1*a4,
-// 		     y1, y2, y3);
+//   solve_equation_3(-a2,
+// 	              a1*a3 - 4*a4,
+// 		      4*a2*a4 - a3*a3 - a1*a1*a4,
+// 		      y1, y2, y3);
 //   GExpr d1 = pow(a1, 2) - 4*a2 + 4*y1;
 //   GExpr d2 = pow(y1, 2) - 4*a4;
 //   GExpr sqrt_d1 = sqrt(d1);
 //   GExpr sqrt_d2 = sqrt(d2);
-//   //
-//   std::cout << " ----a1= " << a1.evalf() << "  sqrt_d1= " << sqrt_d1.evalf() << "  sqrt_d2= ";
-//   std::cout << sqrt_d2.evalf() <<"  y1= " << y1.evalf() << std::endl;
-//   std::cout << " ---- " << (a1/2 +sqrt_d1/2).evalf() << "   " << (y1/2-sqrt_d2/2).evalf() << "   ";
-//   //std::cout << sqrt_d2.evalf() <<"   " << y1.evalf() << std::endl;
 //   solve_equation_2((a1 + sqrt_d1)/2, (y1 - sqrt_d2)/2, x1, x2);
 //   solve_equation_2((a1 - sqrt_d1)/2, (y1 + sqrt_d2)/2, x3, x4);
-}
