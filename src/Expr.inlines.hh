@@ -356,11 +356,6 @@ Expr::functor() const {
   return GiNaC::ex_to<GiNaC::function>(*this).get_serial();
 }
 
-inline Functor
-find_functor(const std::string& name, unsigned num_args) {
-  return GiNaC::function::find_function(name, num_args);
-}
-
 inline std::string
 Expr::get_function_name() const {
   assert(is_a_function());
@@ -505,6 +500,11 @@ Expr::diff(const Symbol& x, unsigned nth) {
 inline Expr
 Expr::unsafe_fp_approximation() const {
   return Base::evalf();
+}
+
+inline Functor
+find_functor(const std::string& name, unsigned num_args) {
+  return GiNaC::function::find_function(name, num_args);
 }
 
 inline Expr

@@ -153,6 +153,9 @@ bool operator!=(const Expr& x, const Expr& y);
 */
 int compare(const Expr& x, const Expr& y);
 
+//! Returns the functor of the function named \p name.
+Functor find_functor(const std::string& name, unsigned num_args = 1);
+
 //! \brief
 //! Returns the application of functor \f$ f \f$ to operand \f$ x \f$,
 //! i.e., the expression \f$ f(x) \f$.
@@ -620,9 +623,6 @@ public:
     the behavior is undefined otherwise.
   */
   Functor functor() const;
-
-  //! Returns the functor of the function named \p name.
-  static Functor find_functor(const std::string& name, unsigned num_args = 1);
 
   //! Return the function's name.
   std::string get_function_name() const;
