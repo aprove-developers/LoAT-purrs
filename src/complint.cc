@@ -3,12 +3,27 @@
 #include "complint.hh"
 
 int
+lexicographic_compare(const double& x, const double& y) {
+  if (x < y)
+    return -1;
+  else if (x > y)
+    return 1;
+  else
+    return 0;
+}
+
+int
 lexicographic_compare(const Interval& x, const Interval& y) {
   if (x.isEmpty())
     return y.isEmpty() ? 0 : -1;
   else if (y.isEmpty())
     return 1;
-  return 0;
+  else if (int r = lexicographic_compare(x.inf(), y.inf()))
+    return r;
+  else if (int r = lexicographic_compare(x.sup(), y.sup()))
+    return r;
+  else
+    return 0;
 }
 
 int
