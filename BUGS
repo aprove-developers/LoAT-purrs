@@ -9,7 +9,7 @@ Known bugs are listed below.
 Bug #1
 Title: 		Cannot solve x^n-1=0
 Description:	eqs_driver can easily solve x^n-K=0 for all values of K but 1.
-Status:		SOLVED UNVERIFIED
+Status:		RESOLVED UNVERIFIED
 Priority:	High
 Reproducible:	Always
 Steps to reproduce:
@@ -27,7 +27,23 @@ Comments:
   2004-04-15 pescetti
     Any time a rational solution is found, a division is always carried out.
   2004-04-15 pescetti
-    SOLVED: polynomials in the form x^n=k are now recognized and solved.
+    RESOLVED: polynomials in the form x^n=k are now recognized and solved.
 
 -----
 
+Bug #2
+Title:		Correct but inconsistent solutions
+Description:	Two correct but syntactically different solutions to same rec.
+Status:		New
+Priority:	Low (but worth investigating)
+Reproducible:	Machine-dependent?
+Steps to reproduce:
+  1. Run rrs_driver -i
+  2. Solve x(n)=x(n-1)+x(n-2)
+  3. Solve it again (cursor up + enter)
+  4. While being actually the same, the two solutions look different. Why?
+Comments:
+  2004-04-17 pescetti
+    Feel like scripting? echo -e "x(n-1)+x(n-2)\nx(n-1)+x(n-2)"|rrs_driver -i
+  2004-04-27 pescetti
+    Tried on two quite different machines and got the same behaviour.
