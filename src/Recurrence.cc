@@ -625,12 +625,13 @@ PURRS::Recurrence::verify_weighted_average() const {
     lower = 0;
   }
   
-  unsigned int shift = 0;
-  if (!initial_conditions_.empty()) {
+  if (!initial_conditions_.empty())
     if (initial_conditions_.rbegin()->first > lower)
-      shift = initial_conditions_.rbegin()->first - lower;
-  }
-
+      // To solve `x(n) = f(n)*sum(k,n_0,n-1,x(k))+g(n)' with the
+      // initial condition `x(m) = h', where `m > n_0',
+      // is like to solve `x(n) = f(n)*sum(k,m,n-1,x(k))+g(n)'.
+      lower = initial_conditions_.rbegin()->first;
+  
   // The case `f(n) = -1', i.e. the recurrence has the form
   // `x(n) = - sum(k, n_0, n-1, x(k)) + g(n)', is special:
   // the solution is simply `x(n) = g(n) - g(n-1)'.
@@ -640,7 +641,7 @@ PURRS::Recurrence::verify_weighted_average() const {
     // FIXME: verify!!!
     return PROVABLY_CORRECT;
   
-  // Note: the solution is valid only for `n > lower_limit()'.
+  // Note: the solution is valid only for `n > lower'.
   Expr exact_solution;
   if (evaluated_exact_solution_.has_expression())
     exact_solution = evaluated_exact_solution_.expression();
@@ -648,10 +649,10 @@ PURRS::Recurrence::verify_weighted_average() const {
     exact_solution = exact_solution_.expression();
 
   // Step 1: validation of the initial condition.
-  Expr e = exact_solution.substitute(n, lower+1+shift);
+  Expr e = exact_solution.substitute(n, lower+1);
   e = simplify_all(e);
   if (e != (weight_rec * get_initial_condition(lower)
-	    + inhomogeneous).substitute(n, lower+1+shift))
+	    + inhomogeneous).substitute(n, lower+1))
     // FIXME: provably_incorrect...
     return INCONCLUSIVE_VERIFICATION;
   
@@ -659,14 +660,13 @@ PURRS::Recurrence::verify_weighted_average() const {
   // Consider the `sum(k, n_0, n-1, x(k)', with `x(k)' replaced by
   // the solution, and tries to semplify it.
   Symbol h;
-  Expr diff = PURRS::sum(h, lower+1+shift, n - 1,
-			 exact_solution.substitute(n, h));
+  Expr diff = PURRS::sum(h, lower+1, n - 1, exact_solution.substitute(n, h));
   diff = simplify_sum(diff, COMPUTE_SUM);
   // Consider the difference
   // `x(n) - (f(n) x(n_0) + f(n) sum(k, n_0+1, n-1, x(k)) + g(n))'
   // and tries to simplify it.
-  diff = exact_solution - diff * weight_rec
-    - get_initial_condition(lower+shift) * weight_rec - inhomogeneous;
+  diff = exact_solution - weight_rec * get_initial_condition(lower)
+    - weight_rec * diff - inhomogeneous;
   diff = simplify_all(diff);
   if (diff == 0)
     return PROVABLY_CORRECT;
@@ -833,18 +833,23 @@ PURRS::Recurrence::verify_exact_solution() const {
   if (!exact_solution_.has_expression())
     throw std::logic_error("PURRS::Recurrence::verify_exact_solution() "
 			   "called, but no exact solution was computed");
-  // Case 1 and case 2: linear recurrences of finite order
-  // and non-linear recurrences of finite order. 
-  if (is_linear_finite_order() || is_non_linear_finite_order())
+
+  switch (type_) {
+  case ORDER_ZERO:
+  case LINEAR_FINITE_ORDER_CONST_COEFF:
+  case LINEAR_FINITE_ORDER_VAR_COEFF:
+  case NON_LINEAR_FINITE_ORDER:
     return verify_finite_order();
-  // Case 3: weighted-average recurrence.
-  else if (is_weighted_average())
+  case WEIGHTED_AVERAGE:
     return verify_weighted_average();
-  else {
-    assert(is_functional_equation());
-    // Case 4 (special case): functional equation of the form
-    // `x(n) = x(n/b)'. 
+  case FUNCTIONAL_EQUATION:
+    // FIXME: see again what to make in the case of the
+    // functional equations.
+    // Special case: functional equation of the form `x(n) = x(n/b)'.
     return INCONCLUSIVE_VERIFICATION;
+  default:
+    throw std::runtime_error("PURRS internal error: "
+			     "verify_exact_solution().");
   }
 }
 
@@ -1580,8 +1585,7 @@ subs_i_c_weighted_average(const Expr& solution_or_bound) const {
   // `initial_conditions', i.e. the largest index of the initial
   // conditions inserted by the user.
   unsigned int max_index_user_i_c = get_max_index_initial_condition();
-  int shift = max_index_user_i_c - lower;
-  if (shift > 0) {
+  if (max_index_user_i_c > lower) {
     // To solve `x(n) = f(n)*sum(k,n_0,n-1,x(k))+g(n)' with the
     // initial condition `x(m) = h', where `m > n_0',
     // is like to solve `x(n) = f(n)*sum(k,m,n-1,x(k))+g(n)'.
@@ -1597,11 +1601,10 @@ subs_i_c_weighted_average(const Expr& solution_or_bound) const {
       = sol_or_bound.substitute(x(max_index_user_i_c),
 				get_initial_condition(max_index_user_i_c));
   }
-  else {
-    assert(shift == 0);
+  else
     sol_or_bound
       = sol_or_bound.substitute(x(lower), get_initial_condition(lower));
-  }
+
   return sol_or_bound;
 }
 
