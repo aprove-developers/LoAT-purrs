@@ -910,7 +910,9 @@ public:
   //! Dumps all the data members of \p *this onto \p s.
   void dump(std::ostream& s) const;
   
-private:
+  // FIXME: this public section is temporary.
+public:
+  //private:
   //! The possible classification of the recurrence.
   enum Classifier_Status {
     /*!
@@ -980,16 +982,20 @@ private:
 
   mutable Classifier_Status classifier_status_;
 
+private:
   //! \brief
   //! Returns the status of <CODE>Solver_Status</CODE> associated
   //! to \p classifier_status.
   static Solver_Status map_status(Classifier_Status classifier_status);
 
+  // FIXME: this public section is temporary.
+public:
   //! \brief
   //! Classifies the recurrence \p *this calling the method
   //! <CODE>classify()</CODE>. 
   Classifier_Status classify_and_catch_special_cases() const;
 
+private:
   //! \brief
   //! Analyzes the \f$ i \f$-th addend of the right hand side \p rhs
   //! of the recurrence \p *this.
@@ -1171,6 +1177,8 @@ private:
   //! is one of the equations of the system.
   std::map<unsigned int, Expr> system_rhs;
 
+  // FIXME: this public section is temporary.
+public:
   //! The recurrence type.
   enum Type {
     /*!
@@ -1215,6 +1223,7 @@ private:
 
   mutable Type type_;
 
+private:
   mutable Finite_Order_Info* finite_order_p;
   mutable Functional_Equation_Info* functional_eq_p;
   mutable Non_Linear_Info* non_linear_p;
