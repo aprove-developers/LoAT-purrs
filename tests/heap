@@ -211,6 +211,7 @@ n	n*x(n/3)+n*n*n
 n	n*x(n/356)+n*log(n)/log(2)
 n	n+x(n*2)
 n	sin(n-1)*x(n-1)
+n	sum(k,0,n,x(k))+n^2
 n	x((3*(n-1)))
 n	x((3*n)/3)
 n	x((7/10)*n)+x((1/5)*n)+2*n
