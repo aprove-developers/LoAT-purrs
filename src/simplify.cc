@@ -1116,6 +1116,20 @@ change_base_logarithm(const Expr& base, const Expr exponent,
 	     simplify_logarithm_in_expanded_ex(exponent));
 }
 
+void
+find_log_factors(const Expr& e, Expr& log_factors, Expr& rem_factors) {
+  assert(e.is_a_mul());
+  for (unsigned i = e.nops(); i-- > 0; ) {
+    const Expr& factor = e.op(i);
+    if ((factor.is_a_power() && factor.arg(0).is_the_log_function()
+	 && factor.arg(1) == -1)
+	|| factor.is_the_log_function())
+      log_factors *= factor;
+    else
+      rem_factors *= factor;
+  }
+}
+
 Expr
 prepare_change_base_logarithm(const Expr& base, const Expr& exponent) {
   Number base_num;
@@ -1124,60 +1138,41 @@ prepare_change_base_logarithm(const Expr& base, const Expr& exponent) {
     std::vector<Number> bases;
     std::vector<int> exponents;
     // The base is integer.
-    if (base_num.is_integer()) {
-      // The exponent is a `mul'.
-      if (exponent.is_a_mul()) {
-	Expr log_factors_exp = 1;
-	Expr rem_factors_exp = 1;
-	for (unsigned i = exponent.nops(); i-- > 0; ) {
-	  const Expr& factor = exponent.op(i);
-	  if ((factor.is_a_power() && factor.arg(0).is_the_log_function()
-	      && factor.arg(1) == -1)
-	      || factor.is_the_log_function())
-	    log_factors_exp *= factor;
-	  else
-	    rem_factors_exp *= factor;
-	}
-	partial_factor(base_num, bases, exponents);
-	if (bases.size() == 1) {
-	  Number new_base = bases[0];
-	  return pwr(change_base_logarithm(base, log_factors_exp, new_base,
-					   exponents[0]),
-		     rem_factors_exp);
-	}
-	else
-	  return pwr(change_base_logarithm(base, log_factors_exp, base_num),
-		     rem_factors_exp);
+    if (base_num.is_integer() && exponent.is_a_mul()) {
+      Expr log_factors_exp = 1;
+      Expr rem_factors_exp = 1;
+      find_log_factors(exponent, log_factors_exp, rem_factors_exp);
+      partial_factor(base_num, bases, exponents);
+      if (bases.size() == 1) {
+	Number new_base = bases[0];
+	return pwr(change_base_logarithm(base, log_factors_exp, new_base,
+					 exponents[0]), rem_factors_exp);
       }
-      // The exponent is not a `mul'.
-      else {
-	partial_factor(base_num, bases, exponents);
-	if (bases.size() == 1) {
-	  Number new_base = bases[0];
-	  return change_base_logarithm(base, exponent, new_base, exponents[0]);
-	}
-	else
-	  return change_base_logarithm(base, exponent, base_num);
-      }
+      else
+	return pwr(change_base_logarithm(base, log_factors_exp, base_num),
+		   rem_factors_exp);
     }
     // The base is rational with the numerator equal to `1'.
-    if (base_num.is_rational() && base_num.numerator() == 1) {
+    if (base_num.is_rational() && base_num.numerator() == 1
+	&& exponent.is_a_mul()) {
       Number denom_base = base_num.denominator();
+      Expr log_factors_exp = 1;
+      Expr rem_factors_exp = 1;
+      find_log_factors(exponent, log_factors_exp, rem_factors_exp);
       partial_factor(denom_base, bases, exponents);
       if (bases.size() == 1) {
 	Number new_base = bases[0];
-	return pwr(change_base_logarithm(base, exponent, new_base, exponents[0]),
-		   -1);
+	return pwr(change_base_logarithm(base, log_factors_exp, new_base,
+					 exponents[0]),
+		   -rem_factors_exp);
       }
       else
-	return pwr(change_base_logarithm(base, exponent, denom_base), -1);
+	return pwr(change_base_logarithm(base, log_factors_exp, base_num),
+		   -rem_factors_exp);
     }
-    return change_base_logarithm(base, exponent, base_num);
   }
-  // The base is not a positive number.
-  else
-    return pwr(simplify_logarithm_in_expanded_ex(base),
-	       simplify_logarithm_in_expanded_ex(exponent));
+  return pwr(simplify_logarithm_in_expanded_ex(base),
+	     simplify_logarithm_in_expanded_ex(exponent));
 }
 
 /*!
