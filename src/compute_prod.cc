@@ -80,7 +80,7 @@ compute_product_on_add(const Symbol& index, const Number& lower,
 	  if (is_denominator)
 	    throw std::domain_error("Cannot compute a product at the "
 				    "denominator if one of the factor "
-				    "is zero");
+				    "is zero.");
 	  else {
 	    e_prod = 0;
 	    e_prod_computed = true;
@@ -189,7 +189,7 @@ comp_prod(const Symbol& index, const Number& lower, const Expr& e,
       if (is_denominator)
 	throw std::domain_error("Cannot compute a product at the "
 				"denominator if one of the factor "
-				"is zero");
+				"is zero.");
       else
 	e_prod = 0;
   }
@@ -217,35 +217,35 @@ comp_prod(const Symbol& index, const Number& lower, const Expr& e,
 //! \f[
 //!   e!(0) \defeq 1,
 //!   \qquad
-//!   e!(n) \defeq \prod_{k=lower}^n e(k),
+//!   e!(n) \defeq \prod_{k=l}^n e(k),
 //! \f]
-//! where \f$ lower \f$ is an integer.
+//! where \f$ l \in \Zset \f$.
 /*!
-  When possible to find the closed form for \f$ \prod_{k=lower}^n e(k) \f$,
+  When possible to find the closed form for \f$ \prod_{k=l}^n e(k) \f$,
   we compute it; when it is not possible we returns the symbolic function
   for the product.
-  We defined inductively \f$ \prod_{k=lower}^n e(k) \f$ as follows:
+  We defined inductively \f$ \prod_{k=l}^n e(k) \f$ as follows:
   - if \f$ e(k) \f$ is a constant, i.e. it not contains \f$ k \f$,
-    then \f$ \prod_{k=lower}^n e(k) = e^{n - lower + 1} \f$;
+    then \f$ \prod_{k=l}^n e(k) = e^{n - l + 1} \f$;
   - if \f$ e(k) = k \f$ then
-      if \f$ lower > 0 \f$ then
-        \f$ \prod_{k=lower}^n e(k) = n! / (lower - 1)! \f$;
-      else \f$ \prod_{k=lower}^n e(k) = 0 \f$;
+      if \f$ l > 0 \f$ then
+        \f$ \prod_{k=l}^n e(k) = n! / (l - 1)! \f$;
+      else \f$ \prod_{k=l}^n e(k) = 0 \f$;
   - if \f$ e = k + h \f$ where \f$ h \in \Zset \f$
-      if \f$ lower > -h \f$
-        \f$ e_prod = e(k)! / (lower + h - 1)! \f$;
-      else \f$ \prod_{k=lower}^n e(k) = 0 \f$;
+      if \f$ l > -h \f$
+        \f$ e_prod = (n+h)! / (l + h - 1)! \f$;
+      else \f$ \prod_{k=l}^n e(k) = 0 \f$;
   - if \f$ e = 2*k+1 \f$,
-    then \f$ \prod_{k=lower}^n e(k) = \frac{(2*n + 1)!}{2^n * n!} \f$;
+    then \f$ \prod_{k=l}^n e(k) = \frac{(2*n + 1)!}{2^n * n!} \f$;
   - if \f$ e \f$ is a power there are two cases.
     We consider \f$ a \f$ and \f$ b \f$ so that \f$ e = a^b \f$, 
     - if \f$ a \f$ contains \f$ n \f$ and \f$ b \f$ is a number,
-      then \f$ \prod_{k=lower}^n e(k) = (\prod_{k=lower}^n a(k))^b;
+      then \f$ \prod_{k=l}^n e(k) = (\prod_{k=l}^n a(k))^b;
     - if \f$ a \f$ not contains \f$ n, i.e. \f$ a \f$ is a constant,
-      then \f$ \prod_{k=lower}^n e(k) = k^{\sum_{h=lower}^n f(h)} \f$;
+      then \f$ \prod_{k=l}^n e(k) = k^{\sum_{h=l}^n f(h)} \f$;
   - if \f$ e(k) = e_1(k) \cdots e_m(k) \f$, then
-    \f$ \prod_{k=lower}^n e(k) =  \prod_{k=lower}^n e_1(k) \cdots
-    \prod_{k=lower}^n e_m(k) \f$.
+    \f$ \prod_{k=l}^n e(k) =  \prod_{k=l}^n e_1(k) \cdots
+    \prod_{k=l}^n e_m(k) \f$.
 */
 PURRS::Expr
 PURRS::compute_product(const Symbol& index, const Number& lower,
