@@ -78,12 +78,13 @@ found_and_erase_n(const GExpr& not_num_exponent, const GSymbol& n) {
      found = true;
 
  GExpr not_num_exp_minus_n = 1;
- if (found)
+ if (found) {
    if (is_a<mul>(not_num_exponent)) {
      for (unsigned i = not_num_exponent.nops(); i-- > 0; )
        if (!not_num_exponent[i].is_equal(n))
 	 not_num_exp_minus_n *= not_num_exponent[i];
    }
+ }
  else
    not_num_exp_minus_n = not_num_exponent;
 
