@@ -199,6 +199,8 @@ n	factorial(n)-x(n-3)+x(n-2)+n*log(n)+x(n*3)
 n	factorial(n)-x(n-3)+x(n-2)+n*log(n)+x(n/3)
 n	log(n)*x(n/2)
 n	log(x(n-1))
+n	mod(2*x(n-1),143)
+n	mod(2*x(n-1),m)
 n	n*(n-2)*x(n-2)-(n-1)*x(n-1)
 n	n*x(n-1)+n*x(n-2)
 n	n*x(n-1)+x(n-2)
@@ -827,8 +829,6 @@ yv	factorial(n^n^2)
 yv	log(n)*log(n)+x(n-1)
 yv	log(n-2)-log(n)
 yv	m*x(n-1)+b
-yv	mod(2*x(n-1),143)
-yv	mod(2*x(n-1),m)
 yv	n
 yv	n!
 yv	n*(n-1)*x(n-1)+n
