@@ -665,6 +665,11 @@ Expr::is_the_acos_function() const {
 }
 
 inline bool
+Expr::is_the_factorial_function() const {
+  return is_ex_the_function(*this, factorial);
+}
+
+inline bool
 Expr::is_the_x_function() const {
   return is_ex_the_function(*this, x);
 }

@@ -456,8 +456,24 @@ public:
   //! <CODE>acos()</CODE>.
   bool is_the_acos_function() const;
 
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>factorial()</CODE>.
+  bool is_the_factorial_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>x()</CODE>.
   bool is_the_x_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>sum()</CODE>.
   bool is_the_sum_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>prod()</CODE>.
   bool is_the_prod_function() const;
 
   //! Returns the numeric value of \p *this.
