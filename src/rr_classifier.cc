@@ -990,25 +990,22 @@ PURRS::Recurrence::classify() const {
 	!= SUCCESS)
       return status;
 
-  if (!is_functional_equation())
+  set_inhomogeneous_term(inhomogeneous);
+  D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
+
+  if (is_functional_equation())
+    functional_eq_p = new Functional_Equation_Info(rank, coefficients_fe,
+						   divisors_arg);
+  else {
     // `inhomogeneous_term' is a function of `n', the parameters and of
     // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
     //  non-negative integers.
     if (order == 0)
       set_order_zero();
-
-  assert(is_linear_finite_order() || is_functional_equation());
-
-  set_inhomogeneous_term(inhomogeneous);
-  D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
-
-  if (is_linear_finite_order())
     finite_order_p = new Finite_Order_Info(order, 0, coefficients_lfo,
 					   gcd_among_decrements);
-  else if (is_functional_equation())
-    functional_eq_p = new Functional_Equation_Info(rank, coefficients_fe,
-						   divisors_arg);
-
+  }
+  assert(is_linear_finite_order() || is_functional_equation());
   return SUCCESS;
 }
 
