@@ -27,8 +27,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Finite_Order_Info.types.hh"
 #include <vector>
-#include <algorithm>
-#include <iterator>
 
 namespace Parma_Recurrence_Relation_Solver {
 

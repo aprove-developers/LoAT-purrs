@@ -34,7 +34,8 @@ namespace Parma_Recurrence_Relation_Solver {
 class Finite_Order_Info {
 public:
   //! \brief
-  //! Constructor: sets \f$ order_ = k \f$, \f$ first_initial_condition_ = i_c \f$
+  //! Constructor: sets \f$ order_ = k \f$,
+  //! \f$ first_initial_condition_ = i_c \f$, and
   //! \f$ coefficients_ = coeffs \f$.
   Finite_Order_Info(int k, unsigned i_c, const std::vector<Expr>& coeffs);
 
@@ -79,6 +80,7 @@ private:
 
   //! Stores the coefficients of the recurrence.
   std::vector<Expr> coefficients_;
+
 };
 
 } // namespace Parma_Recurrence_Relation_Solver
