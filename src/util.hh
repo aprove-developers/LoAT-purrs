@@ -32,6 +32,10 @@ http://www.cs.unipr.it/purrs/ . */
 int
 gcd(int n, int m);
 
+//! Computes the lcm among the integers in the vector \f$numbers\f$.
+GNumber
+lcm(const std::vector<GNumber>& numbers);
+
 //! Computes the cubic root of \f$e\f$.
 GExpr
 cubic_root(const GExpr& e);

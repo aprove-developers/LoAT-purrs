@@ -37,6 +37,20 @@ gcd(int n, int m) {
   return n;  
 }
 
+/*!
+  Computes the lcm among the integers in the vector \p numbers.
+*/
+GNumber
+lcm(const std::vector<GNumber>& numbers) {
+  for (unsigned i = numbers.size() - 1; i-- > 0; )
+    assert(numbers[i].is_integer());
+
+  GNumber n = numbers[numbers.size() - 1];
+  for (unsigned i = numbers.size() - 1; i-- > 0; )
+    n = lcm(n, numbers[i]);
+  return n;
+}
+
 GExpr
 cubic_root(const GExpr& e) {
   static GExpr one_third = GExpr(1)/3;
