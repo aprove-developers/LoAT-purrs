@@ -8,7 +8,7 @@
 % n expected not to be solved
 % K unsolvable: expect the system to diagnose this
 % k unsolvable: expect the system not to diagnose this
-% I indeterminate: the recurrence has infinite solution
+% I indeterminate: the recurrence has infinite solutions
 % M malformed: expect the system to gracefully deal with it
 % m malformed: expect the system to die badly
 % U expected to find upper bound with a provably correct result	
