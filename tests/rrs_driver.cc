@@ -195,7 +195,7 @@ set_expectations(const string& s) {
 Recurrence::Solver_Status
 solve_wrapper(const Recurrence& rec) {
   try {
-    return rec.solve(Recurrence::n);
+    return rec.solve();
   }
   catch (exception& e) {
     if (verbose) {
@@ -355,14 +355,15 @@ main(int argc, char *argv[]) try {
       if (interactive) {
 	cout << "*** SOLUTION ***"
 	     << endl
-	     << rec.exact_solution(Recurrence::n)
+	     << rec.exact_solution()
 	     << endl
 	     << "****************"
 	     << endl << endl;
+	rec.dump(cout);
       }
       if (latex) {
 	cout << "\\medskip\\indent\n\\(\n x(n) = ";
-	rec.exact_solution(Recurrence::n).latex_print(cout);
+	rec.exact_solution().latex_print(cout);
 	cout << "\n\\)\n" << endl;
       }
       break;

@@ -257,9 +257,9 @@ main() try {
 
   Expr solution;
   try {
-    switch (recurrence.solve(n)) {
+    switch (recurrence.solve()) {
     case Recurrence::OK:
-      solution = recurrence.exact_solution(n);
+      solution = recurrence.exact_solution();
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
       error("this recurrence is unsolvable");

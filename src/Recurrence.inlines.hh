@@ -78,16 +78,16 @@ Recurrence::replace_recurrence(unsigned k, const Expr& e) {
 }
 
 inline Recurrence::Solver_Status
-Recurrence::solve(const Symbol& n) const {
+Recurrence::solve() const {
   Solver_Status status = OK;
-  if (!solved && (status = solve_try_hard(recurrence_rhs, n, solution)) == OK)
+  if (!solved && (status = solve_try_hard()) == OK)
     solved = true;
   return status;
 }
 
 inline Expr
-Recurrence::exact_solution(const Symbol& n) const {
-  if (solved || solve(n))
+Recurrence::exact_solution() const {
+  if (solved || solve())
     return solution;
   else
     // Well, if the client insists...
@@ -95,8 +95,8 @@ Recurrence::exact_solution(const Symbol& n) const {
 }
 
 inline bool
-Recurrence::verify_solution(const Symbol& n) const {
-  if (solved || solve(n)) {
+Recurrence::verify_solution() const {
+  if (solved || solve()) {
     // Verify the solution.
     return false;
   }
@@ -110,7 +110,7 @@ operator<(const Symbol& x, const Symbol& y) {
 }
 
 inline Symbol
-Recurrence::insert_auxiliary_definition(const Expr& e) {
+Recurrence::insert_auxiliary_definition(const Expr& e) const {
   typedef std::map<Symbol, Expr> Map;
   Symbol new_symbol;
   std::pair<Map::iterator, bool> r
@@ -121,7 +121,7 @@ Recurrence::insert_auxiliary_definition(const Expr& e) {
 }
 
 inline Expr
-Recurrence::get_auxiliary_definition(const Symbol& z) {
+Recurrence::get_auxiliary_definition(const Symbol& z) const {
   typedef std::map<Symbol, Expr> Map;
   Map::const_iterator i = auxiliary_definitions.find(z);
   if (i != auxiliary_definitions.end())

@@ -153,7 +153,8 @@ characteristic_equation_and_its_roots(int order,
   // per equazioni di grado superiore al primo.
   if (order == 1) {
     characteristic_eq = y - coefficients[1];
-    roots.push_back(coefficients[1]);
+    // FIXME: `NON_RATIONAL' because the coefficient could be a parameter. 
+    roots.push_back(Polynomial_Root(coefficients[1], NON_RATIONAL));
   }
   else {
     // Check if the vector `coefficients' contains only numeric
@@ -545,6 +546,17 @@ Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
   return OK;
 }
 
+#if 0
+static void
+substitute_non_rational_roots_with_symbols(const Recurrence& rec,
+					   std::vector<Polynomial_Root>& roots) {
+  for (unsigned i = roots.size(); i-- > 0; )
+    if (roots[i].is_non_rational())
+      roots[i].value() = rec.insert_auxiliary_definition(roots[i].value());
+  D_VEC(roots, 0, roots.size()-1);
+}
+#endif
+
 /*!
   Returns an expression that is equivalent to \p e and that is
   "maximally expanded" with respect to addition.  This amounts, among
@@ -560,11 +572,11 @@ additive_form(const Expr& e) {
   supplied in SOME FORM. (Explain.)
 */
 Recurrence::Solver_Status
-Recurrence::solve(const Expr& rhs, const Symbol& n, Expr& solution) {
-  D_VAR(rhs);
+Recurrence::solve_easy_cases() const {
+  D_VAR(recurrence_rhs);
   // The following code depends on the possibility of recovering
   // the various parts of `rhs' as summands of an additive expression.
-  Expr expanded_rhs = additive_form(rhs);  
+  Expr expanded_rhs = additive_form(recurrence_rhs);
 
   // Initialize the computation of the order of the linear part of the
   // recurrence.  This works like the computation of a maximum: it is
@@ -774,6 +786,9 @@ Recurrence::solve(const Expr& rhs, const Symbol& n, Expr& solution) {
 						 characteristic_eq, roots,
 						 all_distinct))
 	return TOO_COMPLEX;
+      // If there is some root not rational then, for efficiency, we substitute
+      // it with an arbitrary symbol.
+      //      substitute_non_rational_roots_with_symbols(*this, roots);
       solution = solve_constant_coeff_order_2(n, g_n, order, all_distinct,
 					      base_of_exps, exp_poly_coeff,
 					      exp_no_poly_coeff, 
@@ -797,6 +812,9 @@ Recurrence::solve(const Expr& rhs, const Symbol& n, Expr& solution) {
 	D_MSG("Not found roots");
 	return TOO_COMPLEX;
       }
+      // If there is some root not rational then, for efficiency, we substitute
+      // it with an arbitrary symbol.
+      //substitute_non_rational_roots_with_symbols(*this, roots);
       solution = solve_constant_coeff_order_k(n, g_n, order, all_distinct,
 					      base_of_exps, exp_poly_coeff,
 					      exp_no_poly_coeff,
@@ -826,8 +844,8 @@ Recurrence::solve(const Expr& rhs, const Symbol& n, Expr& solution) {
     solution = solution.collect(conditions);
   }
 #if 0
-  if (!verify_solution(solution, order, rhs, n)) {
-    std::cout << "x(n) = " << rhs << std::endl;
+  if (!verify_solution(solution, order, recurrence_rhs, n)) {
+    std::cout << "x(n) = " << recurrence_rhs << std::endl;
     std::cout << " -> solution wrong or not enough simplified." << std::endl;
     std::cout << std::endl;
   }
@@ -1007,11 +1025,11 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs,
   the errors that may arise.
 */
 Recurrence::Solver_Status
-Recurrence::solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
+Recurrence::solve_try_hard() const {
   bool exit_anyway = false;
   Solver_Status status;
   do {
-    status = solve(rhs, n, solution);
+    status = solve_easy_cases();
     switch (status) {
     case OK:
       break;
@@ -1026,17 +1044,19 @@ Recurrence::solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
     case HAS_NEGATIVE_DECREMENT:
       {
 	Expr new_rhs;
-	eliminate_negative_decrements(rhs, new_rhs, n);
+	eliminate_negative_decrements(recurrence_rhs, new_rhs, n);
 	D_MSGVAR("Recurrence tranformed: ", new_rhs);
-	status = solve(new_rhs, n, solution);
+	recurrence_rhs = new_rhs;
+	status = solve_easy_cases();
       }
       break;
     case HAS_NULL_DECREMENT:
       {
 	Expr new_rhs;
-	if (eliminate_null_decrements(rhs, new_rhs, n)) {
+	if (eliminate_null_decrements(recurrence_rhs, new_rhs, n)) {
 	  D_MSGVAR("Recurrence tranformed: ", new_rhs);
-	  status = solve(new_rhs, n, solution);
+	  recurrence_rhs = new_rhs;
+	  status = solve_easy_cases();
 	}
 	else
 	  status = UNSOLVABLE_RECURRENCE;
@@ -2058,7 +2078,7 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
     exp_poly_decomposition(new_p_n, n,
 			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
     std::vector<Polynomial_Root> new_roots;
-    new_roots.push_back(Expr(1));
+    new_roots.push_back(Polynomial_Root(Expr(1), RATIONAL));
     if (!compute_sum_with_gosper_algorithm(n, 1, n, base_of_exps,
 					   exp_poly_coeff, exp_no_poly_coeff,
 					   new_roots, p_n/alpha_factorial,

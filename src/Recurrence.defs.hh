@@ -29,6 +29,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr.defs.hh"
 #include "alg_eq_solver.hh"
 #include <map>
+#include <iosfwd>
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -62,14 +63,14 @@ public:
   void replace_recurrence(unsigned k, const Expr& e);
 
   //! Returns a new symbol \f$ z \f$ and records the equation \f$ z = e \f$.
-  Symbol insert_auxiliary_definition(const Expr& e);
+  Symbol insert_auxiliary_definition(const Expr& e) const;
 
 private:
   //! \brief
   //! Returns the right-hand side of the auxiliary equation \f$ z = e \f$,
   //! if such an auxiliary equation exists;
   //! returns the expression \f$ z \f$ otherwise.
-  Expr get_auxiliary_definition(const Symbol& z);
+  Expr get_auxiliary_definition(const Symbol& z) const;
 
 public:
   enum Solver_Status {
@@ -120,20 +121,26 @@ public:
   };
 
 
-  Solver_Status solve(const Symbol& n) const;
-  Expr exact_solution(const Symbol& n) const;
-  bool verify_solution(const Symbol& n) const;
+  Solver_Status solve() const;
+  Expr exact_solution() const;
+  bool verify_solution() const;
 
   //! The index of the recurrence.
   static const Symbol& n;
 
+  //! Dumps all the data members of \p *this onto \p s.
+  void dump(std::ostream& s) const;
+
 private:
+  Solver_Status solve_easy_cases() const;
+  Solver_Status solve_try_hard() const;
+
   //! Holds the right-hand side of the global recurrence to be solved.
   //! This may have been set directly by the constructor or it may be the
   //! result of transforming a system into a single recurrence.
   //! The global recurrence is thus of the form
   //! <CODE>x(n) = recurrence_rhs</CODE>.
-  Expr recurrence_rhs;
+  mutable Expr recurrence_rhs;
 
   //! Holds the right-hand sides of a system of  recurrence equations.
   //! If <CODE>i == system_rhs.find(k)</CODE> then
@@ -145,7 +152,7 @@ private:
 
   mutable Expr solution;
 
-  std::map<Symbol, Expr> auxiliary_definitions;
+  mutable std::map<Symbol, Expr> auxiliary_definitions;
 
 private:
   static Solver_Status
@@ -160,10 +167,6 @@ private:
   classification_summand(const Expr& r, const Symbol& n, Expr& e,
 			 std::vector<Expr>& coefficients, int& order,
 			 bool& has_non_constant_coefficients);
-  static Solver_Status
-  solve(const Expr& rhs, const Symbol& n, Expr& solution);
-  static Solver_Status
-  solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution);
   static Solver_Status
   solve_constant_coeff_order_1(const Symbol& n,
 			       const std::vector<Expr>& base_of_exps,
