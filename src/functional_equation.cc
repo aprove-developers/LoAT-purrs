@@ -138,6 +138,7 @@ is_non_decreasing_poly(const Expr& e, const Symbol& x) {
 */
 bool
 is_non_decreasing_no_poly(const Expr& e, const Symbol& x) {
+  Number k;
   if (e.is_polynomial(x)) {
     if (is_non_decreasing_poly(e, x))
       return true;
@@ -157,6 +158,9 @@ is_non_decreasing_no_poly(const Expr& e, const Symbol& x) {
     }
     return true;
   }
+  else if (e.is_a_power() && e.arg(0) == Recurrence::n
+	   && e.arg(1).is_a_number(k) && k.is_positive())
+    return true;
   else if (e.is_the_log_function())
     return true;
   else if (e.is_a_power()) {
