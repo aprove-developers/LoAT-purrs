@@ -51,6 +51,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
+#define Nepero exp(Expr(1))
+
 namespace {
 using namespace PURRS;
 
@@ -510,8 +512,8 @@ rewrite_non_linear_recurrence(const Expr& rhs, Expr& new_rhs, Expr& base) {
     if (simple_cases)
       if (common_exponent == 1) {
 	// Substitute any `x' function `f' with `exp(1)^f'.
-	base = exp(Expr(1));
-	Expr tmp = substitute_x_function(rhs, exp(Expr(1)), true);
+	base = Nepero;
+	Expr tmp = substitute_x_function(rhs, Nepero, true);
 	tmp = simplify_ex_for_input(tmp, true);
 	for (unsigned i = tmp.nops(); i-- > 0; )
 	  new_rhs += log(tmp.op(i));
@@ -526,7 +528,7 @@ rewrite_non_linear_recurrence(const Expr& rhs, Expr& new_rhs, Expr& base) {
 	Expr tmp = substitute_x_function(rhs, common_exponent, true);
 	tmp = simplify_ex_for_input(tmp, true);
 	for (unsigned i = tmp.nops(); i-- > 0; )
-	  new_rhs += log(tmp.op(i)) / log(Expr(common_exponent));
+	  new_rhs += log(tmp.op(i)) / log(common_exponent);
 	new_rhs = simplify_logarithm(new_rhs);
 	D_VAR(new_rhs);
 	return true;
@@ -539,12 +541,11 @@ rewrite_non_linear_recurrence(const Expr& rhs, Expr& new_rhs, Expr& base) {
     Number num_exp;
     if (base_rhs.is_the_x_function() && exponent_rhs.is_a_number(num_exp)
 	&& num_exp.is_positive_integer()) {
-      unsigned exponent_x_function = num_exp.to_unsigned();
       // Substitute any `x' function `f' with `exponent_x_function^f'.
-      base = exponent_x_function;
-      Expr tmp = substitute_x_function(rhs, exponent_x_function, true);
+      base = num_exp;
+      Expr tmp = substitute_x_function(rhs, num_exp, true);
       tmp = simplify_ex_for_input(tmp, true);
-      new_rhs += log(tmp) / log(Expr(exponent_x_function));
+      new_rhs += log(tmp) / log(num_exp);
       new_rhs = simplify_logarithm(new_rhs);
       D_VAR(new_rhs);
       return true;
@@ -661,14 +662,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	else if (argument.is_a_add() && argument.nops() == 2) {
 	  Number decrement;
 	  if (get_constant_decrement(argument, decrement)) {
-#if 0
-	    if (found_function_x) {
-	      set_non_linear_finite_order();
-	      return SUCCESS;
-	    }
-#else
 	    assert(!found_function_x);
-#endif
 	    Solver_Status status
 	      = compute_order(decrement, order, index,
 			      coefficients.max_size());
@@ -755,8 +749,8 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classification_recurrence(const Expr& rhs,
 					     int& gcd_among_decrements) const {
-  // Check if the inhomogeneous term contains floating point numbers.
-  if (rhs.has_floating_point_numbers())
+  // Check if the inhomogeneous term contains non rational numbers.
+  if (rhs.has_non_rational_numbers())
     return MALFORMED_RECURRENCE;
 
   if (find_non_linear_recurrence(rhs)) {

@@ -550,21 +550,21 @@ PURRS::Expr::is_rational_function(const Symbol& x) const {
 }
 
 bool
-PURRS::Expr::has_floating_point_numbers() const {
+PURRS::Expr::has_non_rational_numbers() const {
   const Expr& e = *this;
   if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned i = e.nops(); i-- > 0; )
-      if (e.op(i).has_floating_point_numbers())
+      if (e.op(i).has_non_rational_numbers())
 	return true;
   }
   else if (e.is_a_power()) {
-    if (e.arg(0).has_floating_point_numbers()
-	|| e.arg(1).has_floating_point_numbers())
+    if (e.arg(0).has_non_rational_numbers()
+	|| e.arg(1).has_non_rational_numbers())
       return true;
   }
   else if (e.is_a_function()) {
     for (unsigned i = e.nops(); i-- > 0; )
-      if (e.arg(i).has_floating_point_numbers())
+      if (e.arg(i).has_non_rational_numbers())
 	return true;
   }
   else {

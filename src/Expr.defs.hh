@@ -744,10 +744,10 @@ public:
   bool is_rational_function(const Symbol& x) const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if \p *this contains floating point numbers;
+  //! Returns <CODE>true</CODE> if \p *this contains non rational numbers;
   //! returns <CODE>false</CODE> otherwise.
   bool
-  has_floating_point_numbers() const;
+  has_non_rational_numbers() const;
 
   //! \brief
   //! If \p any_x_function is true then returns <CODE>true</CODE> if
