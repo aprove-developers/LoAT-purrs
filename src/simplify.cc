@@ -1215,10 +1215,7 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
 	  // Factorize the base of the argument of the logarithm.
 	  std::vector<Number> bases;
 	  std::vector<int> exponents;
-	  D_VAR(num_base);
 	  partial_factor(num_base, bases, exponents);
-	  D_VEC(bases, 0, bases.size()-1);
-	  D_VEC(exponents, 0, exponents.size()-1);
 	  if (exponents.size() == 1)
 	    return exponent * exponents[0] * log(bases[0]);
 	  else {
@@ -1231,6 +1228,8 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
 	    return exponent * exponents[0] * log(new_base);
 	  }
 	}
+	else
+	  return exponent * log(base);
 	// Apply the first property.
 	if (base.is_the_exp_function() && base.arg(0) == 1)
 	  return exponent;
