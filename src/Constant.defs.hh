@@ -52,6 +52,7 @@ private:
   friend class Expr;
 
 public:
+  // Made public only to initialize the constant Pi.
   Constant(const GiNaC::constant& gc);
 };
 

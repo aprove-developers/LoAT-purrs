@@ -35,24 +35,27 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-// output stream operators
+//! Output operator.
+/*! \relates Expr */
 std::ostream& operator<<(std::ostream& os, const Expr& exp);
 
-// binary arithmetic operators Expr with Expr
+//! Binary arithmetic operators Expr with Expr.
 Expr operator+(const Expr& lh, const Expr& rh);
 Expr operator-(const Expr& lh, const Expr& rh);
 Expr operator*(const Expr& lh, const Expr& rh);
 Expr operator/(const Expr& lh, const Expr& rh);
 
-// binary arithmetic assignment operators with Expr
+//! Binary arithmetic assignment operators with Expr.
 Expr& operator+=(Expr& lh, const Expr& rh);
 Expr& operator-=(Expr& lh, const Expr& rh);
 Expr& operator*=(Expr& lh, const Expr& rh);
 Expr& operator/=(Expr& lh, const Expr& rh);
 
+//! Unary operators.
 Expr operator+(const Expr& lh);
 Expr operator-(const Expr& lh);
 
+//! Binary operators Expr with Expr
 bool operator==(const Expr& lh, const Expr& rh);
 bool operator!=(const Expr& lh, const Expr& rh);
 bool operator<(const Expr& lh, const Expr& rh);
@@ -92,6 +95,7 @@ public:
   //! Assignment operator.
   Expr& operator=(const Expr& exp);
 
+
   Expr operator[](int i) const;
 
   bool is_a_symbol() const;
@@ -121,6 +125,7 @@ public:
 
   unsigned nops() const;
   Expr op(unsigned i) const;
+  // FIXME: are `is_equal()' and `is_zero()' necessary?
   bool is_equal(const Expr& e) const;
   bool is_zero() const;
   Expr subs(const Expr& exp1, const Expr& exp2) const;
@@ -146,8 +151,6 @@ public:
   Expr diff(const Symbol& symb, unsigned nth = 1);
 
   Expr to_rational(Expr_List& lst);
-
-  // solve(), lsolve()
   
 private:
   GiNaC::ex e;

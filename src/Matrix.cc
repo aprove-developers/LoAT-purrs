@@ -26,7 +26,3 @@ site: http://www.cs.unipr.it/purrs/ . */
 #include <config.h>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
-
-//  PURRS::Matrix
-//  PURRS::Matrix::solve(const Matrix & vars, const Matrix & rhs,
-//	       unsigned algo = solve_algo::automatic) const {};

@@ -143,12 +143,67 @@ inline
 Number::~Number() {
 }
 
-int
+inline bool
+Number::Number::is_positive() const {
+  return n.is_positive();
+}
+
+inline bool
+Number::Number::is_integer() const {
+  return n.is_integer();
+}
+
+inline bool
+Number::Number::is_pos_integer() const {
+  return n.is_pos_integer();
+}
+
+inline bool
+Number::Number::is_nonneg_integer() const {
+  return n.is_nonneg_integer();
+}
+
+inline bool
+Number::Number::is_even() const {
+  return n.is_even();
+}
+
+inline bool
+Number::Number::is_odd() const {
+  return n.is_odd();
+}
+
+inline bool
+Number::Number::is_prime() const {
+  return n.is_prime();
+}
+
+inline bool
+Number::Number::is_rational() const {
+  return n.is_rational();
+}
+
+inline bool
+Number::Number::is_real() const {
+  return n.is_real();
+}
+
+inline bool
+Number::Number::is_cinteger() const {
+  return n.is_cinteger();
+}
+
+inline bool
+Number::Number::is_crational() const {
+  return n.is_crational();
+}
+
+inline int
 Number::to_int() const {
   return n.to_int();
 }
 
-long
+inline long
 Number::to_long() const {
   return n.to_long();
 }

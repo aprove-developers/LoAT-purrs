@@ -32,17 +32,17 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-// binary arithmetic operators Number with Number
+//! Binary arithmetic operators Number with Number.
 Number operator+(const Number& lh, const Number& rh);
 Number operator-(const Number& lh, const Number& rh);
 Number operator*(const Number& lh, const Number& rh);
 Number operator/(const Number& lh, const Number& rh);
 
-// unary operators
+//! Unary operators.
 Number operator+(const Number &lh);
 Number operator-(const Number &lh);
 
-// increment / decrement operators
+//! Increment / decrement operators.
 Number& operator++(Number& rh);
 Number& operator--(Number& rh);
 Number operator++(Number& lh, int);
@@ -50,7 +50,7 @@ Number operator--(Number& lh, int);
 
 class Parma_Recurrence_Relation_Solver::Number {
 public:
-  //! Ordinary copy-constructor.
+  //! Default constructor.
   Number();
 
   //! Builds the integer number \p i.

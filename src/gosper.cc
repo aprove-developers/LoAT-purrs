@@ -278,7 +278,7 @@ gosper_step_three(const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
 	possible_deg = B_A;
     deg_x = possible_deg >= 0 ? possible_deg : -1;
   }
-  if (deg_x.is_equal(-1))
+  if (deg_x == -1)
     return false;
 #if NOISY
   std::cout << "Degree of x(n) = " << deg_x << std::endl;
