@@ -1179,6 +1179,7 @@ rewrite_binomials(const Expr& e) {
 
 Expr
 factorize_base_arg_log(const Number& base, const Expr& exponent = 1) {
+  assert(base.is_integer());
   std::vector<Number> bases;
   std::vector<int> exponents;
   partial_factor(base, bases, exponents);
@@ -1225,7 +1226,11 @@ logarithm_of_product(const Expr& arg_log) {
 Expr
 apply_elementary_prop(const Expr& e, bool all_properties = true) {
   assert(e.is_the_log_function());
-  const Expr& arg_log = e.arg(0);
+  Expr arg_log;
+  if (e.arg(0).is_a_power())
+    arg_log = simplify_powers(e.arg(0), true);
+  else
+    arg_log = e.arg(0);
   // Apply the second property.
   Number arg_log_num;
   if (arg_log.is_a_power()) {
@@ -1233,8 +1238,14 @@ apply_elementary_prop(const Expr& e, bool all_properties = true) {
     const Expr& exponent = arg_log.arg(1);
     Number num_base;
     if (base.is_a_number(num_base)) {
-      // Factorize the base of the argument of the logarithm.
-      return factorize_base_arg_log(num_base, exponent);
+      if (num_base.is_integer())
+	// Factorize the base of the argument of the logarithm.
+	return factorize_base_arg_log(num_base, exponent);
+      else {
+	assert(num_base.is_rational());
+	return factorize_base_arg_log(num_base.numerator(), exponent)
+	  - factorize_base_arg_log(num_base.denominator(), exponent);
+      }
     }
     else
       return exponent * log(base);
@@ -1244,14 +1255,14 @@ apply_elementary_prop(const Expr& e, bool all_properties = true) {
   }
   else if (arg_log.is_a_number(arg_log_num)) {
     if (arg_log_num.is_positive_integer())
-      // Factorize the base of the argument of the logarithm.
+      // Factorize the base of the argument of the logarithm and apply
+      // the second property.
       return factorize_base_arg_log(arg_log_num);
     if (all_properties && arg_log_num.denominator() != 1) {
       Number numer = arg_log_num.numerator();
       Number denom = arg_log_num.denominator();
       assert(denom.is_positive_integer());
-      // If `all_properties' is true apply the third and the
-      // fourth properties.
+      // Apply the third and the fourth properties.
       if (numer.is_positive_integer())
 	return factorize_base_arg_log(numer)
 	  - factorize_base_arg_log(denom);
@@ -1259,7 +1270,7 @@ apply_elementary_prop(const Expr& e, bool all_properties = true) {
 	return numer - factorize_base_arg_log(denom);
     }
   }
-  // If `all_properties' is true apply the third and the fourth properties.
+  // Apply the third and the fourth properties.
   if (all_properties && arg_log.is_a_mul())
     return logarithm_of_product(arg_log);
   return log(arg_log);
@@ -1372,7 +1383,7 @@ prepare_simpl_power_in_logarithm(const Expr& base, const Expr& exponent) {
       exponent_simpl = rem * log(base);
     }
   }
-  
+
   // Apply the second and the third properties.
   Number base_num;
   if (base_simpl.is_a_number(base_num) && base_num.is_positive()
@@ -1444,6 +1455,101 @@ prepare_simpl_power_in_logarithm(const Expr& base, const Expr& exponent) {
 }
 
 /*!
+  This function applies the following rewrite rule:
+  \f[
+    \frac{\log(a/b)}{\log(b/a)} = -1.
+  \f]
+*/
+Expr
+simpl_quotient_of_logs(const Expr& e) {
+  assert(e.is_a_mul());
+  // Divide the factors of \p e in 3 different expressions:
+  // `log_factors' will contain the factors of the form `log(a)';
+  // `inv_log_factors' will contain the factors of the form `1 / log(a)';
+  // all the other factors will be contained in `e_simplified'.
+  Expr e_simplified = 1;
+  Expr log_factors = 1;
+  Expr inv_log_factors = 1;
+  for (unsigned i = e.nops(); i-- > 0; ) {
+    const Expr& factor = e.op(i);
+    if (factor.is_the_log_function())
+      log_factors *= factor;
+    else if (factor.is_a_power()
+	     && factor.arg(0).is_the_log_function() && factor.arg(1) == -1)
+      inv_log_factors *= factor;
+    else
+      e_simplified *= factor;
+  }
+  // No simplification to apply.
+  if (log_factors == 1 || inv_log_factors == 1)
+    return e_simplified * log_factors * inv_log_factors;
+
+  // There is more than one factor of the form `log(a)'.
+  if (log_factors.is_a_mul())
+    for (unsigned i = log_factors.nops(); i-- > 0; ) {
+      const Expr& arg_log_1 = log_factors.op(i).arg(0);
+      // There is more than one factor of the form `1 / log(a)'.
+      if (inv_log_factors.is_a_mul())
+	for (unsigned j = inv_log_factors.nops(); j-- > 0; ) {
+	  const Expr& arg_log_2 = inv_log_factors.op(j).arg(0).arg(0);
+	  if (numerator(arg_log_1) == denominator(arg_log_2)
+	      && numerator(arg_log_2) == denominator(arg_log_1)) {
+	    e_simplified *= -1;
+	    inv_log_factors /= inv_log_factors.op(j);
+	    break;
+	  }
+	  else {
+	    e_simplified *= log_factors.op(i) * inv_log_factors.op(j);
+	    inv_log_factors /= inv_log_factors.op(j);
+	    break;
+	  }
+	}
+      // There is only 1 factor of the form `1 / log(a)'.
+      else {
+	if (inv_log_factors == 1)
+	  e_simplified *= log_factors.op(i);
+	else {
+	  const Expr& arg_log_2 = inv_log_factors.arg(0).arg(0);
+	  if (numerator(arg_log_1) == denominator(arg_log_2)
+	      && numerator(arg_log_2) == denominator(arg_log_1)) {
+	    e_simplified *= -1;
+	    inv_log_factors = 1;
+	  }
+	  else {
+	    e_simplified *= log_factors.op(i) * inv_log_factors;
+	    inv_log_factors = 1;
+	  }
+	}
+      }
+    }
+  // There is only 1 factor of the form `log(a)'.
+  else {
+    const Expr& arg_log_1 = log_factors.arg(0);
+    // There is more than one factor of the form `1 / log(a)'.
+    if (inv_log_factors.is_a_mul())
+      for (unsigned j = inv_log_factors.nops(); j-- > 0; ) {
+	const Expr& arg_log_2 = inv_log_factors.op(j).arg(0).arg(0);
+	if (numerator(arg_log_1) == denominator(arg_log_2)
+	    && numerator(arg_log_2) == denominator(arg_log_1))
+	  return e_simplified * -1 * inv_log_factors / inv_log_factors.op(j);
+	else
+	  return e_simplified * log_factors * inv_log_factors
+	    / inv_log_factors.op(j);
+      }
+    // There is only 1 factor of the form `1 / log(a)'.
+    else {
+      const Expr& arg_log_2 = inv_log_factors.arg(0).arg(0);
+      if (numerator(arg_log_1) == denominator(arg_log_2)
+	  && numerator(arg_log_2) == denominator(arg_log_1))
+	return e_simplified * -1;
+      else
+	return e_simplified * log_factors * inv_log_factors;
+    }
+  }
+  return e_simplified * inv_log_factors;
+}
+
+/*!
   Applies the following logarithm's property:
   \f[
     \begin{cases}
@@ -1469,9 +1575,14 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
       e_rewritten += simplify_logarithm_in_expanded_ex(e.op(i));
   }
   else if (e.is_a_mul()) {
-    e_rewritten = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten *= simplify_logarithm_in_expanded_ex(e.op(i));
+    const Expr& tmp = simpl_quotient_of_logs(e);
+    if (tmp.is_a_mul()) {
+      e_rewritten = 1;
+      for (unsigned i = tmp.nops(); i-- > 0; )
+	e_rewritten *= simplify_logarithm_in_expanded_ex(tmp.op(i));
+    }
+    else
+      return simplify_logarithm_in_expanded_ex(tmp);
   }
   else if (e.is_a_power())
     // Apply the last three properties: note that is important that
