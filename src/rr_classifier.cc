@@ -622,6 +622,9 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
     // constants (`a != 1').
     // In this case is not necessary the `linearization' of the recurrence
     // because we already know the solution in function of `c' and `a'.
+    // The linear recurrence is necessary if the solution must be evaluated
+    // on initial conditions with indeces bigger than the indeces of the
+    // symbolic initial conditions occurring in the solution.
     if (simple_cases && rhs.nops() == 2) {
       Number coeff;
       if (rhs.op(0).is_a_number(coeff) && rhs.op(1).is_a_power()
@@ -632,6 +635,18 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	// Store `a'.
 	assert(rhs.op(1).arg(1).is_a_number());
 	coeff_and_base.second = rhs.op(1).arg(1).ex_to_number();
+	// Store the right hand side of the associated linear recurrence
+	// (when possible).
+	if (coeff_and_base.second != -1) {
+	  Expr tmp = coeff_and_base.first;
+	  if (coeff_and_base.first.is_negative()) {
+	    Symbol s = rec.insert_auxiliary_definition(coeff_and_base.first);
+	    auxiliary_symbols.push_back(s);
+	    tmp = s;
+	  }
+	  new_rhs = coeff_and_base.second * x(Recurrence::n-1)
+	    + log(tmp) / log(abs(rhs.op(1).arg(1).ex_to_number()));
+	}
 	return true;
       }
       else if (rhs.op(1).is_a_number(coeff) && rhs.op(0).is_a_power()
@@ -642,6 +657,19 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	// Store `a'.
 	assert(rhs.op(0).arg(1).is_a_number());
 	coeff_and_base.second = rhs.op(0).arg(1).ex_to_number();
+	// Store the right hand side of the associated linear recurrence
+	// (when possible).
+	if (coeff_and_base.second != -1) {
+	  Expr tmp = coeff_and_base.first;
+	  if (coeff_and_base.first.is_negative()) {
+	    Symbol s = rec.insert_auxiliary_definition(coeff_and_base.first);
+	    auxiliary_symbols.push_back(s);
+	    tmp = s;
+	  }
+	  new_rhs = coeff_and_base.second * x(Recurrence::n-1)
+	    + log(tmp) / log(abs(rhs.op(0).arg(1).ex_to_number()));
+	}
+	D_VAR(new_rhs);
 	return true;
       }
     }
