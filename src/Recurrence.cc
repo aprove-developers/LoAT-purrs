@@ -189,7 +189,7 @@ PURRS::Recurrence::n = Symbol("n");
 */
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
-  assert (rec.is_linear_finite_order() || rec.is_non_linear_finite_order());
+  assert(rec.is_linear_finite_order() || rec.is_non_linear_finite_order());
   unsigned int order_rec;
   unsigned int first_i_c;
   if (rec.is_non_linear_finite_order()) {
@@ -554,6 +554,7 @@ compute_infinite_order_recurrence(Expr& solution) const {
   // At the moment we consider only recurrences of infinite order
   // transformable in first order recurrences.
   std::vector<Expr> coefficients(2);
+  // Shift forward `n -> n + 1' the coefficient.
   coefficients[1] = coeff_first_order().substitute(n, n+1);
   Recurrence rec_rewritten(rhs_transformed_in_first_order());
   // It is not necessary to repeat the classification's process
@@ -564,6 +565,7 @@ compute_infinite_order_recurrence(Expr& solution) const {
     rec_rewritten.set_type(LINEAR_FINITE_ORDER_VAR_COEFF);
   else
     rec_rewritten.set_type(LINEAR_FINITE_ORDER_CONST_COEFF);
+  // Shift forward `n -> n + 1' the inhomogeneous term.
   rec_rewritten.set_inhomogeneous_term(inhomog_first_order()
 				       .substitute(n, n+1));
   Solver_Status status;
