@@ -36,7 +36,12 @@ namespace Parma_Recurrence_Relation_Solver {
 inline Interval
 approximate_integer(const Number& n) {
   // Kludge!!!
-  return Interval(n.to_int());
+  try {
+    return Interval(n.to_int());
+  }
+  catch (...) {
+    return Interval(n.to_double());
+  }
 }
 
 inline Interval
@@ -55,7 +60,7 @@ inline CInterval
 approximate(const Number& n) {
   if (n.is_real())
     return CInterval(approximate_rational(n.real()),
-		     0);
+		     Interval::ZERO());
   else
     return CInterval(approximate_rational(n.real()),
 		     approximate_rational(n.imaginary()));
@@ -124,8 +129,15 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
     bool exponent_interval_result
       = generic_approximate(e.arg(1), sh, exponent_ae, exponent_aci);
     if (base_interval_result)
-      if (exponent_interval_result)
-	aci = pow(base_aci, exponent_aci);
+      if (exponent_interval_result) {
+	// Kludge to get around what is likely to be a CoStLy bug: see
+	// http://www.cs.unipr.it/pipermail/purrs-devel/2002-November/000724.html
+	if (exponent_aci.re() == -Interval::ONE()
+	    && exponent_aci.im() == Interval::ZERO())
+	  aci = CInterval(Interval::ONE(), Interval::ONE()) / base_aci;
+	else
+	  aci = pow(base_aci, exponent_aci);
+      }
       else
 	ae = pwr(Complex_Interval(base_aci), exponent_ae);
     else

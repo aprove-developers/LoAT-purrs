@@ -322,7 +322,7 @@ Number::to_int() const {
   // of CLN 1.1.5 and/or GiNaC 1.0.11.
   // See http://www.cs.unipr.it/pipermail/purrs-devel/2002-October/000412.html.
   if (!is_integer() || (n > 0 && n > INT_MAX)  || (n < 0 && n < INT_MIN))
-    throw std::domain_error("Cannot conver to an `int'"
+    throw std::domain_error("Cannot convert to an `int' "
 			    "in PURRS::Number::to_int()");
   return n.to_int();
 }
@@ -333,7 +333,7 @@ Number::to_long() const {
   // of CLN 1.1.5 and/or GiNaC 1.0.11.
   // See http://www.cs.unipr.it/pipermail/purrs-devel/2002-October/000412.html.
   if (!is_integer() || (n > 0 && n > LONG_MAX)  || (n < 0 && n < LONG_MIN))
-    throw std::domain_error("Cannot conver to a `long'"
+    throw std::domain_error("Cannot convert to a `long' "
 			    "in PURRS::Number::to_long()");
   return n.to_long();
 }
