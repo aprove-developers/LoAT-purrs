@@ -1000,34 +1000,32 @@ simplify_expanded_ex_for_output(const Expr& e, bool input) {
 }
 
 Expr
-rewrite_factorial(const Number& a, const Number& b) {
-  Expr prod = factorial(a * Recurrence::n);
+rewrite_factorial(const Number& a, const Number& b, const Symbol& k) {
+  Expr prod = factorial(a * k);
   if (b > 0)
     for (Number j = 1; j <= b; ++j)
-      prod *= a * Recurrence::n + j; 
+      prod *= a * k + j; 
   else
     for (Number j = 0; j < abs(b); ++j)
-      prod *= pwr(a * Recurrence::n - j, -1);
+      prod *= pwr(a * k - j, -1);
   return prod;
 }
 
 bool
-check_form_of_mul(const Expr& e, Number& a) {
+check_form_of_mul(const Expr& e, const Symbol& k, Number& a) {
   assert(e.is_a_mul() && e.nops() == 2);
   const Expr& first = e.op(0);
   const Expr& second = e.op(1);
-  if ((first == Recurrence::n && second.is_a_number(a)
-       && a.is_positive_integer())
-      || (second == Recurrence::n && first.is_a_number(a)
-	  && a.is_positive_integer()))
+  if ((first == k && second.is_a_number(a) && a.is_positive_integer())
+      || (second == k && first.is_a_number(a) && a.is_positive_integer()))
     return true;
   else
     return false;
 }
 
 /*!
-  Given the factorial expression \f$ (a n + b)! \f$, this function 
-  returns a new expression that contains explicitly \f$ (a n)! \f$.
+  Given the factorial expression \f$ (a k + b)! \f$, this function 
+  returns a new expression that contains explicitly \f$ (a k)! \f$.
   We use the rewrite rule explained in the comment for
   <CODE>rewrite_factorials()</CODE>
 */
@@ -1039,26 +1037,27 @@ decompose_factorial(const Expr& e) {
     const Expr& first = argument.op(0);
     const Expr& second = argument.op(1);
     Number b;
+    Symbol k;
     if (first.is_a_number(b) && b.is_integer())
       if (second.is_a_mul() && second.nops() == 2) {
 	Number a;
-	// Checks if `second' has the form `a*n with `a' a positive
+	// Checks if `second' has the form `a*k with `a' a positive
 	// integer number'. 
-	if (check_form_of_mul(second, a))
-	  return rewrite_factorial(a, b);
+	if (check_form_of_mul(second, k, a))
+	  return rewrite_factorial(a, b, k);
       }
-      else if (second == Recurrence::n)
-	return rewrite_factorial(1, b);
+      else if (second.is_a_symbol(k))
+	return rewrite_factorial(1, b, k);
     if (second.is_a_number(b) && b.is_integer())
       if (first.is_a_mul() && first.nops() == 2) {
 	Number a;
-	// Checks if `second' has the form `a*n with `a' a positive
+	// Checks if `second' has the form `a*k with `a' a positive
 	// integer number'. 
-	if (check_form_of_mul(first, a))
-	  return rewrite_factorial(a, b);
+	if (check_form_of_mul(first, k, a))
+	  return rewrite_factorial(a, b, k);
       }
-      else if (first == Recurrence::n)
-	return rewrite_factorial(1, b);
+      else if (first.is_a_symbol(k))
+	return rewrite_factorial(1, b, k);
   }
   return e;
 }
@@ -1071,13 +1070,13 @@ decompose_factorial(const Expr& e) {
   - let \f$ a \in \Nset \setminus \{0\} \f$ and let \f$ b \in \Zset \f$:
     \f[
       \begin{cases}
-        (a n + b)!
+        (a k + b)!
         =
-        (a n)! \cdot (a n + 1) \cdots (a n + b),
+        (a k)! \cdot (a k + 1) \cdots (a k + b),
           \quad \text{if } b \in \Nset \setminus \{0\}; \\
-        (a n)!,
+        (a k)!,
           \quad \text{if } b = 0; \\
-        \dfrac{(a n)!}{(a n) \cdot (a n - 1) \cdots (a n + b + 1))},
+        \dfrac{(a k)!}{(a k) \cdot (a k - 1) \cdots (a k + b + 1))},
           \quad \text{if } b \in \Zset \setminus \Nset.
       \end{cases}
     \f]
@@ -1505,12 +1504,16 @@ PURRS::simplify_numer_denom(const Expr& e) {
 */
 PURRS::Expr
 PURRS::simplify_factorials_and_exponentials(const Expr& e) {
+#if 0
   Expr e_numerator;
   Expr e_denominator;
   numerator_denominator_purrs(e, e_numerator, e_denominator);
   e_numerator = rewrite_factorials_and_exponentials(e_numerator);
   e_denominator = rewrite_factorials_and_exponentials(e_denominator);
   return e_numerator / e_denominator;
+#else
+  return rewrite_factorials_and_exponentials(e);
+#endif
 }
 
 PURRS::Expr
