@@ -578,6 +578,11 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
       return INCONCLUSIVE_VERIFICATION;
 
     // Step 2: validation of the solution using mathematic induction.
+    // Note: with recurrences of infinite order is not true that if it is
+    // homogeneous then is sufficient to verify the initial condition.
+    // In fact, the recurrences could be in a non-standard form like
+    // `x(n) = f(n) sum(k, 0, n-1, x(k)+h(n))'. For standard form
+    // we consider recurrences with the argument of the sum equal to `x(k)'. 
     // Find the lower_bound of the sum.
     // FIXME: maybe it is better put the lower bound of the sum
     // in the class `Infinite_Order_Info', so we could avoid this search.
@@ -594,12 +599,19 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 	  if (term.is_the_sum_function())
 	    lower_bound_sum = term.arg(1).ex_to_number().to_unsigned();
       }
-    else {
-      assert(rec.recurrence_rhs.is_the_sum_function());
-      lower_bound_sum
-	= rec.recurrence_rhs.arg(1).ex_to_number().to_unsigned();
-    }
-
+    else
+      if (rec.recurrence_rhs.is_a_mul())
+	for (unsigned i = rec.recurrence_rhs.nops(); i-- > 0; ) {
+	  if (rec.recurrence_rhs.op(i).is_the_sum_function()) {
+	    lower_bound_sum
+	      = rec.recurrence_rhs.op(i).arg(1).ex_to_number().to_unsigned();
+	    break;
+	  }
+	}
+      else 
+	lower_bound_sum
+	  = rec.recurrence_rhs.arg(1).ex_to_number().to_unsigned();
+    
     // Let `x(n) = f(n) sum(k, n_0, n-1, x(k)) + g(n)' be the infinite
     // order recurrence. Now we must consider the expression
     // `x(n) - f(n) x(n_0) - f(n) sum(k, n_0 + 1, n - 1, x(k)) - g(n)',
