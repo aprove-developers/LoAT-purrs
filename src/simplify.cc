@@ -125,44 +125,41 @@ collect_same_base(const GExpr& e, const std::vector<GExpr>& bases,
 static GExpr
 collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
 		       std::vector<GExpr>& exponents) {
+  assert(is_a<mul>(e));
   GExpr ris = 1;
-  if (is_a<mul>(e)) {
-    // At the end of the cycle 'ris' will contain the powers of 'e', with
-    // the same exponents, simplified in only one power with the base equal
-    // to the two previous base multiplicated (rule 12).
-    unsigned i = exponents.size();
-    while (i > 0) {
-      --i;
-      if (exponents[i] != 0) {
-	GExpr exp = exponents[i];
-	GExpr base = bases[i];
-	bool found = false;
-	for (unsigned j = i; j-- > 0; )
-	  if (exponents[j].is_equal(exp)) {
-	    found = true;
-	    base *= bases[j];
-	    exponents[j] = 0;
-	  }
-	if (found)
-	  ris *= pow(base, exp);
-	else
-	  exponents[i] = 0;
-      }
+  // At the end of the cycle 'ris' will contain the powers of 'e', with
+  // the same exponents, simplified in only one power with the base equal
+  // to the two previous base multiplicated (rule 12).
+  unsigned i = exponents.size();
+  while (i > 0) {
+    --i;
+    if (exponents[i] != 0) {
+      GExpr exp = exponents[i];
+      GExpr base = bases[i];
+      bool found = false;
+      for (unsigned j = i; j-- > 0; )
+	if (exponents[j].is_equal(exp)) {
+	  found = true;
+	  base *= bases[j];
+	  exponents[j] = 0;
+	}
+      if (found)
+	ris *= pow(base, exp);
+      else
+	exponents[i] = 0;
     }
-    for (i = e.nops(); i-- > 0; )
-      if (!is_a<power>(e.op(i)))
-	ris *= e.op(i);
-      else {
-	bool insert = true;
-	for (unsigned j = exponents.size(); j-- > 0; )
-	  if (exponents[j].is_equal(e.op(i).op(1)))
-	    insert = false;
-	if (insert)
-	  ris *= e.op(i);
-      }
   }
-  else
-    ris *= e;
+  for (i = e.nops(); i-- > 0; )
+    if (!is_a<power>(e.op(i)))
+      ris *= e.op(i);
+    else {
+      bool insert = true;
+      for (unsigned j = exponents.size(); j-- > 0; )
+	if (exponents[j].is_equal(e.op(i).op(1)))
+	  insert = false;
+      if (insert)
+	ris *= e.op(i);
+    }
   return ris;
 }
 
@@ -170,14 +167,30 @@ static GExpr
 collect_base_exponent(const GExpr& e) {
   GExpr tmp = e;
   assert(is_a<mul>(tmp));
-  GList lst;
-  if (find(tmp, wild(0) * pow(wild(1), wild(2)), lst)) {
+  // Special case: the exponential 'exp' is a GiNaC::function but have
+  // the same properties of the other powers.
+  GExpr argument = 0;
+  GExpr rem = 1;
+  for (unsigned i = tmp.nops(); i-- > 0; ) {
+    GList l;
+    if (tmp.op(i).match(exp(wild()), l))
+      argument += l.op(0).rhs();
+    else
+      rem *= tmp.op(i);
+  }
+  tmp = exp(argument) * rem;
+#if NOISY
+  std::cout << "tmp dopo 'exp'... " << tmp << std::endl;
+#endif
+  if (is_a<mul>(tmp)) {
+    // Builds two vector that contain the bases and the exponents of
+    // the eventual multiplication's factors that are powers. 
     std::vector<GExpr> bases;
     std::vector<GExpr> exponents;
-    for (unsigned i = lst.op(0).nops(); i-- > 0; )
-      if (is_a<power>(lst.op(0).op(i))) {
-	bases.push_back(lst.op(0).op(i).op(0));
-	exponents.push_back(lst.op(0).op(i).op(1));
+    for (unsigned i = tmp.nops(); i-- > 0; )
+      if (is_a<power>(tmp.op(i))) {
+	bases.push_back(tmp.op(i).op(0));
+	exponents.push_back(tmp.op(i).op(1));
       }
     // Rules 5 and 6.    
     tmp = collect_same_base(tmp, bases, exponents);
@@ -185,7 +198,8 @@ collect_base_exponent(const GExpr& e) {
     std::cout << "tmp dopo same base... " << tmp << std::endl;
 #endif
     // Rule 12.
-    tmp = collect_same_exponents(tmp, bases, exponents);
+    if (is_a<mul>(tmp))
+      tmp = collect_same_exponents(tmp, bases, exponents);
 #if NOISY
     std::cout << "tmp dopo same exponents... " << tmp << std::endl;
 #endif
@@ -610,46 +624,60 @@ reduce_product(const GExpr& a) {
 }
 
 static void
+assign(const GExpr& e, GExpr& numerica, GExpr& symbolic) {
+  if (is_a<power>(e))
+    if (is_a<numeric>(e.op(0)) && is_a<numeric>(e.op(1)))
+      numerica *= e;
+    else
+      symbolic *= e;
+  else if (is_a<function>(e))
+    if (is_a<numeric>(e.op(0)))
+      numerica *= e;
+    else
+      symbolic *= e;
+  else
+    if (is_a<numeric>(e))
+      numerica *= e;
+    else
+      symbolic *= e;
+}
+
+/*!
+  Give the <CODE>GExpr</CODE> \p e that is not a <CODE>GiNaC::add</CODE>,
+  builds two other <CODE>GExpr</CODE> \p numerica and \p symbolic that
+  contains numeric part and symbolic part of \p e, rispectively.
+  FIXME: it is not recursive, i.e. for instance not consider function of
+  function, da ripensare...
+*/
+static void
 split(const GExpr& e, GExpr& numerica, GExpr& symbolic) {
-  GExpr tmp = e;
-  assert(!is_a<add>(tmp));
-  if (is_a<mul>(tmp))
-    for (unsigned i = tmp.nops(); i-- > 0; )
-      if (is_a<power>(tmp.op(i))) {
-	if (is_a<numeric>(tmp.op(i).op(0))) {
-	  // Passaggi necessari se si ha per es. come fattore 3^sqrt(8).
-	  GExpr exp = tmp.op(i).op(1);
-	  if (is_a<numeric>(exp)
-	      || ((is_a<power>(exp)
-		   && is_a<numeric>(exp.op(0)) && is_a<numeric>(exp.op(1))))) 
-	    numerica *= tmp.op(i);
-	  else
-	    symbolic *= tmp.op(i);
-	}
-	// The base of the i-th factor is not numeric.
+  assert(!is_a<add>(e));
+  if (is_a<power>(e)) {
+    GExpr tmp = pow_simpl(e);
+    // 'tmp' can be a 'GiNaC::power' or a 'GiNaC::mul' with some factor a
+    // 'GiNaC::power' or a more simpler term.
+    if (is_a<mul>(tmp))
+      for (unsigned i = tmp.nops(); i-- > 0; )
+	assign(tmp.op(i), numerica, symbolic);
+    else
+      assign(tmp, numerica, symbolic);
+  }
+  else if (is_a<mul>(e))
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (is_a<power>(e.op(i))) {
+	GExpr factor = pow_simpl(e.op(i));
+	// 'tmp' can be a 'GiNaC::power' or a 'GiNaC::mul' with some factor a
+	// 'GiNaC::power' or a more simpler term.
+	if (is_a<mul>(factor))
+	  for (unsigned i = factor.nops(); i-- > 0; )
+	    assign(factor.op(i), numerica, symbolic);
 	else
-	  symbolic *= tmp.op(i);
+	  assign(factor, numerica, symbolic);
       }
       else
-	if (is_a<numeric>(tmp.op(i)))
-	  numerica *= tmp.op(i);
-	else
-	  symbolic *= tmp.op(i);
-  else if (is_a<power>(tmp)) {
-    if (is_a<numeric>(tmp.op(0))) {
-      GExpr exp = tmp.op(1);
-      if (is_a<numeric>(exp)
-	  || ((is_a<power>(exp)
-	       && is_a<numeric>(exp.op(0)) && is_a<numeric>(exp.op(1))))) 
-	numerica *= tmp;
-      else
-	symbolic *= tmp;
-    }
-    else
-      symbolic *= tmp;
-  }
+	assign(e.op(i), numerica, symbolic);
   else
-    symbolic *= tmp;
+    assign(e, numerica, symbolic);
 }
 
 static GExpr
@@ -687,6 +715,10 @@ manip_factor(const GExpr& e) {
       }
     }
     tmp *= factor_function;
+  }
+  else if (is_a<function>(tmp)) {
+    GExpr argument = simplify_on_output_ex(tmp.op(0));
+    tmp = tmp.subs(tmp.op(0) == argument);
   }
 #if NOISY
   std::cout << "tmp dopo function... " << tmp << std::endl << std::endl;
