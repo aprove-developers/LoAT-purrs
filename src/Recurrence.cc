@@ -30,6 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Recurrence.defs.hh"
 #include "util.hh"
+#include "approx_expr.hh"
 #include <iostream>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
@@ -88,8 +89,12 @@ PURRS::Recurrence::dump(std::ostream& s) const {
     for (Map::const_iterator i = auxiliary_definitions.begin(),
 	   ad_end = auxiliary_definitions.end();
 	 i != ad_end;
-	 ++i)
+	 ++i) {
       s << "  " << i->first << " = " << i->second << std::endl;
+#if 1
+      s << "***  " << i->first << " = " << approximate(i->second) << std::endl;
+#endif
+    }
   }
   //s << "solution = " << solution << std::endl;
   s << std::endl;

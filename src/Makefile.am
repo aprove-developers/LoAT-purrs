@@ -13,7 +13,7 @@ VPATH = @srcdir@
 
 @SET_MAKE@
 
-SUBDIRS = . Intervals
+SUBDIRS =
 
 INCLUDES = -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/CoStLy @extra_includes@
 
@@ -23,6 +23,7 @@ lib_LIBRARIES = libpurrs.a
 
 # The ordering of the following list *matters*!
 INCLUDE_FILES = \
+complint.hh \
 Constant.types.hh \
 Expr.types.hh \
 Expr_List.types.hh \
@@ -69,6 +70,7 @@ Matrix.cc \
 Recurrence.cc \
 alg_eq_solver.cc \
 approx_expr.cc \
+complint.cc \
 poly_factor.cc \
 rr_solver.cc \
 gosper.cc \

@@ -44,7 +44,9 @@ approximate_rational(const Number& n) {
   if (n.is_integer())
     return approximate_integer(n);
   else if (n.is_rational())
-    return approximate_integer(n.numerator()) / approximate_integer(n.denominator());
+    return
+      approximate_integer(n.numerator())
+      / approximate_integer(n.denominator());
   else
     abort();
 }
@@ -78,7 +80,7 @@ approximate(const Expr& e) {
     static Expr one_half = Number(1)/2;
     const Expr& base = e.arg(0);
     const Expr& exponent = e.arg(1);
-#if 0
+#if 1
     return pow(approximate(base), approximate(exponent));
 #else
     std::cout << base << "^" << exponent << std::endl;

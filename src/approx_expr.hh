@@ -26,11 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_approx_expr_hh 1
 
 #include "Expr.types.hh"
-
-#include <Interval.h>
-#include <cinterval.h>
-typedef filib::Interval Interval;
-typedef cinterval CInterval;
+#include "complint.hh"
 
 namespace Parma_Recurrence_Relation_Solver {
 
