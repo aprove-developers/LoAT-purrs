@@ -34,9 +34,9 @@ Comments:
 Bug #2
 Title:		Correct but inconsistent solutions
 Description:	Two correct but syntactically different solutions to same rec.
-Status:		NEW
-Priority:	Low (but worth investigating)
-Reproducible:	Machine-dependent?
+Status:		ASSIGNED (pescetti)
+Priority:	High ([work on] Bug#3 depends on this)
+Reproducible:	Always?
 Steps to reproduce:
   1. Run rrs_driver -i
   2. Solve x(n)=x(n-1)+x(n-2)
@@ -47,13 +47,15 @@ Comments:
     Feel like scripting? echo -e "x(n-1)+x(n-2)\nx(n-1)+x(n-2)"|rrs_driver -i
   2004-04-27 pescetti
     Tried on two quite different machines and got the same behaviour.
+  2004-06-06 pescetti
+    Since simplifying seems unreliable at times, this bug must be solved first.
 
 -----
 
 Bug #3
 Title:		INCONCLUSIVE_VERIFICATION after a few attempts
 Description:	Solve and verify the same recurrence 4 times; 4th attempt fails
-Status:		ASSIGNED (pescetti)
+Status:		DEPENDS on Bug#2
 Priority:	High
 Reproducible:	Always?
 Steps to reproduce:
@@ -66,3 +68,27 @@ Comments:
     Bug#2 might depend on this one (or be the same problem in harmless form).
   2004-05-07 pescetti
     Tried on two quite different machines and got the same behaviour.
+  2004-05-24 pescetti
+    Different expressions are passed to verify_exact_solution().
+  2004-06-04 pescetti
+    Actually, Bug#2 might *cause* this one: are we just unable to simplify?
+  2004-06-05 pescetti
+    Yep. We fail to simplify to zero a simple expression involving sums.
+  2004-06-06 pescetti
+    Further investigation on this bug depends on Bug#2.
+
+-----
+
+Bug #4
+Title:		Better simplification for sums needed
+Description:	Simple sums aren't always correctly simplified to zero.
+Status:		ASSIGNED (pescetti)
+Priority:	Medium
+Reproducible:	Always
+Steps to reproduce:
+  1. Run simplify_driver -i
+  2. sum(a,1,n,a)+sum(a,1,n,-a) is correctly simplified to zero
+  3. sum(a,1,n,a+1)+sum(a,1,n,-a-1) is not
+Comments:
+  2004-06-04 pescetti
+    We should maybe collect the sum operator to get better solutions.
