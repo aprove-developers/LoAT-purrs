@@ -629,10 +629,7 @@ PURRS::Recurrence::compute_lower_bound() const {
 	return TOO_COMPLEX;
     // Functional equation.
     else if (is_functional_equation())
-      if ((status = approximate_functional_equation()) == SUCCESS)
-	return SUCCESS;
-      else
-	return status;
+      return approximate_functional_equation();
     // Non linear finite order.
     else {
       Expr bound;
@@ -680,10 +677,7 @@ PURRS::Recurrence::compute_upper_bound() const {
 	return TOO_COMPLEX;
     // Functional equation.
     else if (is_functional_equation())
-      if ((status = approximate_functional_equation()) == SUCCESS)
-	return SUCCESS;
-      else
-	return status;
+      return approximate_functional_equation();
     // Non linear finite order.
     else {
       Expr bound;
