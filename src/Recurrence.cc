@@ -249,7 +249,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
     for (unsigned i = order_rec; i-- > 0; ) {
       terms_to_sub[i] = simplify_all(partial_solution.substitute
 				     (n, n - (i + 1)));
-      terms_to_sub[i] = simplify_sum(terms_to_sub[i]);
+      terms_to_sub[i] = simplify_sum(terms_to_sub[i], true);
       substituted_rhs = substituted_rhs
 	.substitute(x(n - (i + 1)), terms_to_sub[i]);
     }
@@ -304,9 +304,9 @@ PURRS::Recurrence::verify_bound(const Recurrence& rec, bool upper) {
   assert(rec.is_functional_equation());
   Expr bound;
   if (upper)
-    bound = simplify_sum(rec.upper_bound_.expression());
+    bound = simplify_sum(rec.upper_bound_.expression(), true);
   else
-    bound = simplify_sum(rec.lower_bound_.expression());
+    bound = simplify_sum(rec.lower_bound_.expression(), true);
   
   // Step 1: validation of initial conditions.
   if (!validation_initial_conditions_in_bound(upper, bound,
