@@ -80,20 +80,22 @@ Expr_List::op(unsigned i) const {
   return l.op(i);
 }
 
-inline Expr_List
+inline Expr_List&
 Expr_List::append(const Expr& exp) {
-  return l.append(exp.e);
+  l.append(exp.e);
+  return *this;
 }
 
-inline Expr_List
+inline Expr_List&
 Expr_List::prepend(const Expr& exp) {
-  return l.prepend(exp.e);
+  l.prepend(exp.e);
+  return *this;
 }
 
-// FIXME: dovrebbe tornare Expr_List&?
-inline Expr_List
+inline Expr_List&
 Expr_List::remove_first() {
-  return l.remove_first();
+  l.remove_first();
+  return *this;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

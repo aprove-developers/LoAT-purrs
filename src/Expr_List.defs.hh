@@ -38,8 +38,13 @@ public:
   //! Default constructor.
   Expr_List();
 
+  //! Builds a list containing \p symb.
   explicit Expr_List(const Symbol& symb);
+
+  //! Builds a list containing \p exp1 and \p exp2.
   explicit Expr_List(const Expr& exp1, const Expr& exp2);
+
+  //! Builds a list containing \p exp1, \p exp2, \p exp3, \p exp4 and \p exp5.
   explicit Expr_List(const Expr& exp1, const Expr& exp2, const Expr& exp3,
 		     const Expr& exp4, const Expr& exp5);
 
@@ -55,10 +60,9 @@ public:
   unsigned nops() const;
   Expr op(unsigned i) const;
 
-  Expr_List append(const Expr& exp);
-  Expr_List prepend(const Expr& exp);
-  // FIXME: dovrebbe tornare Expr_List&?
-  Expr_List remove_first();
+  Expr_List& append(const Expr& exp);
+  Expr_List& prepend(const Expr& exp);
+  Expr_List& remove_first();
 
 private:
   GiNaC::lst l;
