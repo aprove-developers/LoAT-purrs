@@ -84,7 +84,7 @@ mypow(const CInterval& base, const CInterval& exponent) {
 	return sqr(base);
       else if (ep == 0.5)
 	return sqrt(base);
-      else if (ep == floor(ep) && base.re().sup() < 0.0) {
+      else if (ep == std::floor(ep) && base.re().sup() < 0.0) {
 	CInterval r = pow(-base, exponent);
 	if ((long(ep) % 2) != 0)
 	  r = -r;
