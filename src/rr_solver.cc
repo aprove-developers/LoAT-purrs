@@ -1,5 +1,4 @@
 
-#if 0
 void
 clear(GList& l) {
   for (unsigned n = l.nops(); n-- > 0; )
@@ -166,4 +165,3 @@ solve(const GExpr& rhs, const GSymbol& n) {
     return true;
   }
 }
-#endif
