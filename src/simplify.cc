@@ -53,38 +53,49 @@ split_exponent(GExpr& num, GExpr& not_num, const GExpr& e) {
 
 /*!
   Applies the rules 9 and 10 of the terms rewriting system
-  \f$ \mathfrak{R}_o \f$.
-  Returns a new <CODE>GExpr</CODE> <CODE>ris</CODE> with the eventual
-  simplifications.
- */
+  \f$ \mathfrak{R}_o \f$ to the <CODE>GExpr</CODE> \p e that is certainly
+  a <CODE>GiNaC::mul</CODE>.
+  The vectors \p bases and \p exponents contain rispectively all bases and
+  exponents of the powers that are in \p e and, at the end, will contain
+  the new bases and exponents of the powers in \p e after the simplification.
+  Returns a new <CODE>GExpr</CODE> \p ris containing the modified
+  expression \p e.
+*/
 static GExpr
-collect_same_base(const GExpr& e, const std::vector<GExpr>& bases,
+collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 		  std::vector<GExpr>& exponents) {
   assert(is_a<mul>(e));
-  // At the end of the cycle 'ris' will contain the powers of 'e', with
-  // the same bases, simplified in only one power with the exponents summed
-  // (rule 10).
+  // At the end of the cycle 'while', 'ris' will contain all the powers of 'e'.
+  // The powers with the same bases will simplified in only one power with
+  // the summed exponents (rule 10).
   GExpr ris = 1;
-  std::vector<GExpr> tmp_exp(exponents);
   unsigned i = bases.size();
   while (i > 0) {
     --i;
-    GExpr exp = tmp_exp[i];
+    GExpr exp = exponents[i];
     GExpr base = bases[i];
     for (unsigned j = i; j-- > 0; )
+      // In the vectors 'bases' and 'exponents' the base and the exponent
+      // considerated in the simplification, are substituded with
+      // the value '0' and with the base and the exponent of the new power.
       if (bases[j].is_equal(base)) {
-	exp += tmp_exp[j];
-	tmp_exp[j] = 0;
+	exp += exponents[j];
+	// FIXME: si puo' migliorare eliminando il j-esimo elemento sia
+	// da 'bases' che da 'exponents' invece che metterli a 0. 
+	bases[j] = 0;
 	exponents[j] = 0;
 	exponents[i] = 0;
       }
     ris *= pow(base, exp);
-    tmp_exp[i] = 0;
   }
   // Now adds to 'ris' the factor of 'e' not considered in the
-  // previous simplifications.
+  // previous simplification, i.e., the factor which are not powers .
   for (i = e.nops(); i-- > 0; ) {
     if (!is_a<power>(e.op(i))) {
+      // We must consider those factors that are not powers but are equal
+      // to some base of the vector 'bases', in order to apply the rule 9,
+      // i.e., 'a * a^e = a^(e + 1)'. In this case, we add '1' to the
+      // correspondenting exponent.
       bool to_sum = false;
       for (unsigned j = bases.size(); j-- > 0; )
 	if (bases[j].is_equal(e.op(i))) {
@@ -97,18 +108,10 @@ collect_same_base(const GExpr& e, const std::vector<GExpr>& bases,
 	      exponents[j] = exponents[j] + 1;
 	  }
 	}
-      // (rule 9)
+      // Applies rule 9.
       if (to_sum)
 	ris = ris.subs(pow(e.op(i), wild()) == pow(e.op(i), (wild() + 1)));
       else
-	ris *= e.op(i);
-    }
-    else {
-      bool insert = true;
-      for (unsigned j = bases.size(); j-- > 0; )
-	if (bases[j].is_equal(e.op(i).op(0)))
-	  insert = false;
-      if (insert)
 	ris *= e.op(i);
     }
   }
@@ -117,11 +120,11 @@ collect_same_base(const GExpr& e, const std::vector<GExpr>& bases,
 
 /*!
   Applies the rule 12 of the terms rewriting system \f$ \mathfrak{R}_o \f$
-  under condition that the common exponent of the powers is not integer
+  under condition that the common exponent to the powers is not integer
   because, in this case, <CODE>GiNaC</CODE> automatically decomposes the
   power.
-  Returns a new <CODE>GExpr</CODE> <CODE>ris</CODE> with the eventual
-  simplifications.
+  Returns a new <CODE>GExpr</CODE> \p ris containing the modified
+  expression \p e.
  */
 static GExpr
 collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
@@ -130,7 +133,7 @@ collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
   GExpr ris = 1;
   // At the end of the cycle 'ris' will contain the powers of 'e', with
   // the same exponents, simplified in only one power with the base equal
-  // to the two previous base multiplicated (rule 12).
+  // to the previous bases multiplicated among themselves (rule 12).
   unsigned i = exponents.size();
   while (i > 0) {
     --i;
@@ -147,29 +150,29 @@ collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
       if (found)
 	ris *= pow(base, exp);
       else
-	exponents[i] = 0;
+	ris *= pow(base, exponents[i]);
     }
   }
+  // Now adds to 'ris' the factor of 'e' not considered in the
+  // previous simplifications, i.e., the factor which are not powers.
   for (i = e.nops(); i-- > 0; )
     if (!is_a<power>(e.op(i)))
       ris *= e.op(i);
-    else {
-      bool insert = true;
-      for (unsigned j = exponents.size(); j-- > 0; )
-	if (exponents[j].is_equal(e.op(i).op(1)))
-	  insert = false;
-      if (insert)
-	ris *= e.op(i);
-    }
   return ris;
 }
 
+/*!
+  Applies to <CODE>GExpr</CODE> \p e, that is certainly a
+  <CODE>GiNaC::mul</CODE>, the rules \f$ 9, 10 \f$ and \f$ 12 \f$ of the
+  term rewritng system \f$ \mathfrak{R}_o \f$.
+  Returns a new <CODE>GExpr</CODE> containing the modified expression \p e. 
+*/
 static GExpr
 collect_base_exponent(const GExpr& e) {
   GExpr tmp = e;
   assert(is_a<mul>(tmp));
-  // Builds two vector that contain the bases and the exponents of
-  // the eventual multiplication's factors that are powers. 
+  // Builds two vectors containing the bases and the exponents of
+  // the eventual multiplication's factors which are powers. 
   std::vector<GExpr> bases;
   std::vector<GExpr> exponents;
   for (unsigned i = tmp.nops(); i-- > 0; )
@@ -177,12 +180,12 @@ collect_base_exponent(const GExpr& e) {
       bases.push_back(tmp.op(i).op(0));
       exponents.push_back(tmp.op(i).op(1));
     }
-  // Rules 9 and 10.    
+  // Applies rules 9 and 10.    
   tmp = collect_same_base(tmp, bases, exponents);
 #if NOISY
   std::cout << "tmp dopo same base... " << tmp << std::endl;
 #endif
-  // Rule 12.
+  // Applies rule 12.
   if (is_a<mul>(tmp))
     tmp = collect_same_exponents(tmp, bases, exponents);
 #if NOISY
@@ -194,16 +197,16 @@ collect_base_exponent(const GExpr& e) {
 /*!
   \p e is a multiplication and at least one of the factors is a
   <CODE>GiNaC::power</CODE>.
-  We consider three vectors with a number of elements like the factor's
+  We consider three vectors with a number of elements equal to the factor's
   number of \p e: \p vect_base, \p vect_num_exp and \p vect_not_num_exp.
   Initially \p vect_num_exp and \p vect_not_num_exp will have each element
   equal to \p num_exponent or \p not_num_exponents, respectively.
-  Looks each factor of \p e and, if it is a power, puts its base in
+  We consider each factor of \p e and, if it is a power, put its base in
   the respective position of the vector \p vect_base and upgrades the
   rispective values of \p vect_num_exp and \p vect_not_num_exp with the
-  exponent of \p e's factor.
-  If \p e's factor is not a power puts it in the respective position
-  of the vector \p vect_base and left unchanged the others vector.
+  exponents of \p e's factors.
+  If \p e's factor is not a power we put it in the respective position
+  of the vector \p vect_base and leave unchanged the others vectors.
  */
 static GExpr
 simpl_powers_base(const GExpr& e, const GExpr& num_exponent,
@@ -243,16 +246,16 @@ simpl_powers_base(const GExpr& e, const GExpr& num_exponent,
 }
 
 /*!
-  Applies the rule \f$ 6, 7 \f$ and \f$ 8 \f$ of the terms rewriting system
+  Applies the rules \f$ 6, 7 \f$ and \f$ 8 \f$ of the terms rewriting system
   \f$ \mathfrak{R}_o \f$.
   The <CODE>GExpr</CODE> \p e is a <CODE>GiNaC::power</CODE>:
-  finds the base and the exponent of the power (\p e could be a serie
-  of nested powers). While does this operation divides the exponents
+  it finds the base and the exponent of the power (\p e could be a serie
+  of nested powers). While it does this operation divides the exponents
   (that can be multiplications but not addictions because the expression
   \p e is expanded) in two parts: in \p num_exponent put
   numeric factors and in \p not_num_exponent put not numeric factors.
-  Then checks the base: if it is not a multiplication checks and
-  simplifications are finished, otherwise we must raise every factor of the
+  Therefore tests the base: if it is not a multiplication the checks and the
+  simplifications are finished, otherwise we must elevate every factor of the
   base to the exponents. In the case there is some base's factor that is a
   <CODE>GiNaC::power</CODE> we must do further simplifications.
 */
@@ -292,7 +295,7 @@ pow_simpl(const GExpr& e) {
     // Some factor of the base is a power.
     if (base_power)
       tot = simpl_powers_base(b, num_exponent, not_num_exponent);
-    // No factor of the base is a power.
+    // Any factor of the base is a power.
     else {
       for (unsigned i = b.nops(); i-- > 0; )
 	if (!is_a<numeric>(b.op(i)))
@@ -316,7 +319,7 @@ pow_simpl(const GExpr& e) {
 }
 
 /*!
-  Compute the gcd between the integers \f$n\f$ and \f$m\f$.
+  Computes the gcd between the integers \f$n\f$ and \f$m\f$.
 */
 static int
 gcd(int n, int m) {
@@ -546,18 +549,17 @@ reduce_product(const GExpr& a) {
     GNumber exp_1 = 1;
     for (unsigned i = tmp.nops(); i-- > 0; )
       if (is_a<power>(tmp.op(i))) {
-	// Base and exponent of 'tmp.op(i)' are both numeric.
+	// Base and exponent of 'tmp.op(i)' are both numerics.
 	if (GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(0)) &&
 	    GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(1))) {
 	  GNumber base_2 = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(0));
 	  GNumber exp_2  = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(1));
 	  GExpr to_reduce = red_prod(base_1, exp_1, base_2, exp_2);
-	  // red_prod restituisce 
-	  // numerico            oppure
-	  // numerico^numerico   oppure
-	  // numerico * numerico^numerico
-	  // es. 3^(1/4)*6^(3/4) restituisce 3*8^(1/4)
-	  // FIXME: giusto?
+	  // red_prod returns
+	  // numeric             or
+	  // numeric^numeric   or
+	  // numeric * numeric^numeric
+	  // es. 3^(1/4)*6^(3/4) returns 3*8^(1/4)
 	  if (is_a<mul>(to_reduce)) {
 	    assert(to_reduce.nops() == 2);
 	    for (unsigned j = 2; j-- > 0; )
@@ -586,7 +588,7 @@ reduce_product(const GExpr& a) {
  	  factor_to_reduce = pow(to_reduce, 1);
 	  }
 	}
-	// Base and exponent of 'tmp.op(i)' are not both numeric.
+	// Base and exponent of 'tmp.op(i)' are not both numerics.
 	else
 	  factor_no_to_reduce *= tmp.op(i);
       }
@@ -607,8 +609,8 @@ reduce_product(const GExpr& a) {
 
 /*!
   Give an expression \p e builds two other expressions \p numerica and
-  \p symbolic that contain the numeric and the symbolic part of \p e,
-  rispectively.  
+  \p symbolic containing the numeric and the symbolic part of \p e,
+  respectively.  
 */
 static void
 split(const GExpr& e, GExpr& numerica, GExpr& symbolic) {
@@ -677,7 +679,7 @@ manip_factor(const GExpr& e) {
 #if NOISY
   std::cout << "tmp dopo nested... " << tmp << std::endl;
 #endif
-  // Goes recursively to simplify factors that are functions simplifying
+  // Simplifies recursively the factors which are functions simplifying
   // their arguments.
   if (is_a<mul>(tmp)) {
     GExpr factor_function = 1;
@@ -698,8 +700,8 @@ manip_factor(const GExpr& e) {
 #if NOISY
   std::cout << "tmp dopo function... " << tmp << std::endl << std::endl;
 #endif
-  // Special case: the exponential 'exp' is a GiNaC::function but have
-  // the same properties of the other powers.
+  // Special case: the exponential 'exp' is a 'GiNaC::function' but it has
+  // the same properties of the powers.
   if (is_a<mul>(tmp)) {
     GExpr argument = 0;
     GExpr rem = 1;
@@ -723,15 +725,16 @@ manip_factor(const GExpr& e) {
   std::cout << std::endl << "symbolic " << symbolic << std::endl;
   std::cout << "numerica " << numerica << std::endl << std::endl;
 #endif
-  // Simplifies eventual powers with same base or same exponents in
-  // a symbolic part.
+  // Simplifies eventual powers with same base or same exponent which are in
+  // the symbolic part 'symbolic'.
   if (is_a<mul>(symbolic))
     symbolic = collect_base_exponent(symbolic);
 #if NOISY
   std::cout << std::endl << "symbolic dopo simpl " << symbolic << std::endl;
 #endif
-  // If there are in 'symbolic' factors numeric or powers with base
-  // and exponent numeric, then multiplies this factors to 'numerica'.
+  // If 'symbolic' has got numerics factors or powers with base
+  // and exponent numerics, then multiplies this factors or this powers
+  // to 'numerica'.
   if (is_a<mul>(symbolic))
     for (unsigned i = symbolic.nops(); i-- > 0; ) {
       if (is_a<power>(symbolic.op(i))) {
@@ -751,8 +754,8 @@ manip_factor(const GExpr& e) {
   std::cout << std::endl << "symbolic dopo simpl " << symbolic << std::endl;
   std::cout << "numerica " << numerica << std::endl << std::endl;
 #endif
-  // Simplifies eventual powers with same base or same exponents in
-  // a numeric part.
+  // Simplifies eventual powers with same base or same exponents which are in
+  // a numeric part 'numeric'.
   if (is_a<mul>(numerica))
     numerica = collect_base_exponent(numerica);
 #if NOISY
@@ -769,13 +772,13 @@ manip_factor(const GExpr& e) {
 
 /*!
   Crosses the tree of the expanded expression \p e recursevely to find
-  subexpressions to which we apply the rules of the terms rewriting system
-  \f$ /mathfrak{R}_i \f$. More exactly here the rules \f$ 6, 7 \f$ and
-  \f$ 8 \f$ of the system are implemented because the first four roules are
+  subexpressions which we want to apply the rules of the terms rewriting system
+  \f$ /mathfrak{R}_i \f$. Actually, here the rules \f$ 6, 7 \f$ and
+  \f$ 8 \f$ of the system are implemented because the first four rules are
   automatically executed by <CODE>GiNaC</CODE> and the rule \f$ 5 \f$ is
   partially executed by the method <CODE>expand()</CODE> (partially because
-  \f$ expand(3^(4*x+2*a) = 3^(2*a)*3^(4*x) \f$).
-  Returns a <CODE>GExpr</CODE> that contains the modified expression \p.
+  for example \f$ expand(3^(4*x+2*a) = 3^(2*a)*3^(4*x) \f$).
+  Returns a <CODE>GExpr</CODE> that contains the modified expression \p e.
 */
 GExpr
 simplify_on_input_ex(const GExpr& e) {
@@ -804,12 +807,14 @@ simplify_on_input_ex(const GExpr& e) {
 
 /*!
   Crosses the tree of the expanded expression \p e recursevely to find
-  subexpressions to which we apply the rules of the terms rewriting system
-  \f$ /mathfrak{R}_o \f$. Beyond to the made observations about the function
-  \p simplify_on_input_ex that are valid also here we observe that also
-  the rule \f$ 11 \f$ is automatically executed by <CODE>GiNaC</CODE> while
-  here are implemented the rules \f$ 9, 10, 12, 13, 14, 15, 16 \f$.
-  Returns a <CODE>GExpr</CODE> that contains the modified expression \p.
+  subexpressions which we want to apply the rules of the terms rewriting system
+  \f$ /mathfrak{R}_o \f$. In addiction to the observations about the function
+  \p simplify_on_input_ex that are correct here too, because all the rules
+  of the term rewriting system \f$ /mathfrak{R}_i \f$ are also in
+  \f$ /mathfrak{R}_o \f$, we observe that also the rule \f$ 11 \f$ is
+  automatically executed by <CODE>GiNaC</CODE> and here are implemented
+  only the rules \f$ 9, 10, 12, 13, 14, 15, 16 \f$.
+  Returns a <CODE>GExpr</CODE> that contains the modified expression \p e.
 */
 GExpr
 simplify_on_output_ex(const GExpr& e) {

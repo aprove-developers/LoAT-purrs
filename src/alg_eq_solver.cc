@@ -421,7 +421,7 @@ solve_equation_2(const GExpr& b, const GExpr& c,
 #endif
   sqrt_d = simplify_on_output_ex(sqrt_d);
 #if NOISY
-  std::cout << "sqrt_d before = " << sqrt_d << std::endl;
+  std::cout << "sqrt_d = " << sqrt_d << std::endl;
 #endif
   x1 = (-b + sqrt_d)/2;
   x2 = (-b - sqrt_d)/2;
