@@ -37,7 +37,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Number.defs.hh"
 #include "Finite_Order_Info.defs.hh"
 #include "Functional_Equation_Info.defs.hh"
-#include "Cached_Expr.defs.hh"
 #include "Order_Reduction_Info.defs.hh"
 #include "Recurrence.defs.hh"
 

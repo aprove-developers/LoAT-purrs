@@ -26,7 +26,6 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_factorize_hh 1
 
 #include "Expr.types.hh"
-#include "Symbol.types.hh"
 
 namespace Parma_Recurrence_Relation_Solver {
 
