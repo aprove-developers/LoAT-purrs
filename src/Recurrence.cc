@@ -109,8 +109,8 @@ ok_inequalities(const Expr& e, unsigned int condition) {
 
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::
-validation_initial_conditions(index_type order,
-			      index_type first_valid_index) const {
+validate_initial_conditions(index_type order,
+			    index_type first_valid_index) const {
   for (index_type i = 0; i < order; ++i) {
     Expr e = exact_solution_.expression().substitute(n, first_valid_index + i);
     // Expand blackboard's definitions in order to increase the
@@ -211,7 +211,7 @@ PURRS::Recurrence::verify_finite_order() const {
   
   // Step 1: validation of initial conditions:
   // FIXME: specificare c.i. simboliche.
-  Verify_Status status = validation_initial_conditions(order_rec, first_i_c);
+  Verify_Status status = validate_initial_conditions(order_rec, first_i_c);
   if (status == INCONCLUSIVE_VERIFICATION || status == PROVABLY_INCORRECT)
     return status;
   
@@ -602,7 +602,7 @@ PURRS::Recurrence::verify_infinite_order() const {
 }
 
 PURRS::Recurrence::Verify_Status
-PURRS::Recurrence::validation_initial_conditions(Bound kind_of_bound,
+PURRS::Recurrence::validate_initial_conditions(Bound kind_of_bound,
 						 const Expr& bound,
 						 unsigned int index) const {
   Expr bound_valuated = bound.substitute(n, index);
@@ -679,8 +679,8 @@ PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
   
   // Step 1: validation of initial conditions.
   Verify_Status status
-    = validation_initial_conditions(kind_of_bound, bound,
-				    applicability_condition());
+    = validate_initial_conditions(kind_of_bound, bound,
+				  applicability_condition());
   if (status == INCONCLUSIVE_VERIFICATION || status == PROVABLY_INCORRECT)
     return status;
   

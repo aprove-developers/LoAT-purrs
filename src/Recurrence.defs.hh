@@ -424,8 +424,8 @@ private:
 
   //! @@@
   Verify_Status
-  validation_initial_conditions(index_type order,
-				index_type first_valid_index) const;
+  validate_initial_conditions(index_type order,
+			      index_type first_valid_index) const;
 
   //! @@@
   Verify_Status verify_finite_order() const;
@@ -434,9 +434,9 @@ private:
   Verify_Status verify_infinite_order() const;
 
   //! @@@
-  Verify_Status validation_initial_conditions(Bound kind_of_bound,
-					      const Expr& bound,
-					      unsigned int index) const;
+  Verify_Status validate_initial_conditions(Bound kind_of_bound,
+					    const Expr& bound,
+					    unsigned int index) const;
 
   //! @@@
   Verify_Status verify_bound(Bound kind_of_bound) const;
