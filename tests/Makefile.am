@@ -31,4 +31,6 @@ check_PROGRAMS = $(TESTS) $(BUGS)
 
 # noinst_HEADERS = ehandlers.hh print.hh
 
-BUGS =
+BUGS = bug1
+
+bug1_SOURCES = bug1.cc
