@@ -118,14 +118,32 @@ PURRS::Recurrence::approximate_functional_equation() const {
   D_VAR(sum);
   // Consider an upper bound and a lower bound for `q = [log n / log b]'.
   Expr q_upper = log(n) / log(divisor_arg());
-  Expr initial_condition = x(n / pwr(divisor_arg(), q_upper));
-  Expr ub = pwr(coefficient(), q_upper) * initial_condition
-    + sum.substitute(n, q_upper + 1);
-  upper_bound_.set_expression(simplify_logarithm(ub));
-
   Expr q_lower = q_upper - 1;
-  Expr lb = pwr(coefficient(), q_lower) * initial_condition
-    + sum.substitute(n, q_lower);
+
+  Expr index_initial_condition
+    = simplify_logarithm(n / pwr(divisor_arg(), q_upper));
+  Number index = 0;
+  if (index_initial_condition.is_a_number()) {
+    index = index_initial_condition.ex_to_number();
+    assert(index.is_positive_integer());
+  }
+
+  Expr ub;
+  Expr lb;
+  if (index == 0) {
+    ub = pwr(coefficient(), q_upper) * index_initial_condition
+      + sum.substitute(n, q_upper + 1);
+    lb = pwr(coefficient(), q_lower) * index_initial_condition
+      + sum.substitute(n, q_lower);
+  }
+  else {
+    ub = pwr(coefficient(), q_upper) * get_initial_condition(index.to_int())
+      + sum.substitute(n, q_upper + 1);
+    lb = pwr(coefficient(), q_lower) * get_initial_condition(index.to_int())
+      + sum.substitute(n, q_lower);
+  }
+  upper_bound_.set_expression(simplify_logarithm(ub));
   lower_bound_.set_expression(simplify_logarithm(lb));
+
   return SUCCESS;
 }
