@@ -36,7 +36,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 using namespace GiNaC;
 
-#define NOISY 1
+#define NOISY 0
 
 static GExpr
 get_binding(const GList& l, unsigned wild_index) {
