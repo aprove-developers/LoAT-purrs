@@ -29,8 +29,8 @@ http://www.cs.unipr.it/purrs/ . */
 #include <config.h>
 
 #include "Blackboard.defs.hh"
-#include "util.hh"
 #include "approximate_impl.hh"
+#include "size_norm_impl.hh"
 #include <iostream>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;

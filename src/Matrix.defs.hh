@@ -96,8 +96,6 @@ public:
   */
   Matrix solve(const Matrix& vars, const Matrix& rhs) const;
 
-  int size_norm_matrix() const;
-
 private:
   friend class Expr;
 

@@ -835,10 +835,6 @@ template <typename SymbolHandler>
 unsigned
 generic_size_norm(const Expr& e, const SymbolHandler& sh);
 
-//! Returns the size-norm of \p e.
-unsigned
-size_norm(const Expr& e);
-
 } // namespace Parma_Recurrence_Relation_Solver
 
 #include "Expr.inlines.hh"

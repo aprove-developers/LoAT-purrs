@@ -54,6 +54,8 @@ Init.inlines.hh \
 initializer.hh \
 approximate.hh \
 approximate_impl.hh \
+size_norm.hh \
+size_norm_impl.hh \
 alg_eq_solver.hh \
 poly_factor.hh \
 gosper.hh \
@@ -79,6 +81,7 @@ Recurrence.cc \
 Symbol.cc \
 alg_eq_solver.cc \
 approximate.cc \
+size_norm.cc \
 complint.cc \
 gosper.cc \
 numerator_denominator.cc \

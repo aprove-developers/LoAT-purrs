@@ -1,4 +1,4 @@
-/* Matrix class implementation (non-inline functions).
+/* Declare the public functions for computing size norms.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -22,10 +22,22 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#include "Matrix.defs.hh"
+#ifndef PURRS_approx_expr_hh
+#define PURRS_approx_expr_hh 1
 
-#include "Expr.defs.hh"
+#include "Expr.types.hh"
+#include "Matrix.types.hh"
 
-#include <config.h>
+namespace Parma_Recurrence_Relation_Solver {
 
-namespace PURRS = Parma_Recurrence_Relation_Solver;
+//! Returns the size-norm of \p e.
+unsigned
+size_norm(const Expr& e);
+
+//! Returns the size-norm of \p ,.
+unsigned
+size_norm(const Matrix& m);
+
+} // namespace Parma_Recurrence_Relation_Solver
+
+#endif // !defined(PURRS_approx_expr_hh)

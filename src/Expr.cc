@@ -387,18 +387,3 @@ PURRS::Expr::is_rational_function(const Symbol& x) const {
     return true;
   return false;
 }
-
-namespace {
-
-struct Norm_1 {
-  unsigned size_norm(const PURRS::Symbol&) const {
-    return 1;
-  }
-};
-
-}
-
-unsigned
-PURRS::size_norm(const Expr& e) {
-  return generic_size_norm(e, Norm_1());
-}
