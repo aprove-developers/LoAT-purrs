@@ -307,7 +307,6 @@ solve_equation_2(const GExpr& b, const GExpr& c,
 
 static GExpr
 cubic_root(const GExpr& e) {
-  std::cout << "cubic_root(" << e << ")" << std::endl;
   static GExpr one_third = GExpr(1)/3;
   return pow(e, one_third);
 }

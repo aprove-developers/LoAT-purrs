@@ -118,11 +118,11 @@ footer() {
 
   cout << cgicc::div() << br() << hr().set("class", "half") << endl;
   cout << cgicc::div().set("align", "center") << endl;
-  cout << a("PURRS").set("href", "http://www.cs.unipr.it/purrs/")
-       << span(" algebraic equation solver", set("class", "red")) << br()
+  cout << a("PURRS ").set("href", "http://www.cs.unipr.it/purrs/")
+       << span("algebraic equation solver", set("class", "red")) << br()
        << " by the "
        << a("PURRS development team")
-    .set("href", "mailto:purrs-devel@cs.unipr.it") << "." <<br()
+    .set("href", "mailto:purrs-devel@cs.unipr.it") << "." << br() << br()
        << "A free service brought to you by " << br()
        << a(img()
 	    .set("src", "http://www.cs.unipr.it/images/cs_at_parma")
@@ -146,36 +146,33 @@ error(const string& message) {
   a::reset();		h2::reset(); 		colgroup::reset();
 
   // Output the HTTP headers for an HTML document, and the HTML 4.0 DTD info.
-  cout << HTTPHTMLHeader() << HTMLDoctype(HTMLDoctype::eStrict) << endl;
-  cout << html().set("lang", "en").set("dir", "ltr") << endl;
+  cout << HTTPHTMLHeader() << HTMLDoctype(HTMLDoctype::eStrict) << endl
+       << html().set("lang", "en").set("dir", "ltr") << endl;
 
   // Set up the page's header and title.
   cout << head() << endl;
 
   // Output the style sheet portion of the header
-  cout << style() << comment() << endl;
-  cout << "body { color: black; background-color: white; }" << endl;
-  cout << "hr.half { width: 60%; align: center; }" << endl;
-  cout << "span.red, STRONG.red { color: red; }" << endl;
-  cout << "div.notice { border: solid thin; padding: 1em; margin: 1em 0; "
-       << "background: #ddd; }" << endl;
+  cout << style() << comment() << endl
+       << "body { color: black; background-color: white; }" << endl
+       << "hr.half { width: 60%; align: center; }" << endl
+       << "span.red, STRONG.red { color: red; }" << endl
+       << "div.notice { border: solid thin; padding: 1em; margin: 1em 0; "
+       << "background: #ddd; }" << endl
+       << comment() << style() << endl;
 
-  cout << comment() << style() << endl;
-
-  cout << title("PURRS Demo Error") << endl;
-  cout << meta().set("name", "author")
-    .set("content", "PURRS development team") << endl;
-  cout << head() << endl;
+  cout << title("PURRS Demo Error") << endl
+       << meta()
+    .set("name", "author")
+    .set("content", "PURRS development team") << endl
+       << head() << endl;
     
-  cout << body() << endl;
-    
-  cout << h1() << "PURRS Demo " << span("Error", set("class", "red"))
-       << h1() << endl; 
-  
-  cout << cgicc::div().set("align", "center").set("class", "notice") << endl;
-
-  cout << h2(message) << endl;
-  cout << cgicc::div() << endl;
+  cout << body() << endl
+       << h1() << "PURRS Demo " << span("Error", set("class", "red"))
+       << h1() << endl
+       << cgicc::div().set("align", "center").set("class", "notice") << endl
+       << h2(message) << endl
+       << cgicc::div() << endl;
 
   footer();
   exit(0);
@@ -227,70 +224,123 @@ main() try {
   if(expr == (*cgi).end() || expr->isEmpty())
     error("you did not type anything!!!");
 
-#if HAVE_GETTIMEOFDAY
-  timeval start;
-  gettimeofday(&start, NULL);
-#endif
-
   GSymbol x("x");
   GExpr p = GExpr(**expr, lst(x));
   if (p == GExpr(0)
       || !p.info(info_flags::integer_polynomial)
       || p.info(info_flags::numeric)) {
-    std::string message;
-    std::ostringstream s(message);
+    std::ostringstream s;
     s << "you call '<TT>" << p << "</TT>' a polynomial in <TT>x</TT> "
       << "with integer coefficients?";
     error(s.str());
   }
 
+#if HAVE_GETTIMEOFDAY
+  timeval start;
+  gettimeofday(&start, NULL);
+#endif
+
   std::vector<Polynomial_Root> roots;
   bool all_distinct;
   if (!find_roots(p, x, roots, all_distinct))
-    error("sorry, this is too difficult.");
+    error("sorry, this is too difficult");
 
+#if HAVE_GETTIMEOFDAY
+  // Information on this query
+  timeval end;
+  gettimeofday(&end, NULL);
+#endif
 
   // Output the HTTP headers for an HTML document, and the HTML 4.0 DTD info.
-  cout << HTTPHTMLHeader() << HTMLDoctype(HTMLDoctype::eStrict) << endl;
-  cout << html().set("lang", "en").set("dir", "ltr") << endl;
+  cout << HTTPHTMLHeader() << HTMLDoctype(HTMLDoctype::eStrict) << endl
+       << html().set("lang", "en").set("dir", "ltr") << endl;
 
   // Set up the page's header and title.
   cout << head() << endl;
 
+    // Output the style sheet portion of the header
+  cout << style() << comment() << endl
+       << "body { color: black; background-color: white; }" << endl
+       << "hr.half { width: 60%; align: center; }" << endl
+       << "span.red, strong.red { color: red; }" << endl
+       << "span.green, strong.green { color: green; }" << endl
+       << "div.smaller { font-size: small; }" << endl
+       << "div.bigger { font-size: large; }" << endl
+       << "div.notice { border: solid thin; padding: 1em; margin: 1em 0; "
+       << "background: #ddd; }" << endl
+       << "span.blue { color: blue; }" << endl
+       << "col.title { color: white; background-color: black; "
+       << "font-weight: bold; text-align: center; }" << endl
+       << "col.data { background-color: #DDD; text-align: left; }" << endl
+       << "td.data, tr.data { background-color: #ddd; text-align: left; }"
+       << endl
+       << "td.grayspecial { background-color: #ddd; text-align: left; }"
+       << endl
+       << "td.ltgray, tr.ltgray { background-color: #ddd; }" << endl
+       << "td.dkgray, tr.dkgray { background-color: #bbb; }" << endl
+       << "col.black, td.black, td.title, tr.title { color: white; " 
+       << "background-color: black; font-weight: bold; text-align: center; }"
+       << endl
+       << "col.gray, td.gray { background-color: #ddd; text-align: center; }"
+       << endl
+       << "table.cgi { left-margin: auto; right-margin: auto; width: 90%; }"
+       << endl
+       << comment() << style() << endl;
+
   cout << title() << "PURRS Demo Results" 
        << title() << endl;
-  cout << meta().set("name", "author").set("content", "PURRS") 
-       << endl;
+  cout << meta()
+    .set("name", "author")
+    .set("content", "PURRS development team") << endl;
 
   cout << head() << endl;
     
-  // Start the HTML body
-  cout << body() << endl;
+  // Start the HTML body.
+  cout << body() << endl
+       << h1() << "PURRS Demo " << span("Results", set("class", "green"))
+       << h1() << endl;
 
-  cout << h1() << "PURRS Demo Results" << h1() << endl;
+  cout << cgicc::div().set("align", "center") << endl
+       << table()
+    .set("border", "0").set("rules", "none").set("frame", "void")
+    .set("cellspacing", "2").set("cellpadding", "2")
+    .set("class", "cgi") << endl
+       << colgroup().set("span", "2") << endl
+       << col().set("align", "center").set("span", "2") << endl
+       << colgroup() << endl
+       << tr().set("class", "title") << td("Multiplicity") 
+       << td("Value or Approximation") << tr() << endl;
+  
+  size_t n = roots.size();
+  for (size_t i = 0; i < n; ++i) {
+    std::ostringstream m;
+    m << roots[i].multiplicity();
+    std::ostringstream v;
+    v << roots[i].value();
+    cout << tr().set("class", "data")
+	 << td(m.str()) 
+	 << td(v.str())
+	 << tr() << endl;
+  }
+  cout << table() << cgicc::div() << endl;
 
   // Get a pointer to the environment.
   const CgiEnvironment& env = cgi.getEnvironment();
-    
-  // Generic thank you message.
-  cout << comment() << "This page has been generated by PURRS for "
-       << env.getRemoteHost() << comment() << endl;
-  cout << h4() << "Thanks for using PURRS, "
-       << env.getRemoteHost()
-       << '(' << env.getRemoteAddr() << ")!" << h4() << endl; 
 
-  size_t n = roots.size();
-  for (size_t i = 0; i < n; ++i) {
-    GExpr value = roots[i].value();
-    GNumber multiplicity = roots[i].multiplicity();
-    cout << "x_" << i+1 << " = " << value;
-    if (multiplicity > 1)
-      cout << " (multiplicity " << multiplicity << ")";
-    cout << br() << endl;
-    if (!is_a<numeric>(value))
-      cout << "****  x_" << i+1 << " ~= "
-	   << value.evalf() << br() << endl;
-  }
+  // Timings and thank you.
+  long us = ((end.tv_sec - start.tv_sec) * 1000000)
+    + (end.tv_usec - start.tv_usec);
+
+  cout << br() << br()
+       <<cgicc::div().set("align", "center").set("class", "bigger") << endl
+       << "The computation of roots took " << us << " us"
+       << " (" << (double) (us/1000000.0) << " s)" << br() << br() << endl;
+  string host = env.getRemoteHost();
+  if (host.empty())
+    host = env.getRemoteAddr();
+  cout << "Thanks for using PURRS, "
+       << host << "!" << endl
+       << cgicc::div() << endl;
 
   footer();
   return 0;
