@@ -64,7 +64,6 @@ B	x(n/2+2/100)+n
 B	x(n^(1/2))+1
 B	x(n^5)
 B	x(sqrt(n))+1
-E	2*x(n-1)+a+n*x(n-1)+n
 E	2*x(n-1)+n^100
 I	x((3*n)/3)
 I	x(n)
@@ -89,6 +88,7 @@ M	x(x(n-1))+1
 M	x(x(n-1))+x(x(n-2))
 X	3*x(n/2)+n*log(n)+x(n-1)
 X	3*x(n/2)+x(n-3)+3*n
+X	n*x(n-1)+n+3*x(n/2)+n*log(n)
 X	n^2*x(n-1)-6*x(n/2)
 X	n^2*x(n-1)-x(n/2)
 X	x(n-1)+3*x(n/3)
@@ -191,7 +191,6 @@ n	log(n)*x(n/2)
 n	log(x(n-1))
 n	n*(n-2)*x(n-2)-(n-1)*x(n-1)
 n	n*x(n-1)+n*x(n-2)
-n	n*x(n-1)+n+3*x(n/2)+n*log(n)
 n	n*x(n-1)+x(n-2)
 n	n*x(n-1)-x(n-2)
 n	n*x(n-2)
@@ -271,6 +270,7 @@ ul	2*x(n/2)+(4/3)^n
 ul	2*x(n/2)+1
 ul	2*x(n/2)+2*n*log(n)
 ul	2*x(n/2)+2^n
+ul      2*x(n/2)+2^n*sqrt(2)
 ul	2*x(n/2)+3^n+7
 ul	2*x(n/2)+log(n)
 ul	2*x(n/2)+n
@@ -581,6 +581,7 @@ yv	2*x(n-1)+6
 yv	2*x(n-1)+8*x(n-2)+9*n-18
 yv	2*x(n-1)+a
 yv	2*x(n-1)+a+b
+yv      2*x(n-1)+a+n*x(n-1)+n
 yv	2*x(n-1)+b
 yv	2*x(n-1)+c
 yv	2*x(n-1)+c*n
@@ -874,6 +875,7 @@ yv	x(n-1)+(2^n+5)^3
 yv	x(n-1)+(2^n+5)^a
 yv	x(n-1)+(n*n)!
 yv	x(n-1)+(n-1)*n
+yv      x(n-1)+(n+a)/(n+2)!
 yv	x(n-1)+(n/2)
 yv	x(n-1)+(n^2)
 yv	x(n-1)+(n^2)*(2^n)
