@@ -41,7 +41,7 @@ Expr_List::Expr_List(const Symbol& x)
 
 inline
 Expr_List::Expr_List(const Expr& e1, const Expr& e2)
-  : l(static_cast<const GiNaC::ex>(e1), static_cast<const GiNaC::ex>(e1)) {
+  : l(static_cast<const GiNaC::ex>(e1), static_cast<const GiNaC::ex>(e2)) {
 };
 
 inline
