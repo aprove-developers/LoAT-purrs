@@ -307,13 +307,8 @@ solve_equation_2(const GExpr& b, const GExpr& c,
 
 static GExpr
 cubic_root(const GExpr& e) {
+  std::cout << "cubic_root(" << e << ")" << std::endl;
   static GExpr one_third = GExpr(1)/3;
-  if (is_a<numeric>(e)) {
-    GNumber n = ex_to<numeric>(e); 
-    if (n.is_rational() && n < 0)
-      return (-pow(-n, one_third));
-  }
-  std::cout << "Computing cubic_root(" << e << ")" << std::endl;
   return pow(e, one_third);
 }
 
@@ -338,8 +333,26 @@ solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
   }
   else {
     GExpr sqrt_d = sqrt(d);
-    GExpr S = cubic_root(R + sqrt_d);
-    GExpr T = cubic_root(R - sqrt_d);
+    GExpr A = R + sqrt_d;
+    GExpr B = R - sqrt_d;
+    GExpr S;
+    GExpr T;
+    if (Q >= 0) {
+      S = cubic_root(A);
+      T = -cubic_root(-B);
+    }
+    else {
+      // Q < 0
+      if (R < 0) {
+	S = -cubic_root(-A);
+	T = -cubic_root(-B);
+      }
+      else {
+	// R >= 0
+	S = cubic_root(A);
+	T = cubic_root(B);
+      }
+    }
     GExpr S_plus_T = S + T;
     GExpr t1 = -S_plus_T/2 - a1_div_3;
     GExpr t2 = (S - T)*I*sqrt(GExpr(3))/2;
