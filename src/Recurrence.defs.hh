@@ -181,6 +181,11 @@ public:
     UNSOLVABLE_RECURRENCE,
 
     /*!
+      The recurrence does not have any sense.
+    */
+    MALFORMED_RECURRENCE,
+
+    /*!
       Catchall: the recurrence is generically too complex for the solver.
     */
     TOO_COMPLEX

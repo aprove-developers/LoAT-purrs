@@ -524,6 +524,8 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
       const Expr& argument = r.arg(0);
       if (argument == n)
 	return HAS_NULL_DECREMENT;
+      else if (has_parameters(argument))
+	return MALFORMED_RECURRENCE;
       // Check if this term has the form `x(n + d)'.
       else if (argument.is_a_add() && argument.nops() == 2) {
 	Number decrement;
@@ -588,6 +590,8 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	const Expr& argument = factor.arg(0);
 	if (argument == n)
 	  return HAS_NULL_DECREMENT;
+	else if (has_parameters(argument))
+	  return MALFORMED_RECURRENCE;
 	else if (argument.is_a_add() && argument.nops() == 2) {
 	  Number decrement;
 	  if (get_constant_decrement(argument, decrement)) {
@@ -681,6 +685,10 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classification_recurrence(const Expr& rhs,
 					     int& gcd_among_decrements) const {
+  // Check if the inhomogeneous term contains floating point numbers.
+  if (rhs.has_floating_point_numbers())
+    return MALFORMED_RECURRENCE;
+
   // Initialize the computation of the order of the linear part of the
   // recurrence.  This works like the computation of a maximum: it is
   // the maximum `k', if it exists, such that `rhs = a*x(n-k) + b' where `a'
@@ -720,11 +728,9 @@ PURRS::Recurrence::classification_recurrence(const Expr& rhs,
 	!= SUCCESS)
       return status;
  
-  // Check if the recurrence is non linear, i.e., there is a non-linear term
-  // containing in `e' containing `x(a*n+b)'.
   set_inhomogeneous_term(inhomogeneous);
   D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
-
+  
   // Check if the recurrence is non linear, i.e., if there is a non-linear
   // term in the inhomogeneous_term containing `x(a*n+b)'.
   if ((status = find_non_linear_recurrence(inhomogeneous_term)) != SUCCESS)
@@ -800,6 +806,7 @@ PURRS::Recurrence::classify() const {
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classify_and_catch_special_cases() const {
+  D_MSG("classify");
   bool exit_anyway = false;
   Solver_Status status;
   do {
@@ -810,10 +817,7 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
     case HAS_NON_INTEGER_DECREMENT:
     case HAS_HUGE_DECREMENT:
     case TOO_COMPLEX:
-      {
-	D_MSG("too_complex");
-	exit_anyway = true;
-      }
+      exit_anyway = true;
       break;
     case HAS_NEGATIVE_DECREMENT:
       {
@@ -839,6 +843,9 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	  status = INDETERMINATE_RECURRENCE;
 	exit_anyway = true;
       }
+      break;
+    case MALFORMED_RECURRENCE:
+      exit_anyway = true;
       break;
 
     default:
