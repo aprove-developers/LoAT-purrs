@@ -25,4 +25,16 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_Expr_inlines_hh
 #define PURRS_Expr_inlines_hh
 
+namespace Parma_Recurrence_Relation_Solver {
+
+Expr::Expr(int i)
+  : e(i) {
+}
+
+Expr::Expr(const GiNaC::ex& ge)
+  : e(ge) {
+}
+
+} // namespace Parma_Recurrence_Relation_Solver
+
 #endif // !defined(PURRS_Expr_inlines_hh)

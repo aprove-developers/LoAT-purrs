@@ -38,11 +38,10 @@ PURRS::Recurrence::Recurrence(const Recurrence& y) {
 PURRS::Recurrence::~Recurrence() {
 }
 
-//! Assignment operator.
 PURRS::Recurrence&
-Recurrence::operator=(const Recurrence& y);
+PURRS::Recurrence::operator=(const Recurrence& y) {
+}
 
-//! Replace the main equation
 void
 PURRS::Recurrence::replace_recurrence(const Expr& e) {
 }

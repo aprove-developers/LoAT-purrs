@@ -34,8 +34,11 @@ namespace Parma_Recurrence_Relation_Solver {
 
 class Parma_Recurrence_Relation_Solver::Expr {
 public:
-  //! Ordinary copy-constructor.
+  //! Default constructor.
   Expr();
+
+  //! Builds the integer expression \p i.
+  Expr(int i);
 
   //! Copy-constructor.
   Expr(const Expr& x);
@@ -102,9 +105,12 @@ public:
   // solve(), lsolve()
 private:
   GiNaC::ex e;
-  
+
+  Expr(const GiNaC::ex& ge);
 };
 
 } // namespace Parma_Recurrence_Relation_Solver
+
+#include "Expr.inlines.hh"
 
 #endif // !defined(PURRS_Expr_defs_hh)

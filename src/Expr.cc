@@ -93,9 +93,7 @@ PURRS::Expr::nops() const {
 
 PURRS::Expr
 PURRS::Expr::op(unsigned i) const {
-  Expr tmp;
-  tmp.e = e.op(i);
-  return tmp;
+  return e.op(i);
 }
 
 bool
@@ -108,11 +106,12 @@ PURRS::Expr::is_zero() const {
   return e.is_zero();
 }
 
+#if 0
 PURRS::Expr
 PURRS::Expr::subs(const Expr& exp) const {
   
 }
-#if 0
+
 PURRS::Expr
 PURRS::Expr::subs(const Expr_List& symbols,
 		  const Expr_List& replacements) const {
