@@ -73,8 +73,8 @@ bool less_than(const Recurrence& x, const Recurrence& y);
   and by computing approximations of set union and intersection.
 
   In this class we will introduce constructors and methods in order to
-  create object Recurrence, to compute the exact solution or the
-  approximations, to verify the results and to specify eventual
+  create the object Recurrence, to compute the exact solution or the
+  approximations, to verify the results and to specify possible
   initial conditions.
 
   The system works with recurrences in \ref normal_form "normal form"
@@ -90,10 +90,10 @@ bool less_than(const Recurrence& x, const Recurrence& y);
   from the built-in <CODE>Recurrence::n</CODE>, even if the name is the
   same. You can define <CODE>const Symbol& n = Recurrence::n</CODE>
   once for all or you must specify which is the symbol <CODE>n</CODE>
-  you want consider using every time <CODE>Recurrence::n</CODE>.
+  you want to consider using every time <CODE>Recurrence::n</CODE>.
   
   The following examples show some different ways in order to build
-  object Recurrence:
+  objects Recurrence:
 
   \par Example 1
   \code
@@ -135,7 +135,7 @@ bool less_than(const Recurrence& x, const Recurrence& y);
   this special symbol has in the recurrence.
 
   If the user inserts recurrences not in normal form then the system
-  tries to rewrite it.
+  tries to rewrite them.
   If the rewriting's process has success then in all the successive
   computations the system works with the recurrence rewritten in normal form.
 
@@ -147,10 +147,34 @@ bool less_than(const Recurrence& x, const Recurrence& y);
 
   \par Example 5
   The weighted-average recurrence
-  \f$ x(n) = 2 \sum_{k=3}^n x(k) -2 n \f$
+  \f$ x(n) = 2 \sum_{k=3}^n x(k) - 2 n \f$
   will be transformed in the normal form and, moreover,
   the recurrence is rewritten, if possible, so that the lower limit of
-  the sum is \f$ 0 \f$ and the upper limit is \f$ n-1 \f$:
+  the sum is \f$ 0 \f$ and the upper limit is \f$ n-1 \f$.
+  In general,
+  \f[
+    x(n) = f(n) \sum_{k=n_0}^n x(k) + g(n),
+  \f]
+  is rewritable in
+  \f[
+    x(n) = \frac{f(n)}{1-f(n)} \sum_{k=n_0}^{n-1} x(k) + \frac{g(n)}{1-f(n)}
+  \f]
+  when \f$ f(n) \neq 1 \f$ or in
+  \f[
+    x(n) = - \sum_{k=n_0+1}^{n-1} x(k) - g(n+1)
+  \f]
+  when \f$ f(n) = 1 \f$.
+  Hence, in this example, the recurrence becomes
+  \f$ x(n) = -2 \sum_{k=3}^{n-1} x(k) + 2 n \f$.
+  Now we apply the second transformation: from
+  \f[
+    x(n) = f(n) \sum_{k=n_0}^{n-1} x(k) + g(n)
+  \f]
+  in
+  \f[
+    x(n) = f(n+n_0) \sum_{k=0}^{n-1} x(k) + g(n+n_0).
+  \f]
+  In conclusion, the system will work with the weighted-average recurrence
   \f$ x(n) = -2 \sum_{k=0}^{n-1} x(k) + 2 n + 6 \f$.
 */
 class Recurrence {
@@ -186,7 +210,7 @@ public:
   void replace_recurrence(const Expr& e);
 
   //! \brief
-  //! To use in the case of system of recurrences: sets to \f$ e \f$
+  //! To use in the case of a system of recurrences: sets to \f$ e \f$
   //! the right-hand side of the recurrence of index \f$ k \f$.
   //! The system of recurrences will then include \f$ x_k(n) = e \f$.
   void replace_recurrence(unsigned int k, const Expr& e);
@@ -261,7 +285,7 @@ public:
     /*!
       The recurrence does not have any sense. We include in this status
       three types of malformation:
-      - the recurrence contains non-rational numbers;
+      - the recurrence contains floating point numbers;
       - there is a function \f$ x() \f$ with another function \f$ x() \f$
         as argument;
       - the right-hand side of the recurrence contains at least an
@@ -298,8 +322,8 @@ public:
     PROVABLY_INCORRECT,
 
     /*!
-      The system can not prove if the solution, or the approximation, of
-      \p *this, is correct or not. 
+      The system can not prove whether the solution, or the approximation,
+      of \p *this, is correct or not. 
     */
     INCONCLUSIVE_VERIFICATION
   };
@@ -308,13 +332,13 @@ public:
   //! Tries to solve \p *this exactly and returns <CODE>SUCCESS</CODE>
   //! if the system finds the exact solution.
   /*!
-    The system tries to compute the exact solution with every type
+    The system tries to compute the exact solution of every type
     of recurrence, linear and non-linear of finite order, weighted-average
     and also with functional equations, possibly calling the methods
     that compute lower bound and upper bound and verifying if they are
-    coinciding.
+    the same.
 
-    If the method returns <CODE>SUCCESS</CODE> you can get the
+    If the method returns <CODE>SUCCESS</CODE>, you can get the
     exact solution calling the method <CODE>exact_solution()</CODE>;
     otherwise you are in one of the cases explained in the enumerate
     type <CODE>Solver_Status</CODE>.
@@ -348,14 +372,14 @@ public:
   //! Tries to get lower bound for \p *this and returns <CODE>SUCCESS</CODE>
   //! if the system finds the lower bound.
   /*!
-    The system tries to compute the lower bound for the solution with
+    The system tries to compute the lower bound for the solution of
     every type of recurrence, not only with functional equations.
     In the case of linear and non-linear recurrences of finite order
     and weighted-average recurrences, it tries to compute the
-    exact solution and, if it had success, the solution found obviously
+    exact solution and, if it was successful, the solution found obviously
     represent also a lower bound for the solution.
 
-    If the method returns <CODE>SUCCESS</CODE> you can get the
+    If the method returns <CODE>SUCCESS</CODE>, you can get the
     lower bound calling the method <CODE>lower_bound()</CODE>;
     otherwise you are in one of the cases explained in the enumerate
     type <CODE>Solver_Status</CODE>.    
@@ -390,14 +414,14 @@ public:
   //! Tries to get upper bound for \p *this and returns <CODE>SUCCESS</CODE>
   //! if the system finds the upper bound.
   /*!
-    The system tries to compute the upper bound for the solution with
+    The system tries to compute the upper bound for the solution of
     every type of recurrence, not only with functional equations.
     In the case of linear and non-linear recurrences of finite order
     and weighted-average recurrences, it tries to compute the
-    exact solution and, if it had success, the solution found obviously
+    exact solution and, if it was successful, the solution found obviously
     represent also an upper bound for the solution.
 
-    If the method returns <CODE>SUCCESS</CODE> you can get the
+    If the method returns <CODE>SUCCESS</CODE>, you can get the
     upper bound calling the method <CODE>upper_bound()</CODE>;
     otherwise you are in one of the cases explained in the enumerate
     type <CODE>Solver_Status</CODE>.    
@@ -540,7 +564,7 @@ private:
     /*!
       The recurrence does not have any sense. We include in this status
       two types of malformation:
-      - the recurrence contains non-rational numbers;
+      - the recurrence contains floating point numbers;
       - there is a function \f$ x() \f$ with another function \f$ x() \f$
         as argument.
     */
@@ -679,7 +703,7 @@ private:
   //! \brief
   //! Let \p solution_or_bound be the expression that represent the
   //! solution or the bound computed for the recurrence \p *this.
-  //! This function substitutes eventual initial conditions specified
+  //! This function substitutes possible initial conditions specified
   //! by the user shifting the solution or the bound if necessary.
   Expr substitute_i_c_shifting(const Expr& solution_or_bound) const;
 
@@ -1022,12 +1046,12 @@ private:
   Expr& base_exp_log();
 
   //! \brief
-  //! Stores the symbols associated to the eventual negative numbers
+  //! Stores the symbols associated to the possible negative numbers
   //! that will be the arguments of the logarithms.
   const std::vector<Symbol>& auxiliary_symbols() const;
 
   //! \brief
-  //! Stores the symbols associated to the eventual negative numbers
+  //! Stores the symbols associated to the possible negative numbers
   //! that will be the arguments of the logarithms.
   std::vector<Symbol>& auxiliary_symbols();
 
