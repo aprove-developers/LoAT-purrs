@@ -183,8 +183,8 @@ simpl_powers_base(const GExpr& e, const GExpr& num_exponent,
 }
 
 /*!
-  Applies the rules \f$ E1, E2, E3, E4 \f$ and \f$ E5 \f$ of the rules'set
-  \emph{Expand}.
+  Applies the rules \f$ \textbf{E1}, \textbf{E2}, \textbf{E3}, \textbf{E4} \f$
+  and \f$ \textbf{E5} \f$ of the rules'set \emph{Expand}.
   The <CODE>GExpr</CODE> \p e is a <CODE>GiNaC::power</CODE>:
   it finds the base and the exponent of the power (\p e could be a serie
   of nested powers). While it does this operation divides the exponents
@@ -230,7 +230,7 @@ pow_simpl(const GExpr& e, const GSymbol& n, const bool& input) {
     // The base is numeric.
     if (is_a<numeric>(base)) {
       GNumber exp_num = GiNaC::ex_to<GiNaC::numeric>(num_exponent);
-      // The function 'perfect_root' allows to apply the rule E1.
+      // The function 'perfect_root' allows to apply the rule 'E1'.
       if (exp_num.is_integer() || perfect_root(base, exp_num)) {
 	if (input)	
 	  not_num_exp_minus_n = found_and_erase_n(not_num_exponent, n);
@@ -261,9 +261,9 @@ pow_simpl(const GExpr& e, const GSymbol& n, const bool& input) {
 }
 
 /*!
-  Applies the rules 9 and 10 of the terms rewriting system
-  \f$ \mathfrak{R}_o \f$ to the <CODE>GExpr</CODE> \p e that is certainly
-  a <CODE>GiNaC::mul</CODE>.
+  Applies the rules \f$ \textbf{C1} \f$ and \f$ \textbf{C2} \f$ of the set
+  of rules <CODE>Collect</CODE> to the <CODE>GExpr</CODE> \p e that is
+  certainly a <CODE>GiNaC::mul</CODE>.
   The vectors \p bases and \p exponents contain rispectively all bases and
   exponents of the powers that are in \p e and, at the end, will contain
   the new bases and exponents of the powers in \p e after the simplification.
@@ -277,7 +277,7 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
   assert(is_a<mul>(e));
   // At the end of the cycle 'while', 'ris' will contain all the powers of 'e'.
   // The powers with the same bases will simplified in only one power with
-  // the summed exponents (rule 10).
+  // the summed exponents (rule 'C2').
   GExpr ris = 1;
   unsigned i = bases.size();
   while (i > 0) {
@@ -306,7 +306,7 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
   for (i = e.nops(); i-- > 0; ) {
     if (!is_a<power>(e.op(i))) {
       // We must consider those factors that are not powers but are equal
-      // to some base of the vector 'bases', in order to apply the rule 9,
+      // to some base of the vector 'bases', in order to apply the rule 'C1',
       // i.e., 'a * a^e = a^(e + 1)'. In this case, we add '1' to the
       // correspondenting exponent.
       bool to_sum = false;
@@ -324,7 +324,7 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 	      exponents[j] = exponents[j] + 1;
 	  }
 	}
-      // Applies rule 9.
+      // Applies rule 'C1'.
       if (to_sum)
 	ris = ris.subs(pow(e.op(i), wild()) == pow(e.op(i), wild() + 1));
       else
@@ -335,8 +335,9 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 }
 
 /*!
-  Applies the rule 12 of the terms rewriting system \f$ \mathfrak{R}_o \f$
-  under condition that the common exponent to the powers is not integer
+  Applies the rule \f$ \textbf{C3} \f$ of the set of rules
+  <CODE>Collect</CODE> to the <CODE>GExpr</CODE> \p e  under condition
+  that the common exponent to the powers is not integer
   because, in this case, <CODE>GiNaC</CODE> automatically decomposes the
   power, i. e., \f$ (a*b)^4 \f$ is automatically transformed in
   \f$ a^4*b^4 \f$.
@@ -350,7 +351,7 @@ collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
   GExpr ris = 1;
   // At the end of the cycle 'ris' will contain the powers of 'e', with
   // the same exponents, simplified in only one power with the base equal
-  // to the previous bases multiplicated among themselves (rule 12).
+  // to the previous bases multiplicated among themselves.
   unsigned i = exponents.size();
   while (i > 0) {
     --i;
@@ -379,10 +380,8 @@ collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
 }
 
 /*!
-  Applies to <CODE>GExpr</CODE> \p e, that is certainly a
-  <CODE>GiNaC::mul</CODE>, the rules of the term rewritng system
-  \f$ \mathfrak{C} \f$ (the rule \f$ 11 \f$ is automatically applied by
-  <CODE>GiNaC</CODE>).
+  Applies the rules of the set <CODE>Collect</CODE> to <CODE>GExpr</CODE>
+  \p e, that is certainly a <CODE>GiNaC::mul</CODE>.
   Returns a new <CODE>GExpr</CODE> containing the modified expression \p e. 
 */
 static GExpr
@@ -398,7 +397,7 @@ collect_base_exponent(const GExpr& e) {
       bases.push_back(tmp.op(i).op(0));
       exponents.push_back(tmp.op(i).op(1));
     }
-  // Applies rules 9 and 10.    
+  // Applies rules 'C1' and 'C2'.    
   tmp = collect_same_base(tmp, bases, exponents);
 #if NOISY
   std::cout << "tmp dopo same base... " << tmp << std::endl;
@@ -406,7 +405,7 @@ collect_base_exponent(const GExpr& e) {
   // After the simplifications by the function 'collect_same_base' 'tmp'
   // could not be a 'mul'. 
   if (is_a<mul>(tmp))
-    // Applies rule 12.
+    // Applies rule 'C3'.
     tmp = collect_same_exponents(tmp, bases, exponents);
 #if NOISY
   std::cout << "tmp dopo same exponents... " << tmp << std::endl;
@@ -636,7 +635,7 @@ red_prod(const GNumber& base1, const GNumber& exp1,
 }
 
 /*!
-  Applies the rules of the term rewriting system \f$ \mathfrak{I} \f$ to
+  Applies the rules of the rules'set \f$ \mathfrak{I} \f$ to
   <CODE>GExpr</CODE> \p e if \p e is a <CODE>GiNaC::power</CODE> or to
   each \p e's factor which is a <CODE>GiNaC::power</CODE> if \p e is a
   <CODE>GiNaC::mul</CODE>.
@@ -764,8 +763,7 @@ split(const GExpr& e, GExpr& numerica, GExpr& symbolic) {
 
 /*!
   Applies all rules of term rewriting system \f$ \mathfrak{R}_o \f$ which
-  are applicable on factors, i. e., the rules from \f$ 6 \f$ to \f$ 10 \f$ and
-  from \f$ 12 \f$ to \f$ 22 \f$.
+  are applicable on factors.
   Returns a new <CODE>GExpr</CODE>, obtained multiplying the
   <CODE>GExpr</CODE> \p symbolic and \p numerica, containing the modified
   expression \p e.
@@ -880,9 +878,13 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
   \f$ /mathfrak{R}_i \f$. More exactly here the rules of the set
   \emph{Expand} are implemented because the rules of the set \emph{Automatic}
   are automatically executed by <CODE>GiNaC</CODE>.
-  We observe that the rules \f$ E3 \f$ and \f$ E6 \f$ are executed by the
-  method <CODE>expand()</CODE> (\f$ E3 \f$ only partially because for instance
+  We observe that the rules \f$ \textbf{E3} \f$ and \f$ \textbf{E6} \f$ are
+  executed by the method <CODE>expand()</CODE> (\f$ \textbf{E3} \f$ only
+  partially because for instance
   \f$ expand(3^(4*x+2*a)) = 3^(2*a)*3^(4*x) \f$).
+  \p input is always <CODE>true</CODE> and this means that \p n is a special
+  symbol, i. e., in the simplifications is always put in evidence in respect
+  of the others parameters.
   Returns a <CODE>GExpr</CODE> that contains the modified expression \p e.
 */
 GExpr
@@ -913,12 +915,12 @@ simplify_on_input_ex(const GExpr& e, const GSymbol& n, const bool& input) {
 /*!
   Crosses the tree of the expanded expression \p e recursevely to find
   subexpressions which we want to apply the rules of the terms rewriting system
-  \f$ \mathfrak{R}_o \f$. In addiction to the observations about the function
-  \p simplify_on_input_ex that are correct here too, because all the rules
-  of the term rewriting system \f$ \mathfrak{R}_i \f$ are also in
-  \f$ \mathfrak{R}_o \f$, we observe that also the rule \f$ 11 \f$ is
-  automatically executed by <CODE>GiNaC</CODE> and here are implemented
-  only the rules \f$ 9, 10 \f$ and the rules from \f$ 12 \f$ to \f$ 22 \f$.
+  \f$ \mathfrak{R}_o \f$. The observations about the function
+  \p simplify_on_input_ex are correct here too, because all the rules
+  of the term rewriting system \f$ \mathfrak{R}_i \f$, minus
+  \f$ \textbf{E2} \f$, are also in \f$ \mathfrak{R}_o \f$.
+  \p input is always <CODE>false</CODE> and this means that \p n is not
+  considerated like a special symbol but like the others parameters.
   Returns a <CODE>GExpr</CODE> that contains the modified expression \p e.
 */
 GExpr
