@@ -1,4 +1,4 @@
-/* Declaration of the main function of the algebraic equation solver.
+/* Declaration of the main function of the recurrence relation solver.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
