@@ -1878,7 +1878,7 @@ compute_product_on_add(const Expr& e, const Symbol& n,
   }
   if (!e_prod_computed) {
     Symbol h;
-    e_prod = prod(Expr(h), Expr(lower), upper, e.subs(n, h));
+    e_prod = Parma_Recurrence_Relation_Solver::prod(h, lower, upper, e.subs(n, h));
   }
   return e_prod;
 }
@@ -1934,7 +1934,7 @@ compute_product_on_power(const Expr& e, const Symbol& n,
   }
   if (!e_prod_computed) {
     Symbol h;
-    e_prod = prod(Expr(h), Expr(lower), upper, e.subs(n, h));
+    e_prod = Parma_Recurrence_Relation_Solver::prod(h, lower, upper, e.subs(n, h));
   }
   return e_prod;
 }
@@ -2024,7 +2024,7 @@ compute_product(const Expr& e, const Symbol& n,
   }
   else {
     Symbol h;
-    e_prod = prod(Expr(h), Expr(lower), upper, e.subs(n, h));
+    e_prod = Parma_Recurrence_Relation_Solver::prod(h, lower, upper, e.subs(n, h));
   }
   return e_prod;
 }
