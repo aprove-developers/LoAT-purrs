@@ -24,7 +24,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
-#define NOISY 1
+#define NOISY 0
 
 #include "globals.hh"
 #include "util.hh"
@@ -873,15 +873,24 @@ prepare_for_symbolic_sum(const GSymbol& n, const GExpr& g_n,
   // a roots e, se non e' cosi', fare in modo che lo sia.
   bool equal = true;
   for (unsigned i = roots.size(); i-- > 0; )
-    // FIXME: basta questo controllo? Non puo' essere che le roots
-    // siano tutte uguali ed i coefficienti no?
     if (!roots[i].value().is_equal(bases_exp_g_n[i]))
       equal = false;
   if (!equal) {
-    // FIXME: sbagliato!! reverse va bene solo se order == 2.
-    reverse(bases_exp_g_n.begin(), bases_exp_g_n.end());
-    reverse(g_n_poly_coeff.begin(), g_n_poly_coeff.end());
-    reverse(g_n_no_poly_coeff.begin(), g_n_no_poly_coeff.end());
+    std::vector<GExpr> tmp_exp(roots.size());
+    std::vector<GExpr> tmp_coeff_poly(roots.size());
+    std::vector<GExpr> tmp_coeff_no_poly(roots.size());
+    for (unsigned i = roots.size(); i-- > 0; )
+      tmp_exp[i] = roots[i].value();
+    for (unsigned i = tmp_exp.size(); i-- > 0; )
+      for (unsigned j = bases_exp_g_n.size(); j-- > 0; )
+	if (tmp_exp[i].is_equal(bases_exp_g_n[j])) {
+	  tmp_coeff_poly[i] = g_n_poly_coeff[j];
+	  tmp_coeff_no_poly[i] = g_n_no_poly_coeff[j];
+	}
+    copy(tmp_exp.begin(), tmp_exp.end(), bases_exp_g_n.begin());
+    copy(tmp_coeff_poly.begin(), tmp_coeff_poly.end(), g_n_poly_coeff.begin());
+    copy(tmp_coeff_no_poly.begin(), tmp_coeff_no_poly.end(),
+	 g_n_no_poly_coeff.begin());
   }
   // The roots are simple, i. e., their multiplicity is 1.
   for (unsigned i = exp_poly_coeff.size(); i-- > 0; )
