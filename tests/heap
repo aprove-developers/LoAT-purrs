@@ -626,9 +626,11 @@ yv	10*x(n-1)
 yv	10*x(n-1)+1
 yv	10*x(n-1)+x(n-2)
 yv	10+19
+yv	10^(log(n)/log(10))*x(n-1)
 yv	100*x(n-1)+1
 yv	100+x(n-1)
 yv	100-x(n-1)
+yv	100^(log(x(n-1))/log(10))
 yv	1000*x(n-1)+x(n-2)
 yv	111-x(n-1)+x(n-2)
 yv	16*x(n-1)-x(n-2)
