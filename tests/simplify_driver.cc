@@ -342,32 +342,30 @@ main(int argc, char *argv[]) try {
       cout << "e = " << ex << endl;
     }
 
+    Expr ex_expanded = ex.expand();
+    if (interactive)
+      cout << "Expanded expression = " << ex_expanded << endl;
+    
+    Expr sol_input = simplify_on_input_ex(ex_expanded, Recurrence::n, true);
+    Expr sol_output = simplify_on_output_ex(ex_expanded, Recurrence::n, false);
+    Expr sol_factorials = simplify_factorials_and_exponentials(ex,
+							       Recurrence::n);
     if (expect_right_simplification) {
-
-      Expr ex_expanded = ex.expand();
-      if (interactive)
-	cout << "Expanded expression = " << ex_expanded << endl;
-      
-      Expr sol_input = simplify_on_input_ex(ex_expanded, Recurrence::n, true);
       check_and_notify("input", ex, e_simpl_input, sol_input);
-      
-      Expr sol_output = simplify_on_output_ex(ex_expanded, Recurrence::n, false);
       check_and_notify("output", ex, e_simpl_output, sol_output);
-      
-      Expr sol_factorials = simplify_factorials_and_exponentials(ex, Recurrence::n);
       check_and_notify("factorials", ex, e_simpl_factorials, sol_factorials);
-      
-      if (interactive) {
-	cout << endl;
-	cout << "Simplifications for the input (to collect the symbol `n')" << endl;
-	cout << sol_input << endl << endl;
-	cout << "Simplifications for the output" << endl;
-	cout << sol_output << endl << endl;
-	cout << "Factorials and exponentials' simplifications " << endl;
-	cout << sol_factorials << endl;
-	cout << endl << "---------------------------------------------"
-	     << endl << endl;
-      }
+    }    
+    if (interactive) {
+      cout << endl;
+      cout << "Simplifications for the input (to collect the symbol `n')"
+	   << endl;
+      cout << sol_input << endl << endl;
+      cout << "Simplifications for the output" << endl;
+      cout << sol_output << endl << endl;
+      cout << "Factorials and exponentials' simplifications " << endl;
+      cout << sol_factorials << endl;
+      cout << endl << "---------------------------------------------"
+	   << endl << endl;
     }
   }
   if (regress_test)
