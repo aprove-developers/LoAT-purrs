@@ -640,13 +640,17 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   D_MSGVAR("Before calling simplify: ", solution);
 #endif
   solution = simplify_on_output_ex(solution.expand(), n, false);
-  
   // Only for the output.
-  Expr_List conditions;
-  for (unsigned i = order; i-- > 0; )
-    conditions.append(initial_conditions[i]);
-  solution = solution.collect(conditions);
-
+  // FIXME: the initial conditions can not start always from 0 then
+  // the following `for' is temporary.
+  if (solution.is_a_add()) {
+    Expr_List conditions;
+    for (unsigned i = order; i-- > 0; )
+      conditions.append(initial_conditions[i]);
+    // FIXME: `collect' throws an exception if the object to collect has
+    // non-integer exponent. 
+    solution = solution.collect(conditions);
+  }
 #if 0  
   if (!verify_solution(solution, order, rhs, n)) {
     std::cout << "x(n) = " << rhs << std::endl;
