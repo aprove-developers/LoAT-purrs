@@ -237,6 +237,49 @@ mark_verified_solution() {
        << " ";
 }
 
+bool
+can_split_at(const char c) {
+  switch (c) {
+  case '+':
+  case '-':
+  case '*':
+  case '/':
+    return true;
+  default:
+    return false;
+  }
+}
+
+void
+portray(std::ostream& s, const Expr& e) {
+  std::ostringstream b;
+  b << e;
+  const std::string& t = b.str();
+  int l = t.length();
+  // Ideal line length.
+  const int ill = 80;
+  // `x' will be the ideal split point.
+  int x;
+  // `y' will be the split point found, if any.
+  int y;
+  // Loop until there are characters after the ideal split point.
+  for (x = ill; x < l; x = y+ill) {
+    // Look for a split point at or before `x'.
+    for (y = x; y > x-ill; --y)
+      if (can_split_at(t[y]))
+	goto found;
+    // Split point not found before `x': try after.
+    for (y = x+1; y < l; ++y)
+      if (can_split_at(t[y]))
+	goto found;
+    // If no split point has been found, will print the rest of `t'.
+  found:
+    s << t.substr(x-ill, y-(x-ill)) << std::endl;
+  }
+  // Print what is left.
+  s << t.substr(x-ill, l-(x-ill));
+}
+
 int
 main() try {
   // Limit the amount of resources we may consume.
@@ -485,18 +528,24 @@ main() try {
   if (have_exact_solution) {
     if (have_verified_exact_solution)
       mark_verified_solution();
-    cout << "x(n) = " << exact_solution << endl;
+    cout << "x(n) = ";
+    portray(cout, exact_solution);
+    cout << endl;
   }
   else {
     if (have_lower_bound) {
       if (have_verified_lower_bound)
 	mark_verified_solution();
-      cout << "x(n) >= " << lower_bound << br() << endl;
+      cout << "x(n) >= ";
+      portray(cout, lower_bound);
+      cout << br() << endl;
     }
     if (have_upper_bound) {
       if (have_verified_upper_bound)
 	mark_verified_solution();
-      cout << "x(n) <= " << upper_bound << endl;
+      cout << "x(n) <= ";
+      portray(cout, upper_bound);
+      cout << endl;
     }
   }
 
