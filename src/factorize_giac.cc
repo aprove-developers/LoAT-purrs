@@ -46,8 +46,7 @@ using namespace std;
 
 void
 factorize_giac_recursive(const Expr& e,
-			 Expr& num_factors, Expr& not_num_factors,
-			 Blackboard& blackboard);
+			 Expr& num_factors, Expr& not_num_factors);
 
 void
 print_indent(unsigned i) {
@@ -119,8 +118,7 @@ translate(const Expr& e, Expr& num_factors, Expr& not_num_factors,
       // Recursevely factorize the argument of the function `e'.
       Expr num_factors_arg;
       Expr not_num_factors_arg;
-      factorize_giac_recursive(e.arg(0), num_factors_arg, not_num_factors_arg,
-			       blackboard);
+      factorize_giac_recursive(e.arg(0), num_factors_arg, not_num_factors_arg);
       unary_function_ptr functor = find_functor_ptr(e.get_function_name(),
 						    archive_function_tab);
       // FIXME: Not to use the constructor of the class `symbolic' but 
@@ -147,8 +145,7 @@ translate(const Expr& e, Expr& num_factors, Expr& not_num_factors,
 	Expr num_factors_arg;
 	Expr not_num_factors_arg;
 	factorize_giac_recursive(e.arg(i),
-				 num_factors_arg, not_num_factors_arg,
-				 blackboard);
+				 num_factors_arg, not_num_factors_arg);
 	argument[i] = num_factors_arg * not_num_factors_arg;
       }
       const Expr& tmp = apply(e.functor(), argument);
@@ -222,13 +219,14 @@ translate(const gen& e_giac) {
 
 void
 factorize_giac_recursive(const Expr& e,
-			 Expr& num_factors, Expr& not_num_factors,
-			 Blackboard& blackboard) {
+			 Expr& num_factors, Expr& not_num_factors) {
+  Blackboard blackboard;
   gen giac_e = translate(e, num_factors, not_num_factors, blackboard);
   gen giac_e_factorized = factor(giac_e);
-//   std::cout << "giac_e = "<< giac_e << std::endl;
-//   std::cout << "giac_e_factrized = "<< giac_e_factorized << std::endl;
-  // FIXME: add comment!!!
+  // The decomposition executed by `giac' considers the numeric factors,
+  // but when we come back to the GiNaC's expressions, the numeric
+  // factors are automatically distributed. In order to avoid this,
+  // we divide the numeric factors from the non-numeric factors.
   gen numeric_factors = 1;
   gen not_numeric_factors = 1;
   if (giac_e_factorized.is_symb_of_sommet(at_prod)) {
@@ -249,10 +247,10 @@ factorize_giac_recursive(const Expr& e,
       numeric_factors = numeric_factors * giac_e_factorized;
     else
       not_numeric_factors = not_numeric_factors * giac_e_factorized;
-//   std::cout << "num_factors_giac = "<< numeric_factors << std::endl;
-//   std::cout << "not_num_factors_giac = "<< not_numeric_factors << std::endl;
   num_factors = translate(numeric_factors);
   not_num_factors = translate(not_numeric_factors);
+  num_factors = blackboard.rewrite(num_factors);
+  not_num_factors = blackboard.rewrite(not_num_factors);
 }
 
 } // anonymous namespace
@@ -261,10 +259,7 @@ factorize_giac_recursive(const Expr& e,
 void
 PURRS::factorize_giac(const Expr& e,
 		      Expr& num_factors, Expr& not_num_factors) {
-  Blackboard blackboard;
-  factorize_giac_recursive(e, num_factors, not_num_factors, blackboard);
-  num_factors = blackboard.rewrite(num_factors);
-  not_num_factors = blackboard.rewrite(not_num_factors);
+  factorize_giac_recursive(e, num_factors, not_num_factors);
   // FIXME: to uncomment the following rows when will be solved
   // the problem about the method `expand()' on functions.
   //  assert(e.expand() == (num_factors * not_num_factors).expand());
