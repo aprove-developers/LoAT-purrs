@@ -291,6 +291,9 @@ solve(const GExpr& rhs, const GSymbol& n) {
     }
     else if (clear(substitution), match(e, x_i, substitution)) {
       i = get_binding(substitution, 0);
+      if (!i.has(n))
+	// In this case means that user insrted x(i) with i numeric.
+	break;
       a = 1;
       e = 0;
     }
@@ -314,8 +317,8 @@ solve(const GExpr& rhs, const GSymbol& n) {
     // For the moment the coefficients of recurrence relation
     // must be constants, i. e., it does not contains the variable n.
     if (a.has(n)) {
-      throw ("PURRS error: at the moment we solve the recurrence "
-	     "relation with constant coefficients. ");
+      throw ("PURRS error: at the moment we only solve recurrence "
+	     "relations with constant coefficients. ");
     }
     GExpr coefficient = a;
     // FIXME: turn this assertion into something more appropriate.
@@ -323,6 +326,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
     unsigned long index = decrement.to_long();
     if (order < 0 || index > unsigned(order))
       order = index;
+    
     // The vector 'coefficients' contains in the i-th position
     // the i-th coefficient, i. e., the coefficient of x(n-i).
     if (index > coefficients.size())
@@ -333,19 +337,22 @@ solve(const GExpr& rhs, const GSymbol& n) {
       coefficients.insert(coefficients.end(), coefficient);
     else
       coefficients[index] += coefficient;
+  
   } while (e != 0);
 
   // See if what is left is the inhomogeneous term,
   // i.e., if all the occurrences of `x(e)' are such that
   // `e' is numeric.
   GList occurrences;
-  if (e.find(x_i, occurrences)) {
-    for (unsigned i = 0, n = occurrences.nops(); i < n; ++i)
-      if (!is_a<numeric>(occurrences.op(i))) {
+  if (e.find(x_i, occurrences))
+    for (unsigned i = 0, n = occurrences.nops(); i < n; ++i) {
+      GExpr argument = occurrences.op(i);
+      argument = argument.subs(x(wild(0)) == wild(0));
+      if (!is_a<numeric>(argument)) {
 	failed = true;
 	break;
       }
-  }
+    }
 
   if (failed)
     return false;
@@ -357,6 +364,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
   std::cout << std::endl;
   std::cout << "Inhomogeneous term = " << e << std::endl;
 #endif
+
   // The factors of the form a^(bn+c) (a,b,c numeric) must be transformed
   // into (a^b)^n*a^c. GiNaC tranforms only a^(bn+c) in a^c*a^(bn) but not
   // a^(bn) into (a^b)^n.
@@ -456,7 +464,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
       }	
       else 
 	throw ("PURRS error: at the moment the recurrence "
-	       "relation is solved only when the inhomogeneous term "
+	       "relation is only solved when the inhomogeneous term "
 	       "is polynomials or product of exponentials times "
 	       "polynomials."); 
       break;
@@ -572,6 +580,7 @@ solution_1_poly_times_exponentials(const GSymbol& x_0, const GSymbol& n,
     GExpr solution = 0;
     GExpr exponential = decomposition(0, i);
     GExpr coeff_of_exp = decomposition(1, i);
+    // FIXME: to insert a decent comment here.
     coeff_of_exp = coeff_of_exp.expand();
     GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
     if (is_a<power>(exponential)) 
@@ -588,11 +597,7 @@ solution_1_poly_times_exponentials(const GSymbol& x_0, const GSymbol& n,
     solution_tot += solution;
   }
   solution_tot *= alpha_n;
-  //std::cout << "sol prima di expand " << solution_tot << std::endl;
-  //
-  //transform_exponentials(solution_tot, n);
   solution_tot = solution_tot.expand();
-  //std::cout << "sol dopo expand " << solution_tot << std::endl << std::endl;
   transform_exponentials(solution_tot, n, false);
 
   return true;
@@ -701,6 +706,7 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	GExpr solution_2 = 0;
 	GExpr exponential = decomposition(0, i);
 	GExpr coeff_of_exp = decomposition(1, i);
+	// FIXME: to insert a decent comment here.
 	coeff_of_exp = coeff_of_exp.expand();
 	GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
 	if (is_a<power>(exponential)) {
@@ -758,9 +764,7 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	GMatrix sol(2, 1);
 	sol = vars.inverse();
 	sol = sol.mul(rhs);
-#if NOISY
-	std::cout << "matrix solution " << sol << std::endl;
-#endif
+
 	solution_tot = solution_tot.subs(a == sol(0,0));
 	solution_tot = solution_tot.subs(b == sol(1,0));
       }
@@ -782,9 +786,7 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	GMatrix sol(2, 1);
 	sol = vars.inverse();
 	sol = sol.mul(rhs);
-#if NOISY
-	std::cout << "matrix solution " << sol << std::endl;
-#endif
+
 	g_n = g_n.subs(a == sol(0,0));
 	g_n = g_n.subs(b == sol(1,0));
 	
@@ -802,22 +804,34 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	  GExpr solution = 0;
 	  GExpr exponential = decomposition(0, i);
 	  GExpr coeff_of_exp = decomposition(1, i);
+	  // FIXME: to insert a decent comment here.
 	  coeff_of_exp = coeff_of_exp.expand();
 	  GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
 	  GExpr g_n_k = g_n.subs(n == n - k);
+	  // In this case g_n_k always contains root^(n-k).
+	  // We pass to the function 'sum_poly_exponentials' only
+	  // (1/root)^k that it is multiplied for exponential.op(0).
+	  // Hence we pass only the polynomial part of g_n with
+	  // the substitution n == n - k.
+          GExpr poly_g_n = g_n.subs(wild(0)*power(wild(1), n) == wild(0));
+	  poly_g_n = poly_g_n.subs(n == n - k);
 	  if (is_a<power>(exponential))
-	    solution = sum_poly_times_exponentials(coeff_of_exp_k * g_n_k,
-						   k, n, exponential.op(0));
+	    solution = sum_poly_times_exponentials(coeff_of_exp_k * poly_g_n,
+						   k, n, exponential.op(0) *
+ 						   pow(root, -1));
 	  else
 	    // This is the case of the constant exponential.
-	    solution = sum_poly_times_exponentials(coeff_of_exp_k * g_n_k,
-						   k, n, 1);
+	    solution = sum_poly_times_exponentials(coeff_of_exp_k * poly_g_n,
+						   k, n, pow(root, -1));
 	  // 'sum_poly_times_exponentials' calculates the sum from 0 while
 	  // we want to start from 2.
-	  solution = solution.expand();
-	  solution -= (coeff_of_exp_k * g_n_k).subs(k == 0) +
-	              (coeff_of_exp_k * g_n_k).subs(k == 1) * (1/root);
-	  solution = solution.expand();
+	  solution -= (coeff_of_exp_k * poly_g_n).subs(k == 0) +
+	              (coeff_of_exp_k * poly_g_n).subs(k == 1) * 
+	              (1/root) * exponential.op(0);
+	  // We have passed to the function 'sum_poly_times_exponentials'
+	  // only (1/root)^k then now we must multiply for (root)^n.
+	  solution *= power(root, n);
+  	  solution = solution.expand();
 	  solution_tot += solution;
 	}
 	solution_tot = solution_tot.expand();
