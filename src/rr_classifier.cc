@@ -679,7 +679,6 @@ known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
 			      Expr& inhomog_first_order,
 			      unsigned& first_well_defined) {
   const Expr& inhomog_infinite_order_rec = rhs - weight * term_sum;
-  unsigned lower = term_sum.arg(1).ex_to_number().to_unsigned();
   const Expr& upper = term_sum.arg(2);
 
   // If `f(n)' or `g(n)' contain other functions `x()' with `n' in the
@@ -696,15 +695,6 @@ known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
   // Find the largest positive or null integer that cancel the numerator of
   // `f(n)' and store it in `z' if it is bigger than the current `z'.
   if (!largest_positive_int_zero(numerator(weight), Recurrence::n, z))
-    return false;
-  // FIXME: how we must do in these cases? It is not a DOMAIN_ERROR!
-  // Example: `x(n) = (n-2) * sum(k,0,n-1,x(k))'. The recurrence is
-  // well-defined for any `n >= 1' but the method is not right in this case.
-  // With `x(n) = (n-2) * sum(k,2,n-1,x(k))' it is all ok.
-  // If this case is simply wrong, i.e. it is an error of the user, then
-  // we can do only one check (without consider before numerator anf then
-  // denominator of `weight').
-  if (lower < z)
     return false;
   // `z' will contain the largest positive or null integer, if it exists,
   // that cancel the denominator of `f(n)'.
