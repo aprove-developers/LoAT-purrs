@@ -48,33 +48,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
-namespace {
-using namespace PURRS;
-
-bool
-has_x_function(const Expr& e) {
-  if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
-      if (has_x_function(e.op(i)))
-	return true;
-    return false;
-  }
-  else if (e.is_a_power()) {
-    if (has_x_function(e.arg(0)) || has_x_function(e.arg(1)))
-      return true;
-    return false;
-  }
-  else if (e.is_a_function()) {
-    if (e.is_the_x_function())
-      return true;
-    return false;
-  }
-  else
-    return false;
-} 
-
-} // anonymous namespace
-
 /*!
   Adds to the sum already computed those corresponding to the initial
   conditions:
@@ -96,12 +69,18 @@ add_term_with_initial_conditions(const Expr& g_n,
   for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
     Expr g_n_i = g_n.substitute(n, n - i);
     Expr tmp;
-    if (order_reduction_p)
+    // The substitution of the initial condition will be later:
+    // -  in the case of order recuction on the expanded solution 
+    //    (and not on the reduced solution);
+    // -  in the case of non linear recurrence on solution after
+    //    the change of the variable.
+    if (order_reduction_p || non_linear_p)
       tmp = x(first_initial_condition() + i);
     else
       tmp = get_initial_condition(first_initial_condition() + i);
+
     for (unsigned j = i; j > 0; j--)
-      if (order_reduction_p)
+      if (order_reduction_p || non_linear_p)
 	tmp -= coefficients[j] * x(first_initial_condition() + i - j);
       else
 	tmp -= coefficients[j]
@@ -594,7 +573,7 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec) {
   Expr remainder_solution = 0;
   if (rec.exact_solution_.expression().is_a_add()) {
     for (unsigned i = rec.exact_solution_.expression().nops(); i-- > 0; )
-      if (!has_x_function(rec.exact_solution_.expression().op(i)))
+      if (!rec.exact_solution_.expression().op(i).has_x_function(true))
 	remainder_solution += rec.exact_solution_.expression().op(i);
   }
   remainder_solution
@@ -721,7 +700,12 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
       // add_term_with_initial_conditions(g_n, coefficients, solution);
       Expr solution = exact_solution_.expression();
-      if (order_reduction_p)
+      // The substitution of the initial condition will be later:
+      // -  in the case of order recuction on the expanded solution 
+      //    (and not on the reduced solution);
+      // -  in the case of non linear recurrence on solution after
+      //    the change of the variable.
+      if (order_reduction_p || non_linear_p)
 	solution += x(first_initial_condition()) * pwr(coefficients()[1], n);
       else
 	solution += get_initial_condition(first_initial_condition())

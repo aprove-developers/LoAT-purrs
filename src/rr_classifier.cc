@@ -375,33 +375,6 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
     return 2;
   return 0;
 }
-
-/*!
-  Returns <CODE>true</CODE> if \p e contains the \f$ x \f$ function
-  with its argument containing the symbol \p s.
-  Returns <CODE>false</CODE> otherwise. 
-*/
-bool
-has_x_function(const Expr& e, const Symbol& s) {
-  if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
-      if (has_x_function(e.op(i), s))
-	return true;
-    return false;
-  }
-  else if (e.is_a_power()) {
-    if (has_x_function(e.arg(0), s) || has_x_function(e.arg(1), s))
-      return true;
-    return false;
-  }
-  else if (e.is_a_function()) {
-    if (e.is_the_x_function() && e.arg(0).has(s))
-      return true;
-    return false;
-  }
-  else
-    return false;
-} 
   
 void
 insert_coefficients(const Expr& coeff, unsigned long index,
@@ -665,7 +638,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
     else if (r.is_the_sum_function() && r.arg(2) == n) {
       // Check if the summand has the `x' function with the argument
       // dependently from the index of the sum.
-      if (has_x_function(r.arg(3), r.arg(0).ex_to_symbol())) {
+      if (r.arg(3).has_x_function(false, r.arg(0))) {
 	D_MSG("infinite order");
 	return TOO_COMPLEX;
       }
@@ -733,7 +706,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
       else if (factor.is_the_sum_function() && factor.arg(2) == n) {
 	// Check if the summand has the `x' function with the argument
 	// dependently from the index of the sum.
-	if (has_x_function(factor.arg(3), factor.arg(0).ex_to_symbol())) {
+	if (factor.arg(3).has_x_function(false, factor.arg(0))) {
 	  D_MSG("infinite order");
 	  return TOO_COMPLEX;
 	}

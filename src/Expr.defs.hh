@@ -747,7 +747,16 @@ public:
   //! Returns <CODE>true</CODE> if \p *this contains floating point numbers;
   //! returns <CODE>false</CODE> otherwise.
   bool
-  has_floating_point_numbers() const ;
+  has_floating_point_numbers() const;
+
+  //! \brief
+  //! If \p any_x_function is true then returns <CODE>true</CODE> if
+  //! \p *this contains any type of \f$ x \f$ function; returns
+  //! <CODE>false</CODE> otherwise. If \p any_x_function is false then
+  //! returns <CODE>true</CODE> if \p *this contains the \f$ x \f$ function
+  //! with its argument containing the \p x; returns <CODE>false</CODE> otherwise.
+  bool
+  has_x_function(bool any_x_function, const Expr& x = 0) const;
 
 private:
   friend class Number;
