@@ -36,6 +36,8 @@ Number.types.hh \
 Finite_Order_Info.types.hh \
 Functional_Equation_Info.types.hh \
 Blackboard.types.hh \
+Cached_Expr.types.hh \
+Order_Reduction_Info.types.hh \
 Recurrence.types.hh \
 Symbol.types.hh \
 Complex_Interval.defs.hh \
@@ -79,6 +81,10 @@ Functional_Equation_Info.defs.hh \
 Functional_Equation_Info.inlines.hh \
 Blackboard.defs.hh \
 Blackboard.inlines.hh \
+Cached_Expr.defs.hh \
+Cached_Expr.inlines.hh \
+Order_Reduction_Info.defs.hh \
+Order_Reduction_Info.inlines.hh \
 Recurrence.defs.hh \
 Recurrence.inlines.hh
 
@@ -86,6 +92,8 @@ libpurrs_a_SOURCES = \
 Finite_Order_Info.cc \
 Functional_Equation_Info.cc \
 Blackboard.cc \
+Cached_Expr.cc \
+Order_Reduction_Info.cc \
 Complex_Interval.cc \
 Bool3.cc \
 Constant.cc \
@@ -111,6 +119,8 @@ simplify.cc \
 compute_prod.cc \
 ep_decomp.cc \
 sum_poly.cc \
+compute_bounds.cc \
+compute_exact_solution.cc \
 util.cc \
 $(INCLUDE_FILES)
 
