@@ -310,6 +310,12 @@ x(n-1)+2*factorial(n)+4*n
 2^n * x(n-1)
 % Solution: x(n) = 2^(1/2*n+1/2*n^2) * x(0)
 
+% Order 1, variable coefficients
+% x(n) =
+4^(n-1)*x(n-1)+2^((n-1)^2)
+% Solution: x(n) = -2*2^(n^2)*(1/4)^n+2^(1+n^2)*(1/2)^n+2^(n^2)*(1/2)^n*x(0) 
+
+
 % Order 2
 
 % x(n) =
