@@ -142,10 +142,12 @@ Expr::Expr(const Constant& k)
   : e(k.c) {
 }
 
+#if 0
 inline
 Expr::Expr(const Expr_List& lst)
   : e(lst.l) {
 }
+#endif
 
 inline
 Expr::Expr(const std::string& st, const Expr_List& lst)

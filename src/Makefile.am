@@ -36,10 +36,10 @@ Number.defs.hh \
 Number.inlines.hh \
 Symbol.defs.hh \
 Symbol.inlines.hh \
-Expr_List.defs.hh \
-Expr_List.inlines.hh \
 Expr.defs.hh \
+Expr_List.defs.hh \
 Expr.inlines.hh \
+Expr_List.inlines.hh \
 Matrix.defs.hh \
 Matrix.inlines.hh \
 globals.hh \

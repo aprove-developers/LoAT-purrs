@@ -103,8 +103,10 @@ public:
   //! Builds the constant expression \p k.
   Expr(const Constant& k);
 
+#if 0
   //! Builds the list expression \p lst.
   Expr(const Expr_List& lst);
+#endif
 
   //! Builds the list expression \p lst.
   Expr(const std::string& st, const Expr_List& lst);
