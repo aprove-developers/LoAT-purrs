@@ -94,9 +94,9 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
       index_type first = first_valid_index;
       // Check the number of initial conditions.
       if (initial_conditions.size() < k) {
-	s << "*this is a recurrence of order " << k
+	s << "This is a recurrence of order " << k
 	  << " and at least " << k << " initial conditions\n"
-	  << "are necessary to uniquely determine it";
+	  << "are necessary to uniquely determine it.";
 	throw_invalid_argument(method, s.str().c_str());
       }
       // Check if the largest index of the initial conditions in the
@@ -104,9 +104,10 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
       assert(!initial_conditions.empty());
       index_type largest = initial_conditions.rbegin()->first;
       if (largest < first) {
-	s << "*this is a recurrence of order " << k
+	s << "This is a recurrence of order " << k
 	  << " and it is well-defined only for `n >= " << first << "'.\n"
-	  << "Hence, the largest index can not to be smaller than " << first;
+	  << "Hence, the largest index can not to be smaller than "
+	  << first << ".";
 	throw_invalid_argument(method, s.str().c_str());
       }
       // Check if the indexes of the last `k' initial conditions are
@@ -118,9 +119,9 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 	// Skip the check on the largest initial condition.
 	i++;
 	if (i->first != largest - j) {
-	  s << "*this is a recurrence of order " << k
+	  s << "This is a recurrence of order " << k
 	    << " and the " << k << " largest initial conditions\n"
-	    << " must be consecutive";
+	    << " must be consecutive.";
 	  throw_invalid_argument(method, s.str().c_str());
 	}
       }
@@ -134,26 +135,29 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 	  Number index;
 	  if (i->second.is_a_number(index) && index.is_negative())
 	    throw_invalid_argument(method,
-				   "*this is a non-linear recurrence "
+				   "This is a non-linear recurrence "
 				   "and at the moment we accept only\n"
 				   "non-negative values for the initial "
-				   "conditions");
+				   "conditions.");
 	}
       }
     }
     break;
   case WEIGHTED_AVERAGE:
     {
+      // The user is in this case not with the driver or with the demo
+      // but if call this method passing an empty map of initial
+      // conditions.
       if (initial_conditions.empty())
 	throw_invalid_argument(method,
-			       "*this is a weighted-average recurrence "
+			       "This is a weighted-average recurrence "
 			       "and we need one initial condition\n"
-			       "to uniquely determine it");
+			       "to uniquely determine it.");
       if (initial_conditions.rbegin()->first < first_valid_index) {
-	s << "*this is well-defined for `n >= " << first_valid_index
-	  << "'.\n At least an initial condition with index "
+	s << "This recurrence is well-defined for `n >= " << first_valid_index
+	  << "'.\nAt least an initial condition with index "
 	  << "larger than or equal to " << first_valid_index
-	  << " must be present.";
+	  << "\nmust be present.";
 	throw_invalid_argument(method, s.str().c_str());
       }
     }
