@@ -41,3 +41,4 @@ check_PROGRAMS = $(TESTS) $(BUGS)
 check-local: eqs_driver polynomials rrs_driver recurrences
 	./eqs_driver <$(srcdir)/polynomials
 	./rrs_driver <$(srcdir)/recurrences
+	./rrs_driver -rv <$(srcdir)/heap
