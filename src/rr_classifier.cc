@@ -43,6 +43,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <string>
 #include <vector>
 #include <map>
+#include <utility>
 #include <algorithm>
 
 // TEMPORARY
@@ -539,15 +540,23 @@ find_non_linear_term(const Expr& e) {
   -  \f$ x(n) = a x(n-k_1)^b_1 \cdots x(n-k_h)^b_h \f$,
      where \f$ k_1, \dots, k_h, b_1, \dots, b_h \f$ are positive integers
      and \f$ h > 1 \f$;
-  -  \f$ x(n) = a x(n-k)^b \f$,
+  -  \f$ x(n) = x(n-k)^b \f$,
      where \f$ b \f$ is a rational number while \f$ k \f$ is a
      positive integers.
   The two cases above hold also if instead of terms like `x(n-k)' there are
   term like `x(n/k)'.
+  \p coeff_and_base_ is used in two different ways:
+  In the case of simple non-linear recurrence of the form
+  \f$ x(n) = c x(n-1)^{\alpha} \f$ it contains the pair \f$ c, \alpha \f$;
+  in all the other cases the numeric value of the pair holds \f$ 0 \f$
+  while the second element contains the value that will be the
+  logarithm's base or the exponential's base used in the rewriting
+  of the non-linear recurrence in the correspondent linear recurrence.
 */
 bool
 rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
-			      Expr& new_rhs, Expr& base,
+			      Expr& new_rhs,
+			      std::pair<Number, Expr>& coeff_and_base,
 			      std::vector<Symbol>& auxiliary_symbols) {
   // First case.
   if (rhs.is_a_mul()) {
@@ -557,21 +566,13 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
       const Expr& factor = rhs.op(i);
       Number num_exp;
       if (factor.is_a_power() && factor.arg(0).is_the_x_function()
-	  && factor.arg(1).is_a_number(num_exp))
-	if (num_exp != -1) {
-	  assert(num_exp.is_rational());
-	  simple_cases = true;
-	  if (num_exp.is_negative())
-	    num_exp *= -1;
-	  // If one of the two number is not integer, then `lcm()'
-	  // returns the product of them.
-	  common_exponent = lcm(num_exp, common_exponent);
-	}
-	else {
-	  // Recurrence that the system is not able to transform in linear. 
-	  simple_cases = false;
-	  break;
-	}
+	  && factor.arg(1).is_a_number(num_exp)) {
+	assert(num_exp.is_rational());
+	simple_cases = true;
+	// If one of the two number is not integer, then `lcm()'
+	// returns their product.
+	common_exponent = lcm(num_exp, common_exponent);
+      }
       else if (factor.is_the_x_function())
 	simple_cases = true;
       // Recurrence that the system is not able to transform in linear. 
@@ -580,11 +581,34 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	break;
       }
     }
+    // Consider the special case `x(n) = c x(n-1)^a' with `a' and `c'
+    // constants (`a != 1').
+    // In this case is not necessary the `linearization' of the recurrence
+    // because we already know the solution in function of `c' and `a'.
+    if (simple_cases && rhs.nops() == 2)
+      if (rhs.op(0).is_a_number() && rhs.op(1).is_a_power()
+	  && rhs.op(1).arg(0).is_the_x_function()) {
+	coeff_and_base.first = rhs.op(0).ex_to_number();
+	assert(rhs.op(1).arg(1).is_a_number());
+	if (rhs.op(1).arg(1).ex_to_number().is_negative())
+	  common_exponent *= -1;
+	coeff_and_base.second = common_exponent;
+	return true;
+      }
+      else if (rhs.op(1).is_a_number() && rhs.op(0).is_a_power()
+	       && rhs.op(0).arg(0).is_the_x_function()) {
+	coeff_and_base.first = rhs.op(1).ex_to_number();
+	assert(rhs.op(0).arg(1).is_a_number());
+	if (rhs.op(0).arg(1).ex_to_number().is_negative())
+	  common_exponent *= -1;
+	coeff_and_base.second = common_exponent;
+	return true;
+      }
     new_rhs = 0;
     if (simple_cases)
       if (common_exponent == 1) {
 	// Substitute any function `x()' with `exp(1)^{x()}'.
-	base = Napier;
+	coeff_and_base.second = Napier;
 	Expr tmp = substitute_x_function(rhs, Napier, true);
 	tmp = simplify_ex_for_input(tmp, true);
 	for (unsigned i = tmp.nops(); i-- > 0; ) {
@@ -598,22 +622,23 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	    new_rhs += log(tmp.op(i));
 	}
 	new_rhs = simplify_logarithm(new_rhs);
+	
 	return true;
       }
       else {
 	// Substitute any function `x()' with `common_exponent^{x()}'.
-	base = common_exponent;
-	Expr tmp = substitute_x_function(rhs, common_exponent, true);
+	coeff_and_base.second = common_exponent;
+	Expr tmp = substitute_x_function(rhs, abs(common_exponent), true);
 	tmp = simplify_ex_for_input(tmp, true);
 	for (unsigned i = tmp.nops(); i-- > 0; ) {
 	  Number num;
 	  if (tmp.op(i).is_a_number(num) && num.is_negative()) {
 	    Symbol s = rec.insert_auxiliary_definition(num);
 	    auxiliary_symbols.push_back(s);
-	    new_rhs += log(s) / log(common_exponent);
+	    new_rhs += log(s) / log(abs(common_exponent));
 	  }
 	  else
-	    new_rhs += log(tmp.op(i)) / log(common_exponent);
+	    new_rhs += log(tmp.op(i)) / log(abs(common_exponent));
 	}
 	new_rhs = simplify_logarithm(new_rhs);
 	return true;
@@ -621,27 +646,10 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
   }
   // Second case.
   else if (rhs.is_a_power()) {
-    const Expr& base_rhs = rhs.arg(0);
-    const Expr& exponent_rhs = rhs.arg(1);
     Number num_exp;
-    if (base_rhs.is_the_x_function() && exponent_rhs.is_a_number(num_exp)
-	&& num_exp != -1) {
-      // Substitute any function `x()' with `abs(num_exp)^{x()}'.
-      if (num_exp.is_negative())
-	num_exp *= -1;
-      base = num_exp;
-      const Expr tmp
-	= simplify_ex_for_input(substitute_x_function(rhs, num_exp, true),
-				true);
-      Number num;
-      if (tmp.is_a_number(num) && num.is_negative()) {
-	Symbol s = rec.insert_auxiliary_definition(num);
-	auxiliary_symbols.push_back(s);
-	new_rhs = log(s) / log(num_exp);
-      }
-      else
-	new_rhs = log(tmp) / log(num_exp);
-      new_rhs = simplify_logarithm(new_rhs);
+    if (rhs.arg(0).is_the_x_function() && rhs.arg(1).is_a_number(num_exp)) {
+      coeff_and_base.second = num_exp;
+      coeff_and_base.first = 1;
       return true;
     }
     else
@@ -764,13 +772,24 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
   // two different cases of non-linearity.
   unsigned non_linear_term = find_non_linear_term(addend);
   if (non_linear_term == 0) {
+    // We will store here the right hand side of the linear recurrence
+    // obtained transforming that one non-linear.
     Expr new_rhs;
-    Expr base;
+    // We will store here the symbols associated to the eventual negative
+    // numbers that will be the arguments of the logarithms.
     std::vector<Symbol> auxiliary_symbols;
-    if (rewrite_non_linear_recurrence(*this, rhs, new_rhs, base,
+    // In the case of simple non-linear recurrence of the form
+    // `x(n) = c x(n-1)^a' `coeff_and_base' will contain the pair `c' and a';
+    // in all the other cases the numeric value of the pair will hold `0'
+    // while the second element will contain the value that will be the
+    // logarithm's base or the exponential's base used in the rewriting
+    // of the non-linear recurrence in the correspondent linear recurrence.
+    std::pair<Number, Expr> coeff_and_base;
+    if (rewrite_non_linear_recurrence(*this, rhs, new_rhs, coeff_and_base,
 				      auxiliary_symbols)) {
       set_non_linear_finite_order();
-      non_linear_p = new Non_Linear_Info(new_rhs, base, auxiliary_symbols);
+      non_linear_p = new Non_Linear_Info(new_rhs, coeff_and_base,
+					 auxiliary_symbols);
       return SUCCESS;
     }
     else

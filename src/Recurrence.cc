@@ -763,13 +763,33 @@ PURRS::Recurrence::apply_order_reduction() const {
 }
 
 /*!
-  Builds a new object recurrence containing a linear recurrence and
-  classify it.
+  Compute the solution of non-linear recurrence.
+  If the recurrence is of the form \f$ x(n) = c x(n-1)^{\alpha} \f$
+  then we already know the solution which will store in \p solution_or_bound:
+  \f$ x(n) = x(0)^{\alpha^n} c^{\frac{\alpha^n-1}{\alpha-1}} \f$.
+  In all the other cases this function builds a new object recurrence
+  containing a linear recurrence obtained from that one non-linear, classify
+  and solve it; at the end transform the solution of the linear recurrence
+  in the solution of the non-linear recurrence.
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
 compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
-  D_MSG("compute_non_linear_recurrence");
+  // We consider the simple case of non-linear recurrence of the form
+  // `x(n) = c x(n-1)^a', where `c' and `a' are constants (`a != 1').
+  // In this case we already know the solution:
+  // `x(n) = c^((1-a^n)/(1-a)) x(0)^(a^n)'.
+  // FIXME: the system will must consider the following conditions:
+  // a > 0, a not natural number -> x(0) >= 0, c >= 0;
+  // a < 0, a not natural number -> x(0) > 0, c > 0.
+  if (coeff_simple_non_linear_rec() != 0) {
+    assert(base_exp_log().is_a_number());
+    solution_or_bound = pwr(coeff_simple_non_linear_rec(),
+			    (pwr(base_exp_log(), n)-1)/(base_exp_log()-1))
+      * pwr(x(0), pwr(base_exp_log(), n));
+    return SUCCESS;
+  }
+
   // Build a new object recurrence with a linear recurrence.
   Recurrence rec_rewritten(rhs_transformed_in_linear());
   rec_rewritten.come_from_non_linear_rec = true;
