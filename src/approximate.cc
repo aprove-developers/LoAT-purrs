@@ -38,9 +38,9 @@ struct Identity {
   }
 };
 
-}
+} // anonymous namespace
 
 PURRS::Expr
-PURRS::approximate(const PURRS::Expr& e) {
+PURRS::approximate(const Expr& e) {
   return generic_approximate(e, Identity());
 }

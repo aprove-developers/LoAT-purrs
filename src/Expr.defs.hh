@@ -828,7 +828,7 @@ public:
   //! \p x; returns <CODE>false</CODE> otherwise.
   /*!
     This function realizes the definition of <EM>scalar representation
-    for \f$ x \f$</EM>, where \f$ x \f$ is any symbol.
+    for x</EM>, where \f$ x \f$ is any symbol.
     This is more briefly written <EM>scalar</EM> and defined inductively
     as follows:
     - every number is a scalar;
@@ -846,7 +846,7 @@ public:
   //! rapresentation for \p x; returns <CODE>false</CODE> otherwise.
   /*!
     This function realizes the definition of <EM>integer scalar
-    representation for \f$ x \f$</EM>, where \f$ x \f$ is any symbol.
+    representation for x</EM>, where \f$ x \f$ is any symbol.
     This is defined inductively as follows:
     - every integer number is a integer scalar representation;
     - every parameter different from \f$ x \f$ is an integer scalar
@@ -869,7 +869,7 @@ public:
   //! rapresentation for \p x; returns <CODE>false</CODE> otherwise.
   /*!
     This function realizes the definition of <EM>rational scalar
-    representation for \f$ x \f$</EM>, where \f$ x \f$ is any symbol.
+    representation for x</EM>, where \f$ x \f$ is any symbol.
     This is defined inductively as follows:
     - every rational number is a rational scalar representation;
     - every parameter different from \f$ x \f$ is a rational scalar
@@ -908,7 +908,7 @@ public:
   //! Returns <CODE>true</CODE> if \p *this is a polynomial in \p x;
   //! returns <CODE>false</CODE> otherwise.
   /*!
-    This function realizes the definition of <EM>polynomial in \f$ x \f$</EM>,
+    This function realizes the definition of <EM>polynomial in x</EM>,
     where \f$ x \f$ is any symbol.
     This is more briefly written <EM>polynomial</EM> and defined inductively
     as follows:
@@ -926,7 +926,7 @@ public:
   //! returns <CODE>false</CODE> otherwise.
   /*!
     This function realizes the definition of
-    <EM>integer polynomial in \f$ x \f$</EM>, where \f$ x \f$ is any symbol.
+    <EM>integer polynomial in x</EM>, where \f$ x \f$ is any symbol.
     This is more briefly written <EM>integer polynomial</EM> and defined
     inductively as follows:
     - every integer scalar representation for \f$ x \f$ is an integer
@@ -944,7 +944,7 @@ public:
   //! returns <CODE>false</CODE> otherwise.
   /*!
     This function realizes the definition of
-    <EM>rational polynomial in \f$ x \f$</EM>, where \f$ x \f$ is any symbol.
+    <EM>rational polynomial in x</EM>, where \f$ x \f$ is any symbol.
     This is defined inductively as follows:
     - every rational scalar representation for \f$ x \f$ is a rational
       polynomial;
@@ -961,7 +961,7 @@ public:
   //! returns <CODE>false</CODE> otherwise.
   /*!
     This function realizes the definition of
-    <EM>multivariate polynomial\f$</EM>, defined inductively as follows:
+    <EM>multivariate polynomial</EM>, defined inductively as follows:
     - every scalar representation is a multivariate polynomial;
     - every parameter is a multivariate polynomial;
     - if \f$ a \f$ is a multivariate polynomial and \f$ b \f$ is a positive

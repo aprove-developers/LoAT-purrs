@@ -671,10 +671,10 @@ try_to_compute_sum(bool lower, const Expr& summand,
 }
 
 //! \brief
-//! Returns <CODE>true<CODE> if the system is able to approximate the
+//! Returns <CODE>true</CODE> if the system is able to approximate the
 //! functional equation \f$ x(n) = a x(n/b) + g(n) \f$ with
 //! \ p coefficient as \f$ a \f$, \p divisor_arg as \f$ b \f$ and
-//! \p inhomogeneous as \f$ g(n) \f$; returns <CODE>false<CODE> otherwise.
+//! \p inhomogeneous as \f$ g(n) \f$; returns <CODE>false</CODE> otherwise.
 bool
 known_class_of_functional_eq_rank_1(const Expr& coefficient,
 				    const Number& divisor_arg,

@@ -51,7 +51,7 @@ static const unsigned
 FIND_DIVISORS_THRESHOLD = FIND_DIVISORS_MAX*FIND_DIVISORS_MAX;
 
 bool
-PURRS::vector_not_all_zero(const std::vector<PURRS::Expr>& v) {
+PURRS::vector_not_all_zero(const std::vector<Expr>& v) {
   for (unsigned i = v.size(); i-- > 0; )
     if (!v[i].is_zero())
       return true;

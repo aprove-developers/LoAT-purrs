@@ -1058,14 +1058,14 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
   solution or of the bounds, or during the verification of the obtained
   results.
   
-  If the recurrence is <EM>linear of finite order<EM> in the structure
+  If the recurrence is <EM>linear of finite order</EM> in the structure
   <CODE>Finite_Order_Info</CODE> are stored the order, the coefficients,
   the greates common divisor among the positive integer \f$ k \f$
   of the terms of the form \f$ x(n-k) \f$ contained in the right hand side
   and the first initial condition (i. e., the smallest positive integer for
-  which the recurrence is well-defined) setted to \f$ 0 \k$ by default.
+  which the recurrence is well-defined) setted to \f$ 0 \f$ by default.
 
-  If the recurrence is <EM>linear of infinite order<EM> there is not
+  If the recurrence is <EM>linear of infinite order</EM> there is not
   a general method to solve it. At the moment we solve only recurrences
   of infinite order of the shape
   \f[
@@ -1080,7 +1080,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
   hand side, the coefficient and the inhomogeneous term of the finite order
   recurrence in which \p *this is transformed, the weight \f$ f(n) \f$.
 
-  If the recurrence is <EM>non-linear of finite order<EM> there is not
+  If the recurrence is <EM>non-linear of finite order</EM> there is not
   a general method to solve it. At the moment we solve only a small class
   of them transforming them in linear recurrences.
   In the structure <CODE>Non_Linear_Info</CODE> are stored the right hand
@@ -1088,7 +1088,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
   base used in the transformation, a vector of symbols associated to the
   eventual negative numbers that will be the arguments of the logarithms.
 
-  In the case of <EM>functional equation<EM> in the structure
+  In the case of <EM>functional equation</EM> in the structure
   <CODE>Functional_Equation_Info</CODE> are stored the values
   \f$ a \f$ and \f$ b \f$ of the terms \f$ a x_{n/b} \f$ contained
   in the right hand side, the positive integer starting from which the
