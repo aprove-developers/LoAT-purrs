@@ -168,12 +168,12 @@ transform_exponentials(GExpr& e, const GSymbol& n) {
     clear(lst_of_exp);
   }
 
-  // Transforms a^(bn+c) into (a^b)^n*a^c.
+  // Transforms a^(b*n+c) into (a^b)^n*a^c.
   static GExpr a_bn = pow(wild(0), n*wild(1));
   static GExpr a_n_c = pow(wild(0), n+wild(1));
   static GExpr a_bn_c = pow(wild(0), n*wild(1)+wild(2));
   if (e.find(a_bn_c, lst_of_exp) || e.find(a_n_c, lst_of_exp)) 
-    e.expand();
+    e = e.expand();
   if (e.find(a_bn, lst_of_exp))
     e = split_exp(e, n, lst_of_exp);
 
