@@ -598,6 +598,55 @@ REGISTER_FUNCTION(max,
 		  evalf_func(max_evalf).
 		  derivative_func(max_deriv));
 
+/* min() function */
+
+//! Evaluation of the <CODE>min(a, b)</CODE>.
+/*!
+  min_eval(const ex& first, const ex& second)
+
+  \param first    The first quantity to compare.
+  \param lower    The second quantity to compare.
+
+  All symbols occurring in the two expressions are assumed
+  to stand for nonnegative quantities.
+
+*/
+ex
+min_eval(const ex& first, const ex& second) {
+  PURRS::Expr diff(first - second);
+  if (diff.is_a_number())
+    if (compare(diff, 0) == 1)
+      return second;
+    else return first;
+  else if (diff.preserves_nonnegativity())
+    return second;
+  else if ((-diff).preserves_nonnegativity())
+    return first;
+  else
+    return min(first, second).hold();
+}
+
+ex
+min_evalf(const ex& first, const ex& second) {
+  return min(first, second).hold();
+}
+
+ex
+min_deriv(const ex&, const ex&, unsigned int) {
+  abort();
+}
+
+/*!
+  We define the min function.
+  \f[
+    \min(a,b).
+  \f]
+*/
+REGISTER_FUNCTION(min,
+		  eval_func(min_eval).
+		  evalf_func(min_evalf).
+		  derivative_func(min_deriv));
+
 } // namespace GiNaC
 
 namespace {

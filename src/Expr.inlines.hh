@@ -42,6 +42,7 @@ DECLARE_FUNCTION_2P(binom);
 DECLARE_FUNCTION_4P(sum);
 DECLARE_FUNCTION_4P(prod);
 DECLARE_FUNCTION_2P(max);
+DECLARE_FUNCTION_2P(min);
 
 // Use overloading to allow for multiple arguments in x().
 class x1_SERIAL { public: static unsigned serial; };
