@@ -741,7 +741,7 @@ max(const Expr& x, const Expr& y) {
 
 inline Expr
 min(const Expr& x, const Expr& y) {
-  return max(static_cast<const Expr::Base>(x),
+  return min(static_cast<const Expr::Base>(x),
 	     static_cast<const Expr::Base>(y));
 }
 
