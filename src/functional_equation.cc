@@ -66,7 +66,7 @@ is_non_negative(const Expr& e, const Symbol& x, Number& i) {
   This function checks "heuristically" if the \f$ e(x) \f$ is a non-negative,
   non-decreasing function in \f$ x \f$, where \f$ x \f$ is any symbol.
   The function works in an inductive way as follows:
-  - every number or constant non-decreasing function in \f$ x \f$;
+  - every number is a non-decreasing function in \f$ x \f$;
   - \f$ x \f$ is a non-decreasing function in \f$ x \f$;
   - if \f$ a \f$ is a non-decreasing function in \f$ x \f$ and
     \f$ b \f$ is a positive integer, then \f$ a^b \f$ is a
@@ -84,6 +84,8 @@ is_non_decreasing_poly(const Expr& e, const Symbol& x) {
   else if (e == x)
     return true;
   else if (e.is_a_power()) {
+    if (e.is_a_constant_power(x))
+      return true;
     if (is_non_decreasing_poly(e.arg(0), x)) {
       Number exponent;
       if (e.arg(1).is_a_number(exponent) && exponent.is_positive_integer()) 
@@ -91,7 +93,7 @@ is_non_decreasing_poly(const Expr& e, const Symbol& x) {
     }
   }
   else if (e.is_a_function() && e.nops() == 1)
-    if (!e.arg(0).has(x))
+    if (e.is_a_constant_function(x))
       return true;
     else
       return false;
