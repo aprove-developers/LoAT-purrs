@@ -919,6 +919,8 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	return CL_HAS_NULL_DECREMENT;
       else if (has_parameters(argument))
 	return CL_TOO_COMPLEX;
+      else if (argument.is_a_number(num) && !num.is_nonnegative_integer())
+	return CL_MALFORMED_RECURRENCE;
       // Check if this term has the form `x(n + d)'.
       else if (argument.is_a_add() && argument.nops() == 2) {
 	Number decrement;
@@ -1026,6 +1028,8 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	  return CL_HAS_NULL_DECREMENT;
 	else if (has_parameters(argument))
 	  return CL_TOO_COMPLEX;
+	else if (argument.is_a_number(num) && !num.is_nonnegative_integer())
+	  return CL_MALFORMED_RECURRENCE;
 	else if (argument.is_a_add() && argument.nops() == 2) {
 	  Number decrement;
 	  if (get_constant_decrement(argument, decrement)) {
