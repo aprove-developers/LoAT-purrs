@@ -388,16 +388,11 @@ int
 PURRS::Expr::size_norm() const {
   const Expr& e = *this;
   int count = 0;
-  if (e.is_a_add()) {
+  if (e.is_a_add() || e.is_a_mul()) {
     unsigned e_nops = e.nops();
     for (unsigned i = e_nops; i-- > 0; )
       count += e.op(i).size_norm();
-    count += e_nops - 1;
-  }
-  else if (e.is_a_mul()) {
-    unsigned e_nops = e.nops();
-    for (unsigned i = e_nops; i-- > 0; )
-      count += e.op(i).size_norm();
+    // Number of operation's symbols.
     count += e_nops - 1;
   }
   else if (e.is_a_power()) {
@@ -406,13 +401,13 @@ PURRS::Expr::size_norm() const {
     ++count;
   }
   else if (e.is_a_function()) {
-    if (e.is_the_sum_function() || e.is_the_prod_function())
-      count += 1 + e.op(0).size_norm() + e.op(1).size_norm()
-	+ e.op(2).size_norm() + e.op(3).size_norm();
-    else
-      count += 1 + e.op(0).size_norm();
+    // The functor.
+    count += 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      count += e.op(i).size_norm();
   }
   else
-    ++count;
+    // This is the case of a `Number' or a `Symbol' or a `Constant'.
+    return 1;
   return count;
 }
