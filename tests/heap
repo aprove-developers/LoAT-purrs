@@ -65,6 +65,7 @@ B	x(n/2+2/100)+n
 B	x(n^(1/2))+1
 B	x(n^5)
 B	x(sqrt(n))+1
+D	(n-2)*sum(k,0,n-1,x(k))
 D	2*sum(k,0,-1+n,x(k))-2/(n-1)
 D	2/(n-3)*sum(k,0,n-1,x(k))
 E	2*x(n-1)+n^100
