@@ -433,9 +433,6 @@ main() try {
   // Get the expression (rhs of the recurrence), if any.
   const_form_iterator expr = cgi.getElement("expr");
 
-  // Get the expression (initial conditions for the recurrence), if any.
-  const_form_iterator i_c = cgi.getElement("i_c");
-
   // Get options, if any.
   bool verify = false;
   vector<FormEntry> options;
@@ -456,8 +453,11 @@ main() try {
   Expr rhs = Expr(**expr, symbols);
   Recurrence recurrence(rhs);
 
+  // Get the expression (initial conditions for the recurrence), if any.
+  const_form_iterator i_c = cgi.getElement("i_c");
+
   string list_i_c;
-  if(i_c == (*cgi).end() || expr->isEmpty())
+  if(i_c == (*cgi).end() || i_c->isEmpty())
     list_i_c = "";
   else
     list_i_c = **i_c;
