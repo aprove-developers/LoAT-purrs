@@ -46,15 +46,15 @@ namespace {
 using namespace PURRS;
 
 Expr
-comp_prod(const Expr& e, const Number& lower, const Expr& upper,
+comp_prod(const Symbol& index, const Number& lower, const Expr& e,
 	  bool is_denominator = false);
 
 //! \brief
-//! When possible, computes \f$ \prod_{k=lower}^upper e(k) \f$
+//! When possible, computes \f$ \prod_{k=lower}^n e(k) \f$
 //! if \f$ e \f$ is a sum of terms, otherwise returns the symbolic product.
 Expr
-compute_product_on_add(const Expr& e, const Number& lower, const Expr& upper,
-		       bool is_denominator) {
+compute_product_on_add(const Symbol& index, const Number& lower,
+		       const Expr& e, bool is_denominator) {
   Expr e_prod;
   bool e_prod_computed = false;
   if (e.is_a_add() && e.nops() == 2) {
@@ -63,15 +63,17 @@ compute_product_on_add(const Expr& e, const Number& lower, const Expr& upper,
     const Expr& b = e.op(1);
     Number num;
     // `e' is of the form n + p with p a number.
-    if ((a == Recurrence::n && b.is_a_number(num))
-	|| (b == Recurrence::n && a.is_a_number(num)) && num.is_integer())
+    if ((a == index && b.is_a_number(num))
+	|| (b == index && a.is_a_number(num)) && num.is_integer())
       if (num.is_positive_integer()) {
-	e_prod = factorial(e) / factorial(lower + num - 1);
+	e_prod = factorial(e.substitute(index, Recurrence::n))
+	  / factorial(lower + num - 1);
 	e_prod_computed = true;
       }
       else
 	if (lower > -num) {
-	  e_prod = factorial(e) / factorial(lower + num - 1);
+	  e_prod = factorial(e.substitute(index, Recurrence::n))
+	    / factorial(lower + num - 1);
 	  e_prod_computed = true;
 	}
 	else
@@ -83,19 +85,19 @@ compute_product_on_add(const Expr& e, const Number& lower, const Expr& upper,
 	    e_prod = 0;
 	    e_prod_computed = true;
 	  }
-    else if (e == 2*Recurrence::n+1) {
+    else if (e == 2*index+1) {
       e_prod = factorial(2*Recurrence::n+1) * pwr(2, -Recurrence::n)
 	/ factorial(Recurrence::n);
       e_prod_computed = true;
     }
   }
   else {
-    // Allows to compute `\prod_{k=lower}^upper e(k)' for function as `a*n+a*b'
+    // Allows to compute `\prod_{k=lower}^n e(k)' for function as `a*n+a*b'
     // (`a' not rational).
-    Expr a = e.content(Recurrence::n);
+    Expr a = e.content(index);
     if (a != 1) {
-      e_prod = comp_prod(e.primpart(Recurrence::n), lower, upper)
-	* comp_prod(a, lower, upper);
+      e_prod = comp_prod(index, lower, e.primpart(index))
+	* comp_prod(index, lower, a);
       e_prod_computed = true;
     }
     // To compute numerator and denominator is useful because allows
@@ -106,41 +108,41 @@ compute_product_on_add(const Expr& e, const Number& lower, const Expr& upper,
     Expr denominator;
     numerator_denominator_purrs(e, numerator, denominator);
     if (denominator != 1) {
-      e_prod = comp_prod(numerator, lower, upper)
-	* pwr(comp_prod(denominator, lower, upper), -1);
+      e_prod = comp_prod(index, lower, numerator)
+	* pwr(comp_prod(index, lower, denominator), -1);
       e_prod_computed = true;
     }
   }
   if (!e_prod_computed) {
     Symbol h;
-    e_prod = PURRS::prod(h, lower, upper, e.substitute(Recurrence::n, h));
+    e_prod = PURRS::prod(h, lower, Recurrence::n, e.substitute(index, h));
   }
   return e_prod;
 }
 
 //! \brief
-//! When possible, computes \f$ \prod_{k=lower}^upper e(k) \f$
+//! When possible, computes \f$ \prod_{k=lower}^n e(k) \f$
 //! if \f$ e \f$ is a power, otherwise returns the symbolic product.
 Expr
-compute_product_on_power(const Expr& e,
-			 const Number& lower, const Expr& upper) {
+compute_product_on_power(const Symbol& index, const Number& lower,
+			 const Expr& e) {
   assert(e.is_a_power());
   const Expr& base_e = e.arg(0);
   const Expr& exponent_e = e.arg(1);
   Expr e_prod;
   bool e_prod_computed = false;
-  if (base_e.has(Recurrence::n)) {
+  if (base_e.has(index)) {
     Number exponent;
     if (exponent_e.is_a_number(exponent)) {
       if (exponent.is_positive_integer())
-	e_prod = pwr(comp_prod(base_e, lower, upper), exponent_e);
+	e_prod = pwr(comp_prod(index, lower, base_e), exponent_e);
       else
 	e_prod
-	  = pwr(comp_prod(base_e, lower, upper, true), exponent_e);
+	  = pwr(comp_prod(index, lower, base_e, true), exponent_e);
       e_prod_computed = true;
     }
   }
-  // In this case `\prod_{k=lower}^upper e(k) = k^{\sum_{h=lower}^upper f(h)}'.
+  // In this case `\prod_{k=lower}^n e(k) = k^{\sum_{h=lower}^n f(h)}'.
   else {
     std::vector<Expr> base_of_exps;
     std::vector<Expr> exp_poly_coeff;
@@ -153,7 +155,7 @@ compute_product_on_power(const Expr& e,
     if (vector_not_all_zero(exp_poly_coeff)) {
       Symbol k("k");
       for (unsigned i = base_of_exps.size(); i-- > 0; ) {
-	Expr coeff_k = exp_poly_coeff[i].substitute(Recurrence::n, k);
+	Expr coeff_k = exp_poly_coeff[i].substitute(index, k);
 	new_exponent += sum_poly_times_exponentials(coeff_k, k,
 						    base_of_exps[i]);
 	// `sum_poly_times_exponentials' computes the sum from 0, whereas
@@ -169,20 +171,20 @@ compute_product_on_power(const Expr& e,
   }
   if (!e_prod_computed) {
     Symbol h;
-    e_prod = PURRS::prod(h, lower, upper, e.substitute(Recurrence::n, h));
+    e_prod = PURRS::prod(h, lower, Recurrence::n, e.substitute(index, h));
   }
   return e_prod;
 }
 
 Expr
-comp_prod(const Expr& e, const Number& lower, const Expr& upper,
+comp_prod(const Symbol& index, const Number& lower, const Expr& e,
 	  bool is_denominator) {
   Expr e_prod;
-  if (!e.has(Recurrence::n))
-    e_prod = pwr(e, upper - lower + 1);
-  else if (e == Recurrence::n) {
+  if (!e.has(index))
+    e_prod = pwr(e, Recurrence::n - lower + 1);
+  else if (e == index) {
     if (lower > 0)
-      e_prod = factorial(upper) / factorial(lower - 1);
+      e_prod = factorial(Recurrence::n) / factorial(lower - 1);
     else
       if (is_denominator)
 	throw std::domain_error("Cannot compute a product at the "
@@ -192,17 +194,17 @@ comp_prod(const Expr& e, const Number& lower, const Expr& upper,
 	e_prod = 0;
   }
   else if (e.is_a_add())
-    e_prod = compute_product_on_add(e, lower, upper, is_denominator);
+    e_prod = compute_product_on_add(index, lower, e, is_denominator);
   else if (e.is_a_power())
-    e_prod = compute_product_on_power(e, lower, upper);
+    e_prod = compute_product_on_power(index, lower, e);
   else if (e.is_a_mul()) {
     e_prod = 1;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_prod *= comp_prod(e.op(i), lower, upper);
+      e_prod *= comp_prod(index, lower, e.op(i));
   }
   else {
     Symbol h;
-    e_prod = PURRS::prod(h, lower, upper, e.substitute(Recurrence::n, h));
+    e_prod = PURRS::prod(h, lower, Recurrence::n, e.substitute(index, h));
   }
   return e_prod;
 }
@@ -223,17 +225,17 @@ comp_prod(const Expr& e, const Number& lower, const Expr& upper,
   we compute it; when it is not possible we returns the symbolic function
   for the product.
   We defined inductively \f$ \prod_{k=lower}^n e(k) \f$ as follows:
-  - if \f$ e \f$ is a constant, i.e. it not contains \f$ n \f$,
+  - if \f$ e(k) \f$ is a constant, i.e. it not contains \f$ k \f$,
     then \f$ \prod_{k=lower}^n e(k) = e^{n - lower + 1} \f$;
-  - if \f$ e = n \f$ then
+  - if \f$ e(k) = k \f$ then
       if \f$ lower > 0 \f$ then
         \f$ \prod_{k=lower}^n e(k) = n! / (lower - 1)! \f$;
       else \f$ \prod_{k=lower}^n e(k) = 0 \f$;
-  - if \f$ e = n + k \f$ where \f$ k \in \Zset \f$
-      if \f$ lower > -k \f$
-        \f$ e_prod = e! / (lower + k - 1)! \f$;
+  - if \f$ e = k + h \f$ where \f$ h \in \Zset \f$
+      if \f$ lower > -h \f$
+        \f$ e_prod = e(k)! / (lower + h - 1)! \f$;
       else \f$ \prod_{k=lower}^n e(k) = 0 \f$;
-  - if \f$ e = 2*n+1 \f$,
+  - if \f$ e = 2*k+1 \f$,
     then \f$ \prod_{k=lower}^n e(k) = \frac{(2*n + 1)!}{2^n * n!} \f$;
   - if \f$ e \f$ is a power there are two cases.
     We consider \f$ a \f$ and \f$ b \f$ so that \f$ e = a^b \f$, 
@@ -241,37 +243,21 @@ comp_prod(const Expr& e, const Number& lower, const Expr& upper,
       then \f$ \prod_{k=lower}^n e(k) = (\prod_{k=lower}^n a(k))^b;
     - if \f$ a \f$ not contains \f$ n, i.e. \f$ a \f$ is a constant,
       then \f$ \prod_{k=lower}^n e(k) = k^{\sum_{h=lower}^n f(h)} \f$;
-  - if \f$ e = e_1 \cdots e_m \f$, where \f$ e_i \f$,
-    for \f$ i = 1, \dots, m \f$, is one of the previous case,
-    then \f$ \prod_{k=lower}^n e(k) =  \prod_{k=lower}^n e_1(k) \cdots
+  - if \f$ e(k) = e_1(k) \cdots e_m(k) \f$, then
+    \f$ \prod_{k=lower}^n e(k) =  \prod_{k=lower}^n e_1(k) \cdots
     \prod_{k=lower}^n e_m(k) \f$.
 */
 PURRS::Expr
-PURRS::compute_product(const Expr& e,
-		       const Number& lower, const Expr& upper) {
+PURRS::compute_product(const Symbol& index, const Number& lower,
+		       const Expr& e) {
   assert(lower.is_integer());
-  assert(upper == Recurrence::n);
-//   // Special case: `upper' is a number. 
-//   if (upper.is_a_number()) {
-//     Number num_upper = upper.ex_to_number();
-//     assert(num_upper.is_integer());
-//     if (lower > num_upper)
-//       return 1;
-//     else if (lower == num_upper)
-//       return e.substitute(Recurrence::n, lower);
-//     else {
-//       Expr tmp = 1;
-//       for (Number i = lower; i <= num_upper; ++i)
-// 	tmp *= e.substitute(Recurrence::n, i);
-//       return tmp;
-//     }
-//   }
+  D_VAR(lower);
   Expr common_factor;
   Expr rem;
   factorize(e, common_factor, rem);
   D_VAR(common_factor);
   D_VAR(rem);
   // `e' has been factorized: `e = common_factor * rem'.
-  return comp_prod(common_factor, lower, upper)
-    * comp_prod(rem, lower, upper);
+  return comp_prod(index, lower, common_factor)
+    * comp_prod(index, lower, rem);
 }

@@ -221,8 +221,11 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
       return TOO_COMPLEX;
   // The initial conditions will start from `z'.
   set_first_i_c_for_linear(z.to_unsigned());
+  Symbol index;
   Expr alpha_factorial
-    = compute_product(transform_in_single_fraction(coefficient), z + 1, n);
+    = compute_product(index, z + 1,
+		      transform_in_single_fraction(coefficient
+						   .substitute(n, index)));
   // FIXME: this simplification simplifies the value of `alpha_factorial'
   // but not the solution because we need to the simplification about
   // factorials and exponentials for the output.

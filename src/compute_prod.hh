@@ -27,11 +27,12 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Expr.types.hh"
 #include "Number.types.hh"
+#include "Symbol.types.hh"
 
 namespace Parma_Recurrence_Relation_Solver {
 
 Expr
-compute_product(const Expr& e, const Number& lower, const Expr& upper);
+compute_product(const Symbol& index, const Number& lower, const Expr& e);
 
 } // namespace Parma_Recurrence_Relation_Solver
 
