@@ -50,8 +50,8 @@ namespace Parma_Recurrence_Relation_Solver {
 
 /*!
   Returns <CODE>true</CODE> if and only if \p e is of the form
-  \f$ n - d \f$ with \f$ d \f$ an integer; in this case the opposite
-  of \f$ d \f$ to \p decrement.
+  \f$ n - d \f$ with \f$ d \f$ an integer; in this case assign the
+  opposite of \f$ d \f$ to \p decrement.
 */
 static bool
 get_constant_decrement(const Expr& e, const Symbol& n, Number& decrement) {
@@ -448,13 +448,19 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
       coefficients[index] += a;
   } while (!e.is_zero());
   
-  // Special case: `e' is a function of `n', the parameters and of
-  // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
-  // non-negative integers. 
-  if (order < 0) {
-    solution = e;
-    return OK;
-  }
+  // `order' is negative in two cases. 
+  if (order < 0)
+    if (e.has(x(wild(0))))
+      // 1. the recurrence is not linear, i.e. there is a non-linear term
+      // containing `x(n-k)', where `k' non-negative-integer.
+      return NOT_LINEAR_RECURRENCE;
+    else { 
+      // 2. `e' is a function of `n', the parameters and of
+      // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
+      // non-negative integers. 
+      solution = e;
+      return OK;
+    }
 
   D_VAR(order);
   D_VEC(coefficients, 1, order);
@@ -582,9 +588,21 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   return OK;
 }
 
-
 void
 impose_condition(const std::string&) {
+}
+
+void
+assign_max_decrement_and_coeff(const Expr& possibly_dec,
+			       const Expr& possibly_coeff, const Symbol& n,
+			       int& max_decrement, Expr& coefficient) {
+  Number decrement;
+  get_constant_decrement(possibly_dec, n, decrement);
+  int dec = -decrement.to_int();
+  if (dec > max_decrement) {
+    max_decrement = dec;
+    coefficient = possibly_coeff;
+  }
 }
 
 /*!
@@ -598,53 +616,48 @@ impose_condition(const std::string&) {
   Returns <CODE>true</CODE> if the transformation is successful;
   returns <CODE>false</CODE> otherwise.
 */
+// FIXME: when the transformation fails?
+// Now we not consider non-linear recurrences in the transformation.
 static bool
-eliminate_negative_decrements(const Expr& /* rhs */, Expr& /* new_rhs */,
-			      const Symbol& /* n */) {
-  // Let `max_decrement' be the largest positive integer such that `x(n+j)'
-  // occurs in `rhs' with a coefficient `a' which is not syntactically 0.
-//   int max_decrement = 0;
-//   Expr coeff;
-//   for (unsigned j = rhs.nops(); j-- > 0; ) {
-//     static Expr x_i = x(wild(0));
-//     static Expr a_times_x_i = x_i * wild(1);
-//     Expr_List substitution;
-//     Expr i;
-//     Expr a;
-//     bool found = false;
-//     if (clear(substitution), match(rhs.op(j), a_times_x_i, substitution)) {
-//       i = get_binding(substitution, 0);
-//       a = get_binding(substitution, 1);
-//       found = true;
-//     }
-//     else if (clear(substitution), match(rhs.op(j), x_i, substitution)) {
-//       i = get_binding(substitution, 0);
-//       a = 1;
-//       found = true;
-//     }
-//     if (found) {
-//       Number decrement;
-//       get_constant_decrement(i, n, decrement);
-//       int dec = -decrement.to_int();
-//       if (dec > max_decrement) {
-// 	  max_decrement = dec;
-// 	  coeff = a;
-//       }
-//     }
-//   }
-//   // The changes of variables include replacing `n' by `n-max_decrement',
-//   // changing sign, and division by `a'.
-//   new_rhs = rhs.subs(n, n-max_decrement);
-//   new_rhs = new_rhs.subs(x(n), x(n-max_decrement));
-
-//   new_rhs *= -1;
-//   new_rhs = new_rhs.subs(x(n-max_decrement), - x(n-max_decrement));
-//   new_rhs /= coeff;
-//   new_rhs
-//     = new_rhs.subs(x(n-max_decrement), x(n-max_decrement)*Parma_Recurrence_Relation_Solver::power(coeff, -1));
-
-//   std::cout << "NUOVA = " << new_rhs << std::endl; 
-  return false;
+eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs,
+			      const Symbol& n) {
+  // Seeks `max_decrement', i.e., the largest positive integer such that
+  // `x(n+j)' occurs in `rhs' with a coefficient `coefficient' which is not
+  // syntactically 0.
+  int max_decrement = 0;
+  Expr x_i = x(wild(0));
+  Expr a_times_x_i = x_i * wild(1);
+  Expr_List substitution;
+  Expr coefficient;
+  if (rhs.is_a_add()) {
+    for (unsigned j = rhs.nops(); j-- > 0; )
+      if (clear(substitution), rhs.op(j).match(a_times_x_i, substitution))
+	assign_max_decrement_and_coeff(get_binding(substitution, 0),
+				       get_binding(substitution, 1),
+				       n, max_decrement, coefficient);
+      else if (clear(substitution), rhs.op(j).match(x_i, substitution))
+	assign_max_decrement_and_coeff(get_binding(substitution, 0), 1,
+				       n, max_decrement, coefficient);
+  }
+  else if (rhs.is_a_mul()) {
+    if (clear(substitution), rhs.match(a_times_x_i, substitution))
+      assign_max_decrement_and_coeff(get_binding(substitution, 0),
+				     get_binding(substitution, 1),
+				     n, max_decrement, coefficient);
+  }
+  else
+    if (clear(substitution), rhs.match(x_i, substitution))
+      assign_max_decrement_and_coeff(get_binding(substitution, 0), 1,
+				     n, max_decrement, coefficient);
+  // The changes of variables includes replacing `n' by `n-max_decrement',
+  // changing sign, and division by `coefficient'.
+  new_rhs = rhs.subs(n, n-max_decrement);
+  new_rhs *= -1;
+  new_rhs = new_rhs.subs(x(n), - x(n-max_decrement)
+			 * Parma_Recurrence_Relation_Solver::power(coefficient, -1));
+  new_rhs /= coefficient;
+  
+  return true;
 }
 
 /*!
@@ -695,8 +708,10 @@ solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
     case HAS_NEGATIVE_DECREMENT:
       {
 	Expr new_rhs;
-	if (eliminate_negative_decrements(rhs, new_rhs, n))
-	    status = solve(new_rhs, n, solution);
+	if (eliminate_negative_decrements(rhs, new_rhs, n)) {
+	  std::cout << "Recurrence tranformed x(n) = " << new_rhs << std::endl;
+	  status = solve(new_rhs, n, solution);
+	}
 	else
 	  exit_anyway = true;
       }
@@ -710,6 +725,13 @@ solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
 	  exit_anyway = true;
       }
       exit_anyway = true;
+      break;
+    case NOT_LINEAR_RECURRENCE:
+      // Next we will solve also non-linear recurrence and we will
+      // call an opportune function.
+      throw
+	"PURRS error: today only solve linear recurrences. \n"
+	"Please come back tomorrow.";
       break;
     default:
       throw std::runtime_error("PURRS internal error: "
