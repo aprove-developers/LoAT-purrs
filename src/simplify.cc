@@ -1478,7 +1478,8 @@ compute_sum(const Expr& e) {
 //! the sum with the upper limit of the form `m + j' or `m - j', with
 //! `m' a symbol and `j' an integer, so that the upper limit is `m'.
 //! If \p only_to_the_beginning is <CODE>true</CODE> this function
-//! computes eventual symbolic sums.
+//! splits the sum in many sums how many are the addends of the summand
+//! and computes, when possible, symbolic sums.
 /*!
   If \p only_verification is <CODE>true</CODE> applies the following
   property for the function representing finite sums:
@@ -1494,7 +1495,8 @@ compute_sum(const Expr& e) {
     \end{cases}
   \f]
 
-  If \p only_to_the_beginning is <CODE>true</CODE> computes eventual
+  If \p only_to_the_beginning is <CODE>true</CODE> splits the sum in many
+  sums how many are the addends of the summand and computes,when possible,
   symbolic sums using two different techniques: if the summand is
   polynomial, exponential or product of them uses the method exposed
   in <CODE>sum_poly.{hh, cc}</CODE>; otherwise the Gosper's algorithm
@@ -1529,6 +1531,18 @@ simplify_sum_in_expanded_ex(const Expr& e, bool only_verification,
 					       only_to_the_beginning));
     else {
       if (e.is_the_sum_function()) {
+	// Splits the sum in many sums how many are the addends of the
+	// summand.
+	if (only_to_the_beginning && e.arg(3).is_a_add()) {
+	  e_rewritten = 0;
+	  for (unsigned i = e.arg(3).nops(); i-- > 0; )
+	    e_rewritten
+	      += simplify_sum_in_expanded_ex(sum(e.arg(0), e.arg(1), e.arg(2),
+						 e.arg(3).op(i)),
+					     only_verification,
+					     only_to_the_beginning);
+	  return e_rewritten;
+	}
 	// If the summand does not contain `x' functions with `n' in the
 	// argument (infinite order recurrence) and we are at the first
 	// visit to the expression, then the sum has been inserted by the
