@@ -31,7 +31,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "sum_poly.hh"
 #include "util.hh"
 #include "Expr.defs.hh"
-#include "Recurrence.defs.hh"
 #include <vector>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
@@ -64,19 +63,20 @@ falling_product(const Expr& x, const Number& k, Expr& q) {
 }
 
 /*!
-  This routine computes \f$\sum_{j=0}^n j_{(k)} x^j \f$ for a non negative 
+  This routine computes \f$\sum_{j=0}^N j_{(k)} x^j \f$ for a non negative 
   integer \f$ k \f$ by means of a formula explained in purrs.tex, \S4.3.2. 
   The closed formula is returned in the expression <CODE>q</CODE>. 
 */
 
 void
-sum_falling_prod_times_exp(const Number& k, const Symbol& x, Expr& q) {
+sum_falling_prod_times_exp(const Number& k, const Symbol& x, const Symbol& N,
+			   Expr& q) {
 
   q = pwr(1 - x, - k - 1);
   Expr r;
   for (Number i = 0; i <= k; ++i) {
-    falling_product(Recurrence::n + 1, i, r);
-    q -= r / factorial(i) * pwr(x, Recurrence::n + 1 - i)
+    falling_product(N + 1, i, r);
+    q -= r / factorial(i) * pwr(x, N + 1 - i)
       * pwr(1 - x, i - k - 1);
   }
   q *= factorial(k) * pwr(x, k);
@@ -107,14 +107,14 @@ poly_dec(const Expr& p, const Symbol& x, std::vector<Expr>& summands) {
 }
 
 /*!
-  This routine computes \f$\sum_{j=0}^n p(j) \f$ for a non 
-  negative integer \f$ n \f$ and a polynomial \f$ p \f$ by means 
+  This routine computes \f$\sum_{j=0}^N p(j) \f$ for a non 
+  negative integer \f$ N \f$ and a polynomial \f$ p \f$ by means 
   of a formula explained in purrs.tex, \S4.3.3. 
   The closed formula is returned in the expression <CODE> q </CODE>. 
 */
 
 void 
-sum_poly(const Expr& p, const Symbol& x, Expr& q) {
+sum_poly(const Expr& p, const Symbol& x, const Symbol& N, Expr& q) {
   
   unsigned d = p.degree(x);
   std::vector<Expr> summands(d+1);
@@ -122,7 +122,7 @@ sum_poly(const Expr& p, const Symbol& x, Expr& q) {
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
     Expr r;
-    falling_product(Recurrence::n + 1, i + 1, r);
+    falling_product(N + 1, i + 1, r);
     q += Number(1, i + 1) * summands[i] * r;
   }
 }
@@ -137,7 +137,7 @@ sum_poly(const Expr& p, const Symbol& x, Expr& q) {
 
 /*!
   This routine computes the closed formula for 
-  \f$\sum_{j=0}^n p(j) \alpha^j \f$, 
+  \f$\sum_{j=0}^N p(j) \alpha^j \f$, 
   where \f$ p \f$ is a polynomial (possibly constant) and 
   \f$ \alpha \f$ is a Number (possibly 1). 
   The closed formula is returned in the expression <CODE> q </CODE>. 
@@ -145,13 +145,13 @@ sum_poly(const Expr& p, const Symbol& x, Expr& q) {
 
 PURRS::Expr 
 PURRS::sum_poly_times_exponentials(const Expr& p, const Symbol& x, 
-				   const Expr& alpha) {
+				   const Symbol& N, const Expr& alpha) {
   D_VAR(p);
   D_VAR(x);
   D_VAR(alpha);
   Expr q;
   if (alpha == 1)
-    sum_poly(p.expand(), x, q);
+    sum_poly(p.expand(), x, N, q);
   // we just have to compute the sum of the values of the polynomial 
   else {
     Expr r;
@@ -160,7 +160,7 @@ PURRS::sum_poly_times_exponentials(const Expr& p, const Symbol& x,
     poly_dec(p.expand(), x, summands);
     q = 0;
     for (unsigned i = 0; i <= d; ++i) {
-      sum_falling_prod_times_exp(i, x, r);
+      sum_falling_prod_times_exp(i, x, N, r);
       r = r.expand();
       q += r * summands[i];
     }
@@ -172,18 +172,19 @@ PURRS::sum_poly_times_exponentials(const Expr& p, const Symbol& x,
 
 /*!
   This routine computes the closed formula for 
-  \f$\sum_{j=0}^n p(j) \alpha^j \cos(j\theta) \f$, 
+  \f$\sum_{j=0}^N p(j) \alpha^j \cos(j\theta) \f$, 
   where \f$ p \f$ is a polynomial (possibly constant),  
   \f$ \alpha \f$ and \f$ \theta \f$ are <CODE> Expr </CODE>.
 */
 
 PURRS::Expr
 PURRS::sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x, 
+					     const Symbol& N,
 					     const Expr& alpha,
 					     const Expr& theta) {
   Expr q = 0;
   if (theta.is_zero()) {
-    q = sum_poly_times_exponentials(p, x, alpha);
+    q = sum_poly_times_exponentials(p, x, N, alpha);
     return q;
   }
   unsigned d = p.expand().degree(x);
@@ -191,8 +192,8 @@ PURRS::sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x,
   poly_dec(p.expand(), x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
-    Expr r = pwr(x, Recurrence::n + 2) * cos(Recurrence::n * theta)
-      - pwr(x, Recurrence::n + 1) * cos((Recurrence::n + 1) * theta);
+    Expr r = pwr(x, N + 2) * cos(N * theta)
+      - pwr(x, N + 1) * cos((N + 1) * theta);
     r += 1 - x * cos(theta);
     r /= pwr(x,2) - 2* x * cos(theta) + 1;
     r = pwr(x,i) * r.diff(x,i);
@@ -205,13 +206,14 @@ PURRS::sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x,
 
 /*!
   This routine computes the closed formula for 
-  \f$\sum_{j=0}^n p(j) \alpha^j \sin(j\theta) \f$, 
+  \f$\sum_{j=0}^N p(j) \alpha^j \sin(j\theta) \f$, 
   where \f$ p \f$ is a polynomial (possibly constant),  
   \f$ \alpha \f$ and \f$ \theta \f$ are <CODE> Expr </CODE>.
 */
 
 PURRS::Expr
 PURRS::sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x, 
+					     const Symbol& N,
 					     const Expr& alpha,
 					     const Expr& theta) {
   Expr q = 0;
@@ -223,8 +225,8 @@ PURRS::sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x,
   poly_dec(p.expand(), x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
-    Expr r = pwr(x, Recurrence::n + 2) * sin(Recurrence::n * theta)
-      - pwr(x, Recurrence::n + 1) * sin((Recurrence::n + 1) * theta);
+    Expr r = pwr(x, N + 2) * sin(N * theta)
+      - pwr(x, N + 1) * sin((N + 1) * theta);
     r -= x * sin(theta);
     r /= pwr(x, 2) - 2* x * cos(theta) + 1;
     r = pwr(x, i) * r.diff(x, i);
