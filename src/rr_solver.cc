@@ -554,7 +554,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   \p alpha, \p p and \p q, respectively.
 */
 static void
-exp_poly_decomposition(const GExpr& e, const GSymbol& n
+exp_poly_decomposition(const GExpr& e, const GSymbol& n,
 		       std::vector<GExpr>& alpha,
 		       std::vector<GExpr>& p,
 		       std::vector<GExpr>& q) {
