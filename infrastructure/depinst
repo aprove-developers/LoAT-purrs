@@ -142,13 +142,13 @@ for LIB_SHORT_NAME in ; do
   mkdir obj$LIBNAME;
   cd obj$LIBNAME;
   SUCCESS=0;
-  $PRE_CONF 
-  && $CONF_PATH/configure $OPT_PARAM 
-  && make 
-  && make install 
-  && ldconfig 
-  && echo "$LIB_SHORT_NAME installed successfully." 
-  && SUCCESS=1;
+  $PRE_CONF \
+  && $CONF_PATH/configure $OPT_PARAM \
+  &&  make \
+  &&  make install \
+  &&  ldconfig \
+  &&  echo "$LIB_SHORT_NAME installed successfully." \
+  &&  SUCCESS=1;
   if test $SUCCESS == 1;
     then
     echo "`date +%Y-%m-%d_%H:%M:%S` Installed $LIB_SHORT_NAME as $LIBNAME" >> $INST_LOG;
