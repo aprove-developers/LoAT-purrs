@@ -35,6 +35,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 // TEMPORARY
 #include <iostream>
+#include <fstream>
 
 using namespace GiNaC;
 
@@ -151,8 +152,8 @@ return_sum(const bool distinct, const GSymbol& n, const int order,
 }
 
 /*!
-  Let the recurrence relation with the inhomogeneous term \f$ e(n) \f$
-  in the form polynomials times exponentials:
+  Consider the inhomogeneous term \f$ e(n) \f$ in the form polynomials
+  times exponentials:
   \f$ e(n) = \sum_{i=0}^k \alpha_i^{n} p_i(n) \f$ (where \f$ k \f$ is
   the number of exponentials).
   We call \p \lambda the generic root of the characteristic equation
@@ -804,7 +805,7 @@ exp_poly_decomposition(const GExpr& e, const GSymbol& n,
 }
 
 /*!
-  Let the vectors \p symbolic_sum_distinct and \p symbolic_sum_no_distinct
+  Consider the vectors \p symbolic_sum_distinct and \p symbolic_sum_no_distinct
   that contain all the symbolic sums of the inhomogeneous term's terms that
   are polynomial or the product of a polynomial and an exponential,
   For each sum this function
@@ -1039,7 +1040,7 @@ compute_non_homogeneous_part_solution(const GSymbol& n, const GExpr& g_n,
 }
 
 /*!
-  Let the linear recurrence relation of order \f$ k \f$ with constant
+  Consider the linear recurrence relation of order \f$ k \f$ with constant
   coefficients
   \f$ x_n = a_1 x_{n-1} + a_2 x_{n-2} + \cdots + a_k x_{n-k} + p(n) \f$,
   where \f$ p(n) \f$ is a polynomial or a product of polynomials times
@@ -1125,34 +1126,76 @@ solve_linear_constant_coeff(const GSymbol& n, GExpr& g_n,
   return solution;
 }
 
-/*!
-  Let the right hand side \p rhs of the recurrence relation
-  \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$.
-  Starting from the solution \f$ x(n) \f$ as soon as computed, calculates, 
-  by substitution, \f$ x(n-1), x(n-2), \dotsc, x_{n-k} \f$ which are
-  substituted in \p rhs.
+static void
+print_bad_exp(const GExpr& e) {
+  std::ofstream outfile("not_verified.out", std::ios_base::app);
+  outfile << std::endl;
+  outfile << "EXPRESSION = ";
+  outfile << std::endl;
+  outfile << e;
+  outfile << std::endl;
+}
 
-  Considers the difference \p diff from the solution \f$ x(n) \f$ and the
-  new right hand side:
-  - if \p diff is equal to zero     -> returns <CODE>true</CODE>:
-                                       the solution is certainly right.
-  - if \p diff is not equal to zero -> returns <CODE>false</CODE>:   
-                                       the solution can be wrong or it is not
-				       enough simplified.
+/*!
+  Consider the right hand side \p rhs of the order \f$ k \f$ recurrence
+  relation
+  \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$.
+  We try to check that the solution is correct.
+  - Validation of initial conditions.
+    If \p rhs is equal to \f$ x(0), \cdots, x(k) \f$ for
+    \f$ n = 0, \cdots, k-1 \f$ respectively then
+    the initial conditions are verified and we continue to check; otherwise
+    return false because the solution can be wrong or it is not
+    simplified enough.
+  - Since the initial conditions are verified, we erase from \p solution
+    all terms containing an initial condition.
+    In other words, we check that ther remainder of the solution
+    satisfies the same recurrence relation, but with the initial conditions
+    all equal to \f$ 0 \f$.
+    Starting from the partial solution just computed, we substitute
+    \f$ x(n-1) \f$, \f$ x(n-2) \f$, \f$ \dots \f$, \f$ x_{n-k} \f$ into \p rhs.
+    We next consider the difference \p diff between the partial solution
+    and the new right hand side:
+    - if \p diff is equal to zero     -> return <CODE>true</CODE>:
+                                         the solution is certainly right.
+    - if \p diff is not equal to zero (in a syntactical sense)
+                                      -> return <CODE>false</CODE>:   
+                                         the solution can be wrong or
+                                         we failed to simplify it.
+
+  FIXME: In the latter case, we will need more powerful tools to
+  decide whether the solution is right or it is really wrong.
 */
 static bool
 verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
 		const GSymbol& n) {
+  // Validation of initial conditions.
+  for (int i = order; i-- > 0; ) {
+    GExpr g_i = x(i);
+    if (!g_i.is_equal(solution.subs(n == i))) {
+      print_bad_exp(solution.subs(n == i));
+      return false;
+    }
+  }
+  // The initial conditions are verified. Build an other expression
+  // that has all terms of 'solution' minus those containing an initial
+  // condition.
+  GExpr partial_solution = 0;
+  for (unsigned i = solution.nops(); i-- > 0; )
+    if (!solution.op(i).match(x(wild(0)))
+	&& !solution.op(i).match(wild(1) * x(wild(0))))
+      partial_solution += solution.op(i);
   std::vector<GExpr> terms_to_sub(order);
   for (int i = 0; i < order; ++i)
-    terms_to_sub[i] = solution.subs(n == n - i - 1);    
+    terms_to_sub[i] = partial_solution.subs(n == n - i - 1);    
   GExpr substituted_rhs = simplify_on_input_ex(rhs.expand(), n, true);
   for (unsigned i = terms_to_sub.size(); i-- > 0; )
     substituted_rhs = substituted_rhs.subs(x(n - i - 1) == terms_to_sub[i]);
-  GExpr diff = (solution - substituted_rhs).expand();
-
+  GExpr diff = (partial_solution - substituted_rhs).expand();
   if (diff.is_zero())
     return true;
-  else
+  else {
+    print_bad_exp(diff);
     return false;
+  }
 }
