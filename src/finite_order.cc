@@ -741,7 +741,7 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
       Expr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
       tmp += pwr(root_of_unity, Recurrence::n - i);
     }
-    tmp *= rec.get_initial_condition(i) * 1/gcd_among_decrements;
+    tmp *= x(i)/gcd_among_decrements;
     part_depending_on_ic += tmp;
   }
   part_depending_on_ic = simplify_ex_for_input(part_depending_on_ic, true);

@@ -48,7 +48,8 @@ http://www.cs.unipr.it/purrs/ . */
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 /*!
-  Adds to the sum already computed those corresponding to the initial
+  This function adds the part of the solution of linear recurrences
+  with constant coefficients of finite order corresponding to the initial
   conditions:
   \f[
     \sum_{i=0}^{order - 1} g_{n-i}
@@ -67,23 +68,9 @@ add_term_with_initial_conditions(const Expr& g_n,
   Expr solution = exact_solution_.expression();
   for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
     Expr g_n_i = g_n.substitute(n, n - i);
-    Expr tmp;
-    // The substitution of the initial condition will be later:
-    // -  in the case of order recuction on the expanded solution 
-    //    (and not on the reduced solution);
-    // -  in the case of non linear recurrence on solution after
-    //    the change of the variable.
-    if (applied_order_reduction || come_from_non_linear_rec)
-      tmp = x(first_i_c_for_linear() + i);
-    else
-      tmp = get_initial_condition(first_i_c_for_linear() + i);
-
+    Expr tmp = x(first_i_c_for_linear() + i);
     for (unsigned j = i; j > 0; j--)
-      if (applied_order_reduction || come_from_non_linear_rec)
-	tmp -= coefficients[j] * x(first_i_c_for_linear() + i - j);
-      else
-	tmp -= coefficients[j]
-	  * get_initial_condition(first_i_c_for_linear() + i - j);
+      tmp -= coefficients[j] * x(first_i_c_for_linear() + i - j);
     solution += tmp * g_n_i;
   }
   exact_solution_.set_expression(solution);
@@ -262,7 +249,7 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
       // (forse prima di vedere gosper)
       Symbol h;
       solution
-	+= alpha_factorial * get_initial_condition(z.to_unsigned())
+	+= alpha_factorial * x(z)
 	+ alpha_factorial * PURRS::sum(h, z + 1, n,
 				       inhomogeneous_term.substitute(n, h) 
 				       / alpha_factorial.substitute(n, h));
@@ -270,7 +257,7 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
       return SUCCESS;
     }
   }
-  solution += get_initial_condition(z.to_unsigned());
+  solution += x(z);
   solution *= alpha_factorial;
   exact_solution_.set_expression(solution);
   return SUCCESS;
@@ -653,8 +640,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       if (applied_order_reduction || come_from_non_linear_rec)
 	solution += x(first_i_c_for_linear()) * pwr(coefficients()[1], n);
       else
-	solution += get_initial_condition(first_i_c_for_linear())
-	  * pwr(coefficients()[1], n);
+	solution += x(first_i_c_for_linear()) * pwr(coefficients()[1], n);
       exact_solution_.set_expression(solution);
     }
     else
