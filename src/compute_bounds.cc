@@ -183,17 +183,35 @@ upper_bound_for_power_function(const Number& coeff, const Number& divisor,
   \f]
 */
 void
-lower_bound_for_power_function(const Number& coeff, const Number& k,
-			       Expr& lb) {
-  assert(k == 0 || k == 1 || k > 1);
-  if (k == 0)
-    lb += (Recurrence::n - coeff + 1) * pwr(coeff - 1, -2);
-  else if (k == 1)
-    lb += Recurrence::n * (log(Recurrence::n) / log(coeff) - 1);
-  else if (k > 1)
-    lb += pwr(coeff, k - 1)
-      * (pwr(Recurrence::n, k) - (coeff - 1) * pwr(Recurrence::n, k - 1))
-      / (pwr(coeff, k-1) - 1);
+lower_bound_for_power_function(const Number& coeff,  const Number& divisor,
+			       const Number& k, Expr& lb) {
+  assert(k == 0 || k >= 1);
+  Expr log_log = log(Recurrence::n) / log(divisor);
+  if (k == 0) {
+    Expr n_log_log = pwr(Recurrence::n, log(coeff) / log(divisor));
+    if (coeff < 1)
+      lb += (coeff - n_log_log) / (coeff * (1 - coeff));
+    else if (coeff == 1)
+      if (divisor.is_integer())
+	lb += log_log - 1;
+      else // `divisor' is a rational (non-integer) number.  
+	lb += log_log + log((divisor - 1) / (2 * divisor - 1)) / log(divisor); 
+    else
+      lb += (n_log_log - coeff) / (coeff * (coeff - 1));
+  }
+  else {
+    assert(k >= 1);
+    Expr inv_div_minus_one = pwr(divisor - 1, -1);
+    if (coeff == pwr(divisor, k-1))
+      lb += divisor * inv_div_minus_one * pwr(Recurrence::n, k)
+	- (pwr(divisor, 2) * inv_div_minus_one + k * log_log - k)
+	* pwr(Recurrence::n, k-1);
+    else {
+      assert(coeff == pwr(divisor, k));
+      lb += (log_log - 1 - k * inv_div_minus_one) * pwr(Recurrence::n, k)
+	+ k * pwr(Recurrence::n, k-1) * divisor * inv_div_minus_one;
+    }
+  }
 }
 
 void
@@ -204,9 +222,11 @@ compute_bounds_for_power_of_n(const Number& coeff, const Number& divisor,
   Expr tmp_ub = 0;
   upper_bound_for_power_function(coeff, divisor, k, tmp_ub);
   ub += num * tmp_ub;
-  if (coeff == divisor && (k == 0 || k >= 1)) {
+  if ((k == 0)
+      || ((coeff == pwr(divisor, k-1) || coeff == pwr(divisor, k))
+	  &&  k >= 1)) {
     Expr tmp_lb = 0;
-    lower_bound_for_power_function(coeff, k, tmp_lb);
+    lower_bound_for_power_function(coeff, divisor, k, tmp_lb);
     lb += num * tmp_lb; 
   }
   else
