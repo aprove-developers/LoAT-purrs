@@ -464,6 +464,15 @@ apply(Functor f, const Expr& x) {
 }
 
 inline Expr
+apply(Functor f, const std::vector<Expr>& x) {
+  unsigned x_size = x.size();
+  std::vector<GiNaC::ex> tmp_x(x_size);
+  for (unsigned i = 0; i < x_size; ++i)
+    tmp_x[i] = static_cast<const Expr::Base>(x[i]);
+  return GiNaC::function(f, tmp_x);
+}
+
+inline Expr
 pwr(const Expr& x, const Expr& y) {
   return GiNaC::pow(static_cast<const Expr::Base>(x),
 		    static_cast<const Expr::Base>(y));

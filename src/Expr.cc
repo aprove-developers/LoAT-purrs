@@ -339,8 +339,12 @@ PURRS::Expr::is_scalar_representation(const Symbol& x) const {
   else if (e.is_a_power())
     return e.op(0).is_scalar_representation(x)
       && e.op(1).is_scalar_representation(x);
-  else if (e.is_a_function())
-    return e.op(0).is_scalar_representation(x);
+  else if (e.is_a_function()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!e.op(i).is_scalar_representation(x))
+	return false;
+    return true;
+  }
   else if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned i = e.nops(); i-- > 0; )
       if (!e.op(i).is_scalar_representation(x))

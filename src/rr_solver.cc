@@ -377,12 +377,19 @@ verify_solution(const Expr& solution, int order, const Expr& rhs,
 
 Recurrence::Solver_Status
 Recurrence::check_powers_and_functions(const Expr& e, const Symbol& n) {
+  // If `x(n + k)' is the argument of an other function, then
+  // the recurrence is non-linear.
   if (e.is_a_function()) {
-    Expr operand = e.op(0);
-    if (operand.is_the_x_function())
-      if (operand.op(0).has(n))
-	return NON_LINEAR_RECURRENCE;
+    Expr operand;
+    for (unsigned i = e.nops(); i-- > 0; ) {
+      operand = e.op(i);
+      if (operand.is_the_x_function())
+	if (operand.op(0).has(n))
+	  return NON_LINEAR_RECURRENCE;
+    }
   }
+  // If `x(n + k)' is the base or the exponent of a power, then
+  // the recurrence is non-linear.
   else if (e.is_a_power()) {
     Expr base = e.op(0);
     Expr exponent = e.op(1);
@@ -1424,6 +1431,11 @@ solve_system(bool all_distinct,
   Matrix vars(coefficients_size - 1, 1);
   for (unsigned i = coefficients_size - 1; i-- > 0; )
     vars(i, 0) = Symbol();
+  // FIXME: in the case of `all_distinct = true' we have a Vandermonde's matrix.
+  // It is more efficient to solve the system with the method of inverse matrix,
+  // where the closed form in order to compute the inverse of Vandermonde's matrix
+  // is given in "Knuth, Fundamental Algorithms, Addison-Wesley Publishing Company"
+  // (second edition pag.36).
   Matrix solution = coeff_alpha.solve(vars, rhs);
 
   return solution;
@@ -1999,8 +2011,9 @@ find_parameters(const Expr& e, const Symbol& n) {
     if (e.is_the_x_function())
       return true;
     else
-      if (find_parameters(e.op(0), n))
-	return true;
+      for (unsigned i = e.nops(); i-- > 0; )
+	if (find_parameters(e.op(i), n))
+	  return true;
   }
   else
     if (e.is_a_symbol() && e != n)

@@ -764,16 +764,16 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
     for (unsigned i = e_rewritten.nops(); i-- > 0; ) {
       const Expr& op_i = e_rewritten.op(i);
       if (op_i.is_a_function()) {
-	if (op_i.is_the_sum_function())
-	  factor_function *= sum(op_i.op(0), op_i.op(1), op_i.op(2),
-				 simplify_on_output_ex(op_i.op(3), n, input));
-	else if (op_i.is_the_prod_function())
-	  factor_function *= prod(op_i.op(0), op_i.op(1), op_i.op(2),
-				  simplify_on_output_ex(op_i.op(3), n, input));
-	else
+	if (op_i.nops() == 1)
 	  factor_function
-	    *= apply(op_i.functor(),
-		     simplify_on_output_ex(op_i.op(0), n, input));
+	    *= apply(op_i.functor(), simplify_on_output_ex(op_i.op(0), n, input));
+	else {
+	  unsigned num_argument = op_i.nops();
+	  std::vector<Expr> argument(num_argument);
+	  for (unsigned i = 0; i < num_argument; ++i)
+	    argument[i] = simplify_on_output_ex(op_i.op(i), n, input);
+	  factor_function *= apply(op_i.functor(), argument);
+	}
       }
       else
 	factor_no_function *= op_i;
@@ -781,22 +781,19 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
     e_rewritten = factor_function * factor_no_function;
   }
   else if (e_rewritten.is_a_function()) {
-    if (e_rewritten.is_the_sum_function())
-      e_rewritten = sum(e_rewritten.op(0),
-			e_rewritten.op(1),
-			e_rewritten.op(2),
-			simplify_on_output_ex(e_rewritten.op(3), n, input));
-    else if (e_rewritten.is_the_prod_function())
-      e_rewritten = prod(e_rewritten.op(0),
-			 e_rewritten.op(1),
-			 e_rewritten.op(2),
-			 simplify_on_output_ex(e_rewritten.op(3), n, input));
-    else
+    if (e_rewritten.nops() == 1)
       e_rewritten = apply(e_rewritten.functor(),
 			  simplify_on_output_ex(e_rewritten.op(0), n, input));
+    else {
+      unsigned num_argument = e_rewritten.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned i = 0; i < num_argument; ++i)
+	argument[i] = simplify_on_output_ex(e_rewritten.op(i), n, input);
+      e_rewritten = apply(e_rewritten.functor(), argument);
+    }
   }
   D_MSGVAR("e_rewritten dopo function: ", e_rewritten);
-
+  
   // Special case: the exponential `exp' is a `function' but it has
   // the same properties of the powers.
   if (e_rewritten.is_a_mul()) {
@@ -859,15 +856,16 @@ simplify_on_input_ex(const Expr& e, const Symbol& n, bool input) {
   else if (e.is_a_power())
     return pow_simpl(e, n, input);
   else if (e.is_a_function()) {
-    if (e.is_the_sum_function())
-      e_rewritten = sum(e.op(0), e.op(1), e.op(2),
-			simplify_on_input_ex(e.op(3), n, input));
-    else if (e.is_the_prod_function())
-      e_rewritten = prod(e.op(0), e.op(1), e.op(2),
-			 simplify_on_input_ex(e.op(3), n, input));
-    else
+    if (e.nops() == 1)
       e_rewritten = apply(e.functor(),
-			  simplify_on_input_ex(e.op(0), n, input));
+			  simplify_on_output_ex(e.op(0), n, input));
+    else {
+      unsigned num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned i = 0; i < num_argument; ++i)
+	argument[i] = simplify_on_output_ex(e_rewritten.op(i), n, input);
+    e_rewritten = apply(e.functor(), argument);
+    }
   }
   else
     e_rewritten = e;
@@ -912,15 +910,16 @@ simplify_on_output_ex(const Expr& e, const Symbol& n, bool input) {
       e_rewritten = collect_base_exponent(e_rewritten);
   }
   else if (e.is_a_function()) {
-    if (e.is_the_sum_function())
-      e_rewritten = sum(e.op(0), e.op(1), e.op(2),
-			simplify_on_output_ex(e.op(3), n, input));
-    else if (e.is_the_prod_function())
-      e_rewritten = prod(e.op(0), e.op(1), e.op(2),
-			 simplify_on_output_ex(e.op(3), n, input));
-    else
+    if (e.nops() == 1)
       e_rewritten = apply(e.functor(),
 			  simplify_on_output_ex(e.op(0), n, input));
+    else {
+      unsigned num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned i = 0; i < num_argument; ++i)
+	argument[i] = simplify_on_output_ex(e.op(i), n, input);
+    e_rewritten = apply(e.functor(), argument);
+    }
   }
   else
     e_rewritten = e;

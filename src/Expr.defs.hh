@@ -147,6 +147,11 @@ Expr wild(unsigned label);
 Expr apply(Functor f, const Expr& x);
 
 //! \brief
+//! Returns the application of functor \f$ f \f$ to operands
+//! \f$ x_1, \dots, x_k \f$, i.e., the expression \f$ f(x_1, \dots, x_k) \f$.
+Expr apply(Functor f, const std::vector<Expr>& x);
+
+//! \brief
 //! If \f$ x \f$ and \f$ y \f$ are not zero or \f$ x = 0 \f$ and \f$ y \f$
 //! is a positive rational number, returns \f$ x^y \f$.
 /*!
@@ -672,8 +677,8 @@ public:
     - every number is a scalar;
     - every symbolic constant is a scalar;
     - every parameter different from \f$ x \f$ is a scalar;
-    - if \f$ f \f$ is any unary function and \f$ x \f$ is a
-      scalar representation, then \f$ f(x) \f$ is a scalar;
+    - if \f$ f \f$ is any function and \f$ x_1, \dots, x_k \f$ are scalars,
+      then \f$ f(x_1, \dots, x_k) \f$ is a scalar;
     - if \f$ a \f$ and \f$ b \f$ are scalars then
       \f$ a+b \f$, \f$ a*b \f$, and \f$ a^b \f$ are scalars.
   */
@@ -754,6 +759,7 @@ private:
 
   friend Expr wild(unsigned label);
   friend Expr apply(Functor f, const Expr& x);
+  friend Expr apply(Functor f, const std::vector<Expr>& x);
   friend Expr pwr(const Expr& x, const Expr& y);
   friend Expr sqrt(const Expr& x);
   friend Expr sin(const Expr& x);

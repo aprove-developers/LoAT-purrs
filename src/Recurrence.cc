@@ -54,15 +54,15 @@ PURRS::Recurrence::substitute_auxiliary_definitions(const Expr& e) const {
     e_after_subs = pwr(substitute_auxiliary_definitions(e.op(0)),
 		       substitute_auxiliary_definitions(e.op(1)));
   else if (e.is_a_function()) {
-    if (e.is_the_sum_function())
-      e_after_subs = sum(e.op(0), e.op(1), e.op(2),
-			 substitute_auxiliary_definitions(e.op(3)));
-    else if (e.is_the_prod_function())
-      e_after_subs = prod(e.op(0), e.op(1), e.op(2),
-			  substitute_auxiliary_definitions(e.op(3)));
-    else
-      e_after_subs
-	= apply(e.functor(), substitute_auxiliary_definitions(e.op(0)));
+    if (e.nops() == 1)
+      e_after_subs = apply(e.functor(), substitute_auxiliary_definitions(e.op(0)));
+    else {
+      unsigned num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned i = 0; i < num_argument; ++i)
+	argument[i] = substitute_auxiliary_definitions(e.op(i));
+      e_after_subs = apply(e.functor(), argument);
+    }
   }
   else if (e.is_a_symbol()) {
     Symbol s = e.ex_to_symbol();
