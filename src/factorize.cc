@@ -158,7 +158,7 @@ factorize_no_ratio_ex(const Expr& e, const Symbol& n,
   D_MSGVAR("INPUT ", e);
   Expr e_factorized;
   if (e.is_rational_polynomial()) {
-    e_factorized = sqrfree(e.expand(), Expr_List(n));
+    e_factorized = sqrfree(e.expand());
     D_MSG("sqrfree");
   }
   else
@@ -235,6 +235,12 @@ PURRS::factorize(const Expr& e, const Symbol& n,
   Expr common_den;
   Expr rem_den;
   factorize_no_ratio_ex(denominator, n, common_den, rem_den);
-  common_factor = common_num / common_den;
-  remainder = rem_num / rem_den;
+  if (common_den.is_a_number() && rem_den.is_a_number()) {
+    common_factor = common_num / (common_den * rem_den);
+    remainder = rem_num;
+  }
+  else {
+    common_factor = common_num / common_den;
+    remainder = rem_num / rem_den;
+  }
 }

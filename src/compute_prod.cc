@@ -42,12 +42,12 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
-PURRS::Expr
-PURRS::compute_product(const Expr& e, const Number& lower, const Expr& upper,
-		       bool is_denominator);
-
 namespace {
 using namespace PURRS;
+
+Expr
+comp_prod(const Expr& e, const Number& lower, const Expr& upper,
+	  bool is_denominator = false);
 
 //! \brief
 //! When possible, computes \f$ \prod_{k=lower}^upper e(k) \f$
@@ -94,8 +94,8 @@ compute_product_on_add(const Expr& e, const Number& lower, const Expr& upper,
     // (`a' not rational).
     Expr a = e.content(Recurrence::n);
     if (a != 1) {
-      e_prod = compute_product(e.primpart(Recurrence::n), lower, upper)
-	* compute_product(a, lower, upper);
+      e_prod = comp_prod(e.primpart(Recurrence::n), lower, upper)
+	* comp_prod(a, lower, upper);
       e_prod_computed = true;
     }
     // To compute numerator and denominator is useful because allows
@@ -106,8 +106,8 @@ compute_product_on_add(const Expr& e, const Number& lower, const Expr& upper,
     Expr denominator;
     numerator_denominator_purrs(e, numerator, denominator);
     if (denominator != 1) {
-      e_prod = compute_product(numerator, lower, upper)
-	* pwr(compute_product(denominator, lower, upper), -1);
+      e_prod = comp_prod(numerator, lower, upper)
+	* pwr(comp_prod(denominator, lower, upper), -1);
       e_prod_computed = true;
     }
   }
@@ -133,10 +133,10 @@ compute_product_on_power(const Expr& e,
     Number exponent;
     if (exponent_e.is_a_number(exponent)) {
       if (exponent.is_positive_integer())
-	e_prod = pwr(compute_product(base_e, lower, upper), exponent_e);
+	e_prod = pwr(comp_prod(base_e, lower, upper), exponent_e);
       else
 	e_prod
-	  = pwr(compute_product(base_e, lower, upper, true), exponent_e);
+	  = pwr(comp_prod(base_e, lower, upper, true), exponent_e);
       e_prod_computed = true;
     }
   }
@@ -168,6 +168,39 @@ compute_product_on_power(const Expr& e,
     // per risolvere altre sommatorie risolvibili solo con gosper.
   }
   if (!e_prod_computed) {
+    Symbol h;
+    e_prod = PURRS::prod(h, lower, upper, e.substitute(Recurrence::n, h));
+  }
+  return e_prod;
+}
+
+Expr
+comp_prod(const Expr& e, const Number& lower, const Expr& upper,
+	  bool is_denominator) {
+  Expr e_prod;
+  if (!e.has(Recurrence::n))
+    e_prod = pwr(e, upper - lower + 1);
+  else if (e == Recurrence::n) {
+    if (lower > 0)
+      e_prod = factorial(upper) / factorial(lower - 1);
+    else
+      if (is_denominator)
+	throw std::domain_error("Cannot compute a product at the "
+				"denominator if one of the factor "
+				"is zero");
+      else
+	e_prod = 0;
+  }
+  else if (e.is_a_add())
+    e_prod = compute_product_on_add(e, lower, upper, is_denominator);
+  else if (e.is_a_power())
+    e_prod = compute_product_on_power(e, lower, upper);
+  else if (e.is_a_mul()) {
+    e_prod = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_prod *= comp_prod(e.op(i), lower, upper);
+  }
+  else {
     Symbol h;
     e_prod = PURRS::prod(h, lower, upper, e.substitute(Recurrence::n, h));
   }
@@ -214,14 +247,12 @@ compute_product_on_power(const Expr& e,
     for \f$ i = 1, \dots, m \f$, is one of the previous case,
     then \f$ \prod_{k=lower}^upper e(k) =  \prod_{k=lower}^upper e_1(k) \cdots
     \prod_{k=lower}^upper e_m(k) \f$.
-
-  Note that \p e must be normalized.  
 */
 PURRS::Expr
-PURRS::compute_product(const Expr& e, const Number& lower, const Expr& upper,
-		       bool is_denominator) {
-  D_MSGVAR("*** ", e);
+PURRS::compute_product(const Expr& e,
+		       const Number& lower, const Expr& upper) {
   assert(lower.is_integer());
+  // Special case: `upper' is a number. 
   if (upper.is_a_number()) {
     Number num_upper = upper.ex_to_number();
     assert(num_upper.is_integer());
@@ -241,40 +272,7 @@ PURRS::compute_product(const Expr& e, const Number& lower, const Expr& upper,
   factorize(e, Recurrence::n, common_factor, rem);
   D_VAR(common_factor);
   D_VAR(rem);
-  Expr e_prod;
   // `e' has been factorized: `e = common_factor * rem'.
-  if (common_factor != 1) {
-    e_prod = compute_product(common_factor, lower, upper);
-    e_prod *= compute_product(rem, lower, upper);
-  }
-  else {
-    if (!rem.has(Recurrence::n))
-      e_prod = pwr(rem, upper - lower + 1);
-    else if (rem == Recurrence::n) {
-      if (lower > 0)
-	e_prod = factorial(upper) / factorial(lower - 1);
-      else
-	if (is_denominator)
-	  throw std::domain_error("Cannot compute a product at the "
-				  "denominator if one of the factor "
-				  "is zero");
-	else
-	  e_prod = 0;
-    }
-    else if (rem.is_a_add())
-      e_prod = compute_product_on_add(rem, lower, upper, is_denominator);
-    else if (rem.is_a_power())
-      e_prod = compute_product_on_power(rem, lower, upper);
-    else if (rem.is_a_mul()) {
-      e_prod = 1;
-      for (unsigned i = rem.nops(); i-- > 0; )
-	e_prod *= compute_product(e.op(i), lower, upper);
-    }
-    else {
-      Symbol h;
-      e_prod = PURRS::prod(h, lower, upper, rem.substitute(Recurrence::n, h));
-    }
-  }
-  D_MSGVAR("*** ", e_prod);
-  return e_prod;
+  return comp_prod(common_factor, lower, upper)
+    * comp_prod(rem, lower, upper);
 }

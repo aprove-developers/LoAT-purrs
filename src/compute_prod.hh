@@ -31,8 +31,7 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 Expr
-compute_product(const Expr& e, const Number& lower, const Expr& upper,
-		bool is_denominator = false);
+compute_product(const Expr& e, const Number& lower, const Expr& upper);
 
 } // namespace Parma_Recurrence_Relation_Solver
 
