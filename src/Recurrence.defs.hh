@@ -131,8 +131,25 @@ bool less_than(const Recurrence& x, const Recurrence& y);
   an unexpected result.
 
   To define and to use the symbol \f$ x \f$, as for the symbol \f$ n \f$,
-  creates problems because the hides to the compiler the meaning that
+  creates problems because it is hidden to the compiler the meaning that
   this special symbol has in the recurrence.
+
+  If the user inserts recurrences not in normal form then the system
+  tries to rewrite it.
+  If the rewriting's process has success then in all the successive
+  computations the system works with the recurrence rewritten in normal form.
+
+  \par Example 4
+  The recurrence of the second order
+  \f$ x(n) = 5 x(n+1) - 6 x(n+2) \f$
+  will be rewritten in the normal form
+  \f$ x(n) = 5/6 x(n-1) - 1/6 x(n-2) \f$.
+
+  \par Example 5
+  The infinite order recurrence
+  \f$ x(n) = 2 sum(k,0,n,x(k))-2 n \f$
+  will be transormed in the normal form
+  \f$ x(n) = -2 sum(k,0,n-1,x(k)) + 2 n \f$.
 */
 class Recurrence {
 public:
@@ -161,7 +178,7 @@ public:
   //! of the intersection of \p *this and \p y.
   void approximate_intersection_assign(const Recurrence& y);
 
-  //! WRITEME
+  //! Sets to \f$ e \f$ the right-hand side of \p *this.
   void replace_recurrence(const Expr& e);
 
   //! \brief
@@ -251,13 +268,6 @@ public:
     HAS_NON_INTEGER_DECREMENT,
 
     /*!
-      The right-hand side of the recurrence contains at least an occurrence
-      of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is too big to be handled
-      by the standard solution techniques.
-    */
-    HAS_HUGE_DECREMENT,
-
-    /*!
       Catchall: the recurrence is generically too complex for the solver.
     */
     TOO_COMPLEX
@@ -325,16 +335,20 @@ public:
   Expr approximated_solution() const;
 
   //! \brief
-  //! Verifies the exact solution of \p *this
-  //! assuming that the exact solution has already been computed.
-  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
-  //! that the recurrence \p *this has been successfully solved.
-  //! Returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
-  //! that the solution of the recurrence \p *this is wrong.
-  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
-  //! not able to prove if the solution of the recurrence \p *this
-  //! is correct or not.
+  //! Tries to verify the exact solution of \p *this and returns
+  //! <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
+  //! the verification.
   /*!
+    FIXME: finish!!!
+
+    assuming that the exact solution has already been computed.
+    Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
+    that the recurrence \p *this has been successfully solved.
+    Returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
+    that the solution of the recurrence \p *this is wrong.
+    Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
+    not able to prove if the solution of the recurrence \p *this
+    is correct or not.
     Since the system assumes the exact solution has already been
     computed, the user must call this method after having checked
     the system has successfully computed the exact solution:
@@ -349,18 +363,24 @@ public:
  
   // @@@
   //! \brief
-  //! Verifies the lower bound for \p *this; note that the system
-  //! supposes the lower bound already has been computed.
-  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
-  //! that the recurrence \p *this has been successfully approximated
-  //! from below.
-  //! Returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
-  //! that the lower bound for the solution of the recurrence \p *this
-  //! is wrong.
-  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
-  //! not able to prove if the lower bound for the solution of the
-  //! recurrence \p *this is correct or not.
+  //! Tries to verify the lower bound of the solution of \p *this and
+  //! returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
+  //! the verification.
   /*!
+    FIXME: finish!!!
+
+    Verifies the lower bound for \p *this; note that the system
+    supposes the lower bound already has been computed.
+    Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
+    that the recurrence \p *this has been successfully approximated
+    from below.
+    Returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
+    that the lower bound for the solution of the recurrence \p *this
+    is wrong.
+    Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
+    not able to prove if the lower bound for the solution of the
+    recurrence \p *this is correct or not.
+
     \exception std::logic_error thrown if this method is called
                                 when no lower bound was computed.
   */
@@ -368,28 +388,24 @@ public:
 
   // @@@
   //! \brief
-  //! Verifies the upper bound for \p *this; note that the system
-  //! supposes the upper bound already has been computed.
-  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
-  //! that the recurrence \p *this has been successfully approximated
-  //! from above.
-  //! Returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
-  //! that the upper bound for the solution of the recurrence \p *this
-  //! is wrong.
-  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
-  //! not able to prove if the upper bound for the solution of the
-  //! recurrence \p *this is correct or not.
+  //! Tries to verify the upper bound of the solution of \p *this and
+  //! returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
+  //! the verification.
   /*!
+    FIXME: finish!!!
+
     \exception std::logic_error thrown if this method is called
                                 when no upper bound was computed.
   */
   Verify_Status verify_upper_bound() const;
 
+#if 0
   //! \brief
   //! Returns <CODE>false</CODE> if there are no undefined initial conditions;
   //! otherwise returns <CODE>true</CODE> and adds the corresponding
   //! indexes to \p undefined.
   bool undefined_initial_conditions(std::set<unsigned int>& undefined) const;
+#endif
 
   //! The index of the recurrence.
   /*!
@@ -442,7 +458,7 @@ private:
       of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is too big to be handled
       by the standard solution techniques.
     */
-    CL_HAS_HUGE_DECREMENT,
+    HAS_HUGE_DECREMENT,
 
     /*!
       Catchall: the recurrence is generically too complex for the solver.
@@ -952,7 +968,7 @@ private:
 
   //! \brief
   //! This function must have access to the private data
-  //! <CODE>blackboard</CODE>of the class <CODE>Recurrence</CODE>.
+  //! <CODE>blackboard</CODE> of the class <CODE>Recurrence</CODE>.
   friend Expr Cached_Expr::
   replace_system_generated_symbols(const Recurrence& rec) const;
 };

@@ -850,7 +850,7 @@ PURRS::Recurrence::compute_order(const Number& decrement, index_type& order,
   // (2) we will be able to store the coefficient into the
   // appropriate position of the `coefficients' vector.
   if (decrement >= LONG_MAX || decrement >= max_size)
-    return CL_HAS_HUGE_DECREMENT;
+    return HAS_HUGE_DECREMENT;
   
   // The `order' is defined as the maximum value of `index'.
   index = decrement.to_long();
@@ -1352,7 +1352,7 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
     case CL_SUCCESS:
       break;
     case CL_HAS_NON_INTEGER_DECREMENT:
-    case CL_HAS_HUGE_DECREMENT:
+    case HAS_HUGE_DECREMENT:
     case CL_MALFORMED_RECURRENCE:
     case CL_DOMAIN_ERROR:
     case CL_TOO_COMPLEX:

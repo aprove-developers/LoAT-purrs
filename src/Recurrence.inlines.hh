@@ -137,6 +137,7 @@ Recurrence::replace_initial_condition(unsigned int k, const Expr& e) {
     stat.first->second = e;
 }
 
+#if 0
 inline bool
 Recurrence::
 undefined_initial_conditions(std::set<unsigned int>& undefined) const {
@@ -149,6 +150,7 @@ undefined_initial_conditions(std::set<unsigned int>& undefined) const {
   }
   */
 }
+#endif
 
 inline Expr
 Recurrence::get_initial_condition(unsigned int k) const {
