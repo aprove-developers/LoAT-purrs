@@ -570,13 +570,24 @@ compute_infinite_order_recurrence(Expr& solution) const {
   if ((status = rec_rewritten.solve_linear_finite_order())
       == SUCCESS) {
     solution = rec_rewritten.exact_solution_.expression();
-    // Shift backward: n -> n - 1 and substitution of initial
-    // condition `x(1) = 2*x(0)+1'
-    // (there are 2 steps in 1: x(0) -> x(1) -> value_of_first_element()).
+    // Shift backward: n -> n - 1.
     solution = solution.substitute(n, n - 1);
     solution = solution
       .substitute(x(rec_rewritten.first_well_defined_rhs_linear()),
-		  value_of_first_element());
+		  x(rec_rewritten.first_well_defined_rhs_linear()+1));
+    // If there is the initial condition `x(1)' specified then
+    // the system substitute it with the respective value; otherwise
+    // the system does the substitution `x(1) = 2*x(0)+1' where the
+    // value `2*x(0)+1' is returned by `value_of_first_element()'.
+    // FIXME: At the moment we substitute here only the initial
+    // condition `x(1)'.
+    std::map<unsigned, Expr>::const_iterator i = initial_conditions.find(1);
+    if (i != initial_conditions.end())
+      solution = solution.substitute(x(1), get_initial_condition(1));
+    else
+      solution = solution
+	.substitute(x(rec_rewritten.first_well_defined_rhs_linear()+1),
+		    value_of_first_element());
     //	solution = simplify_ex_for_output(solution, false);
     return SUCCESS;
   }
@@ -743,6 +754,12 @@ PURRS::Recurrence::compute_exact_solution() const {
       Expr solution;
       if ((status = compute_infinite_order_recurrence(solution))
 	  == SUCCESS) {
+	// FIXME: At the moment we substitute here only the initial
+	// condition `x(0)'.
+	std::map<unsigned, Expr>::const_iterator i
+	  = initial_conditions.find(0);
+	if (i != initial_conditions.end())
+	  solution = solution.substitute(x(0), get_initial_condition(0));
 	exact_solution_.set_expression(solution);
 	lower_bound_.set_expression(solution);
 	upper_bound_.set_expression(solution);
