@@ -308,10 +308,10 @@ private:
 				    const std::vector<Number>& coefficients,
 				    const std::vector<Polynomial_Root>&
 				    roots) const;
-  void add_term_with_initial_condition(const Expr& q_upper,
-				       const Expr& q_lower,
-				       Expr& ub, Expr& lb) const;
-  Solver_Status approximate_functional_equation() const;
+  void add_term_with_initial_condition(bool lower, const Expr& q,
+				       Expr& bound) const;
+  Solver_Status approximate_functional_equation_lower() const;
+  Solver_Status approximate_functional_equation_upper() const;
 
   //! \brief
   //! Holds the right-hand side of the global recurrence to be solved.

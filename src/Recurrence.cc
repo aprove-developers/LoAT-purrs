@@ -497,39 +497,46 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 	return status;
 
     // Functional equation.
-    else
-      if ((status = rec_rewritten.approximate_functional_equation())
-	  == SUCCESS)
-	// Transform the solution of the linear recurrence in the solution
-	// of the non linear recurrence.
-	if (type != 0 || (type == 0
-			  && rec_rewritten.lower_bound_.expression()
-			  == rec_rewritten.upper_bound_.expression())) {
-	  if (type == 1)
-	    solution_or_bound = pwr(base_exp_log(),
-				    rec_rewritten.lower_bound_.expression());
-	  else
-	    solution_or_bound = pwr(base_exp_log(),
-				    rec_rewritten.upper_bound_.expression());
-	  solution_or_bound = substitute_x_function(solution_or_bound,
-						    base_exp_log(), false);
-	  solution_or_bound = simplify_ex_for_input(solution_or_bound, true);
-	  solution_or_bound = simplify_logarithm(solution_or_bound);
-	  // Resubstitute eventual auxiliary symbols with the respective
-	  // negative number.
-	  for (unsigned i = auxiliary_symbols().size(); i-- > 0; )
-	    solution_or_bound
-	      = solution_or_bound.substitute(auxiliary_symbols()[i],
-					     get_auxiliary_definition
-					     (auxiliary_symbols()[i]));
-	  D_VAR(solution_or_bound);
-	  recurrence_rhs_rewritten = true;
-	  return SUCCESS;
-	}
+    else {
+      if (type == 1)
+	if ((status = rec_rewritten.approximate_functional_equation_lower())
+	    == SUCCESS)
+	  solution_or_bound = pwr(base_exp_log(),
+				  rec_rewritten.lower_bound_.expression());
 	else
+	  return status;
+      else if (type == 2)
+	if ((status = rec_rewritten.approximate_functional_equation_upper())
+	    == SUCCESS)
+	  solution_or_bound = pwr(base_exp_log(),
+				  rec_rewritten.upper_bound_.expression());
+	else
+	  return status;
+      else {// type == 0
+	if ((status = rec_rewritten.approximate_functional_equation_lower())
+	    != SUCCESS
+	    || (status = rec_rewritten.approximate_functional_equation_upper())
+	    != SUCCESS)
+	  return status;
+	if (rec_rewritten.lower_bound_.expression()
+	    != rec_rewritten.upper_bound_.expression())
 	  return TOO_COMPLEX;
-      else
-	return status;
+      }
+      solution_or_bound = substitute_x_function(solution_or_bound,
+						base_exp_log(), false);
+      solution_or_bound = simplify_ex_for_input(solution_or_bound, true);
+      solution_or_bound = simplify_logarithm(solution_or_bound);
+      // Resubstitute eventual auxiliary symbols with the respective
+      // negative number.
+      for (unsigned i = auxiliary_symbols().size(); i-- > 0; )
+	solution_or_bound
+	  = solution_or_bound.substitute(auxiliary_symbols()[i],
+					 get_auxiliary_definition
+					 (auxiliary_symbols()[i]));
+      D_VAR(solution_or_bound);
+      recurrence_rhs_rewritten = true;
+      return SUCCESS;
+    }
   }
   else
     return status;
@@ -706,7 +713,8 @@ PURRS::Recurrence::compute_exact_solution() const {
     }
     // Functional equation.
     else if (is_functional_equation())
-      if ((status = approximate_functional_equation()) == SUCCESS
+      if ((status = approximate_functional_equation_lower()) == SUCCESS
+	  && (status = approximate_functional_equation_upper()) == SUCCESS
 	  && lower_bound_.expression() == upper_bound_.expression()) {
 	if (!initial_conditions.empty())
 	  lower_bound_.set_expression
@@ -782,7 +790,7 @@ PURRS::Recurrence::compute_lower_bound() const {
 	return TOO_COMPLEX;
     // Functional equation.
     else if (is_functional_equation()) {
-      if ((status = approximate_functional_equation()) != SUCCESS)
+      if ((status = approximate_functional_equation_lower()) != SUCCESS)
 	return status;
       if (!initial_conditions.empty()) {
 	lower_bound_.set_expression
@@ -841,7 +849,7 @@ PURRS::Recurrence::compute_upper_bound() const {
 	return TOO_COMPLEX;
     // Functional equation.
     else if (is_functional_equation()) {
-      if ((status = approximate_functional_equation()) != SUCCESS)
+      if ((status = approximate_functional_equation_upper()) != SUCCESS)
 	return status;
       if (!initial_conditions.empty()) {
 	upper_bound_.set_expression
