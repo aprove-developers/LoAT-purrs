@@ -303,7 +303,11 @@ public:
   //! if the system finds the exact solution.
   Solver_Status compute_exact_solution() const;
 
-  //! Gets the exact solution and puts it in \p e
+  //! Gets the exact solution and puts it in \p e.
+  /*!
+    \exception std::logic_error thrown if this method is called
+                                but no exact solution was computed.
+  */
   void exact_solution(Expr& e) const;
 
   //! \brief
@@ -312,6 +316,10 @@ public:
   Solver_Status compute_lower_bound() const;
 
   //! Gets the lower bound for the solution and puts it in \p e.
+  /*!
+    \exception std::logic_error thrown if this method is called
+                                but no lower bounds was computed.
+  */
   void lower_bound(Expr& e) const;
 
   //! \brief
@@ -320,6 +328,10 @@ public:
   Solver_Status compute_upper_bound() const;
 
   //! Gets the upper bound for the solution and puts it in \p e.
+  /*!
+    \exception std::logic_error thrown if this method is called
+                                but no upper bounds was computed.
+  */
   void upper_bound(Expr& e) const;
 
   Expr approximated_solution() const;
