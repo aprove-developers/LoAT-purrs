@@ -177,7 +177,7 @@ rewrite_term(const Expr& e, const Symbol& r, unsigned gcd_among_decrements) {
   Builds the characteristic equation and computes its roots.
   The boolean \p all_distinct is true if all roots are distinct, i.e., every
   roots has multiplicity equal to one, false otherwise.
-  Returns <CODE>false<CODE> if it does not succeed to find roots of the
+  Returns <CODE>false</CODE> if it does not succeed to find roots of the
   characteristic equations; returns <CODE>true<CODE> otherwise. 
 */
 bool

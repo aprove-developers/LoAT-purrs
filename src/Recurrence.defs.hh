@@ -329,7 +329,7 @@ private:
 
   //! \brief
   //! Classifies the recurrence \p *this calling the method
-  //! <CODE>classify()<CODE>. 
+  //! <CODE>classify()</CODE>. 
   Solver_Status classify_and_catch_special_cases() const;
 
   //! \brief
@@ -595,6 +595,7 @@ private:
   //! of a functional equation is a non negative, non decreasing function.
   unsigned applicability_condition() const;
 
+  //! \brief
   //! \p c is the positive integer starting from which the inhomogeneous term
   //! of a functional equation is a non negative, non decreasing function.
   void set_applicability_condition(unsigned c) const;
@@ -779,7 +780,7 @@ private:
 
   //! \brief
   //! This function must have access to the private data
-  //! <CODE>blackboard<CODE>of the class <CODE>Recurrence</CODE>.
+  //! <CODE>blackboard</CODE>of the class <CODE>Recurrence</CODE>.
   friend Expr Cached_Expr::
   replace_system_generated_symbols(const Recurrence& rec) const;
 };

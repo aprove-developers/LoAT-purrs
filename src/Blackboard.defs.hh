@@ -86,7 +86,7 @@ public:
   bool approximate(const Symbol& s, Expr& ae, CInterval& aci) const;
   Expr approximate(const Expr& e) const;
 
-  void Blackboard::dump(std::ostream& s) const;
+  void dump(std::ostream& s) const;
 
 private:
   template <typename T>
