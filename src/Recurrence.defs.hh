@@ -278,8 +278,8 @@ public:
   //! of the approximation, of the recurrence.
   enum Verify_Status {
     /*!
-      The system can prove that the recurrence has been successfully
-      solved or approximated.
+      The system can prove that the recurrence \p *this has been
+      successfully solved or approximated.
     */
     PROVABLY_CORRECT,
 
@@ -299,10 +299,38 @@ public:
   //! \brief
   //! Tries to solve \p *this exactly and returns <CODE>SUCCESS</CODE>
   //! if the system finds the exact solution.
+  /*!
+    The system tries to compute the exact solution with every type
+    of recurrence, linear and non-linear of finite order, linear of
+    infinite order and also with functional equations, eventually
+    calling the methods that compute lower bound and upper bound and
+    verifying if they are coinciding.
+
+    If the method returns <CODE>SUCCESS</CODE> you can get the
+    exact solution calling the method <CODE>exact_solution()</CODE>;
+    otherwise you are in one of the cases explained in the enumerate
+    type <CODE>Solver_Status</CODE>.
+  */
   Solver_Status compute_exact_solution() const;
 
   //! Gets the exact solution and puts it in \p e.
   /*!
+    We assume that the exact solution has already been computed:
+    in this case the method <CODE>compute_exact_solution()</CODE>
+    returns <CODE>SUCCESS</CODE>.
+
+    \par Example1
+    A correct use of this method can be the following:
+    \code
+        Recurrence rec(2*x(n-1)+1);
+	if (rec.compute_exact_solution() == Recurrence::SUCCESS) {
+	  Expr exact_solution;
+	  rec.exact_solution(exact_solution);
+	}
+    \endcode
+    The solution of the recurrence \f$ x(n) = 2 x(n-1)+1 \f$ is now
+    contained in the variable \p exact_solution.
+
     \exception std::logic_error thrown if this method is called
                                 but no exact solution was computed.
   */
@@ -311,10 +339,40 @@ public:
   //! \brief
   //! Tries to get lower bound for \p *this and returns <CODE>SUCCESS</CODE>
   //! if the system finds the lower bound.
+  /*!
+    The system tries to compute the lower bound for the solution with
+    every type of recurrence, not only with functional equations.
+    In the case of linear and non-linear recurrences of finite order
+    and linear recurrences of infinite order, it tries to compute the
+    exact solution and, if it had success, the solution found obviously
+    represent also a lower bound for the solution.
+
+    If the method returns <CODE>SUCCESS</CODE> you can get the
+    lower bound calling the method <CODE>lower_bound()</CODE>;
+    otherwise you are in one of the cases explained in the enumerate
+    type <CODE>Solver_Status</CODE>.    
+  */
   Solver_Status compute_lower_bound() const;
 
   //! Gets the lower bound for the solution and puts it in \p e.
   /*!
+    We assume that the lower bound has already been computed:
+    in this case the method <CODE>compute_lower_bound()</CODE>
+    returns <CODE>SUCCESS</CODE>.
+
+    \par Example1
+    A correct use of this method can be the following:
+    \code
+        Recurrence rec(7*x(n/5)+10);
+	if (rec.compute_lower_bound() == Recurrence::SUCCESS) {
+	  Expr lower_bound;
+	  rec.lower_bound(lower_bound);
+	}
+    \endcode
+    The lower bound of the solution of the functional equation
+    \f$ x(n) = 7 x(n/5)+10 \f$ is now contained in the variable
+    \p lower_bound.
+
     \exception std::logic_error thrown if this method is called
                                 but no lower bounds was computed.
   */
@@ -323,10 +381,40 @@ public:
   //! \brief
   //! Tries to get upper bound for \p *this and returns <CODE>SUCCESS</CODE>
   //! if the system finds the upper bound.
+  /*!
+    The system tries to compute the upper bound for the solution with
+    every type of recurrence, not only with functional equations.
+    In the case of linear and non-linear recurrences of finite order
+    and linear recurrences of infinite order, it tries to compute the
+    exact solution and, if it had success, the solution found obviously
+    represent also an upper bound for the solution.
+
+    If the method returns <CODE>SUCCESS</CODE> you can get the
+    upper bound calling the method <CODE>upper_bound()</CODE>;
+    otherwise you are in one of the cases explained in the enumerate
+    type <CODE>Solver_Status</CODE>.    
+  */
   Solver_Status compute_upper_bound() const;
 
   //! Gets the upper bound for the solution and puts it in \p e.
   /*!
+    We assume that the upper bound has already been computed:
+    in this case the method <CODE>compute_upper_bound()</CODE>
+    returns <CODE>SUCCESS</CODE>.
+
+    \par Example1
+    A correct use of this method can be the following:
+    \code
+        Recurrence rec(7*x(n/5)+10);
+	if (rec.compute_upper_bound() == Recurrence::SUCCESS) {
+	  Expr upper_bound;
+	  rec.upper_bound(upper_bound);
+	}
+    \endcode
+    The upper bound of the solution of the functional equation
+    \f$ x(n) = 7 x(n/5)+10 \f$ is now contained in the variable
+    \p upper_bound.
+
     \exception std::logic_error thrown if this method is called
                                 but no upper bounds was computed.
   */
@@ -339,60 +427,63 @@ public:
   //! <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
   //! the verification.
   /*!
-    FIXME: finish!!!
+    We assume that the exact solution has already been computed
+    (for a description about the computation of the exact solution
+    see the documentation of the method <CODE>compute_exact_solution()</CODE>).
 
-    assuming that the exact solution has already been computed.
-    Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
-    that the recurrence \p *this has been successfully solved.
-    Returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
-    that the solution of the recurrence \p *this is wrong.
-    Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
-    not able to prove if the solution of the recurrence \p *this
-    is correct or not.
-    Since the system assumes the exact solution has already been
-    computed, the user must call this method after having checked
-    the system has successfully computed the exact solution:
-    this is possible invoking the method
-    <CODE>compute_exact_solution</CODE> and verifying it has returned
-    <CODE>SUCCESS</CODE>.
+    There are two different answers when the system does not succeed
+    to verify the solution:
+    -  returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
+       that the solution of the recurrence \p *this is wrong;
+    -  returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
+       not able to prove if the solution of the recurrence \p *this
+       is correct or not.
 
     \exception std::logic_error thrown if this method is called
                                 when no exact solution was computed.
   */
   Verify_Status verify_exact_solution() const;
  
-  // @@@
   //! \brief
   //! Tries to verify the lower bound of the solution of \p *this and
   //! returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
   //! the verification.
   /*!
-    FIXME: finish!!!
+    We assume that the lower bound of the solution has already been computed
+    (for a description about the computation of the approximation
+    from below see the documentation of the method
+    <CODE>compute_lower_bound()</CODE>).
 
-    Verifies the lower bound for \p *this; note that the system
-    supposes the lower bound already has been computed.
-    Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
-    that the recurrence \p *this has been successfully approximated
-    from below.
-    Returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
-    that the lower bound for the solution of the recurrence \p *this
-    is wrong.
-    Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
-    not able to prove if the lower bound for the solution of the
-    recurrence \p *this is correct or not.
+    There are two different answers when the system does not succeed
+    to verify the solution:
+    -  returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
+       that the lower bound of the solution of \p *this is wrong;
+    -  returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
+       not able to prove if the lower bound of the solution of \p *this
+       is correct or not.
 
     \exception std::logic_error thrown if this method is called
                                 when no lower bound was computed.
   */
   Verify_Status verify_lower_bound() const;
 
-  // @@@
   //! \brief
   //! Tries to verify the upper bound of the solution of \p *this and
   //! returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
   //! the verification.
   /*!
-    FIXME: finish!!!
+    We assume that the lower bound of the solution has already been computed
+    (for a description about the computation of the approximation
+    from over see the documentation of the method
+    <CODE>compute_upper_bound()</CODE>).
+
+    There are two different answers when the system does not succeed
+    to verify the solution:
+    -  returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
+       that the upper bound of the solution of \p *this is wrong;
+    -  returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
+       not able to prove if the upper bound of the solution of \p *this
+       is correct or not.
 
     \exception std::logic_error thrown if this method is called
                                 when no upper bound was computed.
@@ -487,7 +578,7 @@ private:
 
   //! \brief
   //! Returns the status of <CODE>Solver_Status</CODE> associated
-  //! to \p \p classifier_status.
+  //! to \p classifier_status.
   static Solver_Status map_status(Classifier_Status classifier_status);
 
   //! \brief
@@ -950,8 +1041,8 @@ private:
   mutable Cached_Expr upper_bound_;
 
   //! \brief
-  //! If \p tried_to_compute_exact_solution is true then the system has already
-  //! tried_to_compute the exact solution.
+  //! If \p tried_to_compute_exact_solution is true then the system has
+  //! already tried to compute the exact solution.
   mutable bool tried_to_compute_exact_solution;
 
   mutable Blackboard blackboard;

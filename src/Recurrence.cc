@@ -1364,8 +1364,13 @@ PURRS::Recurrence::compute_exact_solution_infinite_order() const {
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_exact_solution() const {
-  // FIXME: commento...
+  // It can happen that there is not the exact solution although
+  // the system tried to compute it (for example the recurrence is
+  // too complex): in order to avoid to repeat the attempt of
+  // computation of the solution, we set to `true' the data
+  // `tried_to_compute_exact_solution'.
   tried_to_compute_exact_solution = true;
+
   // See if we already have the exact solution.
   if (exact_solution_.has_expression())
     return SUCCESS;
@@ -1398,12 +1403,12 @@ PURRS::Recurrence::compute_exact_solution() const {
 			       "compute_exact_solution().");
     }
   else
+    // return the `Solver_Status' associated to `classifier_status'.
     return map_status(classifier_status);
 }
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_lower_bound() const {
-  D_MSG("compute_lower_bound");
   // See if we have the lower bound already.
   if (lower_bound_.has_expression())
     return SUCCESS;
@@ -1436,8 +1441,7 @@ PURRS::Recurrence::compute_lower_bound() const {
     // Non linear finite order.
     else {
       Expr bound;
-      if ((status = compute_non_linear_recurrence(bound, 1))
-	  == SUCCESS) {
+      if ((status = compute_non_linear_recurrence(bound, 1)) == SUCCESS) {
 	lower_bound_.set_expression(bound);
 	return SUCCESS;
       }
@@ -1451,7 +1455,6 @@ PURRS::Recurrence::compute_lower_bound() const {
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_upper_bound() const {
-  D_MSG("compute_upper_bound");
   // See if we have the upper bound already.
   if (upper_bound_.has_expression())
     return SUCCESS;
