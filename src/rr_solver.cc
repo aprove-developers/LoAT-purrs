@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "globals.hh"
 #include "util.hh"
 #include "alg_eq_solver.hh"
+#include <climits>
 
 // TEMPORARY
 #include <iostream>
@@ -113,6 +114,8 @@ solve(const GExpr& rhs, const GSymbol& n) {
       break;
     }
     GNumber coefficient = GiNaC::ex_to<GiNaC::numeric>(a);
+    // FIXME: turn this assertion into something more appropriate.
+    assert(decrement >= LONG_MIN && decrement <= LONG_MAX);
     unsigned long index = decrement.to_long();
     if (degree < 0 || index > unsigned(degree))
       degree = index;
