@@ -51,10 +51,12 @@ using namespace PURRS;
 void
 compute_bounds_for_exp_function(bool lower, const Number& coeff,
 				const Number& divisor, const Number& base,
-				Expr& bound) {
+				const Number& num, Expr& bound) {
+  
   // Lower bound.
-  if (lower)
-    bound += pwr(base, Recurrence::n);
+  if (lower) {
+    bound += num * pwr(base, Recurrence::n);
+  }
   // Upper bound.
   else {
     Expr constant;
@@ -68,11 +70,11 @@ compute_bounds_for_exp_function(bool lower, const Number& coeff,
 	* pwr(log(base), -1 - log(coeff) * pwr(log(divisor), -1))
 	* gamma(1 + log(coeff) * pwr(log(divisor), -1));
     else
-      // cmp == 2
+      // cmp == 2.
       throw std::runtime_error("PURRS internal error: "
 			       "failure of the function `compare()'.");      
-    bound += pwr(base, Recurrence::n)
-      + constant * pwr(base, Recurrence::n / divisor);
+    bound += num * (pwr(base, Recurrence::n)
+		    + constant * pwr(base, Recurrence::n / divisor));
   }
 }
 
@@ -551,16 +553,14 @@ sharper_bounds_for_exponential(bool lower,
   Number num;
   if (coeff >= 1)
     if (poly_coeff.is_a_number(num)) {
-      Expr tmp_bound;
       // `a' positive number.
       if (num.is_positive())
-	compute_bounds_for_exp_function(lower, coeff, divisor, base,
-					tmp_bound);
+	compute_bounds_for_exp_function(lower, coeff, divisor, base, num,
+					bound);
       // `a' negative number -> swap lower with upper or upper with lower.
       else
-	compute_bounds_for_exp_function(!lower, coeff, divisor, base,
-					tmp_bound);
-      bound += num * tmp_bound;
+	compute_bounds_for_exp_function(!lower, coeff, divisor, base, num,
+					bound);
       return true;
     }
   return false;
