@@ -94,12 +94,6 @@ bool operator<=(const Number& x, const Number& y);
 //! Returns the absolute value of \f$ x \f$.
 Number abs(const Number& x);
 
-//! If \f$ x \f$ is a natural number, returns \f$ x! \f$.
-/*!
-  \exception std::range_error thrown if \f$ x \f$ is not a natural number.
-*/
-Number factorial(const Number& x);
-
 //! \brief
 //! If \f$ x \f$ and \f$ y \f$ are integer, returns the greatest common
 //! divisor of \f$ x \f$ and \f$ y \f$.
@@ -310,7 +304,6 @@ private:
   friend bool operator==(const Number& x, long i);
 
   friend Number abs(const Number& x);
-  friend Number factorial(const Number& x);
   friend Number gcd(const Number& x, const Number& y);
   friend Number lcm(const Number& x, const Number& y);
   friend Number exact_pwr(const Number& x, const Number& y);
