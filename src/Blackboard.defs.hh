@@ -63,6 +63,12 @@ public:
   //! returns the expression \f$ z \f$ otherwise.
   Expr get_definition(const Symbol& z) const;
 
+  //! \brief
+  //! Substitutes the left-hand side of the auxiliary equation
+  //! \f$ bad = e \f$ with \p good, so that to have the
+  //! auxiliary equation \f$ good = e \f$.
+  void substitute(const Symbol& bad, const Symbol& good);
+
   //! Rewrite \f$ e \f$ according to the definitions in \p *this.
   Expr rewrite(const Expr& e) const;
 
@@ -106,7 +112,7 @@ private:
   unsigned size_norm(Definition& d) const;
   Expr approximate(Definition& d) const;
 
-  std::map<Symbol, unsigned> index;
+  std::map<Symbol, unsigned, Symbol::NameCompare> index;
 
   mutable std::deque<Definition> definitions;
 

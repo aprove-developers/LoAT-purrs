@@ -67,11 +67,6 @@ Blackboard::operator=(const Blackboard& y) {
   return *this;
 }
 
-inline bool
-operator<(const Symbol& x, const Symbol& y) {
-  return x.get_name() < y.get_name();
-}
-
 inline Symbol
 Blackboard::insert_definition(const Expr& e) {
   Symbol new_symbol;
@@ -89,6 +84,23 @@ Blackboard::get_definition(const Symbol& z) const {
     return definitions[i->second].rhs;
   else
     return z;
+}
+
+inline void
+Blackboard::substitute(const Symbol& bad, const Symbol& good) {
+  std::map<Symbol, unsigned>::const_iterator i = index.find(bad);
+  // Could exist a `bad' symbol that are not stored in the blackboard
+  // (e.g. the index of the sum).
+  if (i != index.end()) {
+    // Insert the equation `good = e', where `e' is the expression
+    // that was associated to `bad'.
+    index.insert(std::map<Symbol, unsigned>::value_type(good,
+							definitions.size()));
+    definitions.push_back(Definition(definitions[i->second].rhs));
+    ++timestamp;
+    // Remove from the blackboard the `bad' element.
+    index.erase(bad);
+  }
 }
 
 } // namespace Parma_Recurrence_Relation_Solver
