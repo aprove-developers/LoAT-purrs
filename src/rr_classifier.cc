@@ -42,6 +42,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <climits>
 #include <string>
 #include <vector>
+#include <algorithm>
 
 // TEMPORARY
 #include <iostream>
@@ -425,8 +426,8 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
 }
   
 void
-insert_coefficients(const Expr& coeff, unsigned long index,
-		    std::vector<Expr>& coefficients) {
+insert_coefficients_lfo(const Expr& coeff, unsigned long index,
+			std::vector<Expr>& coefficients) {
   // The vector `coefficients' contains in the `i'-th position the
   // coefficient of `x(n-i)'.  The first position always contains 0.
   if (index > coefficients.size())
@@ -437,6 +438,58 @@ insert_coefficients(const Expr& coeff, unsigned long index,
     coefficients.push_back(coeff);
   else
     coefficients[index] += coeff;
+}
+
+void
+insert_divisors(const Number& divisor, std::vector<Number>& divisors,
+		unsigned& position) {
+  // The vector `divisors' has the elements in increasing order.
+  unsigned divisors_size = divisors.size();
+  if (divisors_size == 0) {
+    divisors.push_back(divisor);
+    position = 0;
+  }
+  else {
+    position = divisors_size;
+    for (unsigned i = 0; i < divisors_size; ++i)
+      if (divisors[i] > divisor) {
+	if (i == 0)
+	  position = 0;
+	else
+	  position = i;
+	break;
+      }
+    D_VAR(position);
+    std::vector<Number> tmp(divisors_size + 1);
+    for (unsigned i = 0; i < position; ++i)
+      tmp[i] = divisors[i];
+    tmp[position] = divisor;
+    for (unsigned i = position + 1; i <= divisors_size; ++i)
+      tmp[i] = divisors[i-1];    
+    divisors.resize(divisors_size + 1);
+    copy(tmp.begin(), tmp.end(), divisors.begin());
+  }
+  D_VEC(divisors, 0, divisors.size()-1);
+}
+
+void
+insert_coefficients_fe(unsigned position, const Expr& possibly_coeff,
+		       std::vector<Expr>& coefficients) {
+  D_VAR(position);
+  unsigned coefficients_size = coefficients.size();
+  if (coefficients_size == 0)
+    coefficients.push_back(possibly_coeff);
+  else {
+    std::vector<Expr> tmp(coefficients_size + 1);
+    for (unsigned i = 0; i < position; ++i)
+      tmp[i] = coefficients[i];
+    tmp[position] = possibly_coeff;
+    for (unsigned i = position + 1; i <= coefficients_size; ++i)
+      tmp[i] = coefficients[i-1];
+    coefficients.resize(coefficients_size + 1);
+    copy(tmp.begin(), tmp.end(), coefficients.begin());
+  }
+  D_VEC(coefficients, 0, coefficients.size()-1);
 }
 
 /*!
@@ -667,12 +720,13 @@ PURRS::Recurrence::compute_order(const Number& decrement, unsigned int& order,
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
-					  std::vector<Expr>& coefficients,
 					  unsigned int& order,
+					  std::vector<Expr>& coefficients_lfo,
 					  int& gcd_among_decrements,
 					  int num_term,
-					  Expr& coefficient,
-					  Number& divisor_arg) const {
+					  unsigned int& rank,
+					  std::vector<Expr>& coefficients_fe,
+					  std::vector<Number>& divisors) const {
   unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
   if (num_factors == 1)
     if (r.is_the_x_function()) {
@@ -687,14 +741,18 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	if (get_constant_decrement(argument, decrement)) {
 	  unsigned long index;
 	  Solver_Status status
-	    = compute_order(decrement, order, index, coefficients.max_size());
+	    = compute_order(decrement, order, index,
+			    coefficients_lfo.max_size());
 	  if (status != SUCCESS)
 	    return status;
+	  // `num_term == 0' if `r' is the unique term of `recurrence_rhs'
+	  // or if it is the first term of `recurrence_rhs' (i.e. is the
+	  // first time that the system entry in this function).
 	  if (num_term == 0)
 	    gcd_among_decrements = index;
 	  else
 	    gcd_among_decrements = gcd(gcd_among_decrements, index);
-	  insert_coefficients(1, index, coefficients);
+	  insert_coefficients_lfo(1, index, coefficients_lfo);
 	  if (is_order_zero() || is_unknown())
 	    set_linear_finite_order_const_coeff();
 	  else if (is_functional_equation())
@@ -707,16 +765,16 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
       else if (argument.is_a_mul() && argument.nops() == 2) {
 	Number divisor;
 	if (get_constant_divisor(argument, divisor)) {
-	  coefficient = 1;
-	  divisor_arg = divisor; 
+	  ++rank;
+	  unsigned position;
+	  insert_divisors(divisor, divisors, position);
+	  insert_coefficients_fe(position, 1, coefficients_fe);
 	}
 	else
 	  return TOO_COMPLEX;
 	if (is_order_zero() || is_unknown())
 	  set_functional_equation();
-	// `else if (!is_functional_equation())' allows also more than one
-	// term of the form `x(n/b)'.
-	else
+	else if (is_linear_finite_order())
 	  return TOO_COMPLEX;
       }
       else if (argument.has(n))
@@ -736,6 +794,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
       e += r;
   else {
     Expr possibly_coeff = 1;
+    unsigned position;
     bool found_function_x = false;
     bool found_n = false;
     unsigned long index;
@@ -753,7 +812,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	    assert(!found_function_x);
 	    Solver_Status status
 	      = compute_order(decrement, order, index,
-			      coefficients.max_size());
+			      coefficients_lfo.max_size());
 	    if (status != SUCCESS)
 	      return status;
 	    if (num_term == 0)
@@ -768,13 +827,12 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	else if (argument.is_a_mul() && argument.nops() == 2) {
 	  Number divisor;
 	  if (get_constant_divisor(argument, divisor)) {
-	    divisor_arg = divisor;
+	    ++rank;
 	    found_function_x = true;
+	    insert_divisors(divisor, divisors, position);
 	    if (is_order_zero() || is_unknown())
 	      set_functional_equation();
-	    // `else if (!is_functional_equation())' allows also more than one
-	    // term of the form `x(n/b)'.
-	    else
+	    else if (is_linear_finite_order())
 	      return TOO_COMPLEX;
 	  }
 	  else
@@ -801,17 +859,18 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	possibly_coeff *= factor;
       }
     }
-    if (found_function_x)
+    if (found_function_x) {
       if (is_functional_equation())
-	coefficient = possibly_coeff;
+	insert_coefficients_fe(position, possibly_coeff, coefficients_fe);
       else {
-	insert_coefficients(possibly_coeff, index, coefficients);
+	insert_coefficients_lfo(possibly_coeff, index, coefficients_lfo);
 	if (!is_linear_finite_order_var_coeff())
 	  if (found_n)
 	    set_linear_finite_order_var_coeff();
 	  else
 	    set_linear_finite_order_const_coeff();
       }
+    }
     else
       e += possibly_coeff;
   }
@@ -874,18 +933,20 @@ PURRS::Recurrence::classify() const {
   // then `order' is left to `0'.
   unsigned int order = 0;
   // We will store here the coefficients of linear part of the recurrence.
-  std::vector<Expr> coefficients;
+  std::vector<Expr> coefficients_lfo;
+
   // We will store here the greatest common denominator among the decrements
   // `d' of the terms `x(n-d)' contained in the linear part of the
   // recurrence.
   int gcd_among_decrements = 0;
 
-  // We will store here the coefficient of the functional equation
-  // `x(n) = a x(n/b) + d n^e'.
-  Expr coefficient;
-  // We will store here the positive integer divisor of the argument of the
-  // function `x' in the functional equation `x(n) = a x(n/b) + d n^e'.
-  Number divisor_arg;
+  unsigned int rank = 0;
+  // We will store here the coefficients of the functional equation.
+  std::vector<Expr> coefficients_fe;
+  // We will store here the positive integer divisors of the arguments of the
+  // function `x' in the terms of the form `a x(n/b)' contained in the
+  // recurrence.
+  std::vector<Number> divisors_arg;
 
   Expr inhomogeneous = 0;
 
@@ -897,17 +958,18 @@ PURRS::Recurrence::classify() const {
     // It is necessary that the following loop starts from `0'.
     for (unsigned i = 0; i < num_summands; ++i) {
       if ((status = classification_summand(recurrence_rhs.op(i), inhomogeneous,
-					   coefficients, order,
+					   order, coefficients_lfo,
 					   gcd_among_decrements, i,
-					   coefficient, divisor_arg))
+					   rank, coefficients_fe,
+					   divisors_arg))
 	  != SUCCESS)
 	return status;
     }
   else
     if ((status = classification_summand(recurrence_rhs, inhomogeneous,
-					 coefficients, order,
+					 order, coefficients_lfo,
 					 gcd_among_decrements, 0,
-					 coefficient, divisor_arg))
+					 rank, coefficients_fe, divisors_arg))
 	!= SUCCESS)
       return status;
 
@@ -922,12 +984,13 @@ PURRS::Recurrence::classify() const {
 
   set_inhomogeneous_term(inhomogeneous);
   D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
-  
+
   if (is_linear_finite_order())
-    finite_order_p = new Finite_Order_Info(order, 0, coefficients,
+    finite_order_p = new Finite_Order_Info(order, 0, coefficients_lfo,
 					   gcd_among_decrements);
   else if (is_functional_equation())
-    functional_eq_p = new Functional_Equation_Info(coefficient, divisor_arg);
+    functional_eq_p = new Functional_Equation_Info(rank, coefficients_fe,
+						   divisors_arg);
 
   return SUCCESS;
 }

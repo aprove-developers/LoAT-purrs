@@ -266,13 +266,15 @@ PURRS::Recurrence::verify_solution() const {
 	  // ourselves if is verified the reduced recurrence.
 	  Symbol r = insert_auxiliary_definition(mod(n,
 						     gcd_among_decrements()));
-	  unsigned dim = coefficients().size() / gcd_among_decrements() + 1;
+	  unsigned dim = coefficients_lfo().size()
+	    / gcd_among_decrements() + 1;
 	  std::vector<Expr> new_coefficients(dim);
 	  Expr inhomogeneous = 0;
 	  Recurrence rec_rewritten
 	    (rewrite_reduced_order_recurrence(recurrence_rhs, r,
 					      gcd_among_decrements(),
-					      coefficients(), new_coefficients,
+					      coefficients_lfo(),
+					      new_coefficients,
 					      inhomogeneous));
 	  rec_rewritten.finite_order_p
 	    = new Finite_Order_Info(dim - 1, 0, new_coefficients, 1);
@@ -344,8 +346,9 @@ PURRS::Recurrence::verify_bound(bool upper) const {
 	return INCONCLUSIVE_VERIFICATION;
       
       // Step 4: verification of the inductive step.
-      Expr partial_bound_sub = partial_bound.substitute(n, n / divisor_arg());
-      Expr approx = recurrence_rhs.substitute(x(n / divisor_arg()),
+      Expr partial_bound_sub = partial_bound.substitute(n,
+							n / divisors_arg()[0]);
+      Expr approx = recurrence_rhs.substitute(x(n / divisors_arg()[0]),
 					      partial_bound_sub);
       D_VAR(approx);
       approx = simplify_ex_for_input(approx, true);
@@ -391,13 +394,13 @@ PURRS::Recurrence::apply_order_reduction() const {
   // `x' functions with `gcd_among_decrements * n + r' and `x(n-k)' with
   // `x(n - k / gcd_among_decrements)'.
   Symbol r = insert_auxiliary_definition(mod(n, gcd_among_decrements()));
-  unsigned dim = coefficients().size() / gcd_among_decrements() + 1;
+  unsigned dim = coefficients_lfo().size() / gcd_among_decrements() + 1;
   std::vector<Expr> new_coefficients(dim);
   Expr inhomogeneous = 0;
   Recurrence rec_rewritten
     (rewrite_reduced_order_recurrence(recurrence_rhs, r,
 				      gcd_among_decrements(),
-				      coefficients(), new_coefficients,
+				      coefficients_lfo(), new_coefficients,
 				      inhomogeneous));
   rec_rewritten.finite_order_p
     = new Finite_Order_Info(dim - 1, 0, new_coefficients, 1);

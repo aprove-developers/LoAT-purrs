@@ -548,7 +548,7 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::solve_linear_finite_order() const {
   D_VAR(order());
-  D_VEC(coefficients(), 1, order());
+  D_VEC(coefficients_lfo(), 1, order());
 
   if (is_order_zero()) {
     exact_solution_.set_expression(inhomogeneous_term);
@@ -583,7 +583,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 	Expr characteristic_eq;
 	std::vector<Polynomial_Root> roots;
 	bool all_distinct = true;
-	if (!characteristic_equation_and_its_roots(order(), coefficients(),
+	if (!characteristic_equation_and_its_roots(order(), coefficients_lfo(),
 						   num_coefficients,
 						   characteristic_eq, roots,
 						   all_distinct))
@@ -591,7 +591,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 	status = solve_constant_coeff_order_1(roots);
       }
       else
-	status = solve_variable_coeff_order_1(coefficients()[1]);
+	status = solve_variable_coeff_order_1(coefficients_lfo()[1]);
       if (status != SUCCESS) {
 	D_MSG("Summand not hypergeometric: no chance of using Gosper's "
 	      "algorithm");
@@ -605,7 +605,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       Expr characteristic_eq;
       std::vector<Polynomial_Root> roots;
       bool all_distinct = true;
-      if (!characteristic_equation_and_its_roots(order(), coefficients(),
+      if (!characteristic_equation_and_its_roots(order(), coefficients_lfo(),
 						 num_coefficients,
 						 characteristic_eq, roots,
 						 all_distinct))
@@ -628,7 +628,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       Expr characteristic_eq;
       std::vector<Polynomial_Root> roots;
       bool all_distinct = true;
-      if (!characteristic_equation_and_its_roots(order(), coefficients(),
+      if (!characteristic_equation_and_its_roots(order(), coefficients_lfo(),
 						 num_coefficients,
 						 characteristic_eq, roots,
 						 all_distinct)) {
@@ -663,10 +663,10 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       // -  in the case of non linear recurrence on solution after
       //    the change of the variable.
       if (applied_order_reduction || come_from_non_linear_rec)
-	solution += x(first_i_c_for_linear()) * pwr(coefficients()[1], n);
+	solution += x(first_i_c_for_linear()) * pwr(coefficients_lfo()[1], n);
       else
 	solution += get_initial_condition(first_i_c_for_linear())
-	  * pwr(coefficients()[1], n);
+	  * pwr(coefficients_lfo()[1], n);
       exact_solution_.set_expression(solution);
     }
     else

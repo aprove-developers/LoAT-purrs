@@ -580,7 +580,7 @@ PURRS::Recurrence::add_term_with_initial_condition(const Expr& q_upper,
 						   const Expr& q_lower,
 						   Expr& ub, Expr& lb) const {
   Expr index_initial_condition
-    = simplify_logarithm(n / pwr(divisor_arg(), q_upper));
+    = simplify_logarithm(n / pwr(divisors_arg()[0], q_upper));
   Number index = 0;
   if (index_initial_condition.is_a_number()) {
     index = index_initial_condition.ex_to_number();
@@ -592,14 +592,14 @@ PURRS::Recurrence::add_term_with_initial_condition(const Expr& q_upper,
   }
   // The index of the initial condition is not a number.
   if (index == 0) {
-    ub += pwr(coefficient(), q_upper) * x(index_initial_condition);
-    lb += pwr(coefficient(), q_lower) * x(index_initial_condition);
+    ub += pwr(coefficients_fe()[0], q_upper) * x(index_initial_condition);
+    lb += pwr(coefficients_fe()[0], q_lower) * x(index_initial_condition);
   }
   // The index of the initial condition is a number.
   else {
-    ub += pwr(coefficient(), q_upper)
+    ub += pwr(coefficients_fe()[0], q_upper)
       * get_initial_condition(index.to_unsigned());
-    lb += pwr(coefficient(), q_lower)
+    lb += pwr(coefficients_fe()[0], q_lower)
       * get_initial_condition(index.to_unsigned());
   }
 }
@@ -617,141 +617,149 @@ PURRS::Recurrence::add_term_with_initial_condition(const Expr& q_upper,
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::approximate_functional_equation() const {
-  D_VAR(coefficient());
-  D_VAR(divisor_arg());
-  assert(divisor_arg().is_rational() && divisor_arg().is_positive());
-  // We want that `coefficient()' is a positive number and
-  // `divisor_arg()' a rational number bigger than `1'.
-  Number coeff;
-  if (!coefficient().is_a_number(coeff) || !coeff.is_positive()
-      || divisor_arg() < 1)
-    return TOO_COMPLEX;
-  if (has_parameters(inhomogeneous_term)) {
-    D_MSG("Functional equation with parameters");
-    return TOO_COMPLEX;
-  }
+  if (rank() == 1) {
+    Number divisor_arg = divisors_arg()[0];
+    Expr coefficient = coefficients_fe()[0];
 
-  // Consider an upper bound and a lower bound for `q = [log n / log b]'.
-  Expr q_upper = log(n) / log(divisor_arg());
-  Expr q_lower = q_upper - 1;
-  Expr ub = 0;
-  Expr lb = 0;
-  D_VAR(inhomogeneous_term);
-  if (!inhomogeneous_term.is_zero()) {
-    std::vector<Expr> bases_of_exp;
-    std::vector<Expr> exp_poly_coeff;
-    std::vector<Expr> exp_no_poly_coeff;
-    exp_poly_decomposition(inhomogeneous_term,
-			   bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
-    D_VEC(bases_of_exp, 0, bases_of_exp.size()-1);
-    D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
-    D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
-    for (unsigned i = bases_of_exp.size(); i-- > 0; ) {
-      bool computed_only_upper = false;
-      const Expr& base = bases_of_exp[i];
-      const Expr& poly_coeff = exp_poly_coeff[i];
-      const Expr& no_poly_coeff = exp_no_poly_coeff[i];
-      Number num_base;
-      if (base.is_a_number(num_base) && num_base.is_positive_integer()) {
-	// Base of exponential is equal to `1'.
-	if (num_base == 1) {
-	  // Consider the eventual polynomial part.
-	  if (!poly_coeff.is_zero()
-	      && (!sharper_bounds_for_power_of_n(poly_coeff, 
-						 coeff, divisor_arg(),
-						 computed_only_upper, lb, ub)
-	      || computed_only_upper)) {
-	    // Check if the polynomial part is a non-negative,
-	    // non-decreasing function.
-	    Number condition = -1;
-	    if (!is_non_negative_non_decreasing(1, poly_coeff, true,
-						n, true, condition))
-	      return TOO_COMPLEX ;
-	    if (condition > 1)
-	      set_applicability_condition(condition.to_unsigned());
-	    Expr sum_lower = 0;
-	    Expr sum_upper = 0;
-	    try_to_compute_sum(poly_coeff, coeff, divisor_arg(),
-			       computed_only_upper, sum_lower, sum_upper);
-	    lb += sum_lower.substitute(n, q_lower);
-	    ub += sum_upper.substitute(n, q_upper + 1);
-	  }
-	  // Consider the eventual non-polynomial part.
-	  if (!no_poly_coeff.is_zero()
-	      && (!sharper_bounds_for_no_polynomial_function(no_poly_coeff,
-							     coeff,
-							     divisor_arg(),
-							     computed_only_upper,
-							     lb, ub)
-		  || computed_only_upper)) {
-	    // Check if the non-polynomial part is a non-negative,
-	    // non-decreasing function.
-	    Number condition = -1;
-	    if (!is_non_negative_non_decreasing(1, no_poly_coeff, false,
-						n, true, condition))
-	      return TOO_COMPLEX ;
-	    if (condition > 1)
-	      set_applicability_condition(condition.to_unsigned());
-	    Expr sum_lower = 0;
-	    Expr sum_upper = 0;
-	    try_to_compute_sum(no_poly_coeff, coeff, divisor_arg(),
-			       computed_only_upper, sum_lower, sum_upper);
-	    lb += sum_lower.substitute(n, q_lower);
-	    ub += sum_upper.substitute(n, q_upper + 1);
-	  }
-	}
-	// Base of exponential is a number different from `1'.
-	else {
-	  if (!poly_coeff.is_zero())
-	    // Apply, if it possible, the sharper bounds for the exponential.
-	    if (!sharper_bounds_for_exponential(num_base, poly_coeff,
-						coeff, divisor_arg(),
-						lb, ub)) {
-	      // Check if the polynomial part times esponential is a
-	      // non-negative, non-decreasing function.
+    D_VAR(divisor_arg);
+    assert(divisor_arg.is_rational() && divisor_arg.is_positive());
+    // We want that `coefficient' is a positive number and
+    // `divisor_arg' a rational number bigger than `1'.
+    Number coeff;
+    if (!coefficient.is_a_number(coeff) || !coeff.is_positive()
+	|| divisor_arg < 1)
+      return TOO_COMPLEX;
+    if (has_parameters(inhomogeneous_term)) {
+      D_MSG("Functional equation with parameters");
+      return TOO_COMPLEX;
+    }
+    
+    // Consider an upper bound and a lower bound for `q = [log n / log b]'.
+    Expr q_upper = log(n) / log(divisor_arg);
+    Expr q_lower = q_upper - 1;
+    Expr ub = 0;
+    Expr lb = 0;
+    D_VAR(inhomogeneous_term);
+    if (!inhomogeneous_term.is_zero()) {
+      std::vector<Expr> bases_of_exp;
+      std::vector<Expr> exp_poly_coeff;
+      std::vector<Expr> exp_no_poly_coeff;
+      exp_poly_decomposition(inhomogeneous_term,
+			     bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
+      D_VEC(bases_of_exp, 0, bases_of_exp.size()-1);
+      D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
+      D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
+      for (unsigned i = bases_of_exp.size(); i-- > 0; ) {
+	bool computed_only_upper = false;
+	const Expr& base = bases_of_exp[i];
+	const Expr& poly_coeff = exp_poly_coeff[i];
+	const Expr& no_poly_coeff = exp_no_poly_coeff[i];
+	Number num_base;
+	if (base.is_a_number(num_base) && num_base.is_positive_integer()) {
+	  // Base of exponential is equal to `1'.
+	  if (num_base == 1) {
+	    // Consider the eventual polynomial part.
+	    if (!poly_coeff.is_zero()
+		&& (!sharper_bounds_for_power_of_n(poly_coeff, 
+						   coeff, divisor_arg,
+						   computed_only_upper, lb, ub)
+		    || computed_only_upper)) {
+	      // Check if the polynomial part is a non-negative,
+	      // non-decreasing function.
 	      Number condition = -1;
-	      if (!is_non_negative_non_decreasing(num_base, poly_coeff, true,
+	      if (!is_non_negative_non_decreasing(1, poly_coeff, true,
 						  n, true, condition))
 		return TOO_COMPLEX ;
 	      if (condition > 1)
 		set_applicability_condition(condition.to_unsigned());
 	      Expr sum_lower = 0;
 	      Expr sum_upper = 0;
-	      try_to_compute_sum(pwr(base, n) * poly_coeff,
-				 coeff, divisor_arg(),
+	      try_to_compute_sum(poly_coeff, coeff, divisor_arg,
 				 computed_only_upper, sum_lower, sum_upper);
 	      lb += sum_lower.substitute(n, q_lower);
 	      ub += sum_upper.substitute(n, q_upper + 1);
 	    }
-	  if (!no_poly_coeff.is_zero()) {
-	    // In this case is not possible to apply the sharper
-	    // bounds for the exponential.
-	    // Check if the polynomial part times esponential is a
-	    // non-negative, non-decreasing function.
-	    Number condition = -1;
-	    if (!is_non_negative_non_decreasing(num_base, no_poly_coeff, false,
-						n, true, condition))
-	      return TOO_COMPLEX ;
-	    if (condition > 1)
-	      set_applicability_condition(condition.to_unsigned());
-	    Expr sum_lower = 0;
-	    Expr sum_upper = 0;
-	    try_to_compute_sum(pwr(base, n) * no_poly_coeff,
-			       coeff, divisor_arg(),
-			       computed_only_upper, sum_lower, sum_upper);
-	    lb += sum_lower.substitute(n, q_lower);
-	    ub += sum_upper.substitute(n, q_upper + 1);
+	    // Consider the eventual non-polynomial part.
+	    if (!no_poly_coeff.is_zero()
+		&& (!sharper_bounds_for_no_polynomial_function(no_poly_coeff,
+							       coeff,
+							       divisor_arg,
+							       computed_only_upper,
+							       lb, ub)
+		    || computed_only_upper)) {
+	      // Check if the non-polynomial part is a non-negative,
+	      // non-decreasing function.
+	      Number condition = -1;
+	      if (!is_non_negative_non_decreasing(1, no_poly_coeff, false,
+						  n, true, condition))
+		return TOO_COMPLEX ;
+	      if (condition > 1)
+		set_applicability_condition(condition.to_unsigned());
+	      Expr sum_lower = 0;
+	      Expr sum_upper = 0;
+	      try_to_compute_sum(no_poly_coeff, coeff, divisor_arg,
+				 computed_only_upper, sum_lower, sum_upper);
+	      lb += sum_lower.substitute(n, q_lower);
+	      ub += sum_upper.substitute(n, q_upper + 1);
+	    }
+	  }
+	  // Base of exponential is a number different from `1'.
+	  else {
+	    if (!poly_coeff.is_zero())
+	      // Apply, if it possible, the sharper bounds for the exponential.
+	      if (!sharper_bounds_for_exponential(num_base, poly_coeff,
+						  coeff, divisor_arg,
+						  lb, ub)) {
+		// Check if the polynomial part times esponential is a
+		// non-negative, non-decreasing function.
+		Number condition = -1;
+		if (!is_non_negative_non_decreasing(num_base, poly_coeff, true,
+						    n, true, condition))
+		  return TOO_COMPLEX ;
+		if (condition > 1)
+		  set_applicability_condition(condition.to_unsigned());
+		Expr sum_lower = 0;
+		Expr sum_upper = 0;
+		try_to_compute_sum(pwr(base, n) * poly_coeff,
+				   coeff, divisor_arg,
+				   computed_only_upper, sum_lower, sum_upper);
+		lb += sum_lower.substitute(n, q_lower);
+		ub += sum_upper.substitute(n, q_upper + 1);
+	      }
+	    if (!no_poly_coeff.is_zero()) {
+	      // In this case is not possible to apply the sharper
+	      // bounds for the exponential.
+	      // Check if the polynomial part times esponential is a
+	      // non-negative, non-decreasing function.
+	      Number condition = -1;
+	      if (!is_non_negative_non_decreasing(num_base, no_poly_coeff,
+						  false, n, true, condition))
+		return TOO_COMPLEX ;
+	      if (condition > 1)
+		set_applicability_condition(condition.to_unsigned());
+	      Expr sum_lower = 0;
+	      Expr sum_upper = 0;
+	      try_to_compute_sum(pwr(base, n) * no_poly_coeff,
+				 coeff, divisor_arg,
+				 computed_only_upper, sum_lower, sum_upper);
+	      lb += sum_lower.substitute(n, q_lower);
+	      ub += sum_upper.substitute(n, q_upper + 1);
+	    }
 	  }
 	}
-      }
-      // The base of the exponential is not a number.
-      else
-	return TOO_COMPLEX;
-    }  
+	// The base of the exponential is not a number.
+	else
+	  return TOO_COMPLEX;
+      }  
+    }
+    add_term_with_initial_condition(q_upper, q_lower, ub, lb);
+    
+    upper_bound_.set_expression(simplify_logarithm(ub));
+    lower_bound_.set_expression(simplify_logarithm(lb));
+    return SUCCESS;
   }
-  add_term_with_initial_condition(q_upper, q_lower, ub, lb);
-
-  upper_bound_.set_expression(simplify_logarithm(ub));
-  lower_bound_.set_expression(simplify_logarithm(lb));
-  return SUCCESS;
+  else {
+    D_MSG("rank > 1");
+    return TOO_COMPLEX;
+  }
 }

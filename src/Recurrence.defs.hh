@@ -272,12 +272,13 @@ private:
   Solver_Status classify() const;
   Solver_Status classify_and_catch_special_cases() const;
   Solver_Status classification_summand(const Expr& r, Expr& e,
-				       std::vector<Expr>& coefficients,
 				       unsigned int& order,
+				       std::vector<Expr>& coefficients_lfo,
 				       int& gcd_among_decrements,
 				       int num_term,
-				       Expr& coefficient,
-				       Number& divisor_arg) const;
+				       unsigned int& rank,
+				       std::vector<Expr>& coefficients_fe,
+				       std::vector<Number>& divisors) const;
   void
   add_term_with_initial_conditions(const Expr& g_n,
 				   const std::vector<Number>& coefficients) const;
@@ -471,11 +472,11 @@ private:
   //! from it. 
   void set_first_i_c_for_linear(unsigned i_c) const;
 
-  //! Returns the coefficients of the finite order recurrence.
-  const std::vector<Expr>& coefficients() const;
+  //! Returns the coefficients of the linear finite order recurrence.
+  const std::vector<Expr>& coefficients_lfo() const;
 
-  //! Returns the coefficients of the finite order recurrence.
-  std::vector<Expr>& coefficients();
+  //! Returns the coefficients of the linear finite order recurrence.
+  std::vector<Expr>& coefficients_lfo();
 
   //! \brief
   //! Returns the greatest common divisor among the decrements \f$ k \f$
@@ -492,25 +493,27 @@ private:
 
   // Methods to access to private data of `Functional_Equation_Info'.
 
-  //! \brief
-  //! Returns the coefficient \f$ a \f$ of the functional equation
-  //! \f$ x_n = a x_{n/b} + p(n).
-  Expr coefficient() const;
+  //! Returns the rank of the functional equation.
+  unsigned int rank() const;
 
-  //! \brief
-  //! Returns the coefficient \f$ a \f$ of the functional equation
-  //! \f$ x_n = a x_{n/b} + p(n).
-  Expr& coefficient();
+  //! Returns the rank of the functional equation.
+  unsigned int& rank();
 
-  //! \brief
-  //! Returns \f$ b \f$, the divisor of \f$ n \f$ in the functional equation
-  //! \f$ x_n = a x_{n/b} + p(n).
-  Number divisor_arg() const;
+  //! Returns the coefficients of the functional equation.
+  const std::vector<Expr>& coefficients_fe() const;
+
+  //! Returns the coefficients of the functional equation.
+  std::vector<Expr>& coefficients_fe();
 
   //! \brief
   //! Returns \f$ b \f$, the divisor of \f$ n \f$ in the functional equation
   //! \f$ x_n = a x_{n/b} + p(n).
-  Number& divisor_arg();
+  const std::vector<Number>& divisors_arg() const;
+
+  //! \brief
+  //! Returns \f$ b \f$, the divisor of \f$ n \f$ in the functional equation
+  //! \f$ x_n = a x_{n/b} + p(n).
+  std::vector<Number>& divisors_arg();
 
   //! \brief
   //! Returns the positive integer starting from which the inhomogeneous term

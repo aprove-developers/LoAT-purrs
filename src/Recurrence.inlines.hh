@@ -28,6 +28,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <iostream>
 #include <utility>
 #include <stdexcept>
+#include <algorithm>
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -271,17 +272,17 @@ Recurrence::set_first_i_c_for_linear(unsigned i_c) const {
 }
 
 inline const std::vector<Expr>&
-Recurrence::coefficients() const {
+Recurrence::coefficients_lfo() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> coefficients();
+  return finite_order_p -> coefficients_lfo();
 }
 
 inline std::vector<Expr>&
-Recurrence::coefficients() {
+Recurrence::coefficients_lfo() {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> coefficients();
+  return finite_order_p -> coefficients_lfo();
 }
 
 inline unsigned
@@ -298,32 +299,46 @@ Recurrence::gcd_among_decrements() {
   return finite_order_p -> gcd_among_decrements();
 }
 
-inline Expr
-Recurrence::coefficient() const {
+inline unsigned int
+Recurrence::rank() const {
   assert(is_functional_equation());
   assert(functional_eq_p);
-  return functional_eq_p -> coefficient();
+  return functional_eq_p -> rank();
 }
 
-inline Expr&
-Recurrence::coefficient() {
+inline unsigned int&
+Recurrence::rank() {
   assert(is_functional_equation());
   assert(functional_eq_p);
-  return functional_eq_p -> coefficient();
+  return functional_eq_p -> rank();
 }
 
-inline Number
-Recurrence::divisor_arg() const {
+inline const std::vector<Expr>&
+Recurrence::coefficients_fe() const {
   assert(is_functional_equation());
   assert(functional_eq_p);
-  return functional_eq_p -> divisor_arg();
+  return functional_eq_p -> coefficients_fe();
 }
 
-inline Number&
-Recurrence::divisor_arg() {
+inline std::vector<Expr>&
+Recurrence::coefficients_fe() {
   assert(is_functional_equation());
   assert(functional_eq_p);
-  return functional_eq_p -> divisor_arg();
+  return functional_eq_p -> coefficients_fe();
+}
+
+inline const std::vector<Number>&
+Recurrence::divisors_arg() const {
+  assert(is_functional_equation());
+  assert(functional_eq_p);
+  return functional_eq_p -> divisors_arg();
+}
+
+inline std::vector<Number>&
+Recurrence::divisors_arg() {
+  assert(is_functional_equation());
+  assert(functional_eq_p);
+  return functional_eq_p -> divisors_arg();
 }
 
 inline unsigned
