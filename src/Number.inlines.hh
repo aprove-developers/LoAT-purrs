@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Expr.defs.hh"
 #include <climits>
+#include <cassert>
 #include <stdexcept>
 
 namespace Parma_Recurrence_Relation_Solver {
@@ -248,7 +249,13 @@ lcm(const Number& x, const Number& y) {
 }
 
 inline Number
-pwr(const Number& x, const Number& y) {
+exact_pwr(const Number& x, const Number& y) {
+  assert(x.is_complex_rational() && y.is_integer());
+  // The following assertion is here for documentation purposes.
+  // The current version of GiNaC already checks for these cases,
+  // possibly emitting an exception.
+  assert((!x.is_zero() || !y.is_zero())
+	 && ((!x.is_zero()) || (x.is_zero() && y.is_positive())));
   return GiNaC::pow(x.n, y.n);
 }
 

@@ -106,20 +106,27 @@ Number factorial(const Number& x);
 //! Returns 1 otherwise.
 Number gcd(const Number& x, const Number& y);
 
+//! \brief;
 //! If \f$ x \f$ and \f$ y \f$ are integer, returns the least common
 //! multiple of \f$ x \f$ and \f$ y \f$.
 //! Returns \f$ x \cdot y \f$ otherwise.
 Number lcm(const Number& x, const Number& y);
 
-//! If \f$ x \f$ and \f$ y \f$ are not zero or \f$ x = 0 \f$ and \f$ y \f$
-//! is a positive rational number, returns \f$ x^y \f$.
+//! \brief;
+//! Computes \f$ x^y \f$ assuming that the numerical computation
+//! will not introduce approximation errors.
 /*!
+  If \f$ x \f$ is a rational complex number and \f$ y \f$ is an
+  integer, then this method computes \f$ x^y \f$ because in this
+  case are not introduced approximation errors.
+
   \exception std::runtime_error thrown if \f$ x = y = 0 \f$.
   \exception std::logic_error   thrown if \f$ x = 0 \f$ and \f$ y \f$
                                 is not a positive rational number.
 */
-Number pwr(const Number& x, const Number& y);
+Number exact_pwr(const Number& x, const Number& y);
 
+//! \brief;
 //! If \f$ x \f$ and \f$ y \f$ are integer and \f$ y \neq 0 \f$,
 //! returns the remainder of the division of \f$ x \f$ by \f$ y \f$.
 //! If \f$ y = 0 \f$ an exception is thrown.
@@ -307,7 +314,7 @@ private:
   friend Number gamma(const Number& x);
   friend Number gcd(const Number& x, const Number& y);
   friend Number lcm(const Number& x, const Number& y);
-  friend Number pwr(const Number& x, const Number& y);
+  friend Number exact_pwr(const Number& x, const Number& y);
   friend Number mod(const Number& x, const Number& y);
 
 
