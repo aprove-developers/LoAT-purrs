@@ -71,15 +71,35 @@ compute_bounds_for_exp_function(bool lower, const Number& coeff,
   }
 }
 
-bool
+void
 compute_bounds_for_power_of_n(bool lower,
 			      const Number& coeff, const Number& divisor,
 			      const Number& num, const Number& k,
 			      Expr& bound) {
   assert(!k.is_negative());
-  // Lower bound.
+  // FIXME: come si puo' fare per evitare che saltino fuori i numeri in
+  // virgola mobile? Usare tutte Expr non mi sembra una buona idea.
+  const Expr& divisor_ex = divisor;
+  const Expr& k_ex = k;
+  const Expr& pow_div_k = pwr(divisor_ex, k_ex);
+  Number pow_div_k_numeric = pwr(divisor, k);
+
+  const Expr& pow_n_k = pwr(Recurrence::n, k);
   const Expr& frac_log = log(Recurrence::n) / log(divisor);
-  if (lower)
+  // Lower bound.
+  if (lower) {
+    Expr mu_b;
+    Expr c_b;
+    if (divisor.is_positive_integer()) {
+      mu_b = 1;
+      c_b = 1;
+    }
+    else {
+      mu_b = log(2 * divisor / (divisor - 1)) / log(divisor);
+      c_b = divisor / (divisor - 1);
+    }
+    const Expr& pow_frac_log = pwr(Recurrence::n, log(coeff) / log(divisor));
+    Expr tmp_lb;
     // k == 0.
     if (k == 0) {
       Expr lambda_b;
@@ -88,40 +108,19 @@ compute_bounds_for_power_of_n(bool lower,
       else
 	// 1 < divisor < 2.
 	lambda_b = log((2 * divisor - 1)/(divisor - 1)) / log(divisor);
-      Expr tmp_lb;
       if (coeff == 1)
 	tmp_lb = frac_log - lambda_b;
       else
 	tmp_lb = (1 - pwr(Recurrence::n, log(coeff) / log(divisor))
 		  * pwr(coeff, -lambda_b)) / (1 - coeff);
-      bound += num * tmp_lb;
-      return true;
     }
     // k >= 1.
     else if (k >= 1) {
-      Expr mu_b;
-      Expr c_b;
-      if (divisor.is_positive_integer()) {
-	mu_b = 1;
-	c_b = 1;
-      }
-      else {
-	mu_b = log(2 * divisor / (divisor - 1)) / log(divisor);
-	c_b = divisor / (divisor - 1);
-      }
-      // FIXME: come si puo' fare per evitare che saltino fuori i numeri in
-      // virgola mobile? Usare tutte Expr non mi sembra una buona idea.
-      const Expr& divisor_ex = divisor;
-      const Expr& k_ex = k;
-      const Expr& pow_div_k = pwr(divisor_ex, k_ex);
-      Number pow_div_k_numeric = pwr(divisor, k);
+      // FIXME!!
       Number pow_div_k_numeric_minus = pwr(divisor, k-1);
 
       const Expr& pow_div_k_minus = pwr(divisor, k - 1);
-      const Expr& pow_n_k = pwr(Recurrence::n, k);
       const Expr& pow_n_k_minus = pwr(Recurrence::n, k-1);
-      const Expr& pow_frac_log = pwr(Recurrence::n, log(coeff) / log(divisor));
-      Expr tmp_lb;
       if (coeff < pow_div_k_numeric - 1)
 	tmp_lb = pow_div_k / (pow_div_k - coeff)
 	  * (pow_n_k - pow_frac_log * pwr(pow_div_k / coeff, mu_b));
@@ -147,31 +146,38 @@ compute_bounds_for_power_of_n(bool lower,
 	  + c_b * k * coeff * pow_n_k_minus
 	  / (coeff - pow_div_k_minus);
       }
-      bound += num * tmp_lb;
-      return true;
     }
-    else
-      return false;
+    // 0 < k < 1.
+    else {
+      const Expr& pow_c_b_k = pwr(c_b, k);
+      if (coeff < pow_div_k_numeric)
+	tmp_lb = pow_n_k * pow_div_k / (pow_div_k - coeff)
+	  - pow_div_k / (pow_div_k - coeff) * pwr(pow_div_k / coeff, mu_b)
+	  * pow_frac_log
+	  - pow_c_b_k * (log(Recurrence::n) / log(divisor) - 1);
+      else if (coeff == pow_div_k_numeric)
+	tmp_lb = (log(Recurrence::n) / log(divisor) - mu_b)
+	  * (pow_n_k - pow_c_b_k) + pow_c_b_k;
+      else
+	tmp_lb = pow_div_k / (coeff - pow_div_k) * pwr(pow_div_k / coeff, mu_b)
+	  * pow_frac_log
+	  - pow_div_k / (coeff - pow_div_k) * pow_n_k
+	  - pow_c_b_k * (log(Recurrence::n) / log(divisor) - 1);
+    }
+    bound += num * tmp_lb;
+  }
   // Upper bound.
   else {
-    // FIXME: come si puo' fare per evitare che saltino fuori i numeri in
-    // virgola mobile? Usare tutte Expr non mi sembra una buona idea.
-    const Expr& divisor_ex = divisor;
-    const Expr& k_ex = k;
-    const Expr& pow_div_k = pwr(divisor_ex, k_ex);
-    Number pow_div_k_numeric = pwr(divisor, k);
-    const Expr& tmp = pwr(Recurrence::n, k);
     Expr tmp_ub;
     if (coeff < pow_div_k_numeric)
-      tmp_ub = tmp * pow_div_k / (pow_div_k - coeff);
+      tmp_ub = pow_n_k * pow_div_k / (pow_div_k - coeff);
     else if (coeff == pow_div_k_numeric)
-      tmp_ub = tmp * frac_log;
+      tmp_ub = pow_n_k * frac_log;
     else
       tmp_ub = pow_div_k
-	* (pwr(Recurrence::n, log(coeff) / log(divisor)) - tmp)
+	* (pwr(Recurrence::n, log(coeff) / log(divisor)) - pow_n_k)
 	/ (coeff - pow_div_k);
     bound += num * tmp_ub;
-    return true;
   }
 }
 
@@ -243,23 +249,23 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
     return true;
   }
   // Case `g(n) = n^1'.
-  else if (poly_coeff == Recurrence::n
-	   && compute_bounds_for_power_of_n(lower, coeff, divisor, 1, 1,
-					    bound))
+  else if (poly_coeff == Recurrence::n) {
+    compute_bounds_for_power_of_n(lower, coeff, divisor, 1, 1, bound);
     return true;
+  }
   // Case `g(n) = -n^1' -> swap lower with upper or upper with lower.
-  else if (poly_coeff == -Recurrence::n
-	   && compute_bounds_for_power_of_n(!lower, coeff, divisor, 1, 1,
-					    bound))
+  else if (poly_coeff == -Recurrence::n) {
+    compute_bounds_for_power_of_n(!lower, coeff, divisor, 1, 1, bound);
     return true;
+  }
   // Case `g(n) = n^k' with `k > 1' integer.
   else if (poly_coeff.is_a_power()
 	   && poly_coeff.arg(0) == Recurrence::n
 	   && poly_coeff.arg(1).is_a_number(num)
-	   && num.is_positive()
-	   && compute_bounds_for_power_of_n(lower, coeff, divisor, 1, num,
-					    bound))
+	   && num.is_positive()) {
+    compute_bounds_for_power_of_n(lower, coeff, divisor, 1, num, bound);
     return true;
+  }
   // Case `g(n) = a * n^k', with `k' positive integer number.
   else if (poly_coeff.is_a_mul() && poly_coeff.nops() == 2) {
     const Expr& first = poly_coeff.op(0);
@@ -269,12 +275,10 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
       if (second == Recurrence::n) {
 	// `a' positive number.
 	if (num.is_positive())
-	  compute_bounds_for_power_of_n(lower, coeff, divisor, num, 1,
-					bound);
+	  compute_bounds_for_power_of_n(lower, coeff, divisor, num, 1, bound);
 	// `a' negative number -> swap lower with upper or upper with lower.
 	else
-	  compute_bounds_for_power_of_n(!lower, coeff, divisor, num, 1,
-					bound);
+	  compute_bounds_for_power_of_n(!lower, coeff, divisor, num, 1,	bound);
 	return true;
       }
       Number k;
@@ -285,12 +289,10 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
 	  && k.is_positive()) {
 	// `a' positive number.
 	if (num.is_positive())
-	  compute_bounds_for_power_of_n(lower, coeff, divisor, num, k,
-					bound);
+	  compute_bounds_for_power_of_n(lower, coeff, divisor, num, k, bound);
 	// `a' negative number -> swap lower with upper or upper with lower.
 	else
-	  compute_bounds_for_power_of_n(!lower, coeff, divisor, num, k,
-					bound);
+	  compute_bounds_for_power_of_n(!lower, coeff, divisor, num, k, bound);
 	return true;
       }
     }
@@ -299,12 +301,10 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
       if (first == Recurrence::n) {
 	// `a' positive number.
 	if (num.is_positive())
-	  compute_bounds_for_power_of_n(lower, coeff, divisor, num, 1,
-					bound);
+	  compute_bounds_for_power_of_n(lower, coeff, divisor, num, 1, bound);
 	// `a' negative number -> swap lower with upper or upper with lower.
 	else
-	  compute_bounds_for_power_of_n(!lower, coeff, divisor, num, 1,
-					bound);
+	  compute_bounds_for_power_of_n(!lower, coeff, divisor, num, 1, bound);
 	return true;
       }
       Number k;
@@ -346,10 +346,10 @@ sharper_bounds_for_no_polynomial_function(bool lower,
   else if (no_poly_coeff.is_a_power()
 	   && no_poly_coeff.arg(0) == Recurrence::n
 	   && no_poly_coeff.arg(1).is_a_number(k)
-	   && k.is_positive()
-	   && compute_bounds_for_power_of_n(lower, coeff, divisor, 1, k,
-					    bound))
+	   && k.is_positive()) {
+    compute_bounds_for_power_of_n(lower, coeff, divisor, 1, k, bound);
     return true;
+  }
   else if (no_poly_coeff.is_a_mul()) {
     // 3 possibilities: `a log(n)' or `n^k log(n)' or `a n^k'.
     if (no_poly_coeff.nops() == 2) {
