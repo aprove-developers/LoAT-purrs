@@ -29,14 +29,17 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-Expr
-transform_in_single_fraction(const Expr& e);
+void
+numerator_denominator_purrs(const Expr& e, Expr& numerator, Expr& denominator);
 
 Expr
 numerator(const Expr& e);
 
 Expr
 denominator(const Expr& e);
+
+Expr
+transform_in_single_fraction(const Expr& e);
 
 } // namespace Parma_Recurrence_Relation_Solver
 

@@ -349,13 +349,13 @@ find_numerator(const std::vector<Expr>& numerators,
 }
 
 static void
-transform_in_single_fraction(const Expr& e,
+numerator_denominator_factor(const Expr& e,
 			     Expr& numerator, Expr& denominator) {
-  D_MSGVAR("INPUT", e);
   // The dimension of `numerators' and `denominators' is terms'number of `e'
   // and will contain the numerator and the denominator of each term of `e'.  
   std::vector<Expr> numerators;
   std::vector<Expr> denominators;
+  numerator = 1;
   denominator = 1;
   if (e.is_a_add()) {
     numerators.insert(numerators.begin(), e.nops(), Number(1));
@@ -369,18 +369,100 @@ transform_in_single_fraction(const Expr& e,
     }
     numerator = find_numerator(numerators, denominators, denominator);
   }
+  else if (e.is_a_power()) {
+    numerators.push_back(1);
+    denominators.push_back(1);
+    Expr base_num;
+    Expr base_den;
+    numerator_denominator_factor(e.op(0), base_num, base_den);
+    Expr exp_num;
+    Expr exp_den;
+    numerator_denominator_factor(e.op(1), exp_num, exp_den);
+    denominator
+      = find_denominator_single_term(pwr(base_num/base_den, exp_num/exp_den),
+				     0, numerators, denominators);
+    numerator = numerators[0];
+  }
+  else if (e.is_a_mul())
+    for (unsigned i = e.nops(); i-- > 0; ) {
+      if (e.op(i).is_a_power()) {
+	numerators.push_back(1);
+	denominators.push_back(1);
+	Expr num;
+	Expr den;
+	numerator_denominator_factor(e.op(i), num, den);
+	denominator *= find_denominator_single_term(num/den, 0,
+						    numerators, denominators);
+	numerator = numerators[0];
+      }
+      else {
+	numerators.push_back(1);
+	denominators.push_back(1);
+	denominator *= find_denominator_single_term(e.op(i), 0,
+						    numerators, denominators);
+	numerator = numerators[0];
+      }
+    }
   else {
     numerators.push_back(1);
     denominators.push_back(1);
     denominator = find_denominator_single_term(e, 0, numerators, denominators);
     numerator = numerators[0];
   }
+}
 
-  D_MSG("");
-  D_VEC(numerators, 0 , numerators.size()-1);
-  D_VEC(denominators, 0 , denominators.size()-1);
-  D_VAR(numerator);
-  D_VAR(denominator);
+void
+numerator_denominator_purrs(const Expr& e, Expr& numerator, Expr& denominator) {
+  // The dimension of `numerators' and `denominators' is terms'number of `e'
+  // and will contain the numerator and the denominator of each term of `e'.  
+  std::vector<Expr> numerators;
+  std::vector<Expr> denominators;
+  numerator = 1;
+  denominator = 1;
+  if (e.is_a_add()) {
+    numerators.insert(numerators.begin(), e.nops(), Number(1));
+    denominators.insert(denominators.begin(), e.nops(), Number(1));
+    for (unsigned i = e.nops(); i-- > 0; ) {
+      Expr tmp_denominator;
+      numerator_denominator_factor(e.op(i), numerator, tmp_denominator);
+      numerators[i] = numerator;
+      denominators[i] = tmp_denominator;
+      Expr old_denominator = denominator;
+      denominator = take_common_factors(old_denominator, tmp_denominator);
+    }
+    numerator = find_numerator(numerators, denominators, denominator);
+  }
+  else
+    numerator_denominator_factor(e, numerator, denominator);
+}
+
+/*!
+  Let \f$ e(n) = \frac{n_1}{d_1} + \dots + \frac{n_k}{d_k} \f$.
+  This function returns \f$ n = \sum_{i = 1}^k \frac{d}{d_i} n_i \f$
+  where \f$ d \f$ is the product of common and not common factors of
+  \f$ d_1, \cdots, d_k \f$ with maximum exponent.
+*/
+Expr
+numerator(const Expr& e) {
+  Expr numerator;
+  Expr denominator;
+  numerator_denominator_purrs(e.distribute_mul_over_add(),
+			      numerator, denominator);
+  return numerator;
+}
+
+/*!
+  Let \f$ e(n) = \frac{n_1}{d_1} + \dots + \frac{n_k}{d_k} \f$.
+  This function returns the product of common and not common factors of
+  \f$ d_1, \cdots, d_k \f$ with maximum exponent.
+*/
+Expr
+denominator(const Expr& e) {
+  Expr numerator;
+  Expr denominator;
+  numerator_denominator_purrs(e.distribute_mul_over_add(),
+			      numerator, denominator);
+  return denominator;
 }
 
 /*!
@@ -394,40 +476,9 @@ Expr
 transform_in_single_fraction(const Expr& e) {
   Expr numerator;
   Expr denominator;
-  // `transform_in_single_fraction()' works well on expression
-  // where the multiplication is distributed over addition.
-  transform_in_single_fraction(e.distribute_mul_over_add(),
-			       numerator, denominator);
+  numerator_denominator_purrs(e.distribute_mul_over_add(),
+			      numerator, denominator);
   return numerator / denominator;
-}
-
-/*!
-  Let \f$ e(n) = \frac{n_1}{d_1} + \dots + \frac{n_k}{d_k} \f$.
-  This function returns \f$ n = \sum_{i = 1}^k \frac{d}{d_i} n_i \f$
-  where \f$ d \f$ is the product of common and not common factors of
-  \f$ d_1, \cdots, d_k \f$ with maximum exponent.
-*/
-Expr
-numerator(const Expr& e) {
-  Expr numerator;
-  Expr denominator;
-  transform_in_single_fraction(e.distribute_mul_over_add(),
-			       numerator, denominator);
-  return numerator;
-}
-
-/*!
-  Let \f$ e(n) = \frac{n_1}{d_1} + \dots + \frac{n_k}{d_k} \f$.
-  This function returns the product of common and not common factors of
-  \f$ d_1, \cdots, d_k \f$ with maximum exponent.
-*/
-Expr
-denominator(const Expr& e) {
-  Expr numerator;
-  Expr denominator;
-  transform_in_single_fraction(e.distribute_mul_over_add(),
-			       numerator, denominator);
-  return denominator;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver
