@@ -89,6 +89,7 @@ compute_resultant_and_its_roots(const GExpr& f, const GExpr& g,
     R = convert_to_integer_polynomial(R, h);
   
   std::vector<GNumber> potential_roots;
+  assert(is_a<numeric>(R.tcoeff(h)));
   GNumber constant_term = abs(ex_to<GiNaC::numeric>(R.tcoeff(h)));
   // If `constant_term == 0', divide `R' by `h', and repeat.
   // The constant `0' is a root of the original resultant `R'
