@@ -54,6 +54,7 @@ Number operator*(const Number& x, const Number& y);
 Number operator/(const Number& x, const Number& y);
 
 //! Assigns \f$ x + y \f$ to \f$ x \f$ and returns the result.
+/*! \relates Number */
 Number& operator+=(Number& x, const Number& y);
 
 //! Assigns \f$ x - y \f$ to \f$ x \f$ and returns the result.
@@ -119,11 +120,11 @@ Number power(const Number& x, const Number& y);
 //! returns the remainder of the division of \f$ x \f$ by \f$ y \f$.
 //! If \f$ y = 0 \f$ an exception is thrown.
 //! Returns zero otherwise.
-//! If the result is not zero, its sign is the sign of \f$ x \f$
+//! If the result is not zero, its sign is the sign of \f$ y \f$
 /*!
   \exception std::runtime_error thrown if \f$ y = 0 \f$.
 */
-Number irem(const Number& x, const Number& y);
+Number mod(const Number& x, const Number& y);
 
 class Number {
 public:
@@ -152,7 +153,7 @@ public:
   Number(long n, long d);
 
   //! Copy-constructor.
-  Number(const Number& s);
+  Number(const Number& y);
 
   //! Destructor.
   ~Number();
@@ -283,7 +284,7 @@ private:
   friend Number gcd(const Number& x, const Number& y);
   friend Number lcm(const Number& x, const Number& y);
   friend Number power(const Number& x, const Number& y);
-  friend Number irem(const Number& x, const Number& y);
+  friend Number mod(const Number& x, const Number& y);
 
 
 private:

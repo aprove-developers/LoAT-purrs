@@ -354,12 +354,12 @@ Number::denominator() const {
 }
 
 inline Number
-irem(const Number& x, const Number& y) {
+mod(const Number& x, const Number& y) {
   // FIXME: this test is due to a problem in CLN 1.1.5 and/or GiNaC 1.0.11.
   // See http://www.cs.unipr.it/pipermail/purrs-devel/2002-October/000417.html.
   if (y.is_zero())
-    throw std::runtime_error("Division by zero in PURRS::Number::irem()");
-  return GiNaC::irem(x.n, y.n);
+    throw std::runtime_error("Division by zero in PURRS::Number::mod()");
+  return GiNaC::mod(x.n, y.n);
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

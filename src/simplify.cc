@@ -428,7 +428,7 @@ partial_factor(const GNumber n, std::vector<GNumber>& bases,
   GNumber m = abs(n);
   assert(m != 0);
   int k = 0;
-  while (irem(m, 2) == 0) { // the case 2 is handled separately 
+  while (mod(m, 2) == 0) { // the case 2 is handled separately 
     m /= 2;
     ++k;
   }
@@ -438,7 +438,7 @@ partial_factor(const GNumber n, std::vector<GNumber>& bases,
   }
   for (unsigned i=3; (i < FACTOR_THRESHOLD) && (i*i <= m); i += 2) {
     k = 0;
-    while (irem(m, i) == 0) { // test for divisibility by the odd integer i
+    while (mod(m, i) == 0) { // test for divisibility by the odd integer i
       m /= i;
       ++k;
     }
