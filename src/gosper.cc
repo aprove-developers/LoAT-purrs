@@ -300,12 +300,18 @@ gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n, const Expr& x_
     if (upper == Recurrence::n)
       solution = solution.subs(Recurrence::n, Recurrence::n + 1);
     else {
-      Expr n_plus_i = Recurrence::n + wild(0);
-      assert(upper == n_plus_i);
-      Expr_List substitution;
-      upper.match(n_plus_i, substitution);
-      Expr i = get_binding(substitution, 0);
-      solution = solution.subs(Recurrence::n, Recurrence::n + i + 1);
+      assert(upper.is_a_add() && upper.nops() == 2);
+      const Expr& a = upper.op(0);
+      const Expr& b = upper.op(1);
+      assert(a == Recurrence::n || b == Recurrence::n);
+      assert(a.is_a_number() || b.is_a_number());
+      Number num;
+      if (a == Recurrence::n)
+	num = b.ex_to_number();
+      if (b == Recurrence::n)
+	num = a.ex_to_number();
+      assert(num.is_integer());
+      solution = solution.subs(Recurrence::n, Recurrence::n + num + 1);
     }
   solution = simplify_numer_denom(solution);
   return solution;
