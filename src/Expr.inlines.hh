@@ -32,6 +32,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Complex_Interval.defs.hh"
 
 #include <stdexcept>
+#include <cassert>
 
 namespace GiNaC {
 
