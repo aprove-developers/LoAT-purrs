@@ -451,16 +451,46 @@ insert_coefficients(const Expr& coeff, unsigned long index,
     coefficients[index] += coeff;
 }
 
+//! Kinds of non-linear term.
+enum Kinds_Of_Term {
+  //! \brief
+  //! It is a not legal non-linear term of the form \f$ x(x(a)) \f$ with
+  //! \f$ a \f$ containing the special symbol \f$ n \f$; 
+  NESTED,
+
+  //! \brief
+  //! It is a legal non-linear term:
+  //! -  \f$ x(n) = a x(n-k_1)^b_1 \cdots x(n-k_h)^b_h \f$,
+  //!    where \f$ k_1, \dots, k_h, b_1, \dots, b_h \f$ are positive integers
+  //!    and \f$ h > 1 \f$;
+  //! -  \f$ x(n) = x(n-k)^b \f$,
+  //!    where \f$ b \f$ is a rational number while \f$ k \f$ is a
+  //!    positive integers.
+  //! The two cases above hold also if instead of terms like `x(n-k)'
+  //! there are term like `x(n/k)'.
+  LEGAL_NON_LINEAR_TERM,
+
+  //! It is a non-linear term of the form \f$ x(n)^b \f$ (\f$ b \neq 1 \f$).
+  INDETERMINATE,
+
+  //! It is a non-linear term of the form \f$ b^x(n) \f$ (\f$ b \neq 1 \f$).
+  UNSOLVABLE,
+
+  //! It is a linear term.
+  LINEAR_TERM
+};
+
 /*!
   - If there is in \p e an \f$ x \f$ function (with the argument containing
-    \f$ n \f$) inside an other function different from \f$ x \f$ function
-    or if there is in \p e a power with an \f$ x \f$ function in the base
-    or in the exponent of it then returns \f$ 0 \f$;
+    \f$ n - d \f$, \f$ d > 1 \f$) inside an other function different from
+    \f$ x \f$ function or if there is in \p e a power with an \f$ x \f$
+    function in the base or in the exponent of it then returns
+    <CODE>LEGAL_NON_LINEAR_TERM</CODE>;
   - if there is in \p e an \f$ x \f$ function (with the argument containing
-    \f$ n \f$) inside an other \f$ x \f$ function return \f$ 1 \f$;
-  - in all the other cases returns \f$ 2 \f$.
+    \f$ n \f$) inside an other \f$ x \f$ function return <CODE>NESTED</CODE>;
+  - in all the other cases returns <CODE>LINEAR_TERM</CODE>.
 */
-unsigned int
+Kinds_Of_Term
 x_function_in_powers_or_functions(const Expr& e) {
   // There is an `x' function (with the argument containing `n') inside an
   // other function.
@@ -471,75 +501,73 @@ x_function_in_powers_or_functions(const Expr& e) {
       const Expr& operand = e.arg(i);
       if (operand.has_x_function(Recurrence::n))
 	if (e.is_the_x_function())
-	  return 1;
+	  return NESTED;
 	else
-	  return 0;
+	  return LEGAL_NON_LINEAR_TERM;
     }
   }
   // There is a power with an `x' function in the base or in the exponent.
   else if (e.is_a_power()) {
     const Expr& base = e.arg(0);
     const Expr& exponent = e.arg(1);
-    if (base.has_x_function(Recurrence::n)
-	|| exponent.has_x_function(Recurrence::n))
-      return 0;
+    if (base.has_x_function(Recurrence::n))
+      if (base == x(Recurrence::n))
+	return INDETERMINATE;
+      else
+	return LEGAL_NON_LINEAR_TERM;
+    if (exponent.has_x_function(Recurrence::n))
+      if (exponent == x(Recurrence::n))
+	return UNSOLVABLE;
+      else
+	return LEGAL_NON_LINEAR_TERM;
   }
-  return 2;
+  return LINEAR_TERM;
 }
 
-
-//! \brief
-//! Returns \f$ 1 \f$ if finds the non linear term of the form
-//! \f$ x(x(a)) \f$ with \f$ a \f$ containing the special symbol \f$ n \f$;   
-//! returns \f$ 0 \f$ if finds all the other type of non linear term;
-//! returns \f$ 2 \f$ otherwise.
-unsigned int
+Kinds_Of_Term
 find_non_linear_term(const Expr& e) {
   assert(!e.is_a_add());
   // Even if we find a `legal' (i.e. not containing two nested `x' function)
   // non-linear term we do not exit from this function because we must be
   // sure that there are not non-linear term not legal.
-  // If `non_linear_term' at the end of this function is again `2' means
+  // If `term' at the end of this function is again `LINEAR_TERM' means
   // that we have not find non-linear terms.
-  unsigned int non_linear_term = 2;
+  Kinds_Of_Term term = LINEAR_TERM;
   unsigned int num_factors = e.is_a_mul() ? e.nops() : 1;
   if (num_factors == 1) {
-    unsigned int tmp = x_function_in_powers_or_functions(e);
-    // Nested `x' function: not legal non-linear term.
-    if (tmp == 1)
-      return 1;
-    // We have found legal non-linear term.
-    else if (tmp == 0)
-      non_linear_term = 0;
+    Kinds_Of_Term tmp = x_function_in_powers_or_functions(e);
+    // We have found a nested `x' function (not legal non-linear term) or
+    // a legal non-linear term.
+    if (tmp != LINEAR_TERM)
+      return tmp;
   }
   else {
     bool found_function_x = false;
     for (unsigned int j = num_factors; j-- > 0; ) {
       const Expr& factor = e.op(j);
-      unsigned int tmp = x_function_in_powers_or_functions(factor);
+      Kinds_Of_Term tmp = x_function_in_powers_or_functions(factor);
       // Nested `x' function: not legal non-linear term.
-      if (tmp == 1)
-	return 1;
+      if (tmp == NESTED)
+	return tmp;
       // We have found legal non-linear term.
-      else if (tmp == 0)
-	non_linear_term = 0;
+      else if (tmp == LEGAL_NON_LINEAR_TERM)
+	term = tmp;
       if (factor.is_the_x_function())
 	// We have found legal non-linear term product of two ore more
 	// `x' functions.
 	if (found_function_x)
-	  non_linear_term = 0;
+	  term = LEGAL_NON_LINEAR_TERM;
 	else
 	  if (factor.arg(0).has(Recurrence::n))
 	    found_function_x = true;
     }
   }
-  return non_linear_term;
+  return term;
 }
 
 //! \brief
 //! Returns <CODE>true</CODE> if the non linear recurrence \f$ x(n) = rhs \f$
-//! is rewritable as linear recurrence \f$ x(n) = new_rhs \f$.
-//! Returns <CODE>false</CODE> otherwise.
+//! is rewritable as linear recurrence. Returns <CODE>false</CODE> otherwise.
 /*!
   Cases of rewritable non linear recurrences:
   -  \f$ x(n) = a x(n-k_1)^b_1 \cdots x(n-k_h)^b_h \f$,
@@ -551,12 +579,14 @@ find_non_linear_term(const Expr& e) {
   The two cases above hold also if instead of terms like `x(n-k)' there are
   term like `x(n/k)'.
   \p coeff_and_base_ is used in two different ways:
-  In the case of simple non-linear recurrence of the form
-  \f$ x(n) = c x(n-1)^{\alpha} \f$ it contains the pair \f$ c, \alpha \f$;
+  in the case of simple non-linear recurrence of the form
+  \f$ x(n) = c x(n-1)^{\alpha} \f$ it contains the pair \f$ c, \alpha \f$
+  (in this case \p new_rhs will be \f$ 0 \f$);
   in all the other cases the numeric value of the pair holds \f$ 0 \f$
   while the second element contains the value that will be the
   logarithm's base or the exponential's base used in the rewriting
-  of the non-linear recurrence in the correspondent linear recurrence.
+  of the non-linear recurrence in the correspondent linear recurrence
+  (which will be stored in \p new_rhs).
 */
 bool
 rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
@@ -597,25 +627,29 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
     // constants (`a != 1').
     // In this case is not necessary the `linearization' of the recurrence
     // because we already know the solution in function of `c' and `a'.
-    if (simple_cases && rhs.nops() == 2)
-      if (rhs.op(0).is_a_number() && rhs.op(1).is_a_power()
-	  && rhs.op(1).arg(0).is_the_x_function()) {
-	coeff_and_base.first = rhs.op(0).ex_to_number();
+    if (simple_cases && rhs.nops() == 2) {
+      Number coeff;
+      if (rhs.op(0).is_a_number(coeff) && rhs.op(1).is_a_power()
+	  && rhs.op(1).arg(0).is_the_x_function()
+	  && rhs.op(1).arg(0).arg(0) == Recurrence::n-1) {
+	// Store `c'.
+	coeff_and_base.first = coeff;
+	// Store `a'.
 	assert(rhs.op(1).arg(1).is_a_number());
-	if (rhs.op(1).arg(1).ex_to_number().is_negative())
-	  common_exponent *= -1;
-	coeff_and_base.second = common_exponent;
+	coeff_and_base.second = rhs.op(1).arg(1).ex_to_number();
 	return true;
       }
-      else if (rhs.op(1).is_a_number() && rhs.op(0).is_a_power()
-	       && rhs.op(0).arg(0).is_the_x_function()) {
-	coeff_and_base.first = rhs.op(1).ex_to_number();
+      else if (rhs.op(1).is_a_number(coeff) && rhs.op(0).is_a_power()
+	       && rhs.op(0).arg(0).is_the_x_function()
+	       && rhs.op(0).arg(0).arg(0) == Recurrence::n-1) {
+	// Store `c'.
+	coeff_and_base.first = coeff;
+	// Store `a'.
 	assert(rhs.op(0).arg(1).is_a_number());
-	if (rhs.op(0).arg(1).ex_to_number().is_negative())
-	  common_exponent *= -1;
-	coeff_and_base.second = common_exponent;
+	coeff_and_base.second = rhs.op(0).arg(1).ex_to_number();
 	return true;
       }
+    }
     new_rhs = 0;
     if (simple_cases)
       if (common_exponent == 1) {
@@ -661,7 +695,17 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
     Number num_exp;
     if (rhs.arg(0).is_the_x_function() && rhs.arg(1).is_a_number(num_exp)) {
       coeff_and_base.second = num_exp;
-      coeff_and_base.first = 1;
+      const Expr& argument = rhs.arg(0).arg(0);
+      Number d;
+      if (get_constant_decrement(argument, d)) {
+	if (d == 1)
+	  coeff_and_base.first = 1;
+	new_rhs = num_exp * x(Recurrence::n-d);
+      }
+      else if (get_constant_divisor(argument, d))
+	new_rhs = num_exp * x(Recurrence::n/d);   
+      else
+	return false;
       return true;
     }
     else
@@ -922,10 +966,10 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 					  int num_term,
 					  std::map<Number, Expr>&
 					  homogeneous_terms) const {
-  // `non_linear_term == 0' or `non_linear_term == 1' indicate
+  // `term == 0' or `term == 1' indicate
   // two different cases of non-linearity.
-  unsigned int non_linear_term = find_non_linear_term(addend);
-  if (non_linear_term == 0) {
+  unsigned int term = find_non_linear_term(addend);
+  if (term == LEGAL_NON_LINEAR_TERM) {
     // We will store here the right hand side of the linear recurrence
     // obtained transforming that one non-linear.
     Expr new_rhs;
@@ -943,6 +987,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
     if (rewrite_non_linear_recurrence(*this, rhs, new_rhs, coeff_and_base,
 				      auxiliary_symbols, first_valid_index)) {
       set_non_linear_finite_order();
+      D_VAR(new_rhs);
       non_linear_p = new Non_Linear_Info(Recurrence(new_rhs), coeff_and_base,
 					 auxiliary_symbols);
       set_first_valid_index(first_valid_index);
@@ -952,8 +997,13 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
       return CL_TOO_COMPLEX;
   }
   // This is the case of nested `x' function with argument containing `n'.
-  else if (non_linear_term == 1)
+  else if (term == NESTED)
     return CL_MALFORMED_RECURRENCE;
+  else if (term == INDETERMINATE)
+    return CL_INDETERMINATE_RECURRENCE;
+  else if (term == UNSOLVABLE)
+    return CL_UNSOLVABLE_RECURRENCE;
+  
 
   unsigned int num_factors = addend.is_a_mul() ? addend.nops() : 1;
   Number num;
@@ -1475,6 +1525,8 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
     case CL_HAS_NON_INTEGER_DECREMENT:
     case CL_HAS_HUGE_DECREMENT:
     case CL_MALFORMED_RECURRENCE:
+    case CL_UNSOLVABLE_RECURRENCE:
+    case CL_INDETERMINATE_RECURRENCE:
     case CL_DOMAIN_ERROR:
     case CL_TOO_COMPLEX:
       exit_anyway = true;
