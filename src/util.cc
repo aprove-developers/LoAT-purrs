@@ -464,3 +464,46 @@ PURRS::has_parameters(const Expr& e) {
       return true;
   return false;
 }
+
+/*!
+  If \p do_power is true this function substitutes every occurrence
+  of the function \f$ x() \f$ with \f$ k^{x()} \f$.
+  If \p do_power is false substitutes every occurrence
+  of the function \f$ x() \f$ with \f$ log_k x() \f$.
+*/
+Expr
+PURRS::substitute_x_function(const Expr& e, const Expr& k, bool do_power) {
+  Expr e_rewritten;
+  if (e.is_a_add()) {
+    e_rewritten = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten += substitute_x_function(e.op(i), k, do_power);
+  }
+  else if (e.is_a_mul()) {
+    e_rewritten = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten *= substitute_x_function(e.op(i), k, do_power);
+  }
+  else if (e.is_a_power())
+    return pwr(substitute_x_function(e.arg(0), k, do_power),
+ 	       substitute_x_function(e.arg(1), k, do_power));
+  else if (e.is_a_function()) {
+    if (e.is_the_x_function())
+      if (do_power)
+	return pwr(k, e);
+      else
+	return log(e) / log(k);
+    else if (e.nops() == 1)
+      return apply(e.functor(), substitute_x_function(e.arg(0), k, do_power));
+    else {
+      unsigned num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned i = 0; i < num_argument; ++i)
+	argument[i] = substitute_x_function(e.arg(i), k, do_power);
+      return apply(e.functor(), argument);
+    }
+  }
+  else
+    return e;
+  return e_rewritten;
+}

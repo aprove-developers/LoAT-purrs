@@ -95,6 +95,9 @@ largest_positive_int_zero(const Expr& e, Number& z);
 bool
 has_parameters(const Expr& e);
 
+Expr
+substitute_x_function(const Expr& e, const Expr& k, bool do_power);
+
 #if defined(NOISY) && NOISY
 #define D_MSG(s) std::cout << s << std::endl
 #define D_VAR(x) std::cout << #x " = " << x << std::endl
