@@ -249,19 +249,11 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   std::cout << "Inhomogeneous term's decomposition"
 	    << decomposition << std::endl;
 #endif
-  // TEMPORARY until that is not fixed the problem
-  // 'what is a polynomial in x?'
-  clear(occurrences);
-  if (e.find(x_i, occurrences))
-    if (occurrences.nops() != 0)
-      throw ("PURRS error: this case (initials conditions in "
-	     "homogeneous term) is temporary suspended. ");
-
   // Creates the vector of initials conditions.
   std::vector<GExpr> initials_conditions(order);
   for (int i = 0; i < order; ++i)
     initials_conditions[i] = x(i);
-
+  
   switch (order) {
   case 1:
     {
@@ -343,6 +335,7 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
     // In this case there are not any exponentials.
     GExpr p_poly; 
     GExpr p_no_poly;
+    // In 'p' there are not nested powers.
     assign_poly_part_and_no_poly_part(p, n, p_poly, p_no_poly);
     return GMatrix (3, 1, lst(1, p_poly, p_no_poly));
   }
@@ -367,6 +360,7 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
 	coeff = coeff.subs(wild(1)*pow(wild(2), n) == wild(1));
 	GExpr coeff_poly;
 	GExpr coeff_no_poly;
+	// In 'coeff' there are not nested powers.
 	assign_poly_part_and_no_poly_part(coeff, n, coeff_poly, coeff_no_poly);
 	row_coeff_poly.append(coeff_poly);
 	row_coeff_no_poly.append(coeff_no_poly);
