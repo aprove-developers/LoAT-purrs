@@ -64,8 +64,8 @@ using std::string;
 using namespace Parma_Recurrence_Relation_Solver;
 using namespace cgicc;
 
-const int MAX_SECONDS_OF_CPU_TIME = 2;
-const int MAX_VIRTUAL_MEMORY = 8*1024*1024;
+const int MAX_SECONDS_OF_CPU_TIME = 5;
+const int MAX_VIRTUAL_MEMORY = 16*1024*1024;
 
 static void
 set_alarm_on_cpu_time(unsigned int seconds, void (*handler)(int)) {
@@ -257,9 +257,17 @@ main() try {
 
   Expr solution;
   try {
-    if (!recurrence.solve(n))
+    switch (recurrence.solve(n)) {
+    case Recurrence::OK:
       solution = recurrence.exact_solution(n);
+      break;
+    case Recurrence::UNSOLVABLE_RECURRENCE:
+      error("this recurrence is unsolvable");
+      break;
+    case Recurrence::TOO_COMPLEX:
+    default:
       error("sorry, this is too difficult");
+    }
   }
   catch (const char* s) {
     error(s);
