@@ -4,9 +4,9 @@ autoconf 2.52g
 automake 
 gcc 3.0.3
 gmp 4.0.1      (configure with -fexceptions *)
-cln 1.1.4
+cln 1.1.4      (manually copy cln.m4 **)
 ginac 1.0.5
-fi_lib++ 2.0   (apply patches and be careful about how you build it **)
+fi_lib++ 2.0   (apply patches and be careful about how you build it ***)
 
 
 (*)
@@ -14,8 +14,13 @@ Your configure command should be something like
 
 CPPFLAGS=-fexceptions my/path/to/gmp-4.0.1/configure --prefix=/usr/local
 
-
 (**)
+If you build cln out of the source tree, then before installing
+you will need to manually copy the file cln.m4 into your build-dir.
+Namely,
+  cp my/path/to/cln/sources/cln.m4 my/path/to/build/dir
+
+(***)
 cd my/path/to/interval/
 patch -p1 <my/path/to/purrs/infrastructure/patch_filib++-2.0
 ln -s makefiles/Makefile.gcc Makefile
