@@ -1,23 +1,26 @@
 % Tests for Zeilberger Algorithm.
-% Lines beginning with % are comments and will be ignored.
-% Every line contains the summand that will be summed for all integer
-% values of k.
 %
-% Expected results are written, for the time being, as comments
-% just after each summand.
+% Lines beginning with % are comments and will be ignored unless they follow
+% a summand.
+%
+% Every line contains the summand (hypergeometric term in both n and k) that
+% will be summed for all integer values of k.
+% The immediately following line must contain the expected result.
 %
 % Basic example.
 binom(n,k)
-% Sum: 2^n
+2^n
 %
 % Classic Zeilberger example (A=B, 6.4.1)
 binom(n,k)^2
-% Sum: binom(2*n, n)
+(2*n)!/(n!)^2
+% (That actually is binom(2*n, n) ).
 %
-% This one gives a completely incorrect result. (A=B, 6.4.2)
+% A=B, 6.4.2
+% This one in known to give a completely incorrect result.
 (-1)^k*binom(n,k)*binom(3+k,k)
-% Sum: 3/(3+n)
+3/(3+n)
 %
 % Dixon sum, 6.4.4. It works.
 (-1)^k*binom(2*n,k)^3
-% Sum: (-1)^n*((3*n)!)/(n!)
+(-1)^n*((3*n)!)/(n!)^3
