@@ -1,0 +1,95 @@
+#!/bin/bash
+# This script compiles and install the PURRS dependencies.
+# While it is meant to test whether PURRS and its dependencies compile 
+# with the latest GCC snapshot, it can be used to set up the PURRS 
+# infrastructure.
+# Known limitations:
+# * Almost no error check
+# * Some libraries require packaging changes
+# In order to run the script you need:
+# - A GCC snapshot properly configured 
+#   say, --prefix=/usr/local/gcctest --with-local-prefix=/usr/local/gcctest
+# - A package repository with all the PURRS dependencies in bzip2 fornat
+# - Superuser privileges (or sudo access to make, optionally without password)
+
+# General Options
+#
+# Directory containing tarballs.
+REPOSITORY="$HOME/purrs-infrastructure"
+# Base path to the GCC you want to use.
+GCC_BASE="/usr"
+# Set to yes if you also want to download/compile/check PURRS.
+export TEST_PURRS="yes"
+
+CONFIGURE_DEFAULT_OPTIONS="--prefix=$GCC_BASE"
+export LD_LIBRARY_PATH=$GCC_BASE:$GCC_BASE/lib:$LD_LIBRARY_PATH
+export PATH=$GCC_BASE/bin:$PATH
+
+# Log file.
+TODAY=`date +%Y-%m-%d`
+INST_LOG=/tmp/purrs_dep_inst_$TODAY.log
+
+# Library versions.
+# Assumption: LIB-VER.tar.bz2 expands to LIB-VER/
+# Repackage the few libraries that don't (or are not in .bz2 format).
+# Currently NTL and GIAC need to be repackaged as they are distributed as .tar.gz.
+GMP=gmp-4.1.4
+CLN=cln-1.1.8
+GINAC=GiNaC-1.2.4
+NTL=ntl-5.3.2
+GIAC=giac-0.4.0-ap
+CGICC=cgicc-3.2.3
+
+# Some libraries have naive configuration conventions. Insert here
+# any commands to be executed before running configure.
+# Configure will be run as ./configure in this case.
+PRE_CONF_NTL="cd ../$NTL/src"
+PRE_CONF_GIAC="cd ../$GIAC"
+
+# Some specific configure options for libraries that don't use defaults.
+OPT_GMP="$CONFIGURE_DEFAULT_OPTIONS --enable-cxx"
+OPT_NTL="NTL_GMP_LIP=on NTL_STD_CXX=on GMP_PREFIX=$GCC_BASE PREFIX=$GCC_BASE"
+OPT_CGICC="$CONFIGURE_DEFAULT_OPTIONS --enable-namespaces"
+OPT_GIAC="$CONFIGURE_DEFAULT_OPTIONS --disable-debug --disable-gc --without-x --disable-gui --disable-pari --disable-gsl --disable-fltk"
+
+#for LIB_SHORT_NAME in GMP CLN GINAC NTL GIAC CGICC ; do
+for LIB_SHORT_NAME in ; do
+  LIBNAME=${!LIB_SHORT_NAME}
+  OPT_PARAM_NAME="OPT_${LIB_SHORT_NAME}"
+  OPT_PARAM=${!OPT_PARAM_NAME}
+  # Revert to default if no specific options were set.
+  if test ${#OPT_PARAM} == 0; 
+    then OPT_PARAM=$CONFIGURE_DEFAULT_OPTIONS 
+  fi
+  PRE_CONF_NAME="PRE_CONF_${LIB_SHORT_NAME}"
+  PRE_CONF="${!PRE_CONF_NAME}"
+  # If no specific pre-configure options were set, use standard path.
+  if test ${#PRE_CONF} == 0; 
+    then CONF_PATH="../$LIBNAME" 
+    else CONF_PATH="."
+  fi
+  echo "`date +%Y-%m-%d_%H:%M:%S` Installing $LIB_SHORT_NAME as $LIBNAME" >> $INST_LOG;
+  cd $REPOSITORY; 
+  tar jxvf $LIBNAME.tar.bz2;
+  mkdir obj$LIBNAME;
+  cd obj$LIBNAME;
+  $PRE_CONF && $CONF_PATH/configure $OPT_PARAM && make && make install && echo "$LIB_SHORT_NAME installed successfully.";
+  echo "`date +%Y-%m-%d_%H:%M:%S` Installed $LIB_SHORT_NAME as $LIBNAME" >> $INST_LOG;
+done
+
+# Test with a current PURRS snapshot.
+if test $TEST_PURRS == "yes";
+  then
+  cd $REPOSITORY
+  mkdir $TODAY
+  cd $TODAY
+  cvs -d :pserver:anoncvs@cvs.cs.unipr.it:/cvs/purrs -z 9 checkout -P purrs
+  cd purrs
+  echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+  echo "PATH: $PATH"
+  autoreconf
+  cd ..
+  mkdir objpurrs$TODAY
+  cd objpurrs$TODAY
+  ../purrs/configure $CONFIGURE_DEFAULT_OPTIONS --with-cln-prefix=$GCC_BASE && make && make check
+fi
