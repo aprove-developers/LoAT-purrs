@@ -27,6 +27,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "rr_solver.hh"
 
+#include <iostream>
+
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
@@ -77,16 +79,15 @@ Recurrence::replace_recurrence(unsigned k, const Expr& e) {
 }
 
 inline bool
-Recurrence::solve() const {
-  Symbol n("n");
+Recurrence::solve(const Symbol& n) const {
   if (!solved && solve_try_hard(recurrence_rhs, n, solution) == OK)
     solved = true;
   return solved;
 }
 
 inline Expr
-Recurrence::exact_solution() const {
-  if (solved || solve())
+Recurrence::exact_solution(const Symbol& n) const {
+  if (solved || solve(n))
     return solution;
   else
     // Well, if the client insists...
@@ -94,8 +95,8 @@ Recurrence::exact_solution() const {
 }
 
 inline bool
-Recurrence::verify_solution() const {
-  if (solved || solve()) {
+Recurrence::verify_solution(const Symbol& n) const {
+  if (solved || solve(n)) {
     // Verify the solution.
     return false;
   }

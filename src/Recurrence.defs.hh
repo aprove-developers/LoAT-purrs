@@ -63,9 +63,9 @@ public:
   //! 
   Symbol insert_auxiliary_equation(const Expr& e);
 
-  bool solve() const;
-  Expr exact_solution() const;
-  bool verify_solution() const;
+  bool solve(const Symbol& n) const;
+  Expr exact_solution(const Symbol& n) const;
+  bool verify_solution(const Symbol& n) const;
 
 private:
   //! Holds the right-hand side of the global recurrence to be solved.
