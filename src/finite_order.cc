@@ -699,33 +699,53 @@ PURRS::come_back_to_original_variable(const Expr& e, const Symbol& r,
 //! Returns the expanded solution of the recurrence \p rec
 //! to which we have applied the order reduction.
 /*!
-  The expansion of the solution is obtained removing the use of the
-  function \f$ mod() \f$ from the solution.
+  There are two different steps:
+  1)  the problem of expressing the part depending on the initial conditions;
+  2)  to give an expression for \f$ r = n \bmod k \f$.
+  
+  Let \f$ \omega_h \f$, for \f$h, 1 \dots, k \f$ the $k$-th roots of unity.
+  1) Let
+     \f[
+       \eta_{r,k}(n) \defeq \frac 1k \sum_{h=1}^k \omega_h^{n-r},
+     \f]
+     so that $\eta_{r,k}(n) = 1$ if $n\equiv r \bmod k$, and is~$0$
+     otherwise.
+     Therefore we have
+     \f[
+       x_r = \sum_{s=0}^{k-1} \eta_{s,k}(n) x_s.
+     \f]
+
+  2) \f[
+       n \bmod k
+       =
+       \frac12 (k-1) + \sum_{h=2}^k \frac{\omega_h}{1-\omega_h} \, \omega_h^n.
+     \f]
 */
 PURRS::Expr
 PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
 					   unsigned gcd_among_decrements) {
-  // We first rewrite the part of the solution depending on the initial
-  // conditions.
-  Expr part_depending_on_ic = 0;
-  Expr theta = 2*Constant::Pi/gcd_among_decrements;
-  for (unsigned i = gcd_among_decrements; i-- > 0; ) {
-    Expr tmp = 0;
-    for (unsigned j = gcd_among_decrements+1; j-- > 1; ) {	  
-      Expr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
-      tmp += pwr(root_of_unity, Recurrence::n - i);
-    }
-    tmp *= x(i)/gcd_among_decrements;
-    part_depending_on_ic += tmp;
+  // `term_with_ic' will contain the term of the solution relative to
+  // the initial condition; `remainder_solution' will contain the
+  // resto of the solution.
+  Expr term_with_ic = 0;
+  Expr remainder_solution = 0;
+  if (rec.exact_solution_.expression().is_a_add())
+    for (unsigned i = rec.exact_solution_.expression().nops(); i-- > 0; )
+      if (!rec.exact_solution_.expression().op(i).has_x_function(true))
+	remainder_solution += rec.exact_solution_.expression().op(i);
+      else
+	term_with_ic += rec.exact_solution_.expression().op(i);
+  else {
+    assert(rec.exact_solution_.expression().is_the_x_function());
+    term_with_ic = rec.exact_solution_.expression();
   }
-  part_depending_on_ic = simplify_ex_for_input(part_depending_on_ic, true);
-  D_VAR(part_depending_on_ic);
-  
-  // Now we rewrite the part of the solution not depending on the initial
-  // conditions.
+
+  // Compute `to_sub_in_solution': it is the value to substitute to the
+  // function `mod()'.
   Expr to_sub_in_solution = 0;
-  for (unsigned j = gcd_among_decrements+1; j-- > 1; ) {
-    Expr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
+  const Expr& theta = 2*Constant::Pi/gcd_among_decrements;
+  for (unsigned j = 1; j <= gcd_among_decrements; ++j) {
+    const Expr& root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
     // Skip the contribution of the root of unity equal to `1'.
     if (root_of_unity != 1)
       to_sub_in_solution += root_of_unity * pwr(1 - root_of_unity, -1)
@@ -733,18 +753,38 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
   }
   // Add the contribution of the root of unity equal to `1'.
   to_sub_in_solution += Number(1, 2) * (gcd_among_decrements - 1);
-  Expr remainder_solution = 0;
-  if (rec.exact_solution_.expression().is_a_add()) {
-    for (unsigned i = rec.exact_solution_.expression().nops(); i-- > 0; )
-      if (!rec.exact_solution_.expression().op(i).has_x_function(true))
-	remainder_solution += rec.exact_solution_.expression().op(i);
+
+  // 1. rewrite the part of the solution depending on the
+  // initial conditions.
+  for (unsigned h = rec.order()/gcd_among_decrements; h-- > 0; ) {
+    Expr initial_condition = 0;
+    for (unsigned i = 0; i < gcd_among_decrements; ++i) {
+      Expr tmp = 0;
+      for (unsigned j = 1; j <= gcd_among_decrements; ++j) {	  
+	const Expr& root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
+	tmp += pwr(root_of_unity, Recurrence::n - (i + h));
+      }
+      D_VAR(i + h * gcd_among_decrements);
+      initial_condition += tmp * x(i + h * gcd_among_decrements)
+	/ gcd_among_decrements;
+    }
+    D_VAR(x(mod(n, gcd_among_decrements) + h * gcd_among_decrements));
+    D_VAR(initial_condition);
+    term_with_ic = term_with_ic.substitute(x(mod(n, gcd_among_decrements)
+					     + h * gcd_among_decrements),
+					   initial_condition);
   }
+  term_with_ic = term_with_ic.substitute(mod(n, gcd_among_decrements),
+					 to_sub_in_solution);
+
+  // 2. rewrite the part of the solution not depending on the
+  // initial conditions.
   remainder_solution
     = remainder_solution.substitute(mod(n, gcd_among_decrements),
 				    to_sub_in_solution);
   D_VAR(remainder_solution);
-  return simplify_ex_for_output(part_depending_on_ic + remainder_solution,
-				false);
+  
+  return simplify_ex_for_output(term_with_ic + remainder_solution, false);
 }
 
 /*!
