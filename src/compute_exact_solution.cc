@@ -376,11 +376,11 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
   if (all_distinct) {
     const Expr& root_1 = roots[0].value();
     const Expr& root_2 = roots[1].value();
-#if 0
+#if 1
     // FIXME: maybe it is possible to simplify `diff_roots' using
     // the actual values of the roots of the characteristic equation.
     Expr diff_roots = root_1 - root_2;
-    diff_roots = blackboard.rewrite(diff_roots);
+    diff_roots = blackboard.rewrite(diff_roots).expand();
     D_VAR(diff_roots);
 #else
     const Expr& diff_roots = root_1 - root_2;
@@ -399,12 +399,16 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
       for (unsigned int j = symbolic_sum_distinct.size(); j-- > 0; ) {
 	symbolic_sum_no_distinct[j] *= lambda / diff_roots;
 	symbolic_sum_distinct[j] *= lambda / diff_roots;
-#if 0
-	// Substitute all the occurrences of `(lambda-alpha)^(-k)'
-	// with `((lambda+alpha-c)/(-alpha^2+alpha*c+d))^k',
-	// where `c' is the coefficient of `x(n-1)',
-	// `d' is the coefficient of `x(n-2)', `k' is a positive integer.
-	if (!vector_not_all_zero(symbolic_sum_no_distinct)) {
+      }
+
+#if 1
+      // Substitute all the occurrences of `(lambda-alpha)^(-k)'
+      // with `((lambda+alpha-c)/(-alpha^2+alpha*c+d))^k',
+      // where `c' is the coefficient of `x(n-1)',
+      // `d' is the coefficient of `x(n-2)', `k' is a positive integer.
+      if (!vector_not_all_zero(symbolic_sum_no_distinct))
+	for (unsigned int j = symbolic_sum_distinct.size(); j-- > 0; ) {
+	  //for (unsigned int j = 0; j < symbolic_sum_distinct.size(); ++j) {
 	  const Expr& subs_to_diff = (lambda + alpha - coefficients[1])
 	    *pwr(-pwr(alpha, 2) + alpha*coefficients[1] + coefficients[2], -1);
 	  symbolic_sum_distinct[j]
@@ -424,30 +428,43 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
 	  //           = ... = c^2*lambda + c*d + d*lambda'
 	  // and so forth. In this way we no longer have powers  (with
 	  // positive integer exponent) of lambda.
-	  // First possibility.
-	  const Expr& expr_to_subs = coefficients[1]*lambda + coefficients[2];
-	  for (unsigned int i = max_exponent; i > 1; --i)
-	    symbolic_sum_distinct[j]
-	      = symbolic_sum_distinct[j].substitute(pwr(lambda, i),
-						    pwr(lambda, i - 2)
-						    * expr_to_subs).expand();
-// 	  // Second possibility.
-// 	  std::vector<Expr> powers_of_lambda(max_exponent+1);
-// 	  powers_of_lambda[2] = coefficients[1]*lambda + coefficients[2];
-// 	  for (unsigned i = 3; i <= max_exponent; ++i) {
-// 	    powers_of_lambda[i] = (powers_of_lambda[i-1]*lambda).expand();
-// 	    powers_of_lambda[i]
-// 	      = powers_of_lambda[i].substitute(pwr(lambda,2),
-// 					       powers_of_lambda[2]).expand();
-// 	  }
-// 	  for (unsigned i = 2; i <= max_exponent; ++i)
+
+// 	  // First possibility.
+// 	  const Expr& expr_to_subs = coefficients[1]*lambda + coefficients[2];
+// 	  for (unsigned int i = max_exponent; i > 1; --i)
 // 	    symbolic_sum_distinct[j]
 // 	      = symbolic_sum_distinct[j].substitute(pwr(lambda, i),
-// 						    powers_of_lambda[i]);
+// 						    pwr(lambda, i - 2)
+// 						    * expr_to_subs).expand();
+
+	  // Second possibility.
+	  std::vector<Expr> powers_of_lambda(max_exponent+1);
+	  powers_of_lambda[2] = coefficients[1]*lambda + coefficients[2];
+	  for (unsigned i = 3; i <= max_exponent; ++i) {
+	    powers_of_lambda[i] = (powers_of_lambda[i-1]*lambda).expand();
+	    powers_of_lambda[i]
+	      = powers_of_lambda[i].substitute(pwr(lambda,2),
+					       powers_of_lambda[2]).expand();
+	  }
+	  for (unsigned i = 2; i <= max_exponent; ++i)
+	    symbolic_sum_distinct[j]
+	      = symbolic_sum_distinct[j].substitute(pwr(lambda, i),
+						    powers_of_lambda[i]);
+
+// 	  // Third possibility.
+// 	  for (unsigned int i = max_exponent; i > 1; --i) {
+// 	    D_MSG("");
+// 	    D_VAR(symbolic_sum_distinct[j]);
+// 	    const Expr& tmp = coefficients[1]*pwr(lambda, i-1)
+// 	      + coefficients[2]*pwr(lambda, i-2);
+// 	    symbolic_sum_distinct[j]
+// 	      = symbolic_sum_distinct[j].substitute(pwr(lambda, i), tmp);
+// 	    D_MSG("");
+// 	    D_VAR(symbolic_sum_distinct[j]);
+// 	  }
 #endif
 	}
 #endif
-      }
       D_VEC(symbolic_sum_distinct, 0, symbolic_sum_distinct.size()-1);
       D_VEC(symbolic_sum_no_distinct, 0, symbolic_sum_no_distinct.size()-1);
       // Substitutes to the sums in the vector `symbolic_sum_distinct'
