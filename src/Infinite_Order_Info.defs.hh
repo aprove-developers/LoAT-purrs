@@ -29,6 +29,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Infinite_Order_Info.types.hh"
 #include "globals.hh"
 #include "Expr.defs.hh"
+#include "Recurrence.defs.hh"
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -36,17 +37,10 @@ class Infinite_Order_Info {
 public:
   //! \brief
   //! Constructor: sets
-  //! \f$ rhs_transformed_in_first_order_ = new_rhs \f$,
-  //! \f$ coeff_first_order_ = coeff_first_order \f$;
-  //! \f$ inhomog_first_order_ = inhomog_first_order \f$;
-  //! \f$ weight_inf_order_ = weight_inf_order \f$,
-  //! \f$ lower_bound_sum_ = lower_bound_sum,
-  //! \f$ upper_bound_sum_ = upper_bound_sum.
-  Infinite_Order_Info(const Expr& new_rhs, const Expr& coeff_first_order,
-		      const Expr& inhomog_first_order,
-		      const Expr& weight_inf_order,
-		      unsigned int lower_bound_sum,
-		      const Expr& upper_bound_sum);
+  //! \f$ associated_first_order_rec_ = associated_first_order_rec \f$,
+  //! \f$ infinite_order_weight_ = infinite_order_weight \f$.
+  Infinite_Order_Info(const Recurrence& associated_first_order_rec,
+		      const Expr& infinite_order_weight);
 
   //! Copy-constructor.
   Infinite_Order_Info(const Infinite_Order_Info& y);
@@ -57,38 +51,17 @@ public:
   //! Assignment operator.
   Infinite_Order_Info& operator=(const Infinite_Order_Info& y);
 
-  //! Returns <CODE>rhs_transformed_in_first_order_</CODE>.
-  const Expr& rhs_transformed_in_first_order() const;
+  //! Returns <CODE>associated_first_order_rec_</CODE>.
+  const Recurrence& associated_first_order_rec() const;
 
-  //! Returns <CODE>rhs_transformed_in_first_order_</CODE>.
-  Expr& rhs_transformed_in_first_order();
+  //! Returns <CODE>associated_first_order_rec_</CODE>.
+  Recurrence& associated_first_order_rec();
 
-  //! Returns <CODE>coeff_first_order_</CODE>.
-  const Expr& coeff_first_order() const;
+  //! Returns <CODE>infinite_order_weight_</CODE>.
+  const Expr& infinite_order_weight() const;
 
-  //! Returns <CODE>coeff_first_order_</CODE>.
-  Expr& coeff_first_order();
-
-  //! Returns <CODE>inhomog_first_order_</CODE>.
-  const Expr& inhomog_first_order() const;
-
-  //! Returns <CODE>inhomog_first_order_</CODE>.
-  Expr& inhomog_first_order();
-
-  //! Returns <CODE>weight_inf_order_</CODE>.
-  const Expr& weight_inf_order() const;
-
-  //! Returns <CODE>weight_inf_order_</CODE>.
-  Expr& weight_inf_order();
-
-  //! Returns <CODE>lower_bound_sum_</CODE>.
-  unsigned int lower_bound_sum() const;
-
-  //! Returns <CODE>upper_bound_sum_</CODE>.
-  const Expr& upper_bound_sum() const;
-
-  //! Returns <CODE>upper_bound_sum_</CODE>.
-  Expr& upper_bound_sum();
+  //! Returns <CODE>infinite_order_weight_</CODE>.
+  Expr& infinite_order_weight();
 
   //! Returns <CODE>first_valid_index_inf_order_</CODE>.
   index_type first_valid_index_inf_order() const;
@@ -98,53 +71,19 @@ public:
 
 private:
   //! \brief
-  //! Contains the right hand side of the recurrence obtained
-  //! transforming a infinite order recurrence of the form
-  //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
-  //! \f]
-  Expr rhs_transformed_in_first_order_;
-
-  //! \brief
-  //! If the infinite order recurrence is of the shape
-  //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
-  //! \f]
-  //! then it is transformable in a first order linear recurrence.
-  //! This data contains the coefficient of the new recurrence.
-  Expr coeff_first_order_;
-
-  //! \brief
-  //! If the infinite order recurrence is of the shape
-  //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
-  //! \f]
-  //! then it is transformable in a first order linear recurrence.
-  //! This data contains the non homogeneous part of the new recurrence.
-  Expr inhomog_first_order_;
+  //! In the case which the system is able to rewrite the infinite order
+  //! recurrence \p *this in a first order recurrence, this method stores
+  //! the first order recurrence computed (in order to know the cases of
+  //! rewritable infinite order recurrences see the function
+  //! <CODE>rewrite_infinite_order_recurrence()</CODE>).
+  Recurrence associated_first_order_rec_;
 
   //! \brief
   //! Contains the factor \f$ f(n) \f$ of the infinite order recurrence
   //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
+  //!   x(n) = f(n) \sum_{k=n_0}^{u(n)} x(k) + g(n).
   //! \f]
-  Expr weight_inf_order_;
-
-  //! \brief
-  //! Stores the lower bound \f$ n_o \f$ of the object sum of the
-  //! infinite order recurrence
-  //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
-  //! \f].
-  unsigned int lower_bound_sum_;
-
-  //! \brief
-  //! Stores the upper bound \f$ u(n) \f$ of the object sum of the
-  //! infinite order recurrence
-  //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
-  //! \f].
-  Expr upper_bound_sum_;
+  Expr infinite_order_weight_;
 
   //! \brief
   //! Stores the least non-negative integer \f$ j \f$ such that

@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Recurrence_inlines_hh
 
 #include "Non_Linear_Info.defs.hh"
+#include "Infinite_Order_Info.defs.hh"
 
 #include <iostream>
 #include <utility>
@@ -426,81 +427,30 @@ Recurrence::auxiliary_symbols() {
   return non_linear_p -> auxiliary_symbols();
 }
 
-inline const Expr&
-Recurrence::rhs_transformed_in_first_order() const {
+inline const Recurrence&
+Recurrence::associated_first_order_rec() const {
   assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  return infinite_order_p -> rhs_transformed_in_first_order();
+  return infinite_order_p -> associated_first_order_rec();
 }
 
-inline Expr&
-Recurrence::rhs_transformed_in_first_order() {
+inline Recurrence&
+Recurrence::associated_first_order_rec() {
   assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  return infinite_order_p -> rhs_transformed_in_first_order();
-}
-
-inline const Expr&
-Recurrence::coeff_first_order() const {
-  assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  return infinite_order_p -> coeff_first_order();
-}
-
-inline Expr&
-Recurrence::coeff_first_order() {
-  assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  return infinite_order_p -> coeff_first_order();
+  return infinite_order_p -> associated_first_order_rec();
 }
 
 inline const Expr&
-Recurrence::inhomog_first_order() const {
+Recurrence::infinite_order_weight() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> inhomog_first_order();
+  return infinite_order_p -> infinite_order_weight();
 }
 
 inline Expr&
-Recurrence::inhomog_first_order() {
+Recurrence::infinite_order_weight() {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> inhomog_first_order();
-}
-
-inline const Expr&
-Recurrence::weight_inf_order() const {
-  assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  return infinite_order_p -> weight_inf_order();
-}
-
-inline Expr&
-Recurrence::weight_inf_order() {
-  assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  return infinite_order_p -> weight_inf_order();
-}
-
-inline unsigned int
-Recurrence::lower_bound_sum() const {
-  assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  return infinite_order_p -> lower_bound_sum();
-}
-
-inline const Expr&
-Recurrence::upper_bound_sum() const {
-  assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  return infinite_order_p -> upper_bound_sum();
-}
-
-inline Expr&
-Recurrence::upper_bound_sum() {
-  assert(is_linear_infinite_order());
-  assert(infinite_order_p);
-  return infinite_order_p -> upper_bound_sum();
+  return infinite_order_p -> infinite_order_weight();
 }
 
 inline index_type

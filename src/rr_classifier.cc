@@ -665,47 +665,140 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 }
 
 //! \brief
-//! Returns <CODE>true</CODE> if the linear infinite order recurrence
-//! with the right hand side \p rhs belongs to the class that the system
-//! is able to compute; returns <CODE>false</CODE> otherwise.
+//! Returns <CODE>true</CODE> if the linear infinite order recurrence,
+//! whose right-hand-side is stored in \p rhs,
+//! belongs to the class the system is able to compute, i.e. is in
+//! \ref normal_form "normal form" or is possible to rewrite it in
+//! normal form \f[ x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n) \f];
+//! returns <CODE>false</CODE> otherwise.
 /*!
+  \param rhs                  the right hand side of a infinite order
+                              recurrence.
+  \param term_sum             the term of \p rhs containing the sum.  
+  \param weight               the expression multiplied for the sum
+                              (\f$ f(n) \f$).
+  \param inhomogeneous        the inhomogeneous term of the infinite
+                              order recurrence (\f$ g(n) \f$).
+  \param rhs_first_order      the right hand side of the first order
+                              recurrence associated to the infinite
+			      order recurrence.
+  \param first_valid_index    the least non-negative integer \f$ j \f$
+                              such that the infinite order recurrence
+			      is well-defined for \f$ n \geq j \f$.
+
+  \return                     <CODE>true</CODE> if the infinite order
+                              recurrence is in <EM>normal form</EM> or
+			      is possible to rewrite it in normal form
+			      <EM>normal form</EM>; returns
+			      <CODE>false</CODE> otherwise.
+
   The system is able to compute linear infinite order recurrence
-  of the form
+  in normal form
   \f[
-    T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n)
+    x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n).
   \f]
-  transforming it in the linear recurrence of first order
+  This is possible using that, for \f$ n > 1 \f$, the sequence
+  \f$ x \f$ also satisfies the linear recurrence of first order
   \f[
-    T(n) = \frac{f(n)}{f(n-1)} (1+f(n-1)) T(n-1)
+    x(n) = \frac{f(n)}{f(n-1)} (1+f(n-1)) x(n-1)
       + f(n) \left( \frac{g(n)}{f(n)} - \frac{g(n-1)}{f(n-1)} \right).
   \f]
-  If the recurrence stored in \p rhs is of that form then the function
-  returns <CODE>true</CODE> and stores the coefficient of the new recurrence
-  in \p coefficient and the non-homogeneous part \f$ g(n) \f$ in
-  \p inhomogeneous.
-  
-  If the recurrence stored in \p rhs not is of the aforesaid form
-  then the function returns <CODE>false</CODE>.
+  For \f$ n = 1 \f$ it must consider \f$ x(1) = f(1) x(0) + g(1) \f$.
+
+  Moreover, this function transform, when possible, infinite order
+  recurrence in normal form.
+  This transformation is performed in the following way:
+  - If the upper limit of the sum is \f$ n \f$ and \f$ f(n) \neq 1 \f$
+    then, independently from the lower limit of the sum
+    \f$ n_0 \in \Nset \f$, the recurrence
+    \f[
+      x(n) = f(n) \sum_{k=n_0}^n x(k) + g(n),
+    \f]
+    where \f$ f(n) \neq 1 \f$, is transformed in
+    \f[
+      x(n) = \frac{f(n)}{1-f(n)} \sum_{k=n_0}^{n-1} x(k) + \frac{g(n)}{1-f(n)}.
+    \f]
+  - If the upper limit of the sum is \f$ n \f$ and \f$ f(n) = 1 \f$
+    then the previous method in not applicable.
+    A method is pull outside from the sum the terms valued in \f$ n \f$
+    and in \f$ n -1 \f$:
+    \f[
+      x(n) = \sum_{k=n_0}^{n-2} x(k) + x(n-1) + x(n) + g(n).
+    \f]
+    Hence, perform the shift \f$ n = n+1 \f$ so that
+    \f[
+      x(n) = -\sum_{k=n_0+1}^{n-1} x(k) - g(n+1).
+    \f]
+  - If the lower bound of the sum \f$ n_0 \f$ is greater than \f$ 0 \f$
+    the recurrence
+    \f[
+      x(n) = f(n) \sum_{k=n_0}^{n-1} x(k) + g(n),
+    \f]
+    is transformed in
+    \f[
+      x(n) = f(n+n_0) \sum_{k=0}^{n-1} x(k) + g(n+n_0).
+    \f]
+
+  In conclusion the algorithm for classifying and for finding the solution
+  of the infinite order recurrence previews the following steps:
+  - eventual rewriting in the normal form of the recurrence;
+  - computation of the right hand side of the associated first order
+    recurrence;
+  - shift forward of the first order recurence: \f$ n = n + 1 \f$;
+  - computation of the solution of the first order recurrence;
+  - shift backward of the solution: \f$ n = n - 1 \f$;
+  - substitution of the initail condition \f$ x(1) = f(1) x(0) + g(1) \f$.
 */
 bool
-known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
-			      const Expr& weight,
-			      Expr& coeff_first_order,
-			      Expr& inhomog_first_order,
-			      index_type& first_valid_index) {
-  const Expr& inhomog_infinite_order_rec = rhs - weight * term_sum;
-  const Expr& upper = term_sum.arg(2);
+rewrite_infinite_order_recurrence(const Expr& rhs, const Expr& term_sum,
+				  Expr& weight, Expr& inhomogeneous,
+				  Expr& rhs_first_order,
+				  index_type& first_valid_index,
+				  bool& rewritten) {
+  Expr upper = term_sum.arg(2);
+  int lower = term_sum.arg(1).ex_to_number().to_int();
+  inhomogeneous = rhs - weight * term_sum;
 
-  // If `f(n)' or `g(n)' contain other functions `x()' with `n' in the
-  // argument or contain the parameters or the upper bound of the sum
-  // is different from `n' and `n-1', then the recurrence is too
-  // complex for the system.
+  // The recurrence is too complex for the system in the following cases:
+  // - if the weight `f(n)' or the inhomogeneous term `g(n)' contain
+  //   other functions `x()' with `n' in the argument;
+  // - if the weight `f(n)' or the inhomogeneous term `g(n)' contain
+  //   the parameters;
+  // - the upper bound of the sum is different from `n' and `n-1'.
   if (weight.has_x_function(Recurrence::n)
-      || inhomog_infinite_order_rec.has_x_function(Recurrence::n)
+      || inhomogeneous.has_x_function(Recurrence::n)
       || has_parameters(weight)
       || (upper != Recurrence::n && upper != Recurrence::n-1))
     return false;
 
+  // Find the weight `f(n)' and the inhomogeneous term of the
+  // recurrence transformed so that to have the upper limit of the
+  // sum equal to `n'.
+  if (upper == Recurrence::n)
+    if (weight != 1) {
+      rewritten = true;
+      const Expr& tmp = 1 - weight;
+      weight /= tmp;
+      inhomogeneous /= tmp;
+    }
+    else {
+      rewritten = true;
+      weight *= -1;
+      lower += 1;
+      inhomogeneous = -inhomogeneous.substitute(Recurrence::n,
+						Recurrence::n + 1) ;
+    }
+  
+  // Find the weight `f(n)' and the inhomogeneous term of the
+  // recurrence transformed so that to have the lower limit of the
+  // sum equal to `0'.
+  if (lower > 0) {
+    rewritten = true;
+    weight = weight.substitute(Recurrence::n, Recurrence::n + lower);
+    inhomogeneous = inhomogeneous.substitute(Recurrence::n,
+					     Recurrence::n + lower);
+  }
+  
   Number z = 0;
   // Find the largest positive or null integer that cancel the numerator of
   // `f(n)' and store it in `z' if it is bigger than the current `z'.
@@ -717,23 +810,31 @@ known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
   if (!largest_positive_int_zero(denominator(weight), Recurrence::n, z))
     return false;
 
-  if (!largest_positive_int_zero(denominator(inhomog_infinite_order_rec),
-				 Recurrence::n, z))
+  if (!largest_positive_int_zero(denominator(inhomogeneous), Recurrence::n, z))
     return false;
   first_valid_index = z.to_unsigned_int();
 
+  // Find the element will form the first order recurrence.
   const Expr& weight_shifted = weight.substitute(Recurrence::n,
 						 Recurrence::n-1);
-  coeff_first_order = weight / weight_shifted * (1 + weight_shifted);
-  coeff_first_order = simplify_all(coeff_first_order);
-  
-  const Expr& inhomog_infinite_order_rec_shifted
-    = inhomog_infinite_order_rec.substitute(Recurrence::n, Recurrence::n-1);
+  Expr coeff_first_order
+    = simplify_all(weight / weight_shifted * (1 + weight_shifted));
+  // Shift forward: `n -> n + 1'.
+  coeff_first_order =
+    coeff_first_order.substitute(Recurrence::n, Recurrence::n+1);
+
+  const Expr& inhomogeneous_shifted
+    = inhomogeneous.substitute(Recurrence::n, Recurrence::n-1);
+  Expr inhomog_first_order
+    = simplify_all(weight * (inhomogeneous / weight
+			     - inhomogeneous_shifted / weight_shifted));
+  // Shift forward: `n -> n + 1'.
   inhomog_first_order
-    = weight * (inhomog_infinite_order_rec / weight
-		- inhomog_infinite_order_rec_shifted / weight_shifted);
-  inhomog_first_order = simplify_all(inhomog_first_order);
+    = inhomog_first_order.substitute(Recurrence::n, Recurrence::n+1);
   
+  rhs_first_order
+    = coeff_first_order * x(Recurrence::n-1) + inhomog_first_order;
+
   return true;
 }
 
@@ -766,7 +867,7 @@ PURRS::Recurrence::compute_order(const Number& decrement, index_type& order,
   results.
 */
 PURRS::Recurrence::Classifier_Status
-PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
+PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 					  Expr& inhomogeneous,
 					  index_type& order,
 					  std::vector<Expr>& coefficients,
@@ -875,32 +976,23 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 	// `x(n) = f(n) sum(k, n_0, u(n), x(k)) + g(n)'.
 	Expr weight;
 	Expr rhs_rewritten = rhs.collect_term(addend, weight);
-	Expr coeff_first_order;
-	Expr inhomog_first_order;
+	Expr rhs_first_order;
+	bool rewritten;
 	index_type first_valid_index;
-	if (known_class_of_infinite_order(rhs_rewritten, addend, weight,
-					  coeff_first_order,
-					  inhomog_first_order,
-					  first_valid_index)) {
-	  // The lower bound of the sum must be greater or equal than
-	  // the positive integer `n_0' starting from which `weight'
-	  // and `inhomogeneous_term' are well defined, i. e., for each
-	  // `n' greater or equal to `n_0' `weight' and `inhomogeneous_term'
-	  // evaluated in `n' are well-defined.
-	  unsigned int lower_bound_sum
-	    = addend.arg(1).ex_to_number().to_unsigned_int();
-	  if (lower_bound_sum < first_valid_index)
+	if (rewrite_infinite_order_recurrence(rhs_rewritten, addend, weight,
+					      inhomogeneous, rhs_first_order,
+					      first_valid_index, rewritten)) { 
+	  if (rewritten) {
+	    bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
+	    rec_rewritten = true;
+	    Symbol h;
+	    rhs = weight * PURRS::sum(h, 0, n-1, x(h)) + inhomogeneous;
+	  }
+	  if (first_valid_index > 0)
 	    return DOMAIN_ERROR;
-	  infinite_order_p = new Infinite_Order_Info(coeff_first_order
-						     * x(Recurrence::n - 1)
-						     + inhomog_first_order,
-						     coeff_first_order,
-						     inhomog_first_order,
-						     weight, lower_bound_sum,
-						     addend.arg(2));
+	  infinite_order_p
+	    = new Infinite_Order_Info(Recurrence(rhs_first_order), weight);
 	  set_linear_infinite_order();
-	  set_first_valid_index_inf_order(first_valid_index);
-	  inhomogeneous = rhs - addend * weight;
 	  return CLASSIFICATION_OK;
 	}
 	else
@@ -986,36 +1078,24 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 	    for (unsigned int j = num_factors; j-- > 0; )
 	      if (addend.op(j) != factor)
 		weight *= addend.op(j);
-	  Expr coeff_first_order;
-	  Expr inhomog_first_order;
+	  Expr rhs_first_order;
+	  bool rewritten;
 	  index_type first_valid_index;
-	  if (known_class_of_infinite_order(rhs_rewritten, factor, weight,
-					    coeff_first_order,
-					    inhomog_first_order,
-					    first_valid_index)) {
-	    // The lower bound of the sum must be greater or equal than
-	    // the positive integer `n_0' starting from which `weight'
-	    // and `inhomogeneous_term' are well defined, i. e., for each
-	    // `n' greater or equal to `n_0' `weight' and `inhomogeneous_term'
-	    // evaluated in `n' are well-defined.
-	    unsigned int lower_bound_sum
-	      = factor.arg(1).ex_to_number().to_unsigned_int();
-	    if (lower_bound_sum < first_valid_index)
-	      return DOMAIN_ERROR;
-	    infinite_order_p = new Infinite_Order_Info(coeff_first_order
-						       * x(Recurrence::n - 1)
-						       + inhomog_first_order,
-						       coeff_first_order,
-						       inhomog_first_order,
-						       weight,
-						       lower_bound_sum,
-						       factor.arg(2));
+	  if (rewrite_infinite_order_recurrence(rhs_rewritten, factor, weight,
+						inhomogeneous, rhs_first_order,
+						first_valid_index,
+						rewritten)) { 
+	    if (rewritten) {
+	      bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
+	      rec_rewritten = true;
+	      Symbol h;
+	      rhs = weight * PURRS::sum(h, 0, n-1, x(h)) + inhomogeneous;
+	    }
+	  if (first_valid_index > 0)
+	    return DOMAIN_ERROR;
+	    infinite_order_p
+	      = new Infinite_Order_Info(Recurrence(rhs_first_order), weight);
 	    set_linear_infinite_order();
-	    set_first_valid_index_inf_order(first_valid_index);
-	    // Note: `weight * factor' is different from `addend' when
-	    // in `rhs' there is more than one term containing the sum
-	    // in `factor'.
-	    inhomogeneous = rhs_rewritten - weight * factor;
 	    return CLASSIFICATION_OK;
 	  }
 	  else
@@ -1176,7 +1256,7 @@ PURRS::Recurrence::classify() const {
   if (num_summands > 1)
     // It is necessary that the following loop starts from `0'.
     for (unsigned int i = 0; i < num_summands; ++i) {
-      if ((status = classification_summand(rhs, rhs.op(i), inhomogeneous,
+      if ((status = classification_summand(rhs.op(i), rhs, inhomogeneous,
 					   order, coefficients,
 					   gcd_among_decrements, i,
 					   homogeneous_terms))

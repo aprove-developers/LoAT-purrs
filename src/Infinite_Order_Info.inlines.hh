@@ -29,30 +29,17 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-inline
-Infinite_Order_Info::Infinite_Order_Info(const Expr& new_rhs,
-					 const Expr& coeff_first_order,
-					 const Expr& inhomog_first_order,
-					 const Expr& weight_inf_order,
-					 unsigned int lower_bound_sum,
-					 const Expr& upper_bound_sum) 
-  : rhs_transformed_in_first_order_(new_rhs),
-    coeff_first_order_(coeff_first_order),
-    inhomog_first_order_(inhomog_first_order),
-    weight_inf_order_(weight_inf_order),
-    lower_bound_sum_(lower_bound_sum),
-    upper_bound_sum_(upper_bound_sum) {
+inline Infinite_Order_Info::
+Infinite_Order_Info(const Recurrence& associated_first_order_rec,
+		    const Expr& infinite_order_weight)
+  : associated_first_order_rec_(associated_first_order_rec),
+    infinite_order_weight_(infinite_order_weight) {
 }
 
 inline
 Infinite_Order_Info::Infinite_Order_Info(const Infinite_Order_Info& y)
-  : rhs_transformed_in_first_order_
-(y.rhs_transformed_in_first_order_),
-    coeff_first_order_(y.coeff_first_order_),
-    inhomog_first_order_(y.inhomog_first_order_),
-    weight_inf_order_(y.weight_inf_order_),
-    lower_bound_sum_(y.lower_bound_sum_),
-    upper_bound_sum_(y.upper_bound_sum_) {
+  : associated_first_order_rec_(y.associated_first_order_rec_),
+    infinite_order_weight_(y.infinite_order_weight_) {
 }
 
 inline
@@ -61,69 +48,29 @@ Infinite_Order_Info::~Infinite_Order_Info() {
 
 inline Infinite_Order_Info&
 Infinite_Order_Info::operator=(const Infinite_Order_Info& y) {
-  rhs_transformed_in_first_order_
-    = y.rhs_transformed_in_first_order_;
-  coeff_first_order_ = y.coeff_first_order_;
-  inhomog_first_order_ = y.inhomog_first_order_;
-  weight_inf_order_ = y.weight_inf_order_;
-  lower_bound_sum_ = lower_bound_sum_;
-  upper_bound_sum_ = upper_bound_sum_;
+  associated_first_order_rec_ = y.associated_first_order_rec_;
+  infinite_order_weight_ = y.infinite_order_weight_;
   return *this;
 }
 
-inline const Expr&
-Infinite_Order_Info::rhs_transformed_in_first_order() const {
-  return rhs_transformed_in_first_order_;
+inline const Recurrence&
+Infinite_Order_Info::associated_first_order_rec() const {
+  return associated_first_order_rec_;
 }
 
-inline Expr&
-Infinite_Order_Info::rhs_transformed_in_first_order() {
-  return rhs_transformed_in_first_order_;
-}
-
-inline const Expr&
-Infinite_Order_Info::coeff_first_order() const {
-  return coeff_first_order_;
-}
-
-inline Expr&
-Infinite_Order_Info::coeff_first_order() {
-  return coeff_first_order_;
+inline Recurrence&
+Infinite_Order_Info::associated_first_order_rec() {
+  return associated_first_order_rec_;
 }
 
 inline const Expr&
-Infinite_Order_Info::inhomog_first_order() const {
-  return inhomog_first_order_;
+Infinite_Order_Info::infinite_order_weight() const {
+  return infinite_order_weight_;
 }
 
 inline Expr&
-Infinite_Order_Info::inhomog_first_order() {
-  return inhomog_first_order_;
-}
-
-inline const Expr&
-Infinite_Order_Info::weight_inf_order() const {
-  return weight_inf_order_;
-}
-
-inline Expr&
-Infinite_Order_Info::weight_inf_order() {
-  return weight_inf_order_;
-}
-
-inline unsigned int
-Infinite_Order_Info::lower_bound_sum() const {
-  return lower_bound_sum_;
-}
-
-inline const Expr&
-Infinite_Order_Info::upper_bound_sum() const {
-  return upper_bound_sum_;
-}
-
-inline Expr&
-Infinite_Order_Info::upper_bound_sum() {
-  return upper_bound_sum_;
+Infinite_Order_Info::infinite_order_weight() {
+  return infinite_order_weight_;
 }
 
 inline index_type

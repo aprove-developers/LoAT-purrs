@@ -540,33 +540,19 @@ PURRS::Recurrence::verify_infinite_order() const {
   // FIXME: the traditional validation' process does not work,
   // is it true?
   // FIXME: first_valid_index e' shiftato in avanti?
-  if (weight_inf_order() == -1)
+  if (infinite_order_weight() == -1)
     // FIXME: verify!!!
     return PROVABLY_CORRECT;
   
-  Expr weight;
-  Expr inhomogeneous;
-  if (upper_bound_sum() == n-1) {
-    weight = weight_inf_order();
-    inhomogeneous = inhomogeneous_term;
-  }
-  else {
-    // In the case of `upper_bound_sum() == n' the recurrence is
-    // transformed in another equivalent recurrence with the upper
-    // bound of the sum equal to `n-1': we verify the solution
-    // considering this last recurrence.
-    assert(upper_bound_sum() == n);
-    weight = weight_inf_order() / (1 - weight_inf_order());
-    inhomogeneous = inhomogeneous_term / (1 - weight_inf_order());
-  }
+  Expr weight = infinite_order_weight();
   
-  // Note: the solution is valid only for `n > lower_bound_sum()'.
+  // Note: the solution is valid only for `n > 0'.
   
   // Step 1: validation of the initial condition.
-  Expr e = exact_solution_.expression().substitute(n, lower_bound_sum()+1);
+  Expr e = exact_solution_.expression().substitute(n, 1);
   e = simplify_all(e);
-  if (e != weight.substitute(n, lower_bound_sum()+1) * x(lower_bound_sum())
-      + inhomogeneous.substitute(n, lower_bound_sum()+1))
+  if (e != weight.substitute(n, 1) * x(0)
+      + inhomogeneous_term.substitute(n, 1))
     // FIXME: provably_incorrect...
     return INCONCLUSIVE_VERIFICATION;
   
@@ -577,20 +563,20 @@ PURRS::Recurrence::verify_infinite_order() const {
   // `x(n) = f(n) sum(k, 0, n-1, x(k)+h(n))'. For standard form
   // we consider recurrences with the argument of the sum equal to `x(k)'. 
   
-  // Let `x(n) = f(n) sum(k, n_0, n-1, x(k)) + g(n)' be the infinite
+  // Let `x(n) = f(n) sum(k, 0, n-1, x(k)) + g(n)' be the infinite
   // order recurrence. Now we must consider the expression
-  // `x(n) - f(n) x(n_0) - f(n) sum(k, n_0 + 1, n - 1, x(k)) - g(n)',
+  // `x(n) - f(n) x(0) - f(n) sum(k, 0 + 1, n - 1, x(k)) - g(n)',
   // where `x(n)' and `x(k)' are substituted with the solution.
   // If we are able to demonstrate that this expression is syntactically
   // zero, then the solution is correct.
   // FIXME: specificare perche' e' necessario tirare fuori il primo
   // termine oppure lasciarlo dentro.
   Symbol h;
-  Expr diff = PURRS::sum(h, lower_bound_sum() + 1, n - 1,
-			 exact_solution_.expression().substitute(n, h));
+  Expr diff
+    = PURRS::sum(h, 1, n - 1, exact_solution_.expression().substitute(n, h));
   diff = simplify_sum(diff, false, true);
   diff = exact_solution_.expression()
-    - diff * weight - x(lower_bound_sum()) * weight - inhomogeneous;
+    - diff * weight - x(0) * weight - inhomogeneous_term;
   diff = simplify_all(diff);
   if (diff == 0)
     return PROVABLY_CORRECT;
@@ -996,7 +982,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound,
 
 /*!
   Builds the recurrence of infinite order
-  \f$ x(n) = f(n) \sum_{k=n_0}^{n-1} x(k) + g(n) \f$, where
+  \f$ x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n) \f$, where
   \f$ f(n) \f$ is stored in \p weight; \f$ g(n) \f$ is stored
   in \p inhomogeneous and \p first_valid_index contains the least
   non-negative integer \f$ j \f$ such that the recurrence is
@@ -1019,11 +1005,10 @@ PURRS::Recurrence::solve_new_infinite_order_rec(const Expr& weight,
     = simplify_all(weight * (inhomogeneous / weight
 			     - (inhomogeneous / weight).substitute(n, n-1)));
   rec_rewritten.infinite_order_p
-    = new Infinite_Order_Info(coeff_first_order*x(n-1)+inhomog_first_order,
-			      coeff_first_order, inhomog_first_order,
-			      weight, 0, n-1);
+    = new Infinite_Order_Info(Recurrence(coeff_first_order*x(n-1)
+					 +inhomog_first_order), weight);
   rec_rewritten.set_linear_infinite_order();
-  rec_rewritten.set_first_valid_index_inf_order(first_valid_index);
+  associated_first_order_rec().set_first_valid_index(first_valid_index);
   rec_rewritten.set_inhomogeneous_term(inhomogeneous);
   return rec_rewritten.compute_infinite_order_recurrence(solution);
 }
@@ -1067,143 +1052,71 @@ increase_argument_x_function(const Expr& e, unsigned int num) {
 
 } // anonymous namespace
 
+//! \brief
+//! Solve the infinite order recurrence in \ref normal_form "normal form"
+//! \f[
+//!   x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n)
+//! \f]
+//! using the associated recurrence of the first order whose solution
+//! is valid for \f$ n > 1 \f$
+//! \f[
+//!   x(n) = \frac{f(n)}{1-f(n)} \sum_{k=n_0}^{n-1} x(k) + \frac{g(n)}{1-f(n)};
+//! \f]
+//! For \f$ n = 1 \f$ it must consider \f$ x(1) = f(1) x(0) + g(1) \f$.
 /*!
-  Builds a new object <CODE>Recurrence</CODE> containing a linear
-  recurrence of finite order built starting from the recurrence
-  \p *this of infinite order.
+  In the classification's process have been considered the following steps:
+  - eventual rewriting in the normal form of the recurrence;
+  - computation of the right hand side of the associated first order
+    recurrence;
+  - shift forward of the first order recurence: \f$ n = n + 1 \f$.
+  This function performs these other steps:
+  - computation of the solution of the first order recurrence;
+  - shift backward of the solution: \f$ n = n - 1 \f$;
+  - substitution of the initail condition \f$ x(1) = f(1) x(0) + g(1) \f$.
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
 compute_infinite_order_recurrence(Expr& solution) const {
-  // At the moment we consider only recurrences of infinite order
-  // transformable in first order recurrences.
-  if (weight_inf_order() == -1) {
-    // Special case: the recurrence of infinite order starting
-    // from which we have found the components of the linear recurrence
-    // of finite order was of the form `x(n) = f(n) sum(k,0,n-1,x(k)) + g(n)'
-    // with `f(n) = -1'. In this case the solution of the recurrence
-    // is simply `x(n) = g(n) - g(n-1)' and is not necessary all the normal
-    // procedure.
+  if (infinite_order_weight() == -1) {
+    // Special case: `f(n) = -1'.
+    // In this case the solution of the recurrence is simply
+    // `x(n) = g(n) - g(n-1)' and is not necessary all the normal procedure.
     solution
       = inhomogeneous_term - inhomogeneous_term.substitute(n, n-1).expand();
     return SUCCESS;
   }
   else {
-    unsigned int lower = lower_bound_sum();
-    const Expr& upper = upper_bound_sum();
-    if (lower == 0 && upper == n-1) {
-      std::vector<Expr> coefficients(2);
-      // Shift forward `n -> n + 1' the coefficient.
-      coefficients[1] = coeff_first_order().substitute(n, n+1);
-      Recurrence rec_rewritten(rhs_transformed_in_first_order());
-      // It is not necessary to repeat the classification's process
-      // because we already know the order, the coefficients and the
-      // inhomogeneous term.
-      rec_rewritten.finite_order_p = new Finite_Order_Info(1, coefficients, 1);
-      if (coeff_first_order().has(n))
-	rec_rewritten.set_type(LINEAR_FINITE_ORDER_VAR_COEFF);
+    // Classify the first order recurrence relation associated to that
+    // one of infinite order.
+    associated_first_order_rec().classify_and_catch_special_cases();
+    Solver_Status status;
+    if ((status = associated_first_order_rec().solve_linear_finite_order())
+	== SUCCESS) {
+      solution = associated_first_order_rec().exact_solution_.expression();
+      // Shift backward: n -> n - 1.
+      solution = solution.substitute(n, n - 1);
+      solution = solution
+	.substitute(x(associated_first_order_rec().first_valid_index()),
+		    x(associated_first_order_rec().first_valid_index()+1));
+      // If there is the initial condition `x(1)' specified then
+      // the system substitute it with the respective value; otherwise
+      // the system does the substitution `x(1) = 2*x(0)+1'.
+      // FIXME: At the moment we substitute here only the initial
+      // condition `x(1)'.
+      std::map<unsigned int, Expr>::const_iterator i
+	= initial_conditions.find(1);
+      if (i != initial_conditions.end())
+	solution = solution.substitute(x(1), get_initial_condition(1));
       else
-	rec_rewritten.set_type(LINEAR_FINITE_ORDER_CONST_COEFF);
-      // Shift forward `n -> n + 1' the inhomogeneous term.
-      rec_rewritten.set_inhomogeneous_term(inhomog_first_order()
-					   .substitute(n, n+1));
-      Solver_Status status;
-      if ((status = rec_rewritten.solve_linear_finite_order())
-	  == SUCCESS) {
-	solution = rec_rewritten.exact_solution_.expression();
-	// Shift backward: n -> n - 1.
-	solution = solution.substitute(n, n - 1);
 	solution = solution
-	  .substitute(x(rec_rewritten.first_valid_index()),
-		      x(rec_rewritten.first_valid_index()+1));
-	// If there is the initial condition `x(1)' specified then
-	// the system substitute it with the respective value; otherwise
-	// the system does the substitution `x(1) = 2*x(0)+1'.
-	// FIXME: At the moment we substitute here only the initial
-	// condition `x(1)'.
-	std::map<unsigned int, Expr>::const_iterator i
-	  = initial_conditions.find(1);
-	if (i != initial_conditions.end())
-	  solution = solution.substitute(x(1), get_initial_condition(1));
-	else
-	  solution = solution
-	    .substitute(x(rec_rewritten.first_valid_index()+1),
-			(weight_inf_order()*x(0)+inhomogeneous_term)
-			.substitute(n, 1));
-	//	solution = simplify_ex_for_output(solution, false);
-	return SUCCESS;
-      }
-      else
-	return status;
+	  .substitute(x(associated_first_order_rec().first_valid_index()+1),
+		      (infinite_order_weight()*x(0)+inhomogeneous_term)
+		      .substitute(n, 1));
+      //	solution = simplify_ex_for_output(solution, false);
+      return SUCCESS;
     }
     else
-      if (upper == n)
-	// Transform the recurrence `x(n) = f(n) sum(k, n_0, n, x(k)) + g(n)'
-	// in the equivalent recurrence
-	// `x(n) = f(n) / (1-f(n)) sum(k, n_0, n-1, x(k)) + g(n) / (1-f(n))'.
-	if (weight_inf_order() != 1) {
-	  Expr tmp = 1 - weight_inf_order();
-	  Expr weight_rewritten = weight_inf_order() / tmp;
-	  Expr inhomogeneous_rewritten = inhomogeneous_term / tmp;
-	  // Consider the "shifted" recurrence
-	  // `y(n) = f(n+n_0) / (1-f(n+n_0)) sum(k, 0, n-1, x(k))
-	  //           + g(n+n_0) / (1-f(n+n_0))'; later on, the solution
-	  // `y(n)' will be shifted in order to find `x(n)'.
-	  if (lower > 0) {
-	    weight_rewritten = weight_rewritten.substitute(n, n + lower);
-	    inhomogeneous_rewritten
-	      = inhomogeneous_rewritten.substitute(n, n + lower);
-	    tmp = tmp.substitute(n, n + lower);
-	  }
-	  Solver_Status status;
-	  if ((status
-	       = solve_new_infinite_order_rec(weight_rewritten,
-					      inhomogeneous_rewritten,
-					      first_valid_index_inf_order(),
-					      solution))
-	      != SUCCESS)
-	    return status;
-	  // We must shift the solution: n    -> n - lower,
-	  //                             x(a) -> x(a + lower).
-	  if (lower > 0) {
-	    solution = solution.substitute(n, n - lower);
-	    solution
-	      = solution.substitute(x(first_valid_index_inf_order()),
-				    x(first_valid_index_inf_order() + lower));
-	  }
-	  return SUCCESS;
-	}
-	else
-	  // FIXME: how we can do?
-	  return TOO_COMPLEX;
-    // Consider the "shifted" recurrence
-    // `y(n) = f(n+n_0) sum(k, 0, n-1, x(k)) + g(n+n_0)';
-    // later on, the solution `y(n)' will be shifted in order to find `x(n)'.
-    // Note: if `first_valid_index_inf_order() > 0' means that the recurrence
-    // does not have any sense for positive integer less than
-    // `first_valid_index_inf_order()', so it is not possible to consider the
-    // aforesaid method.
-      else if (lower > 0) {
-	const Expr& weight_rewritten
-	  = weight_inf_order().substitute(n, n + lower);
-	const Expr& inhomogeneous_rewritten
-	  = inhomogeneous_term.substitute(n, n + lower);
-	Solver_Status status;
-	if ((status
-	     = solve_new_infinite_order_rec(weight_rewritten,
-					    inhomogeneous_rewritten,
-					    first_valid_index_inf_order(),
-					    solution))
-	    != SUCCESS)
-	  return status;
-	// We must shift the solution: n    -> n - lower,
-	//                             x(a) -> x(a + lower).
-	solution = solution.substitute(n, n - lower);
-	solution = increase_argument_x_function(solution, lower);
-	return SUCCESS;
-      }
-      else
-	return TOO_COMPLEX;
+      return status;
   }
 }
 

@@ -28,7 +28,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Recurrence.types.hh"
 #include "Cached_Expr.defs.hh"
 #include "Non_Linear_Info.types.hh"
-#include "Infinite_Order_Info.defs.hh"
+#include "Infinite_Order_Info.types.hh"
 #include "Blackboard.defs.hh"
 #include "Finite_Order_Info.defs.hh"
 #include "Functional_Equation_Info.defs.hh"
@@ -450,7 +450,7 @@ private:
   //! \brief
   //! Analyzes the \f$ i \f$-th addend of the right hand side \p rhs
   //! of the recurrence \p *this.
-  Classifier_Status classification_summand(const Expr& rhs, const Expr& r,
+  Classifier_Status classification_summand(const Expr& r, Expr& rhs,
 				       Expr& e, index_type& order,
 				       std::vector<Expr>& coefficients,
 				       int& gcd_among_decrements,
@@ -849,73 +849,34 @@ private:
   // Method to access to private data of `Infinite_Order_Info'.
 
   //! \brief
-  //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence then this last recurrence is returned from this method.
-  const Expr& rhs_transformed_in_first_order() const;
+  //! In the case which the system is able to rewrite the infinite order
+  //! recurrence \p *this in first order recurrence, this method returns
+  //! the first order recurrence computed (in order to know the cases of
+  //! rewritable infinite order recurrences see the function
+  //! <CODE>rewrite_infinite_order_recurrence()</CODE>).
+  const Recurrence& associated_first_order_rec() const;
 
   //! \brief
-  //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence then this last recurrence is returned from this method.
-  Expr& rhs_transformed_in_first_order();
-
-  //! \brief
-  //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence then the coefficient of this last recurrence is returned
-  //! from this method.
-  const Expr& coeff_first_order() const;
-
-  //! \brief
-  //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence then the coefficient of this last recurrence is returned
-  //! from this method.
-  Expr& coeff_first_order();
-
-  //! \brief
-  //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence then the non-homogeneous part of this last recurrence is
-  //! returned from this method.
-  const Expr& inhomog_first_order() const;
-
-  //! \brief
-  //! If the infinite order recurrence is rewritable in a first order linear
-  //! recurrence then the non-homogeneous part of this last recurrence is
-  //! returned from this method.
-  Expr& inhomog_first_order();
+  //! In the case which the system is able to rewrite the infinite order
+  //! recurrence \p *this in first order recurrence, this method returns
+  //! the first order recurrence computed (in order to know the cases of
+  //! rewritable infinite order recurrences see the function
+  //! <CODE>rewrite_infinite_order_recurrence()</CODE>).
+  Recurrence& associated_first_order_rec();
 
   //! \brief
   //! Returns the factor \f$ f(n) \f$ of the infinite order recurrence
   //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
+  //!   T(n) = f(n) \sum_{k=0}^n T(k) + g(n).
   //! \f]
-  const Expr& weight_inf_order() const;
+  const Expr& infinite_order_weight() const;
 
   //! \brief
   //! Returns the factor \f$ f(n) \f$ of the infinite order recurrence
   //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
+  //!   T(n) = f(n) \sum_{k=0}^n T(k) + g(n).
   //! \f]
-  Expr& weight_inf_order();
-
-  //! \brief
-  //! Returns the lower bound \f$ n_0 \f$ of the infinite order recurrence
-  //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
-  //! \f]
-  unsigned int lower_bound_sum() const;
-
-  //! \brief
-  //! Returns the upper bound \f$ u(n) \f$ of the infinite order recurrence
-  //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
-  //! \f]
-  const Expr& upper_bound_sum() const;
-
-  //! \brief
-  //! Returns the upper bound \f$ u(n) \f$ of the infinite order recurrence
-  //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
-  //! \f]
-  Expr& upper_bound_sum();
+  Expr& infinite_order_weight();
 
   //! \brief
   //! Stores the least non-negative integer \f$ j \f$ such that
