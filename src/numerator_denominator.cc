@@ -30,8 +30,8 @@ http://www.cs.unipr.it/purrs/ . */
 #include "util.hh"
 #include "Expr.defs.hh"
 #include <vector>
-// See FIXME below.
-//#include <algorithm>
+#include <algorithm>
+#include <iterator>
 
 // TEMPORARY
 #include <iostream>
@@ -175,16 +175,10 @@ split_bases_exponents_factor(const Expr& e,
     std::vector<Number> e_num_bases;
     std::vector<int> e_num_exponents;
     partial_factor(e_num, e_num_bases, e_num_exponents);
-#if 1
-    for (unsigned i = e_num_bases.size(); i -- > 0; ) {
-      bases.push_back(e_num_bases[i]);
-      exponents.push_back(e_num_exponents[i]);
-    }
-#else
-    // FIXME: this two rows are not equivalent to those in the #if 1?
-    copy(e_num_bases.begin(), e_num_bases.end(), bases.begin());
-    copy(e_num_exponents.begin(), e_num_exponents.end(), exponents.begin());
-#endif
+    copy(e_num_bases.begin(), e_num_bases.end(),
+	 inserter(bases, bases.begin()));
+    copy(e_num_exponents.begin(), e_num_exponents.end(),
+	 inserter(exponents, exponents.begin()));
   }
   else
     if (e.is_a_power()) {
