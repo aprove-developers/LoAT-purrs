@@ -358,34 +358,6 @@ collect_same_exponents(const Expr& e) {
   return e_rewritten;
 }
 
-/*!
-  Consider the expression \f$ e = e_1, \dotsc, e_k \f$ and two other expression
-  \f$ old \f$ and \f$ new \f$.
-  If \f$ \exists i \in i \in \{1, \dotsc , k\} \st e_i = old \f$
-  then this function returns
-  \f$ e_1, \dotsc, e_{i-1}, new, e_{i+1}, \dotsc, e_k \f$;
-  otherwise returns \f$ e \f$. 
-*/
-Expr
-substitute_factor(const Expr& e, const Expr& old_factor, const Expr& new_factor) {
-  assert(!e.is_a_add());
-  Expr e_subs = 1;
-  if (e.is_a_mul())
-    for (unsigned i = e.nops(); i-- > 0; ) {
-      const Expr& e_i = e.op(i);
-      if (e_i == old_factor)
-	e_subs *= new_factor;
-      else
-	e_subs *= e_i;
-    }
-  else
-    if (e == old_factor)
-      e_subs *= new_factor;
-    else
-      e_subs *= e;
-  return e_subs;
-}
-
 //! \brief
 //! Applies the rules \f$ \textbf{C1} \f$ and \f$ \textbf{C2} \f$ of the
 //! set of rules <EM>Collect</EM>.
@@ -448,16 +420,16 @@ collect_same_base(const Expr& e) {
 	  // `2*sqrt(2)': in this case we do not add 1 to the exponent.
 	  if (bases_j.is_a_number(base)
 	      && (!base.is_integer() || base == -1))
-	    new_factor = pwr(bases_j, exponents_j+1);
+	    new_factor = pwr(bases_j, exponents_j + 1);
 	  else if (!bases_j.is_a_number() || !exponents_j.is_a_number())
-	    new_factor = pwr(bases_j, exponents_j+1);
+	    new_factor = pwr(bases_j, exponents_j + 1);
 	  else
 	    new_factor = pwr(bases_j, exponents_j) * factor_e;
 	}
       }
       // Applies rule `C1'.
       if (to_sum)
-	e_rewritten = substitute_factor(e_rewritten, old_factor, new_factor);
+	e_rewritten = e_rewritten.substitute(old_factor, new_factor);
       else
 	e_rewritten *= factor_e;
     }
@@ -820,7 +792,8 @@ manip_factor(const Expr& e, bool input) {
 	  unsigned num_argument = factor_e_rewritten.nops();
 	  std::vector<Expr> argument(num_argument);
 	  for (unsigned i = 0; i < num_argument; ++i)
-	    argument[i] = simplify_on_output_ex(factor_e_rewritten.arg(i), input);
+	    argument[i] = simplify_on_output_ex(factor_e_rewritten.arg(i),
+						input);
 	  factor_function *= apply(factor_e_rewritten.functor(), argument);
 	}
       else
@@ -907,7 +880,8 @@ check_form_of_mul(const Expr& e, Number& a) {
   assert(e.is_a_mul() && e.nops() == 2);
   const Expr& first = e.op(0);
   const Expr& second = e.op(1);
-  if ((first == Recurrence::n && second.is_a_number(a) && a.is_positive_integer())
+  if ((first == Recurrence::n && second.is_a_number(a)
+       && a.is_positive_integer())
       || (second == Recurrence::n && first.is_a_number(a)
 	  && a.is_positive_integer()))
     return true;

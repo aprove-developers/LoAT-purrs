@@ -320,14 +320,14 @@ find_roots(const Expr& p, const Symbol& x,
     for (unsigned l = 0, ml = abs_lc_divisors.size(); l < ml; ++l) 
       for (unsigned t = 0, mt = abs_tc_divisors.size(); t < mt; ++t) {
 	Number r = abs_tc_divisors[t] / abs_lc_divisors[l];
-	if (q.subs(x, r).is_zero()) {
+	if (q.substitute(x, r).is_zero()) {
 	  q = quo(q, x-r, x);
 	  --degree;
 	  roots.push_back(Polynomial_Root(r, RATIONAL, multiplicity));
 	  coefficients_changed = true;
 	}
 	r = -r;
-	if (q.subs(x, r).is_zero()) {
+	if (q.substitute(x, r).is_zero()) {
 	  q = quo(q, x-r, x);
 	  --degree;
 	  roots.push_back(Polynomial_Root(r, RATIONAL, multiplicity));

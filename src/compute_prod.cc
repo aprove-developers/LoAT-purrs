@@ -112,7 +112,7 @@ compute_product_on_add(const Expr& e, const Number& lower, const Expr& upper,
   }
   if (!e_prod_computed) {
     Symbol h;
-    e_prod = PURRS::prod(h, lower, upper, e.subs(Recurrence::n, h));
+    e_prod = PURRS::prod(h, lower, upper, e.substitute(Recurrence::n, h));
   }
   return e_prod;
 }
@@ -121,7 +121,8 @@ compute_product_on_add(const Expr& e, const Number& lower, const Expr& upper,
 //! When possible, computes \f$ \prod_{k=lower}^upper e(k) \f$
 //! if \f$ e \f$ is a power, otherwise returns the symbolic product.
 Expr
-compute_product_on_power(const Expr& e, const Number& lower, const Expr& upper) {
+compute_product_on_power(const Expr& e,
+			 const Number& lower, const Expr& upper) {
   assert(e.is_a_power());
   const Expr& base_e = e.arg(0);
   const Expr& exponent_e = e.arg(1);
@@ -151,11 +152,12 @@ compute_product_on_power(const Expr& e, const Number& lower, const Expr& upper) 
     if (vector_not_all_zero(exp_poly_coeff)) {
       Symbol k("k");
       for (unsigned i = base_of_exps.size(); i-- > 0; ) {
-	Expr coeff_k = exp_poly_coeff[i].subs(Recurrence::n, k);
-	new_exponent += sum_poly_times_exponentials(coeff_k, k, base_of_exps[i]);
+	Expr coeff_k = exp_poly_coeff[i].substitute(Recurrence::n, k);
+	new_exponent += sum_poly_times_exponentials(coeff_k, k,
+						    base_of_exps[i]);
 	// `sum_poly_times_exponentials' computes the sum from 0, whereas
 	// we want that the sum start from `1'.
-	new_exponent -= coeff_k.subs(k, 0);
+	new_exponent -= coeff_k.substitute(k, 0);
       }
       e_prod = pwr(base_e, new_exponent);
       e_prod_computed = true;
@@ -166,7 +168,7 @@ compute_product_on_power(const Expr& e, const Number& lower, const Expr& upper) 
   }
   if (!e_prod_computed) {
     Symbol h;
-    e_prod = PURRS::prod(h, lower, upper, e.subs(Recurrence::n, h));
+    e_prod = PURRS::prod(h, lower, upper, e.substitute(Recurrence::n, h));
   }
   return e_prod;
 }
@@ -224,11 +226,11 @@ PURRS::compute_product(const Expr& e, const Number& lower, const Expr& upper,
     if (lower > num_upper)
       return 1;
     else if (lower == num_upper)
-      return e.subs(Recurrence::n, lower);
+      return e.substitute(Recurrence::n, lower);
     else {
       Expr tmp = 1;
       for (Number i = lower; i <= num_upper; ++i)
-	tmp *= e.subs(Recurrence::n, i);
+	tmp *= e.substitute(Recurrence::n, i);
       return tmp;
     }
   }
@@ -257,7 +259,7 @@ PURRS::compute_product(const Expr& e, const Number& lower, const Expr& upper,
   }
   else {
     Symbol h;
-    e_prod = PURRS::prod(h, lower, upper, e.subs(Recurrence::n, h));
+    e_prod = PURRS::prod(h, lower, upper, e.substitute(Recurrence::n, h));
   }
   return e_prod;
 }

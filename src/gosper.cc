@@ -69,8 +69,8 @@ bool
 gosper_step_one(const Expr& t_n, Expr& r_n, bool full) {
   // Not is the case of variable coefficient.
   if (full) 
-    r_n = simplify_factorials_and_exponentials(t_n.subs(Recurrence::n,
-							Recurrence::n+1))
+    r_n = simplify_factorials_and_exponentials(t_n.substitute(Recurrence::n,
+							      Recurrence::n+1))
       * pwr(simplify_factorials_and_exponentials(t_n), -1);
   // FIXME: we must understand the better simplification to use in this case.
   r_n = simplify_numer_denom(r_n);
@@ -91,7 +91,7 @@ void
 compute_resultant_and_its_roots(const Expr& f, const Expr& g,
 				std::vector<Number>& integer_roots) {
   Symbol h("h");
-  Expr temp_g = g.subs(Recurrence::n, Recurrence::n + h);
+  Expr temp_g = g.substitute(Recurrence::n, Recurrence::n + h);
   Expr R = resultant(f, temp_g, Recurrence::n);
   R = R.primpart(h);
   if (!R.is_integer_polynomial())
@@ -111,7 +111,7 @@ compute_resultant_and_its_roots(const Expr& f, const Expr& g,
   find_divisors(constant_term, potential_roots);
   // Find non-negative integral roots of the resultant.
   for(unsigned i = potential_roots.size(); i-- > 0; ) {
-    Number temp = R.subs(h, potential_roots[i]).ex_to_number();
+    Number temp = R.substitute(h, potential_roots[i]).ex_to_number();
     if (temp == 0)
       integer_roots.push_back(potential_roots[i]);
   }
@@ -152,14 +152,16 @@ gosper_step_two(const Expr& r_n, Expr& a_n, Expr& b_n, Expr& c_n) {
   c_n = 1;
   unsigned integer_roots_size = integer_roots.size();
   for (unsigned i = 0; i < integer_roots_size; ++i) {
-    Expr temp_b_n = (b_n.subs(Recurrence::n,
-			      Recurrence::n + integer_roots[i])).expand();
+    Expr temp_b_n
+      = (b_n.substitute(Recurrence::n,
+			Recurrence::n + integer_roots[i])).expand();
     Expr s = general_gcd(a_n, temp_b_n, Recurrence::n);
     a_n = quo(a_n, s, Recurrence::n);
-    Expr temp_s = s.subs(Recurrence::n, Recurrence::n - integer_roots[i]);
+    Expr temp_s = s.substitute(Recurrence::n,
+			       Recurrence::n - integer_roots[i]);
     b_n = quo(b_n, temp_s, Recurrence::n);
     for (Number j = 1; j <= integer_roots[i]; ++j)
-      c_n *= s.subs(Recurrence::n, Recurrence::n - j);
+      c_n *= s.substitute(Recurrence::n, Recurrence::n - j);
   }
   a_n *= Z;
   // The polynomials `a_n' and `b_n' may have rational coefficients.
@@ -206,8 +208,8 @@ find_polynomial_solution(const Number& deg_x, const Expr& a_n,
   for (unsigned i = 0; i < number_of_coeffs; ++i)
     x_n += pwr(Recurrence::n, i) * unknowns.op(i);
 
-  Expr x_n_shift = x_n.subs(Recurrence::n, Recurrence::n+1);
-  Expr b_shift = b_n.subs(Recurrence::n, Recurrence::n-1);
+  Expr x_n_shift = x_n.substitute(Recurrence::n, Recurrence::n+1);
+  Expr b_shift = b_n.substitute(Recurrence::n, Recurrence::n-1);
 
   // Considers the recurrence relation to solve.
   Expr rr = a_n * x_n_shift - b_shift * x_n - c_n;
@@ -226,7 +228,7 @@ find_polynomial_solution(const Number& deg_x, const Expr& a_n,
 
   // Builds the solution `x(n)'.
   for (unsigned i = 0; i < number_of_coeffs; ++i)
-    x_n = x_n.subs(unknowns.op(i), solution.op(i).op(1));
+    x_n = x_n.substitute(unknowns.op(i), solution.op(i).op(1));
 
   D_VAR(x_n);
   return true;
@@ -244,7 +246,8 @@ find_polynomial_solution(const Number& deg_x, const Expr& a_n,
   polynomial solution \f$ x(n) \f$.
 */
 bool
-gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n, Expr& x_n) {
+gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
+		  Expr& x_n) {
   // Gosper's algorithm, step 3.1.
   // Finds the degree of `x(n)'.
   unsigned deg_a = a_n.degree(Recurrence::n);
@@ -264,8 +267,8 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n, Expr& x_n) 
   else {
     // `deg_a = deg_b' and `lead_a = lead_b'.
     Expr A = a_n.coeff(Recurrence::n, deg_a - 1);
-    Expr B = b_n.subs(Recurrence::n, Recurrence::n - 1).coeff(Recurrence::n,
-							      deg_a - 1);
+    Expr B = b_n.substitute(Recurrence::n,
+			    Recurrence::n - 1).coeff(Recurrence::n, deg_a - 1);
     Number B_A = ((B - A) * pwr(lead_a, -1)).ex_to_number();
     Number possible_deg = Number(deg_c) - Number(deg_a) + 1;
     if (B_A.is_nonnegative_integer())
@@ -286,20 +289,21 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n, Expr& x_n) 
   M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
 */
 Expr
-gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n, const Expr& x_n,
-		 const Number& lower, const Expr& upper, Expr solution) {
-  Expr shift_b = b_n.subs(Recurrence::n, Recurrence::n - 1);
+gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
+		 const Expr& x_n, const Number& lower, const Expr& upper,
+		 Expr solution) {
+  Expr shift_b = b_n.substitute(Recurrence::n, Recurrence::n - 1);
   Expr z_n = shift_b * x_n * t * pwr(c_n, -1);
   z_n = simplify_numer_denom(z_n);
   // The Gosper's algorithm computes summation with the lower limit `0'
   // and the upper limit `n - 1': in this case, once we have `z_n',
   // the sum that we are looking for is `z_n - z_0'.
   // In general the solution will be `z_n - z_{lower}'.
-  solution = z_n - z_n.subs(Recurrence::n, lower);
+  solution = z_n - z_n.substitute(Recurrence::n, lower);
   // We must modify the sum if its upper limit is not `n - 1'.
   if (upper != Recurrence::n - 1)
     if (upper == Recurrence::n)
-      solution = solution.subs(Recurrence::n, Recurrence::n + 1);
+      solution = solution.substitute(Recurrence::n, Recurrence::n + 1);
     else {
       assert(upper.is_a_add() && upper.nops() == 2);
       const Expr& a = upper.op(0);
@@ -312,7 +316,7 @@ gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n, const Expr& x_
       if (b == Recurrence::n)
 	num = a.ex_to_number();
       assert(num.is_integer());
-      solution = solution.subs(Recurrence::n, Recurrence::n + num + 1);
+      solution = solution.substitute(Recurrence::n, Recurrence::n + num + 1);
     }
   solution = simplify_numer_denom(solution);
   return solution;
@@ -360,7 +364,7 @@ PURRS::full_gosper(const Expr& t_n, const Number& lower, const Expr& upper,
     // `t' is not Gosper-summable, i. e., there is not hypergeometric
     // solution.
     Symbol h;
-    solution = PURRS::sum(h, lower, upper, t_n.subs(Recurrence::n, h));
+    solution = PURRS::sum(h, lower, upper, t_n.substitute(Recurrence::n, h));
   }
   D_MSGVAR("The sum is: ", solution);
 
@@ -393,7 +397,7 @@ PURRS::partial_gosper(const Expr& t_n, Expr& r_n,
     // `t' is not Gosper-summable, i. e., there is not hypergeometric
     // solution.
     Symbol h;
-    solution = PURRS::sum(h, lower, upper, t_n.subs(Recurrence::n, h));
+    solution = PURRS::sum(h, lower, upper, t_n.substitute(Recurrence::n, h));
   }
   D_MSGVAR("The sum is: ", solution);
 

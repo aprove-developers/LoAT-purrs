@@ -388,17 +388,6 @@ Expr::is_zero() const {
   return Base::is_zero();
 }
 
-inline Expr
-Expr::subs(const Expr& x, const Expr& y) const {
-  return Base::subs(GiNaC::operator==(x, y));
-}
-
-inline Expr
-Expr::subs(const Expr_List& x,
-	   const Expr_List& y) const {
-  return Base::subs(x.l, y.l);
-}
-
 inline bool
 Expr::has(const Expr& x) const {
   return Base::has(x);

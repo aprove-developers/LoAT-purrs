@@ -31,6 +31,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Recurrence.defs.hh"
 #include "util.hh"
 #include "simplify.hh"
+#include "Expr.defs.hh"
 #include "Blackboard.defs.hh"
 #include <algorithm>
 #include <iostream>
@@ -45,48 +46,8 @@ namespace {
 using namespace PURRS;
 
 /*!
-  Substitutes every occurrence of the symbol \p s in the expression \p e
-  with the expression \p r.
-  Returns an expression containing the result of the substitution.
-*/
-Expr
-substitute_symbol_with_expression(const Expr& e, const Symbol& s,
-				  const Expr& r) {
-  Expr e_substituted;
-  if (e.is_a_add()) {
-    e_substituted = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
-      e_substituted += substitute_symbol_with_expression(e.op(i), s, r);
-  }
-  else if (e.is_a_mul()) {
-    e_substituted = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
-      e_substituted *= substitute_symbol_with_expression(e.op(i), s, r);
-  }
-  else if (e.is_a_power())
-    return pwr(substitute_symbol_with_expression(e.arg(0), s, r),
-	       substitute_symbol_with_expression(e.arg(1), s, r));
-  else if (e.is_a_function())
-    if (e.nops() == 1)
-      return apply(e.functor(),
-		   substitute_symbol_with_expression(e.arg(0), s, r));
-    else {
-      unsigned num_argument = e.nops();
-      std::vector<Expr> argument(num_argument);
-      for (unsigned j = 0; j < num_argument; ++j)
-	argument[j] = substitute_symbol_with_expression(e.arg(j), s, r);
-      return apply(e.functor(), argument);
-    }
-  else if (e == s)
-    return r;
-  else
-    return e;
-  return e_substituted;
-}
-
-/*!
   Returns the same expression \p term if it does not contain
-  the function `x'; returns 0 otherwise.
+  the function \f$ x \f$; returns \f$ 0 \f$ otherwise.
 */
 Expr
 find_term_without_function_x(const Expr& term) {
@@ -105,65 +66,6 @@ find_term_without_function_x(const Expr& term) {
       return term;
   return 0;
 }
-
-#if 0
-/*!
-  Given an expression \p e, this function substituted each occurence
-  of the function \f$ x(n - d) \f$, with \f$ d \f$ a positive integers,
-  with an expression contained in the vector \p repls.
-  The position of the \p repls' expression to substitute is given by
-  the position of the positive integer \f$ d \f$ in the vector \p positions.
-*/
-Expr
-substitute_function_x(const Expr& e, const std::vector<Expr>& repls,
-		      const std::vector<unsigned>& positions) {
-  Expr e_substituted;
-  if (e.is_a_add()) {
-    e_substituted = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
-      e_substituted += substitute_function_x(e.op(i), repls, positions);
-  }
-  else if (e.is_a_mul()) {
-    e_substituted = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
-      e_substituted *= substitute_function_x(e.op(i), repls, positions);
-  }
-  else if (e.is_a_power())
-    return pwr(substitute_function_x(e.arg(0), repls, positions),
-	       substitute_function_x(e.arg(1), repls, positions));
-  else if (e.is_a_function())
-    if (e.is_the_x_function()) {
-      const Expr& argument = e.arg(0);
-      // Colud be the case of an initial condition.
-      if (argument.nops() == 2) {
-	// Finds the positive integer `d' of `x(n-d)'.
-	unsigned d;
-	if (argument.op(0) == Recurrence:: n)
-	  d = argument.op(1).ex_to_number().to_int();
-	else
-	  d = argument.op(0).ex_to_number().to_int();
-	// Finds the position of `d' in the vector `positions'.
-	unsigned position = *find(positions.begin(), positions.end(), d);
-	return repls[position];
-      }
-      else
-	return e;
-    }
-    else if (e.nops() == 1)
-      return apply(e.functor(),
-		   substitute_function_x(e.arg(0), repls, positions));
-    else {
-      unsigned num_argument = e.nops();
-      std::vector<Expr> argument(num_argument);
-      for (unsigned j = 0; j < num_argument; ++j)
-	argument[j] = substitute_function_x(e.arg(j), repls, positions);
-      return apply(e.functor(), argument);
-    }
-  else
-    return e;
-  return e_substituted;
-}
-#endif
 
 } // anonymous namespace
 
@@ -188,12 +90,12 @@ substitute_function_x(const Expr& e, const std::vector<Expr>& repls,
     <CODE>recurrence_rhs</CODE>.
     We next consider the difference between the partial solution
     and the new right hand side:
-    - if it is equal to zero  -> returns <CODE>PROVABLY_CORRECT</CODE>:
-                                    the solution is certainly right.
+    - if it is equal to zero -> returns <CODE>PROVABLY_CORRECT</CODE>:
+                                the solution is certainly right.
     - if it is not equal to zero (in a syntactical sense)
-                              -> returns <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
-			         the solution can be wrong or
-				 we failed to simplify it.
+                             -> returns <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
+			        the solution can be wrong or
+				we failed to simplify it.
   FIXME: In the latter case, we will need more powerful tools to
   decide whether the solution is right or it is really wrong and, in this last
   case, to return <CODE>PROVABLY_INCORRECT</CODE>.
@@ -212,8 +114,7 @@ PURRS::Recurrence::verify_solution() const {
       // Step 1: validation of initial conditions.
       for (unsigned i = order(); i-- > 0; ) {
 	Expr solution_valuated
-	  = substitute_symbol_with_expression(solution, n,
-					      first_initial_condition() + i);
+	  = solution.substitute(n, first_initial_condition() + i);
 	solution_valuated = blackboard.rewrite(solution_valuated);
 	solution_valuated = simplify_numer_denom(solution_valuated);
 	D_VAR(solution_valuated);
@@ -250,18 +151,6 @@ PURRS::Recurrence::verify_solution() const {
       // (the `d' are the decrements of the terms `x(n - d)').
       // These new expressions contained in the vector `terms_to_sub' are
       // substituted to the correspondenting values in `recurrence_rhs'.
-#if 0
-      std::vector<unsigned> decrements = tdip->get_decrements();
-      std::vector<Expr> terms_to_sub(decrements.size());
-      for (unsigned i = decrements.size(); i-- > 0; )
-	terms_to_sub[i]
-	  = substitute_symbol_with_expression(partial_solution,
-					      n, n-decrements[i]);
-      Expr substituted_rhs = simplify_on_output_ex(recurrence_rhs.expand(),
-						   false);
-      substituted_rhs = substitute_function_x(recurrence_rhs, terms_to_sub,
-					      decrements);
-#else
       Expr substituted_rhs;
       std::vector<Expr> terms_to_sub(order());
       // We have not applied the order reduction in order to solve the
@@ -276,13 +165,12 @@ PURRS::Recurrence::verify_solution() const {
       for (unsigned i = order(); i-- > 0; ) {
 	terms_to_sub[i]
 	  = simplify_all(partial_solution 
-			 .subs(n, n - (i + 1) * gcd_decrements_old_rhs));
+			 .substitute(n, n - (i + 1) * gcd_decrements_old_rhs));
 	substituted_rhs
-	  = substituted_rhs.subs(x(n - (i + 1) * gcd_decrements_old_rhs),
-				 terms_to_sub[i]);
+	  = substituted_rhs.substitute(x(n - (i + 1) * gcd_decrements_old_rhs),
+				       terms_to_sub[i]);
       }
       D_VEC(terms_to_sub, 0, terms_to_sub.size()-1);
-#endif
       D_VAR(substituted_rhs);
       Expr diff = blackboard.rewrite(partial_solution - substituted_rhs);
       diff = simplify_all(diff);

@@ -148,8 +148,9 @@ Expr apply(Functor f, const Expr& x1, const Expr& x2);
 Expr apply(Functor f, const Expr& x1, const Expr& x2, const Expr& x3);
 
 //! \brief
-//! Returns the application of functor \f$ f \f$ to operands \f$ x_1, x_2, x_3 \f$
-//! and \f$ x_4 \f$, i.e., the expression \f$ f(x_1, x_2, x_3, x_4) \f$.
+//! Returns the application of functor \f$ f \f$ to operands
+//! \f$ x_1, x_2, x_3 \f$ and \f$ x_4 \f$, i.e., the expression
+//! \f$ f(x_1, x_2, x_3, x_4) \f$.
 Expr apply(Functor f,
 	   const Expr& x1, const Expr& x2, const Expr& x3, const Expr& x4);
 
@@ -542,16 +543,9 @@ public:
   bool is_zero() const;
 
   //! \brief
-  //! Performs syntactic substitution in \p *this of the occurrences of
-  //! the subexpression \p x with \p y.
-  // FIXME: we must define subexpression.
-  Expr subs(const Expr& x, const Expr& y) const;
-
-  //! \brief
-  //! Allows the substitution at the same time of the occurences in \p *this
-  //! of the subexpressions contained in \p x with the relative
-  //! expressions in \p y.
-  Expr subs(const Expr_List& x, const Expr_List& y) const;
+  //! Substitutes every occurrence of the expression \p s in \p * this
+  //! with the expression \p r.
+  Expr substitute(const Expr& s, const Expr& r) const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if a subexpression of \p *this
@@ -703,8 +697,8 @@ public:
   void latex_print(std::ostream& s);
 
   //! \brief
-  //! Returns <CODE>true</CODE> if \p *this is a scalar rapresentation for \p x;
-  //! returns <CODE>false</CODE> otherwise.
+  //! Returns <CODE>true</CODE> if \p *this is a scalar rapresentation for
+  //! \p x; returns <CODE>false</CODE> otherwise.
   /*!
     This function realizes the definition of <EM>scalar representation
     for \f$ x \f$</EM>, where \f$ x \f$ is any symbol.
@@ -782,7 +776,8 @@ private:
   friend Expr apply(Functor f, const Expr& x1, const Expr& x2);
   friend Expr apply(Functor f, const Expr& x1, const Expr& x2, const Expr& x3);
   friend Expr apply(Functor f,
-		    const Expr& x1, const Expr& x2, const Expr& x3, const Expr& x4);
+		    const Expr& x1, const Expr& x2,
+		    const Expr& x3, const Expr& x4);
   friend Expr apply(Functor f, const std::vector<Expr>& x);
   friend Expr pwr(const Expr& x, const Expr& y);
   friend Expr sqrt(const Expr& x);

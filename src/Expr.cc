@@ -22,8 +22,13 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
+#ifndef NOISY
+#define NOISY 0
+#endif
+
 #include <config.h>
 
+#include "util.hh"
 #include "Expr.defs.hh"
 
 #include "numerator_denominator.hh"
@@ -401,14 +406,49 @@ REGISTER_FUNCTION(mod,
 
 } // namespace GiNaC
 
+PURRS::Expr
+PURRS::Expr::substitute(const Expr& s, const Expr& r) const {
+  const Expr& e = *this;
+  Expr e_substituted;
+  if (e == s)
+    return r;
+  else if (e.is_a_add()) {
+    e_substituted = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_substituted += e.op(i).substitute(s, r);
+  }
+  else if (e.is_a_mul()) {
+    e_substituted = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_substituted *= e.op(i).substitute(s, r);
+  }
+  else if (e.is_a_power())
+    return pwr(e.arg(0).substitute(s, r), e.arg(1).substitute(s, r));
+  else if (e.is_a_function())
+    if (e.nops() == 1)
+      return apply(e.functor(), e.arg(0).substitute(s, r));
+    else {
+      unsigned num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned j = 0; j < num_argument; ++j)
+	argument[j] = e.arg(j).substitute(s, r);
+      return apply(e.functor(), argument);
+    }
+  else
+    return e;
+  return e_substituted;
+}
 
-static PURRS::Expr
-distribute_mul_over_add_factor(const PURRS::Expr& e) {
+namespace {
+using namespace PURRS;
+
+Expr
+distribute_mul_over_add_factor(const Expr& e) {
   assert(e.is_a_mul());
-  PURRS::Expr distributed_e = e.op(0);
+  Expr distributed_e = e.op(0);
   for (unsigned i = e.nops(); i-- > 1; ) {
-    PURRS::Expr factor = e.op(i);
-    PURRS::Expr tmp = 0;
+    Expr factor = e.op(i);
+    Expr tmp = 0;
     if (factor.is_a_add())
       for (unsigned j = factor.nops(); j-- > 0; )
 	if (distributed_e.is_a_add())
@@ -426,6 +466,8 @@ distribute_mul_over_add_factor(const PURRS::Expr& e) {
   }
   return distributed_e;
 }
+
+} // anonymous namespace
 
 PURRS::Expr
 PURRS::Expr::distribute_mul_over_add() const {
