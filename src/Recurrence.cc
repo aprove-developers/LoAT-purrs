@@ -51,11 +51,11 @@ PURRS::Recurrence::substitute_auxiliary_definitions(const Expr& e) const {
       e_after_subs *= substitute_auxiliary_definitions(e.op(i));
   }
   else if (e.is_a_power())
-    e_after_subs = pwr(substitute_auxiliary_definitions(e.op(0)),
-		       substitute_auxiliary_definitions(e.op(1)));
+    e_after_subs = pwr(substitute_auxiliary_definitions(e.arg(0)),
+		       substitute_auxiliary_definitions(e.arg(1)));
   else if (e.is_a_function()) {
     if (e.nops() == 1)
-      e_after_subs = apply(e.functor(), substitute_auxiliary_definitions(e.op(0)));
+      e_after_subs = apply(e.functor(), substitute_auxiliary_definitions(e.arg(0)));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);

@@ -382,22 +382,22 @@ Recurrence::check_powers_and_functions(const Expr& e, const Symbol& n) {
   if (e.is_a_function()) {
     Expr operand;
     for (unsigned i = e.nops(); i-- > 0; ) {
-      operand = e.op(i);
+      operand = e.arg(i);
       if (operand.is_the_x_function())
-	if (operand.op(0).has(n))
+	if (operand.arg(0).has(n))
 	  return NON_LINEAR_RECURRENCE;
     }
   }
   // If `x(n + k)' is the base or the exponent of a power, then
   // the recurrence is non-linear.
   else if (e.is_a_power()) {
-    Expr base = e.op(0);
-    Expr exponent = e.op(1);
+    Expr base = e.arg(0);
+    Expr exponent = e.arg(1);
     if (base.is_the_x_function())
-      if (base.op(0).has(n))
+      if (base.arg(0).has(n))
 	return NON_LINEAR_RECURRENCE;
     if (exponent.is_the_x_function())
-      if (exponent.op(0).has(n))
+      if (exponent.arg(0).has(n))
 	return NON_LINEAR_RECURRENCE;
   }
   return OK;
@@ -486,7 +486,7 @@ Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
   unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
   if (num_factors == 1) {
     if (r.is_the_x_function()) {
-      Expr argument = r.op(0);
+      Expr argument = r.arg(0);
       if (argument == n)
 	return HAS_NULL_DECREMENT;
       else if (argument.is_a_add() && argument.nops() == 2)
@@ -515,7 +515,7 @@ Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
     for (unsigned i = num_factors; i-- > 0; ) {
       Expr factor = r.op(i);
       if (factor.is_the_x_function()) {
-	Expr argument = factor.op(0);
+	Expr argument = factor.arg(0);
 	if (argument == n)
 	  return HAS_NULL_DECREMENT;
 	else if (argument.is_a_add() && argument.nops() == 2)
@@ -1853,13 +1853,13 @@ compute_product_on_power(const Expr& e, const Symbol& n,
 			 const Number& lower, const Expr& upper) {
   Expr e_prod;
   bool e_prod_computed = false;
-  if (e.op(0).has(n)) {
+  if (e.arg(0).has(n)) {
     Number exponent;
-    if (e.op(1).is_a_number(exponent)) {
+    if (e.arg(1).is_a_number(exponent)) {
       if (exponent.is_positive_integer())
-	e_prod = pwr(compute_product(e.op(0), n, lower, upper), e.op(1));
+	e_prod = pwr(compute_product(e.arg(0), n, lower, upper), e.arg(1));
       else
-	e_prod = pwr(compute_product(e.op(0), n, lower, upper, true), e.op(1));
+	e_prod = pwr(compute_product(e.arg(0), n, lower, upper, true), e.arg(1));
       e_prod_computed = true;
     }
   }
@@ -1868,7 +1868,7 @@ compute_product_on_power(const Expr& e, const Symbol& n,
     std::vector<Expr> base_of_exps;
     std::vector<Expr> exp_poly_coeff;
     std::vector<Expr> exp_no_poly_coeff;
-    exp_poly_decomposition(e.op(1), n,
+    exp_poly_decomposition(e.arg(1), n,
 			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
     Expr new_exponent = 0;
     // `f(h)' is a polynomial or a product of a polynomial times an
@@ -1883,7 +1883,7 @@ compute_product_on_power(const Expr& e, const Symbol& n,
 	// we want it to start from `1'.
 	new_exponent -= coeff_k.subs(k, 0);
       }
-      e_prod = pwr(e.op(0), new_exponent);
+      e_prod = pwr(e.arg(0), new_exponent);
       e_prod_computed = true;
     }
     // FIXME: aggiungere anche 
@@ -2004,7 +2004,7 @@ find_parameters(const Expr& e, const Symbol& n) {
 	return true;
   }
   else if (e.is_a_power()) {
-    if (find_parameters(e.op(0), n) || find_parameters(e.op(1), n))
+    if (find_parameters(e.arg(0), n) || find_parameters(e.arg(1), n))
       return true;
   }
   else if (e.is_a_function()) {
@@ -2012,7 +2012,7 @@ find_parameters(const Expr& e, const Symbol& n) {
       return true;
     else
       for (unsigned i = e.nops(); i-- > 0; )
-	if (find_parameters(e.op(i), n))
+	if (find_parameters(e.arg(i), n))
 	  return true;
   }
   else

@@ -349,7 +349,20 @@ Expr::nops() const {
 
 inline Expr
 Expr::op(unsigned i) const {
+  assert(!is_a_function() && !is_a_power());
   return Base::op(i);
+}
+
+inline Expr&
+Expr::arg(unsigned i) {
+  assert(is_a_function() || is_a_power());
+  return static_cast<Expr&>(let_op(i));
+}
+
+inline const Expr&
+Expr::arg(unsigned i) const {
+  assert(is_a_function() || is_a_power());
+  return static_cast<Expr&>(const_cast<Expr&>(*this).let_op(i));
 }
 
 inline bool

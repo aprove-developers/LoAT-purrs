@@ -51,9 +51,9 @@ find_denominator_single_factor(const Expr& e, unsigned position,
 			       std::vector<Expr>& denominators) {
   Number exponent;
   // `e' is a denominator.
-  if (e.is_a_power() && e.op(1).is_a_number(exponent)
+  if (e.is_a_power() && e.arg(1).is_a_number(exponent)
       && !exponent.is_nonnegative_integer()) {
-    Expr den = pwr(e.op(0), -exponent);
+    Expr den = pwr(e.arg(0), -exponent);
     denominators[position] *= den;
     return den;
   }
@@ -104,8 +104,8 @@ check_factor_is_to_add(const Expr& base_f, const Expr& exponent_f,
   Expr exponent_d;
   // `d' is not a `power'.
   if (d.is_a_power()) {
-    base_d = d.op(0);
-    exponent_d = d.op(1);
+    base_d = d.arg(0);
+    exponent_d = d.arg(1);
     // The two factor have same bases.
     if (base_d == base_f) {
       Number numeric_exponent_d;
@@ -200,8 +200,8 @@ static void
 split_factor(const Expr& factor, Expr& base, Expr& exponent,
 	     Number& numeric_exponent) {
   if (factor.is_a_power()) {
-    base = factor.op(0);
-    exponent = factor.op(1);
+    base = factor.arg(0);
+    exponent = factor.arg(1);
     if (exponent.is_a_number(numeric_exponent))
       exponent = 0;
     else
@@ -374,10 +374,10 @@ numerator_denominator_factor(const Expr& e,
     denominators.push_back(1);
     Expr base_num;
     Expr base_den;
-    numerator_denominator_factor(e.op(0), base_num, base_den);
+    numerator_denominator_factor(e.arg(0), base_num, base_den);
     Expr exp_num;
     Expr exp_den;
-    numerator_denominator_factor(e.op(1), exp_num, exp_den);
+    numerator_denominator_factor(e.arg(1), exp_num, exp_den);
     denominator
       = find_denominator_single_term(pwr(base_num/base_den, exp_num/exp_den),
 				     0, numerators, denominators);

@@ -239,8 +239,8 @@ static bool
 find_power_roots(const Expr& p, const Symbol& x,
 		 std::vector<Polynomial_Root>& roots) {
   assert(p.is_a_power());
-  Expr base = p.op(0);
-  Number exponent = p.op(1).ex_to_number();
+  Expr base = p.arg(0);
+  Number exponent = p.arg(1).ex_to_number();
   assert(exponent.is_positive_integer() && exponent >= 2);
   if (!find_roots(base, x, roots, exponent))
     // No way: we were unable to solve the base.

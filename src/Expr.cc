@@ -337,11 +337,11 @@ PURRS::Expr::is_scalar_representation(const Symbol& x) const {
   else if (e.is_a_symbol() && e != x)
     return true;
   else if (e.is_a_power())
-    return e.op(0).is_scalar_representation(x)
-      && e.op(1).is_scalar_representation(x);
+    return e.arg(0).is_scalar_representation(x)
+      && e.arg(1).is_scalar_representation(x);
   else if (e.is_a_function()) {
     for (unsigned i = e.nops(); i-- > 0; )
-      if (!e.op(i).is_scalar_representation(x))
+      if (!e.arg(i).is_scalar_representation(x))
 	return false;
     return true;
   }
@@ -362,9 +362,9 @@ PURRS::Expr::is_polynomial(const Symbol& x) const {
   else if (e == x)
     return true;
   else if (e.is_a_power()) {
-    if (e.op(0).is_polynomial(x)) {
+    if (e.arg(0).is_polynomial(x)) {
       Number exponent;
-      if (e.op(1).is_a_number(exponent) && exponent.is_positive_integer()) 
+      if (e.arg(1).is_a_number(exponent) && exponent.is_positive_integer()) 
 	return true;
     }
   }
@@ -400,15 +400,15 @@ PURRS::Expr::size_norm() const {
     count += e_nops - 1;
   }
   else if (e.is_a_power()) {
-    count += e.op(0).size_norm();
-    count += e.op(1).size_norm();
+    count += e.arg(0).size_norm();
+    count += e.arg(1).size_norm();
     ++count;
   }
   else if (e.is_a_function()) {
     // The functor.
     count += 1;
     for (unsigned i = e.nops(); i-- > 0; )
-      count += e.op(i).size_norm();
+      count += e.arg(i).size_norm();
   }
   else
     // This is the case of a `Number' or a `Symbol' or a `Constant'.

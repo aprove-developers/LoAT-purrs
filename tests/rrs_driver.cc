@@ -312,7 +312,7 @@ main(int argc, char *argv[]) try {
       if (tmp == dummy_expr)
 	throw std::runtime_error("not detected by GiNaC's parser");
       // Get the mortadella.
-      rhs = tmp.op(0);
+      rhs = tmp.arg(0);
     }
     catch (exception& e) {
       ostringstream m;

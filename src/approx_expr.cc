@@ -76,8 +76,8 @@ approximate(const Expr& e) {
   }
   else if (e.is_a_power()) {
     static Expr one_half = Number(1)/2;
-    const Expr& base = e.op(0);
-    const Expr& exponent = e.op(1);
+    const Expr& base = e.arg(0);
+    const Expr& exponent = e.arg(1);
 #if 0
     return pow(approximate(base), approximate(exponent));
 #else
@@ -95,7 +95,7 @@ approximate(const Expr& e) {
     // FIXME: temporary assertion until the decision about the behavior of
     // the function `approximate()' in these cases.
     assert(!(e.is_the_sum_function() || e.is_the_prod_function()));
-    const Expr& arg = e.op(0);
+    const Expr& arg = e.arg(0);
     CInterval aarg = approximate(arg);
 #if 0
     if (e.is_the_function(abs))
