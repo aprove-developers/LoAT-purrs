@@ -328,6 +328,8 @@ solve(const GExpr& rhs, const GSymbol& n) {
     unsigned long index = decrement.to_long();
     if (order < 0 || index > unsigned(order))
       order = index;
+    // FIXME: why 'coefficients' is created with one useless element, 
+    // the first, that is always zero?
     if (index > coefficients.size())
       coefficients.insert(coefficients.end(),
 			  index - coefficients.size(),
@@ -577,6 +579,8 @@ solve(const GExpr& rhs, const GSymbol& n) {
       // has a double root.
       assert(roots[0].multiplicity() == 2);
 
+      // FIXME: devo costrurire g_n....(qui sotto e' sbagliato).
+
       // The solution is of the form x_n = (a+b*n) \lambda^n where
       // \lambda is the root with multiplicity 2.
       // In this case we must solve a linear system:
@@ -585,14 +589,17 @@ solve(const GExpr& rhs, const GSymbol& n) {
       GSymbol a("a"), b("b");
       GExpr root = roots[0].value();
       solution_tot = (a + b * n) * pow(root, n);
-
-      GMatrix sys(2, 2, lst(1, 0, root, root));
+      // Solved the system with the inverse matrix'method.
+      GMatrix vars(2, 2, lst(1, 0, root, root));
       GMatrix rhs(2, 1, lst(x_0, x_1));
-      GMatrix sol = sys.solve(sys, rhs);
+      GMatrix sol(2, 1);
+      sol = vars.inverse();
+      sol = sol.mul(rhs);
 #if NOISY
-      std::cout << "solution system " << sol << std::endl;
+      std::cout << "matrix solution " << sol << std::endl;
 #endif
-      solution_tot = solution_tot.subs(a == sol(0,0), b == sol(0,1));
+      solution_tot = solution_tot.subs(a == sol(0,0));
+      solution_tot = solution_tot.subs(b == sol(1,0));
 #if NOISY
       std::cout << "Solution  " << solution_tot << std::endl << std::endl;
 #endif
