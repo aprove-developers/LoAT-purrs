@@ -236,7 +236,7 @@ main() try {
 
   Symbol x;
   GExpr p = GExpr(**expr, Expr_List(x));
-  if (p == GExpr(0)
+  if (p.is_zero()
       || !p.is_integer_polynomial()
       || p.is_a_number()) {
     std::ostringstream s;

@@ -217,7 +217,7 @@ find_polynomial_solution(const GSymbol& n, const GNumber& deg_x,
   GList equations;
   for (unsigned i = 0; i < number_of_unknowns; ++i) {
     GExpr lhs = rr.coeff(n, i);
-    equations.prepend(Expr(lhs == 0));
+    equations.prepend(Expr(lhs, 0));
   }
     
   GExpr solution = lsolve(equations, unknowns);  

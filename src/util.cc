@@ -88,6 +88,7 @@ get_binding(const GList& substitution, unsigned wild_index) {
   return substitution.op(wild_index).rhs();
 }
 
+//! \brief
 //! Returns <CODE>true</CODE> if \p e is a scalar rapresentation for \p x;
 //! returns <CODE>false</CODE> otherwise.
 /*!
@@ -125,6 +126,7 @@ is_scalar_representation(const GExpr& e, const GSymbol& x) {
   return false;
 }
 
+//! \brief
 //! Returns <CODE>true</CODE> if \p e is a polynomial in \p x;
 //! returns <CODE>false</CODE> otherwise.
 /*!
@@ -162,6 +164,7 @@ is_polynomial(const GExpr& e, const GSymbol& x) {
   return false;
 }
 
+//! \brief
 //! Isolates a polynomial part of \p e and assigns it to \p polynomial,
 //! assigning the corresponding possibly non-polynomial part of \p e
 //! to \p rest.
@@ -243,6 +246,7 @@ convert_to_integer_polynomial(const GExpr& p, const GSymbol& x,
   return q;
 }
 
+//! \brief
 //! Computes the resultant of the polynomials \p f and \p g with 
 //! rational coefficients, using Euclid's algorithm.
 //! Returns the solution in \p res.

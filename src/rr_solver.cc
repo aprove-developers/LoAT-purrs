@@ -118,6 +118,7 @@ build_characteristic_equation(const GSymbol& x,
   return p;
 }
 
+//! \brief
 //! Returns <CODE>true</CODE> if at least one element of the vector \p v
 //! is different from \f$ 0 \f$.
 //! Returns <CODE>false</CODE> otherwise, i. e., all the elements of \p v
