@@ -1058,13 +1058,18 @@ PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
   else
     bound = simplify_sum(lower_bound_.expression(), REWRITE_UPPER_LIMIT);
   
+  // FIXME: temporary!!!!!!!!
+  // With the introduction of the function `Sc()' the validation
+  // of the initial condition must change!!!!!
+#if 0
   // Step 1: validation of initial conditions.
   Verify_Status status
     = validate_initial_conditions(kind_of_bound, bound,
 				  applicability_condition());
   if (status == INCONCLUSIVE_VERIFICATION || status == PROVABLY_INCORRECT)
     return status;
-  
+#endif  
+
   // Step 2: find `partial_bound'.
   // We not consider the terms containing the initial conditions:
   // `partial_bound' will contain all the other terms.
