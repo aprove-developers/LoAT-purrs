@@ -256,7 +256,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
     if (non_homogeneous_part == 0)
       return PROVABLY_CORRECT;
 
-#if 0
+#if 1
   std::vector<Expr> bases_of_exp;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
@@ -319,6 +319,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
   if (diff.is_a_add()) {
     for (unsigned i = 0; i < diff.nops(); ++i) {
       Expr summand = diff.op(i);
+#if 0
       if (summand.is_a_mul()) {
 	// Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
 	// `a' and `b' possibly 1).
@@ -343,29 +344,30 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 	if (!done)
 	  coefficients_of_exponentials[0] += summand;
       }
-
-//        // Alternative solution
-//        if (summand.is_a_mul()) {
-//  	// Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
-//  	// `a' and `b' possibly 1).
-//  	bool done = false;
-//  	for (unsigned j = 0; (j < summand.nops()) && !done; ++j) {
-//  	  Expr factor = summand.op(j);
-//  	  if (factor == n) {
-//  	    coefficients_of_exponentials[1] += summand/factor;
-//              done = true;
-//            }
-//  	  else if (factor.is_a_power() && factor.arg(0) == n) {
-//  	    assert(factor.arg(1).is_a_number());
-//  	    unsigned k = factor.arg(1).ex_to_number().to_unsigned();
-//  	    coefficients_of_exponentials[k] += summand/factor;
-//              done = true;
-//  	  }
-//  	}
-//          // `done' is false if `factor' contains neither `n' nor `n^k'
-//  	if (!done)
-//  	  coefficients_of_exponentials[0] += summand;
-//        }
+#else
+      if (summand.is_a_mul()) {
+ 	// Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
+ 	// `a' and `b' possibly 1).
+ 	bool done = false;
+ 	for (unsigned j = 0; (j < summand.nops()) && !done; ++j) {
+ 	  Expr factor = summand.op(j);
+ 	  if (factor == n) {
+ 	    coefficients_of_exponentials[1] += summand/factor;
+	    done = true;
+	  }
+ 	  else if (factor.is_a_power() && factor.arg(0) == n) {
+ 	    assert(factor.arg(1).is_a_number());
+ 	    unsigned k = factor.arg(1).ex_to_number().to_unsigned();
+	    assert(k < coefficients_of_exponentials.size());
+ 	    coefficients_of_exponentials[k] += summand/factor;
+	    done = true;
+ 	  }
+ 	}
+	// `done' is false if `factor' contains neither `n' nor `n^k'
+ 	if (!done)
+ 	  coefficients_of_exponentials[0] += summand;
+      }
+#endif
       else if (summand.is_a_power()) {
 	// Summand has the form `n^k' or `a^n'
 	if (summand.arg(0) == n) {
