@@ -58,10 +58,10 @@ get_linear_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
 }
 
 /*!
-  Transforms experssions of the form \f$a^(b*x)\f$ in the expression \p p
+  Transforms expressions of the form \f$a^(b*x)\f$ in the expression \p p
   into \f$(a^b)^x\f$.
 */
-GExpr
+static GExpr
 split_exp(GExpr& p, const GSymbol& x, const GList lst_of_exp) {
   GExpr q = 0;
 
@@ -88,7 +88,7 @@ split_exp(GExpr& p, const GSymbol& x, const GList lst_of_exp) {
   Transforms expressions of the form \f$a^x*b^x\f$ in the expression \p p
   into \f$(a^b)^x\f$.
 */
-GExpr 
+static GExpr 
 union_exp(GExpr& p, const GSymbol& x, const GList lst_of_exp,
 	  const unsigned n) {
   GExpr q = 0;
@@ -119,8 +119,8 @@ union_exp(GExpr& p, const GSymbol& x, const GList lst_of_exp,
   return q;
 }
 
-void
-check_exp_inhomogeneous_term(GExpr& e, const GSymbol& n) {
+static void
+transform_exponentials(GExpr& e, const GSymbol& n) {
   GList lst_of_exp;
 
   // Transforms a^(bn+c) into (a^b)^n*a^c.
@@ -156,7 +156,7 @@ check_exp_inhomogeneous_term(GExpr& e, const GSymbol& n) {
   \f$ \alpha_i^n \f$ and \f$ p(n)_i \f$
   for \f$ i = 1, \ldots, k \f$.
 */
-GMatrix
+static GMatrix
 decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
   GExpr p, q;
   GList(lst_of_exp);
@@ -166,11 +166,9 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
   p.find(pattern, lst_of_exp);
   p = p.collect(lst_of_exp);
 
-  if (lst_of_exp.nops() == 0) {
+  if (lst_of_exp.nops() == 0)
     // In this case there are no axponentials.
-    GMatrix terms_divided(2, 1, lst(1, p));
-    return terms_divided;
-  }
+    return GMatrix (2, 1, lst(1, p));
   else {
     // In this case there is at least one exponential in 'p'
     GList row_exp;
@@ -316,7 +314,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
   // The factors of the form a^(bx+c) (a,b,c numeric) must be transformed
   // into (a^b)^x*a^c. GiNaC tranforms only a^(bx+c) in a^c*a^(bx) but not
   // a^(bx) into (a^b)^x.
-  check_exp_inhomogeneous_term(e, n);
+  transform_exponentials(e, n);
 
   // Now certainly the inhomogeneous term contains only exponential
   // with exponent x.
