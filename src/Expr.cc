@@ -1096,3 +1096,80 @@ PURRS::Expr::collect_symbols(Symbol::SymbolSet& system_generated_symbols,
     else
       new_symbols.insert(s);
 }
+
+void
+PURRS::mathml_print(const GiNaC::ex & e, std::ostream& s)
+{
+  std::string open_tag = "";
+  std::string middle_tag = "";
+  std::string close_tag = "";
+  bool fenced;
+  if (GiNaC::is_a<GiNaC::function>(e)) {
+    std::string function_name=GiNaC::ex_to<GiNaC::function>(e).get_name();
+    s << "<mi>" << function_name << "</mi>";
+  }
+  else {
+    std::string class_name=GiNaC::ex_to<GiNaC::basic>(e).class_name();
+    if (class_name=="numeric") {
+      if (e.info(GiNaC::info_flags::integer))
+	fenced=false;
+      else
+	fenced=true;
+      open_tag = (fenced?"<mn><mfenced>":"<mn>");
+      middle_tag = "";
+      close_tag = (fenced?"</mfenced></mn>":"</mn>");
+      if (e.info(GiNaC::info_flags::rational) && !e.info(GiNaC::info_flags::integer)) {
+	open_tag="";
+	middle_tag="";
+	close_tag="";
+      }
+    }
+    else if (class_name=="symbol") {
+      open_tag = "<mi>";
+      middle_tag = "";
+      close_tag = "</mi>";
+    }
+    else if (class_name=="add") {
+      open_tag = "<mrow>";
+      middle_tag = "<mo>+</mo>";
+      close_tag = "</mrow>";
+    }
+    else if (class_name=="mul") {
+      open_tag = "<mrow>";
+      middle_tag = "<mo>*</mo>";
+      close_tag = "</mrow>";
+    }
+    else if (class_name=="power") {
+      open_tag = "<msup><mrow>";
+      middle_tag = "</mrow><mrow>";
+      close_tag = "</mrow></msup>";
+    }
+    else
+      s << "UNKNOWN:" << class_name;
+  }
+  s << open_tag;
+  size_t n = e.nops();
+  if (n)
+    for (size_t i=0; i<n; i++) {
+      size_t child_nops=e.op(i).nops();
+      if (child_nops > 1)
+	s << "<mfenced>";
+      mathml_print(e.op(i), s);
+      if (child_nops > 1)
+	s << "</mfenced>";
+      if (i != n-1)
+	//s << ",";
+	s << middle_tag;
+    }
+  else if (e.info(GiNaC::info_flags::rational) && !e.info(GiNaC::info_flags::integer))
+    s << "<mfrac>" << "<mn>" << e.numer() << "</mn><mn>" << e.denom() << "</mn></mfrac> ";
+  else
+    s << e;
+  s << close_tag << std::endl;
+}
+
+void
+PURRS::Expr::mathml_output(std::ostream& s) const {
+  const Expr e = *this;
+  mathml_print(e, s);
+}

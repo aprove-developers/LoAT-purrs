@@ -948,9 +948,14 @@ public:
 
   void latex_print(std::ostream& s);
 
+  //! \brief
+  //! Prints the expression in MathML format.
+  void mathml_output(std::ostream& s) const;
+
+
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
-  //! Returns <CODE>true</CODE> if \p *this is a scalar rapresentation for
+  //! Returns <CODE>true</CODE> if \p *this is a scalar representation for
   //! \p x; returns <CODE>false</CODE> otherwise.
   /*!
     This function realizes the definition of <EM>scalar representation
@@ -1260,7 +1265,10 @@ template <typename SymbolHandler>
 unsigned int
 generic_size_norm(const Expr& e, const SymbolHandler& sh);
 
+void mathml_print(const GiNaC::ex& e, std::ostream& s);
+
 } // namespace Parma_Recurrence_Relation_Solver
+
 
 #include "Expr.inlines.hh"
 
