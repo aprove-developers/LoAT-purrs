@@ -1,4 +1,4 @@
-/* Definition of some utility functions.
+/* ************************
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -23,6 +23,8 @@ For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
 #include "simplify.hh"
+
+#include "util.hh"
 #include <vector>
 
 // TEMPORARY
@@ -61,7 +63,7 @@ split_exponent(GExpr& num, GExpr& not_num, const GExpr& e) {
      and not contains \p n:
      returns the <CODE>GExpr</CODE> \p not_num_exp_minus_n equal to
      \p not_num_exponent;
-  3. the <CODE>GExpr</CODE> \p not_num_exponent is not is a
+  3. the <CODE>GExpr</CODE> \p not_num_exponent is not a
      <CODE>GiNaC::mul</CODE> and it is equal to \p n:
      returns the <CODE>GExpr</CODE> \p not_num_exp_minus_n equal to \f$ 1 \f$. 
 */
@@ -140,7 +142,7 @@ simpl_powers_base(const GExpr& e, const GExpr& num_exponent,
   for (unsigned i = e.nops(); i-- > 0; )
     if (is_a<power>(e.op(i))) {
       GExpr tmp = e.op(i);
-      while (is_a<power>(tmp)) {  
+      while (is_a<power>(tmp)) {
         // The exponent of the factor 'e.op(i)' is a multiplication.
         if (is_a<mul>(tmp.op(1)))
           for (unsigned j = tmp.op(1).nops(); j-- > 0; )
@@ -220,6 +222,7 @@ pow_simpl(const GExpr& e, const GSymbol& n, const bool& input) {
   std::cout << "num_exp " << num_exponent << std::endl;
   std::cout << "not_num_exp " << not_num_exponent << std::endl;
 #endif
+
   // The base is a multiplication.
   if (is_a<mul>(base))
     return simpl_powers_base(base, num_exponent, not_num_exponent, n, input);
@@ -411,21 +414,6 @@ collect_base_exponent(const GExpr& e) {
   std::cout << "tmp dopo same exponents... " << tmp << std::endl;
 #endif
   return tmp;
-}
-
-/*!
-  Computes the gcd between the integers \p n and \p m.
-*/
-static int
-gcd(int n, int m) {
-  
-  int r = abs(m);
-  while (r != 0) {
-    r = n % m;
-    n = m; 
-    m = r;
-  }
-  return n;
 }
 
 /*!
@@ -909,6 +897,7 @@ simplify_on_input_ex(const GExpr& e, const GSymbol& n, const bool& input) {
   }
   else
     ris += e;
+
   return ris;
 }
 
