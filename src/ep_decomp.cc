@@ -29,6 +29,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "ep_decomp.hh"
 
 #include "util.hh"
+#include "simplify.hh"
 #include "Expr.defs.hh"
 #include "Recurrence.defs.hh"
 
@@ -133,7 +134,14 @@ PURRS::exp_poly_decomposition(const Expr& e,
 			      std::vector<Expr>& alpha,
 			      std::vector<Expr>& p,
 			      std::vector<Expr>& q) {
-  unsigned num_summands = e.is_a_add() ? e.nops() : 1;
+  // This simplification is necessary because rewrite eventual
+  // nested powers.
+  Expr e_simpl = simplify_ex_for_input(e, true);
+  // With the logarithms' simplification non-polynomial expressions
+  // can become polynomial expressions for the rule `log(a^b) = b log(a)'.
+  e_simpl = simplify_logarithm(e_simpl);
+
+  unsigned num_summands = e_simpl.is_a_add() ? e_simpl.nops() : 1;
   // An upper bound to the number of exponentials is the number of
   // summands in `e': reserve space in the output vectors so that
   // no reallocations will be required.
@@ -142,7 +150,7 @@ PURRS::exp_poly_decomposition(const Expr& e,
   q.reserve(num_summands);
   if (num_summands > 1)
     for (unsigned i = num_summands; i-- > 0; )
-      exp_poly_decomposition_summand(e.op(i), alpha, p, q);
+      exp_poly_decomposition_summand(e_simpl.op(i), alpha, p, q);
   else
-    exp_poly_decomposition_summand(e, alpha, p, q);
+    exp_poly_decomposition_summand(e_simpl, alpha, p, q);
 }
