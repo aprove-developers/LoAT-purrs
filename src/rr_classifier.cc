@@ -1017,8 +1017,11 @@ PURRS::Recurrence::classify() const {
   else if (is_linear_finite_order())
     finite_order_p = new Finite_Order_Info(order, coefficients,
 					   gcd_among_decrements);
+
   assert(is_linear_finite_order() || is_functional_equation()
 	 || is_non_linear_finite_order() || is_linear_infinite_order());
+
+  is_classified = true;
   return SUCCESS;
 }
 
