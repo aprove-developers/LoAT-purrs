@@ -1112,14 +1112,14 @@ rewrite_factorials_and_exponentials(const Expr& e) {
 /*!
   Applies the following rewrite rules:
   \f[
-    \binom(n, k)
+    \binom{n}{k}
     \begin{cases}
       \frac{n!}{(n-k)! k!},
         \quad \text{if } n \text{ and } k \text{ are not both numerics or }
 	n \in \Zset, n \geq 0 \text{ or } k \in \Zset, k \geq 0; \\
       (-1)^k \frac{(k-n-1)!}{(-n-1)! k!},
         \quad \text{if } n \in \Zset, n < 0; \\
-      \binom(n, k),
+      \binom{n}{k},
       \quad \text{otherwise}.
     \end{cases}
   \f]

@@ -255,12 +255,12 @@ Expr factorial(const Expr& x);
 */
 Expr gamma(const Expr& x);
 
-//! Returns the binomial coefficient \f$ \binom(m, k) \f$.
+//! Returns the binomial coefficient \f$ \binom{m}{k} \f$.
 /*!
   When \f$ m \in \Cset \f$ and \f$ k \in \Zset \f$, \f$ k \geq 0 \f$, use
   the following definition:
   \f[
-    \binom(m, k) =
+    \binom{m}{k} =
     \begin{cases}
       1, \quad \text{if } k = 0;\\
       \frac{\prod_{i = m-k+1}^m i}{k!}, \quad \text{if } k > 0.

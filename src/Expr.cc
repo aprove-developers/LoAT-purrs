@@ -429,7 +429,7 @@ binom_deriv(const ex&, const ex&, unsigned int) {
 /*!
   We define the symbolic function
   \f[
-    \binom(m, k), \text{for } m \in \Cset, k \in \Zset, k \geq 0.
+    \binom{m}{k}, \text{for } m \in \Cset, k \in \Zset, k \geq 0.
   \f]
 */
 REGISTER_FUNCTION(binom,
