@@ -333,7 +333,7 @@ collect_base_exponent(const GExpr& e) {
 	else if (is_a<mul>(tmp.op(i).op(0)))
 	  tmp = tmp.subs(tmp.op(i).op(0)
 			 == collect_base_exponent(tmp.op(i).op(0)));
-      if (tmp.op(i).is_equal(input))
+      if (!is_a<mul>(tmp) || tmp.op(i).is_equal(input))
       	repeat = false;
     }
   }
@@ -551,6 +551,11 @@ reduce_to_standard_form(const GNumber root_index, const GNumber r) {
   GExpr   n_d = numer_denom(r);
   GNumber num = GiNaC::ex_to<GiNaC::numeric>(n_d.op(0));
   GNumber den = GiNaC::ex_to<GiNaC::numeric>(n_d.op(1));
+  // FIXME: deal with complex numbers
+  if (!r.is_real()) {
+    GExpr index = 1 / root_index;
+    return pow(r, index);
+  }
   GNumber sign = r > 0 ? 1 : -1;
   GNumber g    = gcd(num, den);
   num /= g;
