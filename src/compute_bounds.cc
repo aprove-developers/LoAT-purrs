@@ -706,6 +706,10 @@ known_class_of_functional_eq_rank_1(const Expr& coefficient,
       || divisor_arg < 1)
     return false;
 
+  // FIXME: temporary!
+  if (!divisor_arg.is_integer())
+    return false;
+
   if (has_parameters(inhomogeneous))
     return false;
 
@@ -881,7 +885,7 @@ compute_non_homogeneous_part(Type_Bound type,
 /*!
   Computes
   \f[
-    a^q x( \frac {n}{b^q} )
+    a^q x( \lfloor \frac {n}{b^q} \rfloor )
   \f]
   where \f$ a \f$ is stored in \p coefficient, \f$ b \f$
   is stored \p divisor.
@@ -891,21 +895,32 @@ compute_term_about_initial_condition(Type_Bound type, unsigned int condition,
 				     const Number& divisor,
 				     const Expr& coefficient,
 				     const Expr& q, Expr& bound) {
+  // `index_initial_condition' is the argument of the `x' function:
+  // `floor(n/b^(log(n)/log(b)))'.
   Expr index_initial_condition;
-  if (type == LOWER_BOUND)
-    index_initial_condition 
-      = simplify_logarithm(Recurrence::n / pwr(divisor, q + 1));
-  else
-    index_initial_condition
-      = simplify_logarithm(Recurrence::n / pwr(divisor, q));
-  index_initial_condition = simplify_ex_for_output(index_initial_condition,
-						   false);
-
-  if (index_initial_condition.is_a_number()
-      && index_initial_condition.ex_to_number() < condition)
-    index_initial_condition = condition;
+  if (divisor == 2) {
+    index_initial_condition = 1;
+    if (index_initial_condition.ex_to_number() < condition)
+      index_initial_condition = condition;
+  }
+  else {
+//     index_initial_condition
+//       = simplify_logarithm(Recurrence::n / pwr(divisor, q));
+//     index_initial_condition = simplify_ex_for_output(index_initial_condition,
+// 						     false);
+//     index_initial_condition = floor(index_initial_condition);
+    index_initial_condition = Sc(Recurrence::n, divisor);
+    D_VAR(index_initial_condition);
+  }
   
-  bound += pwr(coefficient, q) * x(index_initial_condition);
+  // Compute `a^q' removing the function `floor' from `q':
+  // in the case of "upper bound" consider `a^(log(n)/log(b))';
+  // in the case of "lower bound" consider `a^(log(n)/log(b)-1)';
+  assert(q.is_the_floor_function());
+  Expr tmp = q.arg(0);
+  if (type == LOWER_BOUND)
+    tmp -= 1;
+  bound += pwr(coefficient, tmp) * x(index_initial_condition);
 }
 					     
 } // anonymous namespace
@@ -927,11 +942,7 @@ PURRS::Recurrence::approximate_functional_equation(Bound kind_of_bound) const {
       return TOO_COMPLEX;
 
     Number coeff = coefficient.ex_to_number();
-    Expr q;
-    if (kind_of_bound == LOWER)
-      q = log(n) / log(divisor_arg) - 1;
-    else
-      q = log(n) / log(divisor_arg);
+    const Expr& q = floor(log(n) / log(divisor_arg));
 
     Expr bound;
     Number condition = -1;
