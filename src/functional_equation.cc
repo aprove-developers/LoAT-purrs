@@ -71,6 +71,8 @@ is_non_negative(const Expr& e, const Symbol& x, Number& i) {
   - if \f$ a \f$ is a non-decreasing function in \f$ x \f$ and
     \f$ b \f$ is a positive integer, then \f$ a^b \f$ is a
     non-decreasing function in \f$ x \f$;
+  - every \f$ f(x) \f$ constant function, i.e., the argument does not
+    depend from \p x, is a non-decreasing function in \f$ x \f$.
   - if \f$ a \f$ and \f$ b \f$ are non-decreasing functions
     in \f$ x \f$ then \f$ a + b \f$ and \f$ a * b \f$ are
     non-decreasing functions in \f$ x \f$.
@@ -88,6 +90,11 @@ is_non_decreasing_poly(const Expr& e, const Symbol& x) {
 	return true;
     }
   }
+  else if (e.is_a_function() && e.nops() == 1)
+    if (!e.arg(0).has(x))
+      return true;
+    else
+      return false;
   else if (e.is_a_mul()) {
     for (unsigned i = e.nops(); i-- > 0; )
       if (!is_non_decreasing_poly(e.op(i), x))
