@@ -1265,14 +1265,14 @@ PURRS::Recurrence::compute_exact_solution_max() const {
   // We interpret it as follows:
   //   x(0) = a
   //   x(n) = max(f(x(0), ..., x(n-1)), a) for all n >= 1.
-  Expr numeric_arg;
+  Expr numeric_or_symbolic_arg;
   Expr functional_arg;
-  if (recurrence_rhs.arg(0).is_a_number()) {
-    numeric_arg = recurrence_rhs.arg(0);
+  if (recurrence_rhs.arg(0).is_a_number() || recurrence_rhs.arg(0).is_a_symbol()) {
+    numeric_or_symbolic_arg = recurrence_rhs.arg(0);
     functional_arg = recurrence_rhs.arg(1);
   }
-  else if (recurrence_rhs.arg(1).is_a_number()) {
-    numeric_arg = recurrence_rhs.arg(1);
+  else if (recurrence_rhs.arg(1).is_a_number() || recurrence_rhs.arg(1).is_a_symbol()) {
+    numeric_or_symbolic_arg = recurrence_rhs.arg(1);
     functional_arg = recurrence_rhs.arg(0);
   }
   else return TOO_COMPLEX;
@@ -1297,7 +1297,7 @@ PURRS::Recurrence::compute_exact_solution_max() const {
   }
   
   std::map<index_type, Expr> initial_conditions;
-  initial_conditions[0] = numeric_arg;
+  initial_conditions[0] = numeric_or_symbolic_arg;
   aux_rec.set_initial_conditions(initial_conditions);
   aux_rec.exact_solution(solution);
 
@@ -1492,6 +1492,9 @@ PURRS::Recurrence::compute_lower_bound() const {
     case NON_LINEAR_FINITE_ORDER:
       return compute_bound_non_linear(LOWER); 
       break;
+    case MAX_FUNCTION:
+      return TOO_COMPLEX;
+      break;
     default:
       throw std::runtime_error("PURRS internal error: "
 			       "compute_lower_bound().");
@@ -1551,6 +1554,9 @@ PURRS::Recurrence::compute_upper_bound() const {
       break;
     case NON_LINEAR_FINITE_ORDER:
       return compute_bound_non_linear(UPPER);
+      break;
+    case MAX_FUNCTION:
+      return TOO_COMPLEX;
       break;
     default:
       throw std::runtime_error("PURRS internal error: "
