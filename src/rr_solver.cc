@@ -218,18 +218,26 @@ subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
 			    GExpr& solution);
 
 static void
-add_initial_conditions(GExpr& g_n, const GSymbol& n,
-		       std::vector<GNumber>& coefficients,
+add_initial_conditions(const GExpr& g_n, const GSymbol& n,
+		       const std::vector<GNumber>& coefficients,
 		       const std::vector<GExpr>& initial_conditions,
 		       GExpr& solution);
 
 static GExpr
-order_2_sol_roots_no_distinct(const GSymbol& n,
+order_2_sol_roots_no_distinct(const GSymbol& n, GExpr& g_n,
 			      const std::vector<GExpr>& base_of_exps,
 			      const std::vector<GExpr>& exp_poly_coeff,
 			      const std::vector<GExpr>& initial_conditions,
 			      const std::vector<GNumber>& coefficients,
 			      const std::vector<Polynomial_Root>& roots);
+
+static GExpr
+solve_linear_constant_coeff(const GSymbol& n, GExpr& g_n,
+			    const int order, const bool all_distinct,
+			    const std::vector<GExpr>& base_of_exps,
+			    const std::vector<GExpr>& exp_poly_coeff,
+			    const std::vector<GNumber>& coefficients,
+			    const std::vector<Polynomial_Root>& roots);
 
 static bool
 verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
@@ -397,7 +405,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
   D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
 
-  // Creates the vector of initials conditions.
+  // Creates the vector of initial conditions.
   std::vector<GExpr> initial_conditions(order);
   for (int i = 0; i < order; ++i)
     initial_conditions[i] = x(i);
@@ -413,7 +421,6 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   // Temporaneo fino a che 'find_roots()' accettera' i parametri anche
   // per equazioni di grado superiore al primo. 
   std::vector<GNumber> num_coefficients(order+1);
-
   if (order == 1) {
     characteristic_eq = y - coefficients[1];
     roots.push_back(coefficients[1]);
@@ -452,6 +459,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     compute_symbolic_sum(order, n, alpha, lambda, roots,
 			 base_of_exps, exp_poly_coeff,
 			 symbolic_sum_distinct, symbolic_sum_no_distinct);
+  GExpr g_n;
   switch (order) {
   case 1:
     {
@@ -471,18 +479,8 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	// 'add_initial_conditions' perche' richiede un vettore di
 	// 'GNumber' come 'coefficients' e voglio risolvere anche le
 	// parametriche. 
-//  	GExpr g_n = pow(roots[0].value(), n);
-//  	add_initial_conditions(g_n, n, coefficients,
-//  			       initial_conditions, solution);
+	// g_n = pow(roots[0].value(), n);
 	solution += initial_conditions[0] * pow(roots[0].value() ,n);
-
-	D_MSGVAR("Before calling simplify: ", solution);
-
-	solution = simplify_on_output_ex(solution.expand(), n, false);
-
-	if (!verify_solution(solution, order, rhs, n))
-	  D_MSG("ATTENTION: the following solution can be wrong\n"
-		"or not enough simplified.");
       }
       else 
 	throw ("PURRS error: today we only allow inhomogeneous terms\n"
@@ -514,24 +512,10 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	  subs_to_sum_roots_and_bases(alpha, lambda, roots, base_of_exps,
 				      symbolic_sum_distinct,
 				      symbolic_sum_no_distinct, solution);
-	  GExpr g_n = (pow(root_1, n+1) - pow(root_2, n+1)) / diff_roots;
+	  g_n = (pow(root_1, n+1) - pow(root_2, n+1)) / diff_roots;
 	  // FIXME: forse conviene semplificare g_n
 
 	  D_VAR(g_n);
-
-	  add_initial_conditions(g_n, n, num_coefficients,
-				 initial_conditions, solution);
-
-	  D_MSGVAR("Before calling simplify: ", solution);
-
-	  solution = simplify_on_output_ex(solution.expand(), n, false);
-
-	  if (!verify_solution(solution, order, rhs, n))
-	    D_MSG("ATTENTION: the following solution can be wrong\n"
-		  "or not enough simplified.");
-
-	  solution = solution.collect(lst(initial_conditions[0],
-					  initial_conditions[1]));
 	}
 	else 
 	  throw ("PURRS error: today we only allow inhomogeneous terms\n"
@@ -542,20 +526,50 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	// The characteristic equation
 	// x^2 + a_1 * x + a_2 = 0 has a double root.
 	assert(roots[0].multiplicity() == 2);      
-	solution = order_2_sol_roots_no_distinct(n, base_of_exps,
+	solution = order_2_sol_roots_no_distinct(n, g_n, base_of_exps,
 						 exp_poly_coeff,
 						 initial_conditions,
 						 num_coefficients, roots);
-
-	if (!verify_solution(solution, order, rhs, n))
-	  D_MSG("ATTENTION: the following solution can be wrong\n"
-		"or not enough simplified.");
       }
       break;
     }
   default:
-    throw ("PURRS error: order too large"); 
+      // Calculates the solution of linear recurrence relations with
+      // constant coefficients (of order grater than two) when
+      // the inhomogeneous term is a polynomial or the product of a
+      // polynomial and an exponential.
+      if (check_poly_times_exponential(exp_no_poly_coeff)) {
+	solution = solve_linear_constant_coeff(n, g_n, order, all_distinct,
+					       base_of_exps, exp_poly_coeff,
+					       num_coefficients, roots);
+      }
+      else
+	throw ("PURRS error: today we only allow inhomogeneous terms\n"
+	       "in the form of polynomials or product of exponentials\n"
+	       "and polynomials.\n"
+	       "Please come back tomorrow.");
+      break;
   }
+  
+  if (order > 2 || (order == 2 && all_distinct))
+    add_initial_conditions(g_n, n, num_coefficients, initial_conditions,
+			   solution);
+
+  D_MSGVAR("Before calling simplify: ", solution);  
+  solution = simplify_on_output_ex(solution.expand(), n, false);
+  
+  if (!verify_solution(solution, order, rhs, n))
+    D_MSG("ATTENTION: the following solution can be wrong\n"
+	  "or not enough simplified.");
+  
+  // Only for the output.
+  if (order > 1) {
+    GList conditions;
+    for (unsigned i = order; i-- > 0; )
+      conditions.append(initial_conditions[i]);
+    solution = solution.collect(conditions);
+  }
+  
   return true;
 }
 
@@ -835,8 +849,8 @@ subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
 // sapremo risolvere anche le eq. di grado superiore al primo con i
 // parametri.
 static void
-add_initial_conditions(GExpr& g_n, const GSymbol& n,
-		       std::vector<GNumber>& coefficients,
+add_initial_conditions(const GExpr& g_n, const GSymbol& n,
+		       const std::vector<GNumber>& coefficients,
 		       const std::vector<GExpr>& initial_conditions,
 		       GExpr& solution) {
   // 'coefficients.size()' has 'order + 1' elements because in the first
@@ -853,7 +867,7 @@ add_initial_conditions(GExpr& g_n, const GSymbol& n,
 }
 
 static GExpr
-order_2_sol_roots_no_distinct(const GSymbol& n,
+order_2_sol_roots_no_distinct(const GSymbol& n, GExpr& g_n,
 			      const std::vector<GExpr>& base_of_exps,
 			      const std::vector<GExpr>& exp_poly_coeff,
 			      const std::vector<GExpr>& initial_conditions,
@@ -897,7 +911,7 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
     // In this case we must to solve a linear system:
     //             a = 1
     //             (a + b) * \lambda = \alpha.
-    GExpr g_n = (a + b * n) * pow(root, n);
+    g_n = (a + b * n) * pow(root, n);
     // Solved the system with the inverse matrix method.
     GMatrix vars(2, 2, lst(1, 0, root, root));
     GMatrix rhs(2, 1, lst(1, coefficients[1]));
@@ -909,7 +923,7 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
     GExpr g_n_2 = g_n.subs(n == n - 2);
 	
     solution_tot = initial_conditions[1]*g_n_1 + 
-                   initial_conditions[0]*g_n_2*coefficients[2];
+      initial_conditions[0]*g_n_2*coefficients[2];
 
     for (unsigned i = 0; i < num_exponentials; ++i) {
       GExpr solution = 0;
@@ -939,11 +953,176 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
       solution = solution.expand();
       solution_tot += solution;
     }
-    solution_tot = simplify_on_output_ex(solution_tot.expand(), n, false);
-    solution_tot = solution_tot.collect(lst(initial_conditions[0],
-					    initial_conditions[1]));
   }
   return solution_tot;
+}
+
+static void
+prepare_system(const int order, const bool all_distinct,
+	       const std::vector<GNumber>& coefficients,
+	       const std::vector<Polynomial_Root>& roots,
+	       GList& g_i, GList& coeff_equations) {
+  // Prepares a list with the elments for the 'rhs' of the system
+  // to will find the numbers 'alpha_i' (for i = 1,...,k where k is the
+  // order of the recurrence).
+  // The first element is g_0, then g_1, ..., g_k.
+  // Attenzione: nel caso bool distinct == false cambia! NON E' VERO!!!!
+  std::vector<GExpr> tmp(order);
+  tmp[0] = 1;
+  for (int i = 1; i < order; ++i)
+    for (int j = 0; j < i; ++j)
+      tmp[i] += coefficients[j+1] * tmp[i-j-1];
+  for (int i = 0; i < order; ++i)
+    g_i.append(tmp[i]);
+  
+  // Prepares a list with the coefficients to insert in matrix 'system'
+  // to will find the numbers 'alpha_i' (for i = 1,...,k).
+  // This calculus is based on
+  // 'g_n = \alpha_1 \lambda_1^n + \cdots + \alpha_k \lambda_k^n' if the roots
+  // are all distinct; on
+  // 'g_n = \sum_{j=1}^r (\alpha_{j,0} + \alpha_{j,1}n
+  //        + \cdots + \alpha_{j,\mu_j-1}n^{\mu_j-1}) \lambda_j^n'
+  // if there are multiple roots.
+  if (all_distinct)
+    for (int i = 0; i < order; ++i)
+      for (int j = 0; j < order; ++j)
+	coeff_equations.append(pow(roots[j].value(), i)); 
+  else
+    for (int h = 0; h < order; ++h)
+      for (unsigned i = roots.size(); i-- > 0; ) {
+	for (GNumber j = roots[i].multiplicity(); j-- > 1; )
+	  coeff_equations.append(pow(h, j) * pow(roots[i].value(), h));
+	coeff_equations.append(pow(roots[i].value(), h));
+      }
+#if NOISY
+  std::cout << "g_i: " << g_i << std::endl;
+  std::cout << "equations: " << coeff_equations << std::endl;
+#endif
+}
+
+static GExpr
+compute_non_homogeneous_part_solution(const GSymbol& n, const GExpr& g_n,
+				      const int order,
+				      const std::vector<GExpr>& base_of_exps,
+				      const std::vector<GExpr>&
+				      exp_poly_coeff) {
+  GExpr solution_tot = 0;
+  std::vector<GExpr> bases_exp_g_n;
+  std::vector<GExpr> g_n_poly_coeff;
+  std::vector<GExpr> g_n_no_poly_coeff;
+  exp_poly_decomposition(g_n, n, bases_exp_g_n,
+			 g_n_poly_coeff, g_n_no_poly_coeff);
+#if NOISY
+  D_VEC(bases_exp_g_n, 0, bases_exp_g_n.size()-1);
+  D_VEC(g_n_poly_coeff, 0, g_n_poly_coeff.size()-1);
+  D_VEC(g_n_no_poly_coeff, 0, g_n_no_poly_coeff.size()-1);
+#endif  
+  for (unsigned i = bases_exp_g_n.size(); i-- > 0; )
+    for (unsigned j = base_of_exps.size(); j-- > 0; ) {
+      GExpr solution = 0;
+      GSymbol k("k");
+      GExpr g_n_coeff_k = g_n_poly_coeff[i].subs(n == n - k);
+      GExpr exp_poly_coeff_k = exp_poly_coeff[j].subs(n == k);
+      solution = sum_poly_times_exponentials(g_n_coeff_k * exp_poly_coeff_k,
+					     k, n, 1/bases_exp_g_n[i]
+					     * base_of_exps[j]);
+      // 'sum_poly_times_exponentials' calculates the sum from 0 while
+      // we want to start from 'order'.
+      solution -= (g_n_coeff_k * exp_poly_coeff_k).subs(k == 0);
+      for (int h = 1; h < order; ++h)
+	solution -= (g_n_coeff_k * exp_poly_coeff_k).subs(k == h)
+	  * pow(1/bases_exp_g_n[i] * base_of_exps[j], h);
+      solution *= pow(bases_exp_g_n[i], n);
+      solution_tot += solution;
+    }
+  return solution_tot;
+}
+
+/*!
+  Let the linear recurrence relation of order \f$ k \f$ with constant
+  coefficients
+  \f$ x_n = a_1 x_{n-1} + a_2 x_{n-2} + \cdots + a_k x_{n-k} + p(n) \f$,
+  where \f$ p(n) \f$ is a polynomial or a product of polynomials times
+  exponentials.
+  Knowing the roots \f$ \lambda_1, \cdots, \lambda_k \f$ of the
+  characteristic equation, builds the general solution of the homogeneous
+  recurrence \f$ g_n \f$:
+  - if the roots are simple, i. e., they are all distinct, then
+    \f$ g_n = \alpha_1 \lambda_1^n + \cdots + \alpha_k \lambda_k^n \f$,
+  - if there are multiple roots then
+    \f[
+      g_n = \sum_{j=1}^r (\alpha_{j,0} + \alpha_{j,1}n
+            + \cdots + \alpha_{j,\mu_j-1}n^{\mu_j-1}) \lambda_j^n,
+    \f]
+  where \f$ \alpha_1, \cdots, \alpha_k \f$ are complex numbers
+  (\f$ g_n \f$ in the fisrt case is contained those of the second case as
+  special case).
+  Introduced the <EM>fundamental</EM> solution of the associated
+  homogeneous equation, which is
+  \f[
+    \begin{cases}
+      g_n = a_1 g_{n-1} + a_2 g_{n-2} + \cdots + a_k g_{n-k}, \\
+      g_0 = 1, \\
+      g_n = a_1 g_{n-1} + a_2 g_{n-2} + \cdots + a_{n-1} g_1 + a_n g_0
+        & \text{for 1 \le n < k,} \\
+     \end{cases}
+  \f]
+  this function returns the general solution of recurrence relation
+  which is calculated by the formula
+  \f[
+    x_n = \sum_{i=k}^n g_{n-i} p(i)
+          + \sum_{i=0}^{k-1} g_{n-i}
+	    \Bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \Bigr).
+  \f]
+  The two sums in the previous formula correspond to the non-homogeneous
+  part \f$ p(n) \f$ and to the initial conditions, respectively.
+*/
+static GExpr
+solve_linear_constant_coeff(const GSymbol& n, GExpr& g_n,
+			    const int order, const bool all_distinct,
+			    const std::vector<GExpr>& base_of_exps,
+			    const std::vector<GExpr>& exp_poly_coeff,
+			    const std::vector<GNumber>& coefficients,
+			    const std::vector<Polynomial_Root>& roots) {
+
+  GList g_i;
+  GList coeff_equations;
+  // Prepare the elements to insert in the system.
+  prepare_system(order, all_distinct, coefficients, roots,
+		 g_i, coeff_equations);  
+  GMatrix system(order, order, coeff_equations);
+  GMatrix rhs(order, 1, g_i);
+#if NOISY
+  std::cout << "system: " << system << std::endl;
+  std::cout << "rhs: " << rhs << std::endl;
+#endif
+  GMatrix vars(order, 1);
+  for (int i = 0; i < order; ++i)
+    vars(i, 0) = GSymbol();
+  // Solve system in order to finds 'alpha_i' (i = 1,...,order).
+  GMatrix sol = system.solve(vars, rhs);
+#if NOISY
+  std::cout << "alpha_i: " << sol << std::endl;
+#endif
+  // Finds 'g_n', always in according to multplicity of the roots.
+  g_n = 0;
+  if (all_distinct)
+    for (int i = 0; i < order; ++i)
+      g_n += sol(i, 0) * pow(roots[i].value(), n);
+  else
+    for (unsigned i = roots.size(); i-- > 0; ) {
+      int h = 0;
+      for (GNumber j = roots[i].multiplicity(); j-- > 0 && h < order; ) {
+	g_n += sol(h, 0) * pow(n, j) * pow(roots[i].value(), n);
+	++h;
+      }
+    }
+  D_VAR(g_n);
+  // Computes '\sum_{i=k}^n g_{n-i} p(i)'.
+  GExpr solution = compute_non_homogeneous_part_solution(n, g_n, order,
+							 base_of_exps,
+							 exp_poly_coeff);
+  return solution;
 }
 
 /*!
