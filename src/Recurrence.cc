@@ -535,11 +535,10 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 //! This function substitutes eventual initial conditions specified
 //! by the user shifting the solution or the bound if necessary.
 /*!
-  \param exact              <CODE>true</CODE> if the system has computed
-                            an exact solution for the recurrence \p *this;
-                            <CODE>false</CODE> if the system has computed
-			    an approximation for the solution of the
-			    recurrence \p *this.
+  \param linear             <CODE>true</CODE> if the system has solved
+                            a linear recurrence of finite order;
+                            <CODE>false</CODE> if the system has solved
+			    a functional equation.
   \param solution_or_bound  Contains the solution or the bound computed
                             for the recurrence \p *this in function of
 			    arbitrary initial conditions.
@@ -559,12 +558,12 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 */
 Expr
 PURRS::Recurrence::
-substitute_i_c_shifting(bool exact, const Expr& solution_or_bound) const {
+substitute_i_c_shifting(bool linear, const Expr& solution_or_bound) const {
   assert(!initial_conditions.empty());
   Expr sol_or_bound = solution_or_bound;
   unsigned first_well_defined_rhs;
   unsigned order_or_rank;
-  if (exact) {
+  if (linear) {
     first_well_defined_rhs = first_well_defined_rhs_linear();
     order_or_rank = order();
   }
