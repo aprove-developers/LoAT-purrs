@@ -239,11 +239,11 @@ find_polynomial_solution(const GSymbol& n, const GNumber& deg_x,
 /*!
   Returns <CODE>true</CODE> if it finds, if exists, a non-zero polynomial
   solution \f$ x(n) \f$ of \f$ a(n) * x(n+1) - b(n-1) * x(n) = c(n) \f$,
-  where /f$ a(n) /f$, /f$ b(n) /f$ and /f$ c(n) /f$ are polynomials such that
+  where \f$ a(n) \f$, \f$ b(n) \f$ and \f$ c(n) \f$ are polynomials such that
   \f$ gcd(a(n), b(n+h)) = 1 \f$, for all non-negative integers
-  /f$ h /f$. The solution /f$ x(n) /f$ is stored in /p x_n. 
+  \f$ h \f$. The solution \f$ x(n) \f$ is stored in \p x_n. 
   Returns <CODE>false</CODE> otherwise, i. e., it not finds a non-zero
-  polynomial solution /f$ x(n) /f$.
+  polynomial solution \f$ x(n) \f$.
 */
 static bool
 gosper_step_three(const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,

@@ -802,7 +802,7 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
 /*!
   Crosses the tree of the expanded expression \p e recursevely to find
   subexpressions to which we apply the rules of the terms rewriting system
-  \f$ /mathfrak{R}_i \f$. More exactly here the rules of the set
+  \f$ \mathfrak{R}_i \f$. More exactly here the rules of the set
   \emph{Expand} are implemented because the rules of the set <EM>Automatic</EM>
   are automatically executed by <CODE>GiNaC</CODE>.
   We observe that the rule \f$ \textbf{E4} \f$ is automatically executed
