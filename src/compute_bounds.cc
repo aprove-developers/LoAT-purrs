@@ -99,7 +99,6 @@ compute_bounds_for_power_of_n(Type_Bound type,
   if (type == LOWER_BOUND) {
     // FIXME: for the moment use only the theorem in order to compute
     // lower bound in the case `g(n) = n^k'. 
-#if 0
     Expr mu_b;
     Expr c_b;
     if (divisor.is_positive_integer()) {
@@ -146,12 +145,17 @@ compute_bounds_for_power_of_n(Type_Bound type,
 	bound = pow_n_k * (frac_log - mu_b - c_b * k / (divisor - 1))
 	  + c_b * k * pow_n_k_minus * divisor / (divisor - 1);
       else if (diff_coeff_pow_div_k == 1) {
+	// FIXME: theorem 3.8 (alpha > beta^k).
+#if 0
 	bound = pow_frac_log
 	  * (pow_div_k / (coeff - pow_div_k) * pwr(pow_div_k / coeff, mu_b)
 	     - c_b * k * pow_div_k_minus / (coeff - pow_div_k_minus))
 	  - pow_div_k / (coeff - pow_div_k) * pow_n_k
 	  + c_b * k * coeff * pow_n_k_minus
 	  / (coeff - pow_div_k_minus);
+#else
+	return false;
+#endif
       }
       else
 	// diff_coeff_pow_div_k == 2.
@@ -178,9 +182,6 @@ compute_bounds_for_power_of_n(Type_Bound type,
 	// diff_coeff_pow_div_k == 2.
 	return false;
     }
-#else
-    return false;
-#endif
   }
   // Upper bound.
   else
