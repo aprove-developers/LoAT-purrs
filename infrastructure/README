@@ -46,7 +46,7 @@ should output something like
 automake-1.7.2 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/automake-1.7.2-tar-bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/automake-1.7.2.tar.bz2
   cd your-path-to-download-dir
   tar jxvf automake-1.7.2.tar.bz2
 
@@ -79,7 +79,7 @@ You should obtain the following output:
 autoconf-2.57 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/autoconf-2.57-tar-bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/autoconf-2.57.tar.bz2
   cd your-path-to-download-dir
   tar jxvf autoconf-2.57.tar.bz2
 
@@ -113,7 +113,7 @@ libtool-1.4.2 install how-to:
 
 Downloading and unpacking:
   (FIXME: not available by ftp yet!)
-  ftp://ftp.cs.unipr.it/pub/infrastructure/libtool-1.4.2-tar-bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/libtool-1.4.2.tar.bz2
   cd your-path-to-download-dir
   tar jxvf libtool-1.4.2.tar.bz2
 
@@ -204,7 +204,7 @@ Installing (as root):
 cln-1.1.5 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/cln-1.1.5-tar-bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/cln-1.1.5.tar.bz2
   cd your-path-to-download-dir
   tar jxvf cln-1.1.5.tar.bz2
 
@@ -241,7 +241,7 @@ configuration file:
 ntl-5.3 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/ntl-5.3-tar-bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/ntl-5.3.tar.bz2
   cd your-path-to-download-dir
   tar jxvf ntl-5.3.tar.bz2
 
@@ -321,7 +321,7 @@ Installing (as root):
 cgicc-3.2.1 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/cgicc-3.2.1-tar-bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/cgicc-3.2.1.tar.bz2
   cd your-path-to-download-dir
   tar jxvf cgicc-3.2.1.tar.bz2
 
