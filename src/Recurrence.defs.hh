@@ -284,6 +284,26 @@ public:
   */
   void replace_initial_condition(unsigned int k, const Expr& e);
 
+  //! \brief
+  //! Returns the smallest number of initial conditions so that
+  //! \p *this is uniquely identify.
+  /*!
+    \exception std::logic_error      thrown if \p *this is not classified yet
+                                     and the classification's process
+				     called by this method fails.
+  */
+  unsigned int number_initial_conditions() const;
+
+  //! \brief
+  //! Returns the smallest index of initial conditions acceptable
+  //! for \p *this.
+  /*!
+    \exception std::logic_error      thrown if \p *this is not classified yet
+                                     and the classification's process
+				     called by this method fails.
+  */
+  unsigned int smallest_index_initial_conditions() const;
+
   //! Stores the initial conditions specified in \p map_initial_conditions.
   /*!
     The \p map_initial_conditions contains a set of initial
