@@ -724,6 +724,7 @@ compute_special_solution(const Expr& homo_rhs, const index_type order_rec,
     }
   }
 
+  // FIXME: Check that the removed unknowns are the right ones.
   assert(removed_unknowns == mult);
 
   return q;
@@ -824,6 +825,32 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       return TOO_COMPLEX;
     break;
   }
+  D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
+  solution = simplify_ex_for_output(solution, false);
+  solution = simplify_binomials_factorials_exponentials(solution);
+  solution = simplify_logarithm(solution);
+
+  if (is_linear_finite_order_const_coeff())
+    if (order() == 1 )
+      // FIXME: per ora non si puo' usare la funzione
+      // `compute_term_about_initial_conditions' perche' richiede un
+      // vettore di `Number' come `coefficients' e voglio risolvere anche
+      // le parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
+      // compute_term_about_initial_conditions(g_n, coefficients, solution);
+      exact_solution_.set_expression(x(first_valid_index)
+				     * pwr(coefficients()[1],
+					   n-(first_valid_index-order()+1))
+				     + solution);
+    else
+      exact_solution_.set_expression(compute_term_about_initial_conditions
+				     (g_n, num_coefficients, first_valid_index)
+				     + solution);
+  else
+    // In the case of variable coefficients the expression contained in
+    // `solution' is already the sum of the homogeneous part and the
+    // non-homogeneous part of the solution of the recurrence.
+    exact_solution_.set_expression(solution);
+  
 #else
   // `g_n' is defined here because it is necessary in the function
   // `compute_term_about_initial_conditions()' (at the end of function
@@ -865,8 +892,6 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       sol += compute_special_solution(homo_rhs, order_rec, poly, base, mult);
     }
     solution = sol; 
-    // FIXME: Take into account initial conditions here. Use 
-    // compute_term_about_initial_conditions(). Or just find_g_n().
   }
   else 
     if (order()==1) {
@@ -878,8 +903,6 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     }
     else
       return TOO_COMPLEX;
-#endif
-
 
   D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
   solution = simplify_ex_for_output(solution, false);
@@ -888,26 +911,61 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 
   if (is_linear_finite_order_const_coeff())
     if (order() == 1 )
-      // FIXME: per ora non si puo' usare la funzione
-      // `compute_term_about_initial_conditions' perche' richiede un
-      // vettore di `Number' come `coefficients' e voglio risolvere anche
-      // le parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
-      // compute_term_about_initial_conditions(g_n, coefficients, solution);
-      exact_solution_.set_expression(x(first_valid_index)
+      // FIXME: This is a special case because we allow parameters.
+      // `compute_term_about_initial_conditions' doesn't allow them.
+      exact_solution_.set_expression((x(first_valid_index) - solution.substitute(n, first_valid_index))
 				     * pwr(coefficients()[1],
-					   n-(first_valid_index-order()+1))
+					   n-first_valid_index)
 				     + solution);
-    else
+    else {
+      // FIXME: Adapt the formula to the general case and allow multiple roots.
+      if (!all_distinct)
+	return TOO_COMPLEX;
+      unsigned int num_unknowns = roots.size();
+      Expr_List unknowns;
+      for (unsigned int i = 0; i < num_unknowns; ++i)
+	unknowns.append(Symbol());
+      Expr_List equations;
+      for (unsigned int i = 0; i < num_unknowns; ++i) {
+	Expr tmp = x(first_valid_index + i) - solution.substitute(n, first_valid_index + i);
+	for (unsigned int j = 0; j < num_unknowns; ++j)
+	  tmp -= unknowns.op(j) * pwr(roots[j].value(), first_valid_index + i);
+	equations.prepend(Expr(tmp, 0));
+      }
+
+      // Solve the system.
+      Expr sol_system = lsolve(equations, unknowns);
+
+      // FIXME: Would throwing an exception be better?
+      if (sol_system.nops() == 0)
+	return TOO_COMPLEX;
+
+      // Substitute the correct values of the coefficients found above.
+      Expr tmp = solution;
+      for (unsigned int i = sol_system.nops(); i-- > 0; ) {
+	D_MSGVAR("Solution: ", sol_system.op(i).rhs());
+	tmp += (sol_system.op(i).rhs()) * pwr(roots[i].value(), n);
+      }
+
+      D_MSGVAR("Rec. Solution: ", tmp);
+
+      exact_solution_.set_expression(tmp);
+      /*
       exact_solution_.set_expression(compute_term_about_initial_conditions
 				     (g_n, num_coefficients, first_valid_index)
 				     + solution);
+      */
+    }
   else
     // In the case of variable coefficients the expression contained in
     // `solution' is already the sum of the homogeneous part and the
     // non-homogeneous part of the solution of the recurrence.
     exact_solution_.set_expression(solution);
-  
-  // Resubstitutes eventually auxiliary definitions contained in
+
+
+#endif
+
+  // Resubstitute auxiliary definitions possibly appearing in
   // the solution with their original values.
   //exact_solution_.set_expression(blackboard.rewrite(solution));
 
