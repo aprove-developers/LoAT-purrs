@@ -54,7 +54,8 @@ namespace Parma_Recurrence_Relation_Solver {
 static const unsigned FIND_DIVISORS_MAX = 11;
 
 static const unsigned
-FIND_DIVISORS_THRESHOLD = FIND_DIVISORS_MAX*FIND_DIVISORS_MAX;
+FIND_DIVISORS_THRESHOLD = FIND_DIVISORS_MAX*FIND_DIVISORS_MAX
+                          *FIND_DIVISORS_MAX;
 
 static Expr zero = 0;
 
