@@ -9,9 +9,13 @@ WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE. */
 
-#ifndef _Bool3_types_hh
-#define _Bool3_types_hh 1
+#ifndef PURRS_Bool3_types_hh
+#define PURRS_Bool3_types_hh 1
+
+namespace Parma_Recurrence_Relation_Solver {
 
 enum Bool3 { ALWAYS, NEVER, MAYBE };
 
-#endif
+}
+
+#endif // !defined(PURRS_Bool3_types_hh)

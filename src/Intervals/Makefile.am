@@ -22,10 +22,6 @@ noinst_LIBRARIES = libIntervals.a
 libIntervals_a_SOURCES = \
 IEEE754.h \
 round.h \
-Bool3.cc \
-Bool3.types.hh \
-Bool3.defs.hh \
-Bool3.inlines.hh \
 Boundary.cc \
 Boundary.types.hh \
 Boundary.defs.hh \

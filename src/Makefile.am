@@ -26,6 +26,7 @@ INCLUDE_FILES = \
 CInterval.types.hh \
 complint.hh \
 Complex_Interval.types.hh \
+Bool3.types.hh \
 Constant.types.hh \
 Expr.types.hh \
 Expr_List.types.hh \
@@ -38,6 +39,8 @@ Recurrence.types.hh \
 Symbol.types.hh \
 Complex_Interval.defs.hh \
 Complex_Interval.inlines.hh \
+Bool3.defs.hh \
+Bool3.inlines.hh \
 Constant.defs.hh \
 Constant.inlines.hh \
 Number.defs.hh \
@@ -77,6 +80,7 @@ libpurrs_a_SOURCES = \
 Finite_Order_Info.cc \
 Blackboard.cc \
 Complex_Interval.cc \
+Bool3.cc \
 Constant.cc \
 Expr.cc \
 Expr_List.cc \
