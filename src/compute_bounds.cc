@@ -72,7 +72,6 @@ PURRS::Recurrence::approximate_functional_equation() const {
     return TOO_COMPLEX;
   if (condition > 1)
     set_applicability_condition(condition.to_unsigned());
-  std::cout << "OK" << std::endl;
   // Compute `sum_{k = 1}^n a^{n-k} p(b^k)'.
   std::vector<Expr> bases_of_exp;
   std::vector<Expr> exp_poly_coeff;
