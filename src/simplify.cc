@@ -286,10 +286,6 @@ pow_simpl(const GExpr& e) {
       split_exponent(num_exponent, not_num_exponent, base.op(1));
     base = base.op(0);
   };
-  // Simplifies eventual powers with same base or with same exponent
-  // in 'not_num_exponent'.
-  if (is_a<mul>(not_num_exponent))
-    not_num_exponent = collect_base_exponent(not_num_exponent);
   // The base is a multiplication.
   if (is_a<mul>(base)) {
     GExpr tot = 1;
