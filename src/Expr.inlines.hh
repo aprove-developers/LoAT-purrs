@@ -336,13 +336,6 @@ Expr::op(unsigned i) const {
   return Base::op(i);
 }
 
-#if 0
-inline bool
-Expr::is_equal(const Expr& x) const {
-  return Base::is_equal(x);
-}
-#endif
-
 inline bool
 Expr::is_zero() const {
   return Base::is_zero();
