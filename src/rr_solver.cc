@@ -1191,7 +1191,8 @@ add_initial_conditions(const Expr& g_n, const Symbol& n,
 		       const std::vector<Expr>& initial_conditions,
 		       Expr& solution) {
   // `coefficients.size()' has `order + 1' elements because in the first
-  // position there is the value 0. 
+  // position there is the value 0.
+  D_VAR(g_n);
   for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
     Expr g_n_i = g_n.subs(n, n - i);
     Expr tmp = initial_conditions[i];
@@ -1614,11 +1615,12 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
   // Calculates the solution of the second order recurrences when
   // the inhomogeneous term is a polynomial or the product of a
   // polynomial and an exponential.
-  if (!vector_not_all_zero(exp_no_poly_coeff))
-    if (all_distinct) {
-      const Expr& root_1 = roots[0].value();
-      const Expr& root_2 = roots[1].value();
-      Expr diff_roots = root_1 - root_2;
+  if (all_distinct) {
+    const Expr& root_1 = roots[0].value();
+    const Expr& root_2 = roots[1].value();
+    Expr diff_roots = root_1 - root_2;
+    g_n = (pwr(root_1, n+1) - pwr(root_2, n+1)) / diff_roots;
+    if (!vector_not_all_zero(exp_no_poly_coeff)) {
       Symbol alpha("alpha");
       Symbol lambda("lambda");
       std::vector<Expr> symbolic_sum_distinct;
@@ -1639,30 +1641,34 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
 					     base_of_exps,
 					     symbolic_sum_distinct,
 					     symbolic_sum_no_distinct);
-      g_n = (pwr(root_1, n+1) - pwr(root_2, n+1)) / diff_roots;
-      // FIXME: forse conviene semplificare g_n
-      D_VAR(g_n);
     }
     else {
-      // The characteristic equation
-      // x^2 + a_1 * x + a_2 = 0 has a double root.
-      assert(roots[0].multiplicity() == 2);      
-      
-      // Solve system in order to finds `alpha_i' (i = 1,...,order).
-      Matrix sol = solve_system(all_distinct, coefficients, roots);
-      
-      // Finds `g_n', always taking into account the root's multiplicity
-      g_n = find_g_n(n, all_distinct, sol, roots);
-      D_VAR(g_n);
+      Symbol h;
+      solution
+	= diff_roots * (pwr(root_1, n+1) * sum(Expr(h), Expr(2), Expr(n),
+					       pwr(root_1, -h) * e.subs(n, h))
+			- (pwr(root_2, n+1) * sum(Expr(h), Expr(2), Expr(n),
+						  pwr(root_2, -h) * e.subs(n, h))));
+    }
+  }
+  else {
+    // The characteristic equation
+    // x^2 + a_1 * x + a_2 = 0 has a double root.
+    assert(roots[0].multiplicity() == 2);      
+    
+    // Solve system in order to finds `alpha_i' (i = 1,...,order).
+    Matrix sol = solve_system(all_distinct, coefficients, roots);
+    
+    // Finds `g_n', always taking into account the root's multiplicity
+    g_n = find_g_n(n, all_distinct, sol, roots);
+    if (!vector_not_all_zero(exp_no_poly_coeff))
       solution = compute_non_homogeneous_part(n, g_n, order, base_of_exps,
 					      exp_poly_coeff);
+    else {
+      Symbol h;
+      solution = sum(Expr(h), Expr(2), Expr(n), g_n.subs(n, n - h) * e.subs(n, h));
     }
-  else
-    throw
-      "PURRS error: today we only allow inhomogeneous terms\n"
-      "in the form of polynomials or product of exponentials\n"
-      "and polynomials for second order recurrences.\n"
-      "Please come back tomorrow.";
+  }
   return solution;
 }
 
