@@ -93,9 +93,8 @@ erase_factor(Expr& e, const Symbol& n) {
 static bool
 perfect_root(const Expr& base, const Number& exponent) {
   if (exponent.is_rational()) {
-    Expr pow_base_num_exp = pwr(base, exponent);
     Number num;
-    if (pow_base_num_exp.is_a_number(num) && num.is_rational())
+    if (pwr(base, exponent).is_a_number(num) && num.is_rational())
       return true;
   }
   return false;
@@ -159,7 +158,7 @@ find_real_base_and_build_exponent(Expr& base, Expr& numeric_exponent,
   assert(base.is_a_power());
   while (base.is_a_power()) {
     // Split the exponent in two parts: numeric and non-numeric.
-    Expr exponent = base.arg(1);
+    const Expr& exponent = base.arg(1);
     if (exponent.is_a_mul())
       for (unsigned i = exponent.nops(); i-- > 0; )
         split_exponent(exponent.op(i), numeric_exponent, not_numeric_exponent);
@@ -184,7 +183,7 @@ find_real_base_and_build_exponent(Expr& base, Expr& numeric_exponent,
   If \p input is <CODE>true</CODE> then we use the simplifications
   which collect the special symbol \p n; otherwise, i. e. if \p input
   is <CODE>false</CODE>, \p n is like the other parameters.
- */
+*/
 static Expr
 simpl_powers_base(const Expr& base, const Expr& num_exponent,
 		  const Expr& not_num_exponent, const Symbol& n,
@@ -197,15 +196,17 @@ simpl_powers_base(const Expr& base, const Expr& num_exponent,
     vect_num_exp[i] = num_exponent;
     vect_not_num_exp[i] = not_num_exponent;
   }
-  for (unsigned i = base.nops(); i-- > 0; )
-    if (base.op(i).is_a_power()) {
-      Expr factor_of_base = base.op(i);
-      find_real_base_and_build_exponent(factor_of_base, vect_num_exp[i],
+  for (unsigned i = base.nops(); i-- > 0; ) {
+    const Expr& base_factor = base.op(i);
+    if (base_factor.is_a_power()) {
+      Expr tmp_base = base_factor;
+      find_real_base_and_build_exponent(tmp_base, vect_num_exp[i],
 					vect_not_num_exp[i]);
-      vect_base[i] = factor_of_base;
+      vect_base[i] = tmp_base;
     }
     else
-      vect_base[i] = base.op(i);
+      vect_base[i] = base_factor;
+  }
 
   // The numeric and non-numeric part of the exponent of each factor
   // of the base is determined.
@@ -315,9 +316,11 @@ collect_same_exponents(const Expr& e, std::vector<Expr>& bases,
 
   // Now adds to `e_rewritten' the factor of `e' not considered in the
   // previous simplifications, i.e., the factor which are not powers.
-  for (i = e.nops(); i-- > 0; )
-    if (!e.op(i).is_a_power())
-      e_rewritten *= e.op(i);
+  for (i = e.nops(); i-- > 0; ) {
+    const Expr& factor = e.op(i);
+    if (!factor.is_a_power())
+      e_rewritten *= factor;
+  }
   return e_rewritten;
 }
 
@@ -361,8 +364,9 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
 
   // Now adds to `e_rewritten' the factor of `e' not considered in the
   // previous simplification, i.e., the factor which are not powers .
-  for (i = e.nops(); i-- > 0; )
-    if (!e.op(i).is_a_power()) {
+  for (i = e.nops(); i-- > 0; ) {
+    const Expr& factor_e = e.op(i);
+    if (!factor_e.is_a_power()) {
       // We must consider those factors that are not powers but are equal
       // to some base of the vector `bases', in order to apply the rule `C1',
       // i.e., `a * a^e = a^(e + 1)'. In this case, we add `1' to the
@@ -371,7 +375,7 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
       Expr old_factor;
       Expr new_factor;
       for (unsigned j = bases.size(); j-- > 0; )
-	if (bases[j] == e.op(i) && !exponents[j].is_zero()) {
+	if (bases[j] == factor_e && !exponents[j].is_zero()) {
 	  to_sum = true;
 	  // If the base is `integer' then automatically, for instance,
 	  // `2^(3/2)' is transformed in `2*sqrt(2)':
@@ -384,14 +388,15 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
 	  else if (!bases[j].is_a_number() || !exponents[j].is_a_number())
 	    new_factor = pwr(bases[j], exponents[j]+1);
 	  else
-	    new_factor = pwr(bases[j], exponents[j]) * e.op(i);
+	    new_factor = pwr(bases[j], exponents[j]) * factor_e;
 	}
       // Applies rule `C1'.
       if (to_sum)
 	e_rewritten = e_rewritten.subs(old_factor, new_factor);
       else
-	e_rewritten *= e.op(i);
+	e_rewritten *= factor_e;
     }
+  }
   return e_rewritten;
 }
 
@@ -409,7 +414,7 @@ collect_base_exponent(const Expr& e) {
   std::vector<Expr> bases;
   std::vector<Expr> exponents;
   for (unsigned i = e_rewritten.nops(); i-- > 0; ) {
-    Expr factor = e_rewritten.op(i);
+    const Expr& factor = e_rewritten.op(i);
     if (factor.is_a_power()) {
       bases.push_back(factor.arg(0));
       exponents.push_back(factor.arg(1));
@@ -497,10 +502,10 @@ to_std_form(const Number& k, const std::vector<Number>& bases,
   assert(k.is_integer());
   int abs_k = ::abs(k.to_int());
   Expr m = 1;
-  for (unsigned i = 0; i < bases.size(); ++i) {
+  for (unsigned i = bases.size(); i-- > 0; ) {
     int remainder = exponents[i] % abs_k;
     int quotient  = exponents[i] / abs_k;
-    if (( k < 0 ) && ( remainder != 0 )) { // adjust quotient and remainder
+    if (k < 0 && remainder != 0) { // adjust quotient and remainder
       ++quotient;
       remainder = abs_k - remainder;
     }
@@ -579,7 +584,7 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
   Number g = gcd(num, den);
   num /= g;
   den /= g; // clear any common factors from num, den.
-  if ((k % 2 == 0) && (sign == -1)) // complex sign if k is even and r < 0.
+  if (k % 2 == 0 && sign == -1) // complex sign if k is even and r < 0.
     sign = k > 0 ? Number::I : -Number::I;
   if (k < 0) { // swap numerator and denominator, and change sign of k.
     Number i = num;
@@ -610,9 +615,9 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
   // Try one last simplification: if all exponents have a common factor 
   // with the root index, remove it.
   int gc = k;
-  for (unsigned i=0; (i < num_size) && (gc > 1); ++i)
+  for (unsigned i = 0; i < num_size && gc > 1; ++i)
     gc = gcd(gc, num_exponents[i]);
-  for (unsigned i=0; (i < den_size) && (gc > 1); ++i)
+  for (unsigned i = 0; i < den_size && gc > 1; ++i)
     gc = gcd(gc, den_exponents[i]);
   
   if (gc > 1) {
@@ -673,38 +678,42 @@ red_prod(const Number& base1, const Number& exp1,
 static Expr
 reduce_product(const Expr& e) {
   if (e.is_a_mul()) {
-    Expr tmp = e;
     Expr factor_to_reduce = 1;
     Expr factor_no_to_reduce = 1;
     Number base_1 = 1;
     Number exp_1 = 1;
-    for (unsigned i = tmp.nops(); i-- > 0; )
-      if (tmp.op(i).is_a_power()) {
-	// Base and exponent of `tmp.op(i)' are both numerics.
+    for (unsigned i = e.nops(); i-- > 0; ) {
+      const Expr& factor_e = e.op(i);
+      if (factor_e.is_a_power()) {
+	// Base and exponent of `factor_e' are both numerics.
 	Number base_2;
 	Number exp_2;
-	if (tmp.op(i).arg(0).is_a_number(base_2) &&
-	    tmp.op(i).arg(1).is_a_number(exp_2)) {
+	if (factor_e.arg(0).is_a_number(base_2) &&
+	    factor_e.arg(1).is_a_number(exp_2)) {
 	  Expr to_reduce = red_prod(base_1, exp_1, base_2, exp_2);
 	  // red_prod returns `numeric' or `numeric^numeric' or
 	  // `numeric * numeric^numeric'.
 	  if (to_reduce.is_a_mul()) {
-	    assert(to_reduce.nops() == 2);
-	    for (unsigned j = 2; j-- > 0; )
-	      if (to_reduce.op(j).is_a_power()) {
-		base_1 = to_reduce.op(j).arg(0).ex_to_number();
-		exp_1  = to_reduce.op(j).arg(1).ex_to_number();
-		factor_to_reduce
-		  = pwr(to_reduce.op(j).arg(0), to_reduce.op(j).arg(1));
+	    assert(to_reduce.nops() == 2); 
+	    for (unsigned j = 2; j-- > 0; ) {
+	      const Expr& factor = to_reduce.op(j);
+	      if (factor.is_a_power()) {
+		const Expr& base_factor = factor.arg(0);
+		const Expr& exponent_factor = factor.arg(1);
+		base_1 = base_factor.ex_to_number();
+		exp_1  = exponent_factor.ex_to_number();
+		factor_to_reduce = pwr(base_factor, exponent_factor);
 	      }
 	      else
-		factor_no_to_reduce *= to_reduce.op(j);
+		factor_no_to_reduce *= factor;
+	    }
 	  }
 	  else if (to_reduce.is_a_power()) {
-	    base_1 = to_reduce.arg(0).ex_to_number();
-	    exp_1 = to_reduce.arg(1).ex_to_number();
-	    factor_to_reduce
-	      = pwr(to_reduce.arg(0), to_reduce.arg(1));
+	    const Expr& base_to_reduce = to_reduce.arg(0);
+	    const Expr& exponent_to_reduce = to_reduce.arg(1);
+	    base_1 = base_to_reduce.ex_to_number();
+	    exp_1 = exponent_to_reduce.ex_to_number();
+	    factor_to_reduce = pwr(base_to_reduce, exponent_to_reduce);
 	  }
 	  else {
 	    base_1 = to_reduce.ex_to_number();
@@ -713,20 +722,23 @@ reduce_product(const Expr& e) {
 	  }
 	}
 	else
-	  // Base and exponent of `tmp.arg(i)' are not both numerics.
-	  factor_no_to_reduce *= tmp.op(i);
+	  // Base and exponent of `factor_e' are not both numerics.
+	  factor_no_to_reduce *= factor_e;
       }
-    // `tmp.op(i)' is not a `power'.
+      // `factor_e' is not a `power'.
       else
-	factor_no_to_reduce *= tmp.op(i);
+	factor_no_to_reduce *= factor_e;
+    }
     return factor_to_reduce * factor_no_to_reduce;
   }
-  else if (e.is_a_power())
-    if (e.arg(0).is_a_number() && e.arg(1).is_a_number()) {
-      Number base = e.arg(0).ex_to_number();
-      Number exp  = e.arg(1).ex_to_number();
-      return red_prod(base, exp, 1, 1);
-    }
+  else if (e.is_a_power()) {
+    const Expr& base_e = e.arg(0);
+    const Expr& exponent_e = e.arg(1);
+    Number base;
+    Number exponent;
+    if (base_e.is_a_number(base) && exponent_e.is_a_number(exponent))
+      return red_prod(base, exponent, 1, 1);
+  }
   return e;
 }
 
@@ -741,17 +753,19 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
   Expr e_rewritten = 1;
 
   // Simplifies each factor that is a `power'.
-  for (unsigned i = e.nops(); i-- > 0; )
-    if (e.op(i).is_a_power()) {
-      Expr base = simplify_on_output_ex(e.op(i).arg(0), n, input);
-      Expr exp = simplify_on_output_ex(e.op(i).arg(1), n, input);
+  for (unsigned i = e.nops(); i-- > 0; ) {
+    const Expr& factor_e = e.op(i);
+    if (factor_e.is_a_power()) {
+      Expr base = simplify_on_output_ex(factor_e.arg(0), n, input);
+      Expr exp = simplify_on_output_ex(factor_e.arg(1), n, input);
       if (base.is_a_number() && exp.is_a_number())
 	e_rewritten *= reduce_product(pwr(base, exp));
       else
 	e_rewritten *= pow_simpl(pwr(base, exp), n, input);
     }
     else
-      e_rewritten *= e.op(i);
+      e_rewritten *= factor_e;
+  }
   D_MSGVAR("e_rewritten dopo nested: ", e_rewritten);
 
   // From this time forward we do not know if `e_rewritten' is a again `mul'.
@@ -762,22 +776,24 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
     Expr factor_function = 1;
     Expr factor_no_function = 1;
     for (unsigned i = e_rewritten.nops(); i-- > 0; ) {
-      const Expr& op_i = e_rewritten.op(i);
-      if (op_i.is_a_function()) {
-	if (op_i.nops() == 1)
+      const Expr& factor_e_rewritten = e_rewritten.op(i);
+      if (factor_e_rewritten.is_a_function()) {
+	if (factor_e_rewritten.nops() == 1)
 	  factor_function
-	    *= apply(op_i.functor(),
-		     simplify_on_output_ex(op_i.arg(0), n, input));
+	    *= apply(factor_e_rewritten.functor(),
+		     simplify_on_output_ex(factor_e_rewritten.arg(0),
+					   n, input));
 	else {
-	  unsigned num_argument = op_i.nops();
+	  unsigned num_argument = factor_e_rewritten.nops();
 	  std::vector<Expr> argument(num_argument);
 	  for (unsigned i = 0; i < num_argument; ++i)
-	    argument[i] = simplify_on_output_ex(op_i.arg(i), n, input);
-	  factor_function *= apply(op_i.functor(), argument);
+	    argument[i] = simplify_on_output_ex(factor_e_rewritten.arg(i),
+						n, input);
+	  factor_function *= apply(factor_e_rewritten.functor(), argument);
 	}
       }
       else
-	factor_no_function *= op_i;
+	factor_no_function *= factor_e_rewritten;
     }
     e_rewritten = factor_function * factor_no_function;
   }
@@ -800,11 +816,13 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
   if (e_rewritten.is_a_mul()) {
     Expr argument = 0;
     Expr rem = 1;
-    for (unsigned i = e_rewritten.nops(); i-- > 0; )
-      if (e_rewritten.op(i).is_the_exp_function())
-	argument += e_rewritten.op(i).arg(0);
+    for (unsigned i = e_rewritten.nops(); i-- > 0; ) {
+      const Expr& factor_e_rewritten = e_rewritten.op(i);
+      if (factor_e_rewritten.is_the_exp_function())
+	argument += factor_e_rewritten.arg(0);
       else
-	rem *= e_rewritten.op(i);
+	rem *= factor_e_rewritten;
+    }
     e_rewritten = exp(argument) * rem;
   D_MSGVAR("e_rewritten dopo `exp': ", e_rewritten);
   }
@@ -812,11 +830,13 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
   // Simplifies eventual powers with same base or same exponents.
   if (e_rewritten.is_a_add()) {
     Expr terms = 0;
-    for (unsigned i = e_rewritten.nops(); i-- > 0; ) 
-      if (e_rewritten.op(i).is_a_mul())
-	terms += collect_base_exponent(e_rewritten.op(i));
+    for (unsigned i = e_rewritten.nops(); i-- > 0; ) { 
+      const Expr& term_e_rewritten = e_rewritten.op(i);
+      if (term_e_rewritten.is_a_mul())
+	terms += collect_base_exponent(term_e_rewritten);
       else
-	terms += e_rewritten.op(i);
+	terms += term_e_rewritten;
+    }
     e_rewritten = terms;
   }
   else
