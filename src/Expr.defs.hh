@@ -921,6 +921,14 @@ public:
   */
   bool has_x_function_only_ic() const;
 
+  //! \brief
+  //! Let \p x be a simple not numeric expression, i.e., it is not a sum or
+  //! a product or a power, which is assumed to be already expanded.
+  //! Returns a new expression obtained from \p *this collecting the
+  //! expression \p x and puts in \p coeff_x the new coefficient of the
+  //! expression \p x. If \p x it is not in \p *this, then returns \p *this.
+  Expr collect_term(const Expr& x, Expr& coeff_x) const;
+
   //! Returns \p *this evaluated numerically. 
   Expr unsafe_fp_approximation() const;
 

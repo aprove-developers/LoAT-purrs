@@ -33,6 +33,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr.defs.hh"
 #include "Recurrence.defs.hh"
 #include "numerator_denominator.hh"
+#include "simplify.hh"
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
@@ -881,6 +882,58 @@ PURRS::Expr::has_x_function_only_ic() const {
 	if (!e.arg(i).has_x_function_only_ic())
 	  return false;
   return true;
+}
+
+Expr
+PURRS::Expr::collect_term(const Expr& x, Expr& coeff_x) const {
+  assert((*this).is_expanded());
+  assert(!x.is_a_add() && !x.is_a_mul() && !x.is_a_power()
+	 && !x.is_a_number());
+  const Expr& e = simplify_ex_for_input(*this, true);
+  Expr e_rewritten = 0;
+  if (e.is_a_add()) {
+    Expr coeffs_of_x = 0;
+    for (unsigned i = e.nops(); i-- > 0; ) {
+      const Expr& addend = e.op(i);
+      // The i-th addend is a product.
+      if (addend.is_a_mul()) {
+	bool found_x = false;
+	Expr mul_for_x = 1;
+	for (unsigned i = addend.nops(); i-- > 0; ) {
+	  const Expr& factor = addend.op(i);
+	  if (factor == x)
+	    found_x = true;
+	  else if (factor.is_a_power() && factor.arg(0) == x) {
+	    found_x = true;
+	    mul_for_x *= pwr(x, factor.arg(1)-1);
+	  }
+	  else
+	    mul_for_x *= addend.op(i);
+	}
+	if (found_x)
+	  coeffs_of_x += mul_for_x;
+	else
+	  e_rewritten += addend;
+      }
+      // The i-th addend is equal to `x'.
+      else if (addend == x)
+	coeffs_of_x += 1;
+      // The i-th addend is a power.
+      else if (addend.is_a_power() && addend.arg(0) == x)
+	coeffs_of_x += pwr(x, addend.arg(1)-1);
+      // It is not possible to collect `x' from the i-th addend.
+      else
+	e_rewritten += addend;
+    }
+    e_rewritten += x * coeffs_of_x;
+    coeff_x = coeffs_of_x;
+    assert(e.expand() == e_rewritten.expand());
+    return e_rewritten;
+  }
+  else {
+    coeff_x = 1;
+    return e;
+  }
 }
 
 void
