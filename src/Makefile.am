@@ -23,13 +23,14 @@ lib_LIBRARIES = libpurrs.a
 
 # The ordering of the following list *matters*!
 INCLUDE_FILES = \
-Expr.types.hh \
 Constant.types.hh \
-Symbol.types.hh \
+Expr.types.hh \
 Expr_List.types.hh \
-Number.types.hh \
+Init.types.hh \
 Matrix.types.hh \
+Number.types.hh \
 Recurrence.types.hh \
+Symbol.types.hh \
 Constant.defs.hh \
 Constant.inlines.hh \
 Number.defs.hh \
@@ -42,6 +43,9 @@ Expr.inlines.hh \
 Expr_List.inlines.hh \
 Matrix.defs.hh \
 Matrix.inlines.hh \
+Init.defs.hh \
+Init.inlines.hh \
+initializer.hh \
 approx_expr.hh \
 alg_eq_solver.hh \
 poly_factor.hh \
@@ -54,6 +58,7 @@ Recurrence.defs.hh \
 Recurrence.inlines.hh
 
 libpurrs_a_SOURCES = \
+Init.cc \
 Recurrence.cc \
 Expr.cc \
 Constant.cc \
