@@ -701,7 +701,6 @@ PURRS::Recurrence::OK() const {
 #endif
 
   switch(type_) {
-  case UNKNOWN:
   case ORDER_ZERO:
     if (finite_order_p != 0) {
 #ifndef NDEBUG

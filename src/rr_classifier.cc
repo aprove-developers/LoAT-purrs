@@ -712,7 +712,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 			    coefficients.max_size());
 	  if (status != SUCCESS)
 	    return status;
-	  if (is_order_zero() || is_unknown())
+	  if (is_order_zero())
 	    set_linear_finite_order_const_coeff();
 	  else if (is_functional_equation())
 	    return TOO_COMPLEX;
@@ -732,7 +732,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
       else if (argument.is_a_mul() && argument.nops() == 2) {
 	Number divisor;
 	if (get_constant_divisor(argument, divisor)) {
-	  if (is_order_zero() || is_unknown())
+	  if (is_order_zero())
 	    set_functional_equation();
 	  else if (is_linear_finite_order())
 	    return TOO_COMPLEX;
@@ -757,9 +757,9 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
     else
       inhomogeneous += addend;
   else {
-    Expr possibly_coeff = 1;
-    bool found_function_x = false;
-    bool found_n = false;
+    Expr no_x_factor = 1;
+    bool has_x = false;
+    bool has_n = false;
     unsigned long index;
     Number divisor;
     for (unsigned i = num_factors; i-- > 0; ) {
@@ -774,7 +774,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	  Number decrement;
 	  if (get_constant_decrement(argument, decrement)) {
 	    // The non linear terms have already been considered before.
-	    assert(!found_function_x);
+	    assert(!has_x);
 	    Solver_Status status
 	      = compute_order(decrement, order, index,
 			      coefficients.max_size());
@@ -786,7 +786,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	      gcd_among_decrements = index;
 	    else
 	      gcd_among_decrements = gcd(gcd_among_decrements, index);
-	    found_function_x = true;
+	    has_x = true;
 	  }
 	  else
 	    return HAS_NON_INTEGER_DECREMENT;
@@ -794,12 +794,12 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	else if (argument.is_a_mul() && argument.nops() == 2) {
 	  if (get_constant_divisor(argument, divisor)) {
 	    // The non linear terms have already been considered before.
-	    assert(!found_function_x);
-	    if (is_order_zero() || is_unknown())
+	    assert(!has_x);
+	    if (is_order_zero())
 	      set_functional_equation();
 	    else if (is_linear_finite_order())
 	      return TOO_COMPLEX;
-	    found_function_x = true;
+	    has_x = true;
 	  }
 	  else
 	    return TOO_COMPLEX;
@@ -807,7 +807,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	else if (argument.has(n))
 	  return TOO_COMPLEX;
 	else
-	  possibly_coeff *= factor;
+	  no_x_factor *= factor;
       } // ended case of `factor' `x' function.
       // Check if the summand has the `x' function with the argument
       // dependently from the index of the sum.
@@ -818,25 +818,25 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
       }
       else {
 	if (factor.has(n))
-	  found_n = true;
-	possibly_coeff *= factor;
+	  has_n = true;
+	no_x_factor *= factor;
       }
     }
-    if (found_function_x) {
+    if (has_x) {
       if (is_functional_equation())
 	homogeneous_terms
-	  .insert(std::map<Number, Expr>::value_type(divisor, possibly_coeff));
+	  .insert(std::map<Number, Expr>::value_type(divisor, no_x_factor));
       else {
-	insert_coefficients(possibly_coeff, index, coefficients);
+	insert_coefficients(no_x_factor, index, coefficients);
 	if (!is_linear_finite_order_var_coeff())
-	  if (found_n)
+	  if (has_n)
 	    set_linear_finite_order_var_coeff();
 	  else
 	    set_linear_finite_order_const_coeff();
       }
     }
     else
-      inhomogeneous += possibly_coeff;
+      inhomogeneous += no_x_factor;
   }
   return SUCCESS;
 }
@@ -935,15 +935,9 @@ PURRS::Recurrence::classify() const {
 
   if (is_functional_equation())
     functional_eq_p = new Functional_Equation_Info(homogeneous_terms);
-  else {
-    // `inhomogeneous_term' is a function of `n', the parameters and of
-    // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
-    //  non-negative integers.
-    if (is_unknown())
-      set_order_zero();
+  else
     finite_order_p = new Finite_Order_Info(order, coefficients,
 					   gcd_among_decrements);
-  }
   assert(is_linear_finite_order() || is_functional_equation());
   return SUCCESS;
 }

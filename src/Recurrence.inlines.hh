@@ -53,7 +53,7 @@ Recurrence::Recurrence(const Expr& e)
     applied_order_reduction(false),
     come_from_non_linear_rec(false),
     inhomogeneous_term(0),
-    type_(UNKNOWN),
+    type_(ORDER_ZERO),
     finite_order_p(0),
     functional_eq_p(0),
     non_linear_p(0),
@@ -167,16 +167,6 @@ Recurrence::type() {
 inline void
 Recurrence::set_type(const Type& t) const {
   type_ = t;
-}
-
-inline bool
-Recurrence::is_unknown() const {
-  return type_ == UNKNOWN;
-}
-
-inline void
-Recurrence::set_unknown() const {
-  type_ = UNKNOWN; 
 }
 
 inline bool

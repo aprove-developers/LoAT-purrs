@@ -338,11 +338,6 @@ private:
 
   enum Type {
     /*!
-      The type of the recurrence is unknown.
-    */
-    UNKNOWN,
-
-    /*!
       Special recurrence of the form \f$ x(n) = rhs \f$, where \f$ rhs \f$
       contains only functions of  \f$ n \f$, parameters and
       \f$ x(k_1), \dots, x(k_m) \f$ where \f$ m >= 0 \f$ and
@@ -389,14 +384,6 @@ private:
 
   //! Sets <CODE>type_</CODE> with \p t.
   void set_type(const Type& t) const;
-
-  //! \brief
-  //! Returns <CODE>true</CODE> if the recurrence's type is unknown;
-  //! returns <CODE>false</CODE> otherwise.
-  bool is_unknown() const;
-
-  //! Sets <CODE>type_recurrence = UNKNOWN</CODE>.
-  void set_unknown() const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if the recurrence is a special case,
