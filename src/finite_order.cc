@@ -584,14 +584,10 @@ compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
   solution = 0;
   for (unsigned i = exp_poly_coeff.size(); i-- > 0; ) {
     Expr gosper_solution;
-    Expr coefficient = 1;
-    if (!exp_poly_coeff[i].is_zero())
-      coefficient *= exp_poly_coeff[i];
-    if (!exp_no_poly_coeff[i].is_zero())
-      coefficient *= exp_no_poly_coeff[i];
     // FIXME: for the moment use this function only when the `order'
     // is one, then `roots' has only one elements.
-    Expr r_n = pwr(base_of_exps[i], Recurrence::n) * coefficient
+    Expr r_n = pwr(base_of_exps[i], Recurrence::n)
+      * exp_poly_coeff[i] + exp_no_poly_coeff[i]
       * pwr(roots[0].value(), -Recurrence::n);
     D_VAR(t_n);
     D_VAR(r_n);
