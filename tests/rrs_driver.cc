@@ -85,7 +85,7 @@ print_usage() {
 static bool production_mode = false;
 static bool test_mode = false;
 
-// When true, the recurrence for the production mode has been inserted.
+// When true, the recurrence for the production mode has been specified.
 static bool have_recurrence = false;
 
 // When true, the exact solution is required.
@@ -246,21 +246,21 @@ process_options(int argc, char* argv[]) {
       break;
 
     case 'E':
-      exact_solution_required = true;
       production_mode = true;
       do_not_mix_modes();
+      exact_solution_required = true;
       break;
 
     case 'L':
-      lower_bound_required = true;
       production_mode = true;
       do_not_mix_modes();
+      lower_bound_required = true;
       break;
 
     case 'U':
-      upper_bound_required = true;
       production_mode = true;
       do_not_mix_modes();
+      upper_bound_required = true;
       break;
 
     case 'T':
@@ -452,131 +452,128 @@ operator<<(ostream& s, Recurrence::Verify_Status v) {
   return s;
 }
 
+void
+do_production_mode() {
+  if (!have_recurrence) {
+    cerr << program_name
+	 << ": must specify a recurrence using the `-R' option" << endl;
+    my_exit(1);
+  }
+
+  // If nothing has been explicitely requested, we take it
+  // as an implicit request for the exact solution.
+  if (!exact_solution_required
+      && !lower_bound_required
+      && !upper_bound_required)
+    exact_solution_required = true;
+
+  if (exact_solution_required) {
+    Expr exact_solution;
+    switch (compute_exact_solution_wrapper(*precp)) {
+    case Recurrence::SUCCESS:
+      // OK: get the exact solution and print it.
+      precp->exact_solution(exact_solution);
+      exact_solution
+	= precp->substitute_auxiliary_definitions(exact_solution);
+      cout << "x(n) = " << exact_solution << "." << endl;
+      goto exit;
+
+    case Recurrence::UNSOLVABLE_RECURRENCE:
+      cout << "unsolvable." << endl;
+      goto exit;
+
+    case Recurrence::INDETERMINATE_RECURRENCE:
+      cout << "indeterminate." << endl;
+      goto exit;
+
+#if 0
+    case Recurrence::MALFORMED;:
+      cout << "malformed." << endl;
+      goto exit;
+#endif
+
+    case Recurrence::TOO_COMPLEX:
+    default:
+      cout << "exact(too_complex)." << endl;
+      break;
+    }
+  }
+
+  if (lower_bound_required) {
+    Expr lower;
+    switch (precp->compute_lower_bound()) {
+    case Recurrence::SUCCESS:
+      // OK: get the lower bound and print it.
+      precp->lower_bound(lower);
+      cout << "x(n) >= " << lower << "." << endl;
+      break;
+
+    case Recurrence::UNSOLVABLE_RECURRENCE:
+      cout << "unsolvable." << endl;
+      goto exit;
+
+    case Recurrence::INDETERMINATE_RECURRENCE:
+      cout << "indeterminate." << endl;
+      goto exit;
+
+#if 0
+    case Recurrence::MALFORMED;:
+      cout << "malformed." << endl;
+      goto exit;
+#endif
+
+    case Recurrence::TOO_COMPLEX:
+    default:
+      cout << "lower_bound(too_complex)." << endl;
+      break;
+    }
+  }
+
+  if (upper_bound_required) {
+    Expr upper;
+    switch (precp->compute_upper_bound()) {
+    case Recurrence::SUCCESS:
+      // OK: get the upper bound and print it.
+      precp->upper_bound(upper);
+      cout << "x(n) =< " << upper << "." << endl;
+      break;
+    case Recurrence::UNSOLVABLE_RECURRENCE:
+      cout << "unsolvable." << endl;
+      goto exit;
+
+    case Recurrence::INDETERMINATE_RECURRENCE:
+      cout << "indeterminate." << endl;
+      goto exit;
+
+#if 0
+    case Recurrence::MALFORMED;:
+      cout << "malformed." << endl;
+      goto exit;
+#endif
+
+    case Recurrence::TOO_COMPLEX:
+    default:
+      cout << "upper_bound(too_complex)." << endl;
+      break;
+    }
+  }
+ exit:
+  my_exit(0);
+}
+
 int
 main(int argc, char *argv[]) try {
   program_name = argv[0];
 
   set_handlers();
 
-  //purrs_initialize();
-
   init_symbols();
 
   process_options(argc, argv);
 
-  Expr lower;
-  Expr upper;
-  Expr exact_solution;
+  if (production_mode)
+    do_production_mode();
 
-  if (production_mode) {
-    if (have_recurrence) {
-      if (!exact_solution_required && !lower_bound_required
-	  && !upper_bound_required) {
-	exact_solution_required = true;
-	lower_bound_required = true;
-	upper_bound_required = true;
-      }
-      bool required_exact_too_complex = false;
-      if (exact_solution_required)
-	switch (compute_exact_solution_wrapper(*precp)) {
-	case Recurrence::SUCCESS:
-	  // OK: get the exact solution and print it.
-	  precp->exact_solution(exact_solution);
-	  exact_solution
-	    = precp->substitute_auxiliary_definitions(exact_solution);
-	  cout << "x(n) = " << exact_solution << "." << endl;
-	  goto exit;
-	  break;
-	case Recurrence::UNSOLVABLE_RECURRENCE:
-	  cout << "unsolvable." << endl;
-	  goto exit;
-	  break;
-	case Recurrence::INDETERMINATE_RECURRENCE:
-	  cout << "indeterminate." << endl;
-	  goto exit;
-	  break;
-	case Recurrence::TOO_COMPLEX:
-	  if (!lower_bound_required && !upper_bound_required) {
-	    cout << "exact(too_complex)." << endl;
-	    goto exit;
-	  }
-	  required_exact_too_complex = true;
-	  break;
-	default:
-	  break;
-	}
-      bool required_lower_too_complex = false;
-      bool required_upper_too_complex = false;
-      if (lower_bound_required)
-	switch (precp->compute_lower_bound()) {
-	case Recurrence::SUCCESS:
-	  // OK: get the lower bound and print it.
-	  precp->lower_bound(lower);
-	  cout << "x(n) >= " << lower << "." << endl;
-	  break;
-	case Recurrence::UNSOLVABLE_RECURRENCE:
-	  cout << "unsolvable." << endl;
-	  goto exit;
-	  break;
-	case Recurrence::INDETERMINATE_RECURRENCE:
-	  cout << "indeterminate." << endl;
-	  goto exit;
-	  break;
-	case Recurrence::TOO_COMPLEX:
-	  required_lower_too_complex = true;
-	  break;
-	default:
-	  break;
-	}
-      if (upper_bound_required)
-	switch (precp->compute_upper_bound()) {
-	case Recurrence::SUCCESS:
-	  // OK: get the upper bound and print it.
-	  precp->upper_bound(upper);
-	  cout << "x(n) =< " << upper << "." << endl;
-	  break;
-	case Recurrence::UNSOLVABLE_RECURRENCE:
-	  cout << "unsolvable." << endl;
-	  goto exit;
-	  break;
-	case Recurrence::INDETERMINATE_RECURRENCE:
-	  cout << "indeterminate." << endl;
-	  goto exit;
-	  break;
-	case Recurrence::TOO_COMPLEX:
-	  required_upper_too_complex = true;
-	  break;
-	default:
-	  break;
-	}
-      if (required_exact_too_complex)
-	//If the exact solution is too complex and we are arrived here,
-	// then this means that at least one bound has been required.
-	if (required_lower_too_complex && required_upper_too_complex)
-	  cout << "too_complex." << endl;
-	else {
-	  cout << "exact(too_complex)." << endl;
-	  if (required_lower_too_complex)
-	    cout << "lower_bound(too_complex)." << endl;
-	  if (required_upper_too_complex)
-	    cout << "upper_bound(too_complex)." << endl;
-	}
-      else {
-	if (required_lower_too_complex)
-	  cout << "lower_bound(too_complex)." << endl;
-	if (required_upper_too_complex)
-	  cout << "upper_bound(too_complex)." << endl;
-      }
-    }
-    else {
-      cerr << program_name
-	   << ": must specify a recurrence using the `-R' option" << endl;
-      my_exit(1);
-    }
-  exit:
-    my_exit(0);
-  }
-  
   unsigned unexpected_solution_or_bounds_for_it = 0;
   unsigned unexpected_exact_failures = 0;
   unsigned unexpected_lower_failures = 0;
@@ -676,6 +673,9 @@ main(int argc, char *argv[]) try {
     }
 
     Recurrence rec(rhs);
+    Expr lower;
+    Expr upper;
+    Expr exact_solution;
 
     // *** regress test
     if (regress_test) {
