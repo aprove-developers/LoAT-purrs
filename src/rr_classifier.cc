@@ -263,15 +263,25 @@ eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs) {
   int max_decrement = INT_MIN;
   Expr coefficient;
   find_max_decrement_and_coeff(rhs, max_decrement, coefficient);
-  // The changes of variables includes replacing `n' by `n-max_decrement',
-  // changing sign, and division by `coefficient'.
-  new_rhs = change_variable_function_x(rhs, Recurrence::n,
-				       Recurrence::n - max_decrement);
+
+  // The change of variables includes replacing `n' by `n-max_decrement',
+  // changing sign, and dividing by `coefficient'.
+
+  // First replace `n' with `n-max_decrement' in the coefficient. 
+  coefficient = coefficient.substitute(Recurrence::n, Recurrence::n - max_decrement);
+
+  // Then do the same in the recurrence.
+  new_rhs = rhs.substitute(Recurrence::n, Recurrence::n - max_decrement);
+
+  // Collect `x(n)' for efficiency/readability and change sign.
   new_rhs = new_rhs.collect(Expr_List(x(Recurrence::n)));
   new_rhs *= -1;
+
+  // Replace arguments of `x' again, so that the new `x(n)' is the old
+  // `x(n+max_decrement)', and divide by the new `coefficient'.
   new_rhs = new_rhs.substitute(x(Recurrence::n),
-			       - x(Recurrence::n-max_decrement)
-			 * pwr(coefficient, -1));
+  			       - x(Recurrence::n-max_decrement)
+			       * pwr(coefficient, -1));
   new_rhs /= coefficient;
 }
 
