@@ -167,20 +167,21 @@ In the following section we will consider the different types of
 recurrences that the system is able to deal.
 
 
-\section linear_finite_order_const_coeff Linear Recurrences of Finite Order with Constant Coefficients
 
-A <EM>linear recurrence of finite order with constant coefficients</EM>
-is a recurrence of the form
+\section linear_finite_order Linear Recurrences of Finite Order
+
+A <EM>linear recurrence of order \f$ k \f$</EM> is a recurrence of the form
 \f[
    x_n
    =
-   a_1 x_{n-1} + a_2 x_{n-2} + \cdots + a_k x_{n-k} + p(n),
+   \alpha_1(n) x_{n-1} + \alpha_2(n) x_{n-2} + \cdots
+	+ \alpha_k(n) x_{n-k} + p(n),
 \f]
-for \f$ n \geq k \f$, where \f$ k \f$ is a fixed positive integer that
-is called <EM>order of the recurrence relation</EM>.
-We implicitly assume that \f$ a_k \neq 0 \f$, for otherwise the order
+for \f$ n \geq k \f$.
+We implicitly assume that \f$ \alpha_k(n) \neq 0 \f$, for otherwise the order
 would be smaller.
-The <EM>coefficients</EM> \f$a_j\f$ are real or complex numbers.
+The <EM>coefficients</EM> \f$ \alpha_j(n) \f$, for \f$ j = 1, \dots, k \f$,
+are real or complex numbers.
 The function \f$ p \f$ is defined on \f$ \Nset \cap [k, +\infty) \f$,
 and is the <EM>non-homogeneous part</EM> of the recurrence.
 If \f$ p \doteq 0 \f$ (that is, \f$ p \f$ vanishes identically from a
@@ -189,5 +190,100 @@ syntactical point of view), we say that the recurrence is
 Every recurrence is given with a set of \f$ k \f$
 <EM>initial conditions</EM> \f$ x_0 \f$, \f$ x_1 \f$, \f$ \dots \f$,
 \f$ x_{k-1} \f$, which we assume to be known.
+
+If the coefficients \f$ \alpha_j(n) \f$ are constant with respect to the
+variable \f$ n \f$, for \f$ j = 1, \dots, k \f$, then the recurrence
+is called with <EM>constant coefficients</EM>; otherwise the
+recurrence is called with <EM>variable coefficients</EM>.
+
+<B>Linear Recurrences of Finite Order with Costant Coefficients</B>
+
+bla bla
+
+<B>Linear Recurrences of Finite Order with Variable Coefficients</B>
+
+bla bla
+
+
+
+\section linear_infinite_order Linear Recurrences of Infinite Order
+
+An <EM>infinite order recurrence</EM> is described by the equation
+\f[
+  x_n = \sum_{k=0}^{n-1} \bigl( f_k(n) x_k \bigr) + g(n),
+\f]
+where \f$ f_k(n) \f$ and \f$ g(n) \f$ are generic functions defined
+on \f$ \Nset \cap [k, +\infty) \f$.
+\f$ g(n) \f$ is the <EM>non-homogeneous part</EM> of the recurrence;
+If \f$ g \doteq 0 \f$ (that is, \f$ g \f$ vanishes identically from a
+syntactical point of view), we say that the recurrence is
+<EM>homogeneous</EM>.
+
+If \f$ f_k(n) \f$ is constant for each \f$ k = 0, \dotsc, n-1 \f$, then
+the recurrence is called with <EM>constant coefficients</EM>; otherwise
+the recurrence is called with <EM>variable coefficients</EM>.
+
+Note that this type of recurrence is a rather different set of recurrences
+from the previous ones, where we allow \f$ x_n \f$ to depend on <EM>all</EM>
+the previous values of \f$ x \f$, and not only the last \f$ k \f$ of them,
+\f$ k \f$ being a fixed positive integer.
+
+For <EM>normal form</EM> of inifinite order recurrence we add the
+additional conditions that the lower limit of the sum is \f$ 0 \f$ and
+the upper limit is \f$ n-1 \f$.
+
+
+<B>Linear Recurrences of Infinite Order with Variable Coefficients</B>
+
+Let \f$ x_n \f$ be a sequence satisfying the infinite order recurrence
+\f[
+  x_n = f(n) \sum_{k=0}^{n-1} x_k + g(n),
+\f]
+where \f$ \fund{f,g}{\Nset}{\Cset} \f$, and \f$ f \f$ never vanishes.
+We show how to transform any recurrence of this form into a first order
+recurrence with variable coefficients.
+Then, for \f$ n \geq 2 \f$ the sequence \f$ x \f$ also satisfies
+\f[
+  x_n = \alpha(n) x_{n-1} + \beta(n),
+\f]
+where
+\f[
+  \alpha(n) \defeq \frac{f(n)}{f(n-1)} (1+f(n-1))
+	      \qquad \text{and} \qquad \beta(n)
+            \defeq f(n) \left(
+	                  \frac{g(n)}{f(n)} - \frac{g(n-1)}{f(n-1)}
+	                \right),
+\f]
+(for the proof see ...).
+
+
+
+\section non_linear Non Linear Recurrences of Finite Order
+
+bla bla
+
+
+
+\section generalized_recurrence Generalized Recurrences
+
+The <EM>generalized recurrences</EM> are often called
+<EM>functional equations</EM> since, strictly speaking, they do not
+fall into the standard classes of recurrences treated in the previous
+sections.
+A typical example of this is
+\f[
+  x_n = \alpha x_{n / \beta} + d n^e.
+\f]
+Here and in the sequel, we tacitly understand \f$ n / \beta \f$ as
+\f$ \bigl[ n / \beta \bigr] \f$, and write \f$ x(n / \beta) \f$ in place
+of \f$ x_{n/\beta} \f$, as it would be customary when dealing with sequences,
+because the former is easier to read.
+The above quation requires \f$ \beta - 1 \f$ initial conditions
+\f$ x(n) \f$ for \f$ 1 \leq n < \beta \f$, if \f$ \beta \f$ is a positive
+integer.
+Notice that the relation specified by such a functional equation
+between its values at different arguments is much more complicated
+than in the cases of the proper recurrences considered in the previous
+sections.
 
 */
