@@ -333,9 +333,7 @@ public:
       \ref linear_finite_order "linear finite order recurrence"
       or a
       \ref non_linear "non linear finite order recurrence" of order \f$ k \f$.
-      Let also \f$ j \f$ be the least non-negative integer \f$ j \f$
-      such that the recurrence is well-defined for \f$ n \geq j \f$
-      (this is obtainable with the method <CODE>first_valid_index()</CODE>).
+      Let also \f$ j \f$ be the \ref first_valid_index "first valid index".
       Then the initial conditions in the map must include the \f$ k \f$ pairs
       \f[
            (j-k+p, e_1), (j-k+p+1, e_2), (j-k+p+2, e_3), \ldots, (j+p-1, e_k)
@@ -348,9 +346,7 @@ public:
     - Let \p *this be a \ref weighted_average "weighted-average recurrence".
       Only one initial condition of the form \f$ (j, e) \f$ is sufficient
       to uniquely determine the sequence of complex numbers.
-      \f$ j \f$ is the least non-negative integer such that the recurrence
-      is well-defined for \f$ n \geq j \f$ (this is obtainable with the
-      method <CODE>first_valid_index()</CODE>).
+      Let \f$ j \f$ be the \ref first_valid_index "first valid index".
       If \p initial_conditions contains more initial conditions of the form
       \f$ (j+p, e_p) \f$, for \f$ p \geq 0 \f$, the pair with the biggest
       left values is used.
@@ -461,7 +457,7 @@ public:
                                      \p x must be bigger or equal to
 				     \f$ j \f$, where \f$ j \f$
 				     the maximum between \f$ 0 \f$
-				     and \p first_valid_index()-order()+1.
+				     and \p first_valid_index-order()+1.
 
     - a \ref weighted_average "weighted-average recurrence":
                                      by definition and since the recurrence is
@@ -1389,16 +1385,6 @@ private:
   //! Returns the order of the finite order recurrence.
   index_type order() const;
 
-  //! \brief
-  //! Returns the least non-negative integer \f$ j \f$ such that
-  //! the recurrence is well-defined for \f$ n \geq j \f$.
-  index_type first_valid_index() const;
-
-  //! \brief
-  //! Sets to \p i_c is the least non-negative integer \f$ j \f$ such that
-  //! the recurrence is well-defined for \f$ n \geq j \f$.
-  void set_first_valid_index(index_type i_c) const;
-
   //! Returns the coefficients of the linear finite order recurrence.
   const std::vector<Expr>& coefficients() const;
 
@@ -1413,23 +1399,23 @@ private:
 
   //! \brief
   //! Returns the expression \f$ \prod_{i}^n a(k)\f$,
-  //! where \f$ i \f$ is \p first_valid_index() and \f$ a(n) \f$
-  //! is the coefficient of the recurrence of first order with variable
-  //! coefficient.
+  //! where \f$ i \f$ is the \ref first_valid_index "first valid index"
+  //! and \f$ a(n) \f$ is the coefficient of the recurrence of first order
+  //! with variable coefficient.
   const Expr& product_factor() const;
 
   //! \brief
   //! Returns the expression \f$ \prod_{i}^n a(k)\f$,
-  //! where \f$ i \f$ is \p first_valid_index() and \f$ a(n) \f$
-  //! is the coefficient of the recurrence of first order with variable
-  //! coefficient.
+  //! where \f$ i \f$ is the \ref first_valid_index "first valid index"
+  //! and \f$ a(n) \f$ is the coefficient of the recurrence of first order
+  //! with variable coefficient.
   Expr& product_factor();
 
   //! \brief
   //! Sets to \p x the expression \f$ \prod_{i}^n a(k)\f$,
-  //! where \f$ i \f$ is \p first_valid_index() and \f$ a(n) \f$
-  //! is the coefficient of the recurrence of first order with variable
-  //! coefficient.
+  //! where \f$ i \f$ is the \ref first_valid_index "first valid index"
+  //! and \f$ a(n) \f$ is the coefficient of the recurrence of first order
+  //! with variable coefficient.
   void set_product_factor(const Expr& x) const;
 
   //! \brief
@@ -1608,6 +1594,12 @@ private:
   void set_original_rhs(const Expr& weight, const Expr& inhomogeneous,
 			unsigned int lower, const Expr& upper) const;
   
+  //! \brief
+  //! Contains the \ref first_valid_index "first valid index".
+  mutable index_type first_valid_index;
+
+  //! Sets to \p i <CODE>first_valid_index</CODE>.
+  void set_first_valid_index(index_type i) const;
 
   //! \brief
   //! Stores the value, if it exists, of the exact solution

@@ -47,6 +47,7 @@ Recurrence::Recurrence()
     functional_eq_p(0),
     non_linear_p(0),
     weighted_average_p(0),
+    first_valid_index(0),
     tried_to_compute_exact_solution(false) {
 }
 
@@ -61,6 +62,7 @@ Recurrence::Recurrence(const Expr& e)
     functional_eq_p(0),
     non_linear_p(0),
     weighted_average_p(0),
+    first_valid_index(0),
     tried_to_compute_exact_solution(false) {
 }
 
@@ -76,6 +78,7 @@ Recurrence::Recurrence(const Recurrence& y)
     functional_eq_p(y.functional_eq_p),    
     non_linear_p(y.non_linear_p),
     weighted_average_p(y.weighted_average_p),
+    first_valid_index(y.first_valid_index),
     exact_solution_(y.exact_solution_),
     lower_bound_(y.lower_bound_),
     upper_bound_(y.upper_bound_),
@@ -96,6 +99,7 @@ Recurrence::operator=(const Recurrence& y) {
   functional_eq_p = y.functional_eq_p;
   non_linear_p = y.non_linear_p;
   weighted_average_p = y.weighted_average_p;
+  first_valid_index = y.first_valid_index;
   exact_solution_ = y.exact_solution_;
   lower_bound_ = y.lower_bound_;
   upper_bound_ = y.upper_bound_;
@@ -336,20 +340,6 @@ Recurrence::order() const {
   return finite_order_p->order();
 }
 
-inline index_type
-Recurrence::first_valid_index() const {
-  assert(is_linear_finite_order());
-  assert(finite_order_p);
-  return finite_order_p->first_valid_index();
-}
-
-inline void
-Recurrence::set_first_valid_index(index_type i_c) const {
-  assert(is_linear_finite_order());
-  assert(finite_order_p);
-  finite_order_p->set_first_valid_index(i_c);
-}
-
 inline const std::vector<Expr>&
 Recurrence::coefficients() const {
   assert(is_linear_finite_order());
@@ -553,6 +543,11 @@ Recurrence::set_original_rhs(const Expr& weight, const Expr& inhomogeneous,
   assert(is_weighted_average());
   assert(weighted_average_p);
   weighted_average_p->set_original_rhs(weight, inhomogeneous, lower, upper);
+}
+
+inline void
+Recurrence::set_first_valid_index(index_type i) const {
+  first_valid_index = i;
 }
 
 inline Expr

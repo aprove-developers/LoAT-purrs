@@ -39,10 +39,9 @@ public:
   //! \brief
   //! Constructor: sets \f$ order{\_} = k \f$,
   //! \f$ coefficients{\_} = coeffs \f$,
-  //! \f$ first_valid_index{\_} = first_valid_index \f$,
   //! \f$ gcd{\_}among{\_}decrements{\_} = gcd \f$,
   Finite_Order_Info(index_type k, const std::vector<Expr>& coeffs,
-		    index_type first_valid_index, unsigned int gcd);
+		    unsigned int gcd);
   
   //! Copy-constructor.
   Finite_Order_Info(const Finite_Order_Info& y);
@@ -55,12 +54,6 @@ public:
 
   //! Returns <CODE>order_</CODE>.
   index_type order() const;
-
-  //! Returns <CODE>first_valid_index_</CODE>.
-  index_type first_valid_index() const;
-
-  //! Sets <CODE>first_valid_index_</CODE> with \p i_c
-  void set_first_valid_index(index_type i_c);
 
   //! Returns <CODE>coefficients_</CODE>.
   const std::vector<Expr>& coefficients() const;
@@ -97,11 +90,6 @@ private:
   std::vector<Expr> coefficients_;
 
   //! \brief
-  //! The least non-negative integer \f$ j \f$ such that the recurrence
-  //! is well-defined for \f$ n \geq j \f$.
-  index_type first_valid_index_;
-
-  //! \brief
   //! Stores the greatest common divisor among the positive integer \f$ k \f$
   //! of the terms of the form \f$ x(n-k) \f$ contained in the right
   //! hand side of the recurrence. If the order is zero then
@@ -111,9 +99,8 @@ private:
   //! \brief
   //! In the recurrences of the first order with variable coefficient
   //! \f$ a(n) \f$, stores the factor \f$ \prod_{i}^n a(k)\f$,
-  //! where \f$ i \f$ is the non-negative integer
-  //! \p first_valid_index_. In the case of constant
-  //! coefficients it is \f$ 0 \f$.
+  //! where \f$ i \f$ is the \ref first_valid_index "first valid index".
+  //! In the case of constant coefficients it is \f$ 0 \f$.
   Expr product_factor_;
 
   //! \brief

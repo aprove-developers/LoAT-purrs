@@ -119,13 +119,13 @@ get_constant_divisor(const Expr& e, Number& divisor) {
   const Expr& a = e.op(0);
   const Expr& b = e.op(1);
   Number d;
-  if (a == Recurrence::n && b.is_a_number(d) && d.is_rational()
-      && d.is_positive()) {
+  if (a == Recurrence::n && b.is_a_number(d)
+      && d.is_rational() && !d.is_integer() && d.is_positive()) {
     divisor = 1 / d;
     return true;
   }
-  else if (b == Recurrence::n && a.is_a_number(d) && d.is_rational()
-	   && d.is_positive()) {
+  else if (b == Recurrence::n && a.is_a_number(d)
+	   && d.is_rational() && !d.is_integer()&& d.is_positive()) {
     divisor = 1 / d;
     return true;
   }
@@ -562,7 +562,9 @@ bool
 rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 			      Expr& new_rhs,
 			      std::pair<Number, Expr>& coeff_and_base,
-			      std::vector<Symbol>& auxiliary_symbols) {
+			      std::vector<Symbol>& auxiliary_symbols,
+			      index_type& first_valid_index) {
+  Number z;
   // First case.
   if (rhs.is_a_mul()) {
     bool simple_cases = false;
@@ -585,7 +587,12 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	simple_cases = false;
 	break;
       }
+      else
+	if (!find_domain_in_N(factor, Recurrence::n, z))
+	  return false;
     }
+    first_valid_index = z.to_unsigned_int();
+
     // Consider the special case `x(n) = c x(n-1)^a' with `a' and `c'
     // constants (`a != 1').
     // In this case is not necessary the `linearization' of the recurrence
@@ -697,9 +704,12 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
   \param rhs_first_order         the right hand side of the first order
                                  recurrence associated to the weighted-average
 				 recurrence.
-  \param first_valid_index       the least non-negative integer \f$ j \f$
-                                 such that the weighted-average recurrence
-				 is well-defined for \f$ n \geq j \f$.
+  \param first_valid_index       see
+                                 \ref first_valid_index "first_valid_index".
+  \param domain_problem          <CODE>true</CODE> if
+                                 <CODE>first_valid_index</CODE> is largest
+				 than the lower limit of the sum;
+				 <CODE>false</CODE> otherwise.
   \param rewritten               <CODE>true</CODE> if \p rhs is not in the
                                  form of weighted-average recurrence
 				 and this function rewrite it in a
@@ -786,6 +796,7 @@ rewrite_weighted_average_recurrence(const Expr& rhs, const Expr& term_sum,
 				    Expr& original_inhomogeneous,
 				    Expr& rhs_first_order,
 				    index_type& first_valid_index,
+				    bool& domain_problem,
 				    bool& rewritten) {
   Expr upper = term_sum.arg(2);
   int lower = term_sum.arg(1).ex_to_number().to_int();
@@ -822,17 +833,7 @@ rewrite_weighted_average_recurrence(const Expr& rhs, const Expr& term_sum,
   }
   original_weight = weight;
   original_inhomogeneous = inhomogeneous;
-  
-  // Find the weight `f(n)' and the inhomogeneous term of the
-  // recurrence transformed so that to have the lower limit of the
-  // sum equal to `0'.
-  if (lower > 0) {
-    rewritten = true;
-    weight = weight.substitute(Recurrence::n, Recurrence::n + lower);
-    inhomogeneous = inhomogeneous.substitute(Recurrence::n,
-					     Recurrence::n + lower);
-  }
-  
+
   Number z = 0;
   // Find the largest positive or null integer that cancel the numerator of
   // `f(n)' and store it in `z' if it is bigger than the current `z'.
@@ -847,7 +848,19 @@ rewrite_weighted_average_recurrence(const Expr& rhs, const Expr& term_sum,
   if (!find_domain_in_N(inhomogeneous.denominator(), Recurrence::n, z))
     return false;
   first_valid_index = z.to_unsigned_int();
-
+  
+  // Find the weight `f(n)' and the inhomogeneous term of the
+  // recurrence transformed so that to have the lower limit of the
+  // sum equal to `0'.
+  if (lower > 0) {
+    rewritten = true;
+    weight = weight.substitute(Recurrence::n, Recurrence::n + lower);
+    inhomogeneous = inhomogeneous.substitute(Recurrence::n,
+					     Recurrence::n + lower);
+  }
+  if (int(first_valid_index) > lower)
+    domain_problem = true;
+  
   // Find the element will form the first order recurrence.
   const Expr& weight_shifted = weight.substitute(Recurrence::n,
 						 Recurrence::n-1);
@@ -926,11 +939,13 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
     // logarithm's base or the exponential's base used in the rewriting
     // of the non-linear recurrence in the correspondent linear recurrence.
     std::pair<Number, Expr> coeff_and_base;
+    index_type first_valid_index = 0;
     if (rewrite_non_linear_recurrence(*this, rhs, new_rhs, coeff_and_base,
-				      auxiliary_symbols)) {
+				      auxiliary_symbols, first_valid_index)) {
       set_non_linear_finite_order();
       non_linear_p = new Non_Linear_Info(Recurrence(new_rhs), coeff_and_base,
 					 auxiliary_symbols);
+      set_first_valid_index(first_valid_index);
       return CL_SUCCESS;
     }
     else
@@ -1015,6 +1030,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	Expr rhs_first_order;
 	bool rewritten = false;
 	index_type first_valid_index;
+	bool domain_problem = false;
 	Expr weight = orig_weight;
 	Expr orig_inhomogeneous;
 	// If it is possible, rewrites the recurrence in
@@ -1025,12 +1041,13 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 						orig_inhomogeneous,
 						rhs_first_order,
 						first_valid_index,
-						rewritten)) { 
-	  if (first_valid_index > 0)
+						domain_problem, rewritten)) { 
+	  if (domain_problem)
 	    return CL_DOMAIN_ERROR;
 	  weighted_average_p
 	    = new Weighted_Average_Info(Recurrence(rhs_first_order), weight);
 	  set_weighted_average();
+	  set_first_valid_index(first_valid_index);
 	  if (rewritten) {
 	    bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	    rec_rewritten = true;
@@ -1130,6 +1147,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	  Expr rhs_first_order;
 	  bool rewritten = false;
 	  index_type first_valid_index;
+	  bool domain_problem = false;
 	  Expr weight = orig_weight;
 	  Expr orig_inhomogeneous;
 	  // If it is possible, rewrites the recurrence in
@@ -1140,12 +1158,14 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 						  orig_inhomogeneous,
 						  rhs_first_order,
 						  first_valid_index,
+						  domain_problem,
 						  rewritten)) { 
-	    if (first_valid_index > 0)
+	    if (domain_problem)
 	      return CL_DOMAIN_ERROR;
 	    weighted_average_p
 	      = new Weighted_Average_Info(Recurrence(rhs_first_order), weight);
 	    set_weighted_average();
+	    set_first_valid_index(first_valid_index);
 	    if (rewritten) {
 	      bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	      rec_rewritten = true;
@@ -1347,37 +1367,47 @@ PURRS::Recurrence::classify() const {
   // `z' and its value is bigger than the previous, updates `z';
   // otherwise `z' is left unchanged.
   Number z = 0;
-  // In the case of order equal to `0' we do not perform any
-  // check because the solution is simply the right-hand side
-  // of the recurrence.
-  if (is_linear_finite_order() && order > 0) {
-    // FIXME: check also the numerator (ex. log(n-2))!!!
-    // Check the denominator of the inhomogeneous term.
-    if (!inhomogeneous.is_zero()) {
-      const Expr& denom_inhomogeneous = inhomogeneous.denominator();
-      if (has_parameters(denom_inhomogeneous))
-	return CL_TOO_COMPLEX;
-      if (!find_domain_in_N(denom_inhomogeneous, n, z))
-	return CL_TOO_COMPLEX;
+  if (is_linear_finite_order()) {
+    // In the case of order equal to `0' we do not perform any
+    // check because the solution is simply the right-hand side
+    // of the recurrence.
+    if (order > 0) {
+      // FIXME: check also the numerator (ex. log(n-2))!!!
+      // Check the denominator of the inhomogeneous term.
+      if (!inhomogeneous.is_zero()) {
+	const Expr& denom_inhomogeneous = inhomogeneous.denominator();
+	if (has_parameters(denom_inhomogeneous))
+	  return CL_TOO_COMPLEX;
+	if (!find_domain_in_N(denom_inhomogeneous, n, z))
+	  return CL_TOO_COMPLEX;
+      }
+      if (is_linear_finite_order_var_coeff() && order == 1) {
+	// Check the coefficient.
+	const Expr& coefficient = coefficients[1];
+	if (has_parameters(coefficient))
+	  return CL_TOO_COMPLEX;
+	if (!find_domain_in_N(coefficient, n, z))
+	  return CL_TOO_COMPLEX;
+      }
     }
-    if (is_linear_finite_order_var_coeff() && order == 1) {
-      // Check the coefficient.
-      const Expr& coefficient = coefficients[1];
-      if (has_parameters(coefficient))
-	return CL_TOO_COMPLEX;
-      if (!find_domain_in_N(coefficient, n, z))
-	return CL_TOO_COMPLEX;
-    }
-  }
-  
-  // In the case of non linear recurrence or weighted-average recurrence
-  // we have already done the operation `new ...'.
-  if (is_functional_equation())
-    functional_eq_p = new Functional_Equation_Info(homogeneous_terms);
-  else if (is_linear_finite_order())
     finite_order_p = new Finite_Order_Info(order, coefficients,
-					   z.to_unsigned_int(),
 					   gcd_among_decrements);
+    set_first_valid_index(z.to_unsigned_int());
+  }
+  else if (is_functional_equation()) {
+    for (std::map<Number, Expr>::const_iterator i = homogeneous_terms.begin(),
+	   homogeneous_terms_end = homogeneous_terms.end();
+	 i != homogeneous_terms_end; ++i)
+      // Check the coefficients `a' of the homogeneous terms `a x(n/b)'
+      // in the recurrence. 
+      if (!find_domain_in_N(i->second, n, z))
+	return CL_TOO_COMPLEX;
+    functional_eq_p = new Functional_Equation_Info(homogeneous_terms);
+    set_first_valid_index(z.to_unsigned_int());
+  }
+  // In the case of non linear recurrence or weighted-average recurrence
+  // we have already done the operation `new ...' and we have already
+  // computed `first_valid_index'.
 
   assert(is_linear_finite_order() || is_functional_equation()
 	 || is_non_linear_finite_order() || is_weighted_average());

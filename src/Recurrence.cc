@@ -147,10 +147,8 @@ validate_initial_conditions(index_type order,
   relation
   \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$,
   which is stored in the expression \p recurrence_rhs.
-  Let \f$ i \f$ be \p first_valid_index, that is, the least non-negative
-  integer \f$ j \f$ such that the recurrence is well-defined for
-  \f$ n \geq j \f$.
-  Assume that the system has produced the expression
+  Let \f$ i \f$ be the \ref first_valid_index "first_valid_index" and
+  assume that the system has produced the expression
   \p exact_solution_.expression(), which is a function of the
   variable \f$ n \f$.
 
@@ -219,11 +217,11 @@ PURRS::Recurrence::verify_finite_order() const {
   // FIXME: chiarire discorso dell'ordine con le non lineari.
   if (is_non_linear_finite_order()) {
     order_rec = associated_linear_rec().order();
-    first_i_c = associated_linear_rec().first_valid_index();
+    first_i_c = associated_linear_rec().first_valid_index;
   }
   else {
     order_rec = order();
-    first_i_c = first_valid_index();
+    first_i_c = first_valid_index;
   }
   
   if (order_rec == 0)
@@ -550,10 +548,10 @@ PURRS::Recurrence::verify_finite_order() const {
 				      coefficients(), new_coefficients,
 				      inhomogeneous));
     rec_rewritten.finite_order_p
-      = new Finite_Order_Info(dim - 1, new_coefficients,
-			      first_valid_index(), 1);
+      = new Finite_Order_Info(dim - 1, new_coefficients, 1);
     rec_rewritten.set_type(type());
     rec_rewritten.set_inhomogeneous_term(inhomogeneous);
+    rec_rewritten.set_first_valid_index(first_valid_index);
     rec_rewritten.solve_linear_finite_order();
     return rec_rewritten.verify_exact_solution();
   }
@@ -938,7 +936,7 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
   case LINEAR_FINITE_ORDER_VAR_COEFF:
     {
       index_type k = order();
-      index_type first = first_valid_index();
+      index_type first = first_valid_index;
       // Check the number of initial conditions.
       if (initial_conditions.size() < k) {
 	s << "*this is a recurrence of order " << k
@@ -947,7 +945,7 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 	throw_invalid_argument(method, s.str().c_str());
       }
       // Check if the largest index of the initial conditions in the
-      // map `initial_conditions' is not smaller than `first_valid_index()'.
+      // map `initial_conditions' is not smaller than `first_valid_index'.
       assert(!initial_conditions.empty());
       index_type largest = initial_conditions.rbegin()->first;
       if (largest < first) {
@@ -1023,14 +1021,14 @@ PURRS::Recurrence::check_number_for_evaluation(const char* method,
   case LINEAR_FINITE_ORDER_VAR_COEFF:
     {
       // Check that the number `num' is bigger than
-      // `first_valid_index() - order() + 1'.
-      unsigned int min_index = first_valid_index() + 1 >= order()
-	? first_valid_index() - order() + 1 : 0;
+      // `first_valid_index - order() + 1'.
+      unsigned int min_index = first_valid_index + 1 >= order()
+	? first_valid_index - order() + 1 : 0;
       if (num < min_index) {
 	s << "*this is a recurrence of order " << order() << ";\n"
 	  << "the least non-negative integer `j' such that the\n"
 	  << "recurrence is well-defined for `n >= j' is "
-	  << first_valid_index()
+	  << first_valid_index
 	  << ". Hence, you can not to evaluate the solution\n"
 	  << "for number smaller than " << min_index;
 	throw_invalid_argument(method, s.str().c_str());
@@ -1095,7 +1093,7 @@ PURRS::Recurrence::evaluate(unsigned int kind, const Number& x) const {
     // `n' such that `n > first_valid_index'; for `n <= first_valid_index'
     //  the solution is represented by the initial condition with index
     // equal to `x'.
-    if (x < first_valid_index() + 1)
+    if (x < first_valid_index + 1)
       evaluated = get_initial_condition(x.to_unsigned_int());
     else
       evaluated = evaluated.substitute(n, x);
@@ -1141,9 +1139,10 @@ PURRS::Recurrence::apply_order_reduction() const {
 				    coefficients(), new_coefficients,
 				    inhomogeneous));
   rec_rewritten.finite_order_p
-    = new Finite_Order_Info(dim - 1, new_coefficients, first_valid_index(), 1);
+    = new Finite_Order_Info(dim - 1, new_coefficients, 1);
   rec_rewritten.set_type(type());
   rec_rewritten.set_inhomogeneous_term(inhomogeneous);
+  rec_rewritten.set_first_valid_index(first_valid_index);
   Solver_Status status;
   if ((status = rec_rewritten.solve_linear_finite_order()) == SUCCESS) {
     // Now we must compute the solution for the original recurrence.
@@ -1483,7 +1482,7 @@ subs_i_c_finite_order_and_functioanl_eq(const Expr& solution_or_bound) const {
   index_type first_valid_index_rhs;
   index_type order_or_rank;
   if (is_linear_finite_order()) {
-    first_valid_index_rhs = first_valid_index();
+    first_valid_index_rhs = first_valid_index;
     order_or_rank = order();
   }
   else if (is_functional_equation()) {

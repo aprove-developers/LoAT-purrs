@@ -33,11 +33,9 @@ namespace Parma_Recurrence_Relation_Solver {
 inline
 Finite_Order_Info::Finite_Order_Info(index_type k,
 				     const std::vector<Expr>& coeffs,
-				     index_type first_valid_index,
 				     unsigned int gcd)
   : order_(k),
     coefficients_(coeffs),
-    first_valid_index_(first_valid_index),
     gcd_among_decrements_(gcd),
     product_factor_(0),
     applied_order_reduction_(false) {
@@ -47,7 +45,6 @@ inline
 Finite_Order_Info::Finite_Order_Info(const Finite_Order_Info& y) 
   : order_(y.order_),
     coefficients_(y.coefficients_),
-    first_valid_index_(y.first_valid_index_),
     gcd_among_decrements_(y.gcd_among_decrements_),
     product_factor_(y.product_factor_),
     applied_order_reduction_(y.applied_order_reduction_) {
@@ -61,7 +58,6 @@ inline Finite_Order_Info&
 Finite_Order_Info::operator=(const Finite_Order_Info& y) { 
   order_ = y.order_;
   coefficients_ = y.coefficients_;
-  first_valid_index_ = y.first_valid_index_;
   gcd_among_decrements_ = y.gcd_among_decrements_;
   product_factor_ = y.product_factor_;
   applied_order_reduction_ = y.applied_order_reduction_;
@@ -71,16 +67,6 @@ Finite_Order_Info::operator=(const Finite_Order_Info& y) {
 inline index_type
 Finite_Order_Info::order() const {
   return order_;
-}
-
-inline index_type
-Finite_Order_Info::first_valid_index() const {
-  return first_valid_index_;
-}
-
-inline void
-Finite_Order_Info::set_first_valid_index(index_type i_c) {
-  first_valid_index_ = i_c;
 }
 
 inline const std::vector<Expr>&
