@@ -381,6 +381,162 @@ static bool
 verify_solution(const Expr& solution, int order, const Expr& rhs,
 		const Symbol& n);
 
+static Solver_Status
+check_powers_and_functions(const Expr& e, const Symbol& n) {
+  if (e.is_a_function()) {
+    Expr operand = e.op(0);
+    if (operand.is_the_x_function())
+      if (operand.op(0).has(n))
+	return NON_LINEAR_RECURRENCE;
+  }
+  else if (e.is_a_power()) {
+    Expr base = e.op(0);
+    Expr exponent = e.op(1);
+    if (base.is_the_x_function())
+      if (base.op(0).has(n))
+	return NON_LINEAR_RECURRENCE;
+    if (exponent.is_the_x_function())
+      if (exponent.op(0).has(n))
+	return NON_LINEAR_RECURRENCE;
+  }
+  return OK;
+}
+
+static Solver_Status
+find_non_linear_recurrence(const Expr& e, const Symbol& n) {
+  Solver_Status status;
+  unsigned num_summands = e.is_a_add() ? e.nops() : 1;
+  if (num_summands > 1)
+    for (unsigned i = num_summands; i-- > 0; ) {
+      Expr term = e.op(i);
+      unsigned num_factors = term.is_a_mul() ? term.nops() : 1;
+      if (num_factors == 1) {
+	status = check_powers_and_functions(term, n);
+	if (status != OK)
+	  return status;
+      }
+      else
+	for (unsigned j = num_factors; j-- > 0; ) {
+	  status = check_powers_and_functions(term.op(j), n);
+	  if (status != OK)
+	    return status;
+	}
+    }
+  else {
+    unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
+    if (num_factors == 1) {
+      status = check_powers_and_functions(e, n);
+      if (status != OK)
+	return status;
+    }
+    else
+      for (unsigned j = num_factors; j-- > 0; ) {
+	status = check_powers_and_functions(e.op(j), n);
+	if (status != OK)
+	  return status;
+      }
+  }
+  return OK;
+}
+
+static Solver_Status
+compute_order(const Expr& argument, const Symbol& n, 
+	      int& order, unsigned long& index, unsigned long max_size) {
+  Number decrement;
+  if (!get_constant_decrement(argument, n, decrement))
+    return HAS_NON_INTEGER_DECREMENT;
+  if (decrement == 0)
+    return HAS_NULL_DECREMENT;
+  if (decrement < 0)
+    return HAS_NEGATIVE_DECREMENT;
+  // Make sure that (1) we can represent `decrement' as a long, and
+  // (2) we will be able to store the coefficient into the
+  // appropriate position of the `coefficients' vector.
+  if (decrement >= LONG_MAX || decrement >= max_size)
+    return HAS_HUGE_DECREMENT;
+  
+  // The `order' is defined as the maximum value of `index'.
+  index = decrement.to_long();
+  if (order < 0 || index > unsigned(order))
+    order = index;
+  return OK;
+}
+  
+static void
+insert_coefficients(const Expr& coeff, unsigned long index,
+		    std::vector<Expr>& coefficients) {
+  // The vector `coefficients' contains in the `i'-th position the
+  // coefficient of `x(n-i)'.  The first position always contains 0.
+  if (index > coefficients.size())
+    coefficients.insert(coefficients.end(),
+			index - coefficients.size(),
+			Number(0));
+  if (index == coefficients.size())
+    coefficients.push_back(coeff);
+  else
+    coefficients[index] += coeff;
+}
+
+static Solver_Status
+classification_summand(const Expr& r, const Symbol& n, Expr& e,
+		       std::vector<Expr>& coefficients, int& order,
+		       bool& has_non_constant_coefficients) {
+  Solver_Status status;
+  unsigned long index;  
+  unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
+  if (num_factors == 1) {
+    if (r.is_the_x_function()) {
+      Expr argument = r.op(0);
+      if (argument.has(n)) {
+	status = compute_order(argument, n, order, index, coefficients.max_size());
+	if (status != OK)
+	  return status;
+	insert_coefficients(1, index, coefficients);
+      }
+      else
+	e += r;
+    }
+    else
+      e += r;
+  }
+  else {
+    Expr possibly_coeff = 1;
+    bool found_function_x = false;
+    bool found_n = false;
+    for (unsigned i = num_factors; i-- > 0; ) {
+      Expr factor = r.op(i);
+      if (factor.is_the_x_function()) {
+	Expr argument = factor.op(0);
+	if (argument.has(n))
+	  if (found_function_x)
+	    return NON_LINEAR_RECURRENCE;
+	  else {
+	    status = compute_order(argument, n, order, index,
+				   coefficients.max_size());
+	    if (status != OK)
+	      return status;
+	    found_function_x = true;
+	  }
+	else
+	  possibly_coeff *= factor;
+      }
+      else {
+	if (factor == n)
+	  found_n = true;
+	possibly_coeff *= factor;
+      }
+    }
+    if (found_function_x) {
+      insert_coefficients(possibly_coeff, index, coefficients);
+      if (found_n)
+	has_non_constant_coefficients = true;
+    }
+    else
+      e += possibly_coeff;
+  }
+  return OK;
+}
+
 /*!
   Returns an expression that is equivalent to \p e and that is
   "maximally expanded" with respect to addition.  This amounts, among
@@ -400,7 +556,7 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   D_VAR(rhs);
   // The following code depends on the possibility of recovering
   // the various parts of `rhs' as summands of an additive expression.
-  Expr e = additive_form(rhs);  
+  Expr expanded_rhs = additive_form(rhs);  
 
   // Initialize the computation of the order of the linear part of the
   // recurrence.  This works like the computation of a maximum: it is
@@ -414,7 +570,7 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   // Will be set to true if at least one element of coefficients is
   // non-constant.
   bool has_non_constant_coefficients = false;
-#if 1
+#if 0
   do {
     // These patterns are used repeatedly for pattern matching.
     // We avoid recreating them over and over again by declaring
@@ -505,95 +661,33 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
       coefficients[index] += a;
   } while (!e.is_zero());
 #else
-  e = 0;
-  if (rhs.is_a_add()) {
-    for (unsigned j = rhs.nops(); j-- > 0; ) {
-      Expr term = e.op(j);
-      if (term.is_a_mul()) {
-	Expr possibly_coeff;
-	bool found_function_x = false;
-	bool found_n = false;
-	for (unsigned h = term.nops(); h-- > 0; ) {
-	  Expr factor = term.op(h);
-	  Expr possibly_coeff = 1;
-	  if (factor.is_the_x_function()) {
-	    Expr argument = factor.op(0);
-	    if (argument.has(n))
-	      if (found_function_x)
-		return NON_LINEAR_RECURRENCE;
-	      else {
-		// Puo' tornare HAS_NON_INTEGER_DECREMENT, ...
-		computation_of_order(argument, order);
-		found_function_x = true;
-	      }
-	    else
-	      possibly_coeff *= factor;
-	  }
-	  else {
-	    if (factor == n)
-	      found_n = true;
-	    possibly_coeff *= factor;
-	  }
-	}
-	if (found_function_x) {
-	  insert_in_coefficients(possibly_coeff, order, coefficients);
-	  if (found_n)
-	    has_non_constant_coefficients = true;
-	}
-	else
-	  e += possibly_coeff;
-      }
-      else
-	// `term' has a unique factor.
-	if (term.is_the_x_function()) {
-	  Expr argument = term.op(0);
-	  if (i.has(n)) {
-	    // Puo' tornare HAS_NON_INTEGER_DECREMENT, ...
-	    computation_of_order(argument, order);
-	    insert_in_coefficients(1, order, coefficients);
-	  }
-	  else
-	    e += term;
-	}
-	else
-	  e += term;
-    }
-  }
+  Expr e = 0;
+  Solver_Status status;
+  unsigned num_summands = expanded_rhs.is_a_add() ? expanded_rhs.nops() : 1;
+  if (num_summands > 1)
+    for (unsigned i = num_summands; i-- > 0; )
+      status = classification_summand(expanded_rhs.op(i), n, e, coefficients, order,
+				      has_non_constant_coefficients);
   else
-    // `rhs' is a unique term composed by more factors.
-    if (rhs.is_a_mul()) {
-      /////////...
-    }
-    // `rhs' is a unique term composed by only one factor.
-    else
-      if (rhs.is_the_x_function()) {
-	Expr argument = rhs.op(0);
-	if (argument.has(n)) {
-	  computation_of_order(argument, order);
-	  insert_in_coefficients(1, order, coefficients);
-	}
-	else
-	  e += rhs;
-      }
-      else
-	e += rhs;
+    status = classification_summand(expanded_rhs, n, e, coefficients, order,
+				    has_non_constant_coefficients);
+  D_VAR(e);
+  if (status != OK)
+    return status;
 #endif
-  
-  // `order' is negative in two cases. 
-  if (order < 0)
-    if (e.has(x(wild(0)))) {
-      // 1. the recurrence is not linear, i.e. there is a non-linear term
-      // containing `x(n-k)', where `k' non-negative-integer.
-      D_MSG("non linear");
-      return NON_LINEAR_RECURRENCE;
-    }
-    else { 
-      // 2. `e' is a function of `n', the parameters and of
-      // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
-      // non-negative integers. 
-      solution = e;
-      return OK;
-    }
+  // Check if the recurrence is not linear, i.e. there is a non-linear term
+  // containig in `e' containing `x(a*n+b)'.
+  status = find_non_linear_recurrence(e, n);
+  if (status != OK)
+    return status;
+
+  // `e' is a function of `n', the parameters and of
+  // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
+  //  non-negative integers.
+  if (order < 0) {
+    solution = e;
+    return OK;
+  }
   D_VAR(order);
   D_VEC(coefficients, 1, order);
   D_MSGVAR("Inhomogeneous term: ", e);
@@ -934,6 +1028,7 @@ solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
       exit_anyway = true;
       break;
     case NON_LINEAR_RECURRENCE:
+      D_MSG("non linear");
       // FIXME: can we do something here to try to linearize the recurrence?
       status = TOO_COMPLEX;
       exit_anyway = true;
