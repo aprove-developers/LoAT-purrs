@@ -1024,12 +1024,12 @@ PURRS::simplify_on_input_ex(const Expr& e, const Symbol& n, bool input) {
   else if (e.is_a_function()) {
     if (e.nops() == 1)
       e_rewritten = apply(e.functor(),
-			  simplify_on_output_ex(e.arg(0), n, input));
+			  simplify_on_input_ex(e.arg(0), n, input));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = simplify_on_output_ex(e_rewritten.arg(i), n, input);
+	argument[i] = simplify_on_input_ex(e.arg(i), n, input);
       e_rewritten = apply(e.functor(), argument);
     }
   }
@@ -1094,7 +1094,7 @@ PURRS::simplify_on_output_ex(const Expr& e, const Symbol& n, bool input) {
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
 	argument[i] = simplify_on_output_ex(e.arg(i), n, input);
-    e_rewritten = apply(e.functor(), argument);
+      e_rewritten = apply(e.functor(), argument);
     }
   }
   else
