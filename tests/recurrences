@@ -152,7 +152,7 @@ x(n-2) + (n - 2)^2
 % 7. Parametric with parameters a, b
 % x(n) =
 (1-a) * x(n-1) + b * (1 - x(n-1))
-% Solution: x(n) = pow(1 - a - b, n) * x(0) - pow(a + b, -1) * b * pow(1 - a - b, n) + b * pow(a + b, -1)
+% Solution: x(n) = (1 - a - b)^n * x(0) - (a + b)^(-1) * b * (1 - a - b)^n + b * (a + b)^(-1)
 
 % 8. Order 1, variable coefficients
 % x(n) =
