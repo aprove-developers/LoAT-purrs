@@ -382,48 +382,53 @@ ok_argument_factorial(const Expr& argument, const Symbol& n) {
 void
 PURRS::largest_positive_int_zero(const Expr& e, Number& z) {
   assert(denominator(e) == 1);
-  if (e.is_polynomial(Recurrence::n)) {
-    Expr partial_e = e;
-    unsigned lower_degree = partial_e.ldegree(Recurrence::n);
-    while (lower_degree > 0) {
-      partial_e = quo(partial_e, Recurrence::n, Recurrence::n);
-      lower_degree = partial_e.ldegree(Recurrence::n);
-      if (z < 0)
-	z = 0;
+  // FIXME: `if (e.has(Recurrence::n))' is necessary because here there is
+  // the method `PURRS::is_polynomial()' and the methods
+  // `GiNaC::ldegree()', `GiNaC::tcoeff()' for which for example
+  // `log(2)' is not a polynomial.
+  if (e.has(Recurrence::n))
+    if (e.is_polynomial(Recurrence::n)) {
+      Expr partial_e = e;
+      unsigned lower_degree = partial_e.ldegree(Recurrence::n);
+      while (lower_degree > 0) {
+	partial_e = quo(partial_e, Recurrence::n, Recurrence::n);
+	lower_degree = partial_e.ldegree(Recurrence::n);
+	if (z < 0)
+	  z = 0;
+      }
+      std::vector<Number> potential_roots;
+      Number constant_term
+	= abs(partial_e.tcoeff(Recurrence::n).ex_to_number());
+      // Find the divisors of the constant term.
+      if (constant_term.is_positive_integer())
+	find_divisors(constant_term, potential_roots);
+      // Find non-negative integral roots of the denominator.
+      for(unsigned i = potential_roots.size(); i-- > 0; ) {
+	Number temp = partial_e.substitute(Recurrence::n,
+					   potential_roots[i]).ex_to_number();
+	if (temp == 0 &&  potential_roots[i] > z)
+	  z = potential_roots[i];
+      }
     }
-    std::vector<Number> potential_roots;
-    Number constant_term
-      = abs(partial_e.tcoeff(Recurrence::n).ex_to_number());
-    // Find the divisors of the constant term.
-    if (constant_term.is_positive_integer())
-      find_divisors(constant_term, potential_roots);
-    // Find non-negative integral roots of the denominator.
-    for(unsigned i = potential_roots.size(); i-- > 0; ) {
-      Number temp = partial_e.substitute(Recurrence::n,
-					 potential_roots[i]).ex_to_number();
-      if (temp == 0 &&  potential_roots[i] > z)
-	z = potential_roots[i];
+    else {
+      if (e.is_a_add() || e.is_a_mul())
+	for (unsigned i = e.nops(); i-- > 0; )
+	  largest_positive_int_zero(e.op(i), z);
+      else if (e.is_a_function()) {
+	if (e.is_the_log_function())
+	  if (e.arg(0).is_polynomial(Recurrence::n))
+	    largest_positive_int_zero(e.arg(0) - 1, z);
+	  else if (e.arg(0).is_the_log_function()) {
+	    largest_positive_int_zero(e.arg(0), z);
+	    ++z;
+	  }  
+	  else if (e.is_the_factorial_function())
+	    // If it is in the form `(a n + b)!' with `a' positive integer
+	    // then we find the minimum `n' such that `a n + b >= 0'.
+	    if (ok_argument_factorial(e.arg(0), Recurrence::n))
+	      largest_positive_int_zero(e.arg(0), z);
+      }
     }
-  }
-  else {
-    if (e.is_a_add() || e.is_a_mul())
-      for (unsigned i = e.nops(); i-- > 0; )
-	largest_positive_int_zero(e.op(i), z);
-    else if (e.is_a_function()) {
-      if (e.is_the_log_function())
-	if (e.arg(0).is_polynomial(Recurrence::n))
-	  largest_positive_int_zero(e.arg(0) - 1, z);
-	else if (e.arg(0).is_the_log_function()) {
-	  largest_positive_int_zero(e.arg(0), z);
-	  ++z;
-	}  
-      else if (e.is_the_factorial_function())
-	// If it is in the form `(a n + b)!' with `a' positive integer
-	// then we find the minimum `n' such that `a n + b >= 0'.
-	if (ok_argument_factorial(e.arg(0), Recurrence::n))
-	  largest_positive_int_zero(e.arg(0), z);
-    }
-  }
 }
 
 //! Returns <CODE>true</CODE> if \p e contains parameters;
