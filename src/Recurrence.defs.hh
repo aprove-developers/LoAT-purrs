@@ -254,7 +254,17 @@ public:
                                      and the classification's process
 				     called by this method fails.
   */
-  unsigned int first_valid_initial_condition() const;
+  index_type first_valid_initial_condition() const;
+
+  //! \brief
+  //! Returns
+  //! \ref first_valid_index_for_solution "first valid index for solution".
+  /*!
+    \exception std::logic_error      thrown if this method is called
+                                     but no exact solution, no lower bound
+				     and no upper bound were computed.
+  */
+  index_type first_valid_index_for_solution() const;
 
   //! \brief
   //! Defines initial conditions of the recurrence that have been stored
@@ -1532,12 +1542,19 @@ private:
   void set_original_rhs(const Expr& weight, const Expr& inhomogeneous,
 			unsigned int lower, const Expr& upper) const;
   
-  //! \brief
   //! Contains the \ref first_valid_index "first valid index".
   mutable index_type first_valid_index;
 
+  //! \brief
+  //! Contains the
+  //! \ref first_valid_index_for_solution "first valid index for solution".
+  mutable index_type first_valid_index_for_solution_;
+
   //! Sets to \p i <CODE>first_valid_index</CODE>.
   void set_first_valid_index(index_type i) const;
+
+  //! Sets to \p i <CODE>first_valid_index_for_solution</CODE>.
+  void set_first_valid_index_for_solution(index_type i) const;
 
   //! \brief
   //! Stores the value, if it exists, of the exact solution

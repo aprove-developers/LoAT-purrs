@@ -48,6 +48,7 @@ Recurrence::Recurrence()
     non_linear_p(0),
     weighted_average_p(0),
     first_valid_index(0),
+    first_valid_index_for_solution_(0),
     tried_to_compute_exact_solution(false) {
 }
 
@@ -63,6 +64,7 @@ Recurrence::Recurrence(const Expr& e)
     non_linear_p(0),
     weighted_average_p(0),
     first_valid_index(0),
+    first_valid_index_for_solution_(0),
     tried_to_compute_exact_solution(false) {
 }
 
@@ -79,6 +81,7 @@ Recurrence::Recurrence(const Recurrence& y)
     non_linear_p(y.non_linear_p),
     weighted_average_p(y.weighted_average_p),
     first_valid_index(y.first_valid_index),
+    first_valid_index_for_solution_(y.first_valid_index_for_solution_),
     exact_solution_(y.exact_solution_),
     lower_bound_(y.lower_bound_),
     upper_bound_(y.upper_bound_),
@@ -100,6 +103,7 @@ Recurrence::operator=(const Recurrence& y) {
   non_linear_p = y.non_linear_p;
   weighted_average_p = y.weighted_average_p;
   first_valid_index = y.first_valid_index;
+  first_valid_index_for_solution_ = y.first_valid_index_for_solution_;
   exact_solution_ = y.exact_solution_;
   lower_bound_ = y.lower_bound_;
   upper_bound_ = y.upper_bound_;
@@ -130,6 +134,16 @@ Recurrence::replace_recurrence(unsigned int k, const Expr& e) {
   if (!stat.second)
     // There was already something associated to `k': overwrite it.
     stat.first->second = e;
+}
+
+inline index_type
+Recurrence::first_valid_index_for_solution() const {
+  if (!exact_solution_.has_expression()
+      && !lower_bound_.has_expression() && !upper_bound_.has_expression())
+    throw std::logic_error("PURRS::Recurrence::exact_solution() called, "
+			   "but no exact solution, no lower bound "
+			   "and no upper bound were computed");
+  return first_valid_index_for_solution_;
 }
 
 /*!
@@ -548,6 +562,11 @@ Recurrence::set_original_rhs(const Expr& weight, const Expr& inhomogeneous,
 inline void
 Recurrence::set_first_valid_index(index_type i) const {
   first_valid_index = i;
+}
+
+inline void
+Recurrence::set_first_valid_index_for_solution(index_type i) const {
+  first_valid_index_for_solution_ = i;
 }
 
 inline Expr
