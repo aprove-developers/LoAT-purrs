@@ -76,20 +76,6 @@ find_divisors(GNumber n, std::vector<GNumber>& divisors) {
 }
 
 /*!
-  Compute the gcd between the integers \f$n\f$ and \f$m\f$.
-*/
-static int
-gcd(int n, int m) {
-  int r = m;
-  while (r != 0){
-    r = n % m;
-    n = m; 
-    m = r;
-  }
-  return n;  
-}
-
-/*!
   This function takes a polynomial expression \f$p(x)\f$ and returns 
   the largest integer \f$n\f$ such that there is a polynomial \f$q\f$
   such that \f$p(x) = q(x^n)\f$ and the polynomial \f$q\f$ itself.

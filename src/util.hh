@@ -28,6 +28,10 @@ http://www.cs.unipr.it/purrs/ . */
 #include "globals.hh"
 #include <iostream>
 
+//! Computes the gcd between \f$n\f$ and \f$m\f$.
+int
+gcd(int n, int m);
+
 //! Removes all the elements from \p l.
 void
 clear(GList& l);

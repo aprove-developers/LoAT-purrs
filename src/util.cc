@@ -26,6 +26,17 @@ http://www.cs.unipr.it/purrs/ . */
 
 using namespace GiNaC;
 
+int
+gcd(int n, int m) {
+  int r = m;
+  while (r != 0){
+    r = n % m;
+    n = m; 
+    m = r;
+  }
+  return n;  
+}
+
 void
 clear(GList& l) {
   for (unsigned n = l.nops(); n-- > 0; )
