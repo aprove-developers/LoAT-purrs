@@ -1011,6 +1011,7 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
       break;
     case HAS_NON_INTEGER_DECREMENT:
     case HAS_HUGE_DECREMENT:
+    case MALFORMED_RECURRENCE:
     case TOO_COMPLEX:
       exit_anyway = true;
       break;
@@ -1040,9 +1041,6 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	  return TOO_COMPLEX;
 	exit_anyway = true;
       }
-      break;
-    case MALFORMED_RECURRENCE:
-      exit_anyway = true;
       break;
 
     default:
