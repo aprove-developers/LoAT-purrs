@@ -155,9 +155,9 @@ compute_symbolic_sum(const int order, const GSymbol& n,
 		     std::vector<GExpr>& exp_poly_coeff,
 		     std::vector<GExpr>& symbolic_sum_distinct,
 		     std::vector<GExpr>& symbolic_sum_no_distinct) {
-  for (size_t i = base_of_exps.size(); i-- > 0; ) {
+  for (unsigned i = base_of_exps.size(); i-- > 0; ) {
     bool distinct = true;
-    for (size_t j = roots.size(); j-- > 0; ) {
+    for (unsigned j = roots.size(); j-- > 0; ) {
       if (roots[j].value().is_equal(base_of_exps[i]))
 	distinct = false;
 
@@ -226,7 +226,9 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
 			      const std::vector<GNumber>& coefficients,
 			      const std::vector<Polynomial_Root>& roots);
 
-
+static bool
+verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
+		const GSymbol& n);
 
 /*!
 ...
@@ -251,9 +253,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   GList occurrences;
   bool finished = true;
   if (e.find(x_i, occurrences)) {
-    int occurrences_nops = occurrences.nops();
+    unsigned occurrences_nops = occurrences.nops();
     if (occurrences_nops != 0)
-      for (int i = 0; i < occurrences_nops; ++i) {
+      for (unsigned i = 0; i < occurrences_nops; ++i) {
 	GExpr argument = occurrences.op(i).subs(x(wild(0)) == wild(0));
 	if (argument.has(n)) {
 	  finished = false;
@@ -474,7 +476,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 
 	solution = simplify_on_output_ex(solution.expand(), n, false);
 
-	//int r = verify_solution(solution, order, e,coefficients);
+	if (!verify_solution(solution, order, rhs, n))
+	  D_MSG("ATTENTION: the following solution can be wrong\n"
+		"or not enough simplified.");
       }
       else 
 	throw ("PURRS error: today we only allow inhomogeneous terms\n"
@@ -494,7 +498,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	  GExpr root_1 = roots[0].value();
 	  GExpr root_2 = roots[1].value();
 	  GExpr diff_roots = root_1 - root_2;
-	  for (size_t j = symbolic_sum_distinct.size(); j-- > 0; ) {
+	  for (unsigned j = symbolic_sum_distinct.size(); j-- > 0; ) {
 	    symbolic_sum_no_distinct[j] *= lambda / diff_roots;
 	    symbolic_sum_distinct[j] *= lambda / diff_roots;
 	  }
@@ -517,6 +521,11 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	  D_MSGVAR("Before calling simplify: ", solution);
 
 	  solution = simplify_on_output_ex(solution.expand(), n, false);
+
+	  if (!verify_solution(solution, order, rhs, n))
+	    D_MSG("ATTENTION: the following solution can be wrong\n"
+		  "or not enough simplified.");
+
 	  solution = solution.collect(lst(initial_conditions[0],
 					  initial_conditions[1]));
 	}
@@ -533,6 +542,10 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 						 exp_poly_coeff,
 						 initial_conditions,
 						 num_coefficients, roots);
+
+	if (!verify_solution(solution, order, rhs, n))
+	  D_MSG("ATTENTION: the following solution can be wrong\n"
+		"or not enough simplified.");
       }
       break;
     }
@@ -789,8 +802,8 @@ subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
 			    std::vector<GExpr>& symbolic_sum_no_distinct,
 			    GExpr& solution) {
   solution = 0;
-  for (size_t i = roots.size(); i-- > 0; )
-    for (size_t j = symbolic_sum_distinct.size(); j-- > 0; ) {
+  for (unsigned i = roots.size(); i-- > 0; )
+    for (unsigned j = symbolic_sum_distinct.size(); j-- > 0; ) {
       GExpr base_exp = base_of_exps[j];
       GExpr tmp;
       if (base_exp.is_equal(roots[i].value()))
@@ -820,11 +833,11 @@ add_initial_conditions(GExpr& g_n, const GSymbol& n,
   // 'coefficients.size()' has 'order + 1' elements because in the first
   // position there is the value 0. 
   std::vector<GExpr> g_n_i(coefficients.size() - 1);
-  for (size_t i = g_n_i.size(); i-- > 0; )
+  for (unsigned i = g_n_i.size(); i-- > 0; )
     g_n_i[i] = g_n.subs(n == n - i);
-  for (size_t i = g_n_i.size(); i-- > 0; ) {
+  for (unsigned i = g_n_i.size(); i-- > 0; ) {
     GExpr tmp = initial_conditions[i];
-    for (size_t j = i; j > 0; j--)
+    for (unsigned j = i; j > 0; j--)
       tmp -= coefficients[j]*initial_conditions[i-j];
     solution += tmp * g_n_i[i];
   }
@@ -889,7 +902,7 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
     solution_tot = initial_conditions[1]*g_n_1 + 
                    initial_conditions[0]*g_n_2*coefficients[2];
 
-    for (size_t i = 0; i < num_exponentials; ++i) {
+    for (unsigned i = 0; i < num_exponentials; ++i) {
       GExpr solution = 0;
       GExpr base_of_exp = base_of_exps[i];
       GExpr coeff_of_exp = exp_poly_coeff[i];
@@ -924,16 +937,34 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
   return solution_tot;
 }
 
-/*
-static int
-verify_solution(const GExpr& solution, const int order, const GExpr& e,
-		const std::vector<GNumber>& coefficients) {
-  std::vector<GExpr> terms(order);
-  for (size_t i = 0; i = order; ++i)
-    term[i] = solution.subs(n == n - i - 1);
-  int diff = solution;
-  for (size_t i = terms.size(); i-- > 0; )
-    diff -= coefficients[] 
-  return r;
-}
+/*!
+  Let the right hand side \p rhs of the recurrence relation
+  \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$.
+  Starting from the solution \f$ x(n) \f$ as soon as computed, calculates, 
+  by substitution, \f$ x(n-1), x(n-2), \dotsc, x_{n-k} \f$ which are
+  substituted in \p rhs.
+
+  Considers the difference \p diff from the solution \f$ x(n) \f$ and the
+  new right hand side:
+  - if \p diff is equal to zero     -> returns <CODE>true</CODE>:
+                                       the solution is certainly right.
+  - if \p diff is not equal to zero -> returns <CODE>false</CODE>:   
+                                       the solution can be wrong or it is not
+				       enough simplified.
 */
+static bool
+verify_solution(const GExpr& solution, const int& order, const GExpr& rhs,
+		const GSymbol& n) {
+  std::vector<GExpr> terms_to_sub(order);
+  for (int i = 0; i < order; ++i)
+    terms_to_sub[i] = solution.subs(n == n - i - 1);    
+  GExpr substituted_rhs = simplify_on_input_ex(rhs.expand(), n, true);
+  for (unsigned i = terms_to_sub.size(); i-- > 0; )
+    substituted_rhs = substituted_rhs.subs(x(n - i - 1) == terms_to_sub[i]);
+  GExpr diff = (solution - substituted_rhs).expand();
+
+  if (diff.is_zero())
+    return true;
+  else
+    return false;
+}
