@@ -48,6 +48,7 @@ n	2*x(n/2)+c*n
 n	2*x(n/2)+log(n)
 n	2*x(n/2)+n
 n	2*x(n/2)+n*log(n)
+n	2*x(n/2)+n-1
 n	2*x(n/4)+x(n/2)+n*log(n)
 n	2*x(n/5)+n
 n	2+x(2*n/3)
