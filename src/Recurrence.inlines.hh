@@ -493,6 +493,7 @@ Recurrence::exact_solution(Expr& e) const {
   if (!exact_solution_.has_expression())
     throw std::logic_error("PURRS::Recurrence::exact_solution() called, "
 			   "but no exact solution were computed");
+  exact_solution_.set_expression(exact_solution_.remove_bad_symbols(*this));
   e = exact_solution_.expression();
 }
 
@@ -501,6 +502,7 @@ Recurrence::lower_bound(Expr& e) const {
   if (!lower_bound_.has_expression())
     throw std::logic_error("PURRS::Recurrence::lower_bound() called, "
 			   "but no lower bounds were computed");
+  lower_bound_.set_expression(lower_bound_.remove_bad_symbols(*this));
   e = lower_bound_.expression();
 }
 
@@ -509,6 +511,7 @@ Recurrence::upper_bound(Expr& e) const {
   if (!upper_bound_.has_expression())
     throw std::logic_error("PURRS::Recurrence::upper_bound() called, "
 			   "but no upper bounds were computed");
+  upper_bound_.set_expression(upper_bound_.remove_bad_symbols(*this));
   e = upper_bound_.expression();
 }
 
