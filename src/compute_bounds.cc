@@ -66,9 +66,13 @@ PURRS::Recurrence::approximate_functional_equation() const {
   // Check if the inhomogeneous term `p(n)' is a non-negative,
   // non-decreasing function. For to do this, the parameters are
   // not allowed.
+  Number condition = -1;
   if (has_parameters(inhomogeneous_term)
-      || !is_non_negative_non_decreasing(inhomogeneous_term, n))
+      || !is_non_negative_non_decreasing(inhomogeneous_term, n, condition))
     return TOO_COMPLEX;
+  if (condition > 1)
+    set_applicability_condition(condition.to_unsigned());
+  std::cout << "OK" << std::endl;
   // Compute `sum_{k = 1}^n a^{n-k} p(b^k)'.
   std::vector<Expr> bases_of_exp;
   std::vector<Expr> exp_poly_coeff;

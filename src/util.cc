@@ -369,8 +369,6 @@ ok_argument_factorial(const Expr& argument, const Symbol& n) {
   return false;
 }
 
-} // anonymous namespace
-
 /*!
   Let \f$ e(n) \f$ be the expression in \p n contained in \p e,
   which is assumed to be already expanded and with denominator equal to 1.
@@ -380,8 +378,7 @@ ok_argument_factorial(const Expr& argument, const Symbol& n) {
   then \p z is left unchanged.
 */
 void
-PURRS::largest_positive_int_zero(const Expr& e, Number& z) {
-  assert(denominator(e) == 1);
+largest_positive_int_zero_on_expanded_ex(const Expr& e, Number& z) {
   // FIXME: `if (e.has(Recurrence::n))' is necessary because here there is
   // the method `PURRS::is_polynomial()' and the methods
   // `GiNaC::ldegree()', `GiNaC::tcoeff()' for which for example
@@ -413,22 +410,30 @@ PURRS::largest_positive_int_zero(const Expr& e, Number& z) {
     else {
       if (e.is_a_add() || e.is_a_mul())
 	for (unsigned i = e.nops(); i-- > 0; )
-	  largest_positive_int_zero(e.op(i), z);
+	  largest_positive_int_zero_on_expanded_ex(e.op(i), z);
       else if (e.is_a_function()) {
 	if (e.is_the_log_function())
 	  if (e.arg(0).is_polynomial(Recurrence::n))
-	    largest_positive_int_zero(e.arg(0) - 1, z);
+	    largest_positive_int_zero_on_expanded_ex(e.arg(0) - 1, z);
 	  else if (e.arg(0).is_the_log_function()) {
-	    largest_positive_int_zero(e.arg(0), z);
+	    largest_positive_int_zero_on_expanded_ex(e.arg(0), z);
 	    ++z;
 	  }  
 	  else if (e.is_the_factorial_function())
 	    // If it is in the form `(a n + b)!' with `a' positive integer
 	    // then we find the minimum `n' such that `a n + b >= 0'.
 	    if (ok_argument_factorial(e.arg(0), Recurrence::n))
-	      largest_positive_int_zero(e.arg(0), z);
+	      largest_positive_int_zero_on_expanded_ex(e.arg(0), z);
       }
     }
+}
+
+} // anonymous namespace
+
+void
+PURRS::largest_positive_int_zero(const Expr& e, Number& z) {
+  assert(denominator(e) == 1);
+  largest_positive_int_zero_on_expanded_ex(e.expand(), z);
 }
 
 //! Returns <CODE>true</CODE> if \p e contains parameters;

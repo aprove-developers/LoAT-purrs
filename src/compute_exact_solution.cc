@@ -213,13 +213,13 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
   // that cancel the denominator of the coefficient.
   // If this integer does not exist then `z' is left to 0.
   Number z = 0;
-  largest_positive_int_zero(numerator(coefficient).expand(), z);
-  largest_positive_int_zero(denominator(coefficient).expand(), z);
+  largest_positive_int_zero(numerator(coefficient), z);
+  largest_positive_int_zero(denominator(coefficient), z);
   // Find the largest positive or null integer that cancel the denominator of
   // `inhomogeneous_term' and store it in `z' if it is bigger than the
   // current `z'.
   if (!inhomogeneous_term.is_zero())
-    largest_positive_int_zero(denominator(inhomogeneous_term).expand(), z);
+    largest_positive_int_zero(denominator(inhomogeneous_term), z);
   // The initial conditions will start from `z'.
   set_first_initial_condition(z.to_unsigned());
   Expr alpha_factorial
@@ -607,7 +607,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 	    "the inhomogeneous term.");
       return TOO_COMPLEX;
     }
-    largest_positive_int_zero(denominator(inhomogeneous_term).expand(), z);
+    largest_positive_int_zero(denominator(inhomogeneous_term), z);
   }
   // The initial conditions will start from `z'.
   set_first_initial_condition(z.to_unsigned());

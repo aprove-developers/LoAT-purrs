@@ -44,21 +44,24 @@ namespace {
 using namespace PURRS;
 
 //! \brief;
-//! Returns <CODE>true</CODE> if \p e, valuated in \f$ 1 \f$, is a
+//! Returns <CODE>true</CODE> if \p e, valuated in \f$ i \f$, is a
 //! non-negative number; returns <CODE>false</CODE> otherwise.
 bool
-is_non_negative_in_one(const Expr& e, const Symbol& x) {
-  Number i = -1;
-  largest_positive_int_zero(numerator(e).expand(), i);
-  largest_positive_int_zero(denominator(e).expand(), i);
+is_non_negative(const Expr& e, const Symbol& x, Number& i) {
+  largest_positive_int_zero(numerator(e), i);
+  largest_positive_int_zero(denominator(e), i);
   D_VAR(i);
   if (i == -1)
     ++i;
   Number num;
-  if (numerator(e).substitute(x, i).is_a_number(num) && !num.is_negative())
+  if (numerator(e).substitute(x, i).is_a_number(num) && !num.is_negative()) {
+    D_MSG("true");
     return true;
-  else
+  }
+  else {
+    D_MSG("false");
     return false;
+  }
 }
 
 //! \brief
@@ -148,7 +151,8 @@ is_non_decreasing_no_poly(const Expr& e, const Symbol& x) {
 //! Returns <CODE>true</CODE> if \p f is a non-negative, non-decreasing
 //! function in \p x; returns <CODE>false</CODE> otherwise.
 bool
-PURRS::is_non_negative_non_decreasing(const Expr& f, const Symbol& x) {
+PURRS::is_non_negative_non_decreasing(const Expr& f, const Symbol& x,
+				      Number& condition) {
   D_VAR(f);
   // We search exponentials in `n' (for this the expression
   // `f' must be expanded).
@@ -179,15 +183,16 @@ PURRS::is_non_negative_non_decreasing(const Expr& f, const Symbol& x) {
     // Second step: checks the polynomial part of the exponential's
     // coefficient.
     if (!exp_poly_coeff[i].is_zero())
-      if (!is_non_negative_in_one(exp_poly_coeff[i], x))
+      if (!is_non_negative(exp_poly_coeff[i], x, condition))
 	if (!is_non_decreasing_poly(exp_poly_coeff[i], x)
 	    && !is_non_negative_non_decreasing
-	    (f.substitute(Recurrence::n, Recurrence::n+1)-f, x))
-	return false;
+	    (f.substitute(Recurrence::n, Recurrence::n+1)-f, x, condition))
+	  return false;
     // Third step: checks the possibly non polynomial part of the
     // exponential's coefficient.
+    D_MSG("STEP 3");
     if (!exp_no_poly_coeff[i].is_zero())
-      if (!is_non_negative_in_one(exp_no_poly_coeff[i], x)
+      if (!is_non_negative(exp_no_poly_coeff[i], x, condition)
 	  || !is_non_decreasing_no_poly(exp_no_poly_coeff[i], x))
 	return false;
   }
