@@ -721,6 +721,7 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   std::vector<Expr> base_of_exps;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
+  D_MSGVAR("Inhomogeneous term2: ", e);
   exp_poly_decomposition(e, n,
 			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
   D_VEC(base_of_exps, 0, base_of_exps.size()-1);
@@ -1704,26 +1705,31 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
   return solution;
 }
 
-static Number
-domain_recurrence(const Symbol& n, const Expr& e) {
-  Number i_c = 0;
+static bool
+domain_recurrence(const Symbol& n, const Expr& e, Number& i_c) {
+  bool shift_initial_conditions = false;
   Expr denominator = (e.denominator()).expand();
+  i_c = 0;
   if (denominator != 1) {
     std::vector<Number> potential_roots;
-    Number constant_term = abs(denominator.tcoeff(n).ex_to_number());
-    while (constant_term == 0) {
+    unsigned lower_degree = denominator.ldegree(n);
+    while (lower_degree > 0) {
       denominator = quo(denominator, n, n);
-      constant_term = abs(denominator.tcoeff(n).ex_to_number());
+      lower_degree = denominator.ldegree(n);
+      shift_initial_conditions = true;
     }
-    find_divisors(constant_term, potential_roots);
+    find_divisors(abs(denominator.tcoeff(n).ex_to_number()), potential_roots);
     // Find non-negative integral roots of the denominator.
     for(unsigned i = potential_roots.size(); i-- > 0; ) {
       Number temp = denominator.subs(n, potential_roots[i]).ex_to_number();
-      if (temp == 0 &&  potential_roots[i] > i_c)
+      if (temp == 0 &&  potential_roots[i] > i_c) {
 	i_c = potential_roots[i];
+	shift_initial_conditions = true;
+      }
     }
   }
-  return i_c;
+  D_VAR(i_c);
+  return shift_initial_conditions;
 }
 
 //! \brief
@@ -1740,7 +1746,6 @@ alpha_factorial_if_add(const Expr& alpha, const Symbol& n,
     Expr tmp = get_binding(substitution, 0);
     if (tmp.is_a_number()) {
       Number num = tmp.ex_to_number();
-      D_VAR(num);
       if (num.is_positive_integer()) {
 	alpha_factorial = factorial(alpha) / factorial(num);
 	alpha_factorial_computed = true;
@@ -1953,16 +1958,20 @@ compute_alpha_factorial(const Expr& alpha, const Symbol& n,
 static Expr
 solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
 			     const Expr& coefficient) {
+  Expr tmp;
+  if (p_n == 0)
+    tmp = coefficient;
+  else
+    tmp = p_n * coefficient;
   // `i_c' is the positive integer, if exists, that cancels the common
   // denominator of the recurrence; 0 otherwise.
   Number i_c;
-  if (p_n == 0)
-    i_c = domain_recurrence(n, coefficient);
+  bool shift_initial_conditions = domain_recurrence(n, tmp, i_c);
+  Expr alpha_factorial;
+  if (shift_initial_conditions)
+    alpha_factorial = compute_alpha_factorial(coefficient, n, i_c + 2, n);
   else
-    i_c = domain_recurrence(n, (p_n * coefficient));
-  D_VAR(i_c);
-  // Compute `\alpha!(n)' when possible.
-  Expr alpha_factorial = compute_alpha_factorial(coefficient, n, i_c + 2, n);
+    alpha_factorial = compute_alpha_factorial(coefficient, n, 1, n);
   D_VAR(alpha_factorial);
   // Compute the non-homogeneous term for the recurrence
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
@@ -1992,10 +2001,15 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
       // FIXME: the summand is not hypergeometric:
       // no chance of using Gosper's algorithm.
     }
-    for (Number i = 1; i <= i_c + 1; ++i)
+    // To do this cycle or to consider `c_i + 2' as the lower limit of
+    // the sum is the same thing,  but so is better for the output.
+    Number j = 1;
+    if (shift_initial_conditions)
+      j = i_c + 2;
+    for (Number i = 1; i < j; ++i)
       solution -= t_n.subs(n, i);
   }
-  if ((p_n.denominator() * coefficient.denominator()).has(n))
+  if (shift_initial_conditions)
     solution += x(i_c + 1);
   else
     solution += x(i_c);
