@@ -80,7 +80,6 @@ approximate(const GNumber& n) {
 		     approximate_rational(imag(n)));
 }
 
-#if 0
 CInterval
 approximate(const GExpr& e) {
   CInterval r;
@@ -96,6 +95,7 @@ approximate(const GExpr& e) {
     for (unsigned i = 0, n = e.nops(); i < n; ++i)
       r *= approximate(e.op(i));
   }
+#if 0
   else if (is_exactly_a<power>(e)) {
     static GExpr one_half = GNumber(1)/2;
     const GExpr& base = e.op(0);
@@ -122,6 +122,7 @@ approximate(const GExpr& e) {
     else
       abort();
   }
+#endif
   else if (is_exactly_a<constant>(e)) {
     if (e == Pi)
       return CInterval(Interval(PI_lower_bound.d, PI_upper_bound.d), 0);
@@ -135,4 +136,3 @@ approximate(const GExpr& e) {
 
   return r;
 }
-#endif
