@@ -82,7 +82,8 @@ int main() try {
     l = Expr_List(n, a, b, c, d);
     Expr u_b = Expr(s,l);
 
-    gosper(t, n, l_b, u_b, solution);
+    Expr r_n = 0;
+    gosper(t_n, r_n, n, l_b, u_b, solution);
 #if NOISY
     std::cout << endl << "The sum is: " << solution << std::endl;
     cout << endl << "---------------------------------------------" << endl;
