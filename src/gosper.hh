@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Expr.types.hh"
 #include "Symbol.types.hh"
+#include "Number.types.hh"
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -34,7 +35,7 @@ namespace Parma_Recurrence_Relation_Solver {
 //! M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
 bool
 gosper(const Expr& t, const Symbol& n,
-       const int lower_bound, const Expr& upper_bound, Expr& solution);
+       const Number& lower_bound, const Expr& upper_bound, Expr& solution);
 
 } // namespace Parma_Recurrence_Relation_Solver
 

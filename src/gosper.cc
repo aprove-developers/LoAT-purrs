@@ -302,7 +302,7 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
 static Expr
 gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
 		 const Expr& x_n, const Symbol& n,
-		 const int lower_bound, const Expr& upper_bound,
+		 const Number& lower_bound, const Expr& upper_bound,
 		 Expr solution) {
   Expr shift_b = b_n.subs(n, n-1);
   Expr z_n = shift_b * x_n * t * Parma_Recurrence_Relation_Solver::power(c_n, -1);
@@ -353,7 +353,7 @@ gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
 // FIXME: We have to decide the notation for the sum if returns false 
 bool
 gosper(const Expr& t, const Symbol& n,
-       const int lower_bound, const Expr& upper_bound, Expr& solution) {
+       const Number& lower_bound, const Expr& upper_bound, Expr& solution) {
   Expr r_n;
   if (!gosper_step_one(t, n, r_n))
     // `t' is not hypergeometric: no chance of using Gosper's algorithm.

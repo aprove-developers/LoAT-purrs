@@ -989,7 +989,7 @@ gosper(const int order, const Symbol& n,
       Expr t = Parma_Recurrence_Relation_Solver::power(base_of_exps[i], n) * exp_no_poly_coeff[i]
 	* Parma_Recurrence_Relation_Solver::power(roots[0].value(), -n);
       //std::cout << "t(n) = " << t << std::endl;
-      if (!gosper(t, n, order, n, tmp))
+      if (!gosper(t, n, Number(order), n, tmp))
 	return false;
     }
     solution += tmp;
