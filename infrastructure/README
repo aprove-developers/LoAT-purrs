@@ -190,7 +190,7 @@ Configuring and building (and optionally check the build):
   make check
 
 NOTE: if you want to build with support for exception handling
-      (not required now) chnage the above configure command with:
+      (not required now) change the above configure command with:
 CPPFLAGS=-fexceptions ../gmp-4.1.2/configure --prefix=/usr/local --enable-cxx
 
 Installing (as root):
