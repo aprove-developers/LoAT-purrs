@@ -316,8 +316,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     // For the moment the coefficients of recurrence relation
     // must be constants, i. e., it does not contains the variable n.
     if (a.has(n))
-      throw ("PURRS error: for the moment we only solve recurrence "
-	     "relations with constant coefficients. ");
+      throw ("PURRS error: today we only solve recurrence "
+	     "relations with constant coefficients.\n"
+             "Please come back tomorrow.");
     GExpr coefficient = a;
 
     // FIXME: turn this assertion into something more appropriate.
@@ -397,9 +398,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       if (is_a<numeric>(coefficients[i]))
 	num_coefficients[i] = GiNaC::ex_to<GiNaC::numeric>(coefficients[i]);
       else
-	throw("PURRS error: the second order recurrence relations does not "
-	      "support the case of the coefficients with "
-	      "parameters. ");
+	throw("PURRS error: today the second order recurrence relations\n"
+	      "does not support parametric coefficients\n."
+	      "Please come back tomorrow.");
     characteristic_eq = build_characteristic_equation(order, y,
 						      num_coefficients);
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
@@ -454,10 +455,10 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	//int r = verify_solution(solution, order, e,coefficients);
       }
       else 
-	throw ("PURRS error: for the moment the recurrence "
-	       "relation is solved only when the inhomogeneous term "
-	       "is polynomials or product of exponentials times "
-	       "polynomials.");
+	throw ("PURRS error: today we only allow inhomogeneous terms\n"
+	       "in the form of polynomials or product of exponentials\n"
+	       "and polynomials.\n"
+	       "Please come back tomorrow.");
       break;
     }
   case 2:
@@ -498,10 +499,10 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 					  initial_conditions[1]));
 	}
 	else 
-	  throw ("PURRS error: for the moment the recurrence "
-		 "relation is only solved when the inhomogeneous term "
-		 "is polynomials or product of exponentials times "
-		 "polynomials."); 
+	  throw ("PURRS error: today we only allow inhomogeneous terms\n"
+		 "in the form of polynomials or product of exponentials\n"
+		 "and polynomials.\n"
+		 "Please come back tomorrow.");
       else {
 	// The characteristic equation
 	// x^2 + a_1 * x + a_2 = 0 has a double root.
