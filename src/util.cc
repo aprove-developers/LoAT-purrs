@@ -65,9 +65,9 @@ clear(GList& l) {
 }
 
 /*!
-  We assume that \p substitution has been produced by GiNaC::match()
-  and that the binding for the wildcard of index \p wild_index
-  is in the position \p wild_index of \p substitution.
+  We assume that \p substitution has been produced by
+  <CODE>GiNaC::match()</CODE> and that the binding for the wildcard of
+  index \p wild_index is in the position \p wild_index of \p substitution.
 */
 GExpr
 get_binding(const GList& substitution, unsigned wild_index) {
@@ -79,7 +79,7 @@ get_binding(const GList& substitution, unsigned wild_index) {
 
 /*!
   Return <CODE>true</CODE> if the <CODE>GiNaC::GExpr</CODE> \p p is an
-  object <CODE>scalar_for_poly_in_var</CODE>, <CODE>false</CODE> otherwise.
+  object <EM>scalar_for_poly_in_var</EM>, <CODE>false</CODE> otherwise.
 */
 static bool
 is_scalar_for_poly(const GExpr& e, const GSymbol& var) {
@@ -109,7 +109,7 @@ is_scalar_for_poly(const GExpr& e, const GSymbol& var) {
 
 /*!
   Return <CODE>true</CODE> if the <CODE>GiNaC::GExpr</CODE> \p p is an
-  object <CODE>polynomial_in_var</CODE>, <CODE>false</CODE> otherwise.
+  object <EM>polynomial_in_var</EM>, <CODE>false</CODE> otherwise.
 */
 static bool
 is_polynomial(const GExpr& e, const GSymbol& var) {
@@ -152,35 +152,35 @@ is_polynomial(const GExpr& e, const GSymbol& var) {
   also for non polynomial part).
   Step 1
   We consider the variable \p var.
-  Definition the object <CODE>scalar_for_poly_in_var</CODE> in inductive way:
+  Definition the object <EM>scalar_for_poly_in_var</EM> in inductive way:
   - every <CODE>GiNaC::numeric</CODE> is a
-    <CODE>scalar_for_poly_in_var</CODE>;
+    <EM>scalar_for_poly_in_var</EM>;
   - every <CODE>GiNaC::constant</CODE> is a
-    <CODE>scalar_for_poly_in_var</CODE>;
+    <EM>scalar_for_poly_in_var</EM>;
   - every <CODE>GiNaC::symbol</CODE> different from \p var is a
-    <CODE>scalar_for_poly_in_var</CODE>;
+    <EM>scalar_for_poly_in_var</EM>;
   - given \f$ e \f$ a <CODE>GiNaC::power</CODE>, if \f$ e.op(0) \f$ and
-    \f$ e.op(1) \f$ are <CODE>scalar_for_poly_in_var</CODE>
-    then \f$ e \f$ is a <CODE>scalar_for_poly_in_var</CODE>;
+    \f$ e.op(1) \f$ are <EM>scalar_for_poly_in_var</EM>
+    then \f$ e \f$ is a <EM>scalar_for_poly_in_var</EM>;
   - given \f$ f \f$ a <CODE>GiNaC::function</CODE>,
-    if \f$ f.op(0) \f$ is <CODE>scalar_for_poly_in_var</CODE>
-    then \f$ f \f$ is a <CODE>scalar_for_poly_in_var</CODE>;
+    if \f$ f.op(0) \f$ is <EM>scalar_for_poly_in_var</EM>
+    then \f$ f \f$ is a <EM>scalar_for_poly_in_var</EM>;
   - given the binary operations sum (\f$ + \f$) and multiplication (\f$ * \f$),
-    if \f$ a \f$ and \f$ b \f$ are <CODE>scalar_for_poly_in_var</CODE> then
-    \f$ a + b \f$ and \f$ a * b \f$ are <CODE>scalar_for_poly_in_var</CODE>.
+    if \f$ a \f$ and \f$ b \f$ are <EM>scalar_for_poly_in_var</EM> then
+    \f$ a + b \f$ and \f$ a * b \f$ are <EM>scalar_for_poly_in_var</EM>.
   Step 2
-  Definition of <CODE>polynomial_in_var</CODE> in inductive way
-  - every <CODE>scalar_for_poly_in_var</CODE> is a
-    <CODE>polynomial_in_var</CODE>;
-  - \p var is a <CODE>polynomial_in_var</CODE>;
+  Definition of <EM>polynomial_in_var</EM> in inductive way
+  - every <EM>scalar_for_poly_in_var</EM> is a
+    <EM>polynomial_in_var</EM>;
+  - \p var is a <EM>polynomial_in_var</EM>;
   - given \f$ e \f$ a <CODE>GiNaC::power</CODE>,
-    if \f$ e.op(0) \f$ is <CODE>polynomial_in_var</CODE> and
+    if \f$ e.op(0) \f$ is <EM>polynomial_in_var</EM> and
     \f$ e.op(1) \f$ is <CODE>GiNaC::numeric</CODE> such that
     <CODE>e.op(1).GiNaC::is_pos_integer()</CODE>
-    then \f$ e \f$ is a <CODE>valid_base</CODE>;
+    then \f$ e \f$ is a <EM>polynomial_in_var</EM>;
   - given the binary operations sum (\f$ + \f$) and multiplication (\f$ * \f$),
-    if \f$ a \f$ and \f$ b \f$ are <CODE>polynomial_in_var</CODE> then
-    \f$ a + b \f$ and \f$ a * b \f$ are <CODE>polynomial_in_var</CODE>.
+    if \f$ a \f$ and \f$ b \f$ are <EM>polynomial_in_var</EM> then
+    \f$ a + b \f$ and \f$ a * b \f$ are <EM>polynomial_in_var</EM>.
 */
 void
 assign_polynomial_part(const GExpr& p, const GSymbol& var,
