@@ -27,15 +27,13 @@ TESTS =
 
 BUGS =
 
-noinst_PROGRAMS = simplify_driver
-
-simplify_driver_SOURCES = simplify_driver.cc
-
-check_PROGRAMS = eqs_driver rrs_driver $(TESTS) $(BUGS)
+noinst_PROGRAMS = eqs_driver rrs_driver simplify_driver
 
 eqs_driver_SOURCES = eqs_driver.cc
 rrs_driver_SOURCES = rrs_driver.cc
+simplify_driver_SOURCES = simplify_driver.cc
 
+check_PROGRAMS = $(TESTS) $(BUGS)
 
 check-local: eqs_driver polynomials rrs_driver recurrences
 	./eqs_driver <$(srcdir)/polynomials
