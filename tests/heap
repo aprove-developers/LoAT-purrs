@@ -248,12 +248,14 @@ ul	3*x(n/3)+n*log(n)
 ul	3*x(n/4)+n*log(n)
 ul	4*x(n/2)+(n^2)*n
 ul	4*x(n/2)+(n^2)*n^(1/2)
+ul	4*x(n/2)+(n^2)*n^(1/2)*5
 ul	4*x(n/2)+(n^2)*sqrt(n)
 ul	4*x(n/2)+n^2
 ul	4*x(n/4)+n^(1/2)
 ul	4+x(n/2)+n^3
 ul	5*x(n/2)+2^n
 ul	5*x(n/4)+n*log(log(n))
+ul      8*x(n/2)+n*log(n)
 ul	9*x(n/3)+n^2
 ul	log(n)+2*x(n/2)
 ul	n^n+x(n/3)
