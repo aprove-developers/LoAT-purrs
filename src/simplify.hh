@@ -28,9 +28,9 @@ http://www.cs.unipr.it/purrs/ . */
 #include "globals.hh"
 
 GExpr
-simplify_on_input_ex(const GExpr&);
+simplify_on_input_ex(const GExpr& e, const GSymbol& n);
 
 GExpr
-simplify_on_output_ex(const GExpr& e);
+simplify_on_output_ex(const GExpr& e, const GSymbol& n);
 
 #endif

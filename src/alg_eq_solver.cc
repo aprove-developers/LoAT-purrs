@@ -415,11 +415,12 @@ find_roots(const GExpr& p, const GSymbol& x,
 static void
 solve_equation_2(const GExpr& b, const GExpr& c,
 		 GExpr& x1, GExpr& x2) {
+  GSymbol n("n");
   GExpr sqrt_d = sqrt(b*b - 4*c);
 #if NOISY
   std::cout << "sqrt_d before = " << sqrt_d << std::endl;
 #endif
-  sqrt_d = simplify_on_output_ex(sqrt_d);
+  sqrt_d = simplify_on_output_ex(sqrt_d, n);
 #if NOISY
   std::cout << "sqrt_d = " << sqrt_d << std::endl;
 #endif
@@ -441,6 +442,7 @@ cubic_root(const GExpr& e) {
 bool
 solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
 		 GExpr& x1, GExpr& x2, GExpr& x3) {
+  GSymbol n("n");
   GExpr Q = (3*a2 - pow(a1, 2)) / 9;
   GExpr R = (9*a1*a2 - 27*a3 -2*pow(a1, 3)) / 54;
   GExpr d = pow(Q, 3) + pow(R, 2);
@@ -487,8 +489,8 @@ solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
     std::cout << "S before= " << S << std::endl; 
     std::cout << "T before= " << T << std::endl;
 #endif
-    S = simplify_on_output_ex(S);
-    T = simplify_on_output_ex(T);
+    S = simplify_on_output_ex(S, n);
+    T = simplify_on_output_ex(T, n);
 #if NOISY
     std::cout << "S = " << S << std::endl; 
     std::cout << "T = " << T << std::endl;
@@ -510,6 +512,7 @@ void
 solve_equation_4(const GNumber& a1, const GNumber& a2,
 		 const GNumber& a3, const GNumber& a4,
 		 GExpr& x1, GExpr& x2, GExpr& x3, GExpr& x4) {
+  GSymbol n("n");
   GExpr y1;
   GExpr y2;
   GExpr y3;
@@ -549,8 +552,8 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   std::cout << "p before = " << p << std::endl; 
   std::cout << "q before = " << q << std::endl;
 #endif
-  p = simplify_on_output_ex(p);
-  q = simplify_on_output_ex(q);
+  p = simplify_on_output_ex(p, n);
+  q = simplify_on_output_ex(q, n);
 #if NOISY
   std::cout << "p = " << p << std::endl; 
   std::cout << "q = " << q << std::endl;
@@ -559,7 +562,7 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
 #if NOISY
   std::cout << "r before = " << r << std::endl; 
 #endif
-  r = simplify_on_output_ex(r);
+  r = simplify_on_output_ex(r, n);
   GExpr s = numeric(a1)/4;
 #if NOISY
   std::cout << "r = " << r << std::endl; 
@@ -577,10 +580,10 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
    std::cout << "x4 = " << x4 << std::endl;
    std::cout << std::endl;
 #endif
-   x1 = simplify_on_output_ex(x1);
-   x2 = simplify_on_output_ex(x2);
-   x3 = simplify_on_output_ex(x3);
-   x4 = simplify_on_output_ex(x4);
+   x1 = simplify_on_output_ex(x1, n);
+   x2 = simplify_on_output_ex(x2, n);
+   x3 = simplify_on_output_ex(x3, n);
+   x4 = simplify_on_output_ex(x4, n);
 }
 
 // The old method used to solve equation of degree 4 was wrong, as you

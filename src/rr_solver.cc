@@ -174,7 +174,7 @@ compute_symbolic_sum(const int order, const GSymbol& n,
 	  symbolic_sum_distinct[i].subs(x == alpha/lambda);
 	symbolic_sum_distinct[i] *= pow(lambda, n);
 	symbolic_sum_distinct[i] =
-	  simplify_on_output_ex(symbolic_sum_distinct[i].expand());
+	  simplify_on_output_ex(symbolic_sum_distinct[i].expand(), n);
       }
       // The root is equal to the exponential's base.
       else {
@@ -187,7 +187,7 @@ compute_symbolic_sum(const int order, const GSymbol& n,
 	  symbolic_sum_no_distinct[i] -= q_k.subs(k == j) * pow(lambda, -1);
 	symbolic_sum_no_distinct[i] *= pow(lambda, n);
 	symbolic_sum_no_distinct[i] =
-	  simplify_on_output_ex(symbolic_sum_no_distinct[i].expand());
+	  simplify_on_output_ex(symbolic_sum_no_distinct[i].expand(), n);
       }
     }
   }
@@ -350,7 +350,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 #endif
 
   // Simplifies expressions, in particular rewrites nested powers.
-  e = simplify_on_input_ex(e);
+  e = simplify_on_input_ex(e, n);
 
   // 'decomposition' is a matrix with three rows and a number of columns
   // which is at most the number of exponentials in the inhomogeneous term
@@ -448,7 +448,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	std::cout << "Solutions before calling simplify: " << std::endl;
 	std::cout << solution << std::endl;
 #endif        
-	solution = simplify_on_output_ex(solution.expand());
+	solution = simplify_on_output_ex(solution.expand(), n);
+
+	//int r = verify_solution(solution, order, e,coefficients);
       }
       else 
 	throw ("PURRS error: for the moment the recurrence "
@@ -490,7 +492,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	  std::cout << "Solutions before calling simplify: " << std::endl;
 	  std::cout << solution << std::endl;
 #endif        
-	  solution = simplify_on_output_ex(solution.expand());
+	  solution = simplify_on_output_ex(solution.expand(), n);
 	  solution = solution.collect(lst(initial_conditions[0],
 					  initial_conditions[1]));
 	}
@@ -729,7 +731,6 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
 	
     solution_tot = initial_conditions[1]*g_n_1 + 
                    initial_conditions[0]*g_n_2*coefficients[2];
-    std::cout << "SOL TOT " << solution_tot << std::endl;
 
     for (size_t i = 0; i < num_columns; ++i) {
       GExpr solution = 0;
@@ -770,9 +771,23 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
       solution = solution.expand();
       solution_tot += solution;
     }
-    solution_tot = simplify_on_output_ex(solution_tot.expand());
+    solution_tot = simplify_on_output_ex(solution_tot.expand(), n);
     solution_tot = solution_tot.collect(lst(initial_conditions[0],
 					    initial_conditions[1]));
   }
   return solution_tot;
 }
+
+/*
+static int
+verify_solution(const GExpr& solution, const int order, const GExpr& e,
+		const std::vector<GNumber>& coefficients) {
+  std::vector<GExpr> terms(order);
+  for (size_t i = 0; i = order; ++i)
+    term[i] = solution.subs(n == n - i - 1);
+  int diff = solution;
+  for (size_t i = terms.size(); i-- > 0; )
+    diff -= coefficients[] 
+  return r;
+}
+*/
