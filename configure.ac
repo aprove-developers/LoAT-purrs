@@ -12,7 +12,7 @@
 # Process this file with autoconf to produce a configure script.
 
 # Every other copy of the package version number gets its value from here.
-AC_INIT([the Parma Recurrence Relation Solver], 0.1pre1, purrs-devel@cs.unipr.it, purrs)
+AC_INIT([the Parma Recurrence Relation Solver], 0.0.3pre1, purrs-devel@cs.unipr.it, purrs)
 
 # Minimum autoconf version required.
 AC_PREREQ(2.52g)
