@@ -25,7 +25,9 @@ http://www.cs.unipr.it/purrs/ . */
 #include <iostream>
 #include <string>
 #include <stdexcept>
+#include <sstream>
 #include <cassert>
+#include <cctype>
 #include <getopt.h>
 
 #include "purrs_install.hh"
@@ -40,20 +42,35 @@ using namespace std;
 using namespace Parma_Recurrence_Relation_Solver;
 
 static struct option long_options[] = {
-  {"help",           no_argument,       0, 'h'},
-  {"interactive",    no_argument,       0, 'i'},
+  {"help",              no_argument,       0, 'h'},
+  {"interactive",       no_argument,       0, 'i'},
+  {"regress-test",      no_argument,       0, 'r'},
+  {"verbose",           no_argument,       0, 'v'},
   {0, 0, 0, 0}
 };
 
-static const char* usage_string
-= "Usage: %s [OPTION]...\n\n"
-"  -h, --help              prints this help text\n"
-"  -i, --interactive       sets interactive mode on\n";
+const char* program_name = 0;
 
-#define OPTION_LETTERS "hi"
+void
+print_usage() {
+  cerr << "Usage: " << program_name << " [OPTION]...\n\n"
+    "  -h, --help              prints this help text\n"
+    "  -i, --interactive       sets interactive mode on\n"
+    "  -r, --regress-test      sets regression-testing mode on"
+    "  -v, --verbose           be verbose"
+       << endl;
+}
+
+#define OPTION_LETTERS "hirv"
 
 // Interactive mode is on when true.
 static bool interactive = false;
+
+// Regression-testing mode is on when true.
+static bool regress_test = false;
+
+// Verbose mode is on when true.
+static bool verbose = false;
 
 static void
 my_exit(int status) {
@@ -78,12 +95,20 @@ process_options(int argc, char* argv[]) {
 
     case '?':
     case 'h':
-      fprintf(stderr, usage_string, argv[0]);
+      print_usage();
       my_exit(0);
       break;
 
     case 'i':
-      interactive = 1;
+      interactive = true;
+      break;
+
+    case 'r':
+      regress_test = true;
+      break;
+
+    case 'v':
+      verbose = true;
       break;
 
     default:
@@ -92,14 +117,84 @@ process_options(int argc, char* argv[]) {
   }
 
   if (optind < argc) {
-    fprintf(stderr, usage_string, argv[0]);
+    print_usage();
     my_exit(1);
   }
 }
 
+static unsigned line_number = 0;
+
+static void
+message(const string& s) {
+  cerr << program_name << ": on line " << line_number << ": " << s << endl;
+}
+
+static void
+error(const string& s) {
+  message(s);
+  my_exit(1);
+}
+
+static bool expect_solved;
+static bool expect_not_solved;
+
+void
+set_expectations(const string& s) {
+  // No expectations by default.
+  expect_solved
+    = expect_not_solved
+    = false;
+
+  const char* p = s.c_str();
+  while (char c = *p++) {
+    if (isspace(c))
+      return;
+    switch (c) {
+    case 'y':
+      expect_solved = true;
+      break;
+    case 'n':
+      expect_not_solved = true;
+      break;
+    case '*':
+      break;
+    default:
+      {
+	ostringstream m;
+	m << "unsupported expectation `" << c << "' in `" << s << "'";
+	error(m.str());
+      }
+    }
+  }
+}
+
+bool
+solve_wrapper(const Expr& rhs, const Symbol& n, Expr& solution) {
+  try {
+    if (solve_try_hard(rhs, n, solution) == OK)
+      return true;
+  }
+  catch (exception& e) {
+    if (verbose) {
+      ostringstream m;
+      m << "std::exception caught: " << e.what();
+      message(m.str());
+    }
+  }
+  catch (const char* s) {
+    if (verbose)
+      message(s);
+  }
+  return false;
+}
+
 int
 main(int argc, char *argv[]) try {
+  program_name = argv[0];
+
   set_handlers();
+
+  //purrs_initialize();
 
   process_options(argc, argv);
 
@@ -125,24 +220,61 @@ main(int argc, char *argv[]) try {
   Symbol d("d");
   Expr_List symbols(n, a, b, c, d);
   Expr rhs;
-  while (input_stream) {
-    string s;
-    getline(input_stream, s);
 
+  while (input_stream) {
+    ++line_number;
+
+    string the_line;
+    getline(input_stream, the_line);
+
+    // We may be at end of file.
     if (!input_stream)
-      return 0;
+      my_exit(0);
 
     // Skip comments.
-    if (s.find("%") == 0)
+    if (the_line.find("%") == 0)
       continue;
 
-    rhs = Expr(s, symbols);
+    istringstream line(the_line);
+    string rhs_string;
 
-    if (interactive)
-      cout << "Trying to solve x(n) = " << rhs << endl;
+    if (regress_test) {
+      // Read the expectations' string and use it.
+      string expectations;
+      line >> expectations;
+
+      // Skip empty lines.
+      if (!line)
+	continue;
+
+      set_expectations(expectations);
+
+      getline(line, rhs_string);
+      // Premature end of file?
+      if (!line)
+	error("premature end of file after expectations' string");
+    }
+    else
+      getline(line, rhs_string);
+
+    try {
+      rhs = Expr(rhs_string, symbols);
+    }
+    catch (exception& e) {
+      ostringstream m;
+      m << "parse error: " << e.what();
+      message(m.str());
+      continue;
+    }
+
+    if (verbose) {
+      if (!interactive)
+	cerr << line_number << ": ";
+      cout << "trying to solve x(n) = " << rhs << endl;
+    }
 
     Expr solution;
-    if (solve_try_hard(rhs, n, solution) != OK) {
+    if (!solve_wrapper(rhs, n, solution)) {
       if (interactive)
 	cout << "Sorry, this is too difficult." << endl;
     }
@@ -155,13 +287,13 @@ main(int argc, char *argv[]) try {
 	   << endl << endl;
     }
   }
-  return 0;
+  my_exit(0);
 } 
 catch (exception &p) {
   cerr << "std::exception caught: " << p.what() << endl;
-  return 1;
+  my_exit(1);
 }
 catch (const char* s) {
   cerr << s << endl;
-  return 1;
+  my_exit(1);
 }
