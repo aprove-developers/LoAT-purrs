@@ -113,8 +113,8 @@ build_characteristic_equation(const Symbol& x,
   // Build the vector `int_coefficients' with the elements of
   // `coefficients' multiplied by the least common multiple
   // `least_com_mul'.
-  // There is no need to know the `order' because the order of the recurrence relation
-  // is equal to `coefficients.size() - 1'.
+  // There is no need to know the `order' because the order of the
+  // recurrence relation is equal to `coefficients.size() - 1'.
   if (denominators.size() != 0) {
     Number least_com_mul = lcm(denominators);
     std::vector<Number> int_coefficients(coefficients);
@@ -168,10 +168,10 @@ characteristic_equation_and_its_roots(int order,
 	  "greater than one, does not support parametric coefficients.\n"
 	  "Please come back tomorrow.";
     characteristic_eq = build_characteristic_equation(y, num_coefficients);
+    D_VAR(characteristic_eq);
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
       return false;
   }
-  D_VAR(characteristic_eq);
   D_VEC(roots, 0, roots.size()-1);
   D_MSG("");
   return true;
@@ -365,9 +365,6 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n, int order,
 			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots);
 
-static Expr
-solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
-			     const Expr& coefficient);
 
 static Expr
 compute_alpha_factorial(const Expr& alpha, const Symbol& n,
@@ -742,29 +739,31 @@ Recurrence::solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   Expr g_n;
   switch (order) {
   case 1:
-    if (!has_non_constant_coefficients) {
-      Expr characteristic_eq;
-      std::vector<Polynomial_Root> roots;
-      bool all_distinct = true;
-      if (!characteristic_equation_and_its_roots(order, coefficients,
-						 num_coefficients,
-						 characteristic_eq, roots,
-						 all_distinct))
-	return TOO_COMPLEX;
-      Solver_Status status = solve_constant_coeff_order_1(n, base_of_exps,
-							  exp_poly_coeff,
-							  exp_no_poly_coeff,
-							  roots,
-							  initial_conditions,
-							  solution);
+    {
+      Solver_Status status;
+      if (!has_non_constant_coefficients) {
+	Expr characteristic_eq;
+	std::vector<Polynomial_Root> roots;
+	bool all_distinct = true;
+	if (!characteristic_equation_and_its_roots(order, coefficients,
+						   num_coefficients,
+						   characteristic_eq, roots,
+						   all_distinct))
+	  return TOO_COMPLEX;
+	status = solve_constant_coeff_order_1(n, base_of_exps,
+					      exp_poly_coeff,
+					      exp_no_poly_coeff,
+					      roots, initial_conditions,
+					      solution);
+      }
+      else
+	status = solve_variable_coeff_order_1(n, e, coefficients[1], solution);
       if (status != OK) {
 	D_MSG("Summand not hypergeometric: no chance of using Gosper's "
 	      "algorithm");
 	return status;
       }
     }
-    else
-      solution = solve_variable_coeff_order_1(n, e, coefficients[1]);
     break;
 
   case 2:
@@ -796,8 +795,10 @@ Recurrence::solve(const Expr& rhs, const Symbol& n, Expr& solution) {
       if (!characteristic_equation_and_its_roots(order, coefficients,
 						 num_coefficients,
 						 characteristic_eq, roots,
-						 all_distinct))
+						 all_distinct)) {
+	D_MSG("Not found roots");
 	return TOO_COMPLEX;
+      }
       solution = solve_constant_coeff_order_k(n, g_n, order, all_distinct,
 					      base_of_exps, exp_poly_coeff,
 					      exp_no_poly_coeff,
@@ -1041,14 +1042,16 @@ Recurrence::solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
 	}
 	else
 	  status = UNSOLVABLE_RECURRENCE;
+	exit_anyway = true;
       }
-      exit_anyway = true;
       break;
     case NON_LINEAR_RECURRENCE:
-      D_MSG("non linear");
-      // FIXME: can we do something here to try to linearize the recurrence?
-      status = TOO_COMPLEX;
-      exit_anyway = true;
+      {
+	D_MSG("non linear");
+	// FIXME: can we do something here to try to linearize the recurrence?
+	status = TOO_COMPLEX;
+	exit_anyway = true;
+      }
       break;
 
     default:
@@ -1195,7 +1198,6 @@ add_initial_conditions(const Expr& g_n, const Symbol& n,
   }
 }
 
-// FIXME: to rewrite, comment and code.
 /*!
   Applies the Gosper's algorithm to express in closed form, if it is
   possible, sum with the summand an hypergeometric term not polynomials
@@ -1207,52 +1209,64 @@ add_initial_conditions(const Expr& g_n, const Symbol& n,
   Returns <CODE>false</CODE> otherwise.
 */
 static bool
-gosper_algorithm(const Symbol& n, Expr& t_n, Number lower, const Expr& upper,
-		 const std::vector<Expr>& base_of_exps,
-		 const std::vector<Expr>& exp_poly_coeff,
-		 const std::vector<Expr>& exp_no_poly_coeff,
-		 const std::vector<Polynomial_Root>& roots, Expr& solution) {
+compute_sum_with_gosper_algorithm(const Symbol& n,
+				  const Number& lower, const Expr& upper,
+				  const std::vector<Expr>& base_of_exps,
+				  const std::vector<Expr>& exp_no_poly_coeff,
+				  const std::vector<Polynomial_Root>& roots,
+				  Expr& solution) {
   solution = 0;
-  // `t_n' is zero if the caller is `solve_constant_coeff_order_1()':
-  // in this case exponentials and polynomials times exponentials have just
-  // been summed.
-  if (t_n == 0)
-    for (unsigned i = exp_no_poly_coeff.size(); i-- > 0; ) {
-      Expr tmp;
-      if (!exp_no_poly_coeff[i].is_zero()) {
-	// FIXME: for the moment use this function only when the `order' is one,
-	// then `roots' have only one elements.
-	t_n = pwr(base_of_exps[i], n) * exp_no_poly_coeff[i]
-	  * pwr(roots[0].value(), -n);
-	D_VAR(t_n);
-	// FIXME: non c'e' modo di evitare di creare Expr apposta ma passare
-	// direttamente 0 a gosper?
-	Expr r_n = 0;
-	if (!gosper(t_n, r_n, n, lower, upper, tmp))
-	  return false;
-      }
-      solution += tmp;
-    }
-  // `t_n' is different to zero if the caller is `solve_variable_coeff_order_1()':
-  // we use only Gosper independently from the type of the summand.
-  else
-    for (unsigned i = exp_poly_coeff.size(); i-- > 0; ) {
-      Expr tmp;
-      Expr coefficient = 1;
-      if (!exp_poly_coeff[i].is_zero())
-	coefficient *= exp_poly_coeff[i];
-      if (!exp_no_poly_coeff[i].is_zero())
-	coefficient *= exp_no_poly_coeff[i];
-      // If `t_n' is different from zero then we pass to Gosper's
-      // algorithm the ratio `r(n) = t(n+1) / t(n)'.
-      Expr r_n = pwr(base_of_exps[i], n) * coefficient
+  for (unsigned i = exp_no_poly_coeff.size(); i-- > 0; ) {
+    Expr tmp;
+    if (!exp_no_poly_coeff[i].is_zero()) {
+      // FIXME: for the moment use this function only when the `order'
+      // is one, then `roots' has only one elements.
+      Expr t_n = pwr(base_of_exps[i], n) * exp_no_poly_coeff[i]
 	* pwr(roots[0].value(), -n);
       D_VAR(t_n);
-      D_VAR(r_n);
-      if (!gosper(t_n, r_n, n, lower, upper, tmp))
+      if (!full_gosper(t_n, n, lower, upper, tmp))
 	return false;
-      solution += tmp;
     }
+    solution += tmp;
+  }
+  return true;
+}
+
+/*!
+  Applies a partial version of the Gosper's algorithm to express in
+  closed form, if it is possible, sum with the summand an hypergeometric
+  term. 
+  This function returns <CODE>true</CODE> if the summand is an
+  hypergeometric term, independently if it is possible or not to express
+  the sum in closed form.
+  Returns <CODE>false</CODE> otherwise.
+*/
+static bool
+compute_sum_with_gosper_algorithm(const Symbol& n,
+				  const Number& lower, const Expr& upper,
+				  const std::vector<Expr>& base_of_exps,
+				  const std::vector<Expr>& exp_poly_coeff,
+				  const std::vector<Expr>& exp_no_poly_coeff,
+				  const std::vector<Polynomial_Root>& roots,
+				  const Expr& t_n, Expr& solution) {
+  solution = 0;
+  for (unsigned i = exp_poly_coeff.size(); i-- > 0; ) {
+    Expr tmp;
+    Expr coefficient = 1;
+    if (!exp_poly_coeff[i].is_zero())
+      coefficient *= exp_poly_coeff[i];
+    if (!exp_no_poly_coeff[i].is_zero())
+      coefficient *= exp_no_poly_coeff[i];
+    // FIXME: for the moment use this function only when the `order'
+    // is one, then `roots' has only one elements.
+    Expr r_n = pwr(base_of_exps[i], n) * coefficient
+      * pwr(roots[0].value(), -n);
+    D_VAR(t_n);
+    D_VAR(r_n);
+    if (!partial_gosper(t_n, r_n, n, lower, upper, tmp))
+      return false;
+    solution += tmp;
+  }
   return true;
 }
 
@@ -1296,25 +1310,19 @@ solve_constant_coeff_order_1(const Symbol& n,
     // root and of the bases of the eventual exponentials.
     // In `solution' put the sum of all sums of the vectors after the
     // substitution.
-    solution += subs_to_sum_roots_and_bases(alpha, lambda, roots,
-					    base_of_exps,
-					    symbolic_sum_distinct,
-					    symbolic_sum_no_distinct);
+    solution = subs_to_sum_roots_and_bases(alpha, lambda, roots,
+					   base_of_exps,
+					   symbolic_sum_distinct,
+					   symbolic_sum_no_distinct);
   }
   // Computes the sum when `\lambda^{n-k} p(k)' is not a polynomial or
   // a product of a polynomial times an exponential.
   // The summand must be an hypergeometric term.
   if (vector_not_all_zero(exp_no_poly_coeff)) {
     Expr gosper_solution;
-    // The first argument setted to `0' indicates that this is not the
-    // case of variable coefficient or is case of variable coefficient but
-    // homogeneous.
-    // FIXME: non c'e' modo di evitare di creare Expr apposta ma passare
-    // direttamente 0 a gosper?
-    Expr t_n = 0;
-    if (gosper_algorithm(n, t_n, 1, n,
-			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff,
-			 roots, gosper_solution))
+    if (compute_sum_with_gosper_algorithm(n, 1, n,
+					  base_of_exps, exp_no_poly_coeff,
+					  roots, gosper_solution))
       solution += gosper_solution;
     else
       // FIXME: the summand is not hypergeometric:
@@ -1764,8 +1772,9 @@ alpha_factorial_if_add(const Expr& alpha, const Symbol& n,
 	}
 	else
 	  if (is_denominator)
-	    throw std::domain_error("Cannot compute a product at the denominator"
-				    "if one of the factor is zero");
+	    throw std::domain_error("Cannot compute a product at the "
+				    "denominator if one of the factor "
+				    "is zero");
 	    else
 	    {
 	    alpha_factorial = 0;
@@ -1782,7 +1791,8 @@ alpha_factorial_if_add(const Expr& alpha, const Symbol& n,
     // (`a' not rational).
     Expr a = alpha.content(n);
     if (a != 1) {
-      alpha_factorial = compute_alpha_factorial(alpha.primpart(n), n, lower, upper)
+      alpha_factorial = compute_alpha_factorial(alpha.primpart(n), n,
+						lower, upper)
 	* compute_alpha_factorial(a, n, lower, upper);
       alpha_factorial_computed = true;
     }
@@ -1962,9 +1972,10 @@ compute_alpha_factorial(const Expr& alpha, const Symbol& n,
     x_n = y_n \cdot \alpha!(n).
   \f]
 */
-static Expr
+Recurrence::Solver_Status
+Recurrence::
 solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
-			     const Expr& coefficient) {
+			     const Expr& coefficient, Expr& solution) {
   Expr tmp;
   if (p_n == 0)
     tmp = coefficient;
@@ -1986,7 +1997,6 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
   // `r(n) = \frac{t(n+1)}{t(n)}
   //       = \frac{p(n+1)}{\alpha!(n+1)} * \frac{\alpha!(n)}{p(n)}
   //       = \frac{p(n+1)}{p(n) * \alpha(n+1)}'.
-  Expr solution;
   Expr new_p_n;
   if (!p_n.is_zero()) {
     new_p_n = p_n.subs(n, n+1) / (p_n * coefficient.subs(n, n+1));
@@ -2002,12 +2012,12 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
     // FIXME: perche' non posso passare direttamente `p_n/alpha_factorial'
     // a gosper_algorithm senza dovermi definire un'altra Expr?
     Expr t_n = p_n/alpha_factorial;
-    if (!gosper_algorithm(n, t_n, 1, n,
-			  base_of_exps, exp_poly_coeff, exp_no_poly_coeff,
-			  new_roots, solution)) {
+    if (!compute_sum_with_gosper_algorithm(n, 1, n, base_of_exps,
+					   exp_poly_coeff, exp_no_poly_coeff,
+					   new_roots, t_n, solution))
       // FIXME: the summand is not hypergeometric:
       // no chance of using Gosper's algorithm.
-    }
+      return TOO_COMPLEX;
     // To do this cycle or to consider `c_i + 2' as the lower limit of
     // the sum is the same thing,  but so is better for the output.
     Number j = 1;
@@ -2021,7 +2031,7 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
   else
     solution += x(i_c);
   solution *= alpha_factorial;
-  return solution;
+  return OK;
 }
 
 
