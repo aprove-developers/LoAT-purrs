@@ -33,6 +33,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Symbol.defs.hh"
 
 #include <set>
+#include <string>
 #include <ginac/ginac.h>
 
 namespace Parma_Recurrence_Relation_Solver {
@@ -619,6 +620,9 @@ public:
     the behavior is undefined otherwise.
   */
   Functor functor() const;
+
+  //! Returns the functor of the function named \p name.
+  static Functor find_functor(const std::string& name, unsigned num_args = 1);
 
   //! Return the function's name.
   std::string get_function_name() const;
