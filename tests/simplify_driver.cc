@@ -63,7 +63,6 @@ main() try {
 #endif
   istream& input_stream = *pinput_stream;
 
-  Expr e;
   Symbol x("x");
   Symbol n("n");
   Symbol a("a");
@@ -85,18 +84,18 @@ main() try {
     } while (choice < 1 || choice > 3); 
 
     cout << endl << "Insert an expression: ";
-    Expr_List l(x, n, a, b, c, d);
-
     string s;
     do {
       getline(input_stream, s);
-    } while (all_space(s));
+    } while (input_stream && all_space(s));
 
-    
-    if (!input_stream)
-	return 0;
-    
-    e = Expr(s, l);
+    if (!input_stream) {
+      cout << endl;
+      return 0;
+    }
+
+    Expr_List l(x, n, a, b, c, d);
+    Expr e = Expr(s, l);
     // `expand' does the simplification of the rule E6.
     e = e.expand();
 #if NOISY
