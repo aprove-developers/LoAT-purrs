@@ -809,15 +809,9 @@ PURRS::Recurrence::compute_lower_bound() const {
 	   || is_non_linear_finite_order() || is_linear_infinite_order());
 
     if (is_linear_finite_order() || is_linear_infinite_order())
-      if (!tested_exact_solution) {
+      if (!tested_exact_solution)
 	// There is an exact solution.
-	if ((status = compute_exact_solution()) == SUCCESS) {
-	  lower_bound_.set_expression(exact_solution_.expression());
-	  return SUCCESS;
-	}
-	else
-	  return status;
-      }
+	return compute_exact_solution();
       else
 	return TOO_COMPLEX;
     // Functional equation.
@@ -868,12 +862,7 @@ PURRS::Recurrence::compute_upper_bound() const {
     if (is_linear_finite_order() || is_linear_infinite_order())
       if (!tested_exact_solution)
 	// There is an exact solution.
-	if ((status = compute_exact_solution()) == SUCCESS) {
-	  upper_bound_.set_expression(exact_solution_.expression());
-	  return SUCCESS;
-	}
-	else
-	  return status;
+	return compute_exact_solution();
       else
 	return TOO_COMPLEX;
     // Functional equation.
