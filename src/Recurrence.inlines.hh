@@ -452,9 +452,19 @@ Recurrence::definition_Sc() const {
 
 inline void
 Recurrence::set_definition_Sc() const {
-  assert(is_functional_equation());
-  assert(functional_eq_p);
-  functional_eq_p->set_definition_Sc();
+  assert(is_functional_equation()
+	 || (is_non_linear_finite_order()
+	     && associated_linear_rec().is_functional_equation()));
+  if (is_functional_equation()) {
+    assert(functional_eq_p);
+    functional_eq_p->set_definition_Sc();
+  }
+  else {
+    assert(is_non_linear_finite_order()
+	   && associated_linear_rec().is_functional_equation());
+    assert(associated_linear_rec().functional_eq_p);
+    associated_linear_rec().functional_eq_p->set_definition_Sc();
+  }
 }
 
 inline const Recurrence&
