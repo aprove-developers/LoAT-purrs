@@ -254,7 +254,12 @@ PURRS::Recurrence::set_first_valid_index_for_solution() const {
 	|| is_non_linear_finite_order()) {
       index_type order_rec;
       if (is_non_linear_finite_order())
-	order_rec = associated_linear_rec().order();
+	// This is the case of non-linear recurrences of the form
+	// `x(n) = c x(n-1)^a', where `c' and `a' are constants (`a != 1').
+	if (coeff_simple_non_linear_rec() != 0)
+	  order_rec = 1;
+	else
+	  order_rec = associated_linear_rec().order();
       else
 	order_rec = order();
       std::map<index_type, Expr>::const_reverse_iterator i
@@ -936,16 +941,24 @@ compute_solution_non_linear_finite_order_on_i_c(const Expr& solution) const {
 
   if (initial_conditions_.rbegin()->first >= first_valid_index + order_rec) {
     // In the simple case of non-linear recurrence of the form
-    // `x(n) = c x(n-1)^a', where `c' and `a' are constants (`a != 1'),
-    // we know the solution without computing the associated linear
-    // recurrence. For the substitution of initial conditions is
-    // necessary to know the solution of the associated linear
-    // recurrence.
-    if (coeff_simple_non_linear_rec() != 0)
-      associated_linear_rec().compute_exact_solution_finite_order();
+    // `x(n) = c x(n-1)^a', where `c' and `a' are constants (`a != 1').
+    // the solution is `x(n) = c^((1-a^n)/(1-a)) x(0)^(a^n)'.
+    // The solution for the recurrence withe the initial condition
+    // `x(k)=h', `k > first_valid_index + order_rec' is
+    // `x(n) = c^((1-a^(n-k))/(1-a)) h^(a^(n-k))'.
+    if (coeff_simple_non_linear_rec() != 0) {
+      solution_on_i_c
+	= solution_on_i_c.substitute(x(0),
+				     initial_conditions_.rbegin()->second);
+      solution_on_i_c
+	= solution_on_i_c.substitute(n,
+				     n - initial_conditions_.rbegin()->first);
+      D_VAR(solution_on_i_c);
+      return solution_on_i_c;
+    }
+
     Expr solution_of_linear_rec
       = associated_linear_rec().exact_solution_.expression();
-    
     // Substitute possibly symbolic initial conditions occurring in
     // `solution_of_linear_rec' (at most `k', where `k' is the order
     // of the recurrence) with arbitrary symbols, which will be also
