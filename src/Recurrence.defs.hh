@@ -1113,13 +1113,18 @@ private:
   validate_initial_conditions(index_type order,
 			      index_type first_valid_index) const;
 
+  Verify_Status
+  traditional_step_3(index_type order_rec,
+		     const Expr& summands_with_i_c) const;
+
   //! \brief
   //! Apply the method explained in the paper
   //! <EM>Checking and Confining the Solutions of Recurrence Realtions</EM>
   //! in order to validate solution of linear finite order with constant
   // coefficients.
-  bool verify_new_method_const_coeff(index_type order_rec,
-				     const Expr& summands_without_i_c) const;
+  bool verify_new_method_const_coeff(index_type order_rec, const Expr& e,
+				     const std::vector<Polynomial_Root> roots,
+				     bool inhomogeneous_part) const;
 
   //! \brief
   //! Apply the method explained in the paper

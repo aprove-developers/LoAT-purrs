@@ -141,74 +141,101 @@ validate_initial_conditions(index_type order,
   return PROVABLY_CORRECT;
 }
 
+PURRS::Recurrence::Verify_Status
+PURRS::Recurrence::traditional_step_3(index_type order_rec,
+				      const Expr& summands_with_i_c) const {
+  // Step 3: by substitution, verifies that `summands_with_i_c'
+  // satisfies the homogeneous part of the recurrence.
+  // Computes `substituted_homogeneous_rhs' by substituting, in the
+  // hoomogeneous part of the recurrence, `n' by `n - d' (where `d' is
+  // the decrement of the i-th term `a_i(n)*x(n - d)').
+  Expr substituted_homogeneous_rhs = recurrence_rhs - inhomogeneous_term;
+  // Substitutes in the homogeneous part of the recurrence the terms
+  // of the form `x(n-i)'.
+  //for (index_type d = 1; d <= order_rec; d = d + gcd) {
+  for (index_type d = 1; d <= order_rec; ++d) {
+    Expr shifted_solution
+      = simplify_all(summands_with_i_c.substitute(n, n - d));
+    shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
+    substituted_homogeneous_rhs
+      = substituted_homogeneous_rhs.substitute(x(n - d), shifted_solution);
+  }
+  Expr diff = summands_with_i_c - substituted_homogeneous_rhs;
+  // Differently from the step 1 (validation of symbolic initial condition)
+  // the expression `diff' now contains `n' and is more difficult
+  // to simplify it. For this motive we performed simplification also
+  // before to expand blackboard's definitions.
+  diff = blackboard.rewrite(diff);
+  diff = simplify_all(diff);
+  if (!diff.is_zero()) {
+    diff = simplify_all(diff);
+    if (!diff.is_zero())
+      return INCONCLUSIVE_VERIFICATION;
+  }
+  return PROVABLY_CORRECT;
+}
+
 bool
 PURRS::Recurrence::
-verify_new_method_const_coeff(index_type order_rec,
-			      const Expr& summands_without_i_c) const {
-  std::vector<Expr> bases_of_exp;
-  std::vector<Expr> exp_poly_coeff;
-  std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(inhomogeneous_term.expand(), Recurrence::n,
-			 bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
-  
-  assert(bases_of_exp.size() == exp_poly_coeff.size()
-	 && exp_poly_coeff.size() == exp_no_poly_coeff.size()
-	 && exp_no_poly_coeff.size() >= 1);
-  
-  unsigned int num_of_exponentials = bases_of_exp.size();
-  D_VEC(bases_of_exp, 0, num_of_exponentials-1);
-  D_VEC(exp_poly_coeff, 0, num_of_exponentials-1);
-  D_VEC(exp_no_poly_coeff, 0, num_of_exponentials-1);
-  
+verify_new_method_const_coeff(index_type order_rec, const Expr& e,
+			      const std::vector<Polynomial_Root> roots,
+			      bool inhomogeneous_part) const {
   unsigned int max_polynomial_degree = 0;
-  for (unsigned int i = 0; i < num_of_exponentials; ++i) {
-    if (!exp_no_poly_coeff[i].is_zero()) {
-      D_MSGVAR("No poly: ", exp_no_poly_coeff[i]);
-      return false;
-    }
-    max_polynomial_degree = std::max(max_polynomial_degree,
-				     exp_poly_coeff[i].degree(n));
-  }
-  
-  std::vector<Polynomial_Root> roots;
-  std::vector<Number> num_coefficients(order_rec + 1);
-  bool all_distinct = true;
-  // FIXME: this method is applied only on linear finite order
-  // with constant coefficients!
-  if (is_linear_finite_order_const_coeff()) {
-    Expr characteristic_eq;
-    if (!characteristic_equation_and_its_roots(order_rec, coefficients(),
-					       num_coefficients,
-					       characteristic_eq, roots,
-					       all_distinct)) {
-#if 0
-      abort();
-#else
-      //	DD_MSG("OLD");
-      return false;
-#endif
-    }
-  }
-  // Find the maximum degree of a polynomial that may occur in the
-  // solution.
-  for (unsigned int i = 0, nroots = roots.size(); i < nroots; ++i) {
-    max_polynomial_degree += roots[i].multiplicity() - 1;
-    // FIXME: this may be inefficient!
-    for (unsigned int j = 0; j < num_of_exponentials; ++j)
-      if (roots[i].value() == bases_of_exp[j])
-	++max_polynomial_degree;
-  }
+  unsigned int num_of_exponentials = 0;
+  if (inhomogeneous_part) {
+    std::vector<Expr> bases_of_exp;
+    std::vector<Expr> exp_poly_coeff;
+    std::vector<Expr> exp_no_poly_coeff;
+    exp_poly_decomposition(inhomogeneous_term.expand(), Recurrence::n,
+			   bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
+    
+    assert(bases_of_exp.size() == exp_poly_coeff.size()
+	   && exp_poly_coeff.size() == exp_no_poly_coeff.size()
+	   && exp_no_poly_coeff.size() >= 1);
+    
+    num_of_exponentials = bases_of_exp.size();
+    D_VEC(bases_of_exp, 0, num_of_exponentials-1);
+    D_VEC(exp_poly_coeff, 0, num_of_exponentials-1);
+    D_VEC(exp_no_poly_coeff, 0, num_of_exponentials-1);
+    
+    for (unsigned int i = 0; i < num_of_exponentials; ++i) {
+      if (!exp_no_poly_coeff[i].is_zero()) {
+	D_MSGVAR("No poly: ", exp_no_poly_coeff[i]);
+	return false;
+      }
 
+      max_polynomial_degree = std::max(max_polynomial_degree,
+				       exp_poly_coeff[i].degree(n));
+    }
+  
+    // Find the maximum degree of a polynomial that may occur in the
+    // solution.
+    for (unsigned int i = 0, nroots = roots.size(); i < nroots; ++i) {
+      max_polynomial_degree += roots[i].multiplicity() - 1;
+      // FIXME: this may be inefficient!
+      for (unsigned int j = 0; j < num_of_exponentials; ++j)
+	if (roots[i].value() == bases_of_exp[j])
+	  ++max_polynomial_degree;
+    }
+  }
+  else
+    for (unsigned int i = 0, nroots = roots.size(); i < nroots; ++i)
+      if (roots[i].multiplicity() - 1 > max_polynomial_degree)
+	max_polynomial_degree = roots[i].multiplicity() - 1;
+  
   Expr substituted_rhs = recurrence_rhs;
+  if (!inhomogeneous_part)
+    substituted_rhs -= inhomogeneous_term;
+  
   // FIXME: fare i = i-gcd se e' stata applicata la riduzione dell'ordine.
   for (index_type i = order_rec; i-- > 0; ) {
-    const Expr& shifted_solution
-      = summands_without_i_c.substitute(n, n - (i + 1));
+    const Expr& shifted_solution = e.substitute(n, n - (i + 1));
     //shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
     substituted_rhs = substituted_rhs
       .substitute(x(n - (i + 1)), shifted_solution);
   }
-  Expr diff = blackboard.rewrite(summands_without_i_c - substituted_rhs);
+  // FIXME: ritardare la riscrittura.
+  Expr diff = blackboard.rewrite(e - substituted_rhs);
   diff = diff.expand();
   D_VAR(diff);
   // FIXME: if `diff == 0' then the validation is successfully terminated,
@@ -458,7 +485,7 @@ verify_new_method_var_coeff(index_type order_rec,
 	 FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
 
      - A new method explained in the paper
-       "Checking and Confining the Solutions of Recurrence Realtions".
+       "Checking and Confining the Solutions of Recurrence Relations".
        FIXME: to be written
 
    FIXME: In the latter case, we will need more powerful tools to
@@ -524,54 +551,102 @@ PURRS::Recurrence::verify_finite_order() const {
     else
       summands_without_i_c = exact_solution;
 
+  // Step 3.
+  std::vector<Polynomial_Root> roots;
+  if (is_linear_finite_order_const_coeff()) {
+    std::vector<Number> num_coefficients(order_rec + 1);
+    bool all_distinct = true;
+    Expr characteristic_eq;
+    if (!characteristic_equation_and_its_roots(order_rec, coefficients(),
+					       num_coefficients,
+					       characteristic_eq, roots,
+					       all_distinct)) {
+#if 0
+      abort();
+#else
+      Verify_Status verify_status = traditional_step_3(order_rec,
+						       summands_with_i_c);
+      if (verify_status != PROVABLY_CORRECT)
+	return verify_status;
+      goto continue_with_step_4;
+#endif
+    }
+    else {
 #if 1
-  // Step 3: by substitution, verifies that `summands_with_i_c'
-  // satisfies the homogeneous part of the recurrence.
-  // Computes `substituted_homogeneous_rhs' by substituting, in the
-  // hoomogeneous part of the recurrence, `n' by `n - d' (where `d' is
-  // the decrement of the i-th term `a_i(n)*x(n - d)').
-  Expr substituted_homogeneous_rhs = recurrence_rhs - inhomogeneous_term;
-  // Substitutes in the homogeneous part of the recurrence the terms
-  // of the form `x(n-i)'.
-  //for (index_type d = 1; d <= order_rec; d = d + gcd) {
-  for (index_type d = 1; d <= order_rec; ++d) {
-    Expr shifted_solution
-      = simplify_all(summands_with_i_c.substitute(n, n - d));
-    shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
-    substituted_homogeneous_rhs
-      = substituted_homogeneous_rhs.substitute(x(n - d), shifted_solution);
-  }
-  Expr diff = summands_with_i_c - substituted_homogeneous_rhs;
-  // Differently from the step 1 (validation of symbolic initial condition)
-  // the expression `diff' now contains `n' and is more difficult
-  // to simplify it. For this motive we performed simplification also
-  // before to expand blackboard's definitions.
-  diff = blackboard.rewrite(diff);
-  diff = simplify_all(diff);
-  if (!diff.is_zero()) {
-    diff = simplify_all(diff);
-    if (!diff.is_zero())
-      return INCONCLUSIVE_VERIFICATION;
+      // Step 3: new method.
+      // `summands_with_i_c' e' gia' scritto nella forma
+      // `x(n) = x(0)*(...) + x(1)*(...) + ... + x(k)*(...).
+      D_VAR(summands_with_i_c);
+      if (summands_with_i_c.is_a_add()) {
+	for (unsigned int i = summands_with_i_c.nops(); i-- > 0; ) {
+	  const Expr& addend = summands_with_i_c.op(i);
+	  if (addend.is_a_mul()) {
+	    Expr coeff_i_c = 1;
+	    for (unsigned int j = addend.nops(); j-- > 0; ) {
+	      const Expr& factor = addend.op(j);
+	      if (!factor.is_the_x_function())
+		coeff_i_c *= factor;
+	    }
+	    if (verify_new_method_const_coeff(order_rec, coeff_i_c, roots,
+					      false))
+	      goto continue_with_step_4;
+	  }
+	  else
+	    if (!verify_new_method_const_coeff(order_rec, 1, roots,
+					       false))
+	      goto continue_with_step_4;
+	}
+      }
+      else if (summands_with_i_c.is_a_mul()) {
+	Expr coeff_i_c = 1;
+	for (unsigned int j = summands_with_i_c.nops(); j-- > 0; ) {
+	  const Expr& factor = summands_with_i_c.op(j);
+	  if (!factor.is_the_x_function())
+	    coeff_i_c *= factor;
+	}
+	if (!verify_new_method_const_coeff(order_rec, coeff_i_c, roots,
+					   false))
+	  goto continue_with_step_4;
+      }
+      else {
+	// FIXME: chiamare metodo `is_a_symbolic_initial_condition()'.
+	assert(summands_with_i_c.is_the_x_function());
+	if (!verify_new_method_const_coeff(order_rec, 1, roots,
+					   false))
+	  goto continue_with_step_4;
+      }
+    }
   }
 #endif
-  
+   
+  {
+  // Si applica se non e' lineare a coefficienti costanti o se il nuovo
+  // metodo applicato alla parte omogenea e' fallito.
+  Verify_Status verify_status = traditional_step_3(order_rec,
+						   summands_with_i_c);
+  if (verify_status != PROVABLY_CORRECT)
+    return verify_status;
+  }  
+
+ continue_with_step_4:
   // The recurrence is homogeneous.
   if (summands_without_i_c == 0)
     return PROVABLY_CORRECT;
   
 #if 1
   // Step 4: the method of the paper
-  // "Checking and Confining the Solutions of Recurrence Realtions"
+  // "Checking and Confining the Solutions of Recurrence Relations"
   // for linear finite order with constant coefficients.
   // FIXME: is efficient the new method also in the case of order reduction?
   if (is_linear_finite_order_const_coeff()/* && !applied_order_reduction()*/)
-    if (verify_new_method_const_coeff(order_rec, summands_without_i_c))
+    if (verify_new_method_const_coeff(order_rec, summands_without_i_c, roots,
+				      true))
       return PROVABLY_CORRECT;
 #endif
 
 #if 0
   // Step 4: the method of the paper
-  // "Checking and Confining the Solutions of Recurrence Realtions"
+  // "Checking and Confining the Solutions of Recurrence Relations"
   // for linear finite order with variable coefficients.
   if (is_linear_finite_order_var_coeff())
     if (verify_new_method_var_coeff(order_rec, summands_without_i_c))
@@ -592,7 +667,7 @@ PURRS::Recurrence::verify_finite_order() const {
     shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
     substituted_rhs = substituted_rhs.substitute(x(n - d), shifted_solution);
   }
-  /*Expr*/ diff = summands_without_i_c - substituted_rhs;
+  Expr diff = summands_without_i_c - substituted_rhs;
   // Differently from the step 1 (validation of symbolic initial condition)
   // the expression `diff' now contains `n' and is more difficult
   // to simplify it. For this motive we performed simplification also
