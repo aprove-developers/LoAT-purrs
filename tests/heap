@@ -293,3 +293,7 @@ y	x(n-1)+n!
 n	x(n-2)+n!
 y	x(n-1)+n*n!
 n	x(n-1)+(n*n)!
+nU	x(n)
+nU	x(n)-2
+y	x(n)+x(n)
+n	x(n)*x(n)
