@@ -98,9 +98,9 @@ x(n) = 2 x(n-1) - x(n-2) + 2 x(n-3)
 
 % 1. Fibonacci 
 x(n) = x(n-1) + x(n-2)
-% Solution: x(n) = ...
+% Solution: x(n) = (-1/5*(1/2-1/2*sqrt(5))^n*sqrt(5)+1/5*(1/2+1/2*sqrt(5))^n*sqrt(5))*x(1)+(-1/5*(1/2-1/2*sqrt(5))^(-1)*(1/2-1/2*sqrt(5))^n*sqrt(5)+1/5*(1/2+1/2*sqrt(5))^(-1)*(1/2+1/2*sqrt(5))^n*sqrt(5))*x(0)
 
-% 2. Order 3 
+% 2. Order 3, triple root lambda = 2
 x(n) = -6 * x(n-1) - 12 * x(n-2) - 8 * x(n-3)
 % Solution: x(n) = ...
 
@@ -110,19 +110,19 @@ x(n) = -2 * x(n-1) - x(n-2) + 2^n
 
 % 4. Order 2 (actually, order 1 disguised) 
 x(n) = x(n-2) + (n - 2)^2
-% Solution: x(n) = ...
+% Solution: x(n) = numeric(1, 3) * n - numeric(1, 2) * n^2 + numeric(1, 6) * n^3 + numeric(1, 2) * (1 - (-1)^n) * x(1) + numeric(1, 2) * (1 + (-1)^n)*x(0)
 
-% 5. 
-x(n) = 2 * x(n-1) - x(n-2) + 3* n - 1
-% Solution: x(n) = 
+% 5. To be completed 
+x(n) = 2 * x(n-1) - x(n-2) + 3 * n - 1
+% Solution: x(n) = (-x(0) + x(1)) * n + x(0) + numeric(1, 2) * n^3 + n^2 - numeric(3, 2) * n
 
 % 6. Parametric with parameter m
 x(n) = 7 * x(n-1) + 10 * (2^(n-1) * m)^2
-% Solution: x(n) = ...
+% Solution: x(n) = 7^n * x(0) + m^2 * numeric (13, 3) * (7^n - 4^n)
 
 % 7. Parametric with parameters a, b 
 x(n) = (1-a) * x(n-1) + b * (1 - x(n-1))
-% Solution: x(n) = ...
+% Solution: x(n) = pow(1 - a - b, n) * x(0) + pow(a + b, -1) * b * pow(1 - a - b, n) - b * pow(a + b, -1)
 
 % 8. Order 1, variable coefficients 
 x(n) = 3 / n * x(n-1)
@@ -161,7 +161,7 @@ x(n) = x(n-1) + a
 x(n) = a * x(n-1)
 % Solution: x(n) = a^n * x(0)
 
-x(n) = 3 * x(n-1) + 2^n
+x(n) = 3 * x(n-1) + 2
 % Solution: x(n) = 3^n * x(0) + 3^n - 1
 
 x(n) = x(n-1) + n
@@ -189,3 +189,6 @@ x(n) = 2 * x(n-1) + 1
 
 x(n) = x(n-1) + 2^n
 % Solution: x(n) = x(0) + 2^(n+1) - 2
+
+x(n) = 2 * x(n-1) + n
+% Solution: x(n) = 2^n * x(0) + 2 * 2^n - 2 - n
