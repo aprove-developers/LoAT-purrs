@@ -508,6 +508,13 @@ y	7*log(4^n)
 
 %%%%%%%%
 
+y	log(n^2)
+log(n^2)
+log(n^2)
+log(n^2)
+2*log(n)
+
+%%%%%%%%
 y	log(36)
 log(36)
 log(36)
