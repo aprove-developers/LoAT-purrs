@@ -71,19 +71,40 @@ statement
   G_n(n, x_{n-1}, \dots, x_1, x_0).
 \f]
 
+\anchor order
+<B>Order of a recurrence</B>
+
+If there exists a <EM>fixed</EM> positive integer \f$ k \f$ and a function
+\f$ H_n \f$ of arity \f$ k+1 \f$ such that for \f$ n \ge k \f$
+\f[
+  G_n(n, x_{n-1}, \dots, x_1, x_0)
+  =
+  H_n(n, x_{n-1}, \dots, x_{n-k}),
+\f]
+we say that the recurrence in normal form has <EM>order</EM> (at most)
+\f$ k \f$.
+We take the <EM>smallest</EM> possible value of \f$ k \f$ as the order
+of the recurrence.
+If no such \f$ k \f$ exists, then we say that the recurrence has
+<EM>infinite order</EM>.
+
+\anchor initial_conditions
+<B>Initial conditions</B>
+
+The order of a recurrence, if finite, suggests the number of necessary
+<EM>initial conditions</EM> in order to uniquely identify the
+recurrence.
+In the case of infinite order recurrence the number of initial conditions
+depend by the form of the recurrence (see SECTION INFINITE_ORDER_REC).
+We denote with \f$ x(k) \f$, with \f$ k \in \Nset \f$,
+<EM>symbolic initial conditions</EM>, i.e. initial condition not still
+defined by the user.
 
 homogeneous
-
-order
 
 linear
 
 first_valid_index:
 it is the least non-negative integer \f$ j \f$ such that
 the recurrence is well-defined for \f$ n \geq j \f$.
-
-initial conditions (symbolic, user defined)
-
-
-
 */
