@@ -55,9 +55,9 @@ bool less_than(const Recurrence& x, const Recurrence& y);
 
 /*!
   An object of this class abstracts a (possibly infinite) set of
-  sequences of complex numbers.  Formally, an object of class
-  Recurrence is an element of \f$ \wp(\Nset \to \Cset) \f$.  Elements
-  of \f$ \wp(\Nset \to \Cset) \f$ can be specified by imposing a
+  sequences of real numbers.  Formally, an object of class
+  Recurrence is an element of \f$ \wp(\Nset \to \Rset) \f$.  Elements
+  of \f$ \wp(\Nset \to \Rset) \f$ can be specified by imposing a
   recurrence relation (whence the class' name) that the sequences must
   satisy, by imposing some initial conditions for such recurrences,
   and by computing approximations of set union and intersection.
@@ -89,17 +89,6 @@ public:
   //! of the intersection of \p *this and \p y.
   void approximate_intersection_assign(const Recurrence& y);
 
-  //! \brief
-  //! Return <CODE>true</CODE> if it can be proved that all the represented
-  //! sequences are real.
-  /*!
-    Let \f$ S \in \wp(\Nset \to \Cset) \f$ be the set of sequences
-    represented by \p *this.  The value <CODE>true</CODE> is returned
-    if the system can prove that \f$ S \in \wp(\Nset \to \Rset) \f$;
-    <CODE>false</CODE> is returned otherwise.
-  */
-  bool is_real() const;
-  
   //! WRITEME
   void replace_recurrence(const Expr& e);
 
