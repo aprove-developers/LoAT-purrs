@@ -108,12 +108,22 @@ public:
   bool is_a_matrix() const;
   bool is_a_Expr_List() const;
   bool is_a_relational() const;
+  /*
   bool is_exactly_a_number() const;
   bool is_exactly_a_constant() const;
   bool is_exactly_a_add() const;
   bool is_exactly_a_mul() const;
   bool is_exactly_a_power() const;
   bool is_exactly_a_function() const;
+  */
+
+  bool is_the_abs_function() const;
+  bool is_the_exp_function() const;
+  bool is_the_log_function() const;
+  bool is_the_sin_function() const;
+  bool is_the_cos_function() const;
+  bool is_the_tan_function() const;
+  bool is_the_acos_function() const;
 
   // FIXME: const?
   Number ex_to_number() const;
@@ -186,6 +196,8 @@ Expr lcm(const Expr& a, const Expr& b);
 Expr sqrfree(const Expr& e, const Expr_List& lst);
 
 Expr lsolve(const Expr_List& lst1, const Expr_List& lst2);
+
+Expr x(const Expr& e);
 
 } // namespace Parma_Recurrence_Relation_Solver
 

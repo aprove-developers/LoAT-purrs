@@ -27,12 +27,12 @@ typedef Parma_Recurrence_Relation_Solver::Matrix GMatrix;
 typedef Parma_Recurrence_Relation_Solver::Constant constant;
 #endif
 
-GExpr x_eval(const GExpr& e);
-GExpr x_evalf(const GExpr& e);
-GExpr x_deriv(const GExpr&, unsigned int);
-
 namespace GiNaC {
-  DECLARE_FUNCTION_1P(x);
+ex x_eval(const ex& e);
+ex x_evalf(const ex& e);
+ex x_deriv(const ex&, unsigned int);
+
+DECLARE_FUNCTION_1P(x);
 }
 
 #include <Interval.h>

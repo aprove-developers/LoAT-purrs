@@ -60,19 +60,19 @@ approximate(const GNumber& n) {
 CInterval
 approximate(const GExpr& e) {
   CInterval r;
-  if (e.is_exactly_a_number())
+  if (e.is_a_number())
     return approximate(e.ex_to_number());
-  else if (e.is_exactly_a_add()) {
+  else if (e.is_a_add()) {
     r = CInterval(0, 0);
     for (unsigned i = 0, n = e.nops(); i < n; ++i)
       r += approximate(e.op(i));
   }
-  else if (e.is_exactly_a_mul()) {
+  else if (e.is_a_mul()) {
     r = CInterval(1, 0);
     for (unsigned i = 0, n = e.nops(); i < n; ++i)
       r *= approximate(e.op(i));
   }
-  else if (e.is_exactly_a_power()) {
+  else if (e.is_a_power()) {
     static GExpr one_half = GNumber(1)/2;
     const GExpr& base = e.op(0);
     const GExpr& exponent = e.op(1);
@@ -88,30 +88,30 @@ approximate(const GExpr& e) {
     return result;
 #endif
   }
-  else if (e.is_exactly_a_function()) {
+  else if (e.is_a_function()) {
     const GExpr& arg = e.op(0);
     CInterval aarg = approximate(arg);
 #if 0
-    if (is_ex_the_function(e, abs))
+    if (e.is_the_function(abs))
       return abs(aarg);
     else
 #endif
-    if (is_ex_the_function(e, exp))
+    if (e.is_the_exp_function())
       return exp(aarg);
-    else if (is_ex_the_function(e, log))
+    else if (e.is_the_log_function())
       return ln(aarg);
-    else if (is_ex_the_function(e, sin))
+    else if (e.is_the_sin_function())
       return sin(aarg);
-    else if (is_ex_the_function(e, cos))
+    else if (e.is_the_cos_function())
       return cos(aarg);
-    else if (is_ex_the_function(e, tan))
+    else if (e.is_the_tan_function())
       return tan(aarg);
-    else if (is_ex_the_function(e, acos))
+    else if (e.is_the_acos_function())
       return acos(aarg);
     else
       abort();
   }
-  else if (e.is_exactly_a_constant()) {
+  else if (e.is_a_constant()) {
     if (e.is_equal(Pi))
       return CInterval(Interval::PI(), Interval::ZERO());
 #if 0

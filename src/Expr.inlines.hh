@@ -227,37 +227,6 @@ Expr::is_a_relational() const {
   return GiNaC::is_a<GiNaC::relational>(e);
 }
 
-inline bool
-Expr::is_exactly_a_number() const {
-  return GiNaC::is_exactly_a<GiNaC::numeric>(e);
-}
-
-inline bool
-Expr::is_exactly_a_constant() const {
-  return GiNaC::is_exactly_a<GiNaC::constant>(e);
-}
-
-inline bool
-Expr::is_exactly_a_add() const {
-  return GiNaC::is_exactly_a<GiNaC::add>(e);
-}
-
-inline bool
-Expr::is_exactly_a_mul() const {
-  return GiNaC::is_exactly_a<GiNaC::mul>(e);
-}
-
-inline bool
-Expr::is_exactly_a_power() const {
-  return GiNaC::is_exactly_a<GiNaC::power>(e);
-}
-
-inline bool
-Expr::is_exactly_a_function() const {
-  return GiNaC::is_exactly_a<GiNaC::function>(e);
-}
-
-
 inline Number
 Expr::ex_to_number() const {
   assert(GiNaC::is_a<GiNaC::numeric>(e));
