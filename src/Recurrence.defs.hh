@@ -280,6 +280,7 @@ private:
   Solver_Status apply_order_reduction() const;
   Solver_Status compute_non_linear_recurrence(Expr& solution_or_bound,
 					      unsigned type) const;
+  void shift_exact_solution_with_i_c() const;
   Solver_Status classify() const;
   Solver_Status classify_and_catch_special_cases() const;
   Solver_Status classification_summand(const Expr& r, Expr& e,

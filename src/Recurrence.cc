@@ -432,8 +432,6 @@ PURRS::Recurrence::apply_order_reduction() const {
     }
     exact_solution_.set_expression
       (simplify_ex_for_output(exact_solution_.expression(), false));
-    lower_bound_.set_expression(exact_solution_.expression());
-    upper_bound_.set_expression(exact_solution_.expression());
     recurrence_rhs_rewritten = true;
     return SUCCESS;
   }
@@ -531,6 +529,41 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
     return status;
 }
 
+void
+PURRS::Recurrence::shift_exact_solution_with_i_c() const {
+  assert(!initial_conditions.empty());
+  // Consider the maximum index of `x' function in the map
+  // `initial_conditions'.
+  unsigned max_i_c = 0;
+  for (std::map<unsigned, Expr>::const_iterator i = initial_conditions.begin(),
+	 iend = initial_conditions.end(); i != iend; ++i)
+    if (i->first > max_i_c)
+      max_i_c = i->first;
+  D_VAR(max_i_c);
+  D_VAR(first_i_c_for_linear());
+
+  if (first_i_c_for_linear() < max_i_c) {
+    unsigned shift_forward = max_i_c - first_i_c_for_linear();
+    // Shift initial conditions and the index of the recurrence `n'.
+    exact_solution_
+      .set_expression(exact_solution_.expression()
+		      .substitute(n, n - (shift_forward - order() + 1)));
+    for (unsigned i = order(); i-- > 0; )
+      exact_solution_
+	.set_expression(exact_solution_.expression()
+			.substitute(x(i), x(i + shift_forward - order() + 1)));
+  }
+
+  // Substitute initial conditions with the values in the map
+  // `initial_conditions'.
+  for (std::map<unsigned, Expr>::const_iterator i = initial_conditions.begin(),
+	 iend = initial_conditions.end(); i != iend; ++i)
+    exact_solution_
+      .set_expression(exact_solution_.expression()
+		      .substitute(x(i->first),
+				  get_initial_condition(i->first)));
+}
+
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_exact_solution() const {
   D_MSG("compute_exact_solution");
@@ -559,17 +592,24 @@ PURRS::Recurrence::compute_exact_solution() const {
       // FIXME: the order reduction is for the moment applied only to
       // recurrences with constant coefficients because the recurrences
       // with variable coefficients are not allowed with parameters.
-      if (gcd_among_decrements() > 1 && is_linear_finite_order_const_coeff())
-	return apply_order_reduction();
-
-      // We do not have applied the order reduction.
-      if ((status = solve_linear_finite_order()) == SUCCESS) {
-	lower_bound_.set_expression(exact_solution_.expression());
-	upper_bound_.set_expression(exact_solution_.expression());
-	return SUCCESS;
+      if (gcd_among_decrements() > 1 && is_linear_finite_order_const_coeff()) {
+	if ((status = apply_order_reduction()) != SUCCESS)
+	  return status;
       }
+      // We do not have applied the order reduction.
       else
-	return status;
+	if ((status = solve_linear_finite_order()) != SUCCESS)
+	  return status;
+
+      // Check if there are specified initial conditions and in this case
+      // eventually shift the solution in according with them before to
+      // substitute the values of the initial conditions to the
+      // generic `x(i)'.
+      if (!initial_conditions.empty())
+	shift_exact_solution_with_i_c();
+      lower_bound_.set_expression(exact_solution_.expression());
+      upper_bound_.set_expression(exact_solution_.expression());
+      return SUCCESS;
     }
     // Functional equation.
     else if (is_functional_equation())
