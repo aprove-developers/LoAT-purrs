@@ -67,7 +67,7 @@ gosper_step_one(const Expr& t, const Symbol& n, Expr& r_n) {
   r_n.numerator_denominator(r_n_num, r_n_den);
   r_n = r_n_num * Parma_Recurrence_Relation_Solver::power(r_n_den, -1);
 #if NOISY
-  cout << endl << "r_n =  " << r_n << endl;
+  std::cout << std::endl << "r_n =  " << r_n << std::endl;
 #endif
   // FIXME: is_rational_function() is temporary until we build a PURRS
   // function for this.
@@ -75,7 +75,7 @@ gosper_step_one(const Expr& t, const Symbol& n, Expr& r_n) {
     return true;
   else {
 #if NOISY
-    cout << "r_n not rational function" << endl;
+    std::cout << "r_n not rational function" << std::endl;
 #endif
     return false;
   }
@@ -362,7 +362,7 @@ gosper(const Expr& t, const Symbol& n,
   gosper_step_two(r_n, n, a_n, b_n, c_n);
   Expr x_n;
   if (!gosper_step_three(a_n, b_n, c_n, n, x_n))
-    return true;
+    return false;
   solution = gosper_step_four(t, b_n, c_n, x_n, n, lower_bound, upper_bound,
 			      solution);
 #if NOISY
