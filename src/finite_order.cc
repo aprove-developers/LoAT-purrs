@@ -112,13 +112,12 @@ return_sum(bool distinct, const Number& order, const Expr& coeff,
   Expr q_k = coeff.substitute(Recurrence::n, k);
   Expr symbolic_sum;  
   if (distinct)
-    symbolic_sum = sum_poly_times_exponentials(q_k, k, x);
+    symbolic_sum = sum_poly_times_exponentials(q_k, k, Recurrence::n, x);
   else
-    symbolic_sum = sum_poly_times_exponentials(q_k, k, 1);
+    symbolic_sum = sum_poly_times_exponentials(q_k, k, Recurrence::n, 1);
   // `sum_poly_times_exponentials' computes the sum from 0, whereas
   // we want that the sum start from `order'.
-  symbolic_sum -= q_k.substitute(k, 0);
-  for (Number j = 1; j < order; ++j)
+  for (Number j = 0; j < order; ++j)
     symbolic_sum -= q_k.substitute(k, j) * pwr(alpha, j) * pwr(lambda, -j);
   if (distinct)
     symbolic_sum = symbolic_sum.substitute(x, alpha/lambda);
@@ -466,7 +465,7 @@ PURRS::prepare_for_symbolic_sum(const Expr& g_n,
   std::vector<Expr> bases_exp_g_n;
   std::vector<Expr> g_n_poly_coeff;
   std::vector<Expr> g_n_no_poly_coeff;
-  exp_poly_decomposition(g_n, bases_exp_g_n,
+  exp_poly_decomposition(g_n, Recurrence::n, bases_exp_g_n,
 			 g_n_poly_coeff, g_n_no_poly_coeff);
   // `bases_of_exp_g_n' must have same elements of `roots' in the same order.
   bool equal = true;
@@ -507,7 +506,7 @@ PURRS::compute_non_homogeneous_part(const Expr& g_n, unsigned int order,
   std::vector<Expr> bases_exp_g_n;
   std::vector<Expr> g_n_poly_coeff;
   std::vector<Expr> g_n_no_poly_coeff;
-  exp_poly_decomposition(g_n, bases_exp_g_n,
+  exp_poly_decomposition(g_n, Recurrence::n, bases_exp_g_n,
 			 g_n_poly_coeff, g_n_no_poly_coeff);
   for (unsigned i = bases_exp_g_n.size(); i-- > 0; )
     for (unsigned j = base_of_exps.size(); j-- > 0; ) {
@@ -518,11 +517,11 @@ PURRS::compute_non_homogeneous_part(const Expr& g_n, unsigned int order,
       Expr exp_poly_coeff_k = exp_poly_coeff[j].substitute(Recurrence::n, k);
       solution
 	= sum_poly_times_exponentials(g_n_coeff_k * exp_poly_coeff_k, k,
+				      Recurrence::n,
 				      1/bases_exp_g_n[i] * base_of_exps[j]);
       // `sum_poly_times_exponentials' computes the sum from 0, whereas
       // we want that the sum start from `order'.
-      solution -= (g_n_coeff_k * exp_poly_coeff_k).substitute(k, 0);
-      for (unsigned int h = 1; h < order; ++h)
+      for (unsigned int h = 0; h < order; ++h)
 	solution -= (g_n_coeff_k * exp_poly_coeff_k).substitute(k, h)
 	  * pwr(1/bases_exp_g_n[i] * base_of_exps[j], h);
       solution *= pwr(bases_exp_g_n[i], Recurrence::n);
@@ -557,7 +556,7 @@ compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
       Expr t_n = pwr(base_of_exps[i], Recurrence::n) * exp_no_poly_coeff[i]
 	* pwr(roots[0].value(), -Recurrence::n);
       D_VAR(t_n);
-      if (!full_gosper(t_n, lower, upper, gosper_solution))
+      if (!full_gosper(Recurrence::n, t_n, lower, upper, gosper_solution))
 	return false;
     }
     solution += gosper_solution;
@@ -596,7 +595,8 @@ compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
       * pwr(roots[0].value(), -Recurrence::n);
     D_VAR(t_n);
     D_VAR(r_n);
-    if (!partial_gosper(t_n, r_n, lower, upper, gosper_solution))
+    if (!partial_gosper(Recurrence::n, t_n, r_n, lower, upper,
+			gosper_solution))
       return false;
     solution += gosper_solution;
   }

@@ -481,8 +481,8 @@ compute_sum(const Expr& summand,
   else
     tmp = summand.substitute(Recurrence::n,
 			     pwr(divisor, Recurrence::n) - 1);
-  exp_poly_decomposition(tmp, bases_of_exp,
-			 exp_poly_coeff, exp_no_poly_coeff);
+  exp_poly_decomposition(tmp, Recurrence::n,
+			 bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
   D_VAR(tmp);
   D_VEC(bases_of_exp, 0, bases_of_exp.size()-1);
   D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
@@ -496,6 +496,7 @@ compute_sum(const Expr& summand,
       Symbol k("k");
       sum += sum_poly_times_exponentials(exp_poly_coeff[i]
 					 .substitute(Recurrence::n, k), k,
+					 Recurrence::n,
 					 bases_of_exp[i] / coefficient);
       // `sum_poly_times_exponentials' computes the sum from 0, whereas
       // we want that the sum starts from `1' if `for_lower' is true
@@ -509,7 +510,7 @@ compute_sum(const Expr& summand,
     Number index = for_lower ? 1 : 2;
     for (unsigned i = bases_of_exp.size(); i-- > 0; ) {
       Expr gosper_sum;
-      if (!full_gosper(pwr(coefficient, -Recurrence::n) * tmp,
+      if (!full_gosper(Recurrence::n, pwr(coefficient, -Recurrence::n) * tmp,
 		       index, Recurrence::n, gosper_sum))
 	return false;
       else
@@ -631,7 +632,7 @@ PURRS::Recurrence::approximate_functional_equation() const {
       std::vector<Expr> bases_of_exp;
       std::vector<Expr> exp_poly_coeff;
       std::vector<Expr> exp_no_poly_coeff;
-      exp_poly_decomposition(inhomogeneous_term,
+      exp_poly_decomposition(inhomogeneous_term, Recurrence::n,
 			     bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
       D_VEC(bases_of_exp, 0, bases_of_exp.size()-1);
       D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);

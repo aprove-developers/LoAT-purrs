@@ -147,16 +147,16 @@ compute_product_on_power(const Symbol& index, const Number& lower,
     std::vector<Expr> base_of_exps;
     std::vector<Expr> exp_poly_coeff;
     std::vector<Expr> exp_no_poly_coeff;
-    exp_poly_decomposition(exponent_e,
+    exp_poly_decomposition(exponent_e, Recurrence::n,
 			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
     Expr new_exponent = 0;
     // `f(h)' is a polynomial or a product of a polynomial times an
     // exponential.
     if (vector_not_all_zero(exp_poly_coeff)) {
-      Symbol k("k");
       for (unsigned i = base_of_exps.size(); i-- > 0; ) {
+	Symbol k("k");
 	Expr coeff_k = exp_poly_coeff[i].substitute(index, k);
-	new_exponent += sum_poly_times_exponentials(coeff_k, k,
+	new_exponent += sum_poly_times_exponentials(coeff_k, k, Recurrence::n,
 						    base_of_exps[i]);
 	// `sum_poly_times_exponentials' computes the sum from 0, whereas
 	// we want that the sum start from `1'.
