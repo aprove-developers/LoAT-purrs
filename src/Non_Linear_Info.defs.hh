@@ -36,8 +36,9 @@ class Non_Linear_Info {
 public:
   //! \brief
   //! Constructor: sets \f$ original_recurrence_rhs_ = rhs \f$,
-  //! \f$ recurrence_rhs_reritten_ = new_rhs \f$ and
-  //! \f$ base_exp_log_ = base_exp_log \f$.
+  //! \f$ recurrence_rhs_reritten_ = new_rhs \f$,
+  //! \f$ base_exp_log_ = base_exp_log \f$,
+  //! \f$ auxiliary_symbols_ = auxiliary_symbols \f$.
   Non_Linear_Info(const Expr& rhs, const Expr& new_rhs,
 		  const Expr& base_exp_log,
 		  const std::vector<Symbol> auxiliary_symbols);
@@ -74,6 +75,25 @@ public:
   
   //! Returns <CODE>auxiliary_symbols_</CODE>.
   std::vector<Symbol>& auxiliary_symbols();
+
+  //! Returns <CODE>order_if_linear_</CODE>.
+  unsigned int order_if_linear() const;
+
+  //! Returns <CODE>order_if_linear_</CODE>.
+  unsigned int& order_if_linear();
+
+  //! Sets <CODE>order_if_non_linear_</CODE> with \p x.
+  void set_order_if_linear(unsigned int x);
+
+  //! Returns <CODE>first_i_c_if_linear_</CODE>.
+  unsigned first_i_c_if_linear() const;
+
+  //! Returns <CODE>first_i_c_if_linear_</CODE>.
+  unsigned& first_i_c_if_linear();
+
+  //! Sets <CODE>first_i_c_if_linear_</CODE> with \p i_c
+  void set_first_i_c_if_linear(unsigned i_c);
+
 private:
   //! \brief
   //! If the rewriting of the non-linear recurrence in a linear
@@ -94,6 +114,18 @@ private:
   //! Stores the symbols associated to the eventual negative numbers
   //! that will be the arguments of the logarithms.
   std::vector<Symbol> auxiliary_symbols_;
+
+  //! \brief
+  //! When the non-linear recurrence is rewritable in a linear recurrence
+  //! of finite order this data stores the order of the linear recurrence.
+  unsigned int order_if_linear_;
+
+  //! \brief
+  //! When the non-linear recurrence is rewritable in a linear recurrence
+  //! of finite order this data stores the smallest positive integer for
+  //! which the recurrence is well-defined: the initial conditions will
+  //! start from it.
+  unsigned first_i_c_if_linear_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

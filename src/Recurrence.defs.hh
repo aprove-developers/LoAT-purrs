@@ -313,8 +313,15 @@ private:
   //! the order reduction; it is <CODE>false</CODE> in all the other cases.
   mutable bool recurrence_rhs_rewritten;
 
+  //! \brief
+  //! It is <CODE>true</CODE> when is applied the order reduction method
+  //! to a linear finite order recurrence; it is <CODE>false</CODE> in
+  //! all the other cases.
   mutable bool applied_order_reduction;
 
+  //! \brief
+  //! It is <CODE>true</CODE> when the recurrence has been deduced from
+  //! a non-linear recurence; it is <CODE>false</CODE> in all the other cases.
   mutable bool come_from_non_linear_rec;
 
   //! \brief
@@ -375,9 +382,13 @@ private:
   mutable Functional_Equation_Info* functional_eq_p;
   mutable Non_Linear_Info* non_linear_p;
 
+  //! Returns <CODE>type_</CODE>.
   Type type() const;
+
+  //! Returns <CODE>type_</CODE>.
   Type& type();
 
+  //! Sets <CODE>type_</CODE> with \p t.
   void set_type(const Type& t) const;
 
   //! \brief
@@ -447,17 +458,18 @@ private:
   //! \brief
   //! Returns the smallest positive integer for which the finite order
   //! recurrence is well-defined: the initial conditions will start from it.
-  unsigned first_initial_condition() const;
+  unsigned first_i_c_for_linear() const;
 
   //! \brief
   //! Returns the smallest positive integer for which the finite order
   //! recurrence is well-defined: the initial conditions will start from it.
-  unsigned& first_initial_condition();
+  unsigned& first_i_c_for_linear();
 
   //! \brief
-  //! \p i_c is the smallest positive integer for which the finite order
-  //! recurrence is well-defined: the initial conditions will start from it. 
-  void set_first_initial_condition(unsigned i_c) const;
+  //! Sets to \p i_c is the smallest positive integer for which the finite
+  //! order recurrence is well-defined: the initial conditions will start
+  //! from it. 
+  void set_first_i_c_for_linear(unsigned i_c) const;
 
   //! Returns the coefficients of the finite order recurrence.
   const std::vector<Expr>& coefficients() const;
@@ -465,11 +477,18 @@ private:
   //! Returns the coefficients of the finite order recurrence.
   std::vector<Expr>& coefficients();
 
-  //! 
+  //! \brief
+  //! Returns the greatest common divisor among the decrements \f$ k \f$
+  //! of the terms \f$ x(n-k) \f$ of a linear finite order recurrence.
+  //! Returns \f$ 0 \f$ if the order of the recurrence is \f$ 0 \f$.
   unsigned gcd_among_decrements() const;
 
-  //! 
+  //!  \brief
+  //! Returns the greatest common divisor among the decrements \f$ k \f$
+  //! of the terms \f$ x(n-k) \f$ of a linear finite order recurrence.
+  //! Returns \f$ 0 \f$ if the order of the recurrence is \f$ 0 \f$.
   unsigned& gcd_among_decrements();
+
 
   // Methods to access to private data of `Functional_Equation_Info'.
 
@@ -522,8 +541,16 @@ private:
   //! <CODE>recurrence_rhs</CODE> of the non-linear recurrence.
   Expr& original_recurrence_rhs();
 
+  //! \brief
+  //! If the non-linear recurrence is rewritable in a linear recurrence
+  //! then this data contains the right hand side of the linear recurrence
+  //! associated to the original non-linear recurrence. 
   Expr rhs_transformed_in_linear() const;
 
+  //! \brief
+  //! If the non-linear recurrence is rewritable in a linear recurrence
+  //! then this data contains the right hand side of the linear recurrence
+  //! associated to the original non-linear recurrence. 
   Expr& rhs_transformed_in_linear();
 
   //! \brief
@@ -549,6 +576,42 @@ private:
   //! Stores the symbols associated to the eventual negative numbers
   //! that will be the arguments of the logarithms.
   std::vector<Symbol>& auxiliary_symbols();
+
+  //! \brief
+  //! Returns the order of the finite order recurrence associated to
+  //! the non-linear recurrence .
+  unsigned int order_if_linear() const;
+
+  //! \brief
+  //! Returns the order of the finite order recurrence associated to
+  //! the non-linear recurrence.
+  unsigned int& order_if_linear();
+
+  //! \brief
+  //! Sets to \p x the order of the linear recurrence associated to
+  //! the non linear. 
+  void set_order_if_linear(unsigned int x) const;
+
+  //! \brief
+  //! When the non-linear recurrence is rewritable in a linear recurrence
+  //! of finite order then this method returns the smallest positive
+  //! integer for which the finite order recurrence is well-defined:
+  //! the initial conditions will start from it.
+  unsigned first_i_c_if_linear() const;
+
+  //! \brief
+  //! When the non-linear recurrence is rewritable in a linear recurrence
+  //! of finite order then this method returns the smallest positive
+  //! integer for which the finite order recurrence is well-defined:
+  //! the initial conditions will start from it.
+  unsigned& first_i_c_if_linear();
+
+  //! \brief
+  //! When the non-linear recurrence is rewritable in a linear recurrence
+  //! of finite order then this method sets to \p i_c is the smallest
+  //! positive integer for which the finite order recurrence is well-defined:
+  //! the initial conditions will start from it. 
+  void set_first_i_c_if_linear(unsigned i_c) const;
 
   mutable Cached_Expr exact_solution_;
   mutable Cached_Expr lower_bound_;

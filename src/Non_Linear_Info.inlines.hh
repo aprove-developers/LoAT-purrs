@@ -36,7 +36,9 @@ Non_Linear_Info::Non_Linear_Info(const Expr& rhs, const Expr& new_rhs,
   : original_recurrence_rhs_(rhs),
     rhs_transformed_in_linear_(new_rhs),
     base_exp_log_(base_exp_log),
-    auxiliary_symbols_(auxiliary_symbols) {
+    auxiliary_symbols_(auxiliary_symbols),
+    order_if_linear_(0),
+    first_i_c_if_linear_(0) {
 }
 
 inline
@@ -44,8 +46,11 @@ Non_Linear_Info::Non_Linear_Info(const Non_Linear_Info& y)
   : original_recurrence_rhs_(y.original_recurrence_rhs_),
     rhs_transformed_in_linear_(y.rhs_transformed_in_linear_),
     base_exp_log_(y.base_exp_log_),
-    auxiliary_symbols_(y.auxiliary_symbols_) {
+    auxiliary_symbols_(y.auxiliary_symbols_),
+    order_if_linear_(y.order_if_linear_),
+    first_i_c_if_linear_(y.first_i_c_if_linear_) {
 }
+
 inline
 Non_Linear_Info::~Non_Linear_Info() {
 }
@@ -56,6 +61,8 @@ Non_Linear_Info::operator=(const Non_Linear_Info& y) {
   rhs_transformed_in_linear_ = y.rhs_transformed_in_linear_;
   base_exp_log_ = y.base_exp_log_;
   auxiliary_symbols_ = y.auxiliary_symbols_;
+  order_if_linear_ = y.order_if_linear_;
+  first_i_c_if_linear_ = y.first_i_c_if_linear_;
   return *this;
 }
 
@@ -97,6 +104,36 @@ Non_Linear_Info::auxiliary_symbols() const {
 inline std::vector<Symbol>&
 Non_Linear_Info::auxiliary_symbols() {
   return auxiliary_symbols_;
+}
+
+inline unsigned int
+Non_Linear_Info::order_if_linear() const {
+  return order_if_linear_;
+}
+
+inline unsigned int&
+Non_Linear_Info::order_if_linear() {
+  return order_if_linear_;
+}
+
+inline void
+Non_Linear_Info::set_order_if_linear(unsigned int x) {
+  order_if_linear_ = x;
+}
+
+inline unsigned
+Non_Linear_Info::first_i_c_if_linear() const {
+  return first_i_c_if_linear_;
+}
+
+inline unsigned&
+Non_Linear_Info::first_i_c_if_linear() {
+  return first_i_c_if_linear_;
+}
+
+inline void
+Non_Linear_Info::set_first_i_c_if_linear(unsigned i_c) {
+  first_i_c_if_linear_ = i_c;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

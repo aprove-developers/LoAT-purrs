@@ -250,24 +250,24 @@ Recurrence::order() {
 }
 
 inline unsigned
-Recurrence::first_initial_condition() const {
+Recurrence::first_i_c_for_linear() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> first_initial_condition();
+  return finite_order_p -> first_i_c_for_linear();
 }
 
 inline unsigned&
-Recurrence::first_initial_condition() {
+Recurrence::first_i_c_for_linear() {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  return finite_order_p -> first_initial_condition();
+  return finite_order_p -> first_i_c_for_linear();
 }
 
 inline void
-Recurrence::set_first_initial_condition(unsigned i_c) const {
+Recurrence::set_first_i_c_for_linear(unsigned i_c) const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
-  finite_order_p -> set_first_initial_condition(i_c);
+  finite_order_p -> set_first_i_c_for_linear(i_c);
 }
 
 inline const std::vector<Expr>&
@@ -393,6 +393,45 @@ inline std::vector<Symbol>&
 Recurrence::auxiliary_symbols() {
   assert(non_linear_p);
   return non_linear_p -> auxiliary_symbols();
+}
+
+inline unsigned int
+Recurrence::order_if_linear() const {
+  assert(non_linear_p);
+  return non_linear_p -> order_if_linear();
+}
+
+inline unsigned int&
+Recurrence::order_if_linear() {
+  assert(non_linear_p);
+  return non_linear_p -> order_if_linear();
+}
+
+inline void
+Recurrence::set_order_if_linear(unsigned int x) const {
+  assert(non_linear_p);
+  return non_linear_p -> set_order_if_linear(x);
+}
+
+inline unsigned
+Recurrence::first_i_c_if_linear() const {
+  assert(is_non_linear_finite_order());
+  assert(non_linear_p);
+  return non_linear_p -> first_i_c_if_linear();
+}
+
+inline unsigned&
+Recurrence::first_i_c_if_linear() {
+  assert(is_non_linear_finite_order());
+  assert(non_linear_p);
+  return non_linear_p -> first_i_c_if_linear();
+}
+
+inline void
+Recurrence::set_first_i_c_if_linear(unsigned i_c) const {
+  assert(is_non_linear_finite_order());
+  assert(non_linear_p);
+  non_linear_p -> set_first_i_c_if_linear(i_c);
 }
 
 inline void

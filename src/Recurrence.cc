@@ -189,29 +189,32 @@ PURRS::Recurrence::verify_solution() const {
   if ((is_linear_finite_order() || is_non_linear_finite_order())
        && exact_solution_.has_expression()) {
 
+    unsigned int order_rec;
+    unsigned int first_i_c;
     if (is_non_linear_finite_order()) {
-      D_MSG("qui!!!!");
-      return INCONCLUSIVE_VERIFICATION;
-#if 0
-	
-#endif
+      order_rec = order_if_linear();
+      first_i_c = first_i_c_if_linear();
+    }
+    else {
+      order_rec = order();
+      first_i_c = first_i_c_for_linear();
     }
 
     D_VAR(recurrence_rhs);
-    D_VAR(order());
-    D_VAR(first_initial_condition());
+    D_VAR(order_rec);
+    D_VAR(first_i_c);
 
-    if (order() == 0)
+    if (order_rec == 0)
       return PROVABLY_CORRECT;
     else {
       // Step 1: validation of initial conditions.
-      for (unsigned i = order(); i-- > 0; ) {
+      for (unsigned i = order_rec; i-- > 0; ) {
 	Expr solution_valuated = exact_solution_.expression()
-	  .substitute(n, first_initial_condition() + i);
+	  .substitute(n, first_i_c + i);
 	solution_valuated = blackboard.rewrite(solution_valuated);
 	solution_valuated = simplify_all(solution_valuated);
 	D_VAR(solution_valuated);
-	unsigned i_c = first_initial_condition() + i;
+	unsigned i_c = first_i_c + i;
 	if (applied_order_reduction)
 	  // FIXME: !!!
 	  i_c = mod(Number(i_c), Number(gcd_among_decrements())).to_unsigned();
@@ -241,10 +244,10 @@ PURRS::Recurrence::verify_solution() const {
       // These new expressions contained in the vector `terms_to_sub' are
       // substituted to the correspondenting values in `recurrence_rhs'.
       Expr substituted_rhs;
-      std::vector<Expr> terms_to_sub(order());
+      std::vector<Expr> terms_to_sub(order_rec);
 
       substituted_rhs = recurrence_rhs;
-      for (unsigned i = order(); i-- > 0; ) {
+      for (unsigned i = order_rec; i-- > 0; ) {
 	terms_to_sub[i] = simplify_all(partial_solution.substitute
 				       (n, n - (i + 1)));
 	substituted_rhs = substituted_rhs
@@ -434,6 +437,10 @@ PURRS::Recurrence::apply_order_reduction() const {
     return status;
 }
 
+/*!
+  Builds a new object recurrence containing a linear recurrence and
+  classify it.
+*/
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
 compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
@@ -454,6 +461,8 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
     if (rec_rewritten.is_linear_finite_order())
       if ((status = rec_rewritten.solve_linear_finite_order())
 	  == SUCCESS) {
+	set_order_if_linear(rec_rewritten.order());
+	set_first_i_c_if_linear(rec_rewritten.first_i_c_for_linear());
 	// Transform the solution of the linear recurrence in the solution
 	// of the non linear recurrence.
 	if (rec_rewritten.exact_solution_.expression() == 0)

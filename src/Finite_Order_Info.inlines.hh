@@ -35,7 +35,7 @@ Finite_Order_Info::Finite_Order_Info(int k, unsigned i_c,
 				     const std::vector<Expr>& coeffs,
 				     unsigned gcd)
   : order_(k),
-    first_initial_condition_(i_c),
+    first_i_c_for_linear_(i_c),
     coefficients_(coeffs),
     gcd_among_decrements_(gcd) {
 }
@@ -43,7 +43,7 @@ Finite_Order_Info::Finite_Order_Info(int k, unsigned i_c,
 inline
 Finite_Order_Info::Finite_Order_Info(const Finite_Order_Info& y) 
   : order_(y.order_),
-    first_initial_condition_(y.first_initial_condition_),
+    first_i_c_for_linear_(y.first_i_c_for_linear_),
     coefficients_(y.coefficients_),
     gcd_among_decrements_(y.gcd_among_decrements_) {
 }
@@ -55,7 +55,7 @@ Finite_Order_Info::~Finite_Order_Info() {
 inline Finite_Order_Info&
 Finite_Order_Info::operator=(const Finite_Order_Info& y) { 
   order_ = y.order_;
-  first_initial_condition_ = y.first_initial_condition_;
+  first_i_c_for_linear_ = y.first_i_c_for_linear_;
   coefficients_ = y.coefficients_;
   gcd_among_decrements_ = y.gcd_among_decrements_;
   return *this;
@@ -72,18 +72,18 @@ Finite_Order_Info::order() {
 }
 
 inline unsigned
-Finite_Order_Info::first_initial_condition() const {
-  return first_initial_condition_;
+Finite_Order_Info::first_i_c_for_linear() const {
+  return first_i_c_for_linear_;
 }
 
 inline unsigned&
-Finite_Order_Info::first_initial_condition() {
-  return first_initial_condition_;
+Finite_Order_Info::first_i_c_for_linear() {
+  return first_i_c_for_linear_;
 }
 
 inline void
-Finite_Order_Info::set_first_initial_condition(unsigned i_c) {
-  first_initial_condition_ = i_c;
+Finite_Order_Info::set_first_i_c_for_linear(unsigned i_c) {
+  first_i_c_for_linear_ = i_c;
 }
 
 inline const std::vector<Expr>&

@@ -74,16 +74,16 @@ add_term_with_initial_conditions(const Expr& g_n,
     // -  in the case of non linear recurrence on solution after
     //    the change of the variable.
     if (applied_order_reduction || come_from_non_linear_rec)
-      tmp = x(first_initial_condition() + i);
+      tmp = x(first_i_c_for_linear() + i);
     else
-      tmp = get_initial_condition(first_initial_condition() + i);
+      tmp = get_initial_condition(first_i_c_for_linear() + i);
 
     for (unsigned j = i; j > 0; j--)
       if (applied_order_reduction || come_from_non_linear_rec)
-	tmp -= coefficients[j] * x(first_initial_condition() + i - j);
+	tmp -= coefficients[j] * x(first_i_c_for_linear() + i - j);
       else
 	tmp -= coefficients[j]
-	  * get_initial_condition(first_initial_condition() + i - j);
+	  * get_initial_condition(first_i_c_for_linear() + i - j);
     solution += tmp * g_n_i;
   }
   exact_solution_.set_expression(solution);
@@ -154,7 +154,7 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
   // The summand must be an hypergeometric term.
   if (vector_not_all_zero(exp_no_poly_coeff)) {
     Expr gosper_solution;
-    if (compute_sum_with_gosper_algorithm(first_initial_condition() + 1, n,
+    if (compute_sum_with_gosper_algorithm(first_i_c_for_linear() + 1, n,
 					  base_of_exps, exp_no_poly_coeff,
 					  roots, gosper_solution))
       solution += gosper_solution;
@@ -162,8 +162,8 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
       // FIXME: the summand is not hypergeometric:
       // no chance of using Gosper's algorithm.
       Symbol h;
-      unsigned lower = first_initial_condition() > 0
-	? first_initial_condition() + 1	: 1;
+      unsigned lower = first_i_c_for_linear() > 0
+	? first_i_c_for_linear() + 1 : 1;
       solution += PURRS::sum(h, lower, n,
 			     pwr(roots[0].value(), n - h)
 			     * inhomogeneous_term.substitute(n, h));
@@ -220,7 +220,7 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
   if (!inhomogeneous_term.is_zero())
     largest_positive_int_zero(denominator(inhomogeneous_term), z);
   // The initial conditions will start from `z'.
-  set_first_initial_condition(z.to_unsigned());
+  set_first_i_c_for_linear(z.to_unsigned());
   Expr alpha_factorial
     = compute_product(transform_in_single_fraction(coefficient), z + 1, n);
   // FIXME: this simplification simplifies the value of `alpha_factorial'
@@ -248,7 +248,7 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
 			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
     std::vector<Polynomial_Root> new_roots;
     new_roots.push_back(Polynomial_Root(Expr(1), RATIONAL));
-    if (!compute_sum_with_gosper_algorithm(first_initial_condition() + 1, n,
+    if (!compute_sum_with_gosper_algorithm(first_i_c_for_linear() + 1, n,
 					   base_of_exps, exp_poly_coeff,
 					   exp_no_poly_coeff, new_roots,
 					   inhomogeneous_term/alpha_factorial,
@@ -376,8 +376,8 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
     }
     else {
       Symbol h;
-      unsigned lower = first_initial_condition() > 1
-	? first_initial_condition() + 1	: 2;
+      unsigned lower = first_i_c_for_linear() > 1
+	? first_i_c_for_linear() + 1 : 2;
       solution = 1 / diff_roots
 	* (pwr(root_1, Recurrence::n+1)
 	   * PURRS::sum(h, lower, Recurrence::n, pwr(root_1, -h)
@@ -402,8 +402,8 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
 					      exp_poly_coeff);
     else {
       Symbol h;
-      unsigned lower = first_initial_condition() > 1
-	? first_initial_condition() + 1	: 2;
+      unsigned lower = first_i_c_for_linear() > 1
+	? first_i_c_for_linear() + 1 : 2;
       solution
 	= PURRS::sum(h, lower, Recurrence::n,
 		     g_n.substitute(Recurrence::n, Recurrence::n - h)
@@ -515,8 +515,8 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
     }
     else {
       Symbol h;
-      unsigned lower = first_initial_condition() > order() - 1
-	? first_initial_condition() + 1	: order();
+      unsigned lower = first_i_c_for_linear() > order() - 1
+	? first_i_c_for_linear() + 1 : order();
       solution
 	= PURRS::sum(h, lower, Recurrence::n,
 		     g_n.substitute(Recurrence::n, Recurrence::n - h)
@@ -529,8 +529,8 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
 					      exp_poly_coeff);
     else {
       Symbol h;
-      unsigned lower = first_initial_condition() > order() - 1
-	? first_initial_condition() + 1	: order();
+      unsigned lower = first_i_c_for_linear() > order() - 1
+	? first_i_c_for_linear() + 1 : order();
       solution
 	= PURRS::sum(h, lower, Recurrence::n,
 		     g_n.substitute(Recurrence::n, Recurrence::n - h)
@@ -565,8 +565,8 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     largest_positive_int_zero(denominator(inhomogeneous_term), z);
   }
   // The initial conditions will start from `z'.
-  set_first_initial_condition(z.to_unsigned());
-  D_VAR(first_initial_condition());
+  set_first_i_c_for_linear(z.to_unsigned());
+  D_VAR(first_i_c_for_linear());
 
   // `g_n' is defined here because it is necessary in the function
   // `add_term_with_initial_conditions()' (at the end of function
@@ -661,9 +661,9 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       // -  in the case of non linear recurrence on solution after
       //    the change of the variable.
       if (applied_order_reduction || come_from_non_linear_rec)
-	solution += x(first_initial_condition()) * pwr(coefficients()[1], n);
+	solution += x(first_i_c_for_linear()) * pwr(coefficients()[1], n);
       else
-	solution += get_initial_condition(first_initial_condition())
+	solution += get_initial_condition(first_i_c_for_linear())
 	  * pwr(coefficients()[1], n);
       exact_solution_.set_expression(solution);
     }
@@ -681,7 +681,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   if (exact_solution_.expression().is_a_add()) {
     Expr_List conditions;
     for (unsigned i = order(); i-- > 0; )
-      conditions.append(x(first_initial_condition() + i));
+      conditions.append(x(first_i_c_for_linear() + i));
     // FIXME: `collect' throws an exception if the object to collect has
     // non-integer exponent. 
     exact_solution_

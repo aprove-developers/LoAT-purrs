@@ -37,7 +37,7 @@ class Finite_Order_Info {
 public:
   //! \brief
   //! Constructor: sets \f$ order_ = k \f$,
-  //! \f$ first_initial_condition_ = i_c \f$,
+  //! \f$ first_i_c_for_linear_ = i_c \f$,
   //! \f$ coefficients_ = coeffs \f$ and
   //! \f$ gcd_among_decrements_ = gcd \f$.
   Finite_Order_Info(int k, unsigned i_c, const std::vector<Expr>& coeffs,
@@ -58,14 +58,14 @@ public:
   //! Returns <CODE>order_</CODE>.
   unsigned int& order();
 
-  //! Returns <CODE>first_initial_condition_</CODE>.
-  unsigned first_initial_condition() const;
+  //! Returns <CODE>first_i_c_for_linear_</CODE>.
+  unsigned first_i_c_for_linear() const;
 
-  //! Returns <CODE>first_initial_condition_</CODE>.
-  unsigned& first_initial_condition();
+  //! Returns <CODE>first_i_c_for_linear_</CODE>.
+  unsigned& first_i_c_for_linear();
 
-  //! Sets <CODE>first_initial_condition_</CODE> with \p i_c
-  void set_first_initial_condition(unsigned i_c);
+  //! Sets <CODE>first_i_c_for_linear_</CODE> with \p i_c
+  void set_first_i_c_for_linear(unsigned i_c);
 
   //! Returns <CODE>coefficients_</CODE>.
   const std::vector<Expr>& coefficients() const;
@@ -86,11 +86,16 @@ private:
   //! \brief
   //! The smallest positive integer for which the recurrence is
   //! well-defined: the initial conditions will start from it.
-  unsigned first_initial_condition_;
+  unsigned first_i_c_for_linear_;
 
   //! Stores the coefficients of the recurrence.
   std::vector<Expr> coefficients_;
 
+  //! \brief
+  //! Stores the greatest common divisor among the positive integer \f$ k \f$
+  //! of the terms of the form \f$ x(n-k) \f$ contained in the right
+  //! hand side of the recurrence. If the order is zero then
+  //! \p gcd_among_decrements_ stores \f$ 0 \f$.
   unsigned gcd_among_decrements_;
 };
 
