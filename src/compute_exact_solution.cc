@@ -32,7 +32,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "util.hh"
 #include "numerator_denominator.hh"
 #include "simplify.hh"
-#include "sum_poly.hh"
 #include "compute_prod.hh"
 #include "ep_decomp.hh"
 #include "finite_order.hh"
