@@ -42,6 +42,12 @@ using namespace std;
 using namespace Parma_Recurrence_Relation_Solver;
 
 static struct option long_options[] = {
+  {"rhs",               required_argument, 0, 'R'},
+  {"initial-condition", required_argument, 0, 'I'},
+  {"exact",             no_argument,       0, 'E'},
+  {"lower-bound",       no_argument,       0, 'L'},
+  {"upper-bound",       no_argument,       0, 'U'},
+  {"timeout",           required_argument, 0, 'T'},
   {"help",              no_argument,       0, 'h'},
   {"interactive",       no_argument,       0, 'i'},
   {"latex",             no_argument,       0, 'l'},
@@ -55,15 +61,41 @@ const char* program_name = 0;
 void
 print_usage() {
   cerr << "Usage: " << program_name << " [OPTION]...\n\n"
-    "  -h, --help              prints this help text\n"
-    "  -i, --interactive       sets interactive mode on\n"
-    "  -l, --latex             output LaTeX code\n"
-    "  -r, --regress-test      sets regression-testing mode on\n"
-    "  -v, --verbose           be verbose"
+    "  -R, --rhs \"<expr>\"     set the right-hand side of the recurrence\n"
+    "                           that has to be solved/approximated\n" 
+    "  -I, --initial-condition \"<expr>\"\n"
+    "                           set an initial condition for the recurrence\n"
+    "  -E, --exact              try to solve the solution\n"
+    "  -L, --lower-bound        try to approximate the solution of the\n"
+    "                           recurrence from below\n"
+    "  -U, --upper-bound        try to approximate the solution of the\n"
+    "                           recurrence from above\n"
+    "  -T, --timeout N          interrupt computation after N seconds\n"
+    "  -h, --help               print this help text\n"
+    "  -i, --interactive        set interactive mode on\n"
+    "  -l, --latex              output LaTeX code\n"
+    "  -r, --regress-test       set regression-testing mode on\n"
+    "  -v, --verbose            be verbose"
        << endl;
 }
 
-#define OPTION_LETTERS "hilrv"
+#define OPTION_LETTERS "EILRTUhilrv"
+
+// To avoid mixing incompatible options.
+static bool production_mode = false;
+static bool test_mode = false;
+
+// When true, the exact solution is required.
+static bool exact_solution_required = false;
+
+// When true, an approximation from below of the solution is required.
+static bool lower_bound_required = false;
+
+// When true, an approximation from above of the solution is required.
+static bool upper_bound_required = false;
+
+// When greater than zero, gives the timeout threshold.
+static long timeout_threshold = 0;
 
 // Interactive mode is on when true.
 static bool interactive = false;
@@ -84,6 +116,16 @@ my_exit(int status) {
 }
 
 static void
+do_not_mix_modes() {
+  if (production_mode && test_mode) {
+    cerr << "Production mode options (-R, -I, -E, -L, -U, -T) and\n"
+	 << "test mode options (-i, -l, -r, -v) are mutually exclusive."
+	 << endl;
+    my_exit(1);
+  }
+}
+
+static void
 process_options(int argc, char* argv[]) {
   int option_index;
   int c;
@@ -98,6 +140,60 @@ process_options(int argc, char* argv[]) {
     case 0:
       break;
 
+    case 'R':
+      production_mode = true;
+      do_not_mix_modes();
+      if (!optarg) {
+	cerr << program_name << ": the rhs expression must follow `-R'"
+	     << endl;
+	my_exit(1);
+      }
+      // Here `optarg' points to the beginning of the rhs.
+      break;
+
+    case 'I':
+      production_mode = true;
+      do_not_mix_modes();
+      if (!optarg) {
+	cerr << program_name << ": an initial condition expression "
+	     << "must follow `-I'" << endl;
+	my_exit(1);
+      }
+      // Here `optarg' points to the beginning of the initial conddition.
+      break;
+
+    case 'E':
+      exact_solution_required = true;
+      production_mode = true;
+      do_not_mix_modes();
+      break;
+
+    case 'L':
+      lower_bound_required = true;
+      production_mode = true;
+      do_not_mix_modes();
+      break;
+
+    case 'U':
+      upper_bound_required = true;
+      production_mode = true;
+      do_not_mix_modes();
+      break;
+
+    case 'T':
+      {
+	char* endptr;
+	long secs = strtol(optarg, &endptr, 10);
+	if (*endptr || secs < 0) {
+	  cerr << program_name << ": a non-negative integer must follow `-T'"
+	       << endl;
+	  my_exit(1);
+	}
+	else
+	  timeout_threshold = secs;
+      }
+      break;
+
     case '?':
     case 'h':
       print_usage();
@@ -106,18 +202,26 @@ process_options(int argc, char* argv[]) {
 
     case 'i':
       interactive = true;
+      test_mode = true;
+      do_not_mix_modes();
       break;
 
     case 'l':
       latex = true;
+      test_mode = true;
+      do_not_mix_modes();
       break;
 
     case 'r':
       regress_test = true;
+      test_mode = true;
+      do_not_mix_modes();
       break;
 
     case 'v':
       verbose = true;
+      test_mode = true;
+      do_not_mix_modes();
       break;
 
     default:
