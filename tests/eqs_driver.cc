@@ -38,7 +38,9 @@ http://www.cs.unipr.it/purrs/ . */
 using namespace std;
 using namespace Parma_Recurrence_Relation_Solver;
 
+#ifndef NOISY
 #define NOISY 1
+#endif
 
 #ifdef USE_READLINE
 #define INPUT_STREAM rdl
