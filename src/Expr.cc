@@ -53,6 +53,29 @@ REGISTER_FUNCTION(x,
 		  evalf_func(x_evalf).
 		  derivative_func(x_deriv));
 
+/*!
+  Let \f$ e(x) \f$ be the expression in \p x contained in \p e.
+  This function computes two expressions \f$ e_1 \f$ and \f$ e_2 \f$
+  such that \f$ e = e_1 \cdot e_2 \f$: \f$ e_1 \f$ contains all factors of
+  \f$ e \f$ that do not depend from the symbol \p x; \f$ e_2 \f$
+  contains all factors of \f$ e \f$ that depend from the symbol \p x.
+*/
+void
+get_out_factors_from_argument(const ex& e, const ex& x, ex& in, ex& out) {
+  if (is_a<mul>(e))
+    for (unsigned i = e.nops(); i-- > 0; ) {
+      const ex& factor = e.op(i);
+      if (factor.has(x))
+	in *= factor;
+      else
+	out *= factor;
+    }
+  else
+    if (e.has(x))
+      in *= e;
+    else
+      out *= e;
+}
 
 //! Evaluation of the <CODE>sum(index, lower, upper, summand)</CODE>.
 /*!
@@ -79,7 +102,9 @@ REGISTER_FUNCTION(x,
         \sum_{k = a}^n f(k) - f(n) - f(n-1) - \cdots - f(n-j+1),
         \quad \text{if } b = n + j \text{and j is a positive integer}; \\
       \sum_{k = a}^b f(k) = \sum_{k = a}^n f(k) + f(n+1) + \cdots + f(n+j),
-        \quad \text{if } b = n + j \text{and j is a negative integer}.
+        \quad \text{if } b = n + j \text{and j is a negative integer}; \\
+      \sum_{k = a}^b \alpha f(k) = \alpha \sum_{k = a}^b f(k),
+        \quad \text{where } \alpha \text{does not depend from } k.  
     \end{cases}
   \f]
 
@@ -124,10 +149,18 @@ sum_eval(const ex& index, const ex& lower, const ex& upper,
 	numeric_term = ex_to<numeric>(second_term);
  	symbolic_term = ex_to<symbol>(first_term);
       }
-      else
-	return sum(index, lower, upper, summand).hold();
+      else {
+	ex factors_in = 1;
+	ex factors_out = 1;
+	get_out_factors_from_argument(summand, index, factors_in, factors_out);
+	return factors_out * sum(index, lower, upper, factors_in).hold();
+      }
       if (numeric_term.is_integer()) {
-	s += sum(index, lower, ex(symbolic_term), summand).hold();
+	ex factors_in = 1;
+	ex factors_out = 1;
+	get_out_factors_from_argument(summand, index, factors_in, factors_out);
+	s += factors_out
+	  * sum(index, lower, ex(symbolic_term), factors_in).hold();
 	if (numeric_term.is_pos_integer())
 	  for (numeric j = 1; j <= numeric_term; ++j)
 	    s += summand.subs(index == symbolic_term + j);
@@ -135,11 +168,19 @@ sum_eval(const ex& index, const ex& lower, const ex& upper,
 	  for (numeric j = numeric_term + 1; j <= 0 ; ++j)
 	    s -= summand.subs(index == symbolic_term + j);
       }
-      else
-	return sum(index, lower, upper, summand).hold();
+      else {
+	ex factors_in = 1;
+	ex factors_out = 1;
+	get_out_factors_from_argument(summand, index, factors_in, factors_out);
+	return factors_out * sum(index, lower, upper, factors_in).hold();
+      }
     }
-    else
-      return sum(index, lower, upper, summand).hold();
+    else {
+      ex factors_in = 1;
+      ex factors_out = 1;
+      get_out_factors_from_argument(summand, index, factors_in, factors_out);
+      return factors_out * sum(index, lower, upper, factors_in).hold();
+    }
   return s;
 }
 
@@ -191,7 +232,9 @@ REGISTER_FUNCTION(sum,
 	  \cdots f(n-j+1)^(-1),
         \quad \text{if } b = n + j \text{and j is a positive integer}; \\
       \prod_{k = a}^b f(k) = \prod_{k = a}^n f(k) \cdot f(n+1) \cdots f(n+j),
-        \quad \text{if } b = n + j \text{and j is a negative integer}.
+        \quad \text{if } b = n + j \text{and j is a negative integer}; \\
+      \prod_{k = a}^b \alpha f(k) = \alpha \prod_{k = a}^b f(k),
+        \quad \text{where } \alpha \text{does not depend from } k. 
     \end{cases}
   \f]
 
@@ -238,10 +281,18 @@ prod_eval(const ex& index, const ex& lower, const ex& upper,
 	numeric_term = ex_to<numeric>(second_term);
  	symbolic_term = ex_to<symbol>(first_term);
       }
-      else
-	return prod(index, lower, upper, factor).hold();
+      else {
+	ex factors_in = 1;
+	ex factors_out = 1;
+	get_out_factors_from_argument(factor, index, factors_in, factors_out);
+	return factors_out * prod(index, lower, upper, factors_in).hold();
+      }
       if (numeric_term.is_integer()) {
-	p *= prod(index, lower, ex(symbolic_term), factor).hold();
+	ex factors_in = 1;
+	ex factors_out = 1;
+	get_out_factors_from_argument(factor, index, factors_in, factors_out);
+	p *= factors_out
+	  * prod(index, lower, ex(symbolic_term), factors_in).hold();
 	if (numeric_term.is_pos_integer())
 	  for (numeric j = 1; j <= numeric_term; ++j)
 	    p *= factor.subs(index == symbolic_term + j);
@@ -249,11 +300,19 @@ prod_eval(const ex& index, const ex& lower, const ex& upper,
 	  for (numeric j = numeric_term + 1; j <= 0 ; ++j)
 	    p *= 1 / factor.subs(index == symbolic_term + j);
       }
-      else
-	return prod(index, lower, upper, factor).hold();
+      else {
+	ex factors_in = 1;
+	ex factors_out = 1;
+	get_out_factors_from_argument(factor, index, factors_in, factors_out);
+	return factors_out * prod(index, lower, upper, factors_in).hold();
+      }
     }
-    else
-      return prod(index, lower, upper, factor).hold();
+    else {
+      ex factors_in = 1;
+      ex factors_out = 1;
+      get_out_factors_from_argument(factor, index, factors_in, factors_out);
+      return factors_out * prod(index, lower, upper, factors_in).hold();
+    }
   return p;
 }
 
