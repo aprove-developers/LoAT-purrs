@@ -52,7 +52,7 @@ Blackboard::Blackboard()
 
 inline
 Blackboard::Blackboard(const Blackboard& y)
-  : definitions(y.definitions), timestamp(y.timestamp) {
+  : index(y.index), definitions(y.definitions), timestamp(y.timestamp) {
 }
 
 inline
@@ -61,6 +61,7 @@ Blackboard::~Blackboard() {
 
 inline Blackboard&
 Blackboard::operator=(const Blackboard& y) {
+  index = y.index;
   definitions = y.definitions;
   timestamp = y.timestamp;
   return *this;
