@@ -236,13 +236,14 @@ PURRS::factorize_no_ratio_ex(const Expr& e,
 
 /*!
   This function factorizes as much possible the expression \p e
-  and returns the two values \p common_factor and \p remainder
+  which is assumed to be already expanded.
+  Returns the two values \p common_factor and \p remainder
   such that the product of them is equal to \p e.
 */
 void
 PURRS::factorize(const Expr& e,
 		 Expr& common_factor, Expr& remainder) {
-  D_MSGVAR("factorize ", e);
+  assert(e.is_expanded());
   Expr numerator;
   Expr denominator;
   numerator_denominator_purrs(e, numerator, denominator);
