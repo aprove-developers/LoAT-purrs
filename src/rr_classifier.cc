@@ -459,17 +459,18 @@ insert_coefficients(const Expr& coeff, unsigned long index,
 */
 unsigned
 x_function_in_powers_or_functions(const Expr& e) {
-  // There is an `x' function (with the argument containing `n' inside an
+  // There is an `x' function (with the argument containing `n') inside an
   // other function.
   if (e.is_a_function()) {
     for (unsigned i = e.nops(); i-- > 0; ) {
+      // `operand' is the argument (if unary function) or the i-th
+      // argument (otherwise) of the function `e'.
       const Expr& operand = e.arg(i);
-      if (operand.is_the_x_function())
-	if (operand.arg(0).has(Recurrence::n))
-	  if (e.is_the_x_function())
-	    return 1;
-	  else
-	    return 0;
+      if (operand.has_x_function(false, Recurrence::n))
+	if (e.is_the_x_function())
+	  return 1;
+	else
+	  return 0;
     }
   }
   // There is a power with an `x' function in the base or in the exponent.
