@@ -32,7 +32,6 @@ n	2*x((2^n)/2)
 n	2*x((2^n)/2)+2^n
 n	2*x(7/10*n)+3*n
 n	2*x(n-1)*x(n-2)
-n	2*x(n-1)+n^n
 n	2*x(n-1)-a*x(n-2)+a
 n	2*x(n-1)-b+3*a*x(n-2)
 n	2*x(n/2)
@@ -56,9 +55,6 @@ n	3*x(n/2)+n*log(n)
 n	3*x(n/2)+x(n-3)+3*n
 n	3*x(n/4)+n*log(n)
 n	4*x(n/2)+n^2
-n	5*x(n-1)+log(n)
-n	5*x(n-1)+n*log(log(n))
-n	5*x(n-1)+n*log(n)
 n	5*x(n-4)+n*log(log(n))
 n	5*x(n/4)+n*log(log(n))
 n	6*x(n/7)+n
@@ -73,8 +69,6 @@ n	log(x(n-1))
 n	log(x(n-1))+x(n-2)
 n	log(x(n-2))+x(n-1)
 n	n*(n-2)*x(n-2)-(n-1)*x(n-1)
-n	n*x(n-1)+log(n)
-n	n*x(n-1)+n!
 n	n*x(n-1)+n*x(n-2)
 n	n*x(n-1)+x(n-2)
 n	n*x(n-1)-x(n-2)
@@ -99,13 +93,8 @@ n	x(n-1)!
 n	x(n-1)*(n-1)-x(n-2)*(n-2)
 n	x(n-1)*x(n-1)
 n	x(n-1)*x(n-2)
-n	x(n-1)+(1+1/n)^n
-n	x(n-1)+(2^n+5)^a
-n	x(n-1)+(n*n)!
 n	x(n-1)+3*x(n/3)
 n	x(n-1)+4*x(n-5)
-n	x(n-1)+sin(n)
-n	x(n-1)+sqrt(n)
 n	x(n-1)+x(n-2)*a
 n	x(n-1)+x(n-3)-3*x(n-2)+7*x(n-5)
 n	x(n-1)/((n+a)*(n+a+2))
@@ -208,6 +197,7 @@ y	2*x(n-1)+n+1
 y	2*x(n-1)+n^25
 y	2*x(n-1)+n^5
 y	2*x(n-1)+n^50
+y	2*x(n-1)+n^n
 y	2*x(n-1)+x(n-2)
 y	2*x(n-1)+x(n-2)+1
 y	2*x(n-1)+x(n-2)+n/2
@@ -266,6 +256,9 @@ y	4*x(n-2)
 y	4^(n-1)*x(n-1)+2^((n-1)^2)
 y	4^(n-1)+3*x(n-1)-2*x(n-2)
 y	5
+y	5*x(n-1)+log(n)
+y	5*x(n-1)+n*log(log(n))
+y	5*x(n-1)+n*log(n)
 y	5*x(n-1)-6*x(n-2)
 y	5*x(n-1)-6*x(n-2)+2*n+2^n
 y	5*x(n-1)-6*x(n-2)+4
@@ -293,6 +286,8 @@ y	n*x(n-1)+4
 y	n*x(n-1)+a
 y	n*x(n-1)+n
 y	n*x(n-1)-1/(n+1)
+y	n*x(n-1)+log(n)
+y	n*x(n-1)+n!
 y	n+1
 y	n+x(n-1)
 y	n^2
@@ -343,6 +338,11 @@ y	x(n-1)+n/2
 y	x(n-1)+n^2
 y	x(n-1)+n^4
 y	x(n-1)+x(0)
+y	x(n-1)+(1+1/n)^n
+y	x(n-1)+(2^n+5)^a
+y	x(n-1)+(n*n)!
+y	x(n-1)+sin(n)
+y	x(n-1)+sqrt(n)
 y	x(n-1)+x(n-2)
 y	x(n-1)+x(n-2)+1
 y	x(n-1)+x(n-2)+2*n
