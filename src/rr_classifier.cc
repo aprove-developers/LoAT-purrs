@@ -1009,10 +1009,10 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
       const Expr& argument = addend.arg(0);
       if (argument == n)
 	return CL_HAS_NULL_DECREMENT;
+      else if (!argument.has(n))
+	return CL_MALFORMED_RECURRENCE;
       else if (has_parameters(argument))
 	return CL_TOO_COMPLEX;
-      else if (argument.is_a_number(num) && !num.is_nonnegative_integer())
-	return CL_MALFORMED_RECURRENCE;
       // Check if this term has the form `x(n + d)'.
       else if (argument.is_a_add() && argument.nops() == 2) {
 	Number decrement;
@@ -1130,10 +1130,10 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	const Expr& argument = factor.arg(0);
 	if (argument == n)
 	  return CL_HAS_NULL_DECREMENT;
+	else if (!argument.has(n))
+	  return CL_MALFORMED_RECURRENCE;
 	else if (has_parameters(argument))
 	  return CL_TOO_COMPLEX;
-	else if (argument.is_a_number(num) && !num.is_nonnegative_integer())
-	  return CL_MALFORMED_RECURRENCE;
 	else if (argument.is_a_add() && argument.nops() == 2) {
 	  Number decrement;
 	  if (get_constant_decrement(argument, decrement)) {
@@ -1288,8 +1288,8 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 					      where \f$ k \f$ is too big to
 					      be handled by the standard
 					      solution techniques;
-  - <CODE>CL_MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
-                                              any sense;
+  - <CODE>CL_MALFORMED_RECURRENCE</CODE>      if the recurrence is not
+                                              \ref syntactically_correct "syntactically correct";
   - <CODE>CL_DOMAIN_ERROR</CODE>              if the recurrence is not
                                               well-defined;
   - <CODE>CL_UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not
@@ -1490,8 +1490,8 @@ PURRS::Recurrence::classify() const {
 					      where \f$ k \f$ is too big
 					      to be handled by the standard
 					      solution techniques;
-  - <CODE>CL_MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
-                                              any sense;
+  - <CODE>CL_MALFORMED_RECURRENCE</CODE>      if the recurrence is not
+                                              \ref syntactically_correct "syntactically correct";
   - <CODE>CL_DOMAIN_ERROR</CODE>              if the recurrence is not
                                               well_defined;
   - <CODE>CL_UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not

@@ -101,9 +101,7 @@ bool less_than(const Recurrence& x, const Recurrence& y);
   - mathematical functions (ex. \f$ \log() \f$, \dots);
   - unary functions \f$ x() \f$ with argument of the following form:
     \f$ n + k \f$ with \f$ k \in \Zset \f$,
-    \f$ n / k \f$ with \f$ k \in \Qset \f$,
-    a number (no floating point) or a symbol,
-    mathematical functions.
+    \f$ n / k \f$ with \f$ k \in \Qset \f$.
   
   The following examples show some different ways in order to build
   objects Recurrence:
