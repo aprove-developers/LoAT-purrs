@@ -46,6 +46,7 @@ Give conditions on parameters when solving parametric recurrences.
 Find suitable notations in \texttt{GiNaC} for formal sums, formal products
 and hypergeometric functions.
 Also, give rules to combine and simplify sums and products.
+FIXED formal sums and formal product.
 
 \item (Added on 20.9.2002)
 In order to apply the ``transcendental'' methods of summation contained
@@ -54,6 +55,7 @@ need to be able to simplify ratios of factorials.
 Of course the same remark holds for binomial coefficients.
 \texttt{GiNaC} shows no ability at that (just try
 \texttt{factorial$(n+1)$/factorial$(n)$}).
+FIXED factorials.
 
 \item (Added on 9.10.2002)
 We have the following problem with Gosper's algorithm, in particular when
@@ -106,6 +108,10 @@ the difference $x(n) - (n-2)^2 - x(n-2)$, which is simplified to
 $5/2+((-1)^n)^2*n-n-5/2*((-1)^n)^2$, and not to $0$.
 We remark that the expression $5/2+((-1)^n)^2*n-n-5/2*((-1)^n)^2$ is
 simplified to $0$ on a further call to \texttt{simplify\_on\_output\_ex()}.
+
+\item (Added on 24.10.2002)
+Write a message to ginac list about the problem of initialization mechanism
+of the symbolic functions (x(n), sum(), ...). 
 
 \end{enumerate}
 
