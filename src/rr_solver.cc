@@ -51,10 +51,10 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 /*!
-  Returns <CODE>true</CODE> in two cases:
-  - if \p e is of the form \f$ n - d \f$ with \f$ d \f$ an integer:
-    in this case assign the opposite of \f$ d \f$ to \p decrement.
-  - if \p e is equal to \p n: in this case decrement is zero.
+  Returns <CODE>true</CODE> if \p e is of the form \f$ n - d \f$ with
+  \f$ d \f$ an integer: in this case assign the opposite of \f$ d \f$ to
+  \p decrement.
+  Returns <CODE>false</CODE> otherwise.
 */
 static bool
 get_constant_decrement(const Expr& e, const Symbol& n, Number& decrement) {
@@ -64,14 +64,11 @@ get_constant_decrement(const Expr& e, const Symbol& n, Number& decrement) {
     Expr d = get_binding(substitution, 0);
     if (d.is_a_number()) {
       Number i = d.ex_to_number();
-      if (i.is_integer())
+      if (i.is_integer()) {
 	decrement = -i;
-      return true;
+	return true;
+      }
     }    
-  }
-  else if (e == n) {
-    decrement = 0;
-     return true;
   }
   return false;
 }
@@ -445,8 +442,6 @@ compute_order(const Expr& argument, const Symbol& n,
   Number decrement;
   if (!get_constant_decrement(argument, n, decrement))
     return HAS_NON_INTEGER_DECREMENT;
-  if (decrement == 0)
-    return HAS_NULL_DECREMENT;
   if (decrement < 0)
     return HAS_NEGATIVE_DECREMENT;
   // Make sure that (1) we can represent `decrement' as a long, and
@@ -487,14 +482,21 @@ classification_summand(const Expr& r, const Symbol& n, Expr& e,
   if (num_factors == 1) {
     if (r.is_the_x_function()) {
       Expr argument = r.op(0);
-      if (argument.has(n)) {
-	status = compute_order(argument, n, order, index, coefficients.max_size());
-	if (status != OK)
-	  return status;
-	insert_coefficients(1, index, coefficients);
-      }
-      else
-	e += r;
+      if (argument == n)
+	return HAS_NULL_DECREMENT;
+      else if (argument.is_a_add() && argument.nops() == 2)
+	if ((argument.op(0) == n && argument.op(1).is_a_number())
+	    || (argument.op(1) == n && argument.op(0).is_a_number())) {
+	  status = compute_order(argument, n, order, index,
+				 coefficients.max_size());
+	  if (status != OK)
+	    return status;
+	  insert_coefficients(1, index, coefficients);
+	}
+	else
+	  return TOO_COMPLEX;
+      else if (argument.has(n))
+	return TOO_COMPLEX;
     }
     else
       e += r;
@@ -507,21 +509,28 @@ classification_summand(const Expr& r, const Symbol& n, Expr& e,
       Expr factor = r.op(i);
       if (factor.is_the_x_function()) {
 	Expr argument = factor.op(0);
-	if (argument.has(n))
-	  if (found_function_x)
-	    return NON_LINEAR_RECURRENCE;
-	  else {
+	if (argument == n)
+	  return HAS_NULL_DECREMENT;
+	else if (argument.is_a_add() && argument.nops() == 2)
+	  if ((argument.op(0) == n && argument.op(1).is_a_number())
+	      || (argument.op(1) == n && argument.op(0).is_a_number())) {
+	    if (found_function_x)
+	      return NON_LINEAR_RECURRENCE;
 	    status = compute_order(argument, n, order, index,
 				   coefficients.max_size());
 	    if (status != OK)
 	      return status;
 	    found_function_x = true;
 	  }
+	  else
+	    return TOO_COMPLEX;
+	else if (argument.has(n))
+	  return TOO_COMPLEX;
 	else
 	  possibly_coeff *= factor;
       }
       else {
-	if (factor == n)
+	if (factor.has(n))
 	  found_n = true;
 	possibly_coeff *= factor;
       }
@@ -665,15 +674,18 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   Solver_Status status;
   unsigned num_summands = expanded_rhs.is_a_add() ? expanded_rhs.nops() : 1;
   if (num_summands > 1)
-    for (unsigned i = num_summands; i-- > 0; )
+    for (unsigned i = num_summands; i-- > 0; ) {
       status = classification_summand(expanded_rhs.op(i), n, e, coefficients, order,
 				      has_non_constant_coefficients);
-  else
+      if (status != OK)
+	return status;
+    }
+  else {
     status = classification_summand(expanded_rhs, n, e, coefficients, order,
 				    has_non_constant_coefficients);
-  D_VAR(e);
-  if (status != OK)
-    return status;
+    if (status != OK)
+      return status;
+  }
 #endif
   // Check if the recurrence is not linear, i.e. there is a non-linear term
   // containig in `e' containing `x(a*n+b)'.
@@ -811,7 +823,7 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
     // non-integer exponent. 
     solution = solution.collect(conditions);
   }
-#if 0  
+#if 0
   if (!verify_solution(solution, order, rhs, n)) {
     std::cout << "x(n) = " << rhs << std::endl;
     std::cout << " -> solution wrong or not enough simplified." << std::endl;
@@ -1004,13 +1016,16 @@ solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
     case HAS_NON_INTEGER_DECREMENT:
     case HAS_HUGE_DECREMENT:
     case TOO_COMPLEX:
+      {
+      D_MSG("too_complex");
       exit_anyway = true;
+      }
       break;
     case HAS_NEGATIVE_DECREMENT:
       {
 	Expr new_rhs;
 	eliminate_negative_decrements(rhs, new_rhs, n);
-	//std::cout << "Recurrence tranformed x(n) = " << new_rhs << std::endl;
+	D_MSGVAR("Recurrence tranformed: ", new_rhs);
 	status = solve(new_rhs, n, solution);
       }
       break;
@@ -1018,7 +1033,7 @@ solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
       {
 	Expr new_rhs;
 	if (eliminate_null_decrements(rhs, new_rhs, n)) {
-	  //std::cout << "Recurrence tranformed x(n) = " << new_rhs << std::endl;
+	  D_MSGVAR("Recurrence tranformed: ", new_rhs);
 	  status = solve(new_rhs, n, solution);
 	}
 	else
