@@ -420,11 +420,35 @@ a+12*factorial(-3+2*n)
 
 %%%%%%%%
 
+y	(a+b+1)!/(a+b)!
+factorial(b+a)^(-1)*factorial(1+b+a)
+factorial(b+a)^(-1)*factorial(1+b+a)
+1+b+a
+factorial(b+a)^(-1)*factorial(1+b+a)
+
+%%%%%%%%
+
+y	(a+b)!/(a+b+1)!
+factorial(b+a)*factorial(1+b+a)^(-1)
+factorial(b+a)*factorial(1+b+a)^(-1)
+(1+b+a)^(-1)
+factorial(b+a)*factorial(1+b+a)^(-1)
+
+%%%%%%%%
+
 y	a^n*(2*a)^(-n)
 (1/2)^n
 (1/2)^n
 a^n*(2*a)^(-n)
 a^n*(2*a)^(-n)
+
+%%%%%%%%
+
+y	(2*a+b+3)!*c+9
+9+c*factorial(3+b+2*a)
+9+c*factorial(3+b+2*a)
+9+(3+b+2*a)*(1+b+2*a)*(2+b+2*a)*c*factorial(b+2*a)
+9+c*factorial(3+b+2*a)
 
 %%%%%%%%
 
