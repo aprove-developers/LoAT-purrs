@@ -296,37 +296,41 @@ PURRS::Recurrence::verify_finite_order() const {
   if (summands_without_i_c == 0)
     return PROVABLY_CORRECT;
   
-#if 0
-  std::vector<Expr> bases_of_exp;
-  std::vector<Expr> exp_poly_coeff;
-  std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(inhomogeneous_term.expand(), Recurrence::n,
-			 bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
-  
-  assert(bases_of_exp.size() == exp_poly_coeff.size()
-	 && exp_poly_coeff.size() == exp_no_poly_coeff.size()
-	 && exp_no_poly_coeff.size() >= 1);
-  
-  unsigned int num_of_exponentials = bases_of_exp.size();
-  D_VEC(bases_of_exp, 0, num_of_exponentials-1);
-  D_VEC(exp_poly_coeff, 0, num_of_exponentials-1);
-  D_VEC(exp_no_poly_coeff, 0, num_of_exponentials-1);
-  
-  unsigned int max_polynomial_degree = 0;
-  for (unsigned int i = 0; i < num_of_exponentials; ++i) {
-    if (!exp_no_poly_coeff[i].is_zero()) {
-      DD_MSGVAR("No poly: ", exp_no_poly_coeff[i]);
-      goto traditional;
+  // Start the method of the paper
+  // "Checking and Confining the Solutions of Recurrence Realtions".
+  // FIXME: can the new method work also in the case of order reduction?
+  if (is_linear_finite_order_const_coeff() && !applied_order_reduction()) {
+    std::vector<Expr> bases_of_exp;
+    std::vector<Expr> exp_poly_coeff;
+    std::vector<Expr> exp_no_poly_coeff;
+    exp_poly_decomposition(inhomogeneous_term.expand(), Recurrence::n,
+			   bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
+    
+    assert(bases_of_exp.size() == exp_poly_coeff.size()
+	   && exp_poly_coeff.size() == exp_no_poly_coeff.size()
+	   && exp_no_poly_coeff.size() >= 1);
+    
+    unsigned int num_of_exponentials = bases_of_exp.size();
+    D_VEC(bases_of_exp, 0, num_of_exponentials-1);
+    D_VEC(exp_poly_coeff, 0, num_of_exponentials-1);
+    D_VEC(exp_no_poly_coeff, 0, num_of_exponentials-1);
+    
+    unsigned int max_polynomial_degree = 0;
+    for (unsigned int i = 0; i < num_of_exponentials; ++i) {
+      if (!exp_no_poly_coeff[i].is_zero()) {
+	D_MSGVAR("No poly: ", exp_no_poly_coeff[i]);
+	goto traditional;
+      }
+      max_polynomial_degree = std::max(max_polynomial_degree,
+				       exp_poly_coeff[i].degree(n));
     }
-    max_polynomial_degree = std::max(max_polynomial_degree,
-				     exp_poly_coeff[i].degree(n));
-  }
-  
-  {
+    
     std::vector<Polynomial_Root> roots;
     std::vector<Number> num_coefficients(order_rec + 1);
     bool all_distinct = true;
-    if (is_linear_finite_order_const_coeff()) {
+    // FIXME: this method is applied only on linear finite order
+    // with constant coefficients!
+     if (is_linear_finite_order_const_coeff()) {
       Expr characteristic_eq;
       if (!characteristic_equation_and_its_roots(order_rec,
 						 coefficients(),
@@ -334,9 +338,7 @@ PURRS::Recurrence::verify_finite_order() const {
 						 characteristic_eq, roots,
 						 all_distinct))
 	abort();
-    }
-    // FIXME: if this is the case of linear recurrence with variable
-    // coefficient the vector of the roots is empty! 
+	}
     
     // Find the maximum degree of a polynomial that may occur in the
     // solution.
@@ -376,7 +378,7 @@ PURRS::Recurrence::verify_finite_order() const {
 	      assert(factor.arg(1).is_a_number());
 	      k = factor.arg(1).ex_to_number().to_unsigned int();
 	    }
-	    else
+ 	    else
 	      continue;
 	    // FIXME: maybe can be implemented in a better way.
 	    // FIXME: k uninitialized here!
@@ -411,18 +413,22 @@ PURRS::Recurrence::verify_finite_order() const {
 	    coefficients_of_exponentials[0] += summand;
 	}
 #endif
-	else if (summand.is_a_power()) {
+ 	else if (summand.is_a_power()) {
 	  // Summand has the form `n^k' or `a^n'
 	  if (summand.arg(0) == n) {
 	    unsigned int k = summand.arg(1).ex_to_number().to_unsigned_int();
 	    coefficients_of_exponentials[k] += 1;
-	  }
+ 	  }
 	  else
 	    coefficients_of_exponentials[0] += summand;
 	}
-	else {
+ 	else {
 	  // Summand is a constant or the symbol `n'.
-	  assert(summand.is_a_number() || summand == n);
+	  assert(summand.is_a_number() || summand == n
+		 // FIXME: added this condition requested by the
+		 // recurrence number 904 (12-12-03) of the file heap:
+		 // x(n) = a*x(n-1)+b+c*(n-1). Is it right?
+		 || summand.is_a_symbol());
 	  Number k;
 	  if (summand.is_a_number(k))
 	    coefficients_of_exponentials[0] += k;
@@ -442,7 +448,7 @@ PURRS::Recurrence::verify_finite_order() const {
 	  unsigned int k;
 	  if (factor == n)
 	    k = 1;
-	  else if (factor.is_a_power() && factor.arg(0) == n) {
+ 	  else if (factor.is_a_power() && factor.arg(0) == n) {
 	    assert(factor.arg(1).is_a_number());
 	    k = factor.arg(1).ex_to_number().to_unsigned_int();
 	  }
@@ -459,7 +465,7 @@ PURRS::Recurrence::verify_finite_order() const {
       else if (summand.is_a_power()) {
 	// Summand has the form `n^k' or `a^n'
 	if (summand.arg(0) == n) {
-	  unsigned int k = summand.arg(1).ex_to_number().to_unsigned_int();
+ 	  unsigned int k = summand.arg(1).ex_to_number().to_unsigned_int();
 	  coefficients_of_exponentials[k] += 1;
 	}
 	else
@@ -467,9 +473,11 @@ PURRS::Recurrence::verify_finite_order() const {
       }
       else {
 	// Summand is a constant or the symbol `n'.
-	assert(summand.is_a_number() || summand == n);
+	assert(summand.is_a_number() || summand == n
+	       // FIXME: added this condition, is it right?
+	       || summand.is_a_symbol());
 	Number k;
-	if (summand.is_a_number(k))
+ 	if (summand.is_a_number(k))
 	  coefficients_of_exponentials[0] += k;
 	else
 	  coefficients_of_exponentials[1] += 1;
@@ -482,26 +490,22 @@ PURRS::Recurrence::verify_finite_order() const {
     for (unsigned int i = 0; i < max_polynomial_degree; ++i) {
       if (!coefficients_of_exponentials[i].is_zero()) {
 	// Not syntactically 0: try to prove that is it semantically 0.
-	Expr c = coefficients_of_exponentials[i];
+ 	Expr c = coefficients_of_exponentials[i];
 	for (Number r = 0; r < num_tests; ++r) {
 	  Expr c_r = simplify_all(c.substitute(n, r));
 	  if (!c_r.is_zero()) {
-	    DD_MSGVAR("Argh!!! ", i);
-	    DD_MSGVAR("Argh!!! ", r);
-	    DD_MSGVAR("Argh!!! ", c_r);
+	    D_MSGVAR("Argh!!! ", i);
+	    D_MSGVAR("Argh!!! ", r);
+ 	    D_MSGVAR("Argh!!! ", c_r);
 	    goto traditional;
 	  }
 	}
       }
     }
-    DD_MSG("NEW");
     return PROVABLY_CORRECT;
   }
-  
- traditional:
-#endif
 
-  D_MSG("OLD");
+  traditional:
   // Step 4: by substitution, verifies that `summands_without_i_c'
   // satisfies the recurrence.
   // Computes `substituted_rhs' by substituting, in the rhs
