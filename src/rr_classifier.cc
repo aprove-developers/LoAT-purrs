@@ -24,10 +24,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
-#ifndef NOISY
-#define NOISY 0
-#endif
-
 #include "util.hh"
 #include "simplify.hh"
 #include "finite_order.hh"
@@ -39,7 +35,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Non_Linear_Info.defs.hh"
 #include "Recurrence.defs.hh"
 #include "Recurrence.inlines.hh"
-
 #include <climits>
 #include <string>
 #include <vector>
@@ -1453,7 +1448,8 @@ PURRS::Recurrence::classify() const {
       if (!find_domain_in_N(i->second, n, z))
 	return CL_TOO_COMPLEX;
     functional_eq_p = new Functional_Equation_Info(homogeneous_terms);
-    set_first_valid_index(z.to_unsigned_int());
+    index_type index = z.to_unsigned_int() > 1 ? z.to_unsigned_int() : 1;
+    set_first_valid_index(index);
   }
   // In the case of non linear recurrence or weighted-average recurrence
   // we have already done the operation `new ...' and we have already
