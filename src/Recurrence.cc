@@ -256,7 +256,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
     if (non_homogeneous_part == 0)
       return PROVABLY_CORRECT;
 
-#if 1
+#if 0
   std::vector<Expr> bases_of_exp;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
@@ -295,6 +295,8 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 					       all_distinct))
       abort();
   }
+  // FIXME: if this is the case of linear recurrence with variable
+  // coefficient the vector of the roots is empty! 
 
   // Find the maximum degree of a polynomial that may occur in the solution.
   for (unsigned i = 0, nroots = roots.size(); i < nroots; ++i) {
