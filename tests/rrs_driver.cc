@@ -50,6 +50,7 @@ static struct option long_options[] = {
   {"exact",             no_argument,       0, 'E'},
   {"lower-bound",       no_argument,       0, 'L'},
   {"upper-bound",       no_argument,       0, 'U'},
+  {"prolog-term",       no_argument,       0, 'P'},
   {"timeout",           required_argument, 0, 'T'},
   {"help",              no_argument,       0, 'h'},
   {"interactive",       no_argument,       0, 'i'},
@@ -74,6 +75,8 @@ print_usage() {
     "                           recurrence from below\n"
     "  -U, --upper-bound        try to approximate the solution of the\n"
     "                           recurrence from above\n"
+    "  -P, --prolog-term        print the solution or the approximation\n"
+    "                           in the form of prolog term\n"
     "  -T, --timeout N          interrupt computation after N seconds\n"
     "  -h, --help               print this help text\n"
     "  -i, --interactive        set interactive mode on\n"
@@ -84,7 +87,7 @@ print_usage() {
        << endl;
 }
 
-#define OPTION_LETTERS "EI:LR:T:UhilrvV"
+#define OPTION_LETTERS "EI:LPR:T:UhilrvV"
 
 // To avoid mixing incompatible options.
 static bool production_mode = false;
@@ -101,6 +104,9 @@ static bool lower_bound_required = false;
 
 // When true, an approximation from above of the solution is required.
 static bool upper_bound_required = false;
+
+// When true, the output has the form of prolog term.
+static bool prolog_term_required = false;
 
 // When greater than zero, gives the timeout threshold.
 static long timeout_threshold = 0;
@@ -159,7 +165,7 @@ static void
 do_not_mix_modes() {
   if (production_mode && test_mode) {
     cerr << program_name
-         << ": production mode options (-R, -I, -E, -L, -U, -T) and\n"
+         << ": production mode options (-R, -I, -E, -L, -U, ,-P, -T) and\n"
          << "test mode options (-i, -l, -r, -v) are mutually exclusive"
          << endl;
     my_exit(1);
@@ -303,6 +309,12 @@ process_options(int argc, char* argv[]) {
       production_mode = true;
       do_not_mix_modes();
       upper_bound_required = true;
+      break;
+
+    case 'P':
+      production_mode = true;
+      do_not_mix_modes();
+      prolog_term_required = true;
       break;
 
     case 'T':
@@ -528,6 +540,146 @@ operator<<(ostream& s, Recurrence::Verify_Status v) {
   return s;
 }
 
+//! Kinds of solution or approximation required.
+enum Kind { EXACT, LOWER, UPPER };
+
+// Print the solution and all informations about it.
+void
+output_solution(const Kind& kind, const Expr& solution_or_bound,
+		const std::vector<string>& conditions,
+		const std::map<index_type, Expr>& initial_conditions,
+		const std::vector<string>& blackboard) {
+  std::ostringstream s;
+  switch (kind) {
+  case EXACT:
+    s << "x(n) = ";
+    break;
+  case LOWER:
+    s << "x(n) >= ";
+    break;
+  case UPPER:
+    s << "x(n) <= ";
+    break;
+  }
+  // Solution or bound.
+  s << solution_or_bound << ", ";
+  cout << s.str() << endl;
+  // List of conditions.
+  if (!conditions.empty()) {
+    cout << "for ";
+    unsigned int conditions_size = conditions.size();
+    for (unsigned int i = 0; i < conditions_size; ++i) {
+      cout << conditions[i];
+      if (i != conditions_size - 1)
+	cout << ", ";
+    }
+    cout << endl;
+  }
+  // Blackboard.
+  if (!blackboard.empty()) {
+    cout << "where ";
+    unsigned int blackboard_size = blackboard.size();
+    for (unsigned int i = 0; i < blackboard_size; ++i) {
+      cout << blackboard[i];
+      if (i != blackboard_size - 1)
+	cout << ", ";
+    }
+    cout << endl;
+  }
+  // List of initial conditions.
+  if ((kind == LOWER || kind == UPPER) && initial_conditions.size() != 1) {
+    for (std::map<index_type, Expr>::const_iterator i
+	   = initial_conditions.begin(),
+	   initial_conditions_end = initial_conditions.end(), j = i;
+	 i != initial_conditions_end; ++i) {
+      cout << "x(" << i->first << ")=" << i->second;
+      if (++j != initial_conditions_end)
+	cout << ", ";
+    }
+    cout << endl;
+  }
+}
+
+// Print the solution and all informations about it in the form of
+// prolog term.
+void
+output_solution_prolog_term(const Kind& kind, const Expr& solution_or_bound,
+			    const std::vector<string>& conditions,
+			    const std::map<index_type, Expr>&
+			    initial_conditions,
+			    const std::vector<string>& blackboard) {
+  std::ostringstream s;
+  switch (kind) {
+  case EXACT:
+    s << "exact_solution(";
+    break;
+  case LOWER:
+    s << "lower_bound(";
+    break;
+  case UPPER:
+    s << "upper_bound(";
+    break;
+  }
+  // Solution or bound.
+  s << solution_or_bound << ", ";
+  // List of conditions.
+  s << "[";
+  unsigned int conditions_size = conditions.size();
+  for (unsigned int i = 0; i < conditions_size; ++i) {
+    s << conditions[i];
+    if (i != conditions_size - 1)
+      s << ", ";
+  }
+  s << "], ";
+  // List of initial conditions.
+  s << "[";
+  for (std::map<index_type, Expr>::const_iterator i
+	 = initial_conditions.begin(),
+	 initial_conditions_end = initial_conditions.end(), j = i;
+       i != initial_conditions_end; ++i) {
+    s << "x(" << i->first << ")=" << i->second;
+    if (++j != initial_conditions_end)
+      s << ", ";
+  }
+  s << "], ";
+  // Blackboard;
+  s << "[";
+  unsigned int blackboard_size = blackboard.size();
+  for (unsigned int i = 0; i < blackboard_size; ++i) {
+    s << blackboard[i];
+    if (i != blackboard_size - 1)
+      s << ", ";
+  }
+  s << "]).";
+
+  cout << s.str() << endl;
+}
+
+void
+prepare_for_the_output(const Kind& kind,
+		       std::vector<string>& conditions,
+		       std::map<index_type, Expr>& initial_conditions,
+		       std::vector<string>& blackboard) {
+  std::ostringstream s;
+  s << "n>=" << precp->first_valid_index_for_solution();
+  conditions.push_back(s.str());
+  
+  if (kind == LOWER || kind == UPPER) {
+    string Sc_function = precp->definition_Sc();
+    std::ostringstream cond_i_c;
+    if (initial_conditions.empty()) {
+      if (Sc_function.empty())
+	cond_i_c << "x(1)>=0";
+      else {
+	cond_i_c << "x(" << Sc_function.substr(0, 8) << ")>=0";
+      }
+      conditions.push_back(cond_i_c.str());
+    }
+    if (!Sc_function.empty())
+      blackboard.push_back(Sc_function);
+  }
+}
+
 void
 do_production_mode() {
   if (!have_recurrence) {
@@ -544,15 +696,29 @@ do_production_mode() {
     exact_solution_required = true;
 
   if (exact_solution_required) {
-    Expr exact_solution;
     switch (compute_exact_solution_wrapper(*precp)) {
     case Recurrence::SUCCESS:
-      // OK: get the exact solution and print it.
-      precp->exact_solution(exact_solution);
-      exact_solution
-        = precp->substitute_auxiliary_definitions(exact_solution);
-      cout << "x(n) = " << exact_solution << "." << endl;
-      goto exit;
+      {
+	// OK: get the exact solution and print it.
+	Expr exact_solution;
+	precp->exact_solution(exact_solution);
+	exact_solution
+	  = precp->substitute_auxiliary_definitions(exact_solution);
+	// Get all informations about this recurrence.
+	std::vector<string> conditions;
+	std::vector<string> blackboard;
+	std::map<index_type, Expr> initial_conditions
+	  = precp->get_initial_conditions();
+	prepare_for_the_output(EXACT, conditions, initial_conditions,
+			       blackboard);
+	if (prolog_term_required)
+	  output_solution_prolog_term(EXACT, exact_solution, conditions,
+				      initial_conditions, blackboard);
+	else
+	  output_solution(EXACT, exact_solution, conditions,
+			  initial_conditions, blackboard); 
+	goto exit;
+      }
 
     case Recurrence::UNSOLVABLE_RECURRENCE:
       cout << "unsolvable." << endl;
@@ -578,12 +744,27 @@ do_production_mode() {
   }
 
   if (lower_bound_required) {
-    Expr lower;
     switch (precp->compute_lower_bound()) {
     case Recurrence::SUCCESS:
-      // OK: get the lower bound and print it.
-      precp->lower_bound(lower);
-      cout << "x(n) >= " << lower << "." << endl;
+      {
+	// OK: get the lower bound and print it.
+	Expr lower;
+	precp->lower_bound(lower);
+	// Get all informations about this recurrence.
+	std::vector<string> conditions;
+	std::map<index_type, Expr> initial_conditions
+	  = precp->get_initial_conditions();
+	std::vector<string> blackboard;
+	prepare_for_the_output(LOWER, conditions, initial_conditions,
+			       blackboard);
+	// Output must have the form of a prolog term.
+	if (prolog_term_required)
+	  output_solution_prolog_term(LOWER, lower, conditions,
+				      initial_conditions, blackboard);
+	else
+	  output_solution(LOWER, lower, conditions,
+			  initial_conditions, blackboard);
+      }
       break;
 
     case Recurrence::UNSOLVABLE_RECURRENCE:
@@ -610,12 +791,27 @@ do_production_mode() {
   }
 
   if (upper_bound_required) {
-    Expr upper;
     switch (precp->compute_upper_bound()) {
     case Recurrence::SUCCESS:
-      // OK: get the upper bound and print it.
-      precp->upper_bound(upper);
-      cout << "x(n) =< " << upper << "." << endl;
+      {
+	// OK: get the upper bound and print it.
+	Expr upper;
+	precp->upper_bound(upper);
+	// Get all informations about this recurrence.
+	std::vector<string> conditions;
+	std::map<index_type, Expr> initial_conditions
+	  = precp->get_initial_conditions();
+	std::vector<string> blackboard;
+	prepare_for_the_output(LOWER, conditions, initial_conditions,
+			       blackboard);
+	// Output must have the form of a prolog term.
+	if (prolog_term_required)
+	  output_solution_prolog_term(UPPER, upper, conditions,
+				      initial_conditions, blackboard);
+	else
+	  output_solution(UPPER, upper, conditions,
+			  initial_conditions, blackboard);
+      }
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
       cout << "unsolvable." << endl;
