@@ -367,9 +367,9 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n, int order,
 
 
 static Expr
-compute_alpha_factorial(const Expr& alpha, const Symbol& n,
-			const Number& lower, const Expr& upper,
-			bool is_denominator = false);
+compute_product(const Expr& e, const Symbol& n,
+		const Number& lower, const Expr& upper,
+		bool is_denominator = false);
 
 bool
 verify_solution(const Expr& solution, int order, const Expr& rhs,
@@ -1747,53 +1747,51 @@ domain_recurrence(const Symbol& n, const Expr& e, Number& i_c) {
 }
 
 //! \brief
-//! When possible, computes \f$ alpha!(n) \f$ if \f$ alpha \f$ is a sum
-//! or terms, otherwise returns the symbolic product.
+//! When possible, computes \f$ \prod_{k=lower}^upper \e(k) \f$
+//! if \f$ e \f$ is a sum of terms, otherwise returns the symbolic product.
 static Expr
-alpha_factorial_if_add(const Expr& alpha, const Symbol& n,
+compute_product_on_add(const Expr& e, const Symbol& n,
 		       const Number& lower, const Expr& upper,
 		       bool is_denominator) {
-  Expr alpha_factorial;
+  Expr e_prod;
   Expr_List substitution;
-  bool alpha_factorial_computed = false;
-  if (alpha.match(n + wild(0), substitution)) {
+  bool e_prod_computed = false;
+  if (e.match(n + wild(0), substitution)) {
     Expr tmp = get_binding(substitution, 0);
     if (tmp.is_a_number()) {
       Number num = tmp.ex_to_number();
       if (num.is_positive_integer()) {
-	alpha_factorial = factorial(alpha) / factorial(num);
-	alpha_factorial_computed = true;
+	e_prod = factorial(e) / factorial(num);
+	e_prod_computed = true;
       }
       else
 	if (lower > -num) {
-	  alpha_factorial = factorial(alpha) / factorial(lower + num - 1);
-	  alpha_factorial_computed = true;
+	  e_prod = factorial(e) / factorial(lower + num - 1);
+	  e_prod_computed = true;
 	}
 	else
 	  if (is_denominator)
 	    throw std::domain_error("Cannot compute a product at the "
 				    "denominator if one of the factor "
 				    "is zero");
-	    else
-	    {
-	    alpha_factorial = 0;
-	    alpha_factorial_computed = true;
+	  else {
+	    e_prod = 0;
+	    e_prod_computed = true;
 	  }
     }
   }
-  else if (alpha == 2*n+1) {
-    alpha_factorial = factorial(2*n+1) * pwr(2, -n) / factorial(n);
-    alpha_factorial_computed = true;
+  else if (e == 2*n+1) {
+    e_prod = factorial(2*n+1) * pwr(2, -n) / factorial(n);
+    e_prod_computed = true;
   }
   else {
-    // Allows to compute `alpha!(n)' for function as `a*n+a*b'
+    // Allows to compute `e!(n)' for function as `a*n+a*b'
     // (`a' not rational).
-    Expr a = alpha.content(n);
+    Expr a = e.content(n);
     if (a != 1) {
-      alpha_factorial = compute_alpha_factorial(alpha.primpart(n), n,
-						lower, upper)
-	* compute_alpha_factorial(a, n, lower, upper);
-      alpha_factorial_computed = true;
+      e_prod = compute_product(e.primpart(n), n, lower, upper)
+	* compute_product(a, n, lower, upper);
+      e_prod_computed = true;
     }
     // To compute numerator and denominator is useful because allows
     // to solve cases as `a/b * n + c/d': infact consider separately
@@ -1801,43 +1799,42 @@ alpha_factorial_if_add(const Expr& alpha, const Symbol& n,
     // positive integer' or `a = 2 && c*d = 1) and `b*d'.
     Expr num;
     Expr den;
-    alpha.numerator_denominator(num, den);
+    e.numerator_denominator(num, den);
     if (den != 1) {
-      alpha_factorial = compute_alpha_factorial(num, n, lower, upper)
-	* pwr(compute_alpha_factorial(den, n, lower, upper), -1);
-      alpha_factorial_computed = true;
+      e_prod = compute_product(num, n, lower, upper)
+	* pwr(compute_product(den, n, lower, upper), -1);
+      e_prod_computed = true;
     }
   }
-  if (!alpha_factorial_computed) {
+  if (!e_prod_computed) {
     Symbol h("h");
-    Expr alpha_h = alpha.subs(n, h);
-    alpha_factorial = prod(Expr(h), Expr(lower), upper, alpha_h);
+    Expr e_h = e.subs(n, h);
+    e_prod = prod(Expr(h), Expr(lower), upper, e_h);
   }
-  return alpha_factorial;
+  return e_prod;
 }
 
 //! \brief
-//! When possible, computes \f$ alpha!(n) \f$ if \f$ alpha \f$ is a
-//! power, otherwise returns the symbolic product.
+//! When possible, computes \f$ \prod_{k=lower}^upper \e(k) \f$
+//! if \f$ e \f$ is a power, otherwise returns the symbolic product.
 static Expr
-alpha_factorial_if_power(const Expr& alpha, const Symbol& n,
+compute_product_on_power(const Expr& e, const Symbol& n,
 			 const Number& lower, const Expr& upper) {
-  Expr alpha_factorial;
-  bool alpha_factorial_computed = false;
-  if (alpha.op(0).has(n)) {
-    if (alpha.op(1).is_a_number()) {
-      alpha_factorial
-	= pwr(compute_alpha_factorial(alpha.op(0), n, lower, upper, true),
-	      alpha.op(1));
-      alpha_factorial_computed = true;
+  Expr e_prod;
+  bool e_prod_computed = false;
+  if (e.op(0).has(n)) {
+    if (e.op(1).is_a_number()) {
+      e_prod = pwr(compute_product(e.op(0), n, lower, upper, true),
+			    e.op(1));
+      e_prod_computed = true;
     }
   }
-  // In this case `alpha!(n) = k^{\sum_{h=1}^n f(h)}'.
+  // In this case `e!(n) = k^{\sum_{h=1}^n f(h)}'.
   else {
     std::vector<Expr> base_of_exps;
     std::vector<Expr> exp_poly_coeff;
     std::vector<Expr> exp_no_poly_coeff;
-    exp_poly_decomposition(alpha.op(1), n,
+    exp_poly_decomposition(e.op(1), n,
 			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
     Expr new_exponent = 0;
     // `f(h)' is a polynomial or a product of a polynomial times an
@@ -1852,95 +1849,96 @@ alpha_factorial_if_power(const Expr& alpha, const Symbol& n,
 	// we want it to start from `1'.
 	new_exponent -= coeff_k.subs(k, 0);
       }
-      alpha_factorial = pwr(alpha.op(0), new_exponent);
-      alpha_factorial_computed = true;
+      e_prod = pwr(e.op(0), new_exponent);
+      e_prod_computed = true;
     }
     // FIXME: aggiungere anche 
     // if (vector_not_all_zero(exp_no_poly_coeff)) {...}
     // per risolvere altre sommatorie risolvibili solo con gosper.
   }
-  if (!alpha_factorial_computed) {
+  if (!e_prod_computed) {
     Symbol h("h");
-    Expr alpha_h = alpha.subs(n, h);
-    alpha_factorial = prod(Expr(h), Expr(lower), upper, alpha_h);
+    Expr e_h = e.subs(n, h);
+    e_prod = prod(Expr(h), Expr(lower), upper, e_h);
   }
-  return alpha_factorial;
+  return e_prod;
 }
 
 //! \brief
-//! Let \f$ alpha(n) \f$ be a not constant expression in the
-//! variable \f$ n \f$.
-//! This functions computes \f$ \alpha!(n) \f$ defined as follows:
+//! Let \f$ e(n) \f$ be an expression in the variable \f$ n \f$.
+//! This functions computes \f$ \e!(n) \f$ defined as follows:
 //! \f[
-//!   \alpha!(0) \defeq 1,
+//!   \e!(0) \defeq 1,
 //!   \qquad
-//!   \alpha!(n) \defeq \prod_{k=1}^n \alpha(k).
+//!   \e!(n) \defeq \prod_{k=lower}^upper \e(k).
 //! \f]
 /*!
-  When possible to find the closed form for \f$ \prod_{k=1}^n \alpha(k) \f$,
+  When possible to find the closed form for \f$ \prod_{k=lower}^upper \e(k) \f$,
   we compute it; when it is not possible we returns the symbolic function
   for the product.
-  We defined inductively \f$ \alpha!(n) \f$ as follows:
-  - if \f$ alpha \f$ is a constant, i.e. it not contains \f$ n \f$,
-    then \f$ alpha!(n) = alpha^n \f$;
-  - if \f$ alpha = n \f$, then \f$ alpha!(n) = n! \f$;
-  - if \f$ alpha = n + k \f$, where \f$ k \in \Nset \setminus \{0\} \f$,
-    then \f$ alpha!(n) = \frac{(n + k)!}{k!}  \f$;
-  - if \f$ alpha = 2*n+1 \f$,
-    then \f$ alpha!(n) = \frac{(2*n + 1)!}{2^n * n} \f$;
-  - if \f$ alpha \f$ is a power there are two cases.
-    We consider \f$ a \f$ and \f$ b \f$ so that \f$ alpha = a^b \f$, 
+  We observe that if also \f$ upper \f$ is a number, in particular it must be
+  an integer number, than the product is always computable: so the following
+  definition is applied only when \f$ upper \f$ is not a number.
+  We defined inductively \f$ \e!(n) \f$ as follows:
+  - if \f$ e \f$ is a constant, i.e. it not contains \f$ n \f$,
+    then \f$ e!(n) = e^n \f$;
+  - if \f$ e = n \f$, then \f$ e!(n) = n! \f$;
+  - if \f$ e = n + k \f$, where \f$ k \in \Nset \setminus \{0\} \f$,
+    then \f$ e!(n) = \frac{(n + k)!}{k!}  \f$;
+  - if \f$ e = 2*n+1 \f$,
+    then \f$ e!(n) = \frac{(2*n + 1)!}{2^n * n} \f$;
+  - if \f$ e \f$ is a power there are two cases.
+    We consider \f$ a \f$ and \f$ b \f$ so that \f$ e = a^b \f$, 
     - if \f$ a \f$ contains \f$ n \f$ and \f$ b \f$ is a number,
-      then \f$ alpha!(n) = a!(n)^b;
+      then \f$ e!(n) = a!(n)^b;
     - if \f$ a \f$ not contains \f$ n, i.e. \f$ a \f$ is a constant,
-      then \f$ alpha!(n) = k^{\sum_{h=1}^n f(h)} \f$;
-  - if \f$ alpha = alpha_1 \cdots alpha_k \f$, where \f$ alpha_i \f$,
+      then \f$ e!(n) = k^{\sum_{h=1}^n f(h)} \f$;
+  - if \f$ e = e_1 \cdots e_k \f$, where \f$ e_i \f$,
     for \f$ i = 1, \dots, k \f$, is one of the previous case,
-    then \f$ alpha!(n) =  alpha_1!(n) \cdots alpha_k!(n) \f$.  
+    then \f$ e!(n) =  e_1!(n) \cdots e_k!(n) \f$.  
 */
 static Expr
-compute_alpha_factorial(const Expr& alpha, const Symbol& n,
-			const Number& lower, const Expr& upper,
-			bool is_denominator) {
+compute_product(const Expr& e, const Symbol& n,
+		const Number& lower, const Expr& upper,
+		bool is_denominator) {
   assert(lower.is_integer());
   if (upper.is_a_number()) {
     Number num_upper = upper.ex_to_number();
     if (lower > num_upper)
       return 1;
     else if (lower == num_upper)
-      return alpha.subs(n, lower);
+      return e.subs(n, lower);
     else {
       Expr tmp = 1;
       for (Number i = lower; i <= num_upper; ++i)
-	tmp *= alpha.subs(n, i);
+	tmp *= e.subs(n, i);
       return tmp;
     }
   }
   Expr exp_power = upper - lower + 1;
-  Expr alpha_factorial;
-  if (!alpha.has(n))
-    alpha_factorial = pwr(alpha, exp_power);
-  else if (alpha == n) {
-    alpha_factorial = factorial(upper);
+  Expr e_prod;
+  if (!e.has(n))
+    e_prod = pwr(e, exp_power);
+  else if (e == n) {
+    e_prod = factorial(upper);
     if (lower > 1)
-      alpha_factorial *= 1 / factorial(lower - 1);
+      e_prod *= 1 / factorial(lower - 1);
   }
-  else if (alpha.is_a_add())
-    alpha_factorial = alpha_factorial_if_add(alpha, n, lower, upper,
-					     is_denominator);
-  else if (alpha.is_a_power())
-    alpha_factorial = alpha_factorial_if_power(alpha, n, lower, upper);
-  else if (alpha.is_a_mul()) {
-    alpha_factorial = 1;
-    for (unsigned i = alpha.nops(); i-- > 0; )
-      alpha_factorial *= compute_alpha_factorial(alpha.op(i), n, lower, upper);
+  else if (e.is_a_add())
+    e_prod = compute_product_on_add(e, n, lower, upper, is_denominator);
+  else if (e.is_a_power())
+    e_prod = compute_product_on_power(e, n, lower, upper);
+  else if (e.is_a_mul()) {
+    e_prod = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_prod *= compute_product(e.op(i), n, lower, upper);
   }
   else {
     Symbol h("h");
-    Expr alpha_h = alpha.subs(n, h);
-    alpha_factorial = prod(Expr(h), Expr(lower), upper, alpha_h);
+    Expr e_h = e.subs(n, h);
+    e_prod = prod(Expr(h), Expr(lower), upper, e_h);
   }
-  return alpha_factorial;
+  return e_prod;
 }
 
 //! Returns <CODE>true</CODE> if \p e contains parameters;
@@ -2020,9 +2018,9 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
   bool shift_initial_conditions = domain_recurrence(n, tmp, i_c);
   Expr alpha_factorial;
   if (shift_initial_conditions)
-    alpha_factorial = compute_alpha_factorial(coefficient, n, i_c + 2, n);
+    alpha_factorial = compute_product(coefficient, n, i_c + 2, n);
   else
-    alpha_factorial = compute_alpha_factorial(coefficient, n, 1, n);
+    alpha_factorial = compute_product(coefficient, n, 1, n);
   D_VAR(alpha_factorial);
   // Compute the non-homogeneous term for the recurrence
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
