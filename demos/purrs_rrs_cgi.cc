@@ -48,7 +48,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <cgicc/CgiDefs.h>
 #include <cgicc/Cgicc.h>
-#include <cgicc/HTTPHeaders.h>
+#include <cgicc/HTTPHTMLHeader.h>
 #include <cgicc/HTMLClasses.h>
 
 #include "purrs_install.hh"
