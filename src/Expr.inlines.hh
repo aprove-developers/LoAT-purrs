@@ -32,88 +32,88 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-std::ostream&
+inline std::ostream&
 operator<<(std::ostream& os, const Expr& exp) {
   os << exp;
   return os;  
 };
 
-Expr
+inline Expr
 operator+(const Expr& lh, const Expr& rh) {
   return lh + rh;
 }
 
-Expr
+inline Expr
 operator-(const Expr& lh, const Expr& rh) {
   return lh - rh;
 }
 
-Expr
+inline Expr
 operator*(const Expr& lh, const Expr& rh) {
   return lh * rh;
 }
 
-Expr
+inline Expr
 operator/(const Expr& lh, const Expr& rh) {
   return lh / rh;
 }
 
-Expr
+inline Expr
 operator+(const Expr& lh) {
   return +lh;
 }
 
-Expr
+inline Expr
 operator-(const Expr& lh) {
   return -lh;
 }
 
-Expr&
+inline Expr&
 operator+=(const Expr& lh, const Expr& rh) {
   return lh += rh;
 }
 
-Expr&
+inline Expr&
 operator-=(const Expr& lh, const Expr& rh) {
   return lh -= rh;
 }
 
-Expr&
+inline Expr&
 operator*=(const Expr& lh, const Expr& rh) {
   return lh *= rh;
 }
 
-Expr&
+inline Expr&
 operator/=(const Expr& lh, const Expr& rh) {
   return lh /= rh;
 }
 
-bool
+inline bool
 operator==(const Expr& lh, const Expr& rh) {
   return lh == rh;
 }
 
-bool
+inline bool
 operator!=(const Expr& lh, const Expr& rh) {
   return lh != rh;
 }
 
-bool
+inline bool
 operator<(const Expr& lh, const Expr& rh) {
   return lh < rh;
 }
 
-bool
+inline bool
 operator>(const Expr& lh, const Expr& rh) {
   return lh > rh;
 }
 
-bool
+inline bool
 operator<=(const Expr& lh, const Expr& rh) {
   return lh <= rh;
 }
 
-bool
+inline bool
 operator>=(const Expr& lh, const Expr& rh) {
   return lh >= rh;
 }
