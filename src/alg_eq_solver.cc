@@ -415,7 +415,7 @@ find_roots(const GExpr& p, const GSymbol& x,
 static void
 solve_equation_2(const GExpr& b, const GExpr& c,
 		 GExpr& x1, GExpr& x2) {
-  Symbol n;
+  Symbol n("n");
   GExpr sqrt_d = sqrt(b*b - 4*c);
 
   D_MSGVAR("Before: ", sqrt_d);
@@ -447,7 +447,7 @@ solve_equation_2(const GExpr& b, const GExpr& c,
 bool
 solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
 		 GExpr& x1, GExpr& x2, GExpr& x3) {
-  Symbol n;
+  Symbol n("n");
   GNumber Q = (3*a2 - a1*a1) / 9;
   GNumber R = (9*a1*a2 - 27*a3 -2*a1*a1*a1) / 54;
   GNumber d = Q*Q*Q + R*R;
@@ -558,7 +558,7 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
 
   // FIXME: the one and only `n' symbol should be global,
   // i.e., created once and for all.
-  Symbol n;
+  Symbol n("n");
   p = simplify_on_output_ex(p, n, false);
   q = simplify_on_output_ex(q, n, false);
 
