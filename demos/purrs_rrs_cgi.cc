@@ -711,22 +711,33 @@ main() try {
   }
 
   if (have_exact_solution || have_lower_bound || have_upper_bound)
-    cout << br() << "for each n >= " << first_valid_index_for_solution
-	 << br() << endl;
+    cout << br() << "for each n >= " << first_valid_index_for_solution << endl;
 
-  if ((have_lower_bound || have_upper_bound) && !Sc_function.empty()) {
-    cout << "where " << Sc_function << br() << endl;
-    cout << "and" << endl;
-    for (std::map<index_type, Expr>::const_iterator i
-	   = initial_conditions.begin(),
-	   initial_conditions_end = initial_conditions.end(), j = i;
-	 i != initial_conditions_end; ++i) {
-      cout << "  x(" << i->first << ")"
-	   << " = " << i->second;
-      if (++j != initial_conditions_end)
-	cout << ", " << endl;
-      else
-	cout << ". " << endl;
+  if (have_lower_bound || have_upper_bound) {
+    // In the bound occurs the symbolic initial condition `x(1)'.
+    if (Sc_function.empty()) {
+      if (initial_conditions.empty())
+	cout << ", assuming x(1) >= 0," << endl;
+    }
+    // In the bound occurs the symbolic initial condition `x(Sc(n, b))'.
+    else {
+      if (initial_conditions.empty())
+	cout << ", assuming x(" << Sc_function.substr(0, 8) << ") >= 0,"
+	     << endl;
+      cout << br() << "where " << Sc_function << endl;
+      if (!initial_conditions.empty())
+	cout << br() << "and" << endl;
+      for (std::map<index_type, Expr>::const_iterator i
+	     = initial_conditions.begin(),
+	     initial_conditions_end = initial_conditions.end(), j = i;
+	   i != initial_conditions_end; ++i) {
+	cout << "  x(" << i->first << ")"
+	     << " = " << i->second;
+	if (++j != initial_conditions_end)
+	  cout << ", " << endl;
+	else
+	  cout << ". " << endl;
+      }
     }
   }
   
