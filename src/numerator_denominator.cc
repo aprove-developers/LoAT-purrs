@@ -34,7 +34,10 @@ http://www.cs.unipr.it/purrs/ . */
 // TEMPORARY
 #include <iostream>
 
-namespace Parma_Recurrence_Relation_Solver {
+namespace PURRS = Parma_Recurrence_Relation_Solver;
+
+namespace {
+using namespace PURRS;
 
 /*!
   Given \f$ e \f$ a factor of the \f$ i \f$-th term of a more general
@@ -410,8 +413,11 @@ numerator_denominator_factor(const Expr& e,
   }
 }
 
+} // anonymous namespace
+
 void
-numerator_denominator_purrs(const Expr& e, Expr& numerator, Expr& denominator) {
+PURRS::numerator_denominator_purrs(const Expr& e,
+				   Expr& numerator, Expr& denominator) {
   // The dimension of `numerators' and `denominators' is terms'number of `e'
   // and will contain the numerator and the denominator of each term of `e'.  
   std::vector<Expr> numerators;
@@ -441,8 +447,8 @@ numerator_denominator_purrs(const Expr& e, Expr& numerator, Expr& denominator) {
   where \f$ d \f$ is the product of common and not common factors of
   \f$ d_1, \cdots, d_k \f$ with maximum exponent.
 */
-Expr
-numerator(const Expr& e) {
+PURRS::Expr
+PURRS::numerator(const Expr& e) {
   Expr numerator;
   Expr denominator;
   numerator_denominator_purrs(e.distribute_mul_over_add(),
@@ -455,8 +461,8 @@ numerator(const Expr& e) {
   This function returns the product of common and not common factors of
   \f$ d_1, \cdots, d_k \f$ with maximum exponent.
 */
-Expr
-denominator(const Expr& e) {
+PURRS::Expr
+PURRS::denominator(const Expr& e) {
   Expr numerator;
   Expr denominator;
   numerator_denominator_purrs(e.distribute_mul_over_add(),
@@ -471,8 +477,8 @@ denominator(const Expr& e) {
   and not common factors of \f$ d_1, \cdots, d_k \f$ with maximum
   exponent and \f$ n = \sum_{i = 1}^k \frac{d}{d_i} n_i \f$.
 */
-Expr
-transform_in_single_fraction(const Expr& e) {
+PURRS::Expr
+PURRS::transform_in_single_fraction(const Expr& e) {
   Expr numerator;
   Expr denominator;
   numerator_denominator_purrs(e.distribute_mul_over_add(),
@@ -480,4 +486,3 @@ transform_in_single_fraction(const Expr& e) {
   return numerator / denominator;
 }
 
-} // namespace Parma_Recurrence_Relation_Solver

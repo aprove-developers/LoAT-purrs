@@ -31,8 +31,9 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Number.defs.hh"
 
 using namespace NTL;
+namespace PURRS = Parma_Recurrence_Relation_Solver;
 
-namespace Parma_Recurrence_Relation_Solver {
+namespace {
 
 static long
 ZZ_to_long(const ZZ& zz) {
@@ -46,8 +47,11 @@ ZZ_to_long(const ZZ& zz) {
   return (zz < 0) ? -r : r;
 }
 
+} // anonymous namespace
+
+
 int
-poly_factor(const Expr& p, const Symbol& x, std::vector<Expr>& factors) {
+PURRS::poly_factor(const Expr& p, const Symbol& x, std::vector<Expr>& factors) {
   assert(p.is_integer_polynomial());
   ZZX ntl_p;
   for (int i = p.ldegree(x), d = p.degree(x); i<= d; ++i) {
@@ -83,4 +87,3 @@ poly_factor(const Expr& p, const Symbol& x, std::vector<Expr>& factors) {
   return num_factors;
 }
 
-} // namespace Parma_Recurrence_Relation_Solver

@@ -49,7 +49,25 @@ http://www.cs.unipr.it/purrs/ . */
 #include <iostream>
 #include <fstream>
 
-namespace Parma_Recurrence_Relation_Solver {
+namespace PURRS = Parma_Recurrence_Relation_Solver;
+
+namespace {
+using namespace PURRS;
+
+static Expr
+compute_product(const Expr& e, const Symbol& n,
+		const Number& lower, const Expr& upper,
+		bool is_denominator = false);
+
+/*!
+  Returns an expression that is equivalent to \p e and that is
+  "maximally expanded" with respect to addition.  This amounts, among
+  other things, to distribute multiplication over addition.
+*/
+static Expr
+additive_form(const Expr& e) {
+  return e.expand();
+}
 
 /*!
   Returns <CODE>true</CODE> if \p e is of the form \f$ n - d \f$ with
@@ -336,737 +354,6 @@ subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
 }
 
 static void
-exp_poly_decomposition(const Expr& e, const Symbol& n,
-		       std::vector<Expr>& alpha,
-		       std::vector<Expr>& p,
-		       std::vector<Expr>& q);
-
-static void
-add_initial_conditions(const Expr& g_n, const Symbol& n,
-		       const std::vector<Number>& coefficients,
-		       const std::vector<Expr>& initial_conditions,
-		       Expr& solution);
-
-static Expr
-solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
-			     bool all_distinct, const Expr& e,
-			     const std::vector<Number>& coefficients,
-			     const std::vector<Polynomial_Root>& roots);
-
-static Expr
-solve_constant_coeff_order_k(const Symbol& n, Expr& g_n, int order,
-			     bool all_distinct, const Expr& e,
-			     const std::vector<Number>& coefficients,
-			     const std::vector<Polynomial_Root>& roots);
-
-
-static Expr
-compute_product(const Expr& e, const Symbol& n,
-		const Number& lower, const Expr& upper,
-		bool is_denominator = false);
-
-bool
-verify_solution(const Expr& solution, int order, const Expr& rhs,
-		const Symbol& n);
-
-Recurrence::Solver_Status
-Recurrence::check_powers_and_functions(const Expr& e, const Symbol& n) {
-  // If `x(n + k)' is the argument of an other function, then
-  // the recurrence is non-linear.
-  if (e.is_a_function()) {
-    for (unsigned i = e.nops(); i-- > 0; ) {
-      const Expr& operand = e.arg(i);
-      if (operand.is_the_x_function())
-	if (operand.arg(0).has(n))
-	  return NON_LINEAR_RECURRENCE;
-    }
-  }
-  // If `x(n + k)' is the base or the exponent of a power, then
-  // the recurrence is non-linear.
-  else if (e.is_a_power()) {
-    const Expr& base = e.arg(0);
-    const Expr& exponent = e.arg(1);
-    if (base.is_the_x_function())
-      if (base.arg(0).has(n))
-	return NON_LINEAR_RECURRENCE;
-    if (exponent.is_the_x_function())
-      if (exponent.arg(0).has(n))
-	return NON_LINEAR_RECURRENCE;
-  }
-  return OK;
-}
-
-Recurrence::Solver_Status
-Recurrence::find_non_linear_recurrence(const Expr& e, const Symbol& n) {
-  Solver_Status status;
-  unsigned num_summands = e.is_a_add() ? e.nops() : 1;
-  if (num_summands > 1)
-    for (unsigned i = num_summands; i-- > 0; ) {
-      const Expr& term = e.op(i);
-      unsigned num_factors = term.is_a_mul() ? term.nops() : 1;
-      if (num_factors == 1) {
-	status = check_powers_and_functions(term, n);
-	if (status != OK)
-	  return status;
-      }
-      else
-	for (unsigned j = num_factors; j-- > 0; ) {
-	  status = check_powers_and_functions(term.op(j), n);
-	  if (status != OK)
-	    return status;
-	}
-    }
-  else {
-    unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
-    if (num_factors == 1) {
-      status = check_powers_and_functions(e, n);
-      if (status != OK)
-	return status;
-    }
-    else
-      for (unsigned j = num_factors; j-- > 0; ) {
-	status = check_powers_and_functions(e.op(j), n);
-	if (status != OK)
-	  return status;
-      }
-  }
-  return OK;
-}
-
-Recurrence::Solver_Status
-Recurrence::compute_order(const Expr& argument, const Symbol& n, 
-			  int& order, unsigned long& index,
-			  unsigned long max_size) {
-  Number decrement;
-  if (!get_constant_decrement(argument, n, decrement))
-    return HAS_NON_INTEGER_DECREMENT;
-  if (decrement < 0)
-    return HAS_NEGATIVE_DECREMENT;
-  // Make sure that (1) we can represent `decrement' as a long, and
-  // (2) we will be able to store the coefficient into the
-  // appropriate position of the `coefficients' vector.
-  if (decrement >= LONG_MAX || decrement >= max_size)
-    return HAS_HUGE_DECREMENT;
-  
-  // The `order' is defined as the maximum value of `index'.
-  index = decrement.to_long();
-  if (order < 0 || index > unsigned(order))
-    order = index;
-  return OK;
-}
-  
-static void
-insert_coefficients(const Expr& coeff, unsigned long index,
-		    std::vector<Expr>& coefficients) {
-  // The vector `coefficients' contains in the `i'-th position the
-  // coefficient of `x(n-i)'.  The first position always contains 0.
-  if (index > coefficients.size())
-    coefficients.insert(coefficients.end(),
-			index - coefficients.size(),
-			Number(0));
-  if (index == coefficients.size())
-    coefficients.push_back(coeff);
-  else
-    coefficients[index] += coeff;
-}
-
-Recurrence::Solver_Status
-Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
-				   std::vector<Expr>& coefficients, int& order,
-				   bool& has_non_constant_coefficients) {
-  Solver_Status status;
-  unsigned long index;  
-  unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
-  if (num_factors == 1) {
-    if (r.is_the_x_function()) {
-      const Expr& argument = r.arg(0);
-      if (argument == n)
-	return HAS_NULL_DECREMENT;
-      else if (argument.is_a_add() && argument.nops() == 2) {
-	const Expr& first = argument.op(0);
-	const Expr& second = argument.op(1);
-	if ((first == n && second.is_a_number())
-	    || (second == n && first.is_a_number())) {
-	  status = compute_order(argument, n, order, index,
-				 coefficients.max_size());
-	  if (status != OK)
-	    return status;
-	  insert_coefficients(1, index, coefficients);
-	}
-	else
-	  return TOO_COMPLEX;
-      }
-      else if (argument.has(n))
-	return TOO_COMPLEX;
-      else
-	e += r;
-    }
-    else
-      e += r;
-  }
-  else {
-    Expr possibly_coeff = 1;
-    bool found_function_x = false;
-    bool found_n = false;
-    for (unsigned i = num_factors; i-- > 0; ) {
-      const Expr& factor = r.op(i);
-      if (factor.is_the_x_function()) {
-	const Expr& argument = factor.arg(0);
-	if (argument == n)
-	  return HAS_NULL_DECREMENT;
-	else if (argument.is_a_add() && argument.nops() == 2) {
-	  const Expr& first = argument.op(0);
-	  const Expr& second = argument.op(1);
-	  if ((first == n && second.is_a_number())
-	      || (second == n && first.is_a_number())) {
-	    if (found_function_x)
-	      return NON_LINEAR_RECURRENCE;
-	    status = compute_order(argument, n, order, index,
-				   coefficients.max_size());
-	    if (status != OK)
-	      return status;
-	    found_function_x = true;
-	  }
-	  else
-	    return TOO_COMPLEX;
-	}
-	else if (argument.has(n))
-	  return TOO_COMPLEX;
-	else
-	  possibly_coeff *= factor;
-      }
-      else {
-	if (factor.has(n))
-	  found_n = true;
-	possibly_coeff *= factor;
-      }
-    }
-    if (found_function_x) {
-      insert_coefficients(possibly_coeff, index, coefficients);
-      if (found_n)
-	has_non_constant_coefficients = true;
-    }
-    else
-      e += possibly_coeff;
-  }
-  return OK;
-}
-
-static void
-substitute_non_rational_roots(const Recurrence& rec,
-			      std::vector<Polynomial_Root>& roots) {
-  for (unsigned i = roots.size(); i-- > 0; )
-    if (roots[i].is_non_rational())
-      roots[i].value() = rec.insert_auxiliary_definition(roots[i].value());
-  D_VEC(roots, 0, roots.size()-1);
-}
-
-/*!
-  Returns an expression that is equivalent to \p e and that is
-  "maximally expanded" with respect to addition.  This amounts, among
-  other things, to distribute multiplication over addition.
-*/
-Expr
-additive_form(const Expr& e) {
-  return e.expand();
-}
-
-/*!
-  This function solves recurrences of SOME TYPE provided they are
-  supplied in SOME FORM. (Explain.)
-*/
-Recurrence::Solver_Status
-Recurrence::solve_easy_cases() const {
-  D_VAR(recurrence_rhs);
-  // The following code depends on the possibility of recovering
-  // the various parts of `rhs' as summands of an additive expression.
-  Expr expanded_rhs = additive_form(recurrence_rhs);
-
-  // Initialize the computation of the order of the linear part of the
-  // recurrence.  This works like the computation of a maximum: it is
-  // the maximum `k' such that `rhs = a*x(n-k) + b' where `a' is not
-  // syntactically 0. 
-  int order = -1;
-
-  // We will store here the coefficients of linear part of the recurrence.
-  std::vector<Expr> coefficients;
-
-  // Will be set to true if at least one element of coefficients is
-  // non-constant.
-  bool has_non_constant_coefficients = false;
-#if 0
-  do {
-    // These patterns are used repeatedly for pattern matching.
-    // We avoid recreating them over and over again by declaring
-    // them static.
-    static Expr x_i = x(wild(0));
-    static Expr x_i_plus_r = x_i + wild(1);
-    static Expr a_times_x_i = wild(1)*x_i;
-    static Expr a_times_x_i_plus_r = a_times_x_i + wild(2);
-
-    // This will hold the substitutions produced by the various match
-    // operations.
-    Expr_List substitution;
-    
-    // This will hold the index `i' in contexts of the form `x(i)'.
-    Expr i;
-    
-    // This will hold the coefficient `a' in contexts of the form
-    // `a*x(i)'.
-    Expr a;
-
-    // The following matches are attempted starting from the most
-    // common, then the second most common and so forth.  The check
-    // `if (!i.has(n))' is necessary because otherwise do not accept
-    // `x(i)' with `i' numeric in a general recurrence relation
-    // (es. x(n) = x(n-1)+x(0) or x(n) = x(n-1)*x(0)).
-    if (clear(substitution), e.match(x_i_plus_r, substitution)) {
-      i = get_binding(substitution, 0);
-      if (!i.has(n))
-	break;
-      a = 1;
-      e = get_binding(substitution, 1);
-    }
-    else if (clear(substitution), e.match(a_times_x_i_plus_r, substitution)) {
-      i = get_binding(substitution, 0);
-      if (!i.has(n))
-	break;
-      a = get_binding(substitution, 1);
-      e = get_binding(substitution, 2);
-    }
-    else if (clear(substitution), e.match(a_times_x_i, substitution)) {
-      i = get_binding(substitution, 0);
-      if (!i.has(n))
-	break;
-      a = get_binding(substitution, 1);
-      e = 0;
-    }
-    else if (clear(substitution), e.match(x_i, substitution)) {
-      i = get_binding(substitution, 0);
-      if (!i.has(n))
-	break;
-      a = 1;
-      e = 0;
-    }
-    else
-      break;
- 
-    Number decrement;
-    if (!get_constant_decrement(i, n, decrement))
-      return HAS_NON_INTEGER_DECREMENT;
-    if (decrement == 0)
-      return HAS_NULL_DECREMENT;
-    if (decrement < 0)
-      return HAS_NEGATIVE_DECREMENT;
-    // Make sure that (1) we can represent `decrement' as a long, and
-    // (2) we will be able to store the coefficient into the
-    // appropriate position of the `coefficients' vector.
-    if (decrement >= LONG_MAX || decrement >= coefficients.max_size())
-      return HAS_HUGE_DECREMENT;
-
-    // Detect non-constant coefficients, i.e., those with occurrences of `n'.
-    if (a.has(n))
-      has_non_constant_coefficients = true;
-
-    // The `order' is defined as the maximum value of `index'.
-    unsigned long index = decrement.to_long();
-    if (order < 0 || index > unsigned(order))
-      order = index;
-
-    // The vector `coefficients' contains in the `i'-th position the
-    // coefficient of `x(n-i)'.  The first position always contains 0.
-    if (index > coefficients.size())
-      coefficients.insert(coefficients.end(),
-			  index - coefficients.size(),
-			  Number(0));
-    if (index == coefficients.size())
-      coefficients.push_back(a);
-    else
-      coefficients[index] += a;
-  } while (!e.is_zero());
-#else
-  Expr e = 0;
-  Solver_Status status;
-  unsigned num_summands = expanded_rhs.is_a_add() ? expanded_rhs.nops() : 1;
-  if (num_summands > 1)
-    for (unsigned i = num_summands; i-- > 0; ) {
-      status = classification_summand(expanded_rhs.op(i), n, e, coefficients,
-				      order, has_non_constant_coefficients);
-      if (status != OK)
-	return status;
-    }
-  else {
-    status = classification_summand(expanded_rhs, n, e, coefficients, order,
-				    has_non_constant_coefficients);
-    if (status != OK)
-      return status;
-  }
-#endif
-  // Check if the recurrence is not linear, i.e. there is a non-linear term
-  // containig in `e' containing `x(a*n+b)'.
-  status = find_non_linear_recurrence(e, n);
-  if (status != OK)
-    return status;
-
-  // `e' is a function of `n', the parameters and of
-  // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
-  //  non-negative integers.
-  if (order < 0) {
-    solution = e;
-    return OK;
-  }
-  D_VAR(order);
-  D_VEC(coefficients, 1, order);
-  D_MSGVAR("Inhomogeneous term: ", e);
-
-  // Simplifies expanded expressions, in particular rewrites nested powers.
-  e = simplify_on_input_ex(e, n, true);
-
-  // FIXME: the initial conditions can not start always from 0:
-  // make a function for this check.
-  // Create the vector of initial conditions.
-  std::vector<Expr> initial_conditions(order);
-  for (int i = 0; i < order; ++i)
-    initial_conditions[i] = x(i);
-
-  // `num_coefficients' and `g_n' are defined here because they are
-  // necessary in the function `add_initial_conditions()' (at the end
-  // of function `solve()').
-  std::vector<Number> num_coefficients(order + 1);
-  Expr g_n;
-  switch (order) {
-  case 1:
-    {
-      Solver_Status status;
-      if (!has_non_constant_coefficients) {
-	Expr characteristic_eq;
-	std::vector<Polynomial_Root> roots;
-	bool all_distinct = true;
-	if (!characteristic_equation_and_its_roots(order, coefficients,
-						   num_coefficients,
-						   characteristic_eq, roots,
-						   all_distinct))
-	  return TOO_COMPLEX;
-	status = solve_constant_coeff_order_1(n, e, roots, initial_conditions,
-					      solution);
-      }
-      else
-	status = solve_variable_coeff_order_1(n, e, coefficients[1], solution);
-      if (status != OK) {
-	D_MSG("Summand not hypergeometric: no chance of using Gosper's "
-	      "algorithm");
-	return status;
-      }
-    }
-    break;
-
-  case 2:
-    if (!has_non_constant_coefficients) {
-      Expr characteristic_eq;
-      std::vector<Polynomial_Root> roots;
-      bool all_distinct = true;
-      if (!characteristic_equation_and_its_roots(order, coefficients,
-						 num_coefficients,
-						 characteristic_eq, roots,
-						 all_distinct))
-	return TOO_COMPLEX;
-      // If there is some root not rational then, for efficiency, we substitute
-      // it with an arbitrary symbol.
-      substitute_non_rational_roots(*this, roots);
-      solution = solve_constant_coeff_order_2(n, g_n, order, all_distinct,
-					      e, num_coefficients, roots);
-    }
-    else
-      // For the time being, we only solve second order
-      // recurrence relations with constant coefficients.
-      return TOO_COMPLEX;
-    break;
-
-  default:
-    if (!has_non_constant_coefficients) {
-      Expr characteristic_eq;
-      std::vector<Polynomial_Root> roots;
-      bool all_distinct = true;
-      if (!characteristic_equation_and_its_roots(order, coefficients,
-						 num_coefficients,
-						 characteristic_eq, roots,
-						 all_distinct)) {
-	D_MSG("Not found roots");
-	return TOO_COMPLEX;
-      }
-      // If there is some root not rational then, for efficiency, we substitute
-      // it with an arbitrary symbol.
-      substitute_non_rational_roots(*this, roots);
-      solution = solve_constant_coeff_order_k(n, g_n, order, all_distinct,
-					      e, num_coefficients, roots);
-    }
-    else
-      // For the time being, we only solve recurrence relations
-      // of order 3 and more only if they have constant coefficients.
-      return TOO_COMPLEX;
-    break;
-  }
-  
-  if (order > 1)
-    add_initial_conditions(g_n, n, num_coefficients, initial_conditions,
-			   solution);
-  D_MSGVAR("Before calling simplify: ", solution);
-  solution = simplify_on_output_ex(solution.expand(), n, false);
-  // Resubstitutes eventually auxiliary definitions contained in
-  // the solution with their original values.
-  //solution = substitute_auxiliary_definitions(solution);
-  // Only for the output.
-  // FIXME: the initial conditions can not start always from 0 then
-  // the following `for' is temporary.
-  if (solution.is_a_add()) {
-    Expr_List conditions;
-    for (unsigned i = order; i-- > 0; )
-      conditions.append(initial_conditions[i]);
-    // FIXME: `collect' throws an exception if the object to collect has
-    // non-integer exponent. 
-    solution = solution.collect(conditions);
-  }
-#if 0
-  if (!verify_solution(solution, order, recurrence_rhs, n)) {
-    std::cout << "x(n) = " << recurrence_rhs << std::endl;
-    std::cout << " -> solution wrong or not enough simplified." << std::endl;
-    std::cout << std::endl;
-  }
-#endif
-
-  return OK;
-}
-
-void
-impose_condition(const std::string&) {
-}
-
-/*!
-  If \p possibly_dec is greater than \p max_decrement then \p possibly_dec
-  becomes the new maximum decrement and it is assigned to \p max_decrement,
-  in this case \p possibly_coeff becomes the new \p coefficient.
-*/
-void
-assign_max_decrement_and_coeff(const Expr& possibly_dec,
-			       const Expr& possibly_coeff, const Symbol& n,
-			       int& max_decrement, Expr& coefficient) {
-  Number decrement;
-  get_constant_decrement(possibly_dec, n, decrement);
-  int dec = -decrement.to_int();
-  if (dec > max_decrement) {
-    max_decrement = dec;
-    coefficient = possibly_coeff;
-  }
-}
-
-/*!
-  Let \p e be the right hand side of a linear recurrence.
-  This functions seeks the largest positive integer \f$ j \f$ such that
-  \f$ x(n+j) \f$ occurs in \p e and its coefficient.
-  These two values are stored in \p max_decrement and \p coefficient,
-  respectively.
-*/
-void
-find_max_decrement_and_coeff(const Expr& e, const Symbol& n,
-			     const Expr& x_i, const Expr& a_times_x_i,
-			     int& max_decrement, Expr& coefficient) {
-  Expr_List substitution;
-  if (e.is_a_add()) {
-    for (unsigned j = e.nops(); j-- > 0; )
-      if (clear(substitution), e.op(j).match(a_times_x_i, substitution))
-	assign_max_decrement_and_coeff(get_binding(substitution, 0),
-				       get_binding(substitution, 1),
-				       n, max_decrement, coefficient);
-      else if (clear(substitution), e.op(j).match(x_i, substitution))
-	assign_max_decrement_and_coeff(get_binding(substitution, 0), 1,
-				       n, max_decrement, coefficient);
-  }
-  else if (e.is_a_mul()) {
-    if (clear(substitution), e.match(a_times_x_i, substitution))
-      assign_max_decrement_and_coeff(get_binding(substitution, 0),
-				     get_binding(substitution, 1),
-				     n, max_decrement, coefficient);
-  }
-  else
-    if (clear(substitution), e.match(x_i, substitution))
-      assign_max_decrement_and_coeff(get_binding(substitution, 0), 1,
-				     n, max_decrement, coefficient);
-}
-
-/*!
-  Assuming that \p rhs contains occurrences of \f$ x(n-k) \f$
-  where \f$ k \f$ is a negative integer, this function
-  performs suitable changes of variables that preserve the meaning of
-  the recurrence relation, but transforms it into its <EM>standard
-  form</EM> \f$ x(n) = new_rhs \f$, where \f$ new_rhs \f$
-  does not contain any instance of \f$ x(n-k) \f$, with a
-  negative integer \f$ k \f$.
-*/
-static void
-eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs,
-			      const Symbol& n) {
-  // Seeks `max_decrement', i.e., the largest positive integer `j' such that
-  // `x(n+j)' occurs in `rhs' with a coefficient `coefficient' which is not
-  // syntactically 0.
-  Expr x_i = x(wild(0));
-  Expr a_times_x_i = x_i * wild(1);
-  int max_decrement = INT_MIN;
-  Expr coefficient;
-  find_max_decrement_and_coeff(rhs, n, x_i, a_times_x_i,
-			       max_decrement, coefficient);
-  // The changes of variables includes replacing `n' by `n-max_decrement',
-  // changing sign, and division by `coefficient'.
-  new_rhs = rhs.subs(n, n-max_decrement);
-  new_rhs *= -1;
-  new_rhs = new_rhs.subs(x(n), - x(n-max_decrement)
-			 * pwr(coefficient, -1));
-  new_rhs /= coefficient;
-}
-
-/*!
-  Here we assume that \p rhs contains occurrences of \f$ x(n) \f$ itself.
-  Therefore the recurrence may be impossible.  This function decides
-  if this is the case and, if so, it returns <CODE>false</CODE>.  If the
-  recurrence is solvable, it is rewritten into its normal form, which
-  is then written in \f$ new_rhs \f$, and the function returns
-  <CODE>true</CODE>.
-*/
-static bool
-eliminate_null_decrements(const Expr& rhs, Expr& new_rhs,
-			  const Symbol& n) {
-  Expr_List substitution;
-  // Let `rhs = a*x(n) + b' and that `b' does different to zero
-  // and does not contain `x(n)'.  The following cases are possible:
-  // 1. If `a = 1' and `b' does not contain any occurrence of `x(n-k)'
-  //    where `k' is a positive integer, the recurrence is impossible.
-  // 2. If `a = 1' and `b' contains `x(n-k)' for some positive integer `k'
-  //    and with a coefficient that is not syntactically 0, we remove
-  //    `x(n)' from both sides of `x(n) = rhs', and then rewrite the
-  //    recurrence into its standard form.
-  // 3. If `a != 1' we move `a*x(n)' to the left-hand side, and divide
-  //    through by `1 - a', obtaining the standard form, which is 
-  //    `(rhs - a*x(n)) / (1-a)'.
-  if (rhs.is_a_add()) {
-    // Tries `a' and `b'.
-    Expr a;
-    Expr b = rhs;
-    for (unsigned j = rhs.nops(); j-- > 0; ) {
-      const Expr& term = rhs.op(j);
-      if (clear(substitution), term.match(x(n)*wild(0), substitution)) {
-	a = get_binding(substitution, 0);
-	b -= term;
-      }
-      else if (clear(substitution), term.match(x(n), substitution)) {
-	a = 1;
-	b -= term;
-      }
-    }
-    Expr x_i = x(wild(0));
-    Expr a_times_x_i = x_i * wild(1);
-    if (a == 1)
-      // Case 1.
-      if (!b.has(x_i) && !b.has(a_times_x_i))
-	return false;
-    // Case 2.
-      else {
-	// Seeks `max_decrement', i.e., the largest integer `j' (it may be
-	// non positive) such that `x(n+j)' occurs in `b' with a coefficient
-	// `coefficient' which is not syntactically 0.
-	int max_decrement = INT_MIN;
-	Expr coefficient;
-	find_max_decrement_and_coeff(b, n, x_i, a_times_x_i,
-				     max_decrement, coefficient);
-	// Rewrites the recurrence into its standard form:
-	// removes from `b' the term that will be the right hand side of the
-	// recurrence, i.e. `x(n+max_decrement)'; changes variable replacing
-	// `n+max_decrement' by `n', changes sign and divides for the
-	// coefficient of `x(n+max_decrement)'.
-	new_rhs = b - coefficient * x(n+max_decrement);
-	new_rhs = new_rhs.subs(n, n-max_decrement);
-	new_rhs *= -1;
-	new_rhs /= coefficient;
-      }
-    else {
-      // Case 3.
-      new_rhs = b * pwr(1 - a, -1);
-    }
-  }
-  // Let `rhs = a*x(n)'.
-  else if (rhs.is_a_mul()) {
-    if (clear(substitution), rhs.match(x(n)*wild(1), substitution))
-      new_rhs = 0;
-  }
-  // Let `rhs = x(n)'.
-  else if (rhs == x(n))
-    return false;
-  
-  return true;
-}
-
-/*!
-  This function solves recurrences of SOME TYPE provided they
-  are supplied in SOME FORM. (Explain.)
-  It does that by repeatedly calling solve() and handling
-  the errors that may arise.
-*/
-Recurrence::Solver_Status
-Recurrence::solve_try_hard() const {
-  bool exit_anyway = false;
-  Solver_Status status;
-  do {
-    status = solve_easy_cases();
-    switch (status) {
-    case OK:
-      break;
-    case HAS_NON_INTEGER_DECREMENT:
-    case HAS_HUGE_DECREMENT:
-    case TOO_COMPLEX:
-      {
-      D_MSG("too_complex");
-      exit_anyway = true;
-      }
-      break;
-    case HAS_NEGATIVE_DECREMENT:
-      {
-	Expr new_rhs;
-	eliminate_negative_decrements(recurrence_rhs, new_rhs, n);
-	D_MSGVAR("Recurrence tranformed: ", new_rhs);
-	recurrence_rhs = new_rhs;
-	status = solve_easy_cases();
-      }
-      break;
-    case HAS_NULL_DECREMENT:
-      {
-	Expr new_rhs;
-	if (eliminate_null_decrements(recurrence_rhs, new_rhs, n)) {
-	  D_MSGVAR("Recurrence tranformed: ", new_rhs);
-	  recurrence_rhs = new_rhs;
-	  status = solve_easy_cases();
-	}
-	else
-	  status = UNSOLVABLE_RECURRENCE;
-	exit_anyway = true;
-      }
-      break;
-    case NON_LINEAR_RECURRENCE:
-      {
-	D_MSG("non linear");
-	// FIXME: can we do something here to try to linearize the recurrence?
-	status = TOO_COMPLEX;
-	exit_anyway = true;
-      }
-      break;
-
-    default:
-      throw std::runtime_error("PURRS internal error: "
-			       "solve_try_hard().");
-      break;
-    }
-  } while (!exit_anyway && status != OK);
-  return status;
-}
-
-static void
 exp_poly_decomposition_factor(const Expr& base,
 			      const Expr& e, const Symbol& n,
 			      std::vector<Expr>& alpha,
@@ -1271,92 +558,6 @@ compute_sum_with_gosper_algorithm(const Symbol& n,
     solution += gosper_solution;
   }
   return true;
-}
-
-/*!
-  Consider the linear recurrence relation of first order with
-  constant coefficients
-  \f[
-    x_n = \lambda x_{n-1} + p(n),
-  \f]
-  where \f$ p(n) \f$ is a function defined over the natural numbers.
-  In this case we know the final formula that give the solution (we observe
-  that the coefficient coincides with the root of the characteristic
-  equation):
-  \f[
-    x_n = \lambda^n * x_0
-          + \sum_{k=1}^n \lambda^{n-k} p(k).
-  \f]
-*/
-Recurrence::Solver_Status
-Recurrence::
-solve_constant_coeff_order_1(const Symbol& n, const Expr& e,
-			     const std::vector<Polynomial_Root>& roots,
-			     const std::vector<Expr>& initial_conditions,
-			     Expr& solution) {
-  // We search exponentials in `n' (for this the expression `e'
-  // must be expanded).
-  // The vector `base_of_exps' contains the exponential's bases
-  // of all exponentials in `e'. In the `i'-th position of the vectors
-  // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
-  // the polynomial part and possibly non polynomial part of the coefficient
-  // of the exponential with the base in `i'-th position of `base_of_exp'.
-  // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
-  // coefficient of base_of_exps[i]^n.
-  std::vector<Expr> base_of_exps;
-  std::vector<Expr> exp_poly_coeff;
-  std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(e, n,
-			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
-  D_VEC(base_of_exps, 0, base_of_exps.size()-1);
-  D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
-  D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
-
-  solution = 0;
-  // Computes the sum when `\lambda^{n-k} p(k)' is a polynomial or
-  // a product of a polynomial times an exponential.
-  if (vector_not_all_zero(exp_poly_coeff)) {
-    Symbol alpha("alpha");
-    Symbol lambda("lambda");
-    std::vector<Expr> symbolic_sum_distinct;
-    std::vector<Expr> symbolic_sum_no_distinct;
-    compute_symbolic_sum(n, alpha, lambda, roots,
-			 base_of_exps, exp_poly_coeff,
-			 symbolic_sum_distinct, symbolic_sum_no_distinct);
-    // Substitutes to the sums in the vectors `symbolic_sum_distinct' or
-    // `symbolic_sum_no_distinct' the value of the characteristic equation's
-    // root and of the bases of the eventual exponentials.
-    // In `solution' put the sum of all sums of the vectors after the
-    // substitution.
-    solution = subs_to_sum_roots_and_bases(alpha, lambda, roots,
-					   base_of_exps,
-					   symbolic_sum_distinct,
-					   symbolic_sum_no_distinct);
-  }
-  // Computes the sum when `\lambda^{n-k} p(k)' is not a polynomial or
-  // a product of a polynomial times an exponential.
-  // The summand must be an hypergeometric term.
-  if (vector_not_all_zero(exp_no_poly_coeff)) {
-    Expr gosper_solution;
-    if (compute_sum_with_gosper_algorithm(n, 1, n,
-					  base_of_exps, exp_no_poly_coeff,
-					  roots, gosper_solution))
-      solution += gosper_solution;
-    else {
-      // FIXME: the summand is not hypergeometric:
-      // no chance of using Gosper's algorithm.
-      Symbol h;
-      solution += Parma_Recurrence_Relation_Solver::sum(h, 1, n, pwr(roots[0].value(), -h) * e.subs(n, h));
-    }
-  }
-  // FIXME: per ora non si puo' usare la funzione
-  // `add_initial_conditions' perche' richiede un vettore di
-  // `Number' come `coefficients' e voglio risolvere anche le
-  // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
-  // add_initial_conditions(g_n, n, coefficients, initial_conditions,
-  //		              solution);
-  solution += initial_conditions[0] * pwr(roots[0].value(), n);
-  return OK;
 }
 
 /*!
@@ -1643,12 +844,10 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
     }
     else {
       Symbol h;
-      solution
-	= diff_roots * (pwr(root_1, n+1)
-			* Parma_Recurrence_Relation_Solver::sum(h, 2, n,
-								pwr(root_1, -h) * e.subs(n, h))
-			- (pwr(root_2, n+1) * Parma_Recurrence_Relation_Solver::sum(h, 2, n,
-						  pwr(root_2, -h) * e.subs(n, h))));
+      solution = diff_roots
+	* (pwr(root_1, n+1) * PURRS::sum(h, 2, n, pwr(root_1, -h) * e.subs(n, h))
+	   - (pwr(root_2, n+1) * PURRS::sum(h, 2, n,
+					    pwr(root_2, -h) * e.subs(n, h))));
     }
   }
   else {
@@ -1666,8 +865,7 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
 					      exp_poly_coeff);
     else {
       Symbol h;
-      solution = Parma_Recurrence_Relation_Solver::sum(h, 2, n,
-						       g_n.subs(n, n - h) * e.subs(n, h));
+      solution = PURRS::sum(h, 2, n, g_n.subs(n, n - h) * e.subs(n, h));
     }
   }
   return solution;
@@ -1774,8 +972,7 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
     }
     else {
       Symbol h;
-      solution = Parma_Recurrence_Relation_Solver::sum(h, order, n,
-						       g_n.subs(n, n - h) * e.subs(n, h));
+      solution = PURRS::sum(h, order, n, g_n.subs(n, n - h) * e.subs(n, h));
     }
   else
     if (!vector_not_all_zero(exp_no_poly_coeff))
@@ -1784,8 +981,7 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
 					      exp_poly_coeff);
     else {
       Symbol h;
-      solution = Parma_Recurrence_Relation_Solver::sum(h, order, n,
-						       g_n.subs(n, n - h) * e.subs(n, h));
+      solution = PURRS::sum(h, order, n, g_n.subs(n, n - h) * e.subs(n, h));
     }
   return solution;
 }
@@ -1878,7 +1074,7 @@ compute_product_on_add(const Expr& e, const Symbol& n,
   }
   if (!e_prod_computed) {
     Symbol h;
-    e_prod = Parma_Recurrence_Relation_Solver::prod(h, lower, upper, e.subs(n, h));
+    e_prod = PURRS::prod(h, lower, upper, e.subs(n, h));
   }
   return e_prod;
 }
@@ -1934,7 +1130,7 @@ compute_product_on_power(const Expr& e, const Symbol& n,
   }
   if (!e_prod_computed) {
     Symbol h;
-    e_prod = Parma_Recurrence_Relation_Solver::prod(h, lower, upper, e.subs(n, h));
+    e_prod = PURRS::prod(h, lower, upper, e.subs(n, h));
   }
   return e_prod;
 }
@@ -2024,7 +1220,7 @@ compute_product(const Expr& e, const Symbol& n,
   }
   else {
     Symbol h;
-    e_prod = Parma_Recurrence_Relation_Solver::prod(h, lower, upper, e.subs(n, h));
+    e_prod = PURRS::prod(h, lower, upper, e.subs(n, h));
   }
   return e_prod;
 }
@@ -2060,109 +1256,175 @@ find_parameters(const Expr& e, const Symbol& n) {
   return false;
 }
 
+#if 0
+static void
+impose_condition(const std::string&) {
+}
+#endif
+
 /*!
-  Consider the linear recurrence relation of first order with
-  constant coefficients
-  \f[
-    x_n = \alpha(n) x_{n-1} + p(n),
-  \f]
-  where \f$ p(n) \f$ is a function defined over the natural numbers and
-  \f$ \alpha \f$ is not constant.
-  We set \f$ y_n \defeq x_n/\alpha!(n) \f$, where
-  \f[
-    \alpha!(0) \defeq 1,
-    \qquad
-    \alpha!(n) \defeq \prod_{k=1}^n \alpha(k).
-  \f]
-  We find that \f$ y_n \f$ satisfies the recurrence
-  \f[
-    y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}
-  \f]
-  whose solution is
-  \f[
-    y_n = x_0 + \sum_{k=1}^n \frac{p(k)}{k!},
-  \f]
-  so that our problem has been brought to the computation of a finite sum.
-  At the end we find the formula for \f$ x_n \f$:
-  \f[
-    x_n = y_n \cdot \alpha!(n).
-  \f]
+  If \p possibly_dec is greater than \p max_decrement then \p possibly_dec
+  becomes the new maximum decrement and it is assigned to \p max_decrement,
+  in this case \p possibly_coeff becomes the new \p coefficient.
 */
-Recurrence::Solver_Status
-Recurrence::
-solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
-			     const Expr& coefficient, Expr& solution) {
-  if (find_parameters(denominator(coefficient), n)) {
-    D_MSG("Variable coefficient with parameters in the denominator");
-    return TOO_COMPLEX;
+static void
+assign_max_decrement_and_coeff(const Expr& possibly_dec,
+			       const Expr& possibly_coeff, const Symbol& n,
+			       int& max_decrement, Expr& coefficient) {
+  Number decrement;
+  get_constant_decrement(possibly_dec, n, decrement);
+  int dec = -decrement.to_int();
+  if (dec > max_decrement) {
+    max_decrement = dec;
+    coefficient = possibly_coeff;
   }
-  Expr tmp;
-  if (p_n == 0)
-    tmp = coefficient;
-  else
-    tmp = p_n * coefficient;
-  // `i_c' is the positive integer, if exists, that cancels the common
-  // denominator of the recurrence; 0 otherwise.
-  Number i_c;
-  bool shift_initial_conditions = domain_recurrence(n, tmp, i_c);
-  Expr alpha_factorial;
-  if (shift_initial_conditions)
-    alpha_factorial
-      = compute_product(transform_in_single_fraction(coefficient),
-			n, i_c + 2, n);
-  else
-    alpha_factorial
-      = compute_product(transform_in_single_fraction(coefficient), n, 1, n);
-  D_VAR(alpha_factorial);
-  // Compute the non-homogeneous term for the recurrence
-  // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
-  // In this case is better to jump a part of Gosper's step one:
-  // `r(n) = \frac{t(n+1)}{t(n)}
-  //       = \frac{p(n+1)}{\alpha!(n+1)} * \frac{\alpha!(n)}{p(n)}
-  //       = \frac{p(n+1)}{p(n) * \alpha(n+1)}'.
-  Expr new_p_n;
-  if (!p_n.is_zero()) {
-    new_p_n = p_n.subs(n, n+1) / (p_n * coefficient.subs(n, n+1));
-    new_p_n = simplify_on_output_ex(new_p_n.expand(), n, false);
-    new_p_n = simplify_numer_denom(new_p_n);
-    D_VAR(new_p_n);
-    std::vector<Expr> base_of_exps;
-    std::vector<Expr> exp_poly_coeff;
-    std::vector<Expr> exp_no_poly_coeff;
-    exp_poly_decomposition(new_p_n, n,
-			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
-    std::vector<Polynomial_Root> new_roots;
-    new_roots.push_back(Polynomial_Root(Expr(1), RATIONAL));
-    if (!compute_sum_with_gosper_algorithm(n, 1, n, base_of_exps,
-					   exp_poly_coeff, exp_no_poly_coeff,
-					   new_roots, p_n/alpha_factorial,
-					   solution)) {
-      // FIXME: the summand is not hypergeometric:
-      // no chance of using Gosper's algorithm.
-      // vedere direttamente il rapporto p(k)/alpha!(k) se e' sommabile
-      // (forse prima di vedere gosper)
-      Symbol h;
-      solution += Parma_Recurrence_Relation_Solver::sum(h, 1, n,
-							pwr(coefficient, -h) * p_n.subs(n, h));
-      return OK;
-    }
-    // To do this cycle or to consider `c_i + 2' as the lower limit of
-    // the sum is the same thing,  but so is better for the output.
-    Number j = 1;
-    if (shift_initial_conditions)
-      j = i_c + 2;
-    for (Number i = 1; i < j; ++i)
-      solution -= (p_n / alpha_factorial).subs(n, i);
-  }
-  if (shift_initial_conditions)
-    solution += x(i_c + 1);
-  else
-    solution += x(i_c);
-  solution *= alpha_factorial;
-  return OK;
 }
 
+/*!
+  Let \p e be the right hand side of a linear recurrence.
+  This functions seeks the largest positive integer \f$ j \f$ such that
+  \f$ x(n+j) \f$ occurs in \p e and its coefficient.
+  These two values are stored in \p max_decrement and \p coefficient,
+  respectively.
+*/
+static void
+find_max_decrement_and_coeff(const Expr& e, const Symbol& n,
+			     const Expr& x_i, const Expr& a_times_x_i,
+			     int& max_decrement, Expr& coefficient) {
+  Expr_List substitution;
+  if (e.is_a_add()) {
+    for (unsigned j = e.nops(); j-- > 0; )
+      if (clear(substitution), e.op(j).match(a_times_x_i, substitution))
+	assign_max_decrement_and_coeff(get_binding(substitution, 0),
+				       get_binding(substitution, 1),
+				       n, max_decrement, coefficient);
+      else if (clear(substitution), e.op(j).match(x_i, substitution))
+	assign_max_decrement_and_coeff(get_binding(substitution, 0), 1,
+				       n, max_decrement, coefficient);
+  }
+  else if (e.is_a_mul()) {
+    if (clear(substitution), e.match(a_times_x_i, substitution))
+      assign_max_decrement_and_coeff(get_binding(substitution, 0),
+				     get_binding(substitution, 1),
+				     n, max_decrement, coefficient);
+  }
+  else
+    if (clear(substitution), e.match(x_i, substitution))
+      assign_max_decrement_and_coeff(get_binding(substitution, 0), 1,
+				     n, max_decrement, coefficient);
+}
 
+/*!
+  Assuming that \p rhs contains occurrences of \f$ x(n-k) \f$
+  where \f$ k \f$ is a negative integer, this function
+  performs suitable changes of variables that preserve the meaning of
+  the recurrence relation, but transforms it into its <EM>standard
+  form</EM> \f$ x(n) = new_rhs \f$, where \f$ new_rhs \f$
+  does not contain any instance of \f$ x(n-k) \f$, with a
+  negative integer \f$ k \f$.
+*/
+static void
+eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs,
+			      const Symbol& n) {
+  // Seeks `max_decrement', i.e., the largest positive integer `j' such that
+  // `x(n+j)' occurs in `rhs' with a coefficient `coefficient' which is not
+  // syntactically 0.
+  Expr x_i = x(wild(0));
+  Expr a_times_x_i = x_i * wild(1);
+  int max_decrement = INT_MIN;
+  Expr coefficient;
+  find_max_decrement_and_coeff(rhs, n, x_i, a_times_x_i,
+			       max_decrement, coefficient);
+  // The changes of variables includes replacing `n' by `n-max_decrement',
+  // changing sign, and division by `coefficient'.
+  new_rhs = rhs.subs(n, n-max_decrement);
+  new_rhs *= -1;
+  new_rhs = new_rhs.subs(x(n), - x(n-max_decrement)
+			 * pwr(coefficient, -1));
+  new_rhs /= coefficient;
+}
+
+/*!
+  Here we assume that \p rhs contains occurrences of \f$ x(n) \f$ itself.
+  Therefore the recurrence may be impossible.  This function decides
+  if this is the case and, if so, it returns <CODE>false</CODE>.  If the
+  recurrence is solvable, it is rewritten into its normal form, which
+  is then written in \f$ new_rhs \f$, and the function returns
+  <CODE>true</CODE>.
+*/
+static bool
+eliminate_null_decrements(const Expr& rhs, Expr& new_rhs,
+			  const Symbol& n) {
+  Expr_List substitution;
+  // Let `rhs = a*x(n) + b' and that `b' does different to zero
+  // and does not contain `x(n)'.  The following cases are possible:
+  // 1. If `a = 1' and `b' does not contain any occurrence of `x(n-k)'
+  //    where `k' is a positive integer, the recurrence is impossible.
+  // 2. If `a = 1' and `b' contains `x(n-k)' for some positive integer `k'
+  //    and with a coefficient that is not syntactically 0, we remove
+  //    `x(n)' from both sides of `x(n) = rhs', and then rewrite the
+  //    recurrence into its standard form.
+  // 3. If `a != 1' we move `a*x(n)' to the left-hand side, and divide
+  //    through by `1 - a', obtaining the standard form, which is 
+  //    `(rhs - a*x(n)) / (1-a)'.
+  if (rhs.is_a_add()) {
+    // Tries `a' and `b'.
+    Expr a;
+    Expr b = rhs;
+    for (unsigned j = rhs.nops(); j-- > 0; ) {
+      const Expr& term = rhs.op(j);
+      if (clear(substitution), term.match(x(n)*wild(0), substitution)) {
+	a = get_binding(substitution, 0);
+	b -= term;
+      }
+      else if (clear(substitution), term.match(x(n), substitution)) {
+	a = 1;
+	b -= term;
+      }
+    }
+    Expr x_i = x(wild(0));
+    Expr a_times_x_i = x_i * wild(1);
+    if (a == 1)
+      // Case 1.
+      if (!b.has(x_i) && !b.has(a_times_x_i))
+	return false;
+    // Case 2.
+      else {
+	// Seeks `max_decrement', i.e., the largest integer `j' (it may be
+	// non positive) such that `x(n+j)' occurs in `b' with a coefficient
+	// `coefficient' which is not syntactically 0.
+	int max_decrement = INT_MIN;
+	Expr coefficient;
+	find_max_decrement_and_coeff(b, n, x_i, a_times_x_i,
+				     max_decrement, coefficient);
+	// Rewrites the recurrence into its standard form:
+	// removes from `b' the term that will be the right hand side of the
+	// recurrence, i.e. `x(n+max_decrement)'; changes variable replacing
+	// `n+max_decrement' by `n', changes sign and divides for the
+	// coefficient of `x(n+max_decrement)'.
+	new_rhs = b - coefficient * x(n+max_decrement);
+	new_rhs = new_rhs.subs(n, n-max_decrement);
+	new_rhs *= -1;
+	new_rhs /= coefficient;
+      }
+    else {
+      // Case 3.
+      new_rhs = b * pwr(1 - a, -1);
+    }
+  }
+  // Let `rhs = a*x(n)'.
+  else if (rhs.is_a_mul()) {
+    if (clear(substitution), rhs.match(x(n)*wild(1), substitution))
+      new_rhs = 0;
+  }
+  // Let `rhs = x(n)'.
+  else if (rhs == x(n))
+    return false;
+  
+  return true;
+}
+
+#if 0
 static void
 print_bad_exp(const Expr& e, const Expr rhs, bool conditions) {
   std::ofstream outfile("not_verified.out", std::ios_base::app);
@@ -2222,7 +1484,7 @@ find_term_without_initial_conditions(const Expr& term) {
   FIXME: In the latter case, we will need more powerful tools to
   decide whether the solution is right or it is really wrong.
 */
-bool
+static bool
 verify_solution(const Expr& solution, int order, const Expr& rhs,
 		const Symbol& n) {
   // FIXME: the initial conditions can not start always from 0:
@@ -2290,5 +1552,720 @@ verify_solution(const Expr& solution, int order, const Expr& rhs,
   }
   return true;
 }
+#endif
 
-} // namespace Parma_Recurrence_Relation_Solver
+} // anonymous namespace
+
+// bool
+// verify_solution(const Expr& solution, int order, const Expr& rhs,
+// 		const Symbol& n);
+
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::check_powers_and_functions(const Expr& e, const Symbol& n) {
+  // If `x(n + k)' is the argument of an other function, then
+  // the recurrence is non-linear.
+  if (e.is_a_function()) {
+    for (unsigned i = e.nops(); i-- > 0; ) {
+      const Expr& operand = e.arg(i);
+      if (operand.is_the_x_function())
+	if (operand.arg(0).has(n))
+	  return NON_LINEAR_RECURRENCE;
+    }
+  }
+  // If `x(n + k)' is the base or the exponent of a power, then
+  // the recurrence is non-linear.
+  else if (e.is_a_power()) {
+    const Expr& base = e.arg(0);
+    const Expr& exponent = e.arg(1);
+    if (base.is_the_x_function())
+      if (base.arg(0).has(n))
+	return NON_LINEAR_RECURRENCE;
+    if (exponent.is_the_x_function())
+      if (exponent.arg(0).has(n))
+	return NON_LINEAR_RECURRENCE;
+  }
+  return OK;
+}
+
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::find_non_linear_recurrence(const Expr& e, const Symbol& n) {
+  Solver_Status status;
+  unsigned num_summands = e.is_a_add() ? e.nops() : 1;
+  if (num_summands > 1)
+    for (unsigned i = num_summands; i-- > 0; ) {
+      const Expr& term = e.op(i);
+      unsigned num_factors = term.is_a_mul() ? term.nops() : 1;
+      if (num_factors == 1) {
+	status = check_powers_and_functions(term, n);
+	if (status != OK)
+	  return status;
+      }
+      else
+	for (unsigned j = num_factors; j-- > 0; ) {
+	  status = check_powers_and_functions(term.op(j), n);
+	  if (status != OK)
+	    return status;
+	}
+    }
+  else {
+    unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
+    if (num_factors == 1) {
+      status = check_powers_and_functions(e, n);
+      if (status != OK)
+	return status;
+    }
+    else
+      for (unsigned j = num_factors; j-- > 0; ) {
+	status = check_powers_and_functions(e.op(j), n);
+	if (status != OK)
+	  return status;
+      }
+  }
+  return OK;
+}
+
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::compute_order(const Expr& argument, const Symbol& n, 
+				 int& order, unsigned long& index,
+				 unsigned long max_size) {
+  Number decrement;
+  if (!get_constant_decrement(argument, n, decrement))
+    return HAS_NON_INTEGER_DECREMENT;
+  if (decrement < 0)
+    return HAS_NEGATIVE_DECREMENT;
+  // Make sure that (1) we can represent `decrement' as a long, and
+  // (2) we will be able to store the coefficient into the
+  // appropriate position of the `coefficients' vector.
+  if (decrement >= LONG_MAX || decrement >= max_size)
+    return HAS_HUGE_DECREMENT;
+  
+  // The `order' is defined as the maximum value of `index'.
+  index = decrement.to_long();
+  if (order < 0 || index > unsigned(order))
+    order = index;
+  return OK;
+}
+  
+static void
+insert_coefficients(const Expr& coeff, unsigned long index,
+		    std::vector<Expr>& coefficients) {
+  // The vector `coefficients' contains in the `i'-th position the
+  // coefficient of `x(n-i)'.  The first position always contains 0.
+  if (index > coefficients.size())
+    coefficients.insert(coefficients.end(),
+			index - coefficients.size(),
+			Number(0));
+  if (index == coefficients.size())
+    coefficients.push_back(coeff);
+  else
+    coefficients[index] += coeff;
+}
+
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
+					  std::vector<Expr>& coefficients,
+					  int& order,
+					  bool& has_non_constant_coefficients) {
+  Solver_Status status;
+  unsigned long index;  
+  unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
+  if (num_factors == 1) {
+    if (r.is_the_x_function()) {
+      const Expr& argument = r.arg(0);
+      if (argument == n)
+	return HAS_NULL_DECREMENT;
+      else if (argument.is_a_add() && argument.nops() == 2) {
+	const Expr& first = argument.op(0);
+	const Expr& second = argument.op(1);
+	if ((first == n && second.is_a_number())
+	    || (second == n && first.is_a_number())) {
+	  status = compute_order(argument, n, order, index,
+				 coefficients.max_size());
+	  if (status != OK)
+	    return status;
+	  insert_coefficients(1, index, coefficients);
+	}
+	else
+	  return TOO_COMPLEX;
+      }
+      else if (argument.has(n))
+	return TOO_COMPLEX;
+      else
+	e += r;
+    }
+    else
+      e += r;
+  }
+  else {
+    Expr possibly_coeff = 1;
+    bool found_function_x = false;
+    bool found_n = false;
+    for (unsigned i = num_factors; i-- > 0; ) {
+      const Expr& factor = r.op(i);
+      if (factor.is_the_x_function()) {
+	const Expr& argument = factor.arg(0);
+	if (argument == n)
+	  return HAS_NULL_DECREMENT;
+	else if (argument.is_a_add() && argument.nops() == 2) {
+	  const Expr& first = argument.op(0);
+	  const Expr& second = argument.op(1);
+	  if ((first == n && second.is_a_number())
+	      || (second == n && first.is_a_number())) {
+	    if (found_function_x)
+	      return NON_LINEAR_RECURRENCE;
+	    status = compute_order(argument, n, order, index,
+				   coefficients.max_size());
+	    if (status != OK)
+	      return status;
+	    found_function_x = true;
+	  }
+	  else
+	    return TOO_COMPLEX;
+	}
+	else if (argument.has(n))
+	  return TOO_COMPLEX;
+	else
+	  possibly_coeff *= factor;
+      }
+      else {
+	if (factor.has(n))
+	  found_n = true;
+	possibly_coeff *= factor;
+      }
+    }
+    if (found_function_x) {
+      insert_coefficients(possibly_coeff, index, coefficients);
+      if (found_n)
+	has_non_constant_coefficients = true;
+    }
+    else
+      e += possibly_coeff;
+  }
+  return OK;
+}
+
+static void
+substitute_non_rational_roots(const Recurrence& rec,
+			      std::vector<Polynomial_Root>& roots) {
+  for (unsigned i = roots.size(); i-- > 0; )
+    if (roots[i].is_non_rational())
+      roots[i].value() = rec.insert_auxiliary_definition(roots[i].value());
+  D_VEC(roots, 0, roots.size()-1);
+}
+
+/*!
+  This function solves recurrences of SOME TYPE provided they are
+  supplied in SOME FORM. (Explain.)
+*/
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::solve_easy_cases() const {
+  D_VAR(recurrence_rhs);
+  // The following code depends on the possibility of recovering
+  // the various parts of `rhs' as summands of an additive expression.
+  Expr expanded_rhs = additive_form(recurrence_rhs);
+
+  // Initialize the computation of the order of the linear part of the
+  // recurrence.  This works like the computation of a maximum: it is
+  // the maximum `k' such that `rhs = a*x(n-k) + b' where `a' is not
+  // syntactically 0. 
+  int order = -1;
+
+  // We will store here the coefficients of linear part of the recurrence.
+  std::vector<Expr> coefficients;
+
+  // Will be set to true if at least one element of coefficients is
+  // non-constant.
+  bool has_non_constant_coefficients = false;
+#if 0
+  do {
+    // These patterns are used repeatedly for pattern matching.
+    // We avoid recreating them over and over again by declaring
+    // them static.
+    static Expr x_i = x(wild(0));
+    static Expr x_i_plus_r = x_i + wild(1);
+    static Expr a_times_x_i = wild(1)*x_i;
+    static Expr a_times_x_i_plus_r = a_times_x_i + wild(2);
+
+    // This will hold the substitutions produced by the various match
+    // operations.
+    Expr_List substitution;
+    
+    // This will hold the index `i' in contexts of the form `x(i)'.
+    Expr i;
+    
+    // This will hold the coefficient `a' in contexts of the form
+    // `a*x(i)'.
+    Expr a;
+
+    // The following matches are attempted starting from the most
+    // common, then the second most common and so forth.  The check
+    // `if (!i.has(n))' is necessary because otherwise do not accept
+    // `x(i)' with `i' numeric in a general recurrence relation
+    // (es. x(n) = x(n-1)+x(0) or x(n) = x(n-1)*x(0)).
+    if (clear(substitution), e.match(x_i_plus_r, substitution)) {
+      i = get_binding(substitution, 0);
+      if (!i.has(n))
+	break;
+      a = 1;
+      e = get_binding(substitution, 1);
+    }
+    else if (clear(substitution), e.match(a_times_x_i_plus_r, substitution)) {
+      i = get_binding(substitution, 0);
+      if (!i.has(n))
+	break;
+      a = get_binding(substitution, 1);
+      e = get_binding(substitution, 2);
+    }
+    else if (clear(substitution), e.match(a_times_x_i, substitution)) {
+      i = get_binding(substitution, 0);
+      if (!i.has(n))
+	break;
+      a = get_binding(substitution, 1);
+      e = 0;
+    }
+    else if (clear(substitution), e.match(x_i, substitution)) {
+      i = get_binding(substitution, 0);
+      if (!i.has(n))
+	break;
+      a = 1;
+      e = 0;
+    }
+    else
+      break;
+ 
+    Number decrement;
+    if (!get_constant_decrement(i, n, decrement))
+      return HAS_NON_INTEGER_DECREMENT;
+    if (decrement == 0)
+      return HAS_NULL_DECREMENT;
+    if (decrement < 0)
+      return HAS_NEGATIVE_DECREMENT;
+    // Make sure that (1) we can represent `decrement' as a long, and
+    // (2) we will be able to store the coefficient into the
+    // appropriate position of the `coefficients' vector.
+    if (decrement >= LONG_MAX || decrement >= coefficients.max_size())
+      return HAS_HUGE_DECREMENT;
+
+    // Detect non-constant coefficients, i.e., those with occurrences of `n'.
+    if (a.has(n))
+      has_non_constant_coefficients = true;
+
+    // The `order' is defined as the maximum value of `index'.
+    unsigned long index = decrement.to_long();
+    if (order < 0 || index > unsigned(order))
+      order = index;
+
+    // The vector `coefficients' contains in the `i'-th position the
+    // coefficient of `x(n-i)'.  The first position always contains 0.
+    if (index > coefficients.size())
+      coefficients.insert(coefficients.end(),
+			  index - coefficients.size(),
+			  Number(0));
+    if (index == coefficients.size())
+      coefficients.push_back(a);
+    else
+      coefficients[index] += a;
+  } while (!e.is_zero());
+#else
+  Expr e = 0;
+  Solver_Status status;
+  unsigned num_summands = expanded_rhs.is_a_add() ? expanded_rhs.nops() : 1;
+  if (num_summands > 1)
+    for (unsigned i = num_summands; i-- > 0; ) {
+      status = classification_summand(expanded_rhs.op(i), n, e, coefficients,
+				      order, has_non_constant_coefficients);
+      if (status != OK)
+	return status;
+    }
+  else {
+    status = classification_summand(expanded_rhs, n, e, coefficients, order,
+				    has_non_constant_coefficients);
+    if (status != OK)
+      return status;
+  }
+#endif
+  // Check if the recurrence is not linear, i.e. there is a non-linear term
+  // containig in `e' containing `x(a*n+b)'.
+  status = find_non_linear_recurrence(e, n);
+  if (status != OK)
+    return status;
+
+  // `e' is a function of `n', the parameters and of
+  // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
+  //  non-negative integers.
+  if (order < 0) {
+    solution = e;
+    return OK;
+  }
+  D_VAR(order);
+  D_VEC(coefficients, 1, order);
+  D_MSGVAR("Inhomogeneous term: ", e);
+
+  // Simplifies expanded expressions, in particular rewrites nested powers.
+  e = simplify_on_input_ex(e, n, true);
+
+  // FIXME: the initial conditions can not start always from 0:
+  // make a function for this check.
+  // Create the vector of initial conditions.
+  std::vector<Expr> initial_conditions(order);
+  for (int i = 0; i < order; ++i)
+    initial_conditions[i] = x(i);
+
+  // `num_coefficients' and `g_n' are defined here because they are
+  // necessary in the function `add_initial_conditions()' (at the end
+  // of function `solve()').
+  std::vector<Number> num_coefficients(order + 1);
+  Expr g_n;
+  switch (order) {
+  case 1:
+    {
+      Solver_Status status;
+      if (!has_non_constant_coefficients) {
+	Expr characteristic_eq;
+	std::vector<Polynomial_Root> roots;
+	bool all_distinct = true;
+	if (!characteristic_equation_and_its_roots(order, coefficients,
+						   num_coefficients,
+						   characteristic_eq, roots,
+						   all_distinct))
+	  return TOO_COMPLEX;
+	status = solve_constant_coeff_order_1(n, e, roots, initial_conditions,
+					      solution);
+      }
+      else
+	status = solve_variable_coeff_order_1(n, e, coefficients[1], solution);
+      if (status != OK) {
+	D_MSG("Summand not hypergeometric: no chance of using Gosper's "
+	      "algorithm");
+	return status;
+      }
+    }
+    break;
+
+  case 2:
+    if (!has_non_constant_coefficients) {
+      Expr characteristic_eq;
+      std::vector<Polynomial_Root> roots;
+      bool all_distinct = true;
+      if (!characteristic_equation_and_its_roots(order, coefficients,
+						 num_coefficients,
+						 characteristic_eq, roots,
+						 all_distinct))
+	return TOO_COMPLEX;
+      // If there is some root not rational then, for efficiency, we substitute
+      // it with an arbitrary symbol.
+      substitute_non_rational_roots(*this, roots);
+      solution = solve_constant_coeff_order_2(n, g_n, order, all_distinct,
+					      e, num_coefficients, roots);
+    }
+    else
+      // For the time being, we only solve second order
+      // recurrence relations with constant coefficients.
+      return TOO_COMPLEX;
+    break;
+
+  default:
+    if (!has_non_constant_coefficients) {
+      Expr characteristic_eq;
+      std::vector<Polynomial_Root> roots;
+      bool all_distinct = true;
+      if (!characteristic_equation_and_its_roots(order, coefficients,
+						 num_coefficients,
+						 characteristic_eq, roots,
+						 all_distinct)) {
+	D_MSG("Not found roots");
+	return TOO_COMPLEX;
+      }
+      // If there is some root not rational then, for efficiency, we substitute
+      // it with an arbitrary symbol.
+      substitute_non_rational_roots(*this, roots);
+      solution = solve_constant_coeff_order_k(n, g_n, order, all_distinct,
+					      e, num_coefficients, roots);
+    }
+    else
+      // For the time being, we only solve recurrence relations
+      // of order 3 and more only if they have constant coefficients.
+      return TOO_COMPLEX;
+    break;
+  }
+  
+  if (order > 1)
+    add_initial_conditions(g_n, n, num_coefficients, initial_conditions,
+			   solution);
+  D_MSGVAR("Before calling simplify: ", solution);
+  solution = simplify_on_output_ex(solution.expand(), n, false);
+  // Resubstitutes eventually auxiliary definitions contained in
+  // the solution with their original values.
+  //solution = substitute_auxiliary_definitions(solution);
+  // Only for the output.
+  // FIXME: the initial conditions can not start always from 0 then
+  // the following `for' is temporary.
+  if (solution.is_a_add()) {
+    Expr_List conditions;
+    for (unsigned i = order; i-- > 0; )
+      conditions.append(initial_conditions[i]);
+    // FIXME: `collect' throws an exception if the object to collect has
+    // non-integer exponent. 
+    solution = solution.collect(conditions);
+  }
+#if 0
+  if (!verify_solution(solution, order, recurrence_rhs, n)) {
+    std::cout << "x(n) = " << recurrence_rhs << std::endl;
+    std::cout << " -> solution wrong or not enough simplified." << std::endl;
+    std::cout << std::endl;
+  }
+#endif
+
+  return OK;
+}
+
+/*!
+  This function solves recurrences of SOME TYPE provided they
+  are supplied in SOME FORM. (Explain.)
+  It does that by repeatedly calling solve() and handling
+  the errors that may arise.
+*/
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::solve_try_hard() const {
+  bool exit_anyway = false;
+  Solver_Status status;
+  do {
+    status = solve_easy_cases();
+    switch (status) {
+    case OK:
+      break;
+    case HAS_NON_INTEGER_DECREMENT:
+    case HAS_HUGE_DECREMENT:
+    case TOO_COMPLEX:
+      {
+      D_MSG("too_complex");
+      exit_anyway = true;
+      }
+      break;
+    case HAS_NEGATIVE_DECREMENT:
+      {
+	Expr new_rhs;
+	eliminate_negative_decrements(recurrence_rhs, new_rhs, n);
+	D_MSGVAR("Recurrence tranformed: ", new_rhs);
+	recurrence_rhs = new_rhs;
+	status = solve_easy_cases();
+      }
+      break;
+    case HAS_NULL_DECREMENT:
+      {
+	Expr new_rhs;
+	if (eliminate_null_decrements(recurrence_rhs, new_rhs, n)) {
+	  D_MSGVAR("Recurrence tranformed: ", new_rhs);
+	  recurrence_rhs = new_rhs;
+	  status = solve_easy_cases();
+	}
+	else
+	  status = UNSOLVABLE_RECURRENCE;
+	exit_anyway = true;
+      }
+      break;
+    case NON_LINEAR_RECURRENCE:
+      {
+	D_MSG("non linear");
+	// FIXME: can we do something here to try to linearize the recurrence?
+	status = TOO_COMPLEX;
+	exit_anyway = true;
+      }
+      break;
+
+    default:
+      throw std::runtime_error("PURRS internal error: "
+			       "solve_try_hard().");
+      break;
+    }
+  } while (!exit_anyway && status != OK);
+  return status;
+}
+
+/*!
+  Consider the linear recurrence relation of first order with
+  constant coefficients
+  \f[
+    x_n = \lambda x_{n-1} + p(n),
+  \f]
+  where \f$ p(n) \f$ is a function defined over the natural numbers.
+  In this case we know the final formula that give the solution (we observe
+  that the coefficient coincides with the root of the characteristic
+  equation):
+  \f[
+    x_n = \lambda^n * x_0
+          + \sum_{k=1}^n \lambda^{n-k} p(k).
+  \f]
+*/
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::
+solve_constant_coeff_order_1(const Symbol& n, const Expr& e,
+			     const std::vector<Polynomial_Root>& roots,
+			     const std::vector<Expr>& initial_conditions,
+			     Expr& solution) {
+  // We search exponentials in `n' (for this the expression `e'
+  // must be expanded).
+  // The vector `base_of_exps' contains the exponential's bases
+  // of all exponentials in `e'. In the `i'-th position of the vectors
+  // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
+  // the polynomial part and possibly non polynomial part of the coefficient
+  // of the exponential with the base in `i'-th position of `base_of_exp'.
+  // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
+  // coefficient of base_of_exps[i]^n.
+  std::vector<Expr> base_of_exps;
+  std::vector<Expr> exp_poly_coeff;
+  std::vector<Expr> exp_no_poly_coeff;
+  exp_poly_decomposition(e, n,
+			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
+  D_VEC(base_of_exps, 0, base_of_exps.size()-1);
+  D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
+  D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
+
+  solution = 0;
+  // Computes the sum when `\lambda^{n-k} p(k)' is a polynomial or
+  // a product of a polynomial times an exponential.
+  if (vector_not_all_zero(exp_poly_coeff)) {
+    Symbol alpha("alpha");
+    Symbol lambda("lambda");
+    std::vector<Expr> symbolic_sum_distinct;
+    std::vector<Expr> symbolic_sum_no_distinct;
+    compute_symbolic_sum(n, alpha, lambda, roots,
+			 base_of_exps, exp_poly_coeff,
+			 symbolic_sum_distinct, symbolic_sum_no_distinct);
+    // Substitutes to the sums in the vectors `symbolic_sum_distinct' or
+    // `symbolic_sum_no_distinct' the value of the characteristic equation's
+    // root and of the bases of the eventual exponentials.
+    // In `solution' put the sum of all sums of the vectors after the
+    // substitution.
+    solution = subs_to_sum_roots_and_bases(alpha, lambda, roots,
+					   base_of_exps,
+					   symbolic_sum_distinct,
+					   symbolic_sum_no_distinct);
+  }
+  // Computes the sum when `\lambda^{n-k} p(k)' is not a polynomial or
+  // a product of a polynomial times an exponential.
+  // The summand must be an hypergeometric term.
+  if (vector_not_all_zero(exp_no_poly_coeff)) {
+    Expr gosper_solution;
+    if (compute_sum_with_gosper_algorithm(n, 1, n,
+					  base_of_exps, exp_no_poly_coeff,
+					  roots, gosper_solution))
+      solution += gosper_solution;
+    else {
+      // FIXME: the summand is not hypergeometric:
+      // no chance of using Gosper's algorithm.
+      Symbol h;
+      solution += PURRS::sum(h, 1, n, pwr(roots[0].value(), -h) * e.subs(n, h));
+    }
+  }
+  // FIXME: per ora non si puo' usare la funzione
+  // `add_initial_conditions' perche' richiede un vettore di
+  // `Number' come `coefficients' e voglio risolvere anche le
+  // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
+  // add_initial_conditions(g_n, n, coefficients, initial_conditions,
+  //		              solution);
+  solution += initial_conditions[0] * pwr(roots[0].value(), n);
+  return OK;
+}
+
+/*!
+  Consider the linear recurrence relation of first order with
+  constant coefficients
+  \f[
+    x_n = \alpha(n) x_{n-1} + p(n),
+  \f]
+  where \f$ p(n) \f$ is a function defined over the natural numbers and
+  \f$ \alpha \f$ is not constant.
+  We set \f$ y_n \defeq x_n/\alpha!(n) \f$, where
+  \f[
+    \alpha!(0) \defeq 1,
+    \qquad
+    \alpha!(n) \defeq \prod_{k=1}^n \alpha(k).
+  \f]
+  We find that \f$ y_n \f$ satisfies the recurrence
+  \f[
+    y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}
+  \f]
+  whose solution is
+  \f[
+    y_n = x_0 + \sum_{k=1}^n \frac{p(k)}{k!},
+  \f]
+  so that our problem has been brought to the computation of a finite sum.
+  At the end we find the formula for \f$ x_n \f$:
+  \f[
+    x_n = y_n \cdot \alpha!(n).
+  \f]
+*/
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::
+solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
+			     const Expr& coefficient, Expr& solution) {
+  if (find_parameters(denominator(coefficient), n)) {
+    D_MSG("Variable coefficient with parameters in the denominator");
+    return TOO_COMPLEX;
+  }
+  Expr tmp;
+  if (p_n == 0)
+    tmp = coefficient;
+  else
+    tmp = p_n * coefficient;
+  // `i_c' is the positive integer, if exists, that cancels the common
+  // denominator of the recurrence; 0 otherwise.
+  Number i_c;
+  bool shift_initial_conditions = domain_recurrence(n, tmp, i_c);
+  Expr alpha_factorial;
+  if (shift_initial_conditions)
+    alpha_factorial
+      = compute_product(transform_in_single_fraction(coefficient),
+			n, i_c + 2, n);
+  else
+    alpha_factorial
+      = compute_product(transform_in_single_fraction(coefficient), n, 1, n);
+  D_VAR(alpha_factorial);
+  // Compute the non-homogeneous term for the recurrence
+  // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
+  // In this case is better to jump a part of Gosper's step one:
+  // `r(n) = \frac{t(n+1)}{t(n)}
+  //       = \frac{p(n+1)}{\alpha!(n+1)} * \frac{\alpha!(n)}{p(n)}
+  //       = \frac{p(n+1)}{p(n) * \alpha(n+1)}'.
+  Expr new_p_n;
+  if (!p_n.is_zero()) {
+    new_p_n = p_n.subs(n, n+1) / (p_n * coefficient.subs(n, n+1));
+    new_p_n = simplify_on_output_ex(new_p_n.expand(), n, false);
+    new_p_n = simplify_numer_denom(new_p_n);
+    D_VAR(new_p_n);
+    std::vector<Expr> base_of_exps;
+    std::vector<Expr> exp_poly_coeff;
+    std::vector<Expr> exp_no_poly_coeff;
+    exp_poly_decomposition(new_p_n, n,
+			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
+    std::vector<Polynomial_Root> new_roots;
+    new_roots.push_back(Polynomial_Root(Expr(1), RATIONAL));
+    if (!compute_sum_with_gosper_algorithm(n, 1, n, base_of_exps,
+					   exp_poly_coeff, exp_no_poly_coeff,
+					   new_roots, p_n/alpha_factorial,
+					   solution)) {
+      // FIXME: the summand is not hypergeometric:
+      // no chance of using Gosper's algorithm.
+      // vedere direttamente il rapporto p(k)/alpha!(k) se e' sommabile
+      // (forse prima di vedere gosper)
+      Symbol h;
+      solution += PURRS::sum(h, 1, n, pwr(coefficient, -h) * p_n.subs(n, h));
+      return OK;
+    }
+    // To do this cycle or to consider `c_i + 2' as the lower limit of
+    // the sum is the same thing,  but so is better for the output.
+    Number j = 1;
+    if (shift_initial_conditions)
+      j = i_c + 2;
+    for (Number i = 1; i < j; ++i)
+      solution -= (p_n / alpha_factorial).subs(n, i);
+  }
+  if (shift_initial_conditions)
+    solution += x(i_c + 1);
+  else
+    solution += x(i_c);
+  solution *= alpha_factorial;
+  return OK;
+}
+

@@ -31,13 +31,17 @@ http://www.cs.unipr.it/purrs/ . */
 #include "simplify.hh"
 #include "numerator_denominator.hh"
 #include "util.hh"
+#include "Expr.defs.hh"
+#include "Symbol.defs.hh"
+#include "Number.defs.hh"
+
 #include <vector>
 #include <algorithm>
 
 // TEMPORARY
 #include <iostream>
 
-namespace Parma_Recurrence_Relation_Solver {
+namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 static const unsigned
 FACTOR_THRESHOLD = 100;
@@ -46,6 +50,9 @@ FACTOR_THRESHOLD = 100;
   Gosper's algorithm, from Chapter 5 of \f$ A = B \f$, by 
   M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
 */
+
+namespace {
+using namespace PURRS;
 
 //! Gosper's algorithm, step 1: see Chapter 5 of \f$ A = B \f$, by 
 //! M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
@@ -78,8 +85,7 @@ gosper_step_one(const Expr& t_n, Expr& r_n, const Symbol& n, bool full) {
   of Gosper's algorithm.
 */
 static void
-compute_resultant_and_its_roots(const Expr& f, const Expr& g, 
-				const Symbol& n,
+compute_resultant_and_its_roots(const Expr& f, const Expr& g, const Symbol& n,
 				std::vector<Number>& integer_roots) {
   Symbol h("h");
   Expr temp_g = g.subs(n, n + h);
@@ -278,9 +284,8 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
   M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
 */
 static Expr
-gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
-		 const Expr& x_n, const Symbol& n,
-		 const Number& lower, const Expr& upper,
+gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n, const Expr& x_n,
+		 const Symbol& n, const Number& lower, const Expr& upper,
 		 Expr solution) {
   Expr shift_b = b_n.subs(n, n-1);
   Expr z_n = shift_b * x_n * t * pwr(c_n, -1);
@@ -306,6 +311,8 @@ gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
   return solution;
 }
 
+} // anonymous namespace
+
 /*!
   Gosper's algorithm, from Chapter 5 of \f$ A = B \f$, by 
   M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
@@ -329,8 +336,8 @@ gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
      in \p solution the symbolic sum \f$ \sum_{k=lower_limit}^{upper} t_k \f$.
 */
 bool
-full_gosper(const Expr& t_n, const Symbol& n,
-	    const Number& lower, const Expr& upper, Expr& solution) {
+PURRS::full_gosper(const Expr& t_n, const Symbol& n,
+		   const Number& lower, const Expr& upper, Expr& solution) {
   Expr r_n;
   if (!gosper_step_one(t_n, r_n, n, true))
     // `t' is not hypergeometric: no chance of using Gosper's algorithm.
@@ -347,7 +354,7 @@ full_gosper(const Expr& t_n, const Symbol& n,
     // `t' is not Gosper-summable, i. e., there is not hypergeometric
     // solution.
     Symbol h;
-    solution = Parma_Recurrence_Relation_Solver::sum(h, lower, upper, t_n.subs(n, h));
+    solution = PURRS::sum(h, lower, upper, t_n.subs(n, h));
   }
   D_MSGVAR("The sum is: ", solution);
 
@@ -364,8 +371,8 @@ full_gosper(const Expr& t_n, const Symbol& n,
   In other words, we avoid useless calls to simplification routines.
 */
 bool
-partial_gosper(const Expr& t_n, Expr& r_n, const Symbol& n,
-	       const Number& lower, const Expr& upper, Expr& solution) {
+PURRS::partial_gosper(const Expr& t_n, Expr& r_n, const Symbol& n,
+		      const Number& lower, const Expr& upper, Expr& solution) {
   if (!gosper_step_one(t_n, r_n, n, false))
     // `t' is not hypergeometric: no chance of using Gosper's algorithm.
     return false;
@@ -381,11 +388,9 @@ partial_gosper(const Expr& t_n, Expr& r_n, const Symbol& n,
     // `t' is not Gosper-summable, i. e., there is not hypergeometric
     // solution.
     Symbol h;
-    solution = Parma_Recurrence_Relation_Solver::sum(h, lower, upper, t_n.subs(n, h));
+    solution = PURRS::sum(h, lower, upper, t_n.subs(n, h));
   }
   D_MSGVAR("The sum is: ", solution);
 
   return true;
 }
-
-} // namespace Parma_Recurrence_Relation_Solver

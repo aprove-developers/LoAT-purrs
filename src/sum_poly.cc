@@ -35,7 +35,10 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr.defs.hh"
 #include <vector>
 
-namespace Parma_Recurrence_Relation_Solver {
+namespace PURRS = Parma_Recurrence_Relation_Solver;
+
+namespace {
+using namespace PURRS;
 
 /*!
   This routine computes the falling product 
@@ -117,6 +120,8 @@ sum_poly(const Expr& p, const Symbol& x, const Symbol& n, Expr& q) {
   }
 }
 
+} // anonymous namespace
+
 /*!
   At this point we can sum exactly any linear combination of 
   products of polynomials and exponentials (including extreme 
@@ -131,9 +136,9 @@ sum_poly(const Expr& p, const Symbol& x, const Symbol& n, Expr& q) {
   The closed formula is returned in the expression <CODE> q </CODE>. 
 */
 
-Expr 
-sum_poly_times_exponentials(const Expr& p, const Symbol& x, 
-			    const Symbol& n, const Expr& alpha) {
+PURRS::Expr 
+PURRS::sum_poly_times_exponentials(const Expr& p, const Symbol& x, 
+				   const Symbol& n, const Expr& alpha) {
 
   Expr q;
   if (alpha == 1)
@@ -162,10 +167,10 @@ sum_poly_times_exponentials(const Expr& p, const Symbol& x,
   \f$ \alpha \f$ and \f$ \theta \f$ are <CODE> Expr </CODE>.
 */
 
-Expr
-sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x, 
-				      const Symbol& n, const Expr& alpha, 
-				      const Expr& theta) {
+PURRS::Expr
+PURRS::sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x, 
+					     const Symbol& n, const Expr& alpha, 
+					     const Expr& theta) {
   Expr q = 0;
   if (theta.is_zero()) {
     q = sum_poly_times_exponentials(p, x, n, alpha);
@@ -194,10 +199,10 @@ sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x,
   \f$ \alpha \f$ and \f$ \theta \f$ are <CODE> Expr </CODE>.
 */
 
-Expr
-sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x, 
-				      const Symbol& n, const Expr& alpha, 
-				      const Expr& theta) {
+PURRS::Expr
+PURRS::sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x, 
+					     const Symbol& n, const Expr& alpha, 
+					     const Expr& theta) {
   Expr q = 0;
   if (theta.is_zero()) {
     return q;
@@ -217,5 +222,3 @@ sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x,
   q = q.subs(x, alpha).expand();
   return q;
 }
-
-} // namespace Parma_Recurrence_Relation_Solver

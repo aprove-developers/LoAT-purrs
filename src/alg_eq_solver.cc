@@ -36,7 +36,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <cassert>
 #include <iostream>
 
-namespace Parma_Recurrence_Relation_Solver {
+namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 /*!
    We look for possible rational solutions of a polynomial with 
@@ -59,32 +59,175 @@ static const unsigned
 FIND_DIVISORS_THRESHOLD = FIND_DIVISORS_MAX*FIND_DIVISORS_MAX
                           *FIND_DIVISORS_MAX;
 
-static Expr zero = 0;
+static PURRS::Expr zero = 0;
+
+namespace {
+
+using namespace PURRS;
+
+//! Solve the equation \f$x^2 + b x + c = 0\f$.
+static void
+solve_equation_2(const Expr& b, const Expr& c,
+		 Expr& x1, Expr& x2) {
+  Symbol n("n");
+  Expr sqrt_d = sqrt(b*b - 4*c);
+  D_MSGVAR("Before: ", sqrt_d);
+  sqrt_d = simplify_on_output_ex(sqrt_d, n, false);
+  D_VAR(sqrt_d);
+  x1 = (-b + sqrt_d)/2;
+  x2 = (-b - sqrt_d)/2;
+
+  x1 = simplify_on_output_ex(x1, n, false);
+  x2 = simplify_on_output_ex(x2, n, false);
+}
 
 /*!
-  This routine inserts into \p divisors all the positive divisors of
-  the strictly positive integer \p n which is also less than
-  <CODE>FIND_DIVISORS_THRESHOLD</CODE>.
+  Solve the equation \f$x^3 + a_1 x^2 + a_2 x + a_3 = 0\f$
+  and return <CODE>true</CODE> if and only if all the solutions are real.
+  \f$x_1\f$ is guaranteed to be a real solution.
+  The quantity \f$ d \f$ is the <EM>discriminant</EM> of the equation.
+  The roots are real and distinct if and only if \f$ d < 0 \f$, and
+  there are two complex conjugate roots if and only if \f$ d > 0 \f$.
+  When \f$ d = 0 \f$ there is one double (or triple) real root.
+  We avoid computations with complex numbers as far as possible:
+  note that since the coefficients of the equation above are rational
+  numbers, the quantities \f$ d \f$, \f$ Q \f$ and \f$ R \f$ are
+  rational numbers themselves, and we can safely compare them with 0.
 */
-void
-find_divisors(Number n, std::vector<Number>& divisors) {
-  assert(n.is_positive_integer());
-  assert(n > 0 && n < FIND_DIVISORS_THRESHOLD);
-  unsigned m = n.to_int();
-  // Once a divisor `i' is found, it is pushed onto the vector `divisors'
-  // along with its conjugate `j = n/i', provided that `j' is less than `i'.
-  if (m == 1)
-    divisors.push_back(1);
-  else
-    for (unsigned i = 1, j = m; i < FIND_DIVISORS_MAX && i < j; ++i) {
-      j = m / i;
-      unsigned r = m % i;
-      if (r == 0) {
-	divisors.push_back(i);
-	if (i < j)
-	  divisors.push_back(j);
+static bool
+solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
+		 Expr& x1, Expr& x2, Expr& x3) {
+  Symbol n("n");
+  Number Q = (3*a2 - a1*a1) / 9;
+  Number R = (9*a1*a2 - 27*a3 -2*a1*a1*a1) / 54;
+  Number d = Q*Q*Q + R*R;
+  Number a1_div_3 = a1/3;
+  if (d < 0) { // This implies that Q < 0 
+    Expr sqrt_minus_Q = sqrt(-Q);
+    Expr theta = acos(-R/(Q*sqrt_minus_Q));
+    x1 = -a1_div_3 + 2*sqrt_minus_Q*cos(theta/3);
+    x2 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+2 * Constant::Pi)/3);
+    x3 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+4 * Constant::Pi)/3);
+  }
+  else {
+    // When d > 0 there is one real and two complex conjugate roots.
+    // In order to avoid taking cube roots of negative numbers we
+    // check the signs of the expressions A and B below (which need
+    // not be rational) without actually computing them:
+    // - if Q >= 0 then d >= R^2 and sqrt_d >= abs(R) so that 
+    //   A >= 0 and B < 0;
+    // - if Q < 0 and R < 0 then a similar argument shows that 
+    //   A < 0 and B < 0; 
+    // - if Q < 0 and R >= 0 then A > 0 and B > 0.
+    Expr sqrt_d = sqrt(d);
+    Expr A = R + sqrt_d;
+    Expr B = R - sqrt_d;
+    Expr S;
+    Expr T;
+    if (Q >= 0) {
+      S = cubic_root(A);
+      T = -cubic_root(-B);
+    }
+    else {
+      // Q < 0
+      if (R < 0) {
+	S = -cubic_root(-A);
+	T = -cubic_root(-B);
+      }
+      else {
+	// R >= 0
+	S = cubic_root(A);
+	T = cubic_root(B);
       }
     }
+    D_MSGVAR("Before: ", S); 
+    D_MSGVAR("Before: ", T);
+    S = simplify_on_output_ex(S, n, false);
+    T = simplify_on_output_ex(T, n, false);
+    D_VAR(S); 
+    D_VAR(T);
+    Expr S_plus_T = S + T;
+
+    // FIXME: S+T are of the form (a+b)^(1/3) + (a-b)^(1/3).
+    // Is there a way to simplify this?
+
+    Expr t1 = -S_plus_T/2 - a1_div_3;
+    Expr t2 = (S - T) * Number::I * sqrt(Expr(3))/2;
+    x1 = S_plus_T - a1_div_3;
+    x2 = t1 + t2;
+    x3 = t1 - t2;
+  }
+
+  x1 = simplify_on_output_ex(x1, n, false);
+  x2 = simplify_on_output_ex(x2, n, false);
+  x3 = simplify_on_output_ex(x3, n, false);
+
+  // The roots are all real if and only if d <= 0.
+  return d <= 0;
+}
+
+//! Solve the equation \f$x^4 + a_1 x^3 + a_2 x^2 + a_3 x + a_4 = 0\f$.
+static void
+solve_equation_4(const Number& a1, const Number& a2,
+		 const Number& a3, const Number& a4,
+		 Expr& x1, Expr& x2, Expr& x3, Expr& x4) {
+  Number f = a2 - 3*a1*a1*1/8;
+  Number g = a3 + a1*a1*a1/8 - a1*a2/2;
+  Number h = a4 - 3*a1*a1*a1*a1/256 + a1*a1*a2/16 - a1*a3/4;
+  D_VAR(f); 
+  D_VAR(g); 
+  D_VAR(h);
+
+  Expr y1;
+  Expr y2;
+  Expr y3;
+  // If 'g' is zero then the auxiliary equation
+  // y^3 +  f/2*y^2 + (f*f - 4*h)/16*y - g*g/64 = 0
+  // has the root 0, in this case we solve the simpler auxiliary equation
+  // y^2 +  f/2*y + (f*f - 4*h)/16 = 0.
+  if (g == 0) {
+    solve_equation_2(f/2, (f*f - 4*h)/16, y1, y2);
+    // Both roots are nonzero.
+    assert(!y1.is_zero() && !y2.is_zero());
+  }
+  else
+    // We are deliberately ignoring the return value.
+    (void) solve_equation_3(f/2, (f*f - 4*h)/16, -g*g/64, y1, y2, y3);
+
+  Expr p = sqrt(y1);
+  Expr q = sqrt(y2);
+  D_MSGVAR("Before: ", p); 
+  D_MSGVAR("Before: ", q);
+
+  // FIXME: the one and only `n' symbol should be global,
+  // i.e., created once and for all.
+  Symbol n("n");
+  p = simplify_on_output_ex(p, n, false);
+  q = simplify_on_output_ex(q, n, false);
+  D_VAR(p); 
+  D_VAR(q);
+
+  Expr r = -g/(8*p*q);
+  D_MSGVAR("Before: ", r); 
+  r = simplify_on_output_ex(r, n, false);
+  Expr s = a1/4;
+  D_VAR(r); 
+  D_VAR(s); 
+
+  x1 = p + q + r - s;
+  x2 = p - q - r - s;
+  x3 = -p + q - r - s;
+  x4 = -p - q + r - s;
+  D_MSG("Solutions before calling simplify: ");
+  D_VAR(x1); 
+  D_VAR(x2); 
+  D_VAR(x3); 
+  D_VAR(x4);
+  D_MSG("");
+  x1 = simplify_on_output_ex(x1, n, false);
+  x2 = simplify_on_output_ex(x2, n, false);
+  x3 = simplify_on_output_ex(x3, n, false);
+  x4 = simplify_on_output_ex(x4, n, false);
 }
 
 /*!
@@ -141,111 +284,6 @@ is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
     // n == 1, the polynomial q is equal to the polynomial p.
     q = p;
   return n;
-}
-
-static bool
-find_roots(const Expr& p, const Symbol& x,
-	   std::vector<Polynomial_Root>& roots, Number multiplicity);
-
-static bool
-find_power_roots(const Expr& p, const Symbol& x,
-		 std::vector<Polynomial_Root>& roots);
-
-static void
-solve_equation_2(const Expr& b, const Expr& c,
-		 Expr& x1, Expr& x2);
-
-bool
-solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
-		 Expr& x1, Expr& x2, Expr& x3);
-
-void
-solve_equation_4(const Number& a1, const Number& a2,
-		 const Number& a3, const Number& a4,
-		 Expr& x1, Expr& x2, Expr& x3, Expr& x4);
-
-/*!
-  Let \p p be a polynomial with integer coefficients in \p x and
-  \p roots be a (possibly non-empty) vector.
-  This function appends to \p roots some or all the roots of \p p.
-  Let \f$n\f$ be the degree of \p p and let \f$h\f$ and \f$k\f$
-  be the value of <CODE>roots.size()</CODE> on entry and on exit
-  to and from find_roots(), respectively.
-  If \f$n = k-h\f$, then the positions \f$h, h+1, \ldots, k-1\f$
-  of \p roots contain <EM>all</EM> the (possibly complex) roots of \p p
-  and the function returns <CODE>true</CODE>.
-  If \f$n \neq k-h\f$, then the positions \f$h, h+1, \ldots, k-1\f$
-  of \p roots contain <EM>some</EM> of the roots of \p p and the function
-  returns <CODE>true</CODE> if it was possible to prove that <EM>all</EM>
-  the roots of \p p of maximal modulus are among those inserted
-  into \p roots;
-  the function returns <CODE>false</CODE> otherwise.
-  The parameter \p all_distinct is set to <CODE>true</CODE> if it was
-  possible to prove that all the roots of \p p are distinct;
-  \p all_distinct is set to <CODE>false</CODE> otherwise.
-*/
-bool
-find_roots(const Expr& p, const Symbol& x,
-	   std::vector<Polynomial_Root>& roots,
-	   bool& all_distinct) {
-  D_VAR(p);
-  assert(p.is_integer_polynomial());
-  assert(!p.is_a_number());
-  // Compute a square-free decomposition for p.
-  Expr q = sqrfree(p.expand(), Expr_List(x));
-  D_MSGVAR("p after sqrfree = ", q);
-
-  // There are now 4 cases depending on the principal functor of `q':
-  //
-  // 1) q is a product of two or more factors: e.g., (1+x)^2*(2+x);
-  // 2) q is a factor to the power of its multiplicity (at least 2)
-  //    in q: e.g., (1+x)^2;
-  // 3) q is a sum of monomials: e.g., 1+x+x^2;
-  // 4) q is the symbol x.
-  //
-  // In cases 1 and 2 there are multiple roots,
-  // in cases 3 and 4 there are not.
-  if (q.is_a_add()) {
-    all_distinct = true;
-    return find_roots(q, x, roots, 1);
-  }
-  else if (q.is_a_mul()) {
-    all_distinct = false;
-    for (unsigned i = 0, n = q.nops(); i < n; ++i) {
-      const Expr& factor = q.op(i);
-      if (factor.is_a_power()) {
-	if (!find_power_roots(factor, x, roots))
-	  return false;
-      }
-      else if (!find_roots(factor, x, roots, 1))
-	return false;
-    }
-    return true;
-  }
-  else if (q.is_a_power()) {
-    all_distinct = false;
-    return find_power_roots(q, x, roots);
-  }
-  else {
-    assert(q.is_a_symbol());
-    // 0 is the only solution of x = 0.
-    all_distinct = true;
-    roots.push_back(Polynomial_Root(zero, RATIONAL, 1));
-    return true;
-  }
-}
-
-static bool
-find_power_roots(const Expr& p, const Symbol& x,
-		 std::vector<Polynomial_Root>& roots) {
-  assert(p.is_a_power());
-  const Expr& base = p.arg(0);
-  Number exponent = p.arg(1).ex_to_number();
-  assert(exponent.is_positive_integer() && exponent >= 2);
-  if (!find_roots(base, x, roots, exponent))
-    // No way: we were unable to solve the base.
-    return false;
-  return true;
 }
 
 static bool
@@ -411,170 +449,116 @@ find_roots(const Expr& p, const Symbol& x,
   return false;
 }
 
+static bool
+find_power_roots(const Expr& p, const Symbol& x,
+		 std::vector<Polynomial_Root>& roots) {
+  assert(p.is_a_power());
+  const Expr& base = p.arg(0);
+  Number exponent = p.arg(1).ex_to_number();
+  assert(exponent.is_positive_integer() && exponent >= 2);
+  if (!find_roots(base, x, roots, exponent))
+    // No way: we were unable to solve the base.
+    return false;
+  return true;
+}
 
-//! Solve the equation \f$x^2 + b x + c = 0\f$.
-static void
-solve_equation_2(const Expr& b, const Expr& c,
-		 Expr& x1, Expr& x2) {
-  Symbol n("n");
-  Expr sqrt_d = sqrt(b*b - 4*c);
-  D_MSGVAR("Before: ", sqrt_d);
-  sqrt_d = simplify_on_output_ex(sqrt_d, n, false);
-  D_VAR(sqrt_d);
-  x1 = (-b + sqrt_d)/2;
-  x2 = (-b - sqrt_d)/2;
+} // anonymous namespace
 
-  x1 = simplify_on_output_ex(x1, n, false);
-  x2 = simplify_on_output_ex(x2, n, false);
+/*!
+  This routine inserts into \p divisors all the positive divisors of
+  the strictly positive integer \p n which is also less than
+  <CODE>FIND_DIVISORS_THRESHOLD</CODE>.
+*/
+void
+PURRS::find_divisors(Number n, std::vector<Number>& divisors) {
+  assert(n.is_positive_integer());
+  assert(n > 0 && n < FIND_DIVISORS_THRESHOLD);
+  unsigned m = n.to_int();
+  // Once a divisor `i' is found, it is pushed onto the vector `divisors'
+  // along with its conjugate `j = n/i', provided that `j' is less than `i'.
+  if (m == 1)
+    divisors.push_back(1);
+  else
+    for (unsigned i = 1, j = m; i < FIND_DIVISORS_MAX && i < j; ++i) {
+      j = m / i;
+      unsigned r = m % i;
+      if (r == 0) {
+	divisors.push_back(i);
+	if (i < j)
+	  divisors.push_back(j);
+      }
+    }
 }
 
 /*!
-  Solve the equation \f$x^3 + a_1 x^2 + a_2 x + a_3 = 0\f$
-  and return <CODE>true</CODE> if and only if all the solutions are real.
-  \f$x_1\f$ is guaranteed to be a real solution.
-  The quantity \f$ d \f$ is the <EM>discriminant</EM> of the equation.
-  The roots are real and distinct if and only if \f$ d < 0 \f$, and
-  there are two complex conjugate roots if and only if \f$ d > 0 \f$.
-  When \f$ d = 0 \f$ there is one double (or triple) real root.
-  We avoid computations with complex numbers as far as possible:
-  note that since the coefficients of the equation above are rational
-  numbers, the quantities \f$ d \f$, \f$ Q \f$ and \f$ R \f$ are
-  rational numbers themselves, and we can safely compare them with 0.
+  Let \p p be a polynomial with integer coefficients in \p x and
+  \p roots be a (possibly non-empty) vector.
+  This function appends to \p roots some or all the roots of \p p.
+  Let \f$n\f$ be the degree of \p p and let \f$h\f$ and \f$k\f$
+  be the value of <CODE>roots.size()</CODE> on entry and on exit
+  to and from find_roots(), respectively.
+  If \f$n = k-h\f$, then the positions \f$h, h+1, \ldots, k-1\f$
+  of \p roots contain <EM>all</EM> the (possibly complex) roots of \p p
+  and the function returns <CODE>true</CODE>.
+  If \f$n \neq k-h\f$, then the positions \f$h, h+1, \ldots, k-1\f$
+  of \p roots contain <EM>some</EM> of the roots of \p p and the function
+  returns <CODE>true</CODE> if it was possible to prove that <EM>all</EM>
+  the roots of \p p of maximal modulus are among those inserted
+  into \p roots;
+  the function returns <CODE>false</CODE> otherwise.
+  The parameter \p all_distinct is set to <CODE>true</CODE> if it was
+  possible to prove that all the roots of \p p are distinct;
+  \p all_distinct is set to <CODE>false</CODE> otherwise.
 */
 bool
-solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
-		 Expr& x1, Expr& x2, Expr& x3) {
-  Symbol n("n");
-  Number Q = (3*a2 - a1*a1) / 9;
-  Number R = (9*a1*a2 - 27*a3 -2*a1*a1*a1) / 54;
-  Number d = Q*Q*Q + R*R;
-  Number a1_div_3 = a1/3;
-  if (d < 0) { // This implies that Q < 0 
-    Expr sqrt_minus_Q = sqrt(-Q);
-    Expr theta = acos(-R/(Q*sqrt_minus_Q));
-    x1 = -a1_div_3 + 2*sqrt_minus_Q*cos(theta/3);
-    x2 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+2 * Constant::Pi)/3);
-    x3 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+4 * Constant::Pi)/3);
+PURRS::find_roots(const Expr& p, const Symbol& x,
+		  std::vector<Polynomial_Root>& roots,
+		  bool& all_distinct) {
+  D_VAR(p);
+  assert(p.is_integer_polynomial());
+  assert(!p.is_a_number());
+  // Compute a square-free decomposition for p.
+  Expr q = sqrfree(p.expand(), Expr_List(x));
+  D_MSGVAR("p after sqrfree = ", q);
+
+  // There are now 4 cases depending on the principal functor of `q':
+  //
+  // 1) q is a product of two or more factors: e.g., (1+x)^2*(2+x);
+  // 2) q is a factor to the power of its multiplicity (at least 2)
+  //    in q: e.g., (1+x)^2;
+  // 3) q is a sum of monomials: e.g., 1+x+x^2;
+  // 4) q is the symbol x.
+  //
+  // In cases 1 and 2 there are multiple roots,
+  // in cases 3 and 4 there are not.
+  if (q.is_a_add()) {
+    all_distinct = true;
+    return ::find_roots(q, x, roots, 1);
+  }
+  else if (q.is_a_mul()) {
+    all_distinct = false;
+    for (unsigned i = 0, n = q.nops(); i < n; ++i) {
+      const Expr& factor = q.op(i);
+      if (factor.is_a_power()) {
+	if (!find_power_roots(factor, x, roots))
+	  return false;
+      }
+      else if (!::find_roots(factor, x, roots, 1))
+	return false;
+    }
+    return true;
+  }
+  else if (q.is_a_power()) {
+    all_distinct = false;
+    return find_power_roots(q, x, roots);
   }
   else {
-    // When d > 0 there is one real and two complex conjugate roots.
-    // In order to avoid taking cube roots of negative numbers we
-    // check the signs of the expressions A and B below (which need
-    // not be rational) without actually computing them:
-    // - if Q >= 0 then d >= R^2 and sqrt_d >= abs(R) so that 
-    //   A >= 0 and B < 0;
-    // - if Q < 0 and R < 0 then a similar argument shows that 
-    //   A < 0 and B < 0; 
-    // - if Q < 0 and R >= 0 then A > 0 and B > 0.
-    Expr sqrt_d = sqrt(d);
-    Expr A = R + sqrt_d;
-    Expr B = R - sqrt_d;
-    Expr S;
-    Expr T;
-    if (Q >= 0) {
-      S = cubic_root(A);
-      T = -cubic_root(-B);
-    }
-    else {
-      // Q < 0
-      if (R < 0) {
-	S = -cubic_root(-A);
-	T = -cubic_root(-B);
-      }
-      else {
-	// R >= 0
-	S = cubic_root(A);
-	T = cubic_root(B);
-      }
-    }
-    D_MSGVAR("Before: ", S); 
-    D_MSGVAR("Before: ", T);
-    S = simplify_on_output_ex(S, n, false);
-    T = simplify_on_output_ex(T, n, false);
-    D_VAR(S); 
-    D_VAR(T);
-    Expr S_plus_T = S + T;
-
-    // FIXME: S+T are of the form (a+b)^(1/3) + (a-b)^(1/3).
-    // Is there a way to simplify this?
-
-    Expr t1 = -S_plus_T/2 - a1_div_3;
-    Expr t2 = (S - T) * Number::I * sqrt(Expr(3))/2;
-    x1 = S_plus_T - a1_div_3;
-    x2 = t1 + t2;
-    x3 = t1 - t2;
+    assert(q.is_a_symbol());
+    // 0 is the only solution of x = 0.
+    all_distinct = true;
+    roots.push_back(Polynomial_Root(zero, RATIONAL, 1));
+    return true;
   }
-
-  x1 = simplify_on_output_ex(x1, n, false);
-  x2 = simplify_on_output_ex(x2, n, false);
-  x3 = simplify_on_output_ex(x3, n, false);
-
-  // The roots are all real if and only if d <= 0.
-  return d <= 0;
-}
-
-//! Solve the equation \f$x^4 + a_1 x^3 + a_2 x^2 + a_3 x + a_4 = 0\f$.
-void
-solve_equation_4(const Number& a1, const Number& a2,
-		 const Number& a3, const Number& a4,
-		 Expr& x1, Expr& x2, Expr& x3, Expr& x4) {
-  Number f = a2 - 3*a1*a1*1/8;
-  Number g = a3 + a1*a1*a1/8 - a1*a2/2;
-  Number h = a4 - 3*a1*a1*a1*a1/256 + a1*a1*a2/16 - a1*a3/4;
-  D_VAR(f); 
-  D_VAR(g); 
-  D_VAR(h);
-
-  Expr y1;
-  Expr y2;
-  Expr y3;
-  // If 'g' is zero then the auxiliary equation
-  // y^3 +  f/2*y^2 + (f*f - 4*h)/16*y - g*g/64 = 0
-  // has the root 0, in this case we solve the simpler auxiliary equation
-  // y^2 +  f/2*y + (f*f - 4*h)/16 = 0.
-  if (g == 0) {
-    solve_equation_2(f/2, (f*f - 4*h)/16, y1, y2);
-    // Both roots are nonzero.
-    assert(!y1.is_zero() && !y2.is_zero());
-  }
-  else
-    // We are deliberately ignoring the return value.
-    (void) solve_equation_3(f/2, (f*f - 4*h)/16, -g*g/64, y1, y2, y3);
-
-  Expr p = sqrt(y1);
-  Expr q = sqrt(y2);
-  D_MSGVAR("Before: ", p); 
-  D_MSGVAR("Before: ", q);
-
-  // FIXME: the one and only `n' symbol should be global,
-  // i.e., created once and for all.
-  Symbol n("n");
-  p = simplify_on_output_ex(p, n, false);
-  q = simplify_on_output_ex(q, n, false);
-  D_VAR(p); 
-  D_VAR(q);
-
-  Expr r = -g/(8*p*q);
-  D_MSGVAR("Before: ", r); 
-  r = simplify_on_output_ex(r, n, false);
-  Expr s = a1/4;
-  D_VAR(r); 
-  D_VAR(s); 
-
-  x1 = p + q + r - s;
-  x2 = p - q - r - s;
-  x3 = -p + q - r - s;
-  x4 = -p - q + r - s;
-  D_MSG("Solutions before calling simplify: ");
-  D_VAR(x1); 
-  D_VAR(x2); 
-  D_VAR(x3); 
-  D_VAR(x4);
-  D_MSG("");
-  x1 = simplify_on_output_ex(x1, n, false);
-  x2 = simplify_on_output_ex(x2, n, false);
-  x3 = simplify_on_output_ex(x3, n, false);
-  x4 = simplify_on_output_ex(x4, n, false);
 }
 
 std::ostream&
@@ -586,4 +570,3 @@ operator<<(std::ostream& s, const Polynomial_Root& r) {
   return s;
 }
 
-} // namespace Parma_Recurrence_Relation_Solver
