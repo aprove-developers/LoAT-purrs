@@ -15,7 +15,7 @@ VPATH = @srcdir@
 
 SUBDIRS = . Intervals
 
-INCLUDES = -I$(top_builddir) -I$(top_srcdir)/src @extra_includes@ #-I/usr/local/filib/include 
+INCLUDES = -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/CoStLy @extra_includes@
 
 CPPFLAGS = -DPURRS_INTERNAL=public @extra_cpp_flags@
 
@@ -32,6 +32,7 @@ util.hh
 
 libpurrs_a_SOURCES = \
 alg_eq_solver.cc \
+approx_expr.cc \
 poly_factor.cc \
 rr_solver.cc \
 globals.cc \

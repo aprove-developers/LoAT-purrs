@@ -19,9 +19,9 @@ namespace GiNaC {
   DECLARE_FUNCTION_1P(x);
 }
 
-// #include <Interval.h>
-// #include <complex>
-// typedef filib::Interval Interval;
-// typedef std::complex<Interval> CInterval;
+#include <Interval.h>
+#include <cinterval.h>
+typedef filib::Interval Interval;
+typedef cinterval CInterval;
 
 #endif

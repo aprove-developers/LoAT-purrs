@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "globals.hh"
 #include <cln/rational.h>
 #include <ginac/ginac.h>
+#include "cimath.h"
 
 using namespace GiNaC;
 
@@ -59,95 +60,64 @@ approximate(const GNumber& n) {
 CInterval
 approximate(const GExpr& e) {
   CInterval r;
-  if (is_exactly_a<numeric>(e))
-    return approximate(ex_to<numeric>(e));
-  else if (is_exactly_a<add>(e)) {
+  if (GiNaC::is_exactly_a<GiNaC::numeric>(e))
+    return approximate(GiNaC::ex_to<GiNaC::numeric>(e));
+  else if (GiNaC::is_exactly_a<GiNaC::add>(e)) {
     r = CInterval(0, 0);
     for (unsigned i = 0, n = e.nops(); i < n; ++i)
       r += approximate(e.op(i));
   }
-  else if (is_exactly_a<mul>(e)) {
+  else if (GiNaC::is_exactly_a<GiNaC::mul>(e)) {
     r = CInterval(1, 0);
     for (unsigned i = 0, n = e.nops(); i < n; ++i)
       r *= approximate(e.op(i));
   }
-  else if (is_exactly_a<power>(e)) {
+  else if (GiNaC::is_exactly_a<GiNaC::power>(e)) {
     static GExpr one_half = GNumber(1)/2;
     const GExpr& base = e.op(0);
     const GExpr& exponent = e.op(1);
-#ifdef CINT
-    if (exponent == one_half)
-      return sqrt(approximate(base));
-    else
-      return pow(approximate(base), approximate(exponent));
+#if 0
+    return pow(approximate(base), approximate(exponent));
 #else
+    std::cout << base << "^" << exponent << std::endl;
     CInterval abase = approximate(base);
-    if (abase.imag() != 0)
-      abort();
-    if (exponent == one_half)
-      return CInterval(sqrt(abase.real()), 0);
-    else {
-      CInterval aexponent = approximate(exponent);
-      if (aexponent.imag() != 0)
-	abort();
-      return CInterval(pow(abase.real(), aexponent.real()));
-    }
+    CInterval aexponent = approximate(exponent);
+    std::cout << abase << "^" << aexponent << " = ";
+    CInterval result = pow(abase, aexponent);
+    std::cout << result << std::endl;
+    return result;
 #endif
   }
-  else if (is_exactly_a<function>(e)) {
+  else if (GiNaC::is_exactly_a<GiNaC::function>(e)) {
     const GExpr& arg = e.op(0);
     CInterval aarg = approximate(arg);
-    if (is_ex_the_function(e, abs)) {
-#ifdef CINT
+#if 0
+    if (is_ex_the_function(e, abs))
       return abs(aarg);
-#else
-      if (aarg.imag() != 0)
-	abort();
-      return CInterval(abs(aarg.real()), 0);
+    else
 #endif
-    }
-    else if (is_ex_the_function(e, exp)) {
-#if CINT
+    if (is_ex_the_function(e, exp))
       return exp(aarg);
-#else
-      if (aarg.imag() != 0)
-	abort();
-      return CInterval(exp(aarg.real()), 0);
-#endif
-    }
-    else if (is_ex_the_function(e, log)) {
-#if CINT
-      return log(aarg);
-#else
-      if (aarg.imag() != 0)
-	abort();
-      return CInterval(log(aarg.real()), 0);
-#endif
-    }
+    else if (is_ex_the_function(e, log))
+      return ln(aarg);
     else if (is_ex_the_function(e, sin))
       return sin(aarg);
     else if (is_ex_the_function(e, cos))
       return cos(aarg);
     else if (is_ex_the_function(e, tan))
-      return std::tan(aarg);
-    else if (is_ex_the_function(e, acos)) {
-#ifdef CINT
+      return tan(aarg);
+    else if (is_ex_the_function(e, acos))
       return acos(aarg);
-#else
-      if (aarg.imag() != 0)
-	abort();
-      return CInterval(acos(aarg.real()), 0);
-#endif
-    }
     else
       abort();
-}
-  else if (is_exactly_a<constant>(e)) {
+  }
+  else if (GiNaC::is_exactly_a<constant>(e)) {
     if (e == Pi)
-      return Interval::PI();
+      return CInterval(Interval::PI(), Interval::ZERO());
 #if 0
     else if (e == Euler)
-      return CInterval(Interval(E_lower_bound.d, E_upper_bound.d), 0);
+      return CInterval(Interval(E_lower_bound.d, E_upper_bound.d),
+		       Interval::ZERO());
 #endif
     else
       abort();

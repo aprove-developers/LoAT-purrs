@@ -39,7 +39,7 @@ using namespace std;
 using namespace GiNaC;
 
 
-#if 0
+#if 1
 CInterval
 approximate(const GExpr& e);
 #endif
@@ -113,7 +113,7 @@ main() try {
 	  cout << " (multiplicity " << multiplicity << ")";
 	cout << endl;
 	if (!is_a<numeric>(value))
-#if 1
+#if 0
 	  cout << "****  x_" << i+1 << " ~= " << value.evalf() << endl;
 #else
 	  cout << "****  x_" << i+1 << " ~= " << approximate(value) << endl;

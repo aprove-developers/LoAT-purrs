@@ -15,9 +15,9 @@ VPATH = @srcdir@
 
 SUBDIRS =
 
-INCLUDES = -I$(top_builddir)/src @extra_includes@ #-I/usr/local/filib/include 
+INCLUDES = -I$(top_builddir)/src -I$(top_srcdir)/CoStLy @extra_includes@
 
-LDADD = $(top_builddir)/src/libpurrs.a -lstdc++ -lntl @extra_libraries@ -lcgicc #-L/usr/local/filib/lib -lfi -lieee -lprim 
+LDADD = $(top_builddir)/src/libpurrs.a -lstdc++ -lntl @extra_libraries@ -lcgicc
 
 CPPFLAGS = @extra_cpp_flags@
 
