@@ -344,6 +344,7 @@ ul	9*x(n/3)+n^2
 ul	log(n)+2*x(n/2)
 ul	n^n+x(n/3)
 ul	x(7*n/10)-5
+ul	x(n/2)
 ul	x(n/2)*x(n/2)
 ul	x(n/2)+1
 ul	x(n/2)+2^n
@@ -352,6 +353,7 @@ ul	x(n/2)+log(log(n))
 ul	x(n/2)+log(n)
 ul	x(n/2)+log(n/2)
 ul	x(n/2)+n*log(n)
+ul	x(n/2)-1
 ul 	2*x(n/2)+2*n
 ul      2*x(n/2)+2^n*sqrt(2)
 ul      2*x(n/2)+log(2)
@@ -414,12 +416,10 @@ ulv	n+x(n/2)
 ulv	n+x(n/3)
 ulv	n+x(n/5)+7*n/10
 ulv	n/2+x(n/2)
-ulv	x(n/2)
 ulv	x(n/2)*2+n-1
 ulv	x(n/2)+1
 ulv	x(n/2)+9*n
 ulv	x(n/2)+n
-ulv	x(n/2)-1
 ulv	x(n/3)+5
 ulv	x(n/3)+x(n/3)+x(n/3)
 ulv	x(n/5)+3
@@ -1113,7 +1113,6 @@ yv	x(n-4)
 yv	x(n-41)
 yv	x(n-5)
 yv	x(n-8)
-yv	x(n/2)
 yv 	144*x(n-3)+56*x(n-2)+x(n-1)
 yv 	144*x(n-3)+56*x(n-2)+x(n-1)+3^n*n+4
 yv      ((n-1)/(n-3))*x(n-1)+1/n
