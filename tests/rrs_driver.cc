@@ -350,15 +350,7 @@ main(int argc, char *argv[]) try {
 
     Expr rhs;
     try {
-      // Dirty trick here: GiNaC's parser sucks!
-      Expr dummy_expr("0", symbols);
-      // We sandwich the string to be parsed within
-      // "x(" and ")" to force its complete parsing.
-      Expr tmp("x(" + rhs_string + ")", symbols);
-      if (tmp == dummy_expr)
-	throw std::runtime_error("not detected by GiNaC's parser");
-      // Get the mortadella.
-      rhs = tmp.arg(0);
+      rhs = Expr(rhs_string, symbols);
     }
     catch (exception& e) {
       ostringstream m;
