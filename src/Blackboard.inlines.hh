@@ -25,8 +25,12 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_Blackboard_inlines_hh
 #define PURRS_Blackboard_inlines_hh
 
+#include "util.hh"
+
 #include <iostream>
 #include <utility>
+#include <deque>
+#include <map>
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -86,20 +90,38 @@ Blackboard::get_definition(const Symbol& z) const {
     return z;
 }
 
+inline Symbol
+Blackboard::find_symbol(const Expr& e) {
+  std::map<Symbol, unsigned>::const_iterator j = index.begin();
+  for (std::deque<Definition>::const_iterator i = definitions.begin(),
+	 definitions_end = definitions.end(); i != definitions_end; ++i, ++j) {
+    D_VAR(e);
+    D_VAR((*i).rhs);
+    if ((*i).rhs == e) {
+      D_MSG("UGUALI");
+      D_MSG("");
+      return j->first;
+    }
+  }
+  return insert_definition(e);
+}
+
 inline void
-Blackboard::substitute(const Symbol& bad, const Symbol& good) {
-  std::map<Symbol, unsigned>::const_iterator i = index.find(bad);
-  // Could exist a `bad' symbol that are not stored in the blackboard
-  // (e.g. the index of the sum).
+Blackboard::substitute(const Symbol& system_generated_symbol,
+		       const Symbol& new_symbol) {
+  std::map<Symbol, unsigned>::const_iterator i
+    = index.find(system_generated_symbol);
+  // Could exist a `system_generated_symbol' symbol that are
+  // not stored in the blackboard (e.g. the index of the sum).
   if (i != index.end()) {
-    // Insert the equation `good = e', where `e' is the expression
-    // that was associated to `bad'.
-    index.insert(std::map<Symbol, unsigned>::value_type(good,
+    // Insert the equation `new_symbol = e', where `e' is the expression
+    // that was associated to `system_generated_symbol'.
+    index.insert(std::map<Symbol, unsigned>::value_type(new_symbol,
 							definitions.size()));
     definitions.push_back(Definition(definitions[i->second].rhs));
     ++timestamp;
-    // Remove from the blackboard the `bad' element.
-    index.erase(bad);
+    // Remove from the blackboard the `system_generated_symbol' element.
+    index.erase(system_generated_symbol);
   }
 }
 

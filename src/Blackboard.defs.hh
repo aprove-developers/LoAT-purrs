@@ -64,25 +64,32 @@ public:
   Expr get_definition(const Symbol& z) const;
 
   //! \brief
-  //! Substitutes the left-hand side of the auxiliary equation
-  //! \f$ bad = e \f$ with \p good, so that to have the
-  //! auxiliary equation \f$ good = e \f$.
-  void substitute(const Symbol& bad, const Symbol& good);
+  //! If \p e is already in the blackboard then returns the symbol
+  //! \f$ z \f$ so that \f$ z = e \f$; otherwise returns a new symbol
+  //! \f$ z \f$ and records the equation \f$ z = e \f$.
+  Symbol find_symbol(const Expr& e);
 
-  //! Rewrite \f$ e \f$ according to the definitions in \p *this.
+  //! \brief
+  //! Substitutes the left-hand side of the auxiliary equation
+  //! \f$ system_generated_symbol = e \f$ with \p new_symbol, so that to
+  //! have the auxiliary equation \f$ new_symbol = e \f$.
+  void substitute(const Symbol& system_generated_symbol,
+		  const Symbol& new_symbol);
+
+  //! Rewrites \f$ e \f$ according to the definitions in \p *this.
   Expr rewrite(const Expr& e) const;
 
   //! \brief
-  //! Compute the size norm of \f$ e \f$ according to the definitions
+  //! Computes the size norm of \f$ e \f$ according to the definitions
   //! in \p *this.
   unsigned size_norm(const Expr& e) const;
 
   //! \brief
-  //! Compute the size norm of \f$ e \f$ according to the definitions
+  //! Computes the size norm of \f$ e \f$ according to the definitions
   //! in \p *this.
   unsigned size_norm(const Symbol& s) const;
 
-  //! Approximate \f$ e \f$ according to the definitions in \p *this.
+  //! Approximates \f$ e \f$ according to the definitions in \p *this.
   bool approximate(const Symbol& s, Expr& ae, CInterval& aci) const;
   Expr approximate(const Expr& e) const;
 
