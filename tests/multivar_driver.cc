@@ -917,6 +917,8 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
     bool invalid_constant_difference = false;
     constant_sum = true;
     bool invalid_constant_sum = false;
+    size_t decreasing_variable;
+    size_t increasing_variable;
     
     Expr real_var_expr_0;
     Expr real_var_expr_1;
@@ -934,10 +936,18 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
       if (real_var_expr_0 + real_var_expr_1 != real_var_symbol_0 + real_var_symbol_1)
 	constant_sum = false;
       if (real_var_expr_0.substitute(real_var_symbol_0, different_symbol) !=  
-	  real_var_expr_1.substitute(real_var_symbol_1, different_symbol)) {
+	  real_var_expr_1.substitute(real_var_symbol_1, different_symbol))
 	invalid_constant_difference = true;
-      }
       // FIXME: Write a similar check for invalid_constant_sum.
+      // FIXME: Do the following check for each term.
+      if (compare(real_var_expr_0, real_var_symbol_0) == -1) {
+	decreasing_variable = real_var_index[0];
+	increasing_variable = real_var_index[1];
+      }
+      else {
+	decreasing_variable = real_var_index[1];
+	increasing_variable = real_var_index[0];
+      }
     }
 
     if (!constant_difference && !constant_sum)
@@ -1007,9 +1017,6 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
 	cout << "Constant sum." << endl;
 #endif
     
-	// FIXME: Determine the decreasing variable.
-	size_t decreasing_variable = real_var_index[0];
-	size_t increasing_variable = real_var_index[1];
 	// Solve the recurrence with respect to the decreasing variable.
 	for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
 	  const Expr& this_term = (*i);
@@ -1040,7 +1047,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
 	    }
 	  }
 	  
-	  //      cout << solution << " - " << rendl;
+	  //      cout << solution << " - " << endl;
 	  
 	  // Replace the substituted symbols back to their place.
 	  solution = solution.substitute(Recurrence::n, real_var_symbol_0);
