@@ -131,6 +131,7 @@ fact_decomp.cc \
 sum_poly.cc \
 compute_bounds.cc \
 compute_exact_solution.cc \
+verify.cc \
 util.cc \
 $(INCLUDE_FILES)
 
