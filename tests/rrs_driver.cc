@@ -217,6 +217,7 @@ static void
 process_options(int argc, char* argv[]) {
   int option_index;
   int c;
+  std::map<index_type, Expr> initial_conditions;
 
   while (true) {
     option_index = 0;
@@ -276,7 +277,10 @@ process_options(int argc, char* argv[]) {
         if (invalid_initial_condition(r))
           invalid_initial_condition(optarg);
         init_production_recurrence();
-        precp->replace_initial_condition(index.to_unsigned_int(), r);
+	// Insert the pair (index, r), which represents the initial
+	// condition `x(index) = r', in the map `initial_conditions'.
+	initial_conditions.insert(std::map<index_type, Expr>
+				  ::value_type(index.to_unsigned_int(), r));
       }
       break;
 
@@ -362,6 +366,9 @@ process_options(int argc, char* argv[]) {
     print_usage();
     my_exit(1);
   }
+
+  if (!initial_conditions.empty())
+    precp->set_initial_conditions(initial_conditions);
 }
 
 static unsigned line_number = 0;
