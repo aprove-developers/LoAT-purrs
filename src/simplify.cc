@@ -176,7 +176,12 @@ find_real_base_and_build_exponent(Expr& base, Expr& numeric_exponent,
         split_exponent(exponent.op(i), numeric_exponent, not_numeric_exponent);
     else
       split_exponent(exponent, numeric_exponent, not_numeric_exponent);
-    base = base.arg(0);
+    // Note that doing `base = base.arg(0)' here would not work.
+    // In fact, base could have only one reference and, in this case,
+    // it would be deallocated after taking a reference to its `arg(0)'
+    // subexpression but before completing the assignment.
+    Expr arg_0 = base.arg(0);
+    base = arg_0;
   }
 }
 
