@@ -232,8 +232,49 @@ public:
     condition \f$ x(k) \f$, but with the value \f$ e \f$ in place
     of it.
     If the system has already computed the solution or the bound,
-    then the method sustitutes the value \f$ e \f$ in place of
-    \f$ x(k) \f$ in the solution or the bound.
+    then the method replaces \f$ x(k) \f$ with the value \f$ e \f$
+    in the solution or in the bound.
+
+    \par Example 1
+    We consider here the recurrence \f$ x_n = 2 x_{n-1} + 1 \f$ with the
+    initial condition \f$ x_0 = 2 \f$ specified before to solve the
+    recurrence:
+    \code
+      Recurrence rec(2*x(n-1)+1);
+      rec.replace_initial_condition(0,2);
+      if (rec.compute_exact_solution() == Recurrence::SUCCESS) {
+        Expr exact_solution;
+	rec.exact_solution(exact_solution);
+      }
+    \endcode
+    At the end of these instructions the variable
+    <CODE>exact_solution</CODE> will contain the right-hand side of the
+    solution \f$ x(n) = 3*2^n - 1 \f$.
+
+    \par Example 2
+    Now we consider a case with the recurrence \f$ x_n = 2 x_{n-1} + 1 \f$
+    solved before to specify the initial condition \f$ x_1 = 4 \f$:
+    \code
+      Recurrence rec(2*x(n-1)+1);
+      if (rec.compute_exact_solution() == Recurrence::SUCCESS) {
+        Expr exact_solution;
+	rec.exact_solution(exact_solution);
+      }
+      rec.replace_initial_condition(1,4);
+      rec.exact_solution(exact_solution);
+    \endcode
+    Once we have solved the recurrence the variable
+    <CODE>exact_solution</CODE> will contain the right-hand side of the
+    solution \f$ x(n) = x_0 2^n + 2^n -1 \f$.
+    After the call to the method <CODE>replace_initial_condition()</CODE>
+    is necessary also to recall the method <CODE>exact_solution()</CODE>
+    in order to get the solution of the recurrence modified consequently
+    to the insertion of the initial condition.
+    Hence, the solution will become \f$ x(n) = 5/2*2^n - 1 \f$.
+    Note that since the symbolic solution of the recurrence contains the
+    symbolic initial condition \f$ x_0 \f$, while the user had inserted
+    the symbolic initial condition \f$ x_1 \f$, is been necessary to
+    shift the solution.
   */
   void replace_initial_condition(unsigned int k, const Expr& e);
 
@@ -380,7 +421,7 @@ public:
       x(n) = x_0 2^n + 2^n - 1
     \f]
     and its right-hand side is contained in the variable
-    \p exact_solution.
+    <CODE>exact_solution</CODE>.
 
     We remark that in the exact solution will appear symbolically
     the initial conditions until the user will not define it: this
@@ -431,7 +472,8 @@ public:
       x(n) \geq \frac{1}{7} x(1) n^{\log 7 / \log 5} - \frac{5}{3}
                 + \frac{5}{21} n^{\log 7 / \log 5}
     \f]
-    and its right-hand side is contained in the variable \p lower_bound.
+    and its right-hand side is contained in the variable
+    <CODE>lower_bound</CODE>.
 
     We remark that in the lower bound will appear symbolically
     the initial conditions until the user will not define it: this
@@ -482,7 +524,8 @@ public:
       x(n) \leq x(1) n^{\log 7 / \log 5} - \frac{5}{3}
                 + \frac{5}{3} n^{\log 7 / \log 5}
     \f]
-    and its right-hand side is contained in the variable \p lower_bound.
+    and its right-hand side is contained in the variable
+    <CODE>upper_bound</CODE>.
 
     We remark that in the upper bound will appear symbolically
     the initial conditions until the user will not define it: this
