@@ -299,6 +299,18 @@ private:
 					      unsigned type) const;
 
   //! \brief
+  //! Returns <CODE>SUCCESS</CODE> if the system is able to solve the
+  //! recurrence of infinite order
+  //! \f$ x(n) = f(n) \sum_{k=n_0}^n-1 x(k) + g(n) \f$, where
+  //! \f$ f(n) \f$ is stored in \p weight and  \f$ g(n) \f$ is stored
+  //! in \p inhomogeneous: in this case the solution is returned in
+  //! \p solution.
+  Solver_Status
+  solve_new_infinite_order_rec(const Expr& weight, const Expr& inhomogeneous,
+			       unsigned first_well_defined,
+			       Expr& solution) const;
+
+  //! \brief
   //! Solves the recurrence of infinite order \p *this transforming it
   //! in a linear recurrence of finite order stored in a new object
   //! <CODE>Recurrence</CODE>.
@@ -696,23 +708,37 @@ private:
   //! \brief
   //! Returns the factor \f$ f(n) \f$ of the infinite order recurrence
   //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{n-1} T(k) + g(n).
+  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
   //! \f]
   Expr weight_inf_order() const;
 
   //! \brief
   //! Returns the factor \f$ f(n) \f$ of the infinite order recurrence
   //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{n-1} T(k) + g(n).
+  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
   //! \f]
   Expr& weight_inf_order();
 
   //! \brief
   //! Returns the lower bound \f$ n_0 \f$ of the infinite order recurrence
   //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{n-1} T(k) + g(n).
+  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
   //! \f]
   unsigned lower_bound_sum() const;
+
+  //! \brief
+  //! Returns the upper bound \f$ u(n) \f$ of the infinite order recurrence
+  //! \f[
+  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
+  //! \f]
+  Expr upper_bound_sum() const;
+
+  //! \brief
+  //! Returns the upper bound \f$ u(n) \f$ of the infinite order recurrence
+  //! \f[
+  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
+  //! \f]
+  Expr& upper_bound_sum();
 
   //! \brief
   //! Stores the smallest positive integer for which the infinite

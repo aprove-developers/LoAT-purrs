@@ -475,6 +475,20 @@ Recurrence::lower_bound_sum() const {
   return infinite_order_p -> lower_bound_sum();
 }
 
+inline Expr
+Recurrence::upper_bound_sum() const {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  return infinite_order_p -> upper_bound_sum();
+}
+
+inline Expr&
+Recurrence::upper_bound_sum() {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  return infinite_order_p -> upper_bound_sum();
+}
+
 inline unsigned
 Recurrence::infinite_order_fwdr() const {
   assert(is_linear_infinite_order());
