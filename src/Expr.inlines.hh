@@ -355,11 +355,6 @@ Expr::rhs() const {
 }
 
 inline Expr
-Expr::to_rational(Expr_List& x) {
-  return Base::to_rational(x.l);
-}
-
-inline Expr
 Expr::diff(const Symbol& x, unsigned nth) {
   return Base::diff(x.s, nth);
 }

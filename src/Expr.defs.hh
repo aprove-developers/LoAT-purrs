@@ -69,6 +69,7 @@ Expr& operator-=(Expr& x, const Expr& y);
 //! Assigns \f$ x \cdot y \f$ to \f$ x \f$ and returns the result.
 Expr& operator*=(Expr& x, const Expr& y);
 
+//! \brief
 //! If \f$ y \neq 0 \f$, assigns \f$ x / y \f$ to \f$ x \f$
 //! and returns the result.
 /*!
@@ -76,12 +77,17 @@ Expr& operator*=(Expr& x, const Expr& y);
 */
 Expr& operator/=(Expr& x, const Expr& y);
 
-//! Builds an arbitrary expression, called <EM>wildacard</EM>, with the
-//! specified label \p label. The label allows to have multiple different
-//! wildcard in a single expression.
+//! \brief
+//! Builds an arbitrary expression, called <EM>wildcard</EM>, with the
+//! specified label \p label.
+/*!
+  The label allows to have multiple different
+  wildcard in a single expression.
+*/
 // FIXME: meglio con argomento di default `unsigned label = 0'?
 Expr wild(unsigned label);
 
+//! \brief
 //! If \f$ x \f$ and \f$ y \f$ are not zero or \f$ x = 0 \f$ and \f$ y \f$
 //! is a positive rational number, returns \f$ x^y \f$.
 /*!
@@ -91,8 +97,13 @@ Expr wild(unsigned label);
 */
 Expr power(const Expr& x, const Expr& y);
 
-//! 
+//! \brief
+//! If \f$ x \f$ is an exact number, returns the number \f$ y \f$ such that
+//! \f$ y^2 = x \f$; otherwise, only for the output, returns the expression
+//! \f$ sqrt(x) \f$ not valued. 
 Expr sqrt(const Expr& x);
+
+//! 
 Expr sin(const Expr& x);
 Expr cos(const Expr& x);
 Expr acos(const Expr& x);
@@ -100,15 +111,121 @@ Expr tan(const Expr& x);
 Expr exp(const Expr& x);
 Expr log(const Expr& x);
 
+// FIXME: what is a polynomial in a variable `x'?
+// The answer is necessary for the function quo(), rem(), prem(), gcd(),
+// lcm(), degree(), ldegree(), coeff(), lcoeff(), tcoeff(), expand(),
+// collect() and primpart(). 
+
+//! \brief
+//! Computes the quotient \f$ q(x) \f$ of polynomials \f$ a(x) \f$ and
+//! \f$ b(x) \f$ in \f$ Q[x] \f$.
+/*!
+  The quozient \f$ q(x) \f$ satisfies \f$ a(x) = b(x) * q(x) + r(x) \f$,
+  where \f$ r(x) \f$ is the remainder.
+
+  \exception std::overflow_error   thrown if \f$ b = 0 \f$.
+  \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
+                                   rational polynomials.
+*/
 Expr quo(const Expr& a, const Expr& b, const Symbol& x);
+
+//! \brief
+//! Computes the remainder \f$ r(x) \f$ of polynomials \f$ a(x) \f$ and
+//! \f$ b(x) \f$ in \f$ Q[x] \f$.
+/*
+  The remainder \f$ r(x) \f$ satisfies \f$ a(x) = b(x) * q(x) + r(x) \f$,
+  where \f$ q(x) \f$ is the quozient.
+
+  \exception std::overflow_error   thrown if \f$ b = 0 \f$.
+  \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
+                                   rational polynomials.
+*/
 Expr rem(const Expr& a, const Expr& b, const Symbol& x);
+  
+//! \brief
+//! Computes the pseudo-remainder \f$ pseudo\_r(x) \f$ of polynomials
+//! \f$ a(x) \f$ and \f$ b(x) \f$ in \f$ Z[x] \f$.
+/*!
+  The pseudo-remainder satisfies
+  \f$ c * a(x) = b(x) * pseudo\_q(x) + pseudo\_r(x) \f$, where
+  \f$ c = b\_lcoeff^(deg\_a - deg\_b + 1) \f$ with \f$ b\_lcoeff \f$ the
+  leading coefficient of \f$ b(x) \f$ and \f$ deg\_a \f$ and \f$ deg\_b \f$
+  the degree of \f$ a(x) \f$ and \f$ b(x) \f$, respectively.
+
+  \exception std::overflow_error   thrown if \f$ b = 0 \f$.
+  \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
+                                   rational polynomials.
+*/
+// FIXME: what is the pseudo-quozient?
 Expr prem(const Expr& a, const Expr& b, const Symbol& x);
+
+//! \brief
+//! Computes the GCD (greatest common divisor) of multivariate polynomials
+//! \f$ a(X) \f$ and \f$ b(X) \f$ in \f$ Z[X] \f$.
+/*!
+  \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
+                                   rational polynomials.
+*/
+// FIXME: what is a multivariate polynomial?
 Expr gcd(const Expr& a, const Expr& b);
+
+//! \brief
+//! Computes the LCM (least common multiple) of multivariate polynomials
+//! \f$ a(X) \f$ and \f$ b(X) \f$ in \f$ Z[X] \f$.
+/*!
+  \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
+                                   rational polynomials.
+*/
+// FIXME: what is a multivariate polynomial?
 Expr lcm(const Expr& a, const Expr& b);
+
+//! \brief
+//! Computes a square-free factorization for the polynomial \p x with respect
+//! to the variable in the list \p y.
+/*
+  A polynomial \f$ p(X) \in C[X] \f$ is said <EM>square-free</EM>
+  if, whenever any two polynomials \f$ q(X) \f$ and \f$ r(X) \f$
+  are such that
+  \f[
+    p(X) = q(X)^2 r(X),
+  \f]
+  we have \f$ q(X) \in C \f$.
+  This means that \f$ p(X) \f$ has no repeated factors, apart
+  eventually from constants.
+  Given a polynomial \f$ p(X) \in C[X] \f$, we say that the
+  decomposition
+  \f[
+    p(X) = b \cdot p_1(X)^{a_1} \cdot p_2(X)^{a_2} \cdots p_r(X)^{a_r}
+  \f]
+  is a <EM>square-free factorization</EM> of \f$ p(X) \f$ if the
+  following conditions hold:
+  - \f$ b \in C \f$ and \f$ b \neq 0 \f$;
+  - \f$ a_i \f$ is a positive integer for \f$ i = 1, \ldots, r \f$;
+  - the degree of the polynomial \f$ p_i \f$ is strictly positive
+    for \f$ i = 1, \ldots, r \f$;
+  - the polynomial \f$ \Pi_{i=1}^r p_i(X) \f$ is square-free.
+
+  Square-free factorizations need not be unique.  For example, if
+  \f$ a_i \f$ is even, we could change the polynomial \f$ p_i(X) \f$
+  into \f$ -p_i(X) \f$.
+  Observe also that the factors \f$ p_i(X) \f$ need not be irreducible
+  polynomials.
+*/
 Expr sqrfree(const Expr& x, const Expr_List& y);
 
+//! Solves a linear system of equations.
+/*!
+  \p x is a list of of equations in the form of relational expressions and
+  \p y is a list of symbols.
+
+  \exception std::invalid_argument thrown if \p x and \p y are not lists and,
+                                   in particular, lst of equations or lst of
+				   symbols, respectively.
+  \exception std::logic_error      thrown if the system is not linear. 
+*/
 Expr lsolve(const Expr_List& x, const Expr_List& y);
 
+//! Returns the function \f$ x(y) \f$.
 Expr x(const Expr& y);
 
 class Expr : private GiNaC::ex {
@@ -200,12 +317,39 @@ public:
   //! in the form of relational.
   bool is_a_relational() const;
 
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>abs()</CODE>.
   bool is_the_abs_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>exp()</CODE>.
   bool is_the_exp_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>log()</CODE>.
   bool is_the_log_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>sin()</CODE>.
   bool is_the_sin_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>cos()</CODE>.
   bool is_the_cos_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>tan()</CODE>.
   bool is_the_tan_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the function
+  //! <CODE>acos()</CODE>.
   bool is_the_acos_function() const;
 
   //! Returns the numeric value of \p *this.
@@ -216,78 +360,235 @@ public:
   bool is_rational_polynomial() const;
   bool is_relation_equal() const;
 
-  //! If \p *this is an addiction or a multiplication of expressions
-  //! returns the terms'number or the factors'number, respectively.
-  //! If \p *this is a power returns \f$ 2 \f$.
-  //! If \p *this is a function returns \f$ 1 \f$.
-  //! Returns \f$ 0 \f$ otherwise.
+  //! Returns the operand's number of \p *this.
+  /*!
+    If \p *this is an addiction or a multiplication of expressions
+    returns the terms'number or the factors'number, respectively.
+    If \p *this is a power returns \f$ 2 \f$.
+    If \p *this is a function returns \f$ 1 \f$.
+    Returns \f$ 0 \f$ otherwise.
+  */
   unsigned nops() const;
 
-  //! If \p *this is an addiction or a multiplication of expressions
-  //! returns \f$ i \f$-th (\f$ i = 0, \dotsc, nops()-1 \f$) term or factor,
-  //! respectively.
-  //! If \p *this is a power then <CODE>op(0)</CODE> and <CODE>op(1)</CODE>
-  //! return base and exponent of the power.
-  //! If \p *this is a function then <CODE>op(0)</CODE>
-  //! returns the function's argument.
+  //! \brief
+  //! Returns the \f$ i \f$-th (\f$ i = 0, \dotsc, nops()-1 \f$) operand
+  //! of \p *this.
+  /*!
+    If \p *this is an addiction or a multiplication of expressions
+    returns \f$ i \f$-th (\f$ i = 0, \dotsc, nops()-1 \f$) term or factor,
+    respectively.
+    If \p *this is a power then <CODE>op(0)</CODE> and <CODE>op(1)</CODE>
+    return base and exponent of the power.
+    If \p *this is a function then <CODE>op(0)</CODE>
+    returns the function's argument.
+    
+    \exception std::out_of_range thrown if
+                                 \f$ i \notin \{0, \dotsc, nops() - 1 \}.
+  */
   Expr op(unsigned i) const;
 
+  //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is sinctatically
   //! equal to \p e.
   bool is_equal(const Expr& x) const;
 
+  //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is sinctatically
   //! zero.
   bool is_zero() const;
 
-  //! Substitutes in \p *this the occurrences of \p x with \p y.
+  //! \brief
+  //! Performs syntactic substitution in \p *this of the occurrences of
+  //! the subexpression \p x with \p y.
+  // FIXME: we must define subexpression.
   Expr subs(const Expr& x, const Expr& y) const;
 
+  //! \brief
   //! Allows the substitution at the same time of the occurences in \p *this
-  //! of the expressions contained in \p x with the relative
+  //! of the subexpressions contained in \p x with the relative
   //! expressions in \p y.
   Expr subs(const Expr_List& x, const Expr_List& y) const;
 
   //! Returns <CODE>true</CODE> if and only if \p *this matches \p x.
+  // FIXME: devo spiegare meglio cosa vuol dire `matches \p x'?
   bool match(const Expr& x) const;
 
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this matches \p x;
+  //! in this case \p y contains a list of relations
+  //! \f$ wildcard == expression \f$.
+  //! If returns <CODE>false</CODE> then the state of \p y is undefined.
   bool match(const Expr& x, Expr_List& y) const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if a subexpression of \p *this
+  //! matches \p x.
   bool has(const Expr& x) const;
 
+  //! Expandes \p *this, i.e., distributes multiplication over addition.
   Expr expand() const;
+
+  //! \brief
+  //! Sorts expanded expression \p *this collecting, or, in other words,
+  //! putting in evidence, the expressions in \p x.
   Expr collect(const Expr_List& x) const;
+
+  //! \brief
+  //! If \p *this is a polynomial or a rational function, returns the degree
+  //! of the polynomial or the asymptotic degree of the rational function,
+  //! respectively; otherwise the behavior of <CODE>degree()</CODE>
+  //! is undefined. 
+  //! The behavior of <CODE>degree()</CODE> is undefined also if \p x is not
+  //! contained in \p *this.
+  /*!
+    For degree or asymptotic degree we intend the highest integer exponent
+    of the powers in \p *this with base equal to \p x.
+    This method only works reliably if the input expression is collected
+    in terms of \p x.
+
+    \exception std::out_of_range thrown if there is at least one exponent of
+                                 the powers with base equal to \p x not
+				 integer.
+  */
   int degree(const Symbol& x) const;
+
+  //! \brief
+  //! If \p *this is a polynomial or a rational function, returns the degree
+  //! of the polynomial or the asymptotic degree of the rational function,
+  //! respectively; otherwise the behavior of <CODE>degree()</CODE>
+  //! is undefined.
+  //! The behavior of <CODE>ldegree()</CODE> is undefined also if \p x is not
+  //! contained in \p *this.
+  /*!
+    For low degree or asymptotic low degree we intend the lowest integer
+    exponent of the powers in \p *this with base equal to \p x.
+    This method only works reliably if the input expression is collected
+    in terms of \p x.
+
+    \exception std::out_of_range thrown if there is at least one exponent of
+                                 the powers with base equal to \p x not
+				 integer.
+  */
   int ldegree(const Symbol& x) const;
+
+  //! \brief
+  //! Returns coefficient of the term of degree equal to \p k, i. e.,
+  //! the coefficient of the power in the expanded polynomial \p *this
+  //! with base equal to \p x and degree equal to \p k.
+  //! The behavior of <CODE>coeff()</CODE> is undefined if \p *this
+  //! is not a polynomial or \p x is not contained in \p *this or there
+  //! is not a term of \p k's degree.
+  // FIXME: lavora anche sulle espressioni non polinomiali!!
   Expr coeff(const Symbol& x, int k) const;
+
+  //! \brief
+  //! Returns coefficient of the term with highest degree, i. e., the
+  //! coefficient of the highest power in the expanded polynomial \p *this
+  //! with base equal to \p x.
+  //! It is equivalent to <CODE>coeff(x, degree(x))</CODE>.
+  //! The behavior of <CODE>lcoeff()</CODE> is undefined if \p *this
+  //! is not a polynomial or \p x is not contained in \p *this or there
+  //! is not a term of \p k's degree.
+  // FIXME: lavora anche sulle espressioni non polinomiali!!
   Expr lcoeff(const Symbol& x) const;
+
+  //! \brief
+  //! Returns coefficient of the term with lowest degree, i. e., the
+  //! coefficient of the lowest power in the expanded polynomial \p *this
+  //! with base equal to \p x.
+  //! It is equivalent to <CODE>coeff(x, ldegree(x))</CODE>.
+  //! The behavior of <CODE>tcoeff()</CODE> is undefined if \p *this
+  //! is not a polynomial or \p x is not contained in \p *this or there
+  //! is not a term of \p k's degree.
+  // FIXME: lavora anche sulle espressioni non polinomiali!!
   Expr tcoeff(const Symbol& x) const;
+
+  //! \brief
+  //! Returns the primitive polynomial of a multivariate polynomial in
+  //! \f$ Z[x] \f$ with respect to \p x.
+  /*!
+    By definition, a polynomial which generates all elements of an
+    extension field from a base field is called a
+    <EM>primitive polynomial</EM>.
+
+    \exception std::out_of_range     thrown if there is at least one exponent
+                                     of the powers with base equal to \p x not
+				     integer.
+    \exception std::domain_error     thrown if VEDI TEST primpart.cc   
+    \exception std::invalid_argument thrown if VEDI TEST primpart.cc
+  */
   Expr primpart(const Symbol& x) const;
+
+  //! Returns numerator of \p *this.
+  /*!
+    If the expression is not of the normal form `numerator/denominator'
+    (where numerator and denominator are relatively prime) polynomials,
+    it is first converted to this form and then the numerator is returned.
+  */
+  // FIXME: what is a polynomial?
   Expr numerator() const;
+
+  //! Returns denominator of \p *this.
+  /*!
+    If the expression is not of the normal form `numerator/denominator'
+    (where numerator and denominator are relatively prime) polynomials,
+    it is first converted to this form and then the denominator is returned.
+  */
+  // FIXME: what is a polynomial?
   Expr denominator() const;
+
+  //! Returns numerator \p x and denominator \p y of \p *this.
+  /*!
+    If the expression is not of the normal form `numerator/denominator'
+    (where numerator and denominator are relatively prime) polynomials,
+    it is first converted to this form and then the numerator and
+    denominator are returned.
+  */
+  // FIXME: what is a polynomial?
   void numerator_denominator(Expr& x, Expr& y) const;
+
+  //! Returns left hand side of relational expression \p *this.
+  /*!
+    \exception std::runtime_error thrown if \p *this is not a relational
+                                  expression.
+  */
   Expr lhs() const;
+
+  //! Returns right hand side of relational expression \p *this.
+  /*!
+    \exception std::runtime_error thrown if \p *this is not a relational
+                                  expression.
+  */
   Expr rhs() const;
 
+  //! \brief
+  //! Returns partial derivative of \p nth order of \p *this with respect
+  //! to the varable \p x.
   Expr diff(const Symbol& x, unsigned nth = 1);
 
-  Expr to_rational(Expr_List& x);
-
 private:
+  friend class Number;
+  friend class Symbol;
+  friend class Constant;
+  friend class Expr_List;
+  friend class Matrix;
+
   friend std::ostream& operator<<(std::ostream& s, const Expr& x);
 
   friend Expr operator+(const Expr& x);
   friend Expr operator-(const Expr& x);
+
   friend Expr operator+(const Expr& x, const Expr& y);
   friend Expr operator-(const Expr& x, const Expr& y);
   friend Expr operator*(const Expr& x, const Expr& y);
   friend Expr operator/(const Expr& x, const Expr& y);
+
   friend Expr& operator+=(Expr& x, const Expr& y);
   friend Expr& operator-=(Expr& x, const Expr& y);
   friend Expr& operator*=(Expr& x, const Expr& y);
   friend Expr& operator/=(Expr& x, const Expr& y);
 
   friend Expr wild(unsigned label);
-
   friend Expr power(const Expr& x, const Expr& y);
   friend Expr sqrt(const Expr& x);
   friend Expr sin(const Expr& x);
@@ -296,25 +597,19 @@ private:
   friend Expr tan(const Expr& x);
   friend Expr exp(const Expr& x);
   friend Expr log(const Expr& x);
-
   friend Expr quo(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr rem(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr prem(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr gcd(const Expr& a, const Expr& b);
   friend Expr lcm(const Expr& a, const Expr& b);
   friend Expr sqrfree(const Expr& x, const Expr_List& y);
-  
   friend Expr lsolve(const Expr_List& x, const Expr_List& y);
-  
   friend Expr x(const Expr& y);
 
-  friend class Number;
-  friend class Symbol;
-  friend class Constant;
-  friend class Expr_List;
-  friend class Matrix;
-
+  //! Builds the expression corresponding to \p ge.
   Expr(const GiNaC::ex& ge);
+
+  //! Builds the function corresponding to \p gf.
   Expr(const GiNaC::function& gf);
 };
 
