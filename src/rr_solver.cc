@@ -337,36 +337,6 @@ subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
   return solution;
 }
 
-#if 0
-/*!
-  Adds to the sum already computed those corresponding to the initial
-  conditions:
-  \f[
-    \sum_{i=0}^{order - 1} g_{n-i}
-      \bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \bigr).
-  \f]
-*/
-// FIXME: il vettore `coefficients' dovra' diventare di `Expr' quando
-// sapremo risolvere anche le eq. di grado superiore al primo con i
-// parametri.
-void
-add_initial_conditions(const Expr& g_n,
-                       const std::vector<Number>& coefficients,
-		       const std::vector<Expr>& initial_conditions,
-		       Expr& solution) {
-  // `coefficients.size()' has `order + 1' elements because in the first
-  // position there is the value 0.
-  D_VAR(g_n);
-  for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
-    Expr g_n_i = g_n.substitute(Recurrence::n, Recurrence::n - i);
-    Expr tmp = initial_conditions[i];
-    for (unsigned j = i; j > 0; j--)
-      tmp -= coefficients[j] * initial_conditions[i-j];
-    solution += tmp * g_n_i;
-  }
-}
-#endif
-
 /*!
   Applies the Gosper's algorithm to express in closed form, if it is
   possible, sum with the summand an hypergeometric term not polynomials
@@ -1541,10 +1511,11 @@ substitute_non_rational_roots(const Recurrence& rec,
 // sapremo risolvere anche le eq. di grado superiore al primo con i
 // parametri.
 void
-PURRS::Recurrence::add_initial_conditions(const Expr& g_n,
-					  const std::vector<Number>& coefficients,
-					  Expr& solution) const {
-    // `coefficients.size()' has `order + 1' elements because in the first
+PURRS::Recurrence::
+add_initial_conditions(const Expr& g_n,
+		       const std::vector<Number>& coefficients,
+		       Expr& solution) const {
+  // `coefficients.size()' has `order + 1' elements because in the first
   // position there is the value 0.
   D_VAR(g_n);
   for (unsigned i = coefficients.size() - 1; i-- > 0; ) {

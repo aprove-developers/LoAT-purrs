@@ -155,11 +155,12 @@ take_common_and_not_factors(std::vector<Expr>& bases_1,
     else
       e *= pwr(base_1, exponents_1[i]);
   }
-  // All the factors of the first vectors (`bases_1' and `exponents_1') were already
-  // considered. Now we must to consider the factors of the seconds vectors
-  // (`bases_2' and `exponents_2') with the exponents not equal to `0', i. e.,
-  // not considered in the previous loop because they did not have common factors
-  // with the first vectors. 
+  // All the factors of the first vectors (`bases_1' and `exponents_1')
+  // were already considered.
+  // Now we must to consider the factors of the seconds vectors
+  // (`bases_2' and `exponents_2') with the exponents not equal to `0',
+  // i. e., not considered in the previous loop because they did not have
+  // common factors with the first vectors. 
   for (unsigned i = bases_2.size(); i-- > 0; )
     if (!exponents_2[i].is_zero())
       e *= pwr(bases_2[i], exponents_2[i]);
