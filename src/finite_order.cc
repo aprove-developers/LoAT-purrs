@@ -69,11 +69,8 @@ Expr
 build_characteristic_equation(const Symbol& x,
 			      const std::vector<Number>& coefficients) {
   for (unsigned int i = coefficients.size(); i-- > 0; )
-    if (!coefficients[i].is_rational())
-      throw
-	"PURRS error: today the algebraic equation solver works\n"
-	"only with integer coefficients.\n"
-	"Please come back tomorrow.";
+    assert(coefficients[i].is_rational());
+
   std::vector<Number> denominators;
   // Find the least common multiple of the denominators of the
   // rational elements of `coefficients'.
@@ -205,10 +202,7 @@ characteristic_equation_and_its_roots(index_type order,
       if (coefficients[i].is_a_number())
 	num_coefficients[i] = coefficients[i].ex_to_number();
       else
-	throw
-	  "PURRS error: today the recurrence relation of order\n"
-	  "greater than one, does not support parametric coefficients.\n"
-	  "Please come back tomorrow.";
+	return false;
     characteristic_eq = build_characteristic_equation(y, num_coefficients);
     D_VAR(characteristic_eq);
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
