@@ -66,11 +66,6 @@ cubic_root(const Expr& e);
 void
 clear(Expr_List& l);
 
-//! Returns the expression that \p substitution binds
-//! to the wildcard of index \p wild_index.
-Expr
-get_binding(const Expr_List& substitution, unsigned wild_index);
-
 void
 isolate_polynomial_part(const Expr& p, const Symbol& var,
 			Expr& poly, Expr& no_poly);

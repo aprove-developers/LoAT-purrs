@@ -133,20 +133,6 @@ PURRS::clear(Expr_List& l) {
   assert(l.nops() == 0);
 }
 
-/*!
-  We assume that \p substitution has been produced by
-  <CODE>GiNaC::match()</CODE> and that the binding for the wildcard of
-  index \p wild_index is in the position \p wild_index of \p substitution.
-*/
-PURRS::Expr
-PURRS::get_binding(const Expr_List& substitution, unsigned wild_index) {
-  assert(wild_index < substitution.nops());
-  assert(substitution.op(wild_index).is_relation_equal());
-  //assert(substitution.op(wild_index).lhs() == wild(wild_index));
-  return substitution.op(wild_index).rhs();
-}
-
-
 //! \brief
 //! Isolates a polynomial part of \p e and assigns it to \p polynomial,
 //! assigning the corresponding possibly non-polynomial part of \p e
