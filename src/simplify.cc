@@ -50,12 +50,12 @@ using namespace PURRS;
 static const unsigned
 FACTOR_THRESHOLD = 100;
 
-//! Applies the rule `E2' of the set \emph{Expand}.
+//! Applies the rule `E2' of the set <EM>Expand</EM>.
 /*!
-  If \f$ e = e_1 \cdots \e_k \f$ and
+  If \f$ e = e_1 \cdots e_k \f$ and
   \f$ \exists i \in \{1, \dotsc , k\} \st e_i == n \f$,
   then returns <CODE>true</CODE> and \f$ e \f$ becomes
-  \f$ e_1 \cdots e_{i-1} \cdot e_{i+1} \cdots \e_k \f$.
+  \f$ e_1 \cdots e_{i-1} \cdot e_{i+1} \cdots e_k \f$.
   If \f$ e = n \f$ then returns <CODE>true</CODE> and \f$ e \f$
   becomes \f$ 1 \f$.
   For all the other cases returns <CODE>false</CODE> and \f$ e \f$
@@ -574,15 +574,15 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
   if (k > 0)
     if (r == 0)
       return 0;
-  Number num = r.numerator();
-  Number den = r.denominator();
-
   // FIXME: deal with complex numbers
   if (!r.is_real()) {
     Expr index = 1 / root_index;
     return pwr(r, index);
   }
+
   Number sign = r > 0 ? 1 : -1;
+  Number num = r.numerator();
+  Number den = r.denominator();
   Number g = gcd(num, den);
   num /= g;
   den /= g; // clear any common factors from num, den.
@@ -594,18 +594,15 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
     den = i;
     k *= -1;
   } // now, num, den and k are all positive.
-  
   if (k == 1)
     return sign * num * pwr(den, -1);
   
   std::vector<Number> num_bases;
   std::vector<int> num_exponents;
   std::vector<Number> den_bases;
-  std::vector<int> den_exponents;
-  
+  std::vector<int> den_exponents;  
   // Partial factor and reduce numerator and denominator.
   partial_factor(num, num_bases, num_exponents);
-
   unsigned num_size = num_bases.size();
   Expr reduced_num = to_std_form(k, num_bases, num_exponents);
   // Here <CODE>to_std_form</CODE> is called with a negative value of k 
@@ -654,25 +651,32 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
 static Expr
 red_prod(const Number& base1, const Number& exp1, 
 	 const Number& base2, const Number& exp2) {
-  Number base_1 = base1;  
-  Number base_2 = base2;
   assert(exp1 != 0);
   assert(exp2 != 0);
-  
+  Number base_1 = base1;  
+  Number base_2 = base2;
   Number k1_num = exp1.numerator();
   Number k1_den = exp1.denominator();
   Number k2_num = exp2.numerator();
   Number k2_den = exp2.denominator();
-
+  // We want that the sign of the exponent is stored in the denominator
+  // (while the method `numerator()' and `denominator' stores the sign
+  // in the numerator).
+  if (!k1_num.is_positive()) {
+    k1_num *= -1;
+    k1_den *= -1;
+  }
+  if (!k2_num.is_positive()) {
+    k2_num *= -1;
+    k2_den *= -1;
+  }
   base_1 = pwr(base_1, k1_num);
   base_2 = pwr(base_2, k2_num);
-  
   Number g = gcd(k1_den, k2_den);
   Number k = k1_den * k2_den / g;
   Number b1 = pwr(base_1, k2_den / g);
   Number b2 = pwr(base_2, k1_den / g);
   Number b = b1 * b2;
-
   return reduce_to_standard_form(k, b);
 }
 
@@ -990,7 +994,7 @@ rewrite_factorials_and_exponentials(const Expr& e, const Symbol& n) {
   Crosses the tree of the expanded expression \p e recursively to find
   subexpressions to which we apply the rules of the terms rewriting
   system \f$ \mathfrak{R}_i \f$. More exactly here the rules of the set
-  \emph{Expand} are implemented because the rules of the set
+  <EM>Expand</EM> are implemented because the rules of the set
   <EM>Automatic</EM> are automatically executed.  We remark that the
   rule \f$ \textbf{E4} \f$ is automatically executed if the exponent is
   integer, while the rules \f$ \textbf{E3} \f$ and \f$ \textbf{E6} \f$
