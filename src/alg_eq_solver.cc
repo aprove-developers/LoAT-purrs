@@ -569,3 +569,12 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   x3 = simplify_on_output_ex(x3, n, false);
   x4 = simplify_on_output_ex(x4, n, false);
 }
+
+std::ostream&
+operator<<(std::ostream& s, const Polynomial_Root& r) {
+  GNumber multiplicity = r.multiplicity();
+  if (multiplicity != 1)
+    s << "mult: " << multiplicity << ", val: ";
+  s << r.value();
+  return s;
+}

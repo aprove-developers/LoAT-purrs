@@ -24,6 +24,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
+#define NOISY 1
+
 #include "globals.hh"
 #include "util.hh"
 #include "sum_poly.hh"
@@ -35,8 +37,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include <iostream>
 
 using namespace GiNaC;
-
-#define NOISY 0
 
 /*!
   Returns <CODE>true</CODE> if and only if \p e is of the form
@@ -125,10 +125,10 @@ check_poly_times_exponential(const GMatrix& decomposition) {
   for \f$ j = 0, \dotsc, roots.size() \f$ and for
   \f$ i = 0, \dotsc, decomposition.cols() \f$
   -  if \f$ alpha_i \neq \lambda_j \f$ then
-     \f$ symbolic_sum_distinct[i] = f_n_i(\alpha / \lambda)
+     \f$ symbolic_sum_distinct[i] = f_{n_i}(\alpha / \lambda)
           = \lambda^n * \sum_{k=order}^n {\alpha / \lambda}^k \cdot q(k)_i \f$;
   -  if \f$ alpha_i = \lambda_j \f$ then
-     \f$ symbolic_sum_no_distinct[i] = f_n_i(\lambda)
+     \f$ symbolic_sum_no_distinct[i] = f_{n_i}(\lambda)
           = \lambda^n * \sum_{k=order}^n q(k)_i \f$.
 */
 static void
@@ -251,7 +251,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   if (finished) {
     solution = e; 
 #if NOISY 
-    std::cout << "Solution " << solution << std::endl << std::endl;
+    D_VAR(solution);
 #endif
     return true;
   }
@@ -308,7 +308,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     // minore dell'ordine.
 
 #if NOISY
-    std::cout << "decrement = " << decrement << std::endl;
+    D_VAR(decrement);
 #endif
     if (!decrement.is_integer()
 	|| decrement < 0
@@ -347,12 +347,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     return false;
 
 #if NOISY
-  std::cout << "Order = " << order << std::endl;
-  std::cout << "Coefficients = ";
-  for (int i = 1; i <= order; ++i)
-    std::cout << coefficients[i] << " ";
-  std::cout << std::endl;
-  std::cout << "Inhomogeneous term = " << e << std::endl;
+  D_VAR(order);
+  D_VEC(coefficients, 1, order);
+  D_MSGVAR("Inhomogeneous term: ", e);
 #endif
 
   // Simplifies expanded expressions, in particular rewrites nested powers.
@@ -417,10 +414,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   }
 
 #if NOISY
-  std::cout << "characteristic equation " << characteristic_eq << std::endl;
-  for (size_t i = roots.size(); i-- > 0; )
-    std::cout << "root_" << i << ": " << roots[i].value() << "    ";
-  std::cout << std::endl;
+  D_VAR(characteristic_eq);
+  D_VEC(roots, 0, roots.size()-1);
+  D_MSG("");
 #endif
 
   GSymbol alpha("alpha");
@@ -458,8 +454,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 //  			       initial_conditions, solution);
 	solution += initial_conditions[0] * pow(roots[0].value() ,n);
 #if NOISY
-	std::cout << "Solutions before calling simplify: " << std::endl;
-	std::cout << solution << std::endl;
+	D_MSGVAR("Before calling simplify: ", solution);
 #endif        
 	solution = simplify_on_output_ex(solution.expand(), n, false);
 
@@ -498,13 +493,12 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	  GExpr g_n = (pow(root_1, n+1) - pow(root_2, n+1)) / diff_roots;
 	  // FIXME: forse conviene semplificare g_n
 #if NOISY
-	  std::cout << "g_n " << g_n << std::endl;
+	  D_VAR(g_n);
 #endif
 	  add_initial_conditions(g_n, n, num_coefficients,
 				 initial_conditions, solution);
 #if NOISY
-	  std::cout << "Solutions before calling simplify: " << std::endl;
-	  std::cout << solution << std::endl;
+	  D_MSGVAR("Before calling simplify: ", solution);
 #endif        
 	  solution = simplify_on_output_ex(solution.expand(), n, false);
 	  solution = solution.collect(lst(initial_conditions[0],
@@ -702,7 +696,7 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
   GSymbol a("a"), b("b");
   GExpr root = roots[0].value();
 #if NOISY
-  std::cout << "root " << root << std::endl;
+  D_VAR(root);
 #endif      
   if (decomposition(1, 0).is_zero()) {
     // The binary recurrence is homogeneous.

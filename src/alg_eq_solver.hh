@@ -51,6 +51,9 @@ public:
   }
 };
 
+std::ostream& operator<<(std::ostream& s, const Polynomial_Root& r);
+
+
 //! Let \p p be a polynomial with integer coefficients in \p x and
 //! \p roots be a (possibly non-empty) vector.
 //! This function appends to \p roots some or all the roots of \p p.

@@ -53,10 +53,16 @@ assign_poly_part_and_no_poly_part(const GExpr& p, const GSymbol& var,
 #define D_MSG(s) std::cout << s << std::endl
 #define D_VAR(x) std::cout << #x " = " << x << std::endl
 #define D_MSGVAR(s, x) std::cout << s << #x " = " << x << std::endl
+#define D_VEC(vec, first, last) \
+do { \
+  for (int i = first; i <= last; ++i) \
+    std::cout << #vec << "[" << i << "] = " << vec[i] << std::endl; \
+} while (0)
 #else
 #define D_MSG(s)
 #define D_VAR(x)
 #define D_MSGVAR(s, x)
+#define D_VEC(vec, first, last)
 #endif
 
 #endif // _util_hh
