@@ -661,7 +661,6 @@ PURRS::Expr
 compute_special_solution(const Expr& homo_rhs, const index_type order_rec,
 			 const Expr& poly, const Expr& base,
 			 const unsigned int mult) {
-
   // Build the generic polynomial `q' of the correct degree
   // with unknown coefficients.
   unsigned int deg = poly.degree(Recurrence::n) + mult;
@@ -889,13 +888,12 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     // efficiency.
     substitute_non_rational_roots(*this, roots);
 
-
     for (size_t j = 0; j < base_of_exps.size(); ++j) {
       poly = exp_poly_coeff[j];
       base = base_of_exps[j];
       size_t mult = 0;
       for (size_t k = roots.size(); k-- > 0; )
-	if (roots[k].value() == base)
+	if (blackboard.rewrite(roots[k].value()) == base)
 	  mult = roots[k].multiplicity();
     
       sol += compute_special_solution(homo_rhs, order_rec, poly, base, mult);
@@ -922,10 +920,10 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     if (order() == 1 )
       // FIXME: This could be integrated in the method below if 
       // parameters are not a problem.
-      exact_solution_.set_expression((x(first_valid_index) - solution.substitute(n, first_valid_index))
-				     * pwr(coefficients()[1],
-					   n-first_valid_index)
-				     + solution);
+      exact_solution_.set_expression(blackboard.rewrite((x(first_valid_index) - solution.substitute(n, first_valid_index))
+							* pwr(coefficients()[1],
+							      n-first_valid_index)
+							+ solution));
     else {
       unsigned int num_roots = roots.size();
       Expr_List unknowns;
