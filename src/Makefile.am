@@ -146,6 +146,7 @@ Symbol.defs.hh \
 Number.defs.hh \
 Constant.defs.hh \
 Expr.defs.hh \
+Blackboard.defs.hh \
 Recurrence.defs.hh
 
 libpurrs_a_LIBADD =
