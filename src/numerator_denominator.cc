@@ -334,26 +334,23 @@ find_numerator(const std::vector<Expr>& numerators,
     Expr multiply_to_numerator = 1;
     // If `denominator == denominators[i]' we do not have factors to multiply
     // to numerator.
-    if (denominator != i_th_denominator) {
+    if (denominator != i_th_denominator)
       if (denominator.is_a_mul()) {
-	for (unsigned j = denominator.nops(); j-- > 0; ) {
+	for (unsigned j = denominator.nops(); j-- > 0; )
 	  multiply_to_numerator *= find_factor_for_numerator(denominator.op(j),
 							     i_th_denominator);
-
-	}
       }
-      else {
+      else
 	multiply_to_numerator *= find_factor_for_numerator(denominator,
 							   i_th_denominator);
-      }
-    }
     numerator += numerators[i] * multiply_to_numerator;
   }
   return numerator;
 }
 
 static void
-transform_in_single_fraction(const Expr& e, Expr& numerator, Expr& denominator) {
+transform_in_single_fraction(const Expr& e,
+			     Expr& numerator, Expr& denominator) {
   D_MSGVAR("INPUT", e);
   // The dimension of `numerators' and `denominators' is terms'number of `e'
   // and will contain the numerator and the denominator of each term of `e'.  
@@ -397,7 +394,10 @@ Expr
 transform_in_single_fraction(const Expr& e) {
   Expr numerator;
   Expr denominator;
-  transform_in_single_fraction(e, numerator, denominator);
+  // `transform_in_single_fraction()' works well on expression
+  // where the multiplication is distributed over addition.
+  transform_in_single_fraction(e.distribute_mul_over_add(),
+			       numerator, denominator);
   return numerator / denominator;
 }
 
@@ -411,7 +411,8 @@ Expr
 numerator(const Expr& e) {
   Expr numerator;
   Expr denominator;
-  transform_in_single_fraction(e, numerator, denominator);
+  transform_in_single_fraction(e.distribute_mul_over_add(),
+			       numerator, denominator);
   return numerator;
 }
 
@@ -424,7 +425,8 @@ Expr
 denominator(const Expr& e) {
   Expr numerator;
   Expr denominator;
-  transform_in_single_fraction(e, numerator, denominator);
+  transform_in_single_fraction(e.distribute_mul_over_add(),
+			       numerator, denominator);
   return denominator;
 }
 
