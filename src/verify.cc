@@ -1303,7 +1303,14 @@ PURRS::Recurrence::verify_exact_solution(bool partial_verification) const {
     }
     break;
   case WEIGHTED_AVERAGE:
-    return verify_weighted_average();
+    {
+      Verify_Status status = verify_weighted_average();
+      if (status == INCONCLUSIVE_VERIFICATION && !partial_verification)
+	return associated_first_order_rec().verify_exact_solution(true);
+      else
+	return status; 
+    }
+    break;
   case FUNCTIONAL_EQUATION:
     // FIXME: see again what to make in the case of the
     // functional equations.
