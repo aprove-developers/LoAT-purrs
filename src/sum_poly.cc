@@ -26,9 +26,9 @@ http://www.cs.unipr.it/purrs/ . */
 /*!
   This file contains the routines that sum formally expressions of the 
   form \f$ p(n) x^n \f$, where \f$ p \f$ is a polynomial (possibly 
-  constant) and \f$ x \f$ is a real number (possibly 1) or a 
-  <CODE> GExpr </CODE>. 
-  The sum is always over the range \f$ [0, N ]\f$. 
+  constant) and \f$ x \f$ is a real number (possibly 1) or an
+  <CODE> Expr </CODE>.
+  The sum is always over the range \f$ n \in [0, N] \f$.
 */
 
 #include "sum_poly.hh"
@@ -39,7 +39,8 @@ namespace Parma_Recurrence_Relation_Solver {
 
 /*!
   This routine computes the falling product 
-  \f$ x \cdot (x - 1) \cdots (x - k + 1) \f$. 
+  \f$ x_{(k)} := x \cdot (x - 1) \cdots (x - k + 1) \f$,
+  where \f$ k \f$ is an integer. 
   If \f$ k\le 0 \f$, the routine returns 1, which is the usual 
   convention for an empty product. 
   The result is returned in the expression <CODE>q</CODE>. 
@@ -58,10 +59,10 @@ falling_product(const Expr& x, const Number& k, Expr& q) {
   The closed formula is returned in the expression <CODE>q</CODE>. 
 */
 
-static void 
+static void
 sum_falling_prod_times_exp(const Symbol& n, const Number& k, 
 			   const Symbol& x, Expr& q) {
-  
+
   q = pwr(1-x, -k-1);
   Expr r;
   for (Number i = 0; i <= k; ++i) {
@@ -118,7 +119,7 @@ sum_poly(const Expr& p, const Symbol& x, const Symbol& n, Expr& q) {
 
 /*!
   At this point we can sum exactly any linear combination of 
-  products of polynomial and exponentials (including extreme 
+  products of polynomials and exponentials (including extreme 
   cases of constant polynomials or exponentials). 
 */
 
@@ -158,7 +159,7 @@ sum_poly_times_exponentials(const Expr& p, const Symbol& x,
   This routine computes the closed formula for 
   \f$\sum_{j=0}^n p(j) \alpha^j \cos(j\theta) \f$, 
   where \f$ p \f$ is a polynomial (possibly constant),  
-  \f$ \alpha \f$ and \f$ \theta \f$ are Expr.
+  \f$ \alpha \f$ and \f$ \theta \f$ are <CODE> Expr </CODE>.
 */
 
 Expr
@@ -190,7 +191,7 @@ sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x,
   This routine computes the closed formula for 
   \f$\sum_{j=0}^n p(j) \alpha^j \sin(j\theta) \f$, 
   where \f$ p \f$ is a polynomial (possibly constant),  
-  \f$ \alpha \f$ and \f$ \theta \f$ are Expr.
+  \f$ \alpha \f$ and \f$ \theta \f$ are <CODE> Expr </CODE>.
 */
 
 Expr

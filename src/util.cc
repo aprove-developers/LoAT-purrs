@@ -180,11 +180,11 @@ convert_to_integer_polynomial(const Expr& p, const Symbol& x,
 //! Returns the solution in \p res.
 /*!
   The following properties of the resultant are used:
-  - \f$ R(g, f) = (-1)^{\deg(f)\deg(g)} R(f, g) \f$; 
-  - \f$ R(f, g) = a^{\deg(g) - \deg(r)} R(f, r) \f$
+  - \f$ Res(g, f) = (-1)^{\deg(f)\deg(g)} Res(f, g) \f$; 
+  - \f$ Res(f, g) = a^{\deg(g) - \deg(r)} Res(f, r) \f$
     if \f$ g = fq + r \f$ for some polynomials \f$ q \f$  and \f$ r \f$.
     Here \f$ a \f$ is the leading coefficient of the polynomial \f$ f \f$.
-  - \f$ R(f, b) = b^{\deg(f)} \f$ if \f$ b \f$ is a scalar.
+  - \f$ Res(f, b) = b^{\deg(f)} \f$ if \f$ b \f$ is a scalar.
 */
 Expr
 resultant(const Expr& p, const Expr& q, const Symbol& x) {

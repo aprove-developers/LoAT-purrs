@@ -49,10 +49,10 @@ FACTOR_THRESHOLD = 100;
 //! Gosper's algorithm, step 1: see Chapter 5 of \f$ A = B \f$, by 
 //! M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
 /*!
-  By definition, an expression \f$ t(n) \f$ is an
+  By definition, an expression \f$ t(n) \f$ is a
   <EM>hypergeometric term</EM> if \f$ t(n+1) / t(n) \f$ is a rational
   function of \f$ n \f$.
-  This function returns <CODE>true</CODE> if \p t is an hypergeometric term
+  This function returns <CODE>true</CODE> if \p t is a hypergeometric term
   and in this case \p r_n stores the ratio \f$ t(n+1) / t(n) \f$.
   Returns <CODE>false</CODE> otherwise.
 */
@@ -64,7 +64,7 @@ gosper_step_one(const Expr& t_n, Expr& r_n, const Symbol& n, bool full) {
     r_n = simplify_factorials_and_exponentials(t_plus_one, n)
       * pwr(simplify_factorials_and_exponentials(t_n, n), -1);
   }
-  // The following use of `numerator_denominator()' simplify ulteriorly
+  // The following use of `numerator_denominator()' simplifies further
   // `r_n' (we can not to call `simplify_numer_denom()' because it expandes
   // the expressions).
   Expr r_n_num;
@@ -131,7 +131,7 @@ gosper_step_two(const Expr& r_n, const Symbol& n,
   Expr f;
   Expr g;
   r_n.numerator_denominator(f, g);
-  // To do `expand()' is necessary in order to have right answers from
+  // It is necessary to `expand()' in order to have the right answer from
   // `lcoeff()'.
   f = f.expand();
   g = g.expand();
@@ -239,7 +239,7 @@ find_polynomial_solution(const Symbol& n, const Number& deg_x,
   where \f$ a(n) \f$, \f$ b(n) \f$ and \f$ c(n) \f$ are polynomials such that
   \f$ gcd(a(n), b(n+h)) = 1 \f$, for all non-negative integers
   \f$ h \f$. The solution \f$ x(n) \f$ is stored in \p x_n. 
-  Returns <CODE>false</CODE> otherwise, i. e., it not finds a non-zero
+  Returns <CODE>false</CODE> otherwise, i. e., it does not find a non-zero
   polynomial solution \f$ x(n) \f$.
 */
 static bool
@@ -322,16 +322,16 @@ gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
   \f[
     S_n = \sum_{k=0}^{n-1} t_k
   \f]
-  with \f$ t_k \f$ an <EM>hypergeometric term</EM> that does not depend on
+  with \f$ t_k \f$ a <EM>hypergeometric term</EM> that does not depend on
   \f$ n \f$, i. e., consecutive term ratio
   \f[
     r(k) = \frac{t_{k+1}}{t_k}
   \f]
   is a rational function of \f$ k \f$.
-  This function returns <CODE>false</CODE> if \f$ t_k \f$ is not an
-  hypergeometric term. 
-  Returns <CODE>true</CODE> if \f$ t_k \f$ is an hypergeometric term.
-  There are two case:
+  This function returns <CODE>false</CODE> if \f$ t_k \f$ is not a
+  hypergeometric term.
+  It returns <CODE>true</CODE> if \f$ t_k \f$ is a hypergeometric term.
+  There are two cases:
   -  it is possible to express \f$ S_n \f$ in closed form and the solution
      is stored in \p solution;
   -  it is not possible to express \f$ S_n \f$ in closed form and returns
@@ -365,9 +365,13 @@ full_gosper(const Expr& t_n, const Symbol& n,
 }
 
 /*!
-  This function not represent the full Gosper's algorithm because
-  not computes \f$ r(n) = t(n+1) / t(n) \f$ in the first step but
-  \f$ r(n) \f$ is received like argument.
+  This function does not represent the full Gosper algorithm because
+  it does not compute \f$ r(n) = t(n+1) / t(n) \f$ in the first step.
+  Instead, \f$ r(n) \f$ is received as an argument.
+  This is useful when solving first-order recurrence relations with
+  variable coefficients, because it is easy to compute the expression
+  \f$ r(n) \f$ from the coefficients of the recurrence itself.
+  In other words, we avoid useless calls to simplification routines.
 */
 bool
 partial_gosper(const Expr& t_n, Expr& r_n, const Symbol& n,

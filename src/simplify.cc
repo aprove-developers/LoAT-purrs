@@ -100,9 +100,9 @@ perfect_root(const Expr& base, const Number& exponent) {
 }
 
 /*!
-  Given the base \p base, the numeric and not numeric part of the
+  Given the base \p base, the numeric and non-numeric part of the
   exponent, \p num_exp and \p not_num_exp respectively, this function
-  returns the right power in according with some conditions checked
+  returns the right power according to some conditions checked
   by the boolean \p input and \p is_numeric_base.
 */
 static Expr
@@ -113,14 +113,14 @@ return_power(bool is_numeric_base, const Expr& base,
   bool n_removed = false;
   if (input)
     n_removed = erase_factor(not_num_exp_minus_n, n);
-  // We do not want put in evidence the special symbol `n' or it is
+  // We do not want to collect the special symbol `n' or it is
   // not in `not_num_exp'.
   if (!input || !n_removed)
     if (is_numeric_base)
       return pwr(pwr(base, num_exp), not_num_exp);
     else
       return pwr(base, num_exp * not_num_exp);
-  // We put in evidence the special symbol `n'. 
+  // We collect the special symbol `n'. 
   else
     if (is_numeric_base)
       return pwr(pwr(pwr(base, num_exp), not_num_exp_minus_n), n);
@@ -129,7 +129,7 @@ return_power(bool is_numeric_base, const Expr& base,
 }
 
 /*!
-  Separates numeric factors and not numeric factors of an expression \p e. 
+  Separates numeric factors and non-numeric factors of an expression \p e. 
 */
 static void
 split_exponent(const Expr& e, Expr& num, Expr& not_num) {
@@ -142,7 +142,7 @@ split_exponent(const Expr& e, Expr& num, Expr& not_num) {
 /*!
   Let \p base be a power.
   If \p base is a nested power then we find the "real" base and, at the
-  same time, built the exponent that will be obtained from the product of
+  same time, build the exponent that will be obtained from the product of
   \p numeric_exponent and \p not_numeric_exponent.
 */
 static void
@@ -167,14 +167,14 @@ find_real_base_and_build_exponent(Expr& base, Expr& numeric_exponent,
   number of \p base: \p vect_base, \p vect_num_exp and \p vect_not_num_exp.
   Initially \p vect_num_exp and \p vect_not_num_exp will have each element
   equal to \p num_exponent or \p not_num_exponents, respectively.
-  Looks each factor of \p e and there are two cases:
+  The function looks at each factor of \p e and there are two cases:
   -  if it is a power, puts its base in the respective position of the vector
-     \p vect_base and upgrades the rispective values of \p vect_num_exp and
+     \p vect_base and updates the respective values of \p vect_num_exp and
      \p vect_not_num_exp with the exponent of \p base's factor;
   -  if it is not a power, puts it in the respective position of the vector
-     \p vect_base and left unchanged the others vector.
+     \p vect_base and leaves unchanged the other vectors.
   If \p input is <CODE>true</CODE> then we use the simplifications
-  which put in evidence the special symbol \p n; otherwise, i. e. \p input
+  which collect the special symbol \p n; otherwise, i. e. if \p input
   is <CODE>false</CODE>, \p n is like the other parameters.
  */
 static Expr
@@ -199,8 +199,8 @@ simpl_powers_base(const Expr& base, const Expr& num_exponent,
     else
       vect_base[i] = base.op(i);
 
-  // Now, for each factor of the base, is individualized numeric
-  // and not numeric part of its exponent.
+  // The numeric and non-numeric part of the exponent of each factor
+  // of the base is determined.
   Expr tot = 1;
   for (unsigned i = base.nops(); i-- > 0; )
     if (!vect_base[i].is_a_number())
@@ -215,19 +215,19 @@ simpl_powers_base(const Expr& base, const Expr& num_exponent,
 }
 
 /*!
-  Applies the rules \f$ \textbf{E1}, \textbf{E2}, \textbf{E4} \f$ and
-  \f$ \textbf{E5} \f$ of the rules'set <EM>Expand</EM>.
+  This function applies the rules \f$ \textbf{E1}, \textbf{E2}, 
+  \textbf{E4} \f$ and \f$ \textbf{E5} \f$ of the rules' set <EM>Expand</EM>.
   The <CODE>Expr</CODE> \p e is a <CODE>power</CODE>:
-  it finds the base and the exponent of the power (\p e could be a serie
-  of nested powers). While it does this operation divides the exponents
+  it finds the base and the exponent of the power (\p e could be a series
+  of nested powers). While it does this operation, it divides the exponents
   (that can be multiplications but not additions because the expression
-  \p e is expanded) in two parts: in \p num_exponent put
+  \p e is expanded) in two parts: in \p num_exponent it puts
   numeric factors and in \p not_num_exponent put not numeric factors.
-  Therefore tests the base: if it is not a multiplication the checks and the
-  simplifications are finished, otherwise we must elevate every factor of the
-  base to the exponents.
+  Afterwards it tests the base: if it is not a multiplication the checks
+  and the simplifications heve been completed;
+  otherwise we must raise every factor of the base to the exponents.
   If \p input is <CODE>true</CODE> then we use the simplifications
-  which put in evidence the special symbol \p n; otherwise, i. e. \p input
+  which collect the special symbol \p n; otherwise, i. e. \p input
   is <CODE>false</CODE>, \p n is like the other parameters.
 */
 static Expr
@@ -238,7 +238,7 @@ pow_simpl(const Expr& e, const Symbol& n, bool input) {
   // Accumulate here the non-numerical part of the exponent.
   Expr not_num_exponent = 1;
   // Since `e' can be a nested power, find the "real" base of `e' and
-  // built the exponent for the new power not nested.
+  // build the exponent for the new power, which is not nested.
   Expr base = e;
   find_real_base_and_build_exponent(base, num_exponent, not_num_exponent);
   D_VAR(base);
@@ -269,13 +269,13 @@ pow_simpl(const Expr& e, const Symbol& n, bool input) {
 /*!
   Applies the rule \f$ \textbf{C3} \f$ of the set of rules
   <EM>Collect</EM> to the <CODE>Expr</CODE> \p e  under condition
-  that the common exponent to the powers is not integer
-  because, in this case, the power is automatically decomposes,
+  that the common exponent of the powers is not integer
+  because, in this case, the power is automatically decomposed,
   i. e., \f$ (a*b)^4 \f$ is automatically transformed in
   \f$ a^4*b^4 \f$.
   Returns a new <CODE>Expr</CODE> \p e_rewritten containing the modified
   expression \p e; the modified vectors \p bases and \p exponents will
-  be use by the function <CODE>collect_same_exponent()</CODE> called soon
+  be used by the function <CODE>collect_same_exponent()</CODE> called soon
   afterwards this.
 */
 static Expr
@@ -811,7 +811,7 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
   instance \f$ expand(3^(4*x+2*a)) = 3^(2*a)*3^(4*x) \f$):
   hence we here consider only <CODE>power</CODE>.
   \p input is always <CODE>true</CODE> and this means that \p n is a special
-  symbol, i. e., in the simplifications is always put in evidence in respect
+  symbol, i. e., in the simplifications it is always collected with respect
   of the others parameters.
   Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
 */
@@ -1038,14 +1038,14 @@ simpl_exponentials(const Expr& e, const Symbol& n) {
 /*!
   Let \p e be an expression containing ratios of factorials or ratios
   of exponentials.
-  This function tries in the numerator and denominator of \p e eventual
-  factorials of the type \f$ (a n + b)! \f$, whit
-  \f$ a \in \Nset \setminus \{0\} \f$ and \f$ b \in \Zset \f$, and
-  eventual exponentials in order to put in evidence common factors to
-  numerator and denominator to erase.
-  We remark that, for this type of simplifications, is not good to call
-  the function <CODE>simplify_on_output_ex()</CODE> because it expanded
-  the expression while we want to mantain the product of factors. 
+  This function looks for possible instances of factorials of type
+  \f$ (a n + b)! \f$, with \f$ a \in \Nset \setminus \{0\} \f$ and
+  \f$ b \in \Zset \f$, and for possible instances of exponentials
+  both in the numerator and denominator of \p e, in order to collect
+  common factors, which are then erased.
+  We remark that, for this type of simplifications, we do not call
+  the function <CODE>simplify_on_output_ex()</CODE> because it would expand
+  the expression while we want to maintain the product of factors.
   Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
 */
 Expr
