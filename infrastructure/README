@@ -53,6 +53,7 @@ make install
 
 (5)
 cvs -d cvs.cs.unipr.it:/cvs/GiNaC checkout GiNaC
+cd GiNaC
 touch Makefile.in aclocal.m4 configure
 mkdir /tmp/objdir
 cd /tmp/objdir
