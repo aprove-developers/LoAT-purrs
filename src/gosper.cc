@@ -83,11 +83,15 @@ gosper_step_one(const Expr& t_n, Expr& r_n, bool full) {
   }
 }
 
+//! Compute the resultant's non-negative integral roots are needed
+//! in Step 2.1 of Gosper's algorithm.
 /*!
-  The resultant's non-negative integral roots are needed in Step 2.1
+  Compute the resultant's non-negative integral roots are needed in Step 2.1
   of Gosper's algorithm.
+  Returns <CODE>true</CODE> if the system is able to compute the resultant
+  and its roots, <CODE>false</CODE> otherwise.
 */
-void
+bool
 compute_resultant_and_its_roots(const Expr& f, const Expr& g,
 				std::vector<Number>& integer_roots) {
   Symbol h("h");
@@ -108,7 +112,8 @@ compute_resultant_and_its_roots(const Expr& f, const Expr& g,
     R = quo(R, h, h);
     constant_term = abs(R.tcoeff(h).ex_to_number());
   }
-  find_divisors(constant_term, potential_roots);
+  if (!find_divisors(constant_term, potential_roots))
+    return false;
   // Find non-negative integral roots of the resultant.
   for(unsigned i = potential_roots.size(); i-- > 0; ) {
     Number temp = R.substitute(h, potential_roots[i]).ex_to_number();
@@ -118,6 +123,8 @@ compute_resultant_and_its_roots(const Expr& f, const Expr& g,
 
   // It is more efficient to have the roots sorted. 
   sort(integer_roots.begin(), integer_roots.end());
+
+  return true;
 }
 
 //! Gosper's algorithm, step 2: see \S5.3 of \f$ A = B \f$, by 
@@ -126,7 +133,7 @@ compute_resultant_and_its_roots(const Expr& f, const Expr& g,
   We assume that \p f and \p g are relatively prime polynomials, stored
   in the list \p n_d.
 */
-void
+bool
 gosper_step_two(const Expr& r_n, Expr& a_n, Expr& b_n, Expr& c_n) {
   // Gosper's algorithm, step 2.1.
   Expr f;
@@ -137,7 +144,8 @@ gosper_step_two(const Expr& r_n, Expr& a_n, Expr& b_n, Expr& c_n) {
   f = f.expand();
   g = g.expand();
   std::vector<Number> integer_roots;
-  compute_resultant_and_its_roots(f, g, integer_roots);
+  if (!compute_resultant_and_its_roots(f, g, integer_roots))
+    return false;
   // Gosper's algorithm, step 2.2.
   // `a_n' and `b_n' are used below as starting values for a sequence
   // of polynomials.
@@ -179,6 +187,8 @@ gosper_step_two(const Expr& r_n, Expr& a_n, Expr& b_n, Expr& c_n) {
   D_VAR(a_n);
   D_VAR(b_n);
   D_VAR(c_n);
+
+  return true;
 }
 
 bool
@@ -356,7 +366,9 @@ PURRS::full_gosper(const Expr& t_n, const Number& lower, const Expr& upper,
   Expr a_n;
   Expr b_n;
   Expr c_n;
-  gosper_step_two(r_n, a_n, b_n, c_n);
+  if (!gosper_step_two(r_n, a_n, b_n, c_n))
+    // Problem in the computation of the resultant and its roots.
+    return false;
   Expr x_n;
   if (gosper_step_three(a_n, b_n, c_n, x_n))
     solution = gosper_step_four(t_n, b_n, c_n, x_n, lower, upper, solution);
@@ -389,7 +401,9 @@ PURRS::partial_gosper(const Expr& t_n, Expr& r_n,
   Expr a_n;
   Expr b_n;
   Expr c_n;
-  gosper_step_two(r_n, a_n, b_n, c_n);
+  if (!gosper_step_two(r_n, a_n, b_n, c_n))
+    // Problem in the computation of the resultant and its roots.
+    return false;
   Expr x_n;
   if (gosper_step_three(a_n, b_n, c_n, x_n))
     solution = gosper_step_four(t_n, b_n, c_n, x_n, lower, upper, solution);

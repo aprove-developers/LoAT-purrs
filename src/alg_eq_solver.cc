@@ -51,13 +51,12 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
    This means that in the loop that looks for the divisors of a 
    given positive integer in the function <CODE>find_divisors</CODE>, 
    we only have to check for possible divisors that are strictly 
-   less than the constant <CODE>FIND_DIVISORS_MAX</CODE>
+   less than the constant <CODE>FIND_DIVISORS_MAX</CODE>.
 */
 static const unsigned FIND_DIVISORS_MAX = 11;
 
 static const unsigned
-FIND_DIVISORS_THRESHOLD = FIND_DIVISORS_MAX*FIND_DIVISORS_MAX
-                          *FIND_DIVISORS_MAX;
+FIND_DIVISORS_THRESHOLD = FIND_DIVISORS_MAX*FIND_DIVISORS_MAX;
 
 static PURRS::Expr zero = 0;
 
@@ -65,7 +64,7 @@ namespace {
 
 using namespace PURRS;
 
-//! Solve the equation \f$x^2 + b x + c = 0\f$.
+//! Solve the equation \f$ x^2 + b x + c = 0 \f$.
 void
 solve_equation_2(const Expr& b, const Expr& c,
 		 Expr& x1, Expr& x2) {
@@ -81,8 +80,9 @@ solve_equation_2(const Expr& b, const Expr& c,
   x2 = simplify_ex_for_output(x2, false);
 }
 
+//! Solve the equation \f$ x^3 + a_1 x^2 + a_2 x + a_3 = 0 \f$.
 /*!
-  Solve the equation \f$x^3 + a_1 x^2 + a_2 x + a_3 = 0\f$
+  Solve the equation \f$ x^3 + a_1 x^2 + a_2 x + a_3 = 0 \f$
   and return <CODE>true</CODE> if and only if all the solutions are real.
   \f$x_1\f$ is guaranteed to be a real solution.
   The quantity \f$ d \f$ is the <EM>discriminant</EM> of the equation.
@@ -403,6 +403,8 @@ find_roots(const Expr& p, const Symbol& x,
       }
     }
   }
+  // NOTE: after the introduction of the order reduction method the function
+  // `is_nested_polynomial()' is useless!
   // If we want to solve q(x) = 0 and we know that q(x) = r(x^n), then
   // we need to find the roots y_1, ... y_k of r(y) = 0, and then we
   // need to solve x^n = y_1, x^n = y_2, ..., x^n = y_k.
@@ -412,6 +414,7 @@ find_roots(const Expr& p, const Symbol& x,
   // that z^n = 1.
   // We note that the set of roots found in this way does not depend
   // on the particular root x_1 that we have chosen.
+  /*
   Expr r;
   int nested_degree = is_nested_polynomial(q, x, r);
   D_VAR(nested_degree);
@@ -434,6 +437,7 @@ find_roots(const Expr& p, const Symbol& x,
       return true;
     }
   }
+  */
   // Try to factorize the polynomial.
   std::vector<Expr> factors;
   int num_factors = poly_factor(q, x, factors);
@@ -461,32 +465,43 @@ find_power_roots(const Expr& p, const Symbol& x,
 
 } // anonymous namespace
 
+//! Finds all the positive divisors of the strictly positive integer \p n
+//! if it is less than <CODE>FIND_DIVISORS_THRESHOLD</CODE>.
 /*!
   This routine inserts into \p divisors all the positive divisors of
-  the strictly positive integer \p n which is also less than
+  the strictly positive integer \p n if it is less than
   <CODE>FIND_DIVISORS_THRESHOLD</CODE>.
+  Returns <CODE>false</CODE> if \p n is bigger than
+  <CODE>FIND_DIVISORS_THRESHOLD</CODE> and, in this case, the function not
+  find the divisors of \p n; returns <CODE>true</CODE> otherwise.
 */
-void
+bool
 PURRS::find_divisors(Number n, std::vector<Number>& divisors) {
   assert(n.is_positive_integer());
-  assert(n > 0 && n < FIND_DIVISORS_THRESHOLD);
-  unsigned m = n.to_unsigned();
-  // Once a divisor `i' is found, it is pushed onto the vector `divisors'
-  // along with its conjugate `j = n/i', provided that `j' is less than `i'.
-  if (m == 1)
-    divisors.push_back(1);
-  else
-    for (unsigned i = 1, j = m; i < FIND_DIVISORS_MAX && i < j; ++i) {
-      j = m / i;
-      unsigned r = m % i;
-      if (r == 0) {
-	divisors.push_back(i);
-	if (i < j)
-	  divisors.push_back(j);
+  if (n < FIND_DIVISORS_THRESHOLD) {
+    unsigned m = n.to_unsigned();
+    // Once a divisor `i' is found, it is pushed onto the vector `divisors'
+    // along with its conjugate `j = n/i', provided that `j' is less than `i'.
+    if (m == 1)
+      divisors.push_back(1);
+    else
+      for (unsigned i = 1, j = m; i < FIND_DIVISORS_MAX && i < j; ++i) {
+	j = m / i;
+	unsigned r = m % i;
+	if (r == 0) {
+	  divisors.push_back(i);
+	  if (i < j)
+	    divisors.push_back(j);
+	}
       }
-    }
+    return true;
+  }
+  return false;
 }
 
+//! Let \p p be a polynomial with integer coefficients in \p x. This
+//! function finds, when possible, all the roots of \p p with the respective
+//! multiplicity.
 /*!
   Let \p p be a polynomial with integer coefficients in \p x and
   \p roots be a (possibly non-empty) vector.
@@ -558,6 +573,7 @@ PURRS::find_roots(const Expr& p, const Symbol& x,
   }
 }
 
+//! Output operator.
 std::ostream&
 operator<<(std::ostream& s, const Polynomial_Root& r) {
   Number multiplicity = r.multiplicity();
