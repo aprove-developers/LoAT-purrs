@@ -54,6 +54,21 @@ Expr::Expr(int i)
 }
 
 inline
+Expr::Expr(unsigned int i)
+  : Base(i) {
+}
+
+inline
+Expr::Expr(long i)
+  : Base(i) {
+}
+
+inline
+Expr::Expr(unsigned long i)
+  : Base(i) {
+}
+
+inline
 Expr::Expr(const Number& y)
   : Base(y.n) {
 }

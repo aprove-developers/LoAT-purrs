@@ -239,6 +239,15 @@ public:
   //! Builds the integer expression \p i.
   Expr(int i);
 
+  //! Builds the integer expression \p i.
+  Expr(unsigned int i);
+
+  //! Builds the integer expression \p i.
+  Expr(long i);
+
+  //! Builds the integer expression \p i.
+  Expr(unsigned long i);
+
   //! Builds the numeric expression \p y.
   Expr(const Number& y);
 
