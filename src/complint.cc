@@ -77,7 +77,7 @@ complint::archive(archive_node&) const {
 }
 
 ex
-complint::unarchive(const archive_node&, const lst&) {
+complint::unarchive(const archive_node&, lst&) {
   abort();
 }
 
