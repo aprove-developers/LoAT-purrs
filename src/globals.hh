@@ -5,11 +5,19 @@
 #include <ginac/ginac.h>
 #include <cln/complex.h>
 
+#if 1
 typedef GiNaC::ex GExpr;
 typedef GiNaC::symbol GSymbol;
 typedef GiNaC::lst GList;
 typedef GiNaC::numeric GNumber;
 typedef GiNaC::matrix GMatrix;
+#else
+typedef Parma_Recurrence_Relation_Solver::Expr GExpr;
+typedef GiNaC::symbol GSymbol;
+typedef GiNaC::lst GList;
+typedef GiNaC::numeric GNumber;
+typedef GiNaC::matrix GMatrix;
+#endif
 
 GExpr x_eval(const GExpr& e);
 GExpr x_evalf(const GExpr& e);
