@@ -77,16 +77,56 @@ Expr& operator*=(Expr& x, const Expr& y);
 */
 Expr& operator/=(Expr& x, const Expr& y);
 
-//! Returns <CODE>true</CODE> if and only if \p e is \p s.
+//! Returns <CODE>true</CODE> if and only if \p e is syntactically
+//! equal to \p s.
 bool operator==(const Expr& e, const Symbol& s);
 
-//! Returns <CODE>true</CODE> if and only if \p e is \p s.
+//! Returns <CODE>true</CODE> if and only if \p e is syntactically
+//! different from \p s.
+bool operator!=(const Expr& e, const Symbol& s);
+
+//! Returns <CODE>true</CODE> if and only if \p e is syntactically
+//! equal to \p s.
 bool operator==(const Symbol& s, const Expr& e);
+
+//! Returns <CODE>true</CODE> if and only if \p e is syntactically
+//! different from \p s.
+bool operator!=(const Symbol& s, const Expr& e);
+
+//! Returns <CODE>true</CODE> if and only if \p e is syntactically
+//! equal to \p c.
+bool operator==(const Expr& e, const Constant& c);
+
+//! Returns <CODE>true</CODE> if and only if \p e is syntactically
+//! different from \p c.
+bool operator!=(const Expr& e, const Constant& c);
+
+//! Returns <CODE>true</CODE> if and only if \p e is syntactically
+//! equal to \p c.
+bool operator==(const Constant& c, const Expr& e);
+
+//! Returns <CODE>true</CODE> if and only if \p e is syntactically
+//! different from \p c.
+bool operator!=(const Constant& c, const Expr& e);
+
+//! Returns <CODE>true</CODE> if and only if \p e is syntactically \p n.
+bool operator==(const Expr& e, const Number& n);
+
+//! Returns <CODE>true</CODE> if and only if \p e is syntactically \p n.
+bool operator==(const Number& n, const Expr& e);
+
+//! Returns <CODE>true</CODE> if and only if \p e is syntactically \p i.
+bool operator==(const Expr& e, long i);
 
 //! \brief
 //! Returns <CODE>true</CODE> if and only if \p x and \p y are
 //! syntactically equal.
 bool operator==(const Expr& x, const Expr& y);
+
+//! \brief
+//! Returns <CODE>true</CODE> if and only if \p x and \p y are
+//! syntactically different.
+bool operator!=(const Expr& x, const Expr& y);
 
 //! \brief
 //! Builds an arbitrary expression, called <EM>wildcard</EM>, with the
@@ -420,11 +460,6 @@ public:
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is sinctatically
-  //! equal to \p e.
-  bool is_equal(const Expr& x) const;
-
-  //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is sinctatically
   //! zero.
   bool is_zero() const;
 
@@ -633,6 +668,10 @@ private:
   friend Expr& operator/=(Expr& x, const Expr& y);
 
   friend bool operator==(const Expr& e, const Symbol& s);
+  friend bool operator==(const Expr& e, const Constant& c);
+  friend bool operator==(const Expr& e, const Number& n);
+  friend bool operator==(const Expr& e, long i);
+
   friend bool operator==(const Expr& x, const Expr& y);
 
   friend Expr wild(unsigned label);

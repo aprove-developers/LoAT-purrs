@@ -76,6 +76,9 @@ bool operator==(const Number& x, const Number& y);
 //! Returns <CODE>true</CODE> if and only if \f$ x \neq y \f$.
 bool operator!=(const Number& x, const Number& y);
 
+//! Returns <CODE>true</CODE> if and only if \f$ x = i \f$.
+bool operator==(const Number& x, long i);
+
 //! Returns <CODE>true</CODE> if and only if \f$ x > y \f$.
 bool operator>(const Number& x, const Number& y);
 
@@ -279,6 +282,8 @@ private:
   friend bool operator>=(const Number& x, const Number& y);
   friend bool operator<=(const Number& x, const Number& y);
 
+  friend bool operator==(const Number& x, long i);
+
   friend Number abs(const Number& x);
   friend Number factorial(const Number& x);
   friend Number gcd(const Number& x, const Number& y);
@@ -288,6 +293,8 @@ private:
 
 
 private:
+  friend bool operator==(const Expr& e, const Number& n);
+
   GiNaC::numeric n;
 
   //! Builds the number corresponding to \p gn.

@@ -52,6 +52,8 @@ public:
 private:
   friend class Expr;
 
+  friend bool operator==(const Expr& e, const Constant& c);
+
   GiNaC::constant c;
 
   //! Builds the constant corresponding to \p gc.

@@ -266,7 +266,7 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
   Number deg_x = -1;
   // On output, if a possible degree exists,
   // `deg_x' will contain a non-negative number.
-  if (deg_a != deg_b || !lead_a.is_equal(lead_b)) {
+  if (deg_a != deg_b || lead_a != lead_b) {
     if (deg_a >= deg_b && deg_c >= deg_a)
       deg_x = deg_c - deg_a;
     if (deg_b > deg_a && deg_c >= deg_b)
@@ -313,12 +313,12 @@ gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
   // In general the solution will be `z_n - z_{lower_bound}'.
   solution = z_n - z_n.subs(n, lower_bound);
   // We must modify the sum if its upper bound is not `n - 1'.
-  if (!upper_bound.is_equal(n-1))
-    if (upper_bound.is_equal(n))
+  if (upper_bound != n-1)
+    if (upper_bound == n)
       solution = solution.subs(n, n + 1);
     else {
       Expr n_plus_i = n + wild(0);
-      assert(upper_bound.is_equal(n_plus_i));
+      assert(upper_bound == n_plus_i);
       Expr_List substitution;
       upper_bound.match(n_plus_i, substitution);
       Expr i = get_binding(substitution, 0);

@@ -294,7 +294,7 @@ collect_same_exponents(const Expr& e, std::vector<Expr>& bases,
       for (unsigned j = i; j-- > 0; )	
 	// In the vector `bases' in position `i' we put the new base.
 	// In the vactor `exponents' in position `j' we put `0'.
-	if (exponents[j].is_equal(exponents[i])) {
+	if (exponents[j] == exponents[i]) {
 	  bases[i] *= bases[j];
 	  exponents[j] = 0;
 	}
@@ -339,7 +339,7 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
       for (unsigned j = i; j-- > 0; )
 	// In the vector `exponents' in position `i' we put the new
 	// exponent while in opsition `j' we put `0'.	
-	if (bases[j].is_equal(bases[i])) {
+	if (bases[j] == bases[i]) {
 	  exponents[i] += exponents[j];
 	  exponents[j] = 0;
 	}
@@ -360,7 +360,7 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
       // correspondenting exponent.
       bool to_sum = false;
       for (unsigned j = bases.size(); j-- > 0; )
-	if (bases[j].is_equal(e.op(i)) && !exponents[j].is_zero()) {
+	if (bases[j] == e.op(i) && !exponents[j].is_zero()) {
 	  to_sum = true;
 	  // If the base is `integer' then automatically, for instance,
 	  // `2^(3/2)' is transformed in `2*sqrt(2)':

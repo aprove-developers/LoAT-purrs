@@ -69,7 +69,7 @@ get_constant_decrement(const Expr& e, const Symbol& n, Number& decrement) {
       return true;
     }    
   }
-  else if (e.is_equal(n)) {
+  else if (e == n) {
     decrement = 0;
      return true;
   }
@@ -211,7 +211,7 @@ compute_symbolic_sum(const Symbol& n,
   for (unsigned i = base_of_exps.size(); i-- > 0; )
     for (unsigned j = roots.size(); j-- > 0; ) {
       bool distinct = true;
-      if (roots[j].value().is_equal(base_of_exps[i]))
+      if (roots[j].value() == base_of_exps[i])
 	distinct = false;
       
       // The root is different from the exponential's base.
@@ -269,7 +269,7 @@ subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
     for (unsigned j = roots.size(); j-- > 0; ) {
       Expr base_exp = base_of_exps[i];
       Expr tmp;
-      if (!base_exp.is_equal(roots[j].value()))
+      if (base_exp != roots[j].value())
 	tmp = symbolic_sum_distinct[r]
 	  .subs(Expr_List(alpha, lambda),
 		Expr_List(base_exp, roots[j].value()));
@@ -730,7 +730,7 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs,
       }
     Expr x_i = x(wild(0));
     Expr a_times_x_i = x_i * wild(1);
-    if (a.is_equal(1))
+    if (a == 1)
       // Case 1.
       if (!b.has(x_i) && !b.has(a_times_x_i))
 	return false;
@@ -764,7 +764,7 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs,
       new_rhs = 0;
   }
   // Let `rhs = x(n)'.
-  else if (rhs.is_equal(x(n)))
+  else if (rhs == x(n))
     return false;
   
   return true;
@@ -836,7 +836,7 @@ exp_poly_decomposition_factor(const Expr& base,
   unsigned position;
   bool found = false;
   for (unsigned i = alpha_size; i-- > 0; )
-    if (base.is_equal(alpha[i])) {
+    if (base == alpha[i]) {
       position = i;
       found = true;
       break;
@@ -1186,7 +1186,7 @@ prepare_for_symbolic_sum(const Symbol& n, const Expr& g_n,
   // `bases_of_exp_g_n' must have same elements of `roots' in the same order.
   bool equal = true;
   for (unsigned i = roots.size(); i-- > 0; )
-    if (!roots[i].value().is_equal(bases_exp_g_n[i]))
+    if (roots[i].value() != bases_exp_g_n[i])
       equal = false;
   if (!equal) {
     std::vector<Expr> tmp_exp(roots.size());
@@ -1196,7 +1196,7 @@ prepare_for_symbolic_sum(const Symbol& n, const Expr& g_n,
       tmp_exp[i] = roots[i].value();
     for (unsigned i = tmp_exp.size(); i-- > 0; )
       for (unsigned j = bases_exp_g_n.size(); j-- > 0; )
-	if (tmp_exp[i].is_equal(bases_exp_g_n[j])) {
+	if (tmp_exp[i] == bases_exp_g_n[j]) {
 	  tmp_coeff_poly[i] = g_n_poly_coeff[j];
 	  tmp_coeff_no_poly[i] = g_n_no_poly_coeff[j];
 	}
@@ -1460,7 +1460,7 @@ compute_alpha_factorial(const Expr& e, const Symbol& n,
   if (!e.has(n))
     // `e' is_a_number or is_a_constant or is_a_symbol different to `n'...
     alpha_factorial *= pwr(e, n);
-  else if (e.is_equal(n))
+  else if (e == n)
     alpha_factorial *= factorial(e);
   if (e.is_a_power())
     if (e.op(0).has(n) && e.op(1).has(n))
@@ -1602,7 +1602,7 @@ verify_solution(const Expr& solution, const int& order, const Expr& rhs,
   for (int i = order; i-- > 0; ) {
     Expr g_i = x(i);
     Expr sol_subs = simplify_numer_denom(solution.subs(n, i));
-    if (!g_i.is_equal(sol_subs)) {
+    if (g_i != sol_subs) {
       print_bad_exp(sol_subs, rhs, true);
       return false;
     }

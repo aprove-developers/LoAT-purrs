@@ -114,7 +114,7 @@ is_scalar_representation(const Expr& e, const Symbol& x) {
     return true;
   else if (e.is_a_constant())
     return true;
-  else if (e.is_a_symbol() && !e.is_equal(x))
+  else if (e.is_a_symbol() && e != x)
     return true;
   else if (e.is_a_power())
     return is_scalar_representation(e.op(0), x)
@@ -149,7 +149,7 @@ static bool
 is_polynomial(const Expr& e, const Symbol& x) {
   if (is_scalar_representation(e, x))
     return true;
-  else if (e.is_equal(x))
+  else if (e == x)
     return true;
   else if (e.is_a_power()) {
     if (is_polynomial(e.op(0), x))

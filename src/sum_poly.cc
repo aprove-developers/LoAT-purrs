@@ -135,7 +135,7 @@ sum_poly_times_exponentials(const Expr& p, const Symbol& x,
 			    const Symbol& n, const Expr& alpha) {
 
   Expr q;
-  if (alpha.is_equal(1)) 
+  if (alpha == 1)
     sum_poly(p, x, n, q);
   // we just have to compute the sum of the values of the polynomial 
   else {

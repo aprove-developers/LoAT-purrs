@@ -118,86 +118,6 @@ inline
 Expr::~Expr() {
 }
 
-inline std::ostream&
-operator<<(std::ostream& s, const Expr& x) {
-  s << static_cast<const Expr::Base&>(x);
-  return s;
-}
-
-inline Expr
-operator+(const Expr& x) {
-  return x;
-}
-
-inline Expr
-operator-(const Expr& x) {
-  return -static_cast<const Expr::Base&>(x);
-}
-
-inline Expr
-operator+(const Expr& x, const Expr& y) {
-  return static_cast<const Expr::Base&>(x) + static_cast<const Expr::Base&>(y);
-}
-
-inline Expr
-operator-(const Expr& x, const Expr& y) {
-  return static_cast<const Expr::Base&>(x) - static_cast<const Expr::Base&>(y);
-}
-
-inline Expr
-operator*(const Expr& x, const Expr& y) {
-  return static_cast<const Expr::Base&>(x) * static_cast<const Expr::Base&>(y);
-}
-
-inline Expr
-operator/(const Expr& x, const Expr& y) {
-  return static_cast<const Expr::Base&>(x) / static_cast<const Expr::Base&>(y);
-}
-
-inline Expr&
-operator+=(Expr& x, const Expr& y) {
-  static_cast<Expr::Base&>(x) += static_cast<const Expr::Base&>(y);
-  return x;
-}
-
-inline Expr&
-operator-=(Expr& x, const Expr& y) {
-  static_cast<Expr::Base&>(x) -= static_cast<const Expr::Base&>(y);
-  return x;
-}
-
-inline Expr&
-operator*=(Expr& x, const Expr& y) {
-  static_cast<Expr::Base&>(x) *= static_cast<const Expr::Base&>(y);
-  return x;
-}
-
-inline Expr&
-operator/=(Expr& x, const Expr& y) {
-  static_cast<Expr::Base&>(x) /= static_cast<const Expr::Base&>(y);
-  return x;
-}
-
-inline bool
-operator==(const Expr& e, const Symbol& s) {
-  return e.is_a_symbol() && GiNaC::ex_to<GiNaC::symbol>(e).is_equal(s.s);
-}
-
-inline bool
-operator==(const Symbol& s, const Expr& e) {
-  return e == s;
-}
-
-inline bool
-operator==(const Expr& x, const Expr& y) {
-  return x.Base::is_equal(y);
-}
-
-inline Expr
-Expr::operator[](int i) const {
-  return Base::operator[](i);
-}
-
 inline bool
 Expr::is_a_symbol() const {
   return GiNaC::is_a<GiNaC::symbol>(*this);
@@ -275,6 +195,137 @@ Expr::is_relation_equal() const {
   return info(GiNaC::info_flags::relation_equal);
 }
 
+inline std::ostream&
+operator<<(std::ostream& s, const Expr& x) {
+  s << static_cast<const Expr::Base&>(x);
+  return s;
+}
+
+inline Expr
+operator+(const Expr& x) {
+  return x;
+}
+
+inline Expr
+operator-(const Expr& x) {
+  return -static_cast<const Expr::Base&>(x);
+}
+
+inline Expr
+operator+(const Expr& x, const Expr& y) {
+  return static_cast<const Expr::Base&>(x) + static_cast<const Expr::Base&>(y);
+}
+
+inline Expr
+operator-(const Expr& x, const Expr& y) {
+  return static_cast<const Expr::Base&>(x) - static_cast<const Expr::Base&>(y);
+}
+
+inline Expr
+operator*(const Expr& x, const Expr& y) {
+  return static_cast<const Expr::Base&>(x) * static_cast<const Expr::Base&>(y);
+}
+
+inline Expr
+operator/(const Expr& x, const Expr& y) {
+  return static_cast<const Expr::Base&>(x) / static_cast<const Expr::Base&>(y);
+}
+
+inline Expr&
+operator+=(Expr& x, const Expr& y) {
+  static_cast<Expr::Base&>(x) += static_cast<const Expr::Base&>(y);
+  return x;
+}
+
+inline Expr&
+operator-=(Expr& x, const Expr& y) {
+  static_cast<Expr::Base&>(x) -= static_cast<const Expr::Base&>(y);
+  return x;
+}
+
+inline Expr&
+operator*=(Expr& x, const Expr& y) {
+  static_cast<Expr::Base&>(x) *= static_cast<const Expr::Base&>(y);
+  return x;
+}
+
+inline Expr&
+operator/=(Expr& x, const Expr& y) {
+  static_cast<Expr::Base&>(x) /= static_cast<const Expr::Base&>(y);
+  return x;
+}
+
+inline bool
+operator==(const Expr& e, const Symbol& s) {
+  return e.is_a_symbol() && GiNaC::ex_to<GiNaC::symbol>(e).is_equal(s.s);
+}
+
+inline bool
+operator!=(const Expr& e, const Symbol& s) {
+  return !(e == s);
+}
+
+inline bool
+operator==(const Symbol& s, const Expr& e) {
+  return e == s;
+}
+
+inline bool
+operator!=(const Symbol& s, const Expr& e) {
+  return !(s == e);
+}
+
+inline bool
+operator==(const Expr& e, const Constant& c) {
+  return e.is_a_constant() && GiNaC::ex_to<GiNaC::constant>(e).is_equal(c.c);
+}
+
+inline bool
+operator!=(const Expr& e, const Constant& c) {
+  return !(e == c);
+}
+
+inline bool
+operator==(const Constant& c, const Expr& e) {
+  return e == c;
+}
+
+inline bool
+operator!=(const Constant& c, const Expr& e) {
+  return !(c == e);
+}
+
+inline bool
+operator==(const Expr& e, const Number& n) {
+  return e.is_a_number() && GiNaC::ex_to<GiNaC::numeric>(e).is_equal(n.n);
+}
+
+inline bool
+operator==(const Number& n, const Expr& e) {
+  return e == n;
+}
+
+inline bool
+operator==(const Expr& e, long i) {
+  return e.is_a_number()
+    && GiNaC::ex_to<GiNaC::numeric>(e).operator==(i);
+}
+
+inline bool
+operator==(const Expr& x, const Expr& y) {
+  return x.Base::is_equal(y);
+}
+
+inline bool
+operator!=(const Expr& x, const Expr& y) {
+  return !(x == y);
+}
+
+inline Expr
+Expr::operator[](int i) const {
+  return Base::operator[](i);
+}
+
 inline unsigned
 Expr::nops() const {
   return Base::nops();
@@ -285,10 +336,12 @@ Expr::op(unsigned i) const {
   return Base::op(i);
 }
 
+#if 0
 inline bool
 Expr::is_equal(const Expr& x) const {
   return Base::is_equal(x);
 }
+#endif
 
 inline bool
 Expr::is_zero() const {

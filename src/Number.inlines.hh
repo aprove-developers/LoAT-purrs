@@ -203,6 +203,11 @@ operator!=(const Number& x, const Number& y) {
 }
 
 inline bool
+operator==(const Number& x, long i) {
+  return x.n.operator==(i);
+}
+
+inline bool
 operator>(const Number& x, const Number& y) {
   return x.n > y.n;
 }
