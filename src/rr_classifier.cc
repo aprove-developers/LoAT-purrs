@@ -497,15 +497,17 @@ rewrite_non_linear_recurrence(const Expr& rhs, Expr& new_rhs, Expr& base) {
       const Expr& factor = rhs.op(i);
       Number num_exp;
       if (factor.is_a_power() && factor.arg(0).is_the_x_function()
-	  && factor.arg(1).is_a_number(num_exp)
-	  && num_exp.is_positive_integer()) {
+	  && factor.arg(1).is_a_number(num_exp))
+	if (num_exp.is_positive_integer()) {
+	  simple_cases = true;
+	  common_exponent = lcm(num_exp, common_exponent);
+	}
+	else {
+	  simple_cases = false;
+	  break;
+	}
+      if (factor.is_the_x_function())
 	simple_cases = true;
-	common_exponent = lcm(num_exp, common_exponent);
-      }
-      if (factor.is_the_x_function()) {
-	simple_cases = true;
-	common_exponent = lcm(1, common_exponent);
-      }
     }
     D_VAR(common_exponent);
     new_rhs = 0;
