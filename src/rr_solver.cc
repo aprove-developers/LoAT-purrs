@@ -58,17 +58,24 @@ namespace Parma_Recurrence_Relation_Solver {
 */
 static bool
 get_constant_decrement(const Expr& e, const Symbol& n, Number& decrement) {
-  static Expr n_plus_d = n + wild(0);
-  Expr_List substitution;
-  if (e.match(n_plus_d, substitution)) {
-    Expr d = get_binding(substitution, 0);
+  if (e.is_a_add() && e.nops() == 2) {
+    // `e' is of the form a+b.
+    const Expr& a = e.op(0);
+    const Expr& b = e.op(1);
+    Expr d;
+    if (a == n)
+      d = b;
+    else if (b == n)
+      d = a;
+    else
+      return false;
     if (d.is_a_number()) {
       Number i = d.ex_to_number();
       if (i.is_integer()) {
 	decrement = -i;
 	return true;
       }
-    }    
+    }
   }
   return false;
 }
