@@ -175,10 +175,7 @@ private:
 			 std::vector<Expr>& coefficients, int& order,
 			 bool& has_non_constant_coefficients);
   static Solver_Status
-  solve_constant_coeff_order_1(const Symbol& n,
-			       const std::vector<Expr>& base_of_exps,
-			       const std::vector<Expr>& exp_poly_coeff,
-			       const std::vector<Expr>& exp_no_poly_coeff,
+  solve_constant_coeff_order_1(const Symbol& n, const Expr& e,
 			       const std::vector<Polynomial_Root>& roots,
 			       const std::vector<Expr>& initial_conditions,
 			       Expr& solution);

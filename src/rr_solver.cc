@@ -349,19 +349,13 @@ add_initial_conditions(const Expr& g_n, const Symbol& n,
 
 static Expr
 solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
-			     bool all_distinct,
-			     const std::vector<Expr>& base_of_exps,
-			     const std::vector<Expr>& exp_poly_coeff,
-			     const std::vector<Expr>& exp_no_poly_coeff,
+			     bool all_distinct, const Expr& e,
 			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots);
 
 static Expr
 solve_constant_coeff_order_k(const Symbol& n, Expr& g_n, int order,
-			     bool all_distinct,
-			     const std::vector<Expr>& base_of_exps,
-			     const std::vector<Expr>& exp_poly_coeff,
-			     const std::vector<Expr>& exp_no_poly_coeff,
+			     bool all_distinct, const Expr& e,
 			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots);
 
@@ -727,23 +721,6 @@ Recurrence::solve_easy_cases() const {
 
   // Simplifies expanded expressions, in particular rewrites nested powers.
   e = simplify_on_input_ex(e, n, true);
-  // We search exponentials in `n' (for this the expression `e'
-  // must be expanded).
-  // The vector `base_of_exps' contains the exponential's bases
-  // of all exponentials in `e'. In the `i'-th position of the vectors
-  // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
-  // the polynomial part and possibly non polynomial part of the coefficient
-  // of the exponential with the base in `i'-th position of `base_of_exp'.
-  // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
-  // coefficient of base_of_exps[i]^n.
-  std::vector<Expr> base_of_exps;
-  std::vector<Expr> exp_poly_coeff;
-  std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(e, n,
-			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
-  D_VEC(base_of_exps, 0, base_of_exps.size()-1);
-  D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
-  D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
 
   // FIXME: the initial conditions can not start always from 0:
   // make a function for this check.
@@ -770,10 +747,7 @@ Recurrence::solve_easy_cases() const {
 						   characteristic_eq, roots,
 						   all_distinct))
 	  return TOO_COMPLEX;
-	status = solve_constant_coeff_order_1(n, base_of_exps,
-					      exp_poly_coeff,
-					      exp_no_poly_coeff,
-					      roots, initial_conditions,
+	status = solve_constant_coeff_order_1(n, e, roots, initial_conditions,
 					      solution);
       }
       else
@@ -800,9 +774,7 @@ Recurrence::solve_easy_cases() const {
       // it with an arbitrary symbol.
       substitute_non_rational_roots(*this, roots);
       solution = solve_constant_coeff_order_2(n, g_n, order, all_distinct,
-					      base_of_exps, exp_poly_coeff,
-					      exp_no_poly_coeff, 
-					      num_coefficients, roots);
+					      e, num_coefficients, roots);
     }
     else
       // For the time being, we only solve second order
@@ -826,9 +798,7 @@ Recurrence::solve_easy_cases() const {
       // it with an arbitrary symbol.
       substitute_non_rational_roots(*this, roots);
       solution = solve_constant_coeff_order_k(n, g_n, order, all_distinct,
-					      base_of_exps, exp_poly_coeff,
-					      exp_no_poly_coeff,
-					      num_coefficients, roots);
+					      e, num_coefficients, roots);
     }
     else
       // For the time being, we only solve recurrence relations
@@ -1320,13 +1290,28 @@ compute_sum_with_gosper_algorithm(const Symbol& n,
 */
 Recurrence::Solver_Status
 Recurrence::
-solve_constant_coeff_order_1(const Symbol& n,
-			     const std::vector<Expr>& base_of_exps,
-			     const std::vector<Expr>& exp_poly_coeff,
-			     const std::vector<Expr>& exp_no_poly_coeff,
+solve_constant_coeff_order_1(const Symbol& n, const Expr& e,
 			     const std::vector<Polynomial_Root>& roots,
 			     const std::vector<Expr>& initial_conditions,
 			     Expr& solution) {
+  // We search exponentials in `n' (for this the expression `e'
+  // must be expanded).
+  // The vector `base_of_exps' contains the exponential's bases
+  // of all exponentials in `e'. In the `i'-th position of the vectors
+  // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
+  // the polynomial part and possibly non polynomial part of the coefficient
+  // of the exponential with the base in `i'-th position of `base_of_exp'.
+  // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
+  // coefficient of base_of_exps[i]^n.
+  std::vector<Expr> base_of_exps;
+  std::vector<Expr> exp_poly_coeff;
+  std::vector<Expr> exp_no_poly_coeff;
+  exp_poly_decomposition(e, n,
+			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
+  D_VEC(base_of_exps, 0, base_of_exps.size()-1);
+  D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
+  D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
+
   solution = 0;
   // Computes the sum when `\lambda^{n-k} p(k)' is a polynomial or
   // a product of a polynomial times an exponential.
@@ -1357,10 +1342,13 @@ solve_constant_coeff_order_1(const Symbol& n,
 					  base_of_exps, exp_no_poly_coeff,
 					  roots, gosper_solution))
       solution += gosper_solution;
-    else
+    else {
       // FIXME: the summand is not hypergeometric:
       // no chance of using Gosper's algorithm.
-      return TOO_COMPLEX;
+      Symbol h;
+      solution += sum(Expr(h), Expr(1), Expr(n),
+		      pwr(roots[0].value(), -h) * e.subs(n, h));
+    }
   }
   // FIXME: per ora non si puo' usare la funzione
   // `add_initial_conditions' perche' richiede un vettore di
@@ -1601,12 +1589,27 @@ compute_non_homogeneous_part(const Symbol& n, const Expr& g_n, int order,
 */
 static Expr
 solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
-			     bool all_distinct, 
-			     const std::vector<Expr>& base_of_exps,
-			     const std::vector<Expr>& exp_poly_coeff,
-			     const std::vector<Expr>& exp_no_poly_coeff,
+			     bool all_distinct, const Expr& e,
 			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots) {
+  // We search exponentials in `n' (for this the expression `e'
+  // must be expanded).
+  // The vector `base_of_exps' contains the exponential's bases
+  // of all exponentials in `e'. In the `i'-th position of the vectors
+  // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
+  // the polynomial part and possibly non polynomial part of the coefficient
+  // of the exponential with the base in `i'-th position of `base_of_exp'.
+  // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
+  // coefficient of base_of_exps[i]^n.
+  std::vector<Expr> base_of_exps;
+  std::vector<Expr> exp_poly_coeff;
+  std::vector<Expr> exp_no_poly_coeff;
+  exp_poly_decomposition(e, n,
+			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
+  D_VEC(base_of_exps, 0, base_of_exps.size()-1);
+  D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
+  D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
+
   Expr solution;
   // Calculates the solution of the second order recurrences when
   // the inhomogeneous term is a polynomial or the product of a
@@ -1706,12 +1709,27 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
 */
 static Expr
 solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
-			     int order, bool all_distinct,
-			     const std::vector<Expr>& base_of_exps,
-			     const std::vector<Expr>& exp_poly_coeff,
-			     const std::vector<Expr>& exp_no_poly_coeff,
+			     int order, bool all_distinct, const Expr& e,
 			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots) {
+  // We search exponentials in `n' (for this the expression `e'
+  // must be expanded).
+  // The vector `base_of_exps' contains the exponential's bases
+  // of all exponentials in `e'. In the `i'-th position of the vectors
+  // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
+  // the polynomial part and possibly non polynomial part of the coefficient
+  // of the exponential with the base in `i'-th position of `base_of_exp'.
+  // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
+  // coefficient of base_of_exps[i]^n.
+  std::vector<Expr> base_of_exps;
+  std::vector<Expr> exp_poly_coeff;
+  std::vector<Expr> exp_no_poly_coeff;
+  exp_poly_decomposition(e, n,
+			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
+  D_VEC(base_of_exps, 0, base_of_exps.size()-1);
+  D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
+  D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
+
   Expr solution;  
   // Calculates the solution of the recurrences when
   // the inhomogeneous term is a polynomial or the product of a
@@ -2104,12 +2122,16 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
     if (!compute_sum_with_gosper_algorithm(n, 1, n, base_of_exps,
 					   exp_poly_coeff, exp_no_poly_coeff,
 					   new_roots, p_n/alpha_factorial,
-					   solution))
+					   solution)) {
       // FIXME: the summand is not hypergeometric:
       // no chance of using Gosper's algorithm.
       // vedere direttamente il rapporto p(k)/alpha!(k) se e' sommabile
       // (forse prima di vedere gosper)
-      return TOO_COMPLEX;
+      Symbol h;
+      solution += sum(Expr(h), Expr(1), Expr(n),
+		      pwr(coefficient, -h) * p_n.subs(n, h));
+      return OK;
+    }
     // To do this cycle or to consider `c_i + 2' as the lower limit of
     // the sum is the same thing,  but so is better for the output.
     Number j = 1;
