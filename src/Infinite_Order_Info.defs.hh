@@ -76,11 +76,11 @@ public:
   //! Returns <CODE>weight_inf_order_</CODE>.
   Expr& weight_inf_order();
 
-//   //! Returns <CODE>infinite_order_fwdr_</CODE>.
-//   unsigned infinite_order_fwdr() const;
+  //! Returns <CODE>infinite_order_fwdr_</CODE>.
+  unsigned infinite_order_fwdr() const;
 
-//   //! Sets <CODE>infinite_order_fwdr_</CODE> with \p i_c
-//   void set_infinite_order_fwdr(unsigned i_c);
+  //! Sets <CODE>infinite_order_fwdr_</CODE> with \p i_c
+  void set_infinite_order_fwdr(unsigned i_c);
 
 private:
   //! \brief
@@ -116,10 +116,10 @@ private:
   //! \f]
   Expr weight_inf_order_;
 
-//   //! \brief
-//   //! Stores the smallest positive integer for which the recurrence is
-//   //! well-defined: the initial conditions will start from it.
-//   unsigned infinite_order_fwdr_;
+  //! \brief
+  //! Stores the smallest positive integer for which the recurrence is
+  //! well-defined: the initial conditions will start from it.
+  unsigned infinite_order_fwdr_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

@@ -103,15 +103,15 @@ Infinite_Order_Info::weight_inf_order() {
   return weight_inf_order_;
 }
 
-// inline unsigned
-// Infinite_Order_Info::infinite_order_fwdr() const {
-//   return infinite_order_fwdr_;
-// }
+inline unsigned
+Infinite_Order_Info::infinite_order_fwdr() const {
+  return infinite_order_fwdr_;
+}
 
-// inline void
-// Infinite_Order_Info::set_infinite_order_fwdr(unsigned i_c) {
-//   infinite_order_fwdr_ = i_c;
-// }
+inline void
+Infinite_Order_Info::set_infinite_order_fwdr(unsigned i_c) {
+  infinite_order_fwdr_ = i_c;
+}
 
 } // namespace Parma_Recurrence_Relation_Solver
 
