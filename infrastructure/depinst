@@ -70,7 +70,14 @@ for LIB_SHORT_NAME in ; do
   fi
   echo "`date +%Y-%m-%d_%H:%M:%S` Installing $LIB_SHORT_NAME as $LIBNAME" >> $INST_LOG;
   cd $REPOSITORY; 
-  tar jxvf $LIBNAME.tar.bz2;
+  if test -e $LIBNAME.tar.bz2;
+    then tar jxvf $LIBNAME.tar.bz2;
+    else
+    if test -e $LIBNAME.tar.gz;
+      then tar zxvf $LIBNAME.tar.gz;
+      else echo "$LIBNAME.tar.[bz2|gz] not found." >> $INST_LOG;
+    fi
+  fi
   mkdir obj$LIBNAME;
   cd obj$LIBNAME;
   $PRE_CONF && $CONF_PATH/configure $OPT_PARAM && make && make install && echo "$LIB_SHORT_NAME installed successfully.";
