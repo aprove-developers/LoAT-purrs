@@ -294,6 +294,7 @@ ul	2*x(n/3)+n^2
 ul	2*x(n/3)+sqrt(n)
 ul	2*x(n/4)+n^(1/2)
 ul	2*x(n/9)+sqrt(n)
+ul	2+2*x(n/4)
 ul	2+x(2*n/3)
 ul	3*x(n/2)+2^n
 ul	3*x(n/2)+3*n
@@ -333,6 +334,7 @@ ul	x(n/2)+2^n*log(n)
 ul	x(n/2)+log(log(n))
 ul	x(n/2)+log(n)
 ul	x(n/2)+n*log(n)
+ul 	2*x(n/2)+2*n
 ul      2*x(n/2)+log(2)
 ul      2*x(n/2)+n*log(2)
 ul      2*x(n/2)-3*2^n
@@ -347,7 +349,6 @@ ulv	2*n+x(n/3)
 ulv	2*x(n/2)
 ulv	2*x(n/2)+1
 ulv	2*x(n/2)+2
-ulv	2*x(n/2)+2*n
 ulv	2*x(n/2)+3
 ulv	2*x(n/2)+3*n
 ulv	2*x(n/2)+3*n+7
@@ -356,7 +357,6 @@ ulv	2*x(n/2)+n-1
 ulv	2*x(n/2)+n^2
 ulv	2*x(n/3)+1
 ulv	2*x(n/5)+n
-ulv	2+2*x(n/4)
 ulv	2+x(n/2)
 ulv	2+x(n/3)
 ulv	3*n+x(n/3)
