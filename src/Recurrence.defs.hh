@@ -98,7 +98,7 @@ bool less_than(const Recurrence& x, const Recurrence& y);
   if its right-hand side is sum, product and powers of the following object:
   - numbers (no floating-point);
   - symbols for parameters;
-  - mathematical functions (ex. \f$ \log() \f$, \dots);
+  - mathematical functions (ex. \f$ \log() \f$, \f$ \dots \f$);
   - unary functions \f$ x() \f$ with argument of the following form:
     \f$ n + k \f$ with \f$ k \in \Zset \f$,
     \f$ n / k \f$ with \f$ k \in \Qset \f$.

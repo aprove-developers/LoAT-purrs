@@ -218,8 +218,8 @@ characteristic_equation_and_its_roots(index_type order,
   \f$ e(n) = \sum_{i=0}^k \alpha_i^{n} p_i(n) \f$ (where \f$ k \f$ is
   the number of exponentials, and we assume that the \f$ \alpha_j \f$'s
   are distinct complex numbers).
-  \f$ \lambda \f$ denote the generic root of the characteristic 
-  equation and \f$ \alpha \f$ the generic base of an exponential.
+  We use \f$ \lambda \f$ for the generic root of the characteristic 
+  equation and \f$ \alpha \f$ for the generic base of an exponential.
 
   This function fills the two vectors of <CODE>Expr</CODE>,
   \p symbolic_sum_distinct and \p symbolic_sum_no_distinct,

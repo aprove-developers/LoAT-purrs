@@ -96,7 +96,7 @@ floor_deriv(const ex&, unsigned int) {
 /*!
   We define the symbolic function
   \f[
-    \floor{x}.
+    floor(x).
   \f]
   It gives the largest integer less than or equal to x.
 */

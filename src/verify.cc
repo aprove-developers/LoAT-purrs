@@ -670,7 +670,7 @@ fill_vector_coefficients_i_c(const Expr& summands_with_i_c, unsigned int gcd,
        above expression, and store the result in
        \p substituted_homogeneous_rhs.
        For each element of the vector consider the difference
-       \f$ d_i = summands_with_i_c - substituted_homogeneous_rhs \f$:
+       \f$ d_i = summands\_with\_i\_c - substituted\_homogeneous\_rhs \f$:
        - if \f$ d_i = 0 \f$     -> proceed with the other elements or,
                                    if they are finished, proceed to step 4;
        - if \f$ d_i \neq 0 \f$  -> returns
@@ -690,7 +690,7 @@ fill_vector_coefficients_i_c(const Expr& summands_with_i_c, unsigned int gcd,
        right hand side of the recurrence, and store the result in
        \p substituted_rhs.
        Consider the difference
-       \f$ d = summands_without_i_c - substituted_rhs \f$:
+       \f$ d = summands\_without\_i\_c - substituted\_rhs \f$:
        - if \f$ d = 0 \f$     -> returns <CODE>PROVABLY_CORRECT</CODE>:
                                  the solution is certainly right.
        - if \f$ d \neq 0 \f$  -> returns
