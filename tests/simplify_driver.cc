@@ -348,8 +348,8 @@ main(int argc, char *argv[]) try {
     if (interactive)
       cout << "Expanded expression = " << ex_expanded << endl;
     
-    Expr sol_input = simplify_on_input_ex(ex_expanded, true);
-    Expr sol_output = simplify_on_output_ex(ex_expanded, false);
+    Expr sol_input = simplify_ex_for_input(ex_expanded, true);
+    Expr sol_output = simplify_ex_for_output(ex_expanded, false);
     Expr sol_factorials = simplify_factorials_and_exponentials(ex);
     Expr sol_logarithms = simplify_logarithm(ex);
     if (expect_right_simplification) {

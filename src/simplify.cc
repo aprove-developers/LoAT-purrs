@@ -41,14 +41,17 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
-PURRS::Expr
-PURRS::simplify_on_input_ex(const Expr& e, bool input);
-
-PURRS::Expr
-PURRS::simplify_on_output_ex(const Expr& e, bool input);
-
 namespace {
 using namespace PURRS;
+
+Expr
+simplify_expanded_ex_for_input(const Expr& e, bool input);
+
+Expr
+simplify_expanded_ex_for_output(const Expr& e, bool input);
+
+Expr
+simplify_logarithm_in_expanded_ex(const Expr& e);
 
 //! \brief
 //! Given an expression that is a power this function consider its exponent.. 
@@ -759,8 +762,8 @@ manip_factor(const Expr& e, bool input) {
   for (unsigned i = e.nops(); i-- > 0; ) {
     const Expr& factor_e = e.op(i);
     if (factor_e.is_a_power()) {
-      Expr base = simplify_on_output_ex(factor_e.arg(0), input);
-      Expr exp = simplify_on_output_ex(factor_e.arg(1), input);
+      Expr base = simplify_expanded_ex_for_output(factor_e.arg(0), input);
+      Expr exp = simplify_expanded_ex_for_output(factor_e.arg(1), input);
       Number num_base;
       Number num_exp;
       if (base.is_a_number(num_base) && exp.is_a_number(num_exp))
@@ -789,12 +792,14 @@ manip_factor(const Expr& e, bool input) {
 	if (factor_e_rewritten.nops() == 1)
 	  factor_function
 	    *= apply(factor_e_rewritten.functor(),
-		     simplify_on_output_ex(factor_e_rewritten.arg(0), input));
+		     simplify_expanded_ex_for_output(factor_e_rewritten.arg(0),
+						     input));
 	else {
 	  unsigned num_argument = factor_e_rewritten.nops();
 	  std::vector<Expr> argument(num_argument);
 	  for (unsigned i = 0; i < num_argument; ++i)
-	    argument[i] = simplify_on_output_ex(factor_e_rewritten.arg(i),
+	    argument[i]
+	      = simplify_expanded_ex_for_output(factor_e_rewritten.arg(i),
 						input);
 	  factor_function *= apply(factor_e_rewritten.functor(), argument);
 	}
@@ -806,12 +811,13 @@ manip_factor(const Expr& e, bool input) {
   else if (e_rewritten.is_a_function()) {
     if (e_rewritten.nops() == 1)
       e_rewritten = apply(e_rewritten.functor(),
-			  simplify_on_output_ex(e_rewritten.arg(0), input));
+			  simplify_expanded_ex_for_output(e_rewritten.arg(0),
+							  input));
     else {
       unsigned num_argument = e_rewritten.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = simplify_on_output_ex(e_rewritten.arg(i), input);
+	argument[i] = simplify_expanded_ex_for_output(e_rewritten.arg(i), input);
       e_rewritten = apply(e_rewritten.functor(), argument);
     }
   }
@@ -862,6 +868,115 @@ manip_factor(const Expr& e, bool input) {
   else
     if (e_rewritten.is_a_mul())
       e_rewritten = collect_base_exponent(e_rewritten);
+  return e_rewritten;
+}
+
+/*!
+  Crosses the tree of the expanded expression \p e recursively to find
+  subexpressions to which we apply the rules of the terms rewriting
+  system \f$ \mathfrak{R}_i \f$. More exactly here the rules of the set
+  <EM>Expand</EM> are implemented because the rules of the set
+  <EM>Automatic</EM> are automatically executed.  We remark that the
+  rule \f$ \textbf{E4} \f$ is automatically executed when the exponent is
+  integer, while the rules \f$ \textbf{E3} \f$ and \f$ \textbf{E6} \f$
+  are executed by the method <CODE>expand()</CODE> (\f$ \textbf{E3} \f$
+  only partially because for instance \f$ expand(3^(4*x+2*a)) =
+  3^(2*a)*3^(4*x) \f$): hence we here consider only powers.
+  \p input is always <CODE>true</CODE> and this means that \p n is a
+  special symbol, i. e., in the simplifications it is always collected
+  with respect to the others parameters.  The function returns a
+  new expression containing the modified expression \p e.
+*/
+Expr
+simplify_expanded_ex_for_input(const Expr& e, bool input) {
+  Expr e_rewritten;
+  if (e.is_a_add()) {
+    e_rewritten = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten += simplify_expanded_ex_for_input(e.op(i), input);
+  }
+  else if (e.is_a_mul()) {
+    e_rewritten = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten *= simplify_expanded_ex_for_input(e.op(i), input);
+  }
+  else if (e.is_a_power())
+    return simplify_powers(e, input);
+  else if (e.is_a_function()) {
+    if (e.nops() == 1)
+      return apply(e.functor(), simplify_expanded_ex_for_input(e.arg(0), input));
+    else {
+      unsigned num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned i = 0; i < num_argument; ++i)
+	argument[i] = simplify_expanded_ex_for_input(e.arg(i), input);
+      return apply(e.functor(), argument);
+    }
+  }
+  else
+    return e;
+  return e_rewritten;
+}
+
+/*!
+  Crosses the tree of the expanded expression \p e recursively to find
+  subexpressions to which we want to apply the rules of the terms
+  rewriting system \f$ \mathfrak{R}_o \f$. The remarks about the
+  function <CODE>simplify_expanded_ex_for_input()</CODE> are valid here too,
+  because all the rules of the term rewriting system \f$ \mathfrak{R}_i
+  \f$, except for \f$ \textbf{E2} \f$, are also in \f$ \mathfrak{R}_o
+  \f$.  \p input is always <CODE>false</CODE> and this means that \p n
+  is not considerated like a special symbol but like the others
+  parameters.  The function returns a new expression containing
+  the modified expression \p e.
+*/
+Expr
+simplify_expanded_ex_for_output(const Expr& e, bool input) {
+  Expr e_rewritten;
+  if (e.is_a_add()) {
+    e_rewritten = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten += simplify_expanded_ex_for_output(e.op(i), input);
+  }
+  else if (e.is_a_mul())
+    // We can not call `simplify_expanded_ex_for_output()' on every factor
+    // because otherwise it is not possible to transform products.
+    return manip_factor(e, input);
+  else if (e.is_a_power()) {
+    // Is necessary to call `red_prod()' in order to rewrite irrational
+    // numbers, i.e., powers with base and exponent both numerics. 
+    Expr base = simplify_expanded_ex_for_output(e.arg(0), input);
+    Expr exp = simplify_expanded_ex_for_output(e.arg(1), input);
+    Number num_base;
+    Number num_exp;
+    if (base.is_a_number(num_base) && exp.is_a_number(num_exp))
+      e_rewritten = red_prod(num_base, num_exp, 1, 1);
+    else {
+      Expr tmp = pwr(base, exp);
+      if (tmp.is_a_power())
+	e_rewritten = simplify_powers(tmp, input);
+      else
+	e_rewritten = tmp;
+    }
+    // Necessary for the output: for example if `e = sqrt(18)^a' then
+    // with the following rows `e_rewritten = (3*sqrt(2))^a'
+    // (without the following rows `e_rewritten = sqrt(2)^a*3^a').
+    if (e_rewritten.is_a_mul())
+      return collect_base_exponent(e_rewritten);
+  }
+  else if (e.is_a_function()) {
+    if (e.nops() == 1)
+      return apply(e.functor(), simplify_expanded_ex_for_output(e.arg(0), input));
+    else {
+      unsigned num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned i = 0; i < num_argument; ++i)
+	argument[i] = simplify_expanded_ex_for_output(e.arg(i), input);
+      return apply(e.functor(), argument);
+    }
+  }
+  else
+    return e;
   return e_rewritten;
 }
 
@@ -996,8 +1111,8 @@ change_base_logarithm(const Expr& base, const Expr exponent,
 	      && exponent.op(0) == 1 / log(new_base))))
     return pwr(Recurrence::n, new_exponent);
   else
-    return pwr(simplify_logarithm(base),
-	       simplify_logarithm(exponent));
+    return pwr(simplify_logarithm_in_expanded_ex(base),
+	       simplify_logarithm_in_expanded_ex(exponent));
 }
 
 Expr
@@ -1019,120 +1134,73 @@ prepare_change_base_logarithm(const Expr& base, const Expr& exponent) {
       return change_base_logarithm(base, exponent, base_num);
   }
   else
-    return pwr(simplify_logarithm(base), simplify_logarithm(exponent));
+    return pwr(simplify_logarithm_in_expanded_ex(base),
+	       simplify_logarithm_in_expanded_ex(exponent));
 }
 
-} // anonymous namespace
-
 /*!
-  Crosses the tree of the expanded expression \p e recursively to find
-  subexpressions to which we apply the rules of the terms rewriting
-  system \f$ \mathfrak{R}_i \f$. More exactly here the rules of the set
-  <EM>Expand</EM> are implemented because the rules of the set
-  <EM>Automatic</EM> are automatically executed.  We remark that the
-  rule \f$ \textbf{E4} \f$ is automatically executed when the exponent is
-  integer, while the rules \f$ \textbf{E3} \f$ and \f$ \textbf{E6} \f$
-  are executed by the method <CODE>expand()</CODE> (\f$ \textbf{E3} \f$
-  only partially because for instance \f$ expand(3^(4*x+2*a)) =
-  3^(2*a)*3^(4*x) \f$): hence we here consider only powers.
-  \p input is always <CODE>true</CODE> and this means that \p n is a
-  special symbol, i. e., in the simplifications it is always collected
-  with respect to the others parameters.  The function returns a
-  new expression containing the modified expression \p e.
+  Applies the following logarithm's property:
+  \f[
+    \begin{cases}
+      log(a^b) = b log(a), \\
+      (a^b)^{log n / log a} = n^b, \quad \text{where } a \in \Rset, a > 0
+        \text{and } b \in \Nset.
+    \end{cases}
+  \f]
 */
-PURRS::Expr
-PURRS::simplify_on_input_ex(const Expr& e, bool input) {
+Expr
+simplify_logarithm_in_expanded_ex(const Expr& e) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten += simplify_on_input_ex(e.op(i), input);
+      e_rewritten += simplify_logarithm_in_expanded_ex(e.op(i));
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten *= simplify_on_input_ex(e.op(i), input);
+      e_rewritten *= simplify_logarithm_in_expanded_ex(e.op(i));
   }
   else if (e.is_a_power())
-    return simplify_powers(e, input);
+    // Apply the second property.
+    return prepare_change_base_logarithm(e.arg(0), e.arg(1));
   else if (e.is_a_function()) {
-    if (e.nops() == 1)
-      return apply(e.functor(), simplify_on_input_ex(e.arg(0), input));
-    else {
-      unsigned num_argument = e.nops();
-      std::vector<Expr> argument(num_argument);
-      for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = simplify_on_input_ex(e.arg(i), input);
-      return apply(e.functor(), argument);
-    }
-  }
-  else
-    return e;
-  return e_rewritten;
-}
-
-/*!
-  Crosses the tree of the expanded expression \p e recursively to find
-  subexpressions to which we want to apply the rules of the terms
-  rewriting system \f$ \mathfrak{R}_o \f$. The remarks about the
-  function <CODE>simplify_on_input_ex()</CODE> are valid here too,
-  because all the rules of the term rewriting system \f$ \mathfrak{R}_i
-  \f$, except for \f$ \textbf{E2} \f$, are also in \f$ \mathfrak{R}_o
-  \f$.  \p input is always <CODE>false</CODE> and this means that \p n
-  is not considerated like a special symbol but like the others
-  parameters.  The function returns a new expression containing
-  the modified expression \p e.
-*/
-PURRS::Expr
-PURRS::simplify_on_output_ex(const Expr& e, bool input) {
-  Expr e_rewritten;
-  if (e.is_a_add()) {
-    e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten += simplify_on_output_ex(e.op(i), input);
-  }
-  else if (e.is_a_mul())
-    // We can not call `simplify_on_output_ex()' on every factor because
-    // otherwise it is not possible to transform products.
-    return manip_factor(e, input);
-  else if (e.is_a_power()) {
-    // Is necessary to call `red_prod()' in order to rewrite irrational
-    // numbers, i.e., powers with base and exponent both numerics. 
-    Expr base = simplify_on_output_ex(e.arg(0), input);
-    Expr exp = simplify_on_output_ex(e.arg(1), input);
-    Number num_base;
-    Number num_exp;
-    if (base.is_a_number(num_base) && exp.is_a_number(num_exp))
-      e_rewritten = red_prod(num_base, num_exp, 1, 1);
-    else {
-      Expr tmp = pwr(base, exp);
-      if (tmp.is_a_power())
-	e_rewritten = simplify_powers(tmp, input);
+    if (e.is_the_log_function()) {
+      const Expr& arg_log = e.arg(0);
+      // Apply the first property.
+      if (arg_log.is_a_power())
+	return arg_log.arg(1) * log(arg_log.arg(0));
       else
-	e_rewritten = tmp;
+	return e;
     }
-    // Necessary for the output: for example if `e = sqrt(18)^a' then
-    // with the following rows `e_rewritten = (3*sqrt(2))^a'
-    // (without the following rows `e_rewritten = sqrt(2)^a*3^a').
-    if (e_rewritten.is_a_mul())
-      return collect_base_exponent(e_rewritten);
-  }
-  else if (e.is_a_function()) {
-    if (e.nops() == 1)
-      return apply(e.functor(), simplify_on_output_ex(e.arg(0), input));
+    else if (e.nops() == 1)
+      return apply(e.functor(), simplify_logarithm_in_expanded_ex(e.arg(0)));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = simplify_on_output_ex(e.arg(i), input);
+	argument[i] = simplify_logarithm_in_expanded_ex(e.arg(i));
       return apply(e.functor(), argument);
     }
   }
   else
-    return e;
+    e_rewritten = e;
   return e_rewritten;
 }
 
+} // anonymous namespace
+
+
+
+PURRS::Expr
+PURRS::simplify_ex_for_input(const Expr& e, bool input) {
+  return simplify_expanded_ex_for_input(e.expand(), input);
+}
+
+PURRS::Expr
+PURRS::simplify_ex_for_output(const Expr& e, bool input) {
+  return simplify_expanded_ex_for_output(e.expand(), input);
+}
 
 /*!
   Using the function <CODE>numerator_denomominator_purrs()</CODE> we
@@ -1169,8 +1237,8 @@ PURRS::simplify_numer_denom(const Expr& e) {
   both in the numerator and denominator of \p e, in order to collect
   common factors, which are then erased.
   We remark that, for this type of simplifications, we do not call
-  the function <CODE>simplify_on_output_ex()</CODE> because it would expand
-  the expression while we want to maintain the product of factors.
+  the function <CODE>simplify_expanded_ex_for_output()</CODE> because it
+  would expand the expression while we want to maintain the product of factors.
   Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
 */
 PURRS::Expr
@@ -1183,70 +1251,23 @@ PURRS::simplify_factorials_and_exponentials(const Expr& e) {
   return e_numerator / e_denominator;
 }
 
-/*!
-  Applies the following logarithm's property:
-  \f[
-    \begin{cases}
-      log(a^b) = b log(a), \\
-      (a^b)^{log n / log a} = n^b, \quad \text{where } a \in \Rset, a > 0
-        \text{and } b \in \Nset.
-    \end{cases}
-  \f]
-*/
 PURRS::Expr
 PURRS::simplify_logarithm(const Expr& e) {
-  D_MSG("***LOGARITHM");
-  Expr e_rewritten;
-  if (e.is_a_add()) {
-    e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten += simplify_logarithm(e.op(i));
-  }
-  else if (e.is_a_mul()) {
-    e_rewritten = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten *= simplify_logarithm(e.op(i));
-  }
-  else if (e.is_a_power())
-    // Apply the second property.
-    return prepare_change_base_logarithm(e.arg(0), e.arg(1));
-  else if (e.is_a_function()) {
-    if (e.is_the_log_function()) {
-      const Expr& arg_log = e.arg(0);
-      // Apply the first property.
-      if (arg_log.is_a_power())
-	return arg_log.arg(1) * log(arg_log.arg(0));
-      else
-	return e;
-    }
-    else if (e.nops() == 1)
-      return apply(e.functor(), simplify_logarithm(e.arg(0)));
-    else {
-      unsigned num_argument = e.nops();
-      std::vector<Expr> argument(num_argument);
-      for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = simplify_logarithm(e.arg(i));
-      return apply(e.functor(), argument);
-    }
-  }
-  else
-    e_rewritten = e;
-  return e_rewritten;
+  return simplify_logarithm_in_expanded_ex(e.expand());
 }
 
 /*!
   Executes consecutively all simplifications described in the comment
   of the functions <CODE>simplify_numer_denom()</CODE>,
   <CODE>simplify_factorials_and_exponentials()</CODE> and
-  <CODE>simplify_on_output_ex()</CODE>.
+  <CODE>simplify_expanded_on_output_ex()</CODE>.
 */
 PURRS::Expr
 PURRS::simplify_all(const Expr& e) {
   Expr e_rewritten = e;
   e_rewritten = simplify_numer_denom(e_rewritten);
   e_rewritten = simplify_factorials_and_exponentials(e_rewritten);
-  e_rewritten = simplify_on_output_ex(e_rewritten.expand(), false);
-  e_rewritten = simplify_numer_denom(e_rewritten);
-  e_rewritten = e_rewritten.expand();
+  e_rewritten = simplify_ex_for_output(e_rewritten, false);
+  e_rewritten = simplify_numer_denom(e_rewritten).expand();
   return e_rewritten;
 }

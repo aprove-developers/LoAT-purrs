@@ -591,15 +591,16 @@ main(int argc, char *argv[]) try {
 	  if (interactive)
 	    cout << "Unsolvable." << endl << endl;
 	}
-      if (!solved_or_approximated && !unsolvable)
-	if (compute_exact_solution_wrapper(rec)
-	    == Recurrence::TOO_COMPLEX
-	    || rec.compute_lower_bound()
-	    == Recurrence::TOO_COMPLEX
-	    || rec.compute_upper_bound()
-	    == Recurrence::TOO_COMPLEX)
-	  if (interactive)
-	    cout << "Sorry, this is too difficult." << endl << endl;
+      if (!solved_or_approximated && !unsolvable) {
+	assert(compute_exact_solution_wrapper(rec)
+	       == Recurrence::TOO_COMPLEX
+	       || rec.compute_lower_bound()
+	       == Recurrence::TOO_COMPLEX
+	       || rec.compute_upper_bound()
+	       == Recurrence::TOO_COMPLEX);
+	if (interactive)
+	  cout << "Sorry, this is too difficult." << endl << endl;
+      }
     }
     if (interactive)
       rec.dump(cout);

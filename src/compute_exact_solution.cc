@@ -648,7 +648,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 
   D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
   exact_solution_.set_expression
-    (simplify_on_output_ex(exact_solution_.expression().expand(), false));
+    (simplify_ex_for_output(exact_solution_.expression(), false));
   // Resubstitutes eventually auxiliary definitions contained in
   // the solution with their original values.
   //exact_solution_.set_expression(blackboard.rewrite(solution));

@@ -72,13 +72,13 @@ solve_equation_2(const Expr& b, const Expr& c,
   Symbol n("n");
   Expr sqrt_d = sqrt(b*b - 4*c);
   D_MSGVAR("Before: ", sqrt_d);
-  sqrt_d = simplify_on_output_ex(sqrt_d, false);
+  sqrt_d = simplify_ex_for_output(sqrt_d, false);
   D_VAR(sqrt_d);
   x1 = (-b + sqrt_d)/2;
   x2 = (-b - sqrt_d)/2;
 
-  x1 = simplify_on_output_ex(x1, false);
-  x2 = simplify_on_output_ex(x2, false);
+  x1 = simplify_ex_for_output(x1, false);
+  x2 = simplify_ex_for_output(x2, false);
 }
 
 /*!
@@ -142,8 +142,8 @@ solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
     }
     D_MSGVAR("Before: ", S); 
     D_MSGVAR("Before: ", T);
-    S = simplify_on_output_ex(S, false);
-    T = simplify_on_output_ex(T, false);
+    S = simplify_ex_for_output(S, false);
+    T = simplify_ex_for_output(T, false);
     D_VAR(S); 
     D_VAR(T);
     Expr S_plus_T = S + T;
@@ -158,9 +158,9 @@ solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
     x3 = t1 - t2;
   }
 
-  x1 = simplify_on_output_ex(x1, false);
-  x2 = simplify_on_output_ex(x2, false);
-  x3 = simplify_on_output_ex(x3, false);
+  x1 = simplify_ex_for_output(x1, false);
+  x2 = simplify_ex_for_output(x2, false);
+  x3 = simplify_ex_for_output(x3, false);
 
   // The roots are all real if and only if d <= 0.
   return d <= 0;
@@ -202,14 +202,14 @@ solve_equation_4(const Number& a1, const Number& a2,
   // FIXME: the one and only `n' symbol should be global,
   // i.e., created once and for all.
   Symbol n("n");
-  p = simplify_on_output_ex(p, false);
-  q = simplify_on_output_ex(q, false);
+  p = simplify_ex_for_output(p, false);
+  q = simplify_ex_for_output(q, false);
   D_VAR(p); 
   D_VAR(q);
 
   Expr r = -g/(8*p*q);
   D_MSGVAR("Before: ", r); 
-  r = simplify_on_output_ex(r, false);
+  r = simplify_ex_for_output(r, false);
   Expr s = a1/4;
   D_VAR(r); 
   D_VAR(s); 
@@ -224,10 +224,10 @@ solve_equation_4(const Number& a1, const Number& a2,
   D_VAR(x3); 
   D_VAR(x4);
   D_MSG("");
-  x1 = simplify_on_output_ex(x1, false);
-  x2 = simplify_on_output_ex(x2, false);
-  x3 = simplify_on_output_ex(x3, false);
-  x4 = simplify_on_output_ex(x4, false);
+  x1 = simplify_ex_for_output(x1, false);
+  x2 = simplify_ex_for_output(x2, false);
+  x3 = simplify_ex_for_output(x3, false);
+  x4 = simplify_ex_for_output(x4, false);
 }
 
 /*!

@@ -74,7 +74,7 @@ PURRS::Recurrence::approximate_functional_equation() const {
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
   Expr tmp = inhomogeneous_term.substitute(n, pwr(divisor_arg(), n));
-  exp_poly_decomposition(simplify_on_input_ex(tmp, true),
+  exp_poly_decomposition(simplify_ex_for_input(tmp, true),
 			 bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
   assert(coefficient().is_a_number());
   Expr sum = 0;
@@ -114,18 +114,18 @@ PURRS::Recurrence::approximate_functional_equation() const {
     else
       return TOO_COMPLEX;
   sum *= pwr(coefficient(), n);
-  sum = simplify_on_output_ex(sum.expand(), false);
+  sum = simplify_ex_for_output(sum, false);
   D_VAR(sum);
   // Consider an upper bound and a lower bound for `q = [log n / log b]'.
   Expr q_upper = log(n) / log(divisor_arg());
   Expr initial_condition = x(n / pwr(divisor_arg(), q_upper));
   Expr ub = pwr(coefficient(), q_upper) * initial_condition
     + sum.substitute(n, q_upper + 1);
-  upper_bound_.set_expression(simplify_logarithm(ub.expand()));
+  upper_bound_.set_expression(simplify_logarithm(ub));
 
   Expr q_lower = q_upper - 1;
   Expr lb = pwr(coefficient(), q_lower) * initial_condition
     + sum.substitute(n, q_lower);
-  lower_bound_.set_expression(simplify_logarithm(lb.expand()));
+  lower_bound_.set_expression(simplify_logarithm(lb));
   return SUCCESS;
 }

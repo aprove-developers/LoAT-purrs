@@ -147,8 +147,7 @@ PURRS::Recurrence::verify_solution() const {
       else
 	partial_solution
 	  = find_term_without_function_x(exact_solution_.expression());
-      partial_solution = simplify_on_output_ex(partial_solution.expand(),
-					       false);
+      partial_solution = simplify_ex_for_output(partial_solution, false);
       D_VAR(partial_solution);
       // The recurrence is homogeneous.
       if (partial_solution == 0)
@@ -243,8 +242,7 @@ Recurrence::compute_exact_solution() const {
 					  (symbol_for_mod()),
 					  gcd_decrements_old_rhs()));
 	  exact_solution_.set_expression
-	    (simplify_on_output_ex(exact_solution_.expression().expand(),
-				   false));
+	    (simplify_ex_for_output(exact_solution_.expression(), false));
 	}
 	lower_bound_.set_expression(exact_solution_.expression());
 	upper_bound_.set_expression(exact_solution_.expression());

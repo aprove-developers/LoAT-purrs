@@ -751,7 +751,7 @@ PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classify() const {
   D_VAR(recurrence_rhs);
   // Simplifies expanded expressions, in particular rewrites nested powers.
-  Expr rhs = simplify_on_input_ex(recurrence_rhs.expand(), true);
+  Expr rhs = simplify_ex_for_input(recurrence_rhs, true);
   D_VAR(rhs);
 
   // We will store here the greatest common denominator among the decrements
@@ -783,8 +783,6 @@ PURRS::Recurrence::classify() const {
       // Build the new recurrence substituting `n' not contained in the
       // `x' functions with `gcd_among_decrements * n + r' and `x(n-k)' with
       // `x(n - k / gcd_among_decrements)'.
-      // N.B. `recurrence_rhs' must be simplified with
-      // `simplify_on_input_ex()'.
       recurrence_rhs = rewrite_reduced_order_recurrence(rhs, r,
 							gcd_among_decrements);
       status = classify();

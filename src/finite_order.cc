@@ -123,7 +123,7 @@ return_sum(bool distinct, const Number& order, const Expr& coeff,
   if (distinct)
     symbolic_sum = symbolic_sum.substitute(x, alpha/lambda);
   symbolic_sum *= pwr(lambda, Recurrence::n);
-  symbolic_sum = simplify_on_output_ex(symbolic_sum.expand(), false);
+  symbolic_sum = simplify_ex_for_output(symbolic_sum, false);
   return symbolic_sum;
 }
 
@@ -608,7 +608,9 @@ compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
   a recurrence such that \f$ g = gcd(k_1, \dotsc, k_h) > 1 \f$.
   In this case it is possible to reduce the order of the recurrence
   so that we have to solve \f$ g \f$ recurrences of order smaller
-  than the original recurrence. 
+  than the original recurrence.
+  Note: the expression \p e must be simplified so that not to have
+  nested power (using the function <CODE>simplify_ex_for_input</CODE>).
 */
 PURRS::Expr
 PURRS::rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
