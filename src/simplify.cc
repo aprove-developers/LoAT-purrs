@@ -543,7 +543,6 @@ to_std_form(const Number k, const std::vector<Number>& bases,
 */
 static Expr 
 reduce_to_standard_form(const Number root_index, const Number r) {
-  
   assert(root_index.is_integer());
   assert(root_index != 0);
   int k = root_index.to_int();
@@ -554,6 +553,7 @@ reduce_to_standard_form(const Number root_index, const Number r) {
       return 0;
   Number num = r.numerator();
   Number den = r.denominator();
+
   // FIXME: deal with complex numbers
   if (!r.is_real()) {
     Expr index = 1 / root_index;
@@ -582,9 +582,9 @@ reduce_to_standard_form(const Number root_index, const Number r) {
   
   // partial factor and reduce numerator and denominator
   partial_factor(num, num_bases, num_exponents);
+
   unsigned num_size = num_bases.size();
   Expr reduced_num = to_std_form(k, num_bases, num_exponents);
-  
   // here <CODE>to_std_form</CODE> is called with a negative value of k 
   // because we are dealing with the denominator of r 
   partial_factor(den, den_bases, den_exponents);
@@ -608,15 +608,13 @@ reduce_to_standard_form(const Number root_index, const Number r) {
   }
   
   Number irr_part = 1;
-  for (unsigned i=0; i < num_size; ++i)
+  for (unsigned i = 0; i < num_size; ++i)
     irr_part *= Parma_Recurrence_Relation_Solver::power(num_bases[i], num_exponents[i]);
-  for (unsigned i=0; i < den_size; ++i)
+  for (unsigned i = 0; i < den_size; ++i)
     irr_part *= Parma_Recurrence_Relation_Solver::power(den_bases[i], den_exponents[i]);
-  
   Expr q = sign * reduced_num * Parma_Recurrence_Relation_Solver::power(reduced_den, -1);
   if (irr_part > 1)
-    q *= Parma_Recurrence_Relation_Solver::power(irr_part, 1/k);
-  
+    q *= Parma_Recurrence_Relation_Solver::power(irr_part, Number(1, k));
   return q;
 }
 
@@ -644,6 +642,7 @@ red_prod(const Number& base1, const Number& exp1,
   Number b1 = Parma_Recurrence_Relation_Solver::power(base_1, k2_den / g);
   Number b2 = Parma_Recurrence_Relation_Solver::power(base_2, k1_den / g);
   Number b = b1 * b2;
+
   return reduce_to_standard_form(k, b);
 }
 
@@ -885,7 +884,6 @@ simplify_on_output_ex(const Expr& e, const Symbol& n, const bool& input) {
   }
   else
     ris += e;
-
   return ris;
 }
 
