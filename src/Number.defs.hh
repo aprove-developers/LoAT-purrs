@@ -54,7 +54,6 @@ Number operator*(const Number& x, const Number& y);
 Number operator/(const Number& x, const Number& y);
 
 //! Assigns \f$ x + y \f$ to \f$ x \f$ and returns the result.
-/*! \relates Number */
 Number& operator+=(Number& x, const Number& y);
 
 //! Assigns \f$ x - y \f$ to \f$ x \f$ and returns the result.
@@ -63,6 +62,7 @@ Number& operator-=(Number& x, const Number& y);
 //! Assigns \f$ x \cdot y \f$ to \f$ x \f$ and returns the result.
 Number& operator*=(Number& x, const Number& y);
 
+//! \brief
 //! If \f$ y \neq 0 \f$, assigns \f$ x / y \f$ to \f$ x \f$
 //! and returns the result.
 /*!
@@ -120,7 +120,7 @@ Number power(const Number& x, const Number& y);
 //! returns the remainder of the division of \f$ x \f$ by \f$ y \f$.
 //! If \f$ y = 0 \f$ an exception is thrown.
 //! Returns zero otherwise.
-//! If the result is not zero, its sign is the sign of \f$ y \f$
+//! If the result is not zero, its sign is the sign of \f$ y \f$.
 /*!
   \exception std::runtime_error thrown if \f$ y = 0 \f$.
 */

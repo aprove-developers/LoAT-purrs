@@ -42,6 +42,12 @@ public:
   //! \brief
   //! Builds the matrix with \p i rows and \j columns containing the
   //! expression in \p lst.
+  /*!
+    If the list has fewer elements than the matrix, the remaining matrix
+    elements are set to zero.
+    If the list has more elements than the matrix, the excessive elements are
+    thrown away.
+  */
   Matrix(unsigned i, unsigned j, const Expr_List& y);
 
   //! Copy-constructor.
@@ -54,9 +60,19 @@ public:
   Matrix& operator=(const Matrix& y);
 
   //! Accesses to element in \p r row and \p c column of \p *this for reading.
+  /*!
+    \exception std::range_error thrown if \p r is bigger or equal to
+                                rows'number or \p c is bigger or equal
+				columns'number.
+  */
   const Expr& operator()(unsigned r, unsigned c) const;
 
   //! Accesses to element in \p r row and \p c column of \p *this for writing.
+  /*!
+    \exception std::range_error thrown if \p r is bigger or equal to
+                                rows'number or \p c is bigger or equal
+				columns'number.
+  */
   Expr& operator()(unsigned r, unsigned c);
 
   //! \brief
@@ -65,15 +81,21 @@ public:
   /*!
     \param vars    n x p matrix, all elements must be symbols.
     \param rhs     m x p matrix.
-
     Returns a n x p solution matrix.
+
+    \exception std::logic_error      thrown if the matrices'dimensions are
+                                     incompatible.
+    \exception std::invalid_argument thrown if \p vars is not a matrix of
+                                     symbols.
+    \exception std::runtime_error    thrown if the linear system is
+                                     inconsistent. 
   */
   Matrix solve(const Matrix& vars, const Matrix& rhs) const;
 
 private:
-  GiNaC::matrix m;
-
   friend class Expr;
+
+  GiNaC::matrix m;
 
   //! Builds the matrix corresponding to \p gm.
   Matrix(const GiNaC::matrix& gm);
