@@ -26,12 +26,13 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_ep_decomp_hh 1
 
 #include "Expr.types.hh"
+#include "Symbol.types.hh"
 #include <vector>
 
 namespace Parma_Recurrence_Relation_Solver {
 
 void
-exp_poly_decomposition(const Expr& e,
+exp_poly_decomposition(const Expr& e, const Symbol& x,
 		       std::vector<Expr>& alpha,
 		       std::vector<Expr>& p,
 		       std::vector<Expr>& q);

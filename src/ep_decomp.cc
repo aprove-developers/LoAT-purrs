@@ -31,7 +31,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "util.hh"
 #include "simplify.hh"
 #include "Expr.defs.hh"
-#include "Recurrence.defs.hh"
 
 // TEMPORARY
 #include <iostream>
@@ -42,7 +41,7 @@ namespace {
 using namespace PURRS;
 
 void
-exp_poly_decomposition_factor(const Expr& base, const Expr& e,
+exp_poly_decomposition_factor(const Expr& base, const Expr& e, const Symbol& x,
 			      std::vector<Expr>& alpha,
 			      std::vector<Expr>& p,
 			      std::vector<Expr>& q) {
@@ -65,26 +64,26 @@ exp_poly_decomposition_factor(const Expr& base, const Expr& e,
   // `p[position]' and `q[position]', respectively.
   Expr polynomial;
   Expr possibly_non_polynomial;
-  isolate_polynomial_part(e, Recurrence::n, polynomial, possibly_non_polynomial);
+  isolate_polynomial_part(e, x, polynomial, possibly_non_polynomial);
   p[position] += polynomial;
   q[position] += possibly_non_polynomial;
 }
 
 void
-exp_poly_decomposition_summand(const Expr& e,
+exp_poly_decomposition_summand(const Expr& e, const Symbol& x,
 			       std::vector<Expr>& alpha,
 			       std::vector<Expr>& p,
 			       std::vector<Expr>& q) {
   unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
   if (num_factors == 1) {
-    if (e.is_a_power() && e.arg(1) == Recurrence::n) {
-      // We have found something of the form `power(base, n)'.
+    if (e.is_a_power() && e.arg(1) == x) {
+      // We have found something of the form `power(base, x)'.
       Expr base = e.arg(0);
       assert(!base.is_zero());
-      if (base.is_scalar_representation(Recurrence::n)) {
-	// We have found something of the form `power(base, n)'
+      if (base.is_scalar_representation(x)) {
+	// We have found something of the form `power(base, x)'
 	// and `base' is good for the decomposition.
-	exp_poly_decomposition_factor(base, 1, alpha, p, q);
+	exp_poly_decomposition_factor(base, 1, x, alpha, p, q);
 	return;
       }
     }
@@ -92,45 +91,45 @@ exp_poly_decomposition_summand(const Expr& e,
   else
     for (unsigned i = num_factors; i-- > 0; ) {
       const Expr& e_i = e.op(i);
-      if (e_i.is_a_power() && e_i.arg(1) == Recurrence::n) {
-	// We have found something of the form `power(base, n)'.
+      if (e_i.is_a_power() && e_i.arg(1) == x) {
+	// We have found something of the form `power(base, x)'.
 	Expr base = e_i.arg(0);
 	assert(!base.is_zero());
-	if (base.is_scalar_representation(Recurrence::n)) {
-	  // We have found something of the form `power(base, n)'
+	if (base.is_scalar_representation(x)) {
+	  // We have found something of the form `power(base, x)'
 	  // and `base' is good for the decomposition: determine
-	  // `r = e/power(base, n)'.
+	  // `r = e/power(base, x)'.
 	  Expr r = 1;
 	  for (unsigned j = num_factors; j-- > 0; )
 	    if (i != j)
 	      r *= e.op(j);
-	  exp_poly_decomposition_factor(base, r, alpha, p, q);
+	  exp_poly_decomposition_factor(base, r, x, alpha, p, q);
 	  return;
 	}
       }
     }
-  // No proper exponential found: this is treated like `power(1, n) * e'.
-  exp_poly_decomposition_factor(1, e, alpha, p, q);
+  // No proper exponential found: this is treated like `power(1, x) * e'.
+  exp_poly_decomposition_factor(1, e, x, alpha, p, q);
 }
 
 } // anonymous namespace
 
 /*!
-  Let \f$ e(n) \f$ be the expression in \p n contained in \p e,
+  Let \f$ e(x) \f$ be the expression in \p x contained in \p e,
   which is assumed to be already expanded.
   This function computes a decomposition
-  \f$ e(n) = \sum_{i=0}^k \alpha_i^n \bigl(p_i(n) + q_i(n)\bigr) \f$, where
+  \f$ e(x) = \sum_{i=0}^k \alpha_i^x \bigl(p_i(x) + q_i(x)\bigr) \f$, where
   - \f$ \alpha_i \f$ is a expression valid for to be an exponential's base.
     (syntactically different from \p 0);
   - \f$ \alpha_i \neq \alpha_j \f$ if \f$ i \neq j \f$;
-  - \f$ p_i(n) \f$ is (syntactically) a polynomial in \f$ n \f$.
+  - \f$ p_i(x) \f$ is (syntactically) a polynomial in \f$ x \f$.
 
   The expressions corresponding to \f$ \alpha_i \f$, \f$ p_i \f$ and
   \f$ q_i \f$ are stored in the \f$ i \f$-th position of the vectors
   \p alpha, \p p and \p q, respectively.
 */
 void
-PURRS::exp_poly_decomposition(const Expr& e,
+PURRS::exp_poly_decomposition(const Expr& e, const Symbol& x,
 			      std::vector<Expr>& alpha,
 			      std::vector<Expr>& p,
 			      std::vector<Expr>& q) {
@@ -150,7 +149,7 @@ PURRS::exp_poly_decomposition(const Expr& e,
   q.reserve(num_summands);
   if (num_summands > 1)
     for (unsigned i = num_summands; i-- > 0; )
-      exp_poly_decomposition_summand(e_simpl.op(i), alpha, p, q);
+      exp_poly_decomposition_summand(e_simpl.op(i), x, alpha, p, q);
   else
-    exp_poly_decomposition_summand(e_simpl, alpha, p, q);
+    exp_poly_decomposition_summand(e_simpl, x, alpha, p, q);
 }
