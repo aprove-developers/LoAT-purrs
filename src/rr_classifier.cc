@@ -560,6 +560,20 @@ find_non_linear_term(const Expr& e) {
   return term;
 }
 
+//! Kinds of non-linear recurrence.
+enum Kinds_Of_Non_Linear_Rec {
+  //! Recurrence that the system is able to solve.
+  OK_NON_LINEAR_REC,
+
+  //! \brief
+  //! Wrong recurrence (e.g. \f$ x(n) = c x(n-1)^a \f$, with
+  //! \f$ a \in \Qset \setminus \Zset \f$, \f$ c < 0 \f$).
+  DOMAIN_ERROR_NON_LINEAR_REC,
+
+  //! Recurrence that the system is not able to solve.
+  TOO_COMPLEX_NON_LINEAR_REC
+};
+
 //! \brief
 //! Returns <CODE>true</CODE> if the non linear recurrence \f$ x(n) = rhs \f$
 //! is rewritable as linear recurrence. Returns <CODE>false</CODE> otherwise.
@@ -583,7 +597,7 @@ find_non_linear_term(const Expr& e) {
   of the non-linear recurrence in the correspondent linear recurrence
   (which will be stored in \p new_rhs).
 */
-bool
+Kinds_Of_Non_Linear_Rec
 rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 			      Expr& new_rhs,
 			      std::pair<Number, Expr>& coeff_and_base,
@@ -614,7 +628,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
       }
       else
 	if (!find_domain_in_N(factor, Recurrence::n, z))
-	  return false;
+	  return TOO_COMPLEX_NON_LINEAR_REC;
     }
     first_valid_index = z.to_unsigned_int();
 
@@ -634,7 +648,10 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	coeff_and_base.first = coeff;
 	// Store `a'.
 	assert(rhs.op(1).arg(1).is_a_number());
-	coeff_and_base.second = rhs.op(1).arg(1).ex_to_number();
+	coeff_and_base.second = rhs.op(1).arg(1);
+	if (coeff.is_negative()
+	    && !rhs.op(1).arg(1).ex_to_number().is_integer())
+	  return DOMAIN_ERROR_NON_LINEAR_REC;
 	// Store the right hand side of the associated linear recurrence
 	// (when possible).
 	if (coeff_and_base.second != -1) {
@@ -647,7 +664,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	  new_rhs = coeff_and_base.second * x(Recurrence::n-1)
 	    + log(tmp) / log(abs(rhs.op(1).arg(1).ex_to_number()));
 	}
-	return true;
+	return OK_NON_LINEAR_REC;
       }
       else if (rhs.op(1).is_a_number(coeff) && rhs.op(0).is_a_power()
 	       && rhs.op(0).arg(0).is_the_x_function()
@@ -656,7 +673,10 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	coeff_and_base.first = coeff;
 	// Store `a'.
 	assert(rhs.op(0).arg(1).is_a_number());
-	coeff_and_base.second = rhs.op(0).arg(1).ex_to_number();
+	coeff_and_base.second = rhs.op(0).arg(1);
+	if (coeff.is_negative()
+	    && !rhs.op(0).arg(1).ex_to_number().is_integer())
+	  return DOMAIN_ERROR_NON_LINEAR_REC;
 	// Store the right hand side of the associated linear recurrence
 	// (when possible).
 	if (coeff_and_base.second != -1) {
@@ -670,7 +690,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	    + log(tmp) / log(abs(rhs.op(0).arg(1).ex_to_number()));
 	}
 	D_VAR(new_rhs);
-	return true;
+	return OK_NON_LINEAR_REC;
       }
     }
     new_rhs = 0;
@@ -692,7 +712,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	}
 	new_rhs = simplify_logarithm(new_rhs);
 	
-	return true;
+	return OK_NON_LINEAR_REC;
       }
       else {
 	// Substitute any function `x()' with `common_exponent^{x()}'.
@@ -710,7 +730,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	    new_rhs += log(tmp.op(i)) / log(abs(common_exponent));
 	}
 	new_rhs = simplify_logarithm(new_rhs);
-	return true;
+	return OK_NON_LINEAR_REC;
       }
   }
   // Second case.
@@ -728,13 +748,13 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
       else if (get_constant_divisor(argument, d))
 	new_rhs = num_exp * x(Recurrence::n/d);   
       else
-	return false;
-      return true;
+	return TOO_COMPLEX_NON_LINEAR_REC;
+      return OK_NON_LINEAR_REC;
     }
     else
-      return false;
+      return TOO_COMPLEX_NON_LINEAR_REC;
   }
-  return false;
+  return TOO_COMPLEX_NON_LINEAR_REC;
 }
 
 //! \brief
@@ -1007,17 +1027,24 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
     // of the non-linear recurrence in the correspondent linear recurrence.
     std::pair<Number, Expr> coeff_and_base;
     index_type first_valid_index = 0;
-    if (rewrite_non_linear_recurrence(*this, rhs, new_rhs, coeff_and_base,
-				      auxiliary_symbols, first_valid_index)) {
+    switch (rewrite_non_linear_recurrence(*this, rhs, new_rhs, coeff_and_base,
+					  auxiliary_symbols,
+					  first_valid_index)) {
+    case OK_NON_LINEAR_REC:
       set_non_linear_finite_order();
       D_VAR(new_rhs);
       non_linear_p = new Non_Linear_Info(Recurrence(new_rhs), coeff_and_base,
 					 auxiliary_symbols);
       set_first_valid_index(first_valid_index);
       return CL_SUCCESS;
-    }
-    else
+    case DOMAIN_ERROR_NON_LINEAR_REC:
+      return CL_DOMAIN_ERROR;
+    case TOO_COMPLEX_NON_LINEAR_REC:
       return CL_TOO_COMPLEX;
+    default:
+      throw std::runtime_error("PURRS internal error: "
+			       "classification_summand().");
+    }
   }
   // This is the case of nested `x' function with argument containing `n'.
   else if (term == NESTED)
