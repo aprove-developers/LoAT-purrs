@@ -695,8 +695,11 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 					  std::map<Number, Expr>&
 					  homogeneous_terms) const {
   unsigned num_factors = addend.is_a_mul() ? addend.nops() : 1;
+  Number num;
   if (num_factors == 1)
-    if (addend.is_the_x_function()) {
+    if (addend.has_non_rational_numbers())
+      return MALFORMED_RECURRENCE;
+    else if (addend.is_the_x_function()) {
       const Expr& argument = addend.arg(0);
       if (argument == n)
 	return HAS_NULL_DECREMENT;
@@ -747,7 +750,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
       else
 	inhomogeneous += addend;
     } // ended case of `addend' `x' function.
-  // Check if the summand has the `x' function with the argument
+   // Check if the summand has the `x' function with the argument
   // dependently from the index of the sum.
     else if (addend.is_the_sum_function() && addend.arg(2).has(n)
 	     && addend.arg(3).has_x_function(false, addend.arg(0))) {
@@ -764,7 +767,9 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
     Number divisor;
     for (unsigned i = num_factors; i-- > 0; ) {
       const Expr& factor = addend.op(i);
-      if (factor.is_the_x_function()) {
+      if (factor.has_non_rational_numbers())
+	return MALFORMED_RECURRENCE;
+      else if (factor.is_the_x_function()) {
 	const Expr& argument = factor.arg(0);
 	if (argument == n)
 	  return HAS_NULL_DECREMENT;
@@ -864,10 +869,6 @@ PURRS::Recurrence::classify() const {
   D_VAR(recurrence_rhs);
   // Simplifies expanded expressions, in particular rewrites nested powers.
   recurrence_rhs = simplify_ex_for_input(recurrence_rhs, true);
-
-  // Check if the inhomogeneous term contains non rational numbers.
-  if (recurrence_rhs.has_non_rational_numbers())
-    return MALFORMED_RECURRENCE;
 
   // `non_linear_term == 0' or `non_linear_term == 1' indicate
   // two different cases of non-linearity.
