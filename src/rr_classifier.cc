@@ -939,7 +939,7 @@ PURRS::Recurrence::classify() const {
     // `inhomogeneous_term' is a function of `n', the parameters and of
     // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
     //  non-negative integers.
-    if (order == 0)
+    if (is_unknown())
       set_order_zero();
     finite_order_p = new Finite_Order_Info(order, coefficients,
 					   gcd_among_decrements);
