@@ -96,18 +96,27 @@ main() try {
 
     Expr_List l(x, n, a, b, c, d);
     Expr e = Expr(s, l);
-    // `expand' does the simplification of the rule E6.
-    e = e.expand();
-#if NOISY
-    cout << "Expanded expression = " << e << endl;
-#endif
     Expr solution;
     switch (choice) {
     case 1:
-      solution = simplify_on_input_ex(e, n, true);
+      {
+	// `expand' does the simplification of the rule E6.
+	e = e.expand();
+#if NOISY
+	cout << "Expanded expression = " << e << endl;
+#endif
+	solution = simplify_on_input_ex(e, n, true);
+      }
       break;
     case 2:
-      solution = simplify_on_output_ex(e, n, false);
+      {
+	// `expand' does the simplification of the rule E6.
+	e = e.expand();
+#if NOISY
+	cout << "Expanded expression = " << e << endl;
+#endif
+	solution = simplify_on_output_ex(e, n, false);
+      }
       break;
     case 3:
       solution = simplify_factorials_and_exponentials(e, n);
