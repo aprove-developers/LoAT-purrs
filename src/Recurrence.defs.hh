@@ -266,9 +266,11 @@ public:
   void dump(std::ostream& s) const;
 
 private:
+  Solver_Status apply_order_reduction() const;
+  Solver_Status compute_non_linear_recurrence(Expr& solution_or_bound,
+					      bool exact) const;
   Solver_Status classify() const;
   Solver_Status classify_and_catch_special_cases() const;
-  Solver_Status classification_recurrence(const Expr& rhs) const;
   Solver_Status classification_summand(const Expr& r, Expr& e,
 				       std::vector<Expr>& coefficients,
 				       unsigned int& order,
@@ -312,6 +314,8 @@ private:
   mutable bool recurrence_rhs_rewritten;
 
   mutable bool applied_order_reduction;
+
+  mutable bool come_from_non_linear_rec;
 
   //! \brief
   //! Stores the inhomogeneous part of \p *this, i. e., those terms
@@ -517,6 +521,10 @@ private:
   //! recurrence has success then this data contains 
   //! <CODE>recurrence_rhs</CODE> of the non-linear recurrence.
   Expr& original_recurrence_rhs();
+
+  Expr rhs_transformed_in_linear() const;
+
+  Expr& rhs_transformed_in_linear();
 
   //! \brief
   //! If the rewriting of the non-linear recurrence in a linear

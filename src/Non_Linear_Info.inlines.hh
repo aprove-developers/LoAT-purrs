@@ -30,9 +30,11 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
-Non_Linear_Info::Non_Linear_Info(const Expr& rhs, const Expr& base_exp_log,
+Non_Linear_Info::Non_Linear_Info(const Expr& rhs, const Expr& new_rhs,
+				 const Expr& base_exp_log,
 				 const std::vector<Symbol> auxiliary_symbols)
   : original_recurrence_rhs_(rhs),
+    rhs_transformed_in_linear_(new_rhs),
     base_exp_log_(base_exp_log),
     auxiliary_symbols_(auxiliary_symbols) {
 }
@@ -40,6 +42,7 @@ Non_Linear_Info::Non_Linear_Info(const Expr& rhs, const Expr& base_exp_log,
 inline
 Non_Linear_Info::Non_Linear_Info(const Non_Linear_Info& y)
   : original_recurrence_rhs_(y.original_recurrence_rhs_),
+    rhs_transformed_in_linear_(y.rhs_transformed_in_linear_),
     base_exp_log_(y.base_exp_log_),
     auxiliary_symbols_(y.auxiliary_symbols_) {
 }
@@ -50,6 +53,7 @@ Non_Linear_Info::~Non_Linear_Info() {
 inline Non_Linear_Info&
 Non_Linear_Info::operator=(const Non_Linear_Info& y) {
   original_recurrence_rhs_ = y.original_recurrence_rhs_;
+  rhs_transformed_in_linear_ = y.rhs_transformed_in_linear_;
   base_exp_log_ = y.base_exp_log_;
   auxiliary_symbols_ = y.auxiliary_symbols_;
   return *this;
@@ -63,6 +67,16 @@ Non_Linear_Info::original_recurrence_rhs() const {
 inline Expr&
 Non_Linear_Info::original_recurrence_rhs() {
   return original_recurrence_rhs_;
+}
+
+inline Expr
+Non_Linear_Info::rhs_transformed_in_linear() const {
+  return rhs_transformed_in_linear_;
+}
+
+inline Expr&
+Non_Linear_Info::rhs_transformed_in_linear() {
+  return rhs_transformed_in_linear_;
 }
 
 inline Expr

@@ -73,13 +73,13 @@ add_term_with_initial_conditions(const Expr& g_n,
     //    (and not on the reduced solution);
     // -  in the case of non linear recurrence on solution after
     //    the change of the variable.
-    if (applied_order_reduction || non_linear_p)
+    if (applied_order_reduction || come_from_non_linear_rec)
       tmp = x(first_initial_condition() + i);
     else
       tmp = get_initial_condition(first_initial_condition() + i);
 
     for (unsigned j = i; j > 0; j--)
-      if (applied_order_reduction || non_linear_p)
+      if (applied_order_reduction || come_from_non_linear_rec)
 	tmp -= coefficients[j] * x(first_initial_condition() + i - j);
       else
 	tmp -= coefficients[j]
@@ -660,7 +660,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       //    (and not on the reduced solution);
       // -  in the case of non linear recurrence on solution after
       //    the change of the variable.
-      if (applied_order_reduction || non_linear_p)
+      if (applied_order_reduction || come_from_non_linear_rec)
 	solution += x(first_initial_condition()) * pwr(coefficients()[1], n);
       else
 	solution += get_initial_condition(first_initial_condition())
@@ -673,22 +673,6 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
   exact_solution_.set_expression
     (simplify_ex_for_output(exact_solution_.expression(), false));
-
-  // The linear finite order recurrence that the system has solved now
-  // has been deduced from a non linear recurrence.
-  if (non_linear_p) {
-    Expr solution = pwr(base_exp_log(), exact_solution_.expression());
-    solution = substitute_x_function(solution, base_exp_log(), false);
-    solution = simplify_ex_for_input(solution, true);
-    solution = simplify_logarithm(solution);
-    // Resubstitute eventual auxiliary symbols with the respective
-    // negative number.
-    for (unsigned i = auxiliary_symbols().size(); i-- > 0; )
-      solution = solution.substitute(auxiliary_symbols()[i],
-				     get_auxiliary_definition
-				     (auxiliary_symbols()[i]));
-    exact_solution_.set_expression(solution);
-  }
 
   // Resubstitutes eventually auxiliary definitions contained in
   // the solution with their original values.

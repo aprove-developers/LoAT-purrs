@@ -186,13 +186,21 @@ PURRS::Recurrence::n = Symbol("n");
 */
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_solution() const {
-  if (is_linear_finite_order() && exact_solution_.has_expression()) {
+  if ((is_linear_finite_order() || is_non_linear_finite_order())
+       && exact_solution_.has_expression()) {
+
+    if (is_non_linear_finite_order()) {
+      D_MSG("qui!!!!");
+      return INCONCLUSIVE_VERIFICATION;
+#if 0
+	
+#endif
+    }
+
     D_VAR(recurrence_rhs);
     D_VAR(order());
     D_VAR(first_initial_condition());
 
-    if (non_linear_p)
-      recurrence_rhs = original_recurrence_rhs();
     if (order() == 0)
       return PROVABLY_CORRECT;
     else {
@@ -374,7 +382,139 @@ PURRS::Recurrence::verify_bound(bool upper) const {
 }
 
 PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::apply_order_reduction() const {
+  applied_order_reduction = true;
+  // Build the new recurrence substituting `n' not contained in the
+  // `x' functions with `gcd_among_decrements * n + r' and `x(n-k)' with
+  // `x(n - k / gcd_among_decrements)'.
+  Symbol r = insert_auxiliary_definition(mod(n, gcd_among_decrements()));
+  unsigned dim = coefficients().size() / gcd_among_decrements() + 1;
+  std::vector<Expr> new_coefficients(dim);
+  Expr inhomogeneous = 0;
+  Recurrence rec_rewritten
+    (rewrite_reduced_order_recurrence(recurrence_rhs, r,
+				      gcd_among_decrements(),
+				      coefficients(), new_coefficients,
+				      inhomogeneous));
+  rec_rewritten.finite_order_p
+    = new Finite_Order_Info(dim - 1, 0, new_coefficients, 1);
+  rec_rewritten.set_type(type());
+  rec_rewritten.set_inhomogeneous_term(inhomogeneous);
+  Solver_Status status;
+  if ((status = rec_rewritten.solve_linear_finite_order()) == SUCCESS) {
+    // Now we must compute the solution for the original recurrence.
+    // Perform three substitutions:
+    // - r                      -> mod(n, gcd_among_decrements);
+    // - n                      -> 1 / gcd_among_decrements
+    //                             * (n - mod(n, gcd_among_decrements));
+    // - x(k), k non-negative integer -> x(mod(n, gcd_among_decrements)).
+    exact_solution_.set_expression(come_back_to_original_variable
+				   (rec_rewritten
+				    .exact_solution_.expression(), r,
+				    get_auxiliary_definition(r),
+				    gcd_among_decrements()));
+    // If there are defined initial conditions in the map
+    // `initial_conditions' then we must to deduce the exact form
+    // of the solution and substitute to it the defined initial
+    // conditions.
+    if (!initial_conditions.empty()) {
+      exact_solution_.set_expression
+	(simplify_ex_for_output(exact_solution_.expression(), false));
+      Expr expanded_solution
+	= write_expanded_solution(*this, gcd_among_decrements());
+      exact_solution_.set_expression(expanded_solution);
+    }
+    exact_solution_.set_expression
+      (simplify_ex_for_output(exact_solution_.expression(), false));
+    lower_bound_.set_expression(exact_solution_.expression());
+    upper_bound_.set_expression(exact_solution_.expression());
+    return SUCCESS;
+  }
+  else
+    return status;
+}
+
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::
+compute_non_linear_recurrence(Expr& solution_or_bound, bool exact) const {
+  D_MSG("compute_non_linear_recurrence");
+  // Build a new object recurrence with a linear recurrence.
+  Recurrence rec_rewritten(rhs_transformed_in_linear());
+  rec_rewritten.come_from_non_linear_rec = true;
+  D_MSG(rec_rewritten.recurrence_rhs);
+
+  Solver_Status status;
+  // Classify the linear recurrence `rec_rewritten'.
+  if ((status == rec_rewritten.classify_and_catch_special_cases())
+      == SUCCESS) {
+    assert(rec_rewritten.is_linear_finite_order()
+	   || rec_rewritten.is_functional_equation());
+
+    // Linear finite order.
+    if (rec_rewritten.is_linear_finite_order())
+      if ((status = rec_rewritten.solve_linear_finite_order())
+	  == SUCCESS) {
+	// Transform the solution of the linear recurrence in the solution
+	// of the non linear recurrence.
+	if (rec_rewritten.exact_solution_.expression() == 0)
+	  solution_or_bound = 0;
+	else {
+	  solution_or_bound = pwr(base_exp_log(),
+				  rec_rewritten.exact_solution_.expression());
+	  solution_or_bound = substitute_x_function(solution_or_bound,
+						    base_exp_log(), false);
+	  solution_or_bound = simplify_ex_for_input(solution_or_bound, true);
+	  solution_or_bound = simplify_logarithm(solution_or_bound);
+	  // Resubstitute eventual auxiliary symbols with the respective
+	  // negative number.
+	  for (unsigned i = auxiliary_symbols().size(); i-- > 0; )
+	    solution_or_bound
+	      = solution_or_bound.substitute(auxiliary_symbols()[i],
+					     get_auxiliary_definition
+					     (auxiliary_symbols()[i]));
+	}
+	return SUCCESS;
+      }
+      else
+	return status;
+
+    // Functional equation.
+    else
+      if ((status = rec_rewritten.approximate_functional_equation())
+	  == SUCCESS)
+	// Transform the solution of the linear recurrence in the solution
+	// of the non linear recurrence.
+	if (!exact || (exact
+		       && rec_rewritten.lower_bound_.expression()
+		       == rec_rewritten.upper_bound_.expression())) {
+	  solution_or_bound = pwr(base_exp_log(),
+				  rec_rewritten.lower_bound_.expression());
+	  solution_or_bound = substitute_x_function(solution_or_bound,
+						    base_exp_log(), false);
+	  solution_or_bound = simplify_ex_for_input(solution_or_bound, true);
+	  solution_or_bound = simplify_logarithm(solution_or_bound);
+	  // Resubstitute eventual auxiliary symbols with the respective
+	  // negative number.
+	  for (unsigned i = auxiliary_symbols().size(); i-- > 0; )
+	    solution_or_bound
+	      = solution_or_bound.substitute(auxiliary_symbols()[i],
+					     get_auxiliary_definition
+					     (auxiliary_symbols()[i]));
+	  D_VAR(solution_or_bound);
+	  return SUCCESS;
+	}
+	else
+	  return TOO_COMPLEX;
+      else
+	return status;
+  }
+  else
+    return status;
+}
+
+PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_exact_solution() const {
+  D_MSG("compute_exact_solution");
   tested_exact_solution = true;
   // See if we have the exact solution already.
   if (exact_solution_.has_expression())
@@ -390,62 +530,20 @@ PURRS::Recurrence::compute_exact_solution() const {
 
   Solver_Status status;
   if ((status = classify_and_catch_special_cases()) == SUCCESS) {
-    assert(is_linear_finite_order() || is_functional_equation());
+    assert(is_linear_finite_order() || is_functional_equation()
+	   || is_non_linear_finite_order());
+
+    // Linear finite order.
     if (is_linear_finite_order()) {
       // If the greatest common divisor among the decrements is greater
       // than one, the order reduction is applicable.
       // FIXME: the order reduction is for the moment applied only to
       // recurrences with constant coefficients because the recurrences
       // with variable coefficients are not allowed with parameters.
-      if (gcd_among_decrements() > 1 && is_linear_finite_order_const_coeff()) {
-	applied_order_reduction = true;
-	// Build the new recurrence substituting `n' not contained in the
-	// `x' functions with `gcd_among_decrements * n + r' and `x(n-k)' with
-	// `x(n - k / gcd_among_decrements)'.
-	Symbol r = insert_auxiliary_definition(mod(n, gcd_among_decrements()));
-	unsigned dim = coefficients().size() / gcd_among_decrements() + 1;
-	std::vector<Expr> new_coefficients(dim);
-	Expr inhomogeneous = 0;
-	Recurrence rec_rewritten
-	  (rewrite_reduced_order_recurrence(recurrence_rhs, r,
-					    gcd_among_decrements(),
-					    coefficients(), new_coefficients,
-					    inhomogeneous));
-	rec_rewritten.finite_order_p
-	  = new Finite_Order_Info(dim - 1, 0, new_coefficients, 1);
-	rec_rewritten.set_type(type());
-	rec_rewritten.set_inhomogeneous_term(inhomogeneous);
-	if ((status = rec_rewritten.solve_linear_finite_order()) == SUCCESS) {
-	  // Now we must compute the solution for the original recurrence.
-	  // Perform three substitutions:
-	  // - r                      -> mod(n, gcd_among_decrements);
-	  // - n                      -> 1 / gcd_among_decrements
-	  //                             * (n - mod(n, gcd_among_decrements));
-	  // - x(k), k non-negative integer -> x(mod(n, gcd_among_decrements)).
-	  exact_solution_.set_expression(come_back_to_original_variable
-					 (rec_rewritten
-					  .exact_solution_.expression(), r,
-					  get_auxiliary_definition(r),
-					  gcd_among_decrements()));
-	  // If there are defined initial conditions in the map
-	  // `initial_conditions' then we must to deduce the exact form
-	  // of the solution and substitute to it the defined initial
-	  // conditions.
-	  if (!initial_conditions.empty()) {
-	    exact_solution_.set_expression
-	      (simplify_ex_for_output(exact_solution_.expression(), false));
-	    Expr expanded_solution
-	      = write_expanded_solution(*this, gcd_among_decrements());
-	    exact_solution_.set_expression(expanded_solution);
-	  }
-	  exact_solution_.set_expression
-	    (simplify_ex_for_output(exact_solution_.expression(), false));
-	  lower_bound_.set_expression(exact_solution_.expression());
-	  upper_bound_.set_expression(exact_solution_.expression());
-	  return SUCCESS;
-	}
-      }
+      if (gcd_among_decrements() > 1 && is_linear_finite_order_const_coeff())
+	return apply_order_reduction();
 
+      // We do not have applied the order reduction.
       if ((status = solve_linear_finite_order()) == SUCCESS) {
 	lower_bound_.set_expression(exact_solution_.expression());
 	upper_bound_.set_expression(exact_solution_.expression());
@@ -454,7 +552,8 @@ PURRS::Recurrence::compute_exact_solution() const {
       else
 	return status;
     }
-    else // case functional equation
+    // Functional equation.
+    else if (is_functional_equation())
       if ((status = approximate_functional_equation()) == SUCCESS
 	  && lower_bound_.expression() == upper_bound_.expression()) {
 	exact_solution_.set_expression(lower_bound_.expression());
@@ -462,6 +561,19 @@ PURRS::Recurrence::compute_exact_solution() const {
       }
       else
 	return TOO_COMPLEX;
+    // Non linear finite order.
+    else {
+      Expr solution;
+      if ((status = compute_non_linear_recurrence(solution, true))
+	  == SUCCESS) {
+	exact_solution_.set_expression(solution);
+	lower_bound_.set_expression(solution);
+	upper_bound_.set_expression(solution);
+	return SUCCESS;
+      }
+      else
+	return status;
+    }
   }
   else
     return status;
@@ -469,6 +581,7 @@ PURRS::Recurrence::compute_exact_solution() const {
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_lower_bound() const {
+  D_MSG("compute_lower_bound");
   // See if we have the lower bound already.
   if (lower_bound_.has_expression())
     return SUCCESS;
@@ -482,16 +595,37 @@ PURRS::Recurrence::compute_lower_bound() const {
 
   Solver_Status status;
   if ((status = classify_and_catch_special_cases()) == SUCCESS) {
-    assert(is_linear_finite_order() || is_functional_equation());
-    if (!tested_exact_solution && compute_exact_solution() == SUCCESS) {
-      lower_bound_.set_expression(exact_solution_.expression());
-      return SUCCESS;
+    assert(is_linear_finite_order() || is_functional_equation()
+	   || is_non_linear_finite_order());
+
+    if (is_linear_finite_order())
+      if (!tested_exact_solution)
+	// There is an exact solution.
+	if ((status = compute_exact_solution()) == SUCCESS) {
+	  lower_bound_.set_expression(exact_solution_.expression());
+	  return SUCCESS;
+	}
+	else
+	  return status;
+      else
+	return TOO_COMPLEX;
+    // Functional equation.
+    else if (is_functional_equation())
+      if ((status = approximate_functional_equation()) == SUCCESS)
+	return SUCCESS;
+      else
+	return status;
+    // Non linear finite order.
+    else {
+      Expr bound;
+      if ((status = compute_non_linear_recurrence(bound, false))
+	  == SUCCESS) {
+	lower_bound_.set_expression(bound);
+	return SUCCESS;
+      }
+      else
+	return status;
     }
-    if (is_functional_equation()
-	&& (status = approximate_functional_equation()) == SUCCESS)
-      return SUCCESS;
-    else
-      return TOO_COMPLEX;
   }
   else
     return status;
@@ -499,6 +633,7 @@ PURRS::Recurrence::compute_lower_bound() const {
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_upper_bound() const {
+  D_MSG("compute_upper_bound");
   // See if we have the upper bound already.
   if (upper_bound_.has_expression())
     return SUCCESS;
@@ -512,16 +647,36 @@ PURRS::Recurrence::compute_upper_bound() const {
 
   Solver_Status status;
   if ((status = classify_and_catch_special_cases()) == SUCCESS) {
-    assert(is_linear_finite_order() || is_functional_equation());
-    if (!tested_exact_solution && compute_exact_solution() == SUCCESS) {
-      upper_bound_.set_expression(exact_solution_.expression());
-      return SUCCESS;
+    assert(is_linear_finite_order() || is_functional_equation()
+	   || is_non_linear_finite_order());
+    if (is_linear_finite_order())
+      if (!tested_exact_solution)
+	// There is an exact solution.
+	if ((status = compute_exact_solution()) == SUCCESS) {
+	  upper_bound_.set_expression(exact_solution_.expression());
+	  return SUCCESS;
+	}
+	else
+	  return status;
+      else
+	return TOO_COMPLEX;
+    // Functional equation.
+    else if (is_functional_equation())
+      if ((status = approximate_functional_equation()) == SUCCESS)
+	return SUCCESS;
+      else
+	return status;
+    // Non linear finite order.
+    else {
+      Expr bound;
+      if ((status = compute_non_linear_recurrence(bound, false))
+	  == SUCCESS) {
+	upper_bound_.set_expression(bound);
+	return SUCCESS;
+      }
+      else
+	return status;
     }
-    if (is_functional_equation()
-	&& (status = approximate_functional_equation()) == SUCCESS)
-      return SUCCESS;
-    else
-      return TOO_COMPLEX;
   }
   else
     return status;

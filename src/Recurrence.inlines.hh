@@ -36,6 +36,7 @@ Recurrence::Recurrence()
   : recurrence_rhs(0),
     recurrence_rhs_rewritten(false),
     applied_order_reduction(false),
+    come_from_non_linear_rec(false),
     inhomogeneous_term(0),
     type_(ORDER_ZERO),
     finite_order_p(0),
@@ -49,6 +50,7 @@ Recurrence::Recurrence(const Expr& e)
   : recurrence_rhs(e),
     recurrence_rhs_rewritten(false),
     applied_order_reduction(false),
+    come_from_non_linear_rec(false),
     inhomogeneous_term(0),
     type_(UNKNOWN),
     finite_order_p(0),
@@ -62,6 +64,7 @@ Recurrence::Recurrence(const Recurrence& y)
   : recurrence_rhs(y.recurrence_rhs),
     recurrence_rhs_rewritten(y.recurrence_rhs_rewritten),
     applied_order_reduction(y.applied_order_reduction),
+    come_from_non_linear_rec(y.come_from_non_linear_rec),
     inhomogeneous_term(y.inhomogeneous_term),
     system_rhs(y.system_rhs),
     type_(y.type_),
@@ -86,6 +89,7 @@ Recurrence::operator=(const Recurrence& y) {
   recurrence_rhs = y.recurrence_rhs;
   recurrence_rhs_rewritten = y.recurrence_rhs_rewritten;
   applied_order_reduction = y.applied_order_reduction;
+  come_from_non_linear_rec = y.come_from_non_linear_rec;
   inhomogeneous_term = y.inhomogeneous_term;
   system_rhs = y.system_rhs;
   type_ = y.type_;
@@ -353,6 +357,18 @@ inline Expr&
 Recurrence::original_recurrence_rhs() {
   assert(non_linear_p);
   return non_linear_p -> original_recurrence_rhs();
+}
+
+inline Expr
+Recurrence::rhs_transformed_in_linear() const {
+  assert(non_linear_p);
+  return non_linear_p -> rhs_transformed_in_linear();
+}
+
+inline Expr&
+Recurrence::rhs_transformed_in_linear() {
+  assert(non_linear_p);
+  return non_linear_p -> rhs_transformed_in_linear();
 }
 
 inline Expr

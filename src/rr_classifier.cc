@@ -443,7 +443,8 @@ insert_coefficients(const Expr& coeff, unsigned long index,
   Returns <CODE>true</CODE> in two cases:
   - there is in \p e an \f$ x \f$ function (with the argument containing
     \f$ n \f$) inside an other function;
-  - there is in \p e a power with an \f$ x \f$ function in the base.
+  - there is in \p e a power with an \f$ x \f$ function in the base
+    or in the exponent of it.
   Returns <CODE>false</CODE> in all the other cases. 
 */
 bool
@@ -460,9 +461,13 @@ x_function_in_powers_or_functions(const Expr& e) {
   // Second case.
   else if (e.is_a_power()) {
     const Expr& base = e.arg(0);
+    const Expr& exponent = e.arg(1);
     if (base.is_the_x_function())
       if (base.arg(0).has(Recurrence::n))
 	return true;
+    if (exponent.is_the_x_function())
+      if (exponent.arg(0).has(Recurrence::n))
+        return true;
   }
   return false;
 }
@@ -531,6 +536,8 @@ find_non_linear_recurrence(const Expr& e) {
      where \f$ k_1, \dots, k_h, b_1, \dots, b_h \f$ are positive integers
      and \f$ h > 1 \f$ or \f$ b_1 > 1 \f$;
   -  x(n) = x(n-k)^b, where \f$ b > 1 \f$ and \f$ k \f$ are positive integers.
+  The two cases above hold also if instead of terms like `x(n-k)' there are
+  term like `x(n/k)'.
 */
 bool
 rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
@@ -822,15 +829,28 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
   <CODE>HAS_NON_INTEGER_DECREMENT</CODE>, <CODE>TOO_COMPLEX</CODE>.
 */
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::classification_recurrence(const Expr& rhs) const {
+PURRS::Recurrence::classify() const {
+  D_VAR(recurrence_rhs);
   // Check if the inhomogeneous term contains non rational numbers.
-  if (rhs.has_non_rational_numbers())
+  if (recurrence_rhs.has_non_rational_numbers())
     return MALFORMED_RECURRENCE;
 
-  if (find_non_linear_recurrence(rhs)) {
+  // Simplifies expanded expressions, in particular rewrites nested powers.
+  recurrence_rhs = simplify_ex_for_input(recurrence_rhs, true);
+
+  if (find_non_linear_recurrence(recurrence_rhs)) {
     set_non_linear_finite_order();
-    D_MSG("NON LINEAR");
-    return SUCCESS;
+    Expr new_rhs;
+    Expr base;
+    std::vector<Symbol> auxiliary_symbols;
+    if (rewrite_non_linear_recurrence(*this, recurrence_rhs, new_rhs, base,
+				      auxiliary_symbols)) {
+      non_linear_p = new Non_Linear_Info(recurrence_rhs, new_rhs, base,
+					 auxiliary_symbols);
+      return SUCCESS;
+    }
+    else
+      return TOO_COMPLEX;
   }
 
   // Initialize the computation of the order of the linear part of the
@@ -857,11 +877,12 @@ PURRS::Recurrence::classification_recurrence(const Expr& rhs) const {
 
   Solver_Status status;
 
-  unsigned num_summands = rhs.is_a_add() ? rhs.nops() : 1;
+  unsigned num_summands
+    = recurrence_rhs.is_a_add() ? recurrence_rhs.nops() : 1;
   if (num_summands > 1)
     // It is necessary that the following loop starts from `0'.
     for (unsigned i = 0; i < num_summands; ++i) {
-      if ((status = classification_summand(rhs.op(i), inhomogeneous,
+      if ((status = classification_summand(recurrence_rhs.op(i), inhomogeneous,
 					   coefficients, order,
 					   gcd_among_decrements, i,
 					   coefficient, divisor_arg))
@@ -869,16 +890,13 @@ PURRS::Recurrence::classification_recurrence(const Expr& rhs) const {
 	return status;
     }
   else
-    if ((status = classification_summand(rhs, inhomogeneous,
+    if ((status = classification_summand(recurrence_rhs, inhomogeneous,
 					 coefficients, order,
 					 gcd_among_decrements, 0,
 					 coefficient, divisor_arg))
 	!= SUCCESS)
       return status;
 
-  set_inhomogeneous_term(inhomogeneous);
-  D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
-  
   if (!is_functional_equation())
     // `inhomogeneous_term' is a function of `n', the parameters and of
     // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
@@ -886,53 +904,18 @@ PURRS::Recurrence::classification_recurrence(const Expr& rhs) const {
     if (order == 0)
       set_order_zero();
 
+  assert(is_linear_finite_order() || is_functional_equation());
+
+  set_inhomogeneous_term(inhomogeneous);
+  D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
+  
   if (is_linear_finite_order())
     finite_order_p = new Finite_Order_Info(order, 0, coefficients,
 					   gcd_among_decrements);
   else if (is_functional_equation())
     functional_eq_p = new Functional_Equation_Info(coefficient, divisor_arg);
-  
+
   return SUCCESS;
-}
-
-/*!
-  This function solves recurrences of SOME TYPE provided they are
-  supplied in SOME FORM. (Explain.)
-*/
-PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::classify() const {
-  D_VAR(recurrence_rhs);
-  // Simplifies expanded expressions, in particular rewrites nested powers.
-  recurrence_rhs = simplify_ex_for_input(recurrence_rhs, true);
-
-  Solver_Status status;
-
-  // The function `classification_recurrence()' returns `SUCCESS' if
-  // is the order is finite or if is the case of functional equation.
-  if ((status = classification_recurrence(recurrence_rhs))
-      != SUCCESS)
-    return status;
-  assert(is_linear_finite_order() || is_functional_equation()
-	 || is_non_linear_finite_order());
-
-  if (is_non_linear_finite_order()) {
-    Expr new_rhs;
-    Expr base;
-    std::vector<Symbol> auxiliary_symbols;
-    if (rewrite_non_linear_recurrence(*this, recurrence_rhs, new_rhs, base,
-				      auxiliary_symbols)) {
-      set_unknown();
-      recurrence_rhs_rewritten = true;
-      non_linear_p = new Non_Linear_Info(recurrence_rhs, base,
-					 auxiliary_symbols);
-      recurrence_rhs = new_rhs;
-      status = classify();
-    }
-    else
-      return TOO_COMPLEX;
-  }
-  
-  return status;
 }
 
 /*!

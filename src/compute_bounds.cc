@@ -735,29 +735,6 @@ PURRS::Recurrence::approximate_functional_equation() const {
   }
   add_term_with_initial_condition(q_upper, q_lower, ub, lb);
 
-  // The functional equation for which the system has found lower and upper
-  // bounds now has been deduced from a non linear recurrence.
-  if (non_linear_p) {
-    ub = pwr(base_exp_log(), ub);
-    ub = substitute_x_function(ub, base_exp_log(), false);
-    ub = simplify_ex_for_input(ub, true);
-    ub = simplify_logarithm(ub);
-
-    lb = pwr(base_exp_log(), lb);
-    lb = substitute_x_function(lb, base_exp_log(), false);
-    lb = simplify_ex_for_input(lb, true);
-    lb = simplify_logarithm(lb);
-
-    // Resubstitute eventual auxiliary symbols with the respective
-    // negative number.
-    for (unsigned i = auxiliary_symbols().size(); i-- > 0; ) {
-      ub = ub.substitute(auxiliary_symbols()[i],
-			 get_auxiliary_definition(auxiliary_symbols()[i]));
-      lb = lb.substitute(auxiliary_symbols()[i],
-			 get_auxiliary_definition(auxiliary_symbols()[i]));
-    }
-  }
-
   upper_bound_.set_expression(simplify_logarithm(ub));
   lower_bound_.set_expression(simplify_logarithm(lb));
   return SUCCESS;

@@ -36,8 +36,10 @@ class Non_Linear_Info {
 public:
   //! \brief
   //! Constructor: sets \f$ original_recurrence_rhs_ = rhs \f$,
+  //! \f$ recurrence_rhs_reritten_ = new_rhs \f$ and
   //! \f$ base_exp_log_ = base_exp_log \f$.
-  Non_Linear_Info(const Expr& rhs, const Expr& base_exp_log,
+  Non_Linear_Info(const Expr& rhs, const Expr& new_rhs,
+		  const Expr& base_exp_log,
 		  const std::vector<Symbol> auxiliary_symbols);
 
   //! Copy-constructor.
@@ -54,6 +56,12 @@ public:
 
   //! Returns <CODE>original_recurrence_rhs_</CODE>.
   Expr& original_recurrence_rhs();
+
+  //! Returns <CODE>rhs_transformed_in_linear_</CODE>.
+  Expr rhs_transformed_in_linear() const;
+
+  //! Returns <CODE>rhs_transformed_in_linear_</CODE>.
+  Expr& rhs_transformed_in_linear();
 
   //! Returns <CODE>base_exp_log_</CODE>.
   Expr base_exp_log() const;
@@ -72,6 +80,8 @@ private:
   //! recurrence has success then this data contains 
   //! <CODE>recurrence_rhs</CODE> of the non-linear recurrence.
   Expr original_recurrence_rhs_;
+
+  Expr rhs_transformed_in_linear_;
 
   //! \brief
   //! If the rewriting of the non-linear recurrence in a linear
