@@ -40,6 +40,11 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 //! \brief
+//! An unsigned integral type for representing different types of
+//! indexes of the recurrence (e.g. the order of the recurrence).
+typedef unsigned int index_type;
+
+//! \brief
 //! Assuming that \p x and \p y represent sequences of reals,
 //! returns <CODE>true</CODE> if it can be proved that all
 //! the recurrences represented by \p x are less than all
@@ -101,7 +106,7 @@ public:
   //! Sets to \f$ e \f$ the right-hand side of the recurrence
   //! of index \f$ k \f$.  The system of recurrences will then
   //! include \f$ x_k(n) = e \f$.
-  void replace_recurrence(unsigned k, const Expr& e);
+  void replace_recurrence(unsigned int k, const Expr& e);
 
   //! Returns a new symbol \f$ z \f$ and records the equation \f$ z = e \f$.
   Symbol insert_auxiliary_definition(const Expr& e) const;
@@ -114,7 +119,7 @@ public:
   //! \brief
   //! Replaces the values in the \f$ k \f$-th position of the map
   //! <CODE>initial_conditions</CODE> with the expression \p e. 
-  void replace_initial_condition(unsigned k, const Expr& e);
+  void replace_initial_condition(unsigned int k, const Expr& e);
 
   //! Checks if all the invariants are satisfied.
   /*!
@@ -138,7 +143,7 @@ private:
   //! If in the map <CODE>initial_conditions</CODE> there is the
   //! expression \f$ e \f$ correspondent to \p k then returns \f$ e \f$;
   //! returns \f$ x(k) \f$ otherwise.
-  Expr get_initial_condition(unsigned k) const;
+  Expr get_initial_condition(unsigned int k) const;
 
 public:
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
@@ -337,7 +342,7 @@ private:
   //! solves the linear recurrence; from the solution of the linear
   //! recurrence finds the solution of the original recurrence \p *this.
   Solver_Status compute_non_linear_recurrence(Expr& solution_or_bound,
-					      unsigned type) const;
+					      unsigned int type) const;
 
   //! \brief
   //! Returns <CODE>SUCCESS</CODE> if the system is able to solve the
@@ -348,7 +353,7 @@ private:
   //! \p solution.
   Solver_Status
   solve_new_infinite_order_rec(const Expr& weight, const Expr& inhomogeneous,
-			       unsigned first_well_defined,
+			       index_type first_valid_index,
 			       Expr& solution) const;
 
   //! \brief
@@ -376,7 +381,7 @@ private:
   //! Analyzes the \f$ i \f$-th addend of the right hand side \p rhs
   //! of the recurrence \p *this.
   Solver_Status classification_summand(const Expr& rhs, const Expr& r,
-				       Expr& e, unsigned int& order,
+				       Expr& e, index_type& order,
 				       std::vector<Expr>& coefficients,
 				       int& gcd_among_decrements,
 				       int num_term,
@@ -451,7 +456,7 @@ private:
   //! If <CODE>i == system_rhs.find(k)</CODE> then
   //! <CODE>x(k,n) = (*i).second()</CODE>
   //! is one of the equations of the system.
-  std::map<unsigned, Expr> system_rhs;
+  std::map<unsigned int, Expr> system_rhs;
 
   //! The recurrence type.
   enum Type {
@@ -569,18 +574,18 @@ private:
   // Methods to access to private data of `Finite_Order_Info'.
 
   //! Returns the order of the finite order recurrence.
-  unsigned int order() const;
+  index_type order() const;
 
   //! \brief
   //! Returns the smallest positive integer for which the finite order
   //! recurrence is well-defined: the initial conditions will start from it.
-  unsigned first_valid_index() const;
+  index_type first_valid_index() const;
 
   //! \brief
   //! Sets to \p i_c is the smallest positive integer for which the finite
   //! order recurrence is well-defined: the initial conditions will start
   //! from it. 
-  void set_first_valid_index(unsigned i_c) const;
+  void set_first_valid_index(index_type i_c) const;
 
   //! Returns the coefficients of the linear finite order recurrence.
   const std::vector<Expr>& coefficients() const;
@@ -592,7 +597,7 @@ private:
   //! Returns the greatest common divisor among the decrements \f$ k \f$
   //! of the terms \f$ x(n-k) \f$ of a linear finite order recurrence.
   //! Returns \f$ 0 \f$ if the order of the recurrence is \f$ 0 \f$.
-  unsigned gcd_among_decrements() const;
+  unsigned int gcd_among_decrements() const;
 
   //! \brief
   //! Returns the expression \f$ \prod_{i}^n a(k)\f$,
@@ -636,18 +641,18 @@ private:
   //! \brief
   //! Returns the positive integer starting from which the inhomogeneous term
   //! of a functional equation is a non negative, non decreasing function.
-  unsigned applicability_condition() const;
+  index_type applicability_condition() const;
 
   //! \brief
   //! \p c is the positive integer starting from which the inhomogeneous term
   //! of a functional equation is a non negative, non decreasing function.
-  void set_applicability_condition(unsigned c) const;
+  void set_applicability_condition(index_type c) const;
 
   //! \brief
   //! Returns the rank of the functional equation, i. e., the number of terms
   //! of the form \f$ a x(n/b) \f$ where \f$ b \f$ is a rational number
   //! larger than one.
-  size_t rank() const;
+  index_type rank() const;
 
 
   // Method to access to private data of `Non_Linear_Info'.
@@ -701,26 +706,26 @@ private:
   //! \brief
   //! Returns the order of the finite order recurrence associated to
   //! the non-linear recurrence .
-  unsigned int order_if_linear() const;
+  index_type order_if_linear() const;
 
   //! \brief
   //! Sets to \p x the order of the linear recurrence associated to
   //! the non linear. 
-  void set_order_if_linear(unsigned int x) const;
+  void set_order_if_linear(index_type x) const;
 
   //! \brief
   //! When the non-linear recurrence is rewritable in a linear recurrence
   //! of finite order then this method returns the smallest positive
   //! integer for which the finite order recurrence is well-defined:
   //! the initial conditions will start from it.
-  unsigned first_valid_index_if_linear() const;
+  index_type first_valid_index_if_linear() const;
 
   //! \brief
   //! When the non-linear recurrence is rewritable in a linear recurrence
   //! of finite order then this method sets to \p i_c is the smallest
   //! positive integer for which the finite order recurrence is well-defined:
   //! the initial conditions will start from it. 
-  void set_first_valid_index_if_linear(unsigned i_c) const;
+  void set_first_valid_index_if_linear(index_type i_c) const;
 
 
   // Method to access to private data of `Infinite_Order_Info'.
@@ -778,7 +783,7 @@ private:
   //! \f[
   //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
   //! \f]
-  unsigned lower_bound_sum() const;
+  unsigned int lower_bound_sum() const;
 
   //! \brief
   //! Returns the upper bound \f$ u(n) \f$ of the infinite order recurrence
@@ -798,13 +803,13 @@ private:
   //! Stores the smallest positive integer for which the infinite
   //! order recurrence is well-defined: the initial conditions will
   //! start from it.
-  unsigned first_valid_index_inf_order() const;
+  index_type first_valid_index_inf_order() const;
 
   //! \brief
   //! Stores the smallest positive integer for which the infinite
   //! order recurrence is well-defined: the initial conditions will
   //! start from it.
-  void set_first_valid_index_inf_order(unsigned i_c) const;
+  void set_first_valid_index_inf_order(index_type i_c) const;
 
 
 
@@ -819,15 +824,15 @@ private:
 
   mutable Blackboard blackboard;
 
-  std::map<unsigned, Expr> initial_conditions;
+  std::map<unsigned int, Expr> initial_conditions;
 
 private:
   static Solver_Status
-  compute_order(const Number& decrement, unsigned int& order,
+  compute_order(const Number& decrement, index_type& order,
 		unsigned long& index, unsigned long max_size);
   static Expr
   write_expanded_solution(const Recurrence& rec,
-			  unsigned gcd_among_decrements);
+			  unsigned int gcd_among_decrements);
 
   //! \brief
   //! This function must have access to the private data

@@ -37,7 +37,7 @@ public:
   Matrix();
 
   //! Builds the matrix with \p i rows and \p j columns.
-  Matrix(unsigned i, unsigned j);
+  Matrix(unsigned int i, unsigned int j);
 
   //! \brief
   //! Builds the matrix with \p i rows and \p j columns containing the
@@ -48,7 +48,7 @@ public:
     If the list has more elements than the matrix, the excessive
     elements are thrown away.
   */
-  Matrix(unsigned i, unsigned j, const Expr_List& y);
+  Matrix(unsigned int i, unsigned int j, const Expr_List& y);
 
   //! Copy-constructor.
   Matrix(const Matrix& y);
@@ -59,9 +59,9 @@ public:
   //! Assignment operator.
   Matrix& operator=(const Matrix& y);
 
-  unsigned num_rows() const;
+  unsigned int num_rows() const;
 
-  unsigned num_columns() const;
+  unsigned int num_columns() const;
 
   //! Accesses to element in \p r row and \p c column of \p *this for reading.
   /*!
@@ -69,7 +69,7 @@ public:
                                 rows'number or \p c is bigger or equal
 				columns'number.
   */
-  const Expr& operator()(unsigned r, unsigned c) const;
+  const Expr& operator()(unsigned int r, unsigned int c) const;
 
   //! Accesses to element in \p r row and \p c column of \p *this for writing.
   /*!
@@ -77,7 +77,7 @@ public:
                                 rows'number or \p c is bigger or equal
 				columns'number.
   */
-  Expr& operator()(unsigned r, unsigned c);
+  Expr& operator()(unsigned int r, unsigned int c);
 
   //! Computes the determinant of the matrix \p *this.
   /*!

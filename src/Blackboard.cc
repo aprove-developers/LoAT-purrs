@@ -49,12 +49,12 @@ PURRS::Blackboard::rewrite(const Expr& e) const {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten += rewrite(e.op(i));
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten *= rewrite(e.op(i));
   }
   else if (e.is_a_power())
@@ -63,16 +63,16 @@ PURRS::Blackboard::rewrite(const Expr& e) const {
     if (e.nops() == 1)
       e_rewritten = apply(e.functor(), rewrite(e.arg(0)));
     else {
-      unsigned num_argument = e.nops();
+      unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
-      for (unsigned i = 0; i < num_argument; ++i)
+      for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = rewrite(e.arg(i));
       e_rewritten = apply(e.functor(), argument);
     }
   }
   else if (e.is_a_symbol()) {
     Symbol z = e.ex_to_symbol();
-    std::map<Symbol, unsigned>::const_iterator i = index.find(z);
+    std::map<Symbol, unsigned int>::const_iterator i = index.find(z);
     if (i != index.end())
       e_rewritten = rewrite(definitions[i->second]);
     else
@@ -83,7 +83,7 @@ PURRS::Blackboard::rewrite(const Expr& e) const {
   return e_rewritten;
 }
 
-unsigned
+unsigned int
 PURRS::Blackboard::size_norm(Definition& d) const {
   if (timestamp > d.size.timestamp) {
     d.size.value = generic_size_norm(d.rhs, *this);
@@ -92,14 +92,14 @@ PURRS::Blackboard::size_norm(Definition& d) const {
   return d.size.value;
 }
 
-unsigned
+unsigned int
 PURRS::Blackboard::size_norm(const Expr& e) const {
   return generic_size_norm(e, *this);
 }
 
-unsigned
+unsigned int
 PURRS::Blackboard::size_norm(const Symbol& s) const {
-  std::map<Symbol, unsigned>::const_iterator i = index.find(s);
+  std::map<Symbol, unsigned int>::const_iterator i = index.find(s);
   if (i != index.end())
     return size_norm(definitions[i->second]);
   else
@@ -110,7 +110,7 @@ PURRS::Blackboard::size_norm(const Symbol& s) const {
 bool
 PURRS::Blackboard::approximate(const Symbol& s,
 			       Expr& ae, CInterval& aci) const {
-  std::map<Symbol, unsigned>::const_iterator i = index.find(s);
+  std::map<Symbol, unsigned int>::const_iterator i = index.find(s);
   if (i != index.end()) {
     Expr e = approximate(definitions[i->second]);
     if (e.is_a_complex_interval()) {
@@ -148,7 +148,7 @@ PURRS::Blackboard::dump(std::ostream& s) const {
     s << "Blackboard empty." << std::endl;
   else {
     s << "Blackboard contents:" << std::endl;
-    for (std::map<Symbol, unsigned>::const_iterator i = index.begin(),
+    for (std::map<Symbol, unsigned int>::const_iterator i = index.begin(),
 	   index_end = index.end(); i != index_end; ++i)
       s << "  " << i->first
 	<< " = " << definitions[i->second].rhs << std::endl;

@@ -342,7 +342,7 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
   if (poly_coeff.is_a_mul()) {
     Number k = 0;
     Expr factor = 1;
-    for (unsigned i = poly_coeff.nops(); i-- > 0; ) {
+    for (unsigned int i = poly_coeff.nops(); i-- > 0; ) {
       const Expr& poly_coeff_i = poly_coeff.op(i);
       if (poly_coeff_i == Recurrence::n)
 	k = 1;
@@ -415,7 +415,7 @@ sharper_bounds_for_no_polynomial_function(bool lower,
     Expr factor = 1;
     Number k = 0;
     Expr log_part = 0;
-    for (unsigned i = no_poly_coeff.nops(); i-- > 0; ) {
+    for (unsigned int i = no_poly_coeff.nops(); i-- > 0; ) {
       const Expr& no_poly_coeff_i = no_poly_coeff.op(i);
       if (no_poly_coeff_i == log(Recurrence::n))
 	log_part = no_poly_coeff_i;
@@ -539,7 +539,7 @@ sharper_bounds_for_exponential(bool lower,
     // `a' is a product of numbers, constant functions and constant powers.
     if (poly_coeff.is_a_mul()) {
       Expr factor = 1;
-      for (unsigned i = poly_coeff.nops(); i-- > 0; ) {
+      for (unsigned int i = poly_coeff.nops(); i-- > 0; ) {
 	const Expr& poly_coeff_i = poly_coeff.op(i);
 	if (poly_coeff_i.is_a_number()
 	    || ((poly_coeff_i.is_a_constant_function(Recurrence::n)
@@ -604,7 +604,7 @@ compute_sum(bool for_lower, const Expr& summand,
       && vector_not_all_zero(exp_no_poly_coeff))
     return false;
   else if (vector_not_all_zero(exp_poly_coeff))
-    for (unsigned i = bases_of_exp.size(); i-- > 0; ) {
+    for (unsigned int i = bases_of_exp.size(); i-- > 0; ) {
       Symbol k("k");
       sum += sum_poly_times_exponentials(exp_poly_coeff[i]
 					 .substitute(Recurrence::n, k), k,
@@ -620,7 +620,7 @@ compute_sum(bool for_lower, const Expr& summand,
     }
   else {
     Number index = for_lower ? 1 : 2;
-    for (unsigned i = bases_of_exp.size(); i-- > 0; ) {
+    for (unsigned int i = bases_of_exp.size(); i-- > 0; ) {
       Expr gosper_sum;
       if (!gosper_algorithm(Recurrence::n,
 			    pwr(coefficient, -Recurrence::n) * tmp,
@@ -731,7 +731,7 @@ compute_poly_or_no_poly(bool poly, const Expr& e, const Number& base,
 			const Number& coeff, const Number& divisor_arg,
 			Expr& bound, Number& condition) {
   if (e.is_a_add())
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       const Expr& addend = e.op(i);
       if ((poly && !sharper_bounds_for_polynomial_function(lower, addend,
 							   coeff, divisor_arg,
@@ -815,7 +815,7 @@ compute_non_homogeneous_part(bool lower,
   std::vector<Expr> exp_no_poly_coeff;
   exp_poly_decomposition(inhomogeneous.expand(), Recurrence::n,
 			 bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
-  for (unsigned i = bases_of_exp.size(); i-- > 0; ) {
+  for (unsigned int i = bases_of_exp.size(); i-- > 0; ) {
     const Expr& base = bases_of_exp[i];
     const Expr& poly_coeff = exp_poly_coeff[i];
     const Expr& no_poly_coeff = exp_no_poly_coeff[i];
@@ -868,7 +868,7 @@ compute_non_homogeneous_part(bool lower,
   is stored \p divisor.
 */
 void
-compute_term_about_initial_condition(bool lower, unsigned condition,
+compute_term_about_initial_condition(bool lower, unsigned int condition,
 				     const Number& divisor,
 				     const Expr& coefficient,
 				     const Expr& q, Expr& bound) {
@@ -917,7 +917,7 @@ PURRS::Recurrence::approximate_functional_equation_lower() const {
       return TOO_COMPLEX;
 
     if (condition > 1)
-      set_applicability_condition(condition.to_unsigned());
+      set_applicability_condition(condition.to_unsigned_int());
     compute_term_about_initial_condition(true, applicability_condition(),
 					 divisor_arg, coefficient, q_lower,
 					 lower_bound);
@@ -957,7 +957,7 @@ PURRS::Recurrence::approximate_functional_equation_upper() const {
       return TOO_COMPLEX;
 
     if (condition > 1)
-      set_applicability_condition(condition.to_unsigned());
+      set_applicability_condition(condition.to_unsigned_int());
     compute_term_about_initial_condition(false, applicability_condition(),
 					 divisor_arg, coefficient, q_upper,
 					 upper_bound);

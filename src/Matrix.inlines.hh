@@ -35,12 +35,12 @@ Matrix::Matrix() {
 }
 
 inline
-Matrix::Matrix(unsigned i, unsigned j)
+Matrix::Matrix(unsigned int i, unsigned int j)
   : m(i, j) {
 };
 
 inline
-Matrix::Matrix(unsigned i, unsigned j, const Expr_List& y)
+Matrix::Matrix(unsigned int i, unsigned int j, const Expr_List& y)
   : m(i, j, y.l) {
 };
 
@@ -64,24 +64,24 @@ inline
 Matrix::~Matrix() {
 }
 
-inline unsigned
+inline unsigned int
 Matrix::num_rows() const {
   return m.rows();
 };
 
-inline unsigned
+inline unsigned int
 Matrix::num_columns() const {
   return m.cols();
 };
 
 
 inline const Expr&
-Matrix::operator()(unsigned r, unsigned c) const {
+Matrix::operator()(unsigned int r, unsigned int c) const {
   return static_cast<const Expr&>(m(r, c));
 };
 
 inline Expr&
-Matrix::operator()(unsigned r, unsigned c) {
+Matrix::operator()(unsigned int r, unsigned int c) {
   return static_cast<Expr&>(m(r, c));
 };
 

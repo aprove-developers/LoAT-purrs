@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Infinite_Order_Info_defs_hh 1
 
 #include "Infinite_Order_Info.types.hh"
+#include "globals.hh"
 #include "Expr.defs.hh"
 
 namespace Parma_Recurrence_Relation_Solver {
@@ -44,7 +45,8 @@ public:
   Infinite_Order_Info(const Expr& new_rhs, const Expr& coeff_first_order,
 		      const Expr& inhomog_first_order,
 		      const Expr& weight_inf_order,
-		      unsigned lower_bound_sum, const Expr& upper_bound_sum);
+		      unsigned int lower_bound_sum,
+		      const Expr& upper_bound_sum);
 
   //! Copy-constructor.
   Infinite_Order_Info(const Infinite_Order_Info& y);
@@ -80,7 +82,7 @@ public:
   Expr& weight_inf_order();
 
   //! Returns <CODE>lower_bound_sum_</CODE>.
-  unsigned lower_bound_sum() const;
+  unsigned int lower_bound_sum() const;
 
   //! Returns <CODE>upper_bound_sum_</CODE>.
   Expr upper_bound_sum() const;
@@ -89,10 +91,10 @@ public:
   Expr& upper_bound_sum();
 
   //! Returns <CODE>first_valid_index_inf_order_</CODE>.
-  unsigned first_valid_index_inf_order() const;
+  index_type first_valid_index_inf_order() const;
 
   //! Sets <CODE>first_valid_index_inf_order_</CODE> with \p i_c
-  void set_first_valid_index_inf_order(unsigned i_c);
+  void set_first_valid_index_inf_order(index_type i_c);
 
 private:
   //! \brief
@@ -134,7 +136,7 @@ private:
   //! \f[
   //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
   //! \f].
-  unsigned lower_bound_sum_;
+  unsigned int lower_bound_sum_;
 
   //! \brief
   //! Stores the upper bound \f$ u(n) \f$ of the object sum of the
@@ -147,7 +149,7 @@ private:
   //! \brief
   //! Stores the smallest positive integer for which the recurrence is
   //! well-defined: the initial conditions will start from it.
-  unsigned first_valid_index_inf_order_;
+  index_type first_valid_index_inf_order_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

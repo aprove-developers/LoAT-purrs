@@ -47,7 +47,7 @@ assign_common_factor_and_rem(const Expr& base_factor,
   // Find bases and exponents of each factor of `common_factor'.
   split_bases_exponents(common_factor, bases, exponents);
   bool new_common_factor = true;
-  for (unsigned i = bases.size(); i-- > 0; ) {
+  for (unsigned int i = bases.size(); i-- > 0; ) {
     if (base_factor == bases[i]) {
       new_common_factor = false;
       const Expr& exponents_i = exponents[i];
@@ -94,7 +94,7 @@ in_all_factors(const Expr& e,
   bool is_in_every_term = true;
   // Run over all terms of `e' in order to look if `factor' is in
   // every term.
-  for (unsigned i = e.nops(); i-- > 0; ) {
+  for (unsigned int i = e.nops(); i-- > 0; ) {
     const Expr& e_i = e.op(i);
     D_VAR(e_i);
     std::vector<Expr> bases;
@@ -104,7 +104,7 @@ in_all_factors(const Expr& e,
     D_VEC(bases, 0, bases.size()-1);
     D_VEC(exponents, 0, exponents.size()-1);
     bool found = false;
-    for (unsigned j = bases.size(); j-- > 0; ) {
+    for (unsigned int j = bases.size(); j-- > 0; ) {
       if (bases[j] == base_factor) {
 	Number num_exp_common_f;
 	Number num_exp_j;
@@ -158,7 +158,7 @@ collect_common_factor(const Expr& e, const Expr& term,
   D_MSGVAR("COLLECT I ", term);
 //    D_VEC(bases, 0, bases.size()-1);
 //    D_VEC(exponents, 0, exponents.size()-1);
-  for (unsigned i = bases.size(); i-- > 0; )
+  for (unsigned int i = bases.size(); i-- > 0; )
     in_all_factors(e, bases[i], exponents[i], common_factor, rem_summand);
   D_MSGVAR("COLLECT F ", common_factor);
   D_VAR(rem_summand);
@@ -186,7 +186,7 @@ PURRS::factorize_no_ratio_ex(const Expr& e,
   common_factor = 1;
   remainder = 0;
   if (e_factorized.is_a_add()) {
-    for (unsigned i = e_factorized.nops(); i-- > 0; ) {
+    for (unsigned int i = e_factorized.nops(); i-- > 0; ) {
       Expr rem_summand = 1;
       collect_common_factor(e_factorized, e_factorized.op(i),
 			    common_factor, rem_summand);
@@ -216,7 +216,7 @@ PURRS::factorize_no_ratio_ex(const Expr& e,
   }
   else if (e_factorized.is_a_mul()) {
     Expr rem_all_factors = 1;
-    for (unsigned i = e_factorized.nops(); i-- > 0; ) {
+    for (unsigned int i = e_factorized.nops(); i-- > 0; ) {
       const Expr& factor = e_factorized.op(i);
       Expr common = 1;
       Expr rem = 0;

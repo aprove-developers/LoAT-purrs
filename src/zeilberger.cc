@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 #endif
 
 #include "zeilberger.hh"
+#include "globals.hh"
 #include "simplify.hh"
 #include "numerator_denominator.hh"
 #include "util.hh"
@@ -87,7 +88,7 @@ zeilberger_step_one(const Expr& F_m_k,
   Expr r_2;
   second.numerator_denominator(r_1, r_2);
   if (r_1.is_a_mul())
-    for (unsigned i = r_1.nops(); i-- > 0; )
+    for (unsigned int i = r_1.nops(); i-- > 0; )
       if (r_1.op(i) == -1) {
 	r_1 *= -1;
 	r_2 *= -1;
@@ -99,7 +100,7 @@ zeilberger_step_one(const Expr& F_m_k,
   Expr s_2;
   tmp.numerator_denominator(s_1, s_2);
   if (s_1.is_a_mul())
-    for (unsigned i = s_1.nops(); i-- > 0; )
+    for (unsigned int i = s_1.nops(); i-- > 0; )
       if (s_1.op(i) == -1) {
 	s_1 *= -1;
 	s_2 *= -1;
@@ -109,13 +110,13 @@ zeilberger_step_one(const Expr& F_m_k,
   D_VAR(s_2);
 
   // Computes `p_0_k'.
-  unsigned order = coefficients.size() - 1;
-  for (unsigned j = 0; j <= order; ++j) {
+  index_type order = coefficients.size() - 1;
+  for (index_type j = 0; j <= order; ++j) {
     Expr prod_s_1 = 1;
-    for (unsigned i = 0; i < j; ++i)
+    for (index_type i = 0; i < j; ++i)
       prod_s_1 *= s_1.substitute(m, m+j-i);
     Expr prod_s_2 = 1;
-    for (unsigned i = j+1; i <= order; ++i)
+    for (index_type i = j+1; i <= order; ++i)
       prod_s_2 *= s_2.substitute(m, m+i);
     p_0_k += coefficients[j] * prod_s_1 * prod_s_2;
   }
@@ -123,7 +124,7 @@ zeilberger_step_one(const Expr& F_m_k,
   // Computes `r_k' and `s_k'.
   Expr prod_for_r = 1;
   Expr prod_for_s = 1;
-  for (unsigned i = 1; i <= order; ++i) {
+  for (index_type i = 1; i <= order; ++i) {
     const Expr& tmp = s_2.substitute(m, m+i);
     prod_for_r *= tmp;
     prod_for_s *= tmp.substitute(k, k+1);
@@ -170,9 +171,9 @@ PURRS::zeilberger_algorithm(const Expr& F_m_k,
   // We must consider the maximum order for the
   // recurrence ... and, starting from the lower, if the algorithm fails,
   // to increase the order until `order' and to repeat the algorithm.
-  unsigned order = 1; // TEMPORARY
+  index_type order = 1; // TEMPORARY
   std::vector<Symbol> coefficients(order + 1);
-  for (unsigned i = 0; i < order+1; ++i)
+  for (index_type i = 0; i < order+1; ++i)
     coefficients[i] = Symbol();
   if (!zeilberger_step_one(F_m_k, m, k, coefficients, p_0_k, r_k, s_k))
     return false;

@@ -54,13 +54,13 @@ Functional_Equation_Info::operator=(const Functional_Equation_Info& y) {
   return *this;
 }
 
-inline unsigned
+inline index_type
 Functional_Equation_Info::applicability_condition() const {
   return applicability_condition_;
 }
 
 inline void
-Functional_Equation_Info::set_applicability_condition(unsigned c) {
+Functional_Equation_Info::set_applicability_condition(index_type c) {
   applicability_condition_ = c;
 }
 
@@ -84,7 +84,7 @@ Functional_Equation_Info::ht_end() const {
   return homogeneous_terms.end();
 }
 
-inline size_t
+inline index_type
 Functional_Equation_Info::rank() const {
   return homogeneous_terms.size();
 }

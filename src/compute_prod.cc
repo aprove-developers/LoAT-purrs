@@ -154,7 +154,7 @@ compute_product_on_power(const Symbol& index, const Number& lower,
     // `b(h)' is a polynomial or a product of a polynomial times an
     // exponential.
     if (vector_not_all_zero(exp_poly_coeff)) {
-      for (unsigned i = base_of_exps.size(); i-- > 0; ) {
+      for (unsigned int i = base_of_exps.size(); i-- > 0; ) {
 	Symbol k("k");
 	Expr coeff_k = exp_poly_coeff[i].substitute(index, k);
 	new_exponent += sum_poly_times_exponentials(coeff_k, k, Recurrence::n,
@@ -200,7 +200,7 @@ comp_prod(const Symbol& index, const Number& lower, const Expr& e,
     e_prod = compute_product_on_power(index, lower, e);
   else if (e.is_a_mul()) {
     e_prod = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_prod *= comp_prod(index, lower, e.op(i));
   }
   else {

@@ -103,23 +103,23 @@ Non_Linear_Info::auxiliary_symbols() {
   return auxiliary_symbols_;
 }
 
-inline unsigned int
+inline index_type
 Non_Linear_Info::order_if_linear() const {
   return order_if_linear_;
 }
 
 inline void
-Non_Linear_Info::set_order_if_linear(unsigned int x) {
+Non_Linear_Info::set_order_if_linear(index_type x) {
   order_if_linear_ = x;
 }
 
-inline unsigned
+inline index_type
 Non_Linear_Info::first_valid_index_if_linear() const {
   return first_valid_index_if_linear_;
 }
 
 inline void
-Non_Linear_Info::set_first_valid_index_if_linear(unsigned i_c) {
+Non_Linear_Info::set_first_valid_index_if_linear(index_type i_c) {
   first_valid_index_if_linear_ = i_c;
 }
 

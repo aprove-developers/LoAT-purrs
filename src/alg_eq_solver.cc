@@ -53,9 +53,9 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
    we only have to check for possible divisors that are strictly 
    less than the constant <CODE>FIND_DIVISORS_MAX</CODE>.
 */
-static const unsigned FIND_DIVISORS_MAX = 11;
+static const unsigned int FIND_DIVISORS_MAX = 11;
 
-static const unsigned
+static const unsigned int
 FIND_DIVISORS_THRESHOLD = FIND_DIVISORS_MAX*FIND_DIVISORS_MAX;
 
 static PURRS::Expr zero = 0;
@@ -230,10 +230,10 @@ solve_equation_4(const Number& a1, const Number& a2,
   the largest integer \f$n\f$ such that there is a polynomial \f$q\f$
   such that \f$p(x) = q(x^n)\f$ and the polynomial \f$q\f$ itself.
 */
-unsigned
+unsigned int
 is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
   D_MSGVAR("nested polynomial ", p);
-  unsigned degree = p.degree(x);  
+  unsigned int degree = p.degree(x);  
   if (degree == 0) {
     // The constant polynomial.
     q = p;
@@ -248,7 +248,7 @@ is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
   // Here the degree is at least 2 and the polynomial does not have a
   // linear term.  Look for the first non-zero coefficient (apart from
   // the constant term).
-  unsigned i = 2;
+  unsigned int i = 2;
   while(p.coeff(x, i).is_zero())
     ++i;
 
@@ -260,8 +260,8 @@ is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
   // The routine ends as soon as `n' reaches the value of 1
   // (this means that the gcd of all exponents of non-zero 
   // monomials is 1) or when the polynomial has been entirely processed.
-  unsigned n = i;
-  for (unsigned j = i+1; j <= degree && n > 1; ++j)
+  unsigned int n = i;
+  for (unsigned int j = i+1; j <= degree && n > 1; ++j)
     // If n == 1 there is no need to read the rest of the polynomial.
     if (!(p.coeff(x, j)).is_zero())
       n = gcd(n, j);
@@ -272,7 +272,7 @@ is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
   if (n > 1) {
     q = p.coeff(x, 0);
     // Note that `n' divides `degree'.
-    for (unsigned j = 1, m = degree/n; j <= m; ++j)
+    for (unsigned int j = 1, m = degree/n; j <= m; ++j)
       q += p.coeff(x, n*j) * pwr(x, j); 
   }
   else
@@ -284,8 +284,8 @@ is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
 bool
 find_roots(const Expr& p, const Symbol& x,
 	   std::vector<Polynomial_Root>& roots,
-	   unsigned multiplicity) {
-  unsigned ldegree = p.ldegree(x);
+	   unsigned int multiplicity) {
+  unsigned int ldegree = p.ldegree(x);
   assert(ldegree <= 1);
   Expr q;
   if (ldegree == 1) {
@@ -297,7 +297,7 @@ find_roots(const Expr& p, const Symbol& x,
 
   Number lc = q.lcoeff(x).ex_to_number();
   Number tc = q.tcoeff(x).ex_to_number();
-  unsigned degree = q.degree(x);
+  unsigned int degree = q.degree(x);
   if (degree == 1) {
     roots.push_back(Polynomial_Root(-tc/lc, RATIONAL, multiplicity));
     return true;
@@ -312,8 +312,8 @@ find_roots(const Expr& p, const Symbol& x,
     std::vector<Number> abs_tc_divisors;
     find_divisors(abs_lc, abs_lc_divisors);
     find_divisors(abs_tc, abs_tc_divisors);
-    for (unsigned l = 0, ml = abs_lc_divisors.size(); l < ml; ++l) 
-      for (unsigned t = 0, mt = abs_tc_divisors.size(); t < mt; ++t) {
+    for (unsigned int l = 0, ml = abs_lc_divisors.size(); l < ml; ++l) 
+      for (unsigned int t = 0, mt = abs_tc_divisors.size(); t < mt; ++t) {
 	Number r = abs_tc_divisors[t] / abs_lc_divisors[l];
 	if (q.substitute(x, r).is_zero()) {
 	  q = quo(q, x-r, x);
@@ -345,7 +345,7 @@ find_roots(const Expr& p, const Symbol& x,
   }
   // Direct solution for polynomials of degree between 1 and 4.
   if (degree <= 4) {
-    unsigned position = roots.size();
+    unsigned int position = roots.size();
     // Insert `degree' elements at the end of roots.
     roots.insert(roots.end(), degree, Polynomial_Root(Expr(0), RATIONAL));
 
@@ -455,7 +455,7 @@ find_power_roots(const Expr& p, const Symbol& x,
   const Expr& base = p.arg(0);
   Number exponent = p.arg(1).ex_to_number();
   assert(exponent.is_positive_integer() && exponent >= 2);
-  if (!find_roots(base, x, roots, exponent.to_unsigned()))
+  if (!find_roots(base, x, roots, exponent.to_unsigned_int()))
     // No way: we were unable to solve the base.
     return false;
   return true;
@@ -513,7 +513,7 @@ PURRS::find_roots(const Expr& p, const Symbol& x,
   }
   else if (q.is_a_mul()) {
     all_distinct = false;
-    for (unsigned i = 0, n = q.nops(); i < n; ++i) {
+    for (unsigned int i = 0, n = q.nops(); i < n; ++i) {
       const Expr& factor = q.op(i);
       if (factor.is_a_power()) {
 	if (!find_power_roots(factor, x, roots))
@@ -540,7 +540,7 @@ PURRS::find_roots(const Expr& p, const Symbol& x,
 //! Output operator.
 std::ostream&
 operator<<(std::ostream& s, const Polynomial_Root& r) {
-  unsigned multiplicity = r.multiplicity();
+  unsigned int multiplicity = r.multiplicity();
   if (multiplicity != 1)
     s << "mult: " << multiplicity << ", val: ";
   s << r.value();

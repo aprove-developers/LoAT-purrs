@@ -50,7 +50,7 @@ using namespace PURRS;
   and the denominator of \f$ f \f$.
 */
 Expr
-find_denominator_single_factor(const Expr& e, unsigned position,
+find_denominator_single_factor(const Expr& e, unsigned int position,
 			       std::vector<Expr>& numerators,
 			       std::vector<Expr>& denominators) {
   Number num;
@@ -84,12 +84,12 @@ find_denominator_single_factor(const Expr& e, unsigned position,
   Returns the denominator of \f$ e \f$.
 */
 Expr
-find_denominator_single_term(const Expr& e, unsigned position,
+find_denominator_single_term(const Expr& e, unsigned int position,
 			     std::vector<Expr>& numerators,
 			     std::vector<Expr>& denominators) {
   Expr denominator = 1;
   if (e.is_a_mul())
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       denominator *= find_denominator_single_factor(e.op(i), position,
 						    numerators, denominators);
   else
@@ -112,14 +112,14 @@ take_common_and_not_factors(std::vector<Expr>& bases_1,
 			    std::vector<Expr>& exponents_2) {
   Expr e = 1;
   // We consider `base_1' the i-th element of `bases_1'.
-  for (unsigned i = bases_1.size(); i-- > 0; ) {
+  for (unsigned int i = bases_1.size(); i-- > 0; ) {
     const Expr& base_1 = bases_1[i];
     Number exponent_1;
     // The exponent of `base' is a positive integer number.  
     if (exponents_1[i].is_a_number(exponent_1)
 	&& exponent_1.is_positive_integer()) {
       bool added = false;
-      for (unsigned j = bases_2.size(); j-- > 0; ) {
+      for (unsigned int j = bases_2.size(); j-- > 0; ) {
 	const Expr& base_2 = bases_2[j];
 	// We have found an element of `bases_2' sintactically equal
 	// to `base_1'.
@@ -160,7 +160,7 @@ take_common_and_not_factors(std::vector<Expr>& bases_1,
   // (`bases_2' and `exponents_2') with the exponents not equal to `0',
   // i. e., not considered in the previous loop because they did not have
   // common factors with the first vectors. 
-  for (unsigned i = bases_2.size(); i-- > 0; )
+  for (unsigned int i = bases_2.size(); i-- > 0; )
     if (!exponents_2[i].is_zero())
       e *= pwr(bases_2[i], exponents_2[i]);
   return e;
@@ -211,10 +211,10 @@ find_factor_for_numerator(const Expr& d, const Expr& f) {
   std::vector<Expr> f_exponents;
   split_bases_exponents(d, d_bases, d_exponents);
   split_bases_exponents(f, f_bases, f_exponents);
-  for (unsigned i = d_bases.size(); i -- > 0; ) {
+  for (unsigned int i = d_bases.size(); i -- > 0; ) {
     const Expr& d_base = d_bases[i];
     bool added = false;
-    for (unsigned j = f_bases.size(); j -- > 0; ) {
+    for (unsigned int j = f_bases.size(); j -- > 0; ) {
       const Expr& f_base = f_bases[j];
       if (d_base == f_base)
 	if (d_exponents[i] == f_exponents[j]) {
@@ -260,7 +260,7 @@ find_numerator(const std::vector<Expr>& numerators,
 	       const Expr& denominator) {
   assert(numerators.size() == denominators.size());
   Expr numerator = 0;
-  for (unsigned i = numerators.size(); i-- > 0; ) {
+  for (unsigned int i = numerators.size(); i-- > 0; ) {
     const Expr& i_th_denominator = denominators[i];
     Expr multiply_to_numerator = 1;
     // If `denominator == denominators[i]' we do not have factors to multiply
@@ -290,7 +290,7 @@ numerator_denominator_term(const Expr& e,
   if (e.is_a_add()) {
     numerators.insert(numerators.begin(), e.nops(), Number(1));
     denominators.insert(denominators.begin(), e.nops(), Number(1));
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       numerator_denominator_term(e.op(i), numerators[i], denominators[i]);
       denominator = take_common_and_not_factors(denominator,
 						denominators[i]);
@@ -312,7 +312,7 @@ numerator_denominator_term(const Expr& e,
     numerator = numerators[0];
   }
   else if (e.is_a_mul())
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       const Expr& factor = e.op(i);
       if (factor.is_a_power()) {
 	numerators.push_back(1);
@@ -361,7 +361,7 @@ PURRS::numerator_denominator_purrs(const Expr& e,
   if (e.is_a_add()) {
     numerators.insert(numerators.begin(), e.nops(), Number(1));
     denominators.insert(denominators.begin(), e.nops(), Number(1));
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       // Find numerator and denominator of i-th term of `e'.
       numerator_denominator_term(e.op(i), numerators[i], denominators[i]);
       // Find common denominator, i.e., the product of common and not common

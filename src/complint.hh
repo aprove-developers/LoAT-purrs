@@ -30,7 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace GiNaC {
 
-const unsigned TINFO_complint = 0x42420001U;
+const unsigned int TINFO_complint = 0x42420001U;
 
 class complint : public basic {
   GINAC_DECLARE_REGISTERED_CLASS(complint, basic)
@@ -38,7 +38,7 @@ class complint : public basic {
 public:
   complint(const CInterval& i);
 
-  void print(const print_context& c, unsigned level) const;
+  void print(const print_context& c, unsigned int level) const;
 
   const CInterval& get_interval() const {
     return ci;

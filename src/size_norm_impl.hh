@@ -30,16 +30,16 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 template <typename SymbolHandler>
-inline unsigned
+inline unsigned int
 generic_size_norm(const Expr& e, const SymbolHandler& sh) {
   int count = 1;
   if (e.is_a_add() || e.is_a_mul())
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       count += generic_size_norm(e.op(i), sh);
   else if (e.is_a_power())
     count += generic_size_norm(e.arg(0), sh) + generic_size_norm(e.arg(1), sh);
   else if (e.is_a_function())
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       count += generic_size_norm(e.arg(i), sh);
   else if (e.is_a_complex_interval())
     // Four boundaries.

@@ -149,12 +149,12 @@ change_variable_function_x(const Expr& e, const Expr& s, const Expr& r) {
   Expr e_substituted;
     if (e.is_a_add()) {
     e_substituted = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_substituted += change_variable_function_x(e.op(i), s, r);
   }
   else if (e.is_a_mul()) {
     e_substituted = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_substituted *= change_variable_function_x(e.op(i), s, r);
   }
   else if (e.is_a_power())
@@ -168,9 +168,9 @@ change_variable_function_x(const Expr& e, const Expr& s, const Expr& r) {
 	return apply(e.functor(),
 		     change_variable_function_x(e.arg(0), s, r));
     else {
-      unsigned num_argument = e.nops();
+      unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
-      for (unsigned j = 0; j < num_argument; ++j)
+      for (unsigned int j = 0; j < num_argument; ++j)
 	argument[j] = change_variable_function_x(e.arg(j), s, r);
       return apply(e.functor(), argument);
     }
@@ -204,7 +204,7 @@ find_max_decrement_and_coeff_factor(const Expr& e,
   if (e.is_a_mul()) {
     Expr possibly_coeff = 1;
     Expr possibly_argument = 0;
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       const Expr& factor = e.op(i);
       if (factor.is_the_x_function())
 	possibly_argument = factor.arg(0);
@@ -232,7 +232,7 @@ void
 find_max_decrement_and_coeff(const Expr& e,
 			     int& max_decrement, Expr& coefficient) {
   if (e.is_a_add())
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       find_max_decrement_and_coeff_factor(e.op(i),
 					  max_decrement, coefficient);
   else
@@ -277,12 +277,12 @@ eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs) {
 void
 find_coeff_x_n_and_remainder(const Expr& e,
 			     Expr& coeff_x_n, Expr& remainder) {
-  for (unsigned i = e.nops(); i-- > 0; ) {
+  for (unsigned int i = e.nops(); i-- > 0; ) {
     const Expr& term = e.op(i);
     if (term.is_a_mul()) {
       Expr tmp = 1;
       bool found_x_n = false;
-      for (unsigned j = term.nops(); j-- > 0; ) {
+      for (unsigned int j = term.nops(); j-- > 0; ) {
 	const Expr& factor = term.op(j);
 	if (factor == x(Recurrence::n))
 	  found_x_n = true;
@@ -313,7 +313,7 @@ find_coeff_x_n_and_remainder(const Expr& e,
   Returns \f$ 3 \f$ in all the other cases for which the recurrence is
   considered too complex.
 */
-unsigned
+unsigned int
 eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
   // Collect the terms `x(n)' so that the right hand side of the recurrence
   // `rhs' is in the form `rhs = a*x(n) + b' and that `b' does different to
@@ -342,10 +342,10 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
       // Case 2. and Case 3.
       bool found_x = false;
       if (b.is_a_add())
-	for (unsigned i = b.nops(); i-- > 0; ) {
+	for (unsigned int i = b.nops(); i-- > 0; ) {
 	  const Expr& term = b.op(i);
 	  if (term.is_a_mul()) {
-	    for (unsigned j = term.nops(); j-- > 0; ) {
+	    for (unsigned int j = term.nops(); j-- > 0; ) {
 	      const Expr& t_j = term.op(j);
 	      if (t_j.is_the_x_function()) {
 		const Expr& t_j_arg = t_j.arg(0);
@@ -371,7 +371,7 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
 	    }
 	}
       else if (b.is_a_mul())
-	for (unsigned i = b.nops(); i-- > 0; ) {
+	for (unsigned int i = b.nops(); i-- > 0; ) {
 	  const Expr& b_i = b.op(i);
 	  if (b_i.is_the_x_function()) {
 	    const Expr& b_i_arg = b_i.arg(0);
@@ -420,7 +420,7 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
   }
   // Let `rhs = a*x(n)'.
   else if (new_rhs.is_a_mul())
-    for (unsigned i = new_rhs.nops(); i-- > 0; ) {
+    for (unsigned int i = new_rhs.nops(); i-- > 0; ) {
       const Expr& factor = new_rhs.op(i);
       if (factor == x(Recurrence::n))
 	new_rhs = 0;
@@ -455,12 +455,12 @@ insert_coefficients(const Expr& coeff, unsigned long index,
     \f$ n \f$) inside an other \f$ x \f$ function return \f$ 1 \f$;
   - in all the other cases returns \f$ 2 \f$.
 */
-unsigned
+unsigned int
 x_function_in_powers_or_functions(const Expr& e) {
   // There is an `x' function (with the argument containing `n') inside an
   // other function.
   if (e.is_a_function()) {
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       // `operand' is the argument (if unary function) or the i-th
       // argument (otherwise) of the function `e'.
       const Expr& operand = e.arg(i);
@@ -488,7 +488,7 @@ x_function_in_powers_or_functions(const Expr& e) {
 //! \f$ x(x(a)) \f$ with \f$ a \f$ containing the special symbol \f$ n \f$;   
 //! returns \f$ 0 \f$ if finds all the other type of non linear term;
 //! returns \f$ 2 \f$ otherwise.
-unsigned
+unsigned int
 find_non_linear_term(const Expr& e) {
   assert(!e.is_a_add());
   // Even if we find a `legal' (i.e. not containing two nested `x' function)
@@ -496,10 +496,10 @@ find_non_linear_term(const Expr& e) {
   // sure that there are not non-linear term not legal.
   // If `non_linear_term' at the end of this function is again `2' means
   // that we have not find non-linear terms.
-  unsigned non_linear_term = 2;
-  unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
+  unsigned int non_linear_term = 2;
+  unsigned int num_factors = e.is_a_mul() ? e.nops() : 1;
   if (num_factors == 1) {
-    unsigned tmp = x_function_in_powers_or_functions(e);
+    unsigned int tmp = x_function_in_powers_or_functions(e);
     // Nested `x' function: not legal non-linear term.
     if (tmp == 1)
       return 1;
@@ -509,9 +509,9 @@ find_non_linear_term(const Expr& e) {
   }
   else {
     bool found_function_x = false;
-    for (unsigned j = num_factors; j-- > 0; ) {
+    for (unsigned int j = num_factors; j-- > 0; ) {
       const Expr& factor = e.op(j);
-      unsigned tmp = x_function_in_powers_or_functions(factor);
+      unsigned int tmp = x_function_in_powers_or_functions(factor);
       // Nested `x' function: not legal non-linear term.
       if (tmp == 1)
 	return 1;
@@ -562,7 +562,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
   if (rhs.is_a_mul()) {
     bool simple_cases = false;
     Number common_exponent = 1;
-    for (unsigned i = rhs.nops(); i-- > 0; ) {
+    for (unsigned int i = rhs.nops(); i-- > 0; ) {
       const Expr& factor = rhs.op(i);
       Number num_exp;
       if (factor.is_a_power() && factor.arg(0).is_the_x_function()
@@ -611,7 +611,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	coeff_and_base.second = Napier;
 	Expr tmp = substitute_x_function(rhs, Napier, true);
 	tmp = simplify_ex_for_input(tmp, true);
-	for (unsigned i = tmp.nops(); i-- > 0; ) {
+	for (unsigned int i = tmp.nops(); i-- > 0; ) {
 	  Number num;
 	  if (tmp.op(i).is_a_number(num) && num.is_negative()) {
 	    Symbol s = rec.insert_auxiliary_definition(num);
@@ -630,7 +630,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	coeff_and_base.second = common_exponent;
 	Expr tmp = substitute_x_function(rhs, abs(common_exponent), true);
 	tmp = simplify_ex_for_input(tmp, true);
-	for (unsigned i = tmp.nops(); i-- > 0; ) {
+	for (unsigned int i = tmp.nops(); i-- > 0; ) {
 	  Number num;
 	  if (tmp.op(i).is_a_number(num) && num.is_negative()) {
 	    Symbol s = rec.insert_auxiliary_definition(num);
@@ -686,7 +686,7 @@ known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
 			      const Expr& weight,
 			      Expr& coeff_first_order,
 			      Expr& inhomog_first_order,
-			      unsigned& first_well_defined) {
+			      index_type& first_valid_index) {
   const Expr& inhomog_infinite_order_rec = rhs - weight * term_sum;
   const Expr& upper = term_sum.arg(2);
 
@@ -714,7 +714,7 @@ known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
   if (!largest_positive_int_zero(denominator(inhomog_infinite_order_rec),
 				 Recurrence::n, z))
     return false;
-  first_well_defined = z.to_unsigned();
+  first_valid_index = z.to_unsigned_int();
 
   const Expr& weight_shifted = weight.substitute(Recurrence::n,
 						 Recurrence::n-1);
@@ -734,7 +734,7 @@ known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
 } // anonymous namespace
 
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::compute_order(const Number& decrement, unsigned int& order,
+PURRS::Recurrence::compute_order(const Number& decrement, index_type& order,
 				 unsigned long& index,
 				 unsigned long max_size) {
   if (decrement < 0)
@@ -762,7 +762,7 @@ PURRS::Recurrence::compute_order(const Number& decrement, unsigned int& order,
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 					  Expr& inhomogeneous,
-					  unsigned int& order,
+					  index_type& order,
 					  std::vector<Expr>& coefficients,
 					  int& gcd_among_decrements,
 					  int num_term,
@@ -770,7 +770,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 					  homogeneous_terms) const {
   // `non_linear_term == 0' or `non_linear_term == 1' indicate
   // two different cases of non-linearity.
-  unsigned non_linear_term = find_non_linear_term(addend);
+  unsigned int non_linear_term = find_non_linear_term(addend);
   if (non_linear_term == 0) {
     // We will store here the right hand side of the linear recurrence
     // obtained transforming that one non-linear.
@@ -799,7 +799,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
   else if (non_linear_term == 1)
     return MALFORMED_RECURRENCE;
 
-  unsigned num_factors = addend.is_a_mul() ? addend.nops() : 1;
+  unsigned int num_factors = addend.is_a_mul() ? addend.nops() : 1;
   Number num;
   if (num_factors == 1)
     if (addend.has_non_rational_numbers())
@@ -868,19 +868,19 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 	Expr rhs_rewritten = rhs.collect_term(addend, weight);
 	Expr coeff_first_order;
 	Expr inhomog_first_order;
-	unsigned first_well_defined;
+	index_type first_valid_index;
 	if (known_class_of_infinite_order(rhs_rewritten, addend, weight,
 					  coeff_first_order,
 					  inhomog_first_order,
-					  first_well_defined)) {
+					  first_valid_index)) {
 	  // The lower bound of the sum must be greater or equal than
 	  // the positive integer `n_0' starting from which `weight'
 	  // and `inhomogeneous_term' are well defined, i. e., for each
 	  // `n' greater or equal to `n_0' `weight' and `inhomogeneous_term'
 	  // evaluated in `n' are well-defined.
-	  unsigned lower_bound_sum
-	    = addend.arg(1).ex_to_number().to_unsigned();
-	  if (lower_bound_sum < first_well_defined)
+	  unsigned int lower_bound_sum
+	    = addend.arg(1).ex_to_number().to_unsigned_int();
+	  if (lower_bound_sum < first_valid_index)
 	    return DOMAIN_ERROR;
 	  infinite_order_p = new Infinite_Order_Info(coeff_first_order
 						     * x(Recurrence::n - 1)
@@ -890,7 +890,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 						     weight, lower_bound_sum,
 						     addend.arg(2));
 	  set_linear_infinite_order();
-	  set_first_valid_index_inf_order(first_well_defined);
+	  set_first_valid_index_inf_order(first_valid_index);
 	  inhomogeneous = rhs - addend * weight;
 	  return SUCCESS;
 	}
@@ -908,7 +908,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
     bool has_n = false;
     unsigned long index;
     Number divisor;
-    for (unsigned i = num_factors; i-- > 0; ) {
+    for (unsigned int i = num_factors; i-- > 0; ) {
       const Expr& factor = addend.op(i);
       if (factor.has_non_rational_numbers())
 	return MALFORMED_RECURRENCE;
@@ -970,24 +970,24 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 	  Expr rhs_rewritten = rhs.collect_term(factor, weight);
 	  // There are not other sums equal to `factor'.
 	  if (weight == 1)
-	    for (unsigned j = num_factors; j-- > 0; )
+	    for (unsigned int j = num_factors; j-- > 0; )
 	      if (addend.op(j) != factor)
 		weight *= addend.op(j);
 	  Expr coeff_first_order;
 	  Expr inhomog_first_order;
-	  unsigned first_well_defined;
+	  index_type first_valid_index;
 	  if (known_class_of_infinite_order(rhs_rewritten, factor, weight,
 					    coeff_first_order,
 					    inhomog_first_order,
-					    first_well_defined)) {
+					    first_valid_index)) {
 	    // The lower bound of the sum must be greater or equal than
 	    // the positive integer `n_0' starting from which `weight'
 	    // and `inhomogeneous_term' are well defined, i. e., for each
 	    // `n' greater or equal to `n_0' `weight' and `inhomogeneous_term'
 	    // evaluated in `n' are well-defined.
-	    unsigned lower_bound_sum
-	      = factor.arg(1).ex_to_number().to_unsigned();
-	    if (lower_bound_sum < first_well_defined)
+	    unsigned int lower_bound_sum
+	      = factor.arg(1).ex_to_number().to_unsigned_int();
+	    if (lower_bound_sum < first_valid_index)
 	      return DOMAIN_ERROR;
 	    infinite_order_p = new Infinite_Order_Info(coeff_first_order
 						       * x(Recurrence::n - 1)
@@ -998,7 +998,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 						       lower_bound_sum,
 						       factor.arg(2));
 	    set_linear_infinite_order();
-	    set_first_valid_index_inf_order(first_well_defined);
+	    set_first_valid_index_inf_order(first_valid_index);
 	    // Note: `weight * factor' is different from `addend' when
 	    // in `rhs' there is more than one term containing the sum
 	    // in `factor'.
@@ -1133,7 +1133,7 @@ PURRS::Recurrence::classify() const {
   // the maximum `k', if it exists, such that `rhs = a*x(n-k) + b' where `a'
   // is not syntactically 0; if not exists `k' such that `rhs = a*x(n-k) + b',
   // then `order' is left to `0'.
-  unsigned int order = 0;
+  index_type order = 0;
   // We will store here the coefficients of linear part of the recurrence.
   std::vector<Expr> coefficients;
 
@@ -1151,10 +1151,10 @@ PURRS::Recurrence::classify() const {
 
   Solver_Status status;
 
-  unsigned num_summands = rhs.is_a_add() ? rhs.nops() : 1;
+  unsigned int num_summands = rhs.is_a_add() ? rhs.nops() : 1;
   if (num_summands > 1)
     // It is necessary that the following loop starts from `0'.
-    for (unsigned i = 0; i < num_summands; ++i) {
+    for (unsigned int i = 0; i < num_summands; ++i) {
       if ((status = classification_summand(rhs, rhs.op(i), inhomogeneous,
 					   order, coefficients,
 					   gcd_among_decrements, i,
@@ -1266,7 +1266,8 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
     case HAS_NULL_DECREMENT:
       {
 	Expr new_rhs;
-	unsigned result = eliminate_null_decrements(recurrence_rhs, new_rhs);
+	unsigned int result
+	  = eliminate_null_decrements(recurrence_rhs, new_rhs);
 	if (result == 0) {
 	  bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	  rec_rewritten = true;

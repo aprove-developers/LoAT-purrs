@@ -68,7 +68,7 @@ using namespace PURRS;
 Expr
 build_characteristic_equation(const Symbol& x,
 			      const std::vector<Number>& coefficients) {
-  for (unsigned i = coefficients.size(); i-- > 0; )
+  for (unsigned int i = coefficients.size(); i-- > 0; )
     if (!coefficients[i].is_rational())
       throw
 	"PURRS error: today the algebraic equation solver works\n"
@@ -77,7 +77,7 @@ build_characteristic_equation(const Symbol& x,
   std::vector<Number> denominators;
   // Find the least common multiple of the denominators of the
   // rational elements of `coefficients'.
-  for (unsigned i = coefficients.size(); i-- > 0; )
+  for (unsigned int i = coefficients.size(); i-- > 0; )
     if (!coefficients[i].is_integer())
       denominators.push_back(coefficients[i].denominator());
   Expr p = 0;
@@ -90,14 +90,14 @@ build_characteristic_equation(const Symbol& x,
     Number least_com_mul = lcm(denominators);
     std::vector<Number> int_coefficients(coefficients);
     // In the first position of `coefficients' there is 0.
-    for (unsigned i = coefficients.size(); i-- > 1; )
+    for (unsigned int i = coefficients.size(); i-- > 1; )
       int_coefficients[i] *= least_com_mul;
-    for (unsigned i = coefficients.size() - 1; i-- > 0; )
+    for (unsigned int i = coefficients.size() - 1; i-- > 0; )
       p += pwr(x, i) * (-int_coefficients[coefficients.size() - 1 - i]);
     p += least_com_mul * pwr(x, coefficients.size() - 1);
   }
   else {
-    for (unsigned i = coefficients.size() - 1; i-- > 0; )
+    for (unsigned int i = coefficients.size() - 1; i-- > 0; )
       p += pwr(x, i) * (-coefficients[coefficients.size() - 1 - i]);
     p += pwr(x, coefficients.size() - 1);
   }
@@ -105,7 +105,7 @@ build_characteristic_equation(const Symbol& x,
 }
 
 Expr
-return_sum(bool distinct, unsigned lower_bound_sum, const Expr& coeff,
+return_sum(bool distinct, unsigned int lower_bound_sum, const Expr& coeff,
 	   const Symbol& alpha, const Symbol& lambda) {
   Symbol k("k");
   Symbol x("x");
@@ -127,7 +127,7 @@ return_sum(bool distinct, unsigned lower_bound_sum, const Expr& coeff,
 }
 
 Expr
-rewrite_factor(const Expr& e, const Symbol& r, unsigned gcd_among_decrements) {
+rewrite_factor(const Expr& e, const Symbol& r, unsigned int gcd_among_decrements) {
   if (e.is_a_power())
     return pwr(rewrite_factor(e.arg(0), r, gcd_among_decrements),
 	       rewrite_factor(e.arg(1), r, gcd_among_decrements));
@@ -145,9 +145,9 @@ rewrite_factor(const Expr& e, const Symbol& r, unsigned gcd_among_decrements) {
       return apply(e.functor(),
 		   rewrite_factor(e.arg(0), r, gcd_among_decrements));
     else {
-      unsigned num_argument = e.nops();
+      unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
-      for (unsigned i = 0; i < num_argument; ++i)
+      for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = rewrite_factor(e.arg(i), r, gcd_among_decrements);
       return apply(e.functor(), argument);
     }
@@ -160,11 +160,11 @@ rewrite_factor(const Expr& e, const Symbol& r, unsigned gcd_among_decrements) {
   ...
 */
 Expr
-rewrite_term(const Expr& e, const Symbol& r, unsigned gcd_among_decrements) {
-  unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
+rewrite_term(const Expr& e, const Symbol& r, unsigned int gcd_among_decrements) {
+  unsigned int num_factors = e.is_a_mul() ? e.nops() : 1;
   Expr e_rewritten = 1;
   if (num_factors > 1)
-    for (unsigned i = num_factors; i-- > 0; )
+    for (unsigned int i = num_factors; i-- > 0; )
       e_rewritten *= rewrite_factor(e.op(i), r, gcd_among_decrements);
   else
     e_rewritten = rewrite_factor(e, r, gcd_among_decrements);
@@ -182,7 +182,7 @@ rewrite_term(const Expr& e, const Symbol& r, unsigned gcd_among_decrements) {
 */
 bool
 PURRS::
-characteristic_equation_and_its_roots(unsigned int order,
+characteristic_equation_and_its_roots(index_type order,
 				      const std::vector<Expr>& coefficients,
 				      std::vector<Number>& num_coefficients,
 				      Expr& characteristic_eq,
@@ -201,7 +201,7 @@ characteristic_equation_and_its_roots(unsigned int order,
   else {
     // Check if the vector `coefficients' contains only numeric
     // elements and in this case use a vector of Number.
-    for (unsigned i = coefficients.size(); i--> 0; )
+    for (unsigned int i = coefficients.size(); i--> 0; )
       if (coefficients[i].is_a_number())
 	num_coefficients[i] = coefficients[i].ex_to_number();
       else
@@ -214,7 +214,7 @@ characteristic_equation_and_its_roots(unsigned int order,
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
       return false;
   }
-  for (unsigned i = roots.size(); i-- > 0; ) {
+  for (unsigned int i = roots.size(); i-- > 0; ) {
     D_VAR(roots[i].value());
     D_VAR(roots[i].multiplicity());
   }
@@ -258,17 +258,17 @@ PURRS::compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
 			    const std::vector<Polynomial_Root>& roots,
 			    const std::vector<Expr>& base_of_exps,
 			    const std::vector<Expr>& exp_poly_coeff,
-			    unsigned lower_bound_sum,
+			    unsigned int lower_bound_sum,
 			    std::vector<Expr>& symbolic_sum_distinct,
 			    std::vector<Expr>& symbolic_sum_no_distinct) {
   // Compute the order of the recurrence relation.
   Number order = 0;
-  for (unsigned i = roots.size(); i-- > 0; )
+  for (unsigned int i = roots.size(); i-- > 0; )
     order += roots[i].multiplicity();
 
-  unsigned r = 0;
-  for (unsigned i = base_of_exps.size(); i-- > 0; )
-    for (unsigned j = roots.size(); j-- > 0; ) {
+  unsigned int r = 0;
+  for (unsigned int i = base_of_exps.size(); i-- > 0; )
+    for (unsigned int j = roots.size(); j-- > 0; ) {
       bool distinct = true;
       if (roots[j].value() == base_of_exps[i])
 	distinct = false;
@@ -323,12 +323,12 @@ PURRS::subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
 				   std::vector<Expr>& symbolic_sum_no_distinct) {
   // Compute the order of the recurrence relation.
   Number order = 0;
-  for (unsigned i = roots.size(); i-- > 0; )
+  for (unsigned int i = roots.size(); i-- > 0; )
     order += roots[i].multiplicity();
   Expr solution = 0;
-  unsigned r = 0;
-  for (unsigned i = base_of_exps.size(); i-- > 0; )
-    for (unsigned j = roots.size(); j-- > 0; ) {
+  unsigned int r = 0;
+  for (unsigned int i = base_of_exps.size(); i-- > 0; )
+    for (unsigned int j = roots.size(); j-- > 0; ) {
       const Expr& base_exp = base_of_exps[i];
       Expr tmp;
       if (base_exp != roots[j].value())
@@ -376,18 +376,18 @@ PURRS::Matrix
 PURRS::solve_system(bool all_distinct,
 		    const std::vector<Number>& coefficients,
 		    const std::vector<Polynomial_Root>& roots) {
-  unsigned coefficients_size = coefficients.size();
+  unsigned int coefficients_size = coefficients.size();
   // Prepare a list with the elments for the right hand side of the system
   // to solve.
   // The elements of the list are `g_0, g_1, ..., g_{k-1}'.
   // Note that `tmp[i]' is built on `tmp[i-1]'.
   std::vector<Expr> tmp(coefficients_size - 1);
   tmp[0] = 1;
-  for (unsigned i = 1; i < coefficients_size - 1; ++i)
-    for (unsigned j = 0; j < i; ++j)
+  for (unsigned int i = 1; i < coefficients_size - 1; ++i)
+    for (unsigned int j = 0; j < i; ++j)
       tmp[i] += coefficients[j+1] * tmp[i-j-1];
   Expr_List g_i;
-  for (unsigned i = coefficients_size - 1; i-- > 0; )
+  for (unsigned int i = coefficients_size - 1; i-- > 0; )
     g_i.prepend(tmp[i]);
   
   // Prepare a list with the coefficients of the equations of the system
@@ -395,13 +395,13 @@ PURRS::solve_system(bool all_distinct,
   // in according to the roots' multiplicity.
   Expr_List coeff_equations;
   if (all_distinct)
-    for (unsigned i = coefficients_size - 1; i-- > 0; )
-      for (unsigned j = coefficients_size - 1; j-- > 0; )
+    for (unsigned int i = coefficients_size - 1; i-- > 0; )
+      for (unsigned int j = coefficients_size - 1; j-- > 0; )
 	coeff_equations.prepend(pwr(roots[j].value(), i));
   else
-    for (unsigned h = 0; h < coefficients_size - 1; ++h)
-      for (unsigned i = roots.size(); i-- > 0; ) {
-	for (unsigned j = roots[i].multiplicity(); j-- > 1; )
+    for (unsigned int h = 0; h < coefficients_size - 1; ++h)
+      for (unsigned int i = roots.size(); i-- > 0; ) {
+	for (unsigned int j = roots[i].multiplicity(); j-- > 1; )
 	  coeff_equations.append(exact_pwr(h, j) * pwr(roots[i].value(), h));
 	coeff_equations.append(pwr(roots[i].value(), h));
       }
@@ -411,7 +411,7 @@ PURRS::solve_system(bool all_distinct,
 		      coeff_equations);
   Matrix rhs(coefficients_size - 1, 1, g_i);
   Matrix vars(coefficients_size - 1, 1);
-  for (unsigned i = coefficients_size - 1; i-- > 0; )
+  for (unsigned int i = coefficients_size - 1; i-- > 0; )
     vars(i, 0) = Symbol();
   // FIXME: in the case of `all_distinct = true' we have a Vandermonde's
   // matrix.
@@ -432,14 +432,14 @@ PURRS::find_g_n(bool all_distinct, const Matrix& sol,
 		const std::vector<Polynomial_Root>& roots) {
   // Compute the order of the recurrence relation.
   Number order = 0;
-  for (unsigned i = roots.size(); i-- > 0; )
+  for (unsigned int i = roots.size(); i-- > 0; )
     order += roots[i].multiplicity();
   Expr g_n = 0;
   if (all_distinct)
-    for (unsigned i = 0; i < order; ++i)
+    for (index_type i = 0; i < order; ++i)
       g_n += sol(i, 0) * pwr(roots[i].value(), Recurrence::n);
   else
-    for (unsigned i = roots.size(), h = 0; i-- > 0; )
+    for (unsigned int i = roots.size(), h = 0; i-- > 0; )
       for (Number j = roots[i].multiplicity(); j-- > 0; h++)
 	g_n += sol(h, 0) * pwr(Recurrence::n, j)
 	  * pwr(roots[i].value(), Recurrence::n);
@@ -474,17 +474,17 @@ PURRS::prepare_for_symbolic_sum(const Expr& g_n,
 			 g_n_poly_coeff, g_n_no_poly_coeff);
   // `bases_of_exp_g_n' must have same elements of `roots' in the same order.
   bool equal = true;
-  for (unsigned i = roots.size(); i-- > 0; )
+  for (unsigned int i = roots.size(); i-- > 0; )
     if (roots[i].value() != bases_exp_g_n[i])
       equal = false;
   if (!equal) {
     std::vector<Expr> tmp_exp(roots.size());
     std::vector<Expr> tmp_coeff_poly(roots.size());
     std::vector<Expr> tmp_coeff_no_poly(roots.size());
-    for (unsigned i = roots.size(); i-- > 0; )
+    for (unsigned int i = roots.size(); i-- > 0; )
       tmp_exp[i] = roots[i].value();
-    for (unsigned i = tmp_exp.size(); i-- > 0; )
-      for (unsigned j = bases_exp_g_n.size(); j-- > 0; )
+    for (unsigned int i = tmp_exp.size(); i-- > 0; )
+      for (unsigned int j = bases_exp_g_n.size(); j-- > 0; )
 	if (tmp_exp[i] == bases_exp_g_n[j]) {
 	  tmp_coeff_poly[i] = g_n_poly_coeff[j];
 	  tmp_coeff_no_poly[i] = g_n_no_poly_coeff[j];
@@ -495,8 +495,8 @@ PURRS::prepare_for_symbolic_sum(const Expr& g_n,
 	 g_n_no_poly_coeff.begin());
   }
   // The roots are simple, i. e., their multiplicity is 1.
-  for (unsigned i = exp_poly_coeff.size(); i-- > 0; )
-    for (unsigned j = g_n_poly_coeff.size(); j-- > 0; )
+  for (unsigned int i = exp_poly_coeff.size(); i-- > 0; )
+    for (unsigned int j = g_n_poly_coeff.size(); j-- > 0; )
       poly_coeff_tot.push_back(exp_poly_coeff[i] * g_n_poly_coeff[j]);
 }
 
@@ -504,7 +504,7 @@ PURRS::prepare_for_symbolic_sum(const Expr& g_n,
   ...
 */
 PURRS::Expr
-PURRS::compute_non_homogeneous_part(const Expr& g_n, unsigned int order,
+PURRS::compute_non_homogeneous_part(const Expr& g_n, index_type order,
 				    const std::vector<Expr>& base_of_exps,
 				    const std::vector<Expr>& exp_poly_coeff) {
   Expr solution_tot = 0;
@@ -513,8 +513,8 @@ PURRS::compute_non_homogeneous_part(const Expr& g_n, unsigned int order,
   std::vector<Expr> g_n_no_poly_coeff;
   exp_poly_decomposition(g_n.expand(), Recurrence::n, bases_exp_g_n,
 			 g_n_poly_coeff, g_n_no_poly_coeff);
-  for (unsigned i = bases_exp_g_n.size(); i-- > 0; )
-    for (unsigned j = base_of_exps.size(); j-- > 0; ) {
+  for (unsigned int i = bases_exp_g_n.size(); i-- > 0; )
+    for (unsigned int j = base_of_exps.size(); j-- > 0; ) {
       Expr solution = 0;
       Symbol k("k");
       Expr g_n_coeff_k = g_n_poly_coeff[i].substitute(Recurrence::n,
@@ -526,7 +526,7 @@ PURRS::compute_non_homogeneous_part(const Expr& g_n, unsigned int order,
 				      1/bases_exp_g_n[i] * base_of_exps[j]);
       // `sum_poly_times_exponentials' computes the sum from 0, whereas
       // we want that the sum start from `order'.
-      for (unsigned int h = 0; h < order; ++h)
+      for (index_type h = 0; h < order; ++h)
 	solution -= (g_n_coeff_k * exp_poly_coeff_k).substitute(k, h)
 	  * pwr(1/bases_exp_g_n[i] * base_of_exps[j], h);
       solution *= pwr(bases_exp_g_n[i], Recurrence::n);
@@ -551,7 +551,7 @@ compute_sum_with_transcendental_method(const Number& lower, const Expr& upper,
 				       const std::vector<Polynomial_Root>&
 				       roots) {
   Expr solution = 0;
-  for (unsigned i = exp_no_poly_coeff.size(); i-- > 0; ) {
+  for (unsigned int i = exp_no_poly_coeff.size(); i-- > 0; ) {
     Expr gosper_solution;
     if (!exp_no_poly_coeff[i].is_zero()) {
       // FIXME: for the moment use this function only when the `order'
@@ -594,16 +594,16 @@ compute_sum_with_transcendental_method(const Number& lower, const Expr& upper,
 */
 PURRS::Expr
 PURRS::write_reduced_order_recurrence(const Expr& old_rhs, const Symbol& r,
-				      unsigned gcd_among_decrements,
+				      unsigned int gcd_among_decrements,
 				      const std::vector<Expr>& coefficients,
 				      std::vector<Expr>& new_coefficients,
 				      Expr& inhomogeneous) {
-  unsigned num_summands = old_rhs.is_a_add() ? old_rhs.nops() : 1;
+  unsigned int num_summands = old_rhs.is_a_add() ? old_rhs.nops() : 1;
   // Build the right hand side of the reduced order recurrences and,
   // at the same time, build its inhomogeneous term.
   Expr new_rhs = 0;
   if (num_summands > 1)
-    for (unsigned i = num_summands; i-- > 0; ) {
+    for (unsigned int i = num_summands; i-- > 0; ) {
       const Expr& tmp = rewrite_term(old_rhs.op(i), r, gcd_among_decrements);
       new_rhs += tmp;
       if (!tmp.has_x_function(Recurrence::n))
@@ -616,7 +616,7 @@ PURRS::write_reduced_order_recurrence(const Expr& old_rhs, const Symbol& r,
       inhomogeneous += tmp;
   }
   // Find the coefficients of the reduced order recurrence.
-  for (unsigned i = coefficients.size(); i-- > 0; )
+  for (unsigned int i = coefficients.size(); i-- > 0; )
     if (i % gcd_among_decrements == 0)
       new_coefficients[i / gcd_among_decrements] = coefficients[i];
   return new_rhs;
@@ -650,17 +650,17 @@ PURRS::write_reduced_order_recurrence(const Expr& old_rhs, const Symbol& r,
 PURRS::Expr 
 PURRS::come_back_to_original_variable(const Expr& e, const Symbol& r,
 				      const Expr& m,
-				      unsigned gcd_among_decrements) {
+				      unsigned int gcd_among_decrements) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten += come_back_to_original_variable(e.op(i), r,
 						    m, gcd_among_decrements);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten *= come_back_to_original_variable(e.op(i), r,
 						    m, gcd_among_decrements);
   }
@@ -680,9 +680,9 @@ PURRS::come_back_to_original_variable(const Expr& e, const Symbol& r,
 		   come_back_to_original_variable(e.arg(0), r,
 						  m, gcd_among_decrements));
     else {
-      unsigned num_argument = e.nops();
+      unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
-      for (unsigned i = 0; i < num_argument; ++i)
+      for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = come_back_to_original_variable(e.arg(i), r,
 						     m, gcd_among_decrements);
       return apply(e.functor(), argument);
@@ -725,14 +725,14 @@ PURRS::come_back_to_original_variable(const Expr& e, const Symbol& r,
 */
 PURRS::Expr
 PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
-					   unsigned gcd_among_decrements) {
+					   unsigned int gcd_among_decrements) {
   // `term_with_ic' will contain the term of the solution relative to
   // the initial condition; `remainder_solution' will contain the
   // rest of the solution.
   Expr term_with_ic = 0;
   Expr remainder_solution = 0;
   if (rec.exact_solution_.expression().is_a_add())
-    for (unsigned i = rec.exact_solution_.expression().nops(); i-- > 0; )
+    for (unsigned int i = rec.exact_solution_.expression().nops(); i-- > 0; )
       if (rec.exact_solution_.expression().op(i).has_x_function_only_ic())
 	term_with_ic += rec.exact_solution_.expression().op(i);
       else
@@ -746,7 +746,7 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
   // function `mod()'.
   Expr to_sub_in_solution = 0;
   const Expr& theta = 2*Constant::Pi/gcd_among_decrements;
-  for (unsigned j = 1; j <= gcd_among_decrements; ++j) {
+  for (unsigned int j = 1; j <= gcd_among_decrements; ++j) {
     const Expr& root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
     // Skip the contribution of the root of unity equal to `1'.
     if (root_of_unity != 1)
@@ -758,11 +758,11 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
 
   // 1. rewrite the part of the solution depending on the
   // initial conditions.
-  for (unsigned h = rec.order()/gcd_among_decrements; h-- > 0; ) {
+  for (unsigned int h = rec.order()/gcd_among_decrements; h-- > 0; ) {
     Expr initial_condition = 0;
-    for (unsigned i = 0; i < gcd_among_decrements; ++i) {
+    for (unsigned int i = 0; i < gcd_among_decrements; ++i) {
       Expr tmp = 0;
-      for (unsigned j = 1; j <= gcd_among_decrements; ++j) {	  
+      for (unsigned int j = 1; j <= gcd_among_decrements; ++j) {	  
 	const Expr& root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
 	tmp += pwr(root_of_unity, Recurrence::n - (i + h));
       }
@@ -795,10 +795,10 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
 void
 PURRS::substitute_non_rational_roots(const Recurrence& rec,
 				     std::vector<Polynomial_Root>& roots) {
-  for (unsigned i = roots.size(); i-- > 0; )
+  for (unsigned int i = roots.size(); i-- > 0; )
     if (roots[i].is_non_rational())
       roots[i].value() = rec.insert_auxiliary_definition(roots[i].value());
-  for (unsigned i = roots.size(); i-- > 0; )
+  for (unsigned int i = roots.size(); i-- > 0; )
     D_VAR(roots[i].value());
 }
 

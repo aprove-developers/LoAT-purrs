@@ -98,13 +98,13 @@ is_non_decreasing_poly(const Expr& e, const Symbol& x) {
     else
       return false;
   else if (e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!is_non_decreasing_poly(e.op(i), x))
 	return false;
     return true;
   }
   else if (e.is_a_add()) {
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       Number num;
       if ((e.op(i).is_a_number(num) && !num.is_positive())
 	  || !is_non_decreasing_poly(e.op(i), x))
@@ -134,13 +134,13 @@ is_non_decreasing_no_poly(const Expr& e, const Symbol& x) {
       return true;
   }
   else if (e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!is_non_decreasing_no_poly(e.op(i), x))
 	return false;
     return true;
   }
   else if (e.is_a_add()) {
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       Number num;
       if ((e.op(i).is_a_number(num) && !num.is_positive())
 	  || !is_non_decreasing_no_poly(e.op(i), x))

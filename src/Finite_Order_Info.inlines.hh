@@ -31,8 +31,9 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
-Finite_Order_Info::Finite_Order_Info(int k,const std::vector<Expr>& coeffs,
-				     unsigned gcd)
+Finite_Order_Info::Finite_Order_Info(index_type k,
+				     const std::vector<Expr>& coeffs,
+				     unsigned int gcd)
   : order_(k),
     coefficients_(coeffs),
     gcd_among_decrements_(gcd),
@@ -66,18 +67,18 @@ Finite_Order_Info::operator=(const Finite_Order_Info& y) {
   return *this;
 }
 
-inline unsigned int
+inline index_type
 Finite_Order_Info::order() const {
   return order_;
 }
 
-inline unsigned
+inline index_type
 Finite_Order_Info::first_valid_index() const {
   return first_valid_index_;
 }
 
 inline void
-Finite_Order_Info::set_first_valid_index(unsigned i_c) {
+Finite_Order_Info::set_first_valid_index(index_type i_c) {
   first_valid_index_ = i_c;
 }
 
@@ -91,7 +92,7 @@ Finite_Order_Info::coefficients() {
   return coefficients_;
 }
 
-inline unsigned
+inline unsigned int
 Finite_Order_Info::gcd_among_decrements() const {
   return gcd_among_decrements_;
 }

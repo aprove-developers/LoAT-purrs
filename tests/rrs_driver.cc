@@ -276,7 +276,7 @@ process_options(int argc, char* argv[]) {
 	if (invalid_initial_condition(r))
 	  invalid_initial_condition(optarg);
 	init_production_recurrence();
-	precp->replace_initial_condition(index.to_unsigned(), r);
+	precp->replace_initial_condition(index.to_unsigned_int(), r);
       }
       break;
 

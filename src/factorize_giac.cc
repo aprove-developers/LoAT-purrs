@@ -49,13 +49,13 @@ factorize_giac_recursive(const Expr& e,
 			 Expr& num_factors, Expr& not_num_factors);
 
 void
-print_indent(unsigned i) {
+print_indent(unsigned int i) {
   for ( ; i-- > 0; )
     cout << " ";
 }
 
 void
-myprint(const gen& e_giac, unsigned indent = 0) {
+myprint(const gen& e_giac, unsigned int indent = 0) {
   //  cout << "Subtype = " << e_giac.subtype << endl;
   print_indent(indent);
   if (e_giac.is_integer())
@@ -78,7 +78,7 @@ myprint(const gen& e_giac, unsigned indent = 0) {
   }
   else if (e_giac.type == _VECT) {
     vecteur &v = *e_giac._VECTptr;
-    for (unsigned i = v.size(); i-- > 0; ) {
+    for (unsigned int i = v.size(); i-- > 0; ) {
       myprint(v[i], indent+2);
     }
   }
@@ -100,13 +100,13 @@ translate(const Expr& e, Expr& num_factors, Expr& not_num_factors,
   gen e_giac;
   if (e.is_a_add()) {
     e_giac = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_giac = e_giac + translate(e.op(i), num_factors, not_num_factors,
 				  blackboard);
   }
   if (e.is_a_mul()) {
     e_giac = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_giac = e_giac * translate(e.op(i), num_factors, not_num_factors,
 				  blackboard);
   }
@@ -139,9 +139,9 @@ translate(const Expr& e, Expr& num_factors, Expr& not_num_factors,
     }
     else {
       // Recursevely factorize the arguments of the function `e'.
-      unsigned num_argument = e.nops();
+      unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
-      for (unsigned i = 0; i < num_argument; ++i) {
+      for (unsigned int i = 0; i < num_argument; ++i) {
 	Expr num_factors_arg;
 	Expr not_num_factors_arg;
 	factorize_giac_recursive(e.arg(i),
@@ -190,7 +190,7 @@ translate(const gen& e_giac) {
       e = 1;
       if (arg.type == _VECT) {
 	vecteur &v = *arg._VECTptr;
-	for (unsigned i = v.size(); i-- > 0; )
+	for (unsigned int i = v.size(); i-- > 0; )
 	  e *= translate(v[i]);
       }
     }
@@ -198,7 +198,7 @@ translate(const gen& e_giac) {
       gen& arg = e_giac._SYMBptr->feuille;
       if (arg.type == _VECT) {
 	vecteur &v = *arg._VECTptr;
-	for (unsigned i = v.size(); i-- > 0; )
+	for (unsigned int i = v.size(); i-- > 0; )
 	  e += translate(v[i]);
       }
     }
@@ -233,7 +233,7 @@ factorize_giac_recursive(const Expr& e,
     gen& arg = giac_e_factorized._SYMBptr->feuille;
     if (arg.type == _VECT) {
       vecteur &v = *arg._VECTptr;
-      for (unsigned i = v.size(); i-- > 0; )
+      for (unsigned int i = v.size(); i-- > 0; )
 	if (v[i].is_integer() || v[i].type == _FRAC
 	    || v[i].is_symb_of_sommet(at_inv))
 	  numeric_factors = numeric_factors * v[i];

@@ -82,12 +82,12 @@ public:
   //! \brief
   //! Computes the size norm of \f$ e \f$ according to the definitions
   //! in \p *this.
-  unsigned size_norm(const Expr& e) const;
+  unsigned int size_norm(const Expr& e) const;
 
   //! \brief
   //! Computes the size norm of \f$ e \f$ according to the definitions
   //! in \p *this.
-  unsigned size_norm(const Symbol& s) const;
+  unsigned int size_norm(const Symbol& s) const;
 
   //! Approximates \f$ e \f$ according to the definitions in \p *this.
   bool approximate(const Symbol& s, Expr& ae, CInterval& aci) const;
@@ -110,16 +110,16 @@ private:
     explicit Definition(const Expr& e);
 
     Expr rhs;
-    Cached<unsigned> size;
+    Cached<unsigned int> size;
     Cached<Expr> approximation;
     Cached<Expr> expansion;
   };
 
   Expr rewrite(Definition& d) const;
-  unsigned size_norm(Definition& d) const;
+  unsigned int size_norm(Definition& d) const;
   Expr approximate(Definition& d) const;
 
-  std::map<Symbol, unsigned, Symbol::NameCompare> index;
+  std::map<Symbol, unsigned int, Symbol::NameCompare> index;
 
   mutable std::deque<Definition> definitions;
 

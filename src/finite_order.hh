@@ -30,13 +30,14 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Symbol.types.hh"
 #include "Matrix.types.hh"
 #include "Recurrence.types.hh"
+#include "globals.hh"
 #include "alg_eq_solver.hh"
 #include <vector>
 
 namespace Parma_Recurrence_Relation_Solver {
 
 bool
-characteristic_equation_and_its_roots(unsigned int order,
+characteristic_equation_and_its_roots(index_type order,
 				      const std::vector<Expr>& coefficients,
 				      std::vector<Number>& num_coefficients,
 				      Expr& characteristic_eq,
@@ -75,7 +76,7 @@ prepare_for_symbolic_sum(const Expr& g_n,
 			 std::vector<Expr>& poly_coeff_tot);
 
 Expr
-compute_non_homogeneous_part(const Expr& g_n, unsigned int order,
+compute_non_homogeneous_part(const Expr& g_n, index_type order,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff);
 

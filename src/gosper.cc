@@ -42,7 +42,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
-static const unsigned
+static const unsigned int
 FACTOR_THRESHOLD = 100;
 
 /*!
@@ -123,7 +123,7 @@ compute_resultant_and_its_roots(const Symbol& m, const Expr& f, const Expr& g,
   if (!find_divisors(constant_term, potential_roots))
     return false;
   // Find non-negative integral roots of the resultant.
-  for(unsigned i = potential_roots.size(); i-- > 0; ) {
+  for(unsigned int i = potential_roots.size(); i-- > 0; ) {
     Number temp = R.substitute(h, potential_roots[i]).ex_to_number();
     if (temp == 0)
       integer_roots.push_back(potential_roots[i]);
@@ -165,8 +165,8 @@ gosper_step_two(const Symbol& m, const Expr& r_m,
   b_m = g * pwr(lead_g, -1);
   // Computation of the output polynomials.
   c_m = 1;
-  unsigned integer_roots_size = integer_roots.size();
-  for (unsigned i = 0; i < integer_roots_size; ++i) {
+  unsigned int integer_roots_size = integer_roots.size();
+  for (unsigned int i = 0; i < integer_roots_size; ++i) {
     Expr temp_b_m = (b_m.substitute(m, m + integer_roots[i])).expand();
     Expr s = general_gcd(a_m, temp_b_m, m);
     a_m = quo(a_m, s, m);
@@ -202,28 +202,28 @@ gosper_step_two(const Symbol& m, const Expr& r_m,
 bool
 find_polynomial_solution(const Symbol& m, const Number& deg_x, const Expr& a_m,
 			 const Expr& b_m, const Expr& c_m, Expr& x_m) {
-  unsigned deg_a = a_m.degree(m);
-  unsigned deg_b = b_m.degree(m);
-  unsigned deg_c = c_m.degree(m);
+  unsigned int deg_a = a_m.degree(m);
+  unsigned int deg_b = b_m.degree(m);
+  unsigned int deg_c = c_m.degree(m);
   // `number_of_coeffs' is the number of coefficients of 
   // the polynomial `p', that is, 1 + deg_x.
-  unsigned number_of_coeffs = (1 + deg_x).to_unsigned();
+  unsigned int number_of_coeffs = (1 + deg_x).to_unsigned_int();
 
   // Compute the real number of unknowns of the polynomial equation
   // `a(m) * p(m+1) - b(m-1) * p(m) - c(m) = 0'.
   // In general, this is larger than `number_of_coeffs' because 
   // the polynomial equation above may have large degree.
-  unsigned number_of_unknowns = number_of_coeffs;
+  unsigned int number_of_unknowns = number_of_coeffs;
   number_of_unknowns += deg_a > deg_b ? deg_a : deg_b;
   number_of_unknowns = number_of_unknowns > deg_c ? number_of_unknowns : deg_c;
 
   Expr_List unknowns;
-  for (unsigned i = 0; i < number_of_unknowns; ++i)
+  for (unsigned int i = 0; i < number_of_unknowns; ++i)
     unknowns.append(Symbol());
 
   // Builds the generic polynomial `p' of degree `deg_x'.
   x_m = 0;
-  for (unsigned i = 0; i < number_of_coeffs; ++i)
+  for (unsigned int i = 0; i < number_of_coeffs; ++i)
     x_m += pwr(m, i) * unknowns.op(i);
 
   Expr x_m_shift = x_m.substitute(m, m+1);
@@ -235,7 +235,7 @@ find_polynomial_solution(const Symbol& m, const Number& deg_x, const Expr& a_m,
 
   // Builds the lists to put in the matrix `rr_coefficients' and `rhs'.
   Expr_List equations;
-  for (unsigned i = 0; i < number_of_unknowns; ++i) {
+  for (unsigned int i = 0; i < number_of_unknowns; ++i) {
     Expr lhs = rr.coeff(m, i);
     equations.prepend(Expr(lhs, 0));
   }
@@ -245,7 +245,7 @@ find_polynomial_solution(const Symbol& m, const Number& deg_x, const Expr& a_m,
     return false;
 
   // Builds the solution `x(n)'.
-  for (unsigned i = 0; i < number_of_coeffs; ++i)
+  for (unsigned int i = 0; i < number_of_coeffs; ++i)
     x_m = x_m.substitute(unknowns.op(i), solution.op(i).op(1));
 
   D_VAR(x_m);
@@ -268,9 +268,9 @@ gosper_step_three(const Symbol& m, const Expr& a_m, const Expr& b_m,
 		  const Expr& c_m, Expr& x_m) {
   // Gosper's algorithm, step 3.1.
   // Finds the degree of `x(n)'.
-  unsigned deg_a = a_m.degree(m);
-  unsigned deg_b = b_m.degree(m);
-  unsigned deg_c = c_m.degree(m);
+  unsigned int deg_a = a_m.degree(m);
+  unsigned int deg_b = b_m.degree(m);
+  unsigned int deg_c = c_m.degree(m);
   Expr lead_a = a_m.lcoeff(m);
   Expr lead_b = b_m.lcoeff(m);
   Number deg_x = -1;

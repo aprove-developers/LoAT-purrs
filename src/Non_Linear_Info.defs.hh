@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Non_Linear_Info_defs_hh 1
 
 #include "Non_Linear_Info.types.hh"
+#include "globals.hh"
 #include "Expr.defs.hh"
 #include "Symbol.defs.hh"
 
@@ -78,16 +79,16 @@ public:
   std::vector<Symbol>& auxiliary_symbols();
 
   //! Returns <CODE>order_if_linear_</CODE>.
-  unsigned int order_if_linear() const;
+  index_type order_if_linear() const;
 
   //! Sets <CODE>order_if_non_linear_</CODE> with \p x.
-  void set_order_if_linear(unsigned int x);
+  void set_order_if_linear(index_type x);
 
   //! Returns <CODE>first_valid_index_if_linear_</CODE>.
-  unsigned first_valid_index_if_linear() const;
+  index_type first_valid_index_if_linear() const;
 
   //! Sets <CODE>first_valid_index_if_linear_</CODE> with \p i_c
-  void set_first_valid_index_if_linear(unsigned i_c);
+  void set_first_valid_index_if_linear(index_type i_c);
 
 private:
   //! \brief
@@ -114,14 +115,14 @@ private:
   //! \brief
   //! When the non-linear recurrence is rewritable in a linear recurrence
   //! of finite order this data stores the order of the linear recurrence.
-  unsigned int order_if_linear_;
+  index_type order_if_linear_;
 
   //! \brief
   //! When the non-linear recurrence is rewritable in a linear recurrence
   //! of finite order this data stores the smallest positive integer for
   //! which the recurrence is well-defined: the initial conditions will
   //! start from it.
-  unsigned first_valid_index_if_linear_;
+  index_type first_valid_index_if_linear_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

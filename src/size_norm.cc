@@ -35,23 +35,23 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
 namespace {
 
 struct Norm_1 {
-  unsigned size_norm(const PURRS::Symbol&) const {
+  unsigned int size_norm(const PURRS::Symbol&) const {
     return 1;
   }
 };
 
 }
 
-unsigned
+unsigned int
 PURRS::size_norm(const Expr& e) {
   return generic_size_norm(e, Norm_1());
 }
 
-unsigned
+unsigned int
 PURRS::size_norm(const Matrix& m) {
   int count = 0;
-  for (unsigned i = m.num_rows(); i-- > 0; )
-    for (unsigned j = m.num_columns(); j-- > 0; )
+  for (unsigned int i = m.num_rows(); i-- > 0; )
+    for (unsigned int j = m.num_columns(); j-- > 0; )
       count += size_norm(m(i, j));
   return count;
 }

@@ -45,10 +45,10 @@ exp_poly_decomposition_factor(const Expr& base, const Expr& e, const Symbol& x,
 			      std::vector<Expr>& alpha,
 			      std::vector<Expr>& p,
 			      std::vector<Expr>& q) {
-  unsigned alpha_size = alpha.size();
-  unsigned position = alpha_size;
+  unsigned int alpha_size = alpha.size();
+  unsigned int position = alpha_size;
   bool found = false;
-  for (unsigned i = alpha_size; i-- > 0; )
+  for (unsigned int i = alpha_size; i-- > 0; )
     if (base == alpha[i]) {
       position = i;
       found = true;
@@ -74,7 +74,7 @@ exp_poly_decomposition_summand(const Expr& e, const Symbol& x,
 			       std::vector<Expr>& alpha,
 			       std::vector<Expr>& p,
 			       std::vector<Expr>& q) {
-  unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
+  unsigned int num_factors = e.is_a_mul() ? e.nops() : 1;
   if (num_factors == 1) {
     if (e.is_a_power() && e.arg(1) == x) {
       // We have found something of the form `power(base, x)'.
@@ -89,7 +89,7 @@ exp_poly_decomposition_summand(const Expr& e, const Symbol& x,
     }
   }
   else
-    for (unsigned i = num_factors; i-- > 0; ) {
+    for (unsigned int i = num_factors; i-- > 0; ) {
       const Expr& e_i = e.op(i);
       if (e_i.is_a_power() && e_i.arg(1) == x) {
 	// We have found something of the form `power(base, x)'.
@@ -100,7 +100,7 @@ exp_poly_decomposition_summand(const Expr& e, const Symbol& x,
 	  // and `base' is good for the decomposition: determine
 	  // `r = e/power(base, x)'.
 	  Expr r = 1;
-	  for (unsigned j = num_factors; j-- > 0; )
+	  for (unsigned int j = num_factors; j-- > 0; )
 	    if (i != j)
 	      r *= e.op(j);
 	  exp_poly_decomposition_factor(base, r, x, alpha, p, q);
@@ -141,7 +141,7 @@ PURRS::exp_poly_decomposition(const Expr& e, const Symbol& x,
   // can become polynomial expressions for the rule `log(a^b) = b log(a)'.
   e_simpl = simplify_logarithm(e_simpl);
 
-  unsigned num_summands = e_simpl.is_a_add() ? e_simpl.nops() : 1;
+  unsigned int num_summands = e_simpl.is_a_add() ? e_simpl.nops() : 1;
   // An upper bound to the number of exponentials is the number of
   // summands in `e': reserve space in the output vectors so that
   // no reallocations will be required.
@@ -149,7 +149,7 @@ PURRS::exp_poly_decomposition(const Expr& e, const Symbol& x,
   p.reserve(num_summands);
   q.reserve(num_summands);
   if (num_summands > 1)
-    for (unsigned i = num_summands; i-- > 0; )
+    for (unsigned int i = num_summands; i-- > 0; )
       exp_poly_decomposition_summand(e_simpl.op(i), x, alpha, p, q);
   else
     exp_poly_decomposition_summand(e_simpl, x, alpha, p, q);

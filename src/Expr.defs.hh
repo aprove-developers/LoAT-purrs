@@ -41,7 +41,7 @@ namespace Parma_Recurrence_Relation_Solver {
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 //! Type of a functor object.
 #endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
-typedef unsigned Functor;
+typedef unsigned int Functor;
 
 //! Output operator.
 /*! \relates Expr */
@@ -180,7 +180,7 @@ int compare(const Expr& x, const Expr& y);
 
 //! Returns the functor of the function named \p name.
 /*! \relates Expr */
-Functor find_functor(const std::string& name, unsigned num_args = 1);
+Functor find_functor(const std::string& name, unsigned int num_args = 1);
 
 //! \brief
 //! Returns the application of functor \f$ f \f$ to operand \f$ x \f$,
@@ -696,7 +696,7 @@ public:
     If \p *this is a function returns the number of its arguments.
     Returns \f$ 0 \f$ otherwise.
   */
-  unsigned nops() const;
+  unsigned int nops() const;
   
   //! \brief
   //! Returns the \f$ i \f$-th (\f$ i = 0, \dotsc, nops()-1 \f$) operand
@@ -708,7 +708,7 @@ public:
     \exception std::out_of_range thrown if
                                  \f$ i \notin \{0, \dotsc, nops() - 1 \} \f$.
   */
-  Expr op(unsigned i) const;
+  Expr op(unsigned int i) const;
 
   //! \brief
   //! Returns the \f$ i \f$-th (\f$ i = 0, \dotsc, nops()-1 \f$) argument
@@ -720,10 +720,10 @@ public:
     \f$ i \f$-th argument of the function.
   */
 #ifdef UNSAFE_ARG
-  const Expr& arg(unsigned i) const;
-  Expr& arg(unsigned i);
+  const Expr& arg(unsigned int i) const;
+  Expr& arg(unsigned int i);
 #else
-  Expr arg(unsigned i) const;
+  Expr arg(unsigned int i) const;
 #endif
 
   //! \brief
@@ -778,7 +778,7 @@ public:
                                  the powers with base equal to \p x not
 				 integer.
   */
-  unsigned degree(const Symbol& x) const;
+  unsigned int degree(const Symbol& x) const;
 
   //! \brief
   //! If \p *this is a polynomial or a rational function, returns the degree
@@ -797,7 +797,7 @@ public:
                                  the powers with base equal to \p x not
 				 integer.
   */
-  unsigned ldegree(const Symbol& x) const;
+  unsigned int ldegree(const Symbol& x) const;
 
   //! \brief
   //! Returns coefficient of the term of degree equal to \p k, i. e.,
@@ -887,7 +887,7 @@ public:
   //! \brief
   //! Returns partial derivative of \p nth order of \p *this with respect
   //! to the variable \p x.
-  Expr diff(const Symbol& x, unsigned nth = 1);
+  Expr diff(const Symbol& x, unsigned int nth = 1);
 
   void latex_print(std::ostream& s);
 
@@ -1168,7 +1168,7 @@ private:
   the norm of <CODE>s</CODE>, returns the size-norm of \p e.
 */
 template <typename SymbolHandler>
-unsigned
+unsigned int
 generic_size_norm(const Expr& e, const SymbolHandler& sh);
 
 } // namespace Parma_Recurrence_Relation_Solver

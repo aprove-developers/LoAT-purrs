@@ -73,15 +73,15 @@ simplify_logarithm_in_expanded_ex(const Expr& e);
 bool
 erase_factor(Expr& e) {
   if (e.is_a_mul()) {
-    unsigned num_factors = e.nops();
-    unsigned i;
+    unsigned int num_factors = e.nops();
+    unsigned int i;
     for (i = 0; i < num_factors; ++i)
       if (e.op(i) == Recurrence::n)
 	break;
     if (i < num_factors) {
       // Found an occurrence of the symbol `n'.
       Expr r = 1;
-      for (unsigned j = 0; j < num_factors; ++j)
+      for (unsigned int j = 0; j < num_factors; ++j)
 	if (i != j)
 	  r *= e.op(j);
       e = r;
@@ -172,7 +172,7 @@ find_real_base_and_build_exponent(Expr& base, Expr& numeric_exponent,
     // Split the exponent in two parts: numeric and non-numeric.
     const Expr& exponent = base.arg(1);
     if (exponent.is_a_mul())
-      for (unsigned i = exponent.nops(); i-- > 0; )
+      for (unsigned int i = exponent.nops(); i-- > 0; )
         split_exponent(exponent.op(i), numeric_exponent, not_numeric_exponent);
     else
       split_exponent(exponent, numeric_exponent, not_numeric_exponent);
@@ -208,11 +208,11 @@ simplify_powers_with_bases_mul(const Expr& base, const Expr& num_exponent,
   std::vector<Expr> vect_base(base.nops());
   std::vector<Expr> vect_num_exp(base.nops());
   std::vector<Expr> vect_not_num_exp(base.nops());
-  for (unsigned i = base.nops(); i-- > 0; ) {
+  for (unsigned int i = base.nops(); i-- > 0; ) {
     vect_num_exp[i] = num_exponent;
     vect_not_num_exp[i] = not_num_exponent;
   }
-  for (unsigned i = base.nops(); i-- > 0; ) {
+  for (unsigned int i = base.nops(); i-- > 0; ) {
     const Expr& base_factor = base.op(i);
     if (base_factor.is_a_power()) {
       Expr tmp_base = base_factor;
@@ -226,7 +226,7 @@ simplify_powers_with_bases_mul(const Expr& base, const Expr& num_exponent,
   // The numeric and non-numeric part of the exponent of each factor
   // of the base is determined.
   Expr result = 1;
-  for (unsigned i = base.nops(); i-- > 0; )
+  for (unsigned int i = base.nops(); i-- > 0; )
     if (!vect_base[i].is_a_number())
       result *= return_power(false, vect_base[i],
 			     vect_num_exp[i], vect_not_num_exp[i], input);
@@ -299,7 +299,7 @@ simplify_powers(const Expr& e, bool input) {
 void
 find_bases_and_exponents(const Expr& e, std::vector<Expr>& bases,
 			 std::vector<Expr>& exponents) {
-  for (unsigned i = e.nops(); i-- > 0; ) {
+  for (unsigned int i = e.nops(); i-- > 0; ) {
     const Expr& factor = e.op(i);
     if (factor.is_a_power()) {
       bases.push_back(factor.arg(0));
@@ -335,8 +335,8 @@ collect_same_exponents(const Expr& e, bool collect_only_n = false) {
   // of `e' with the same exponents simplified in only one power with the
   // base equal to the previous bases multiplicated among themselves 
   // (rule `C3').
-  for (unsigned i = exponents.size(); i-- > 0; ) {
-    for (unsigned j = i; j-- > 0; ) {
+  for (unsigned int i = exponents.size(); i-- > 0; ) {
+    for (unsigned int j = i; j-- > 0; ) {
       if (exponents[j] == exponents[i]) {
 	if (!collect_only_n
 	    || (collect_only_n && exponents[j] == Recurrence::n)) {
@@ -373,7 +373,7 @@ collect_same_exponents(const Expr& e, bool collect_only_n = false) {
   }
   // Now adds to `e_rewritten' the factors of `e' not considered in the
   // previous cycle, i.e., the factors which are not powers.
-  for (unsigned i = e.nops(); i-- > 0; ) {
+  for (unsigned int i = e.nops(); i-- > 0; ) {
     const Expr& factor = e.op(i);
     if (!factor.is_a_power())
       e_rewritten *= factor;
@@ -404,8 +404,8 @@ collect_same_base(const Expr& e) {
   // the powers of `e' with the same bases simplified in only one power
   // with exponent equal to the sum of the previous powers' exponents
   // (rule `C2').
-  for (unsigned i = exponents.size(); i-- > 0; ) {
-    for (unsigned j = i; j-- > 0; )
+  for (unsigned int i = exponents.size(); i-- > 0; ) {
+    for (unsigned int j = i; j-- > 0; )
       if (bases[j] == bases[i]) {
 	// We have found two equal bases. We store in the i-th
 	// position of the vectors `bases' and `exponents' the new power
@@ -421,7 +421,7 @@ collect_same_base(const Expr& e) {
   // Now adds to `e_rewritten' the factors of `e' not considered in the
   // previous cycle, i.e., the factors which are not powers applying,
   // when possible, the rule `C1'.
-  for (unsigned i = e.nops(); i-- > 0; ) {
+  for (unsigned int i = e.nops(); i-- > 0; ) {
     const Expr& factor_e = e.op(i);
     if (!factor_e.is_a_power()) {
       // We must consider those factors that are not powers but are equal
@@ -431,7 +431,7 @@ collect_same_base(const Expr& e) {
       bool to_sum = false;
       Expr old_factor;
       Expr new_factor;
-      for (unsigned j = bases.size(); j-- > 0; ) {
+      for (unsigned int j = bases.size(); j-- > 0; ) {
 	const Expr& bases_j = bases[j];
 	const Expr& exponents_j = exponents[j];
 	if (bases_j == factor_e && !exponents_j.is_zero()) {
@@ -514,7 +514,7 @@ to_std_form(const Number& k, const std::vector<Number>& bases,
   assert(k.is_integer());
   int abs_k = ::abs(k.to_int());
   Expr m = 1;
-  for (unsigned i = bases.size(); i-- > 0; ) {
+  for (unsigned int i = bases.size(); i-- > 0; ) {
     int remainder = exponents[i] % abs_k;
     int quotient  = exponents[i] / abs_k;
     if (k < 0 && remainder != 0) { // adjust quotient and remainder
@@ -613,36 +613,36 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
   std::vector<int> den_exponents;  
   // Partial factor and reduce numerator and denominator.
   partial_factor(num, num_bases, num_exponents);
-  unsigned num_size = num_bases.size();
+  unsigned int num_size = num_bases.size();
   Expr reduced_num = to_std_form(k, num_bases, num_exponents);
   // Here <CODE>to_std_form</CODE> is called with a negative value of k 
   // because we are dealing with the denominator of r.
   partial_factor(den, den_bases, den_exponents);
-  unsigned den_size = den_bases.size();
+  unsigned int den_size = den_bases.size();
   Expr reduced_den = to_std_form(-k, den_bases, den_exponents);
   
   // Try one last simplification: if all exponents have a common factor 
   // with the root index, remove it.
   int gc = k;
-  for (unsigned i = 0; i < num_size && gc > 1; ++i)
+  for (unsigned int i = 0; i < num_size && gc > 1; ++i)
     gc = gcd(gc, num_exponents[i]);
-  for (unsigned i = 0; i < den_size && gc > 1; ++i)
+  for (unsigned int i = 0; i < den_size && gc > 1; ++i)
     gc = gcd(gc, den_exponents[i]);
   
   if (gc > 1) {
     k /= gc;
-    for (unsigned i = 0; i < num_size; ++i)
+    for (unsigned int i = 0; i < num_size; ++i)
       num_exponents[i] /= gc;
-    for (unsigned i = 0; i < den_size; ++i)
+    for (unsigned int i = 0; i < den_size; ++i)
       den_exponents[i] /= gc;
   }
   
   // The object `irr_part' is surely numeric but we have to use an expression
   // because otherwise the number, since it is irrational, is rounded.
   Expr irr_part = 1;
-  for (unsigned i = 0; i < num_size; ++i)
+  for (unsigned int i = 0; i < num_size; ++i)
     irr_part *= pwr(num_bases[i], num_exponents[i]);
-  for (unsigned i = 0; i < den_size; ++i)
+  for (unsigned int i = 0; i < den_size; ++i)
     irr_part *= pwr(den_bases[i], den_exponents[i]);
   Expr q = sign * reduced_num * pwr(reduced_den, -1);
   if (irr_part.ex_to_number() > 1)
@@ -717,7 +717,7 @@ reduce_product(const Expr& e) {
   Expr factor_no_to_reduce = 1;
   Number base_1 = 1;
   Number exp_1 = 1;
-  for (unsigned i = e.nops(); i-- > 0; ) {
+  for (unsigned int i = e.nops(); i-- > 0; ) {
     const Expr& factor_e = e.op(i);
     if (factor_e.is_a_power()) {
       // Base and exponent of `factor_e' are both numerics.
@@ -730,7 +730,7 @@ reduce_product(const Expr& e) {
 	// `numeric * numeric^numeric'.
 	if (to_reduce.is_a_mul()) {
 	  assert(to_reduce.nops() == 2); 
-	  for (unsigned j = 2; j-- > 0; ) {
+	  for (unsigned int j = 2; j-- > 0; ) {
 	    const Expr& factor = to_reduce.op(j);
 	    if (factor.is_a_power()) {
 	      const Expr& base_factor = factor.arg(0);
@@ -777,7 +777,7 @@ manip_factor(const Expr& e, bool input) {
   assert(e.is_a_mul());
   Expr e_rewritten = 1;
   // Simplifies each factor that is a `power'.
-  for (unsigned i = e.nops(); i-- > 0; ) {
+  for (unsigned int i = e.nops(); i-- > 0; ) {
     const Expr& factor_e = e.op(i);
     if (factor_e.is_a_power()) {
       const Expr& base
@@ -806,7 +806,7 @@ manip_factor(const Expr& e, bool input) {
   if (e_rewritten.is_a_mul()) {
     Expr factor_function = 1;
     Expr factor_no_function = 1;
-    for (unsigned i = e_rewritten.nops(); i-- > 0; ) {
+    for (unsigned int i = e_rewritten.nops(); i-- > 0; ) {
       const Expr& factor_e_rewritten = e_rewritten.op(i);
       if (factor_e_rewritten.is_a_function())
 	if (factor_e_rewritten.nops() == 1)
@@ -815,9 +815,9 @@ manip_factor(const Expr& e, bool input) {
 		     simplify_expanded_ex_for_output(factor_e_rewritten.arg(0)
 						     .expand(), input));
 	else {
-	  unsigned num_argument = factor_e_rewritten.nops();
+	  unsigned int num_argument = factor_e_rewritten.nops();
 	  std::vector<Expr> argument(num_argument);
-	  for (unsigned i = 0; i < num_argument; ++i)
+	  for (unsigned int i = 0; i < num_argument; ++i)
 	    argument[i]
 	      = simplify_expanded_ex_for_output(factor_e_rewritten.arg(i)
 						.expand(), input);
@@ -834,9 +834,9 @@ manip_factor(const Expr& e, bool input) {
 			  simplify_expanded_ex_for_output(e_rewritten.arg(0)
 							  .expand(), input));
     else {
-      unsigned num_argument = e_rewritten.nops();
+      unsigned int num_argument = e_rewritten.nops();
       std::vector<Expr> argument(num_argument);
-      for (unsigned i = 0; i < num_argument; ++i)
+      for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = simplify_expanded_ex_for_output(e_rewritten.arg(i)
 						      .expand(), input);
       e_rewritten = apply(e_rewritten.functor(), argument);
@@ -848,7 +848,7 @@ manip_factor(const Expr& e, bool input) {
   if (e_rewritten.is_a_mul()) {
     Expr argument = 0;
     Expr rem = 1;
-    for (unsigned i = e_rewritten.nops(); i-- > 0; ) {
+    for (unsigned int i = e_rewritten.nops(); i-- > 0; ) {
       const Expr& factor_e_rewritten = e_rewritten.op(i);
       if (factor_e_rewritten.is_the_exp_function())
 	argument += factor_e_rewritten.arg(0);
@@ -861,7 +861,7 @@ manip_factor(const Expr& e, bool input) {
   // Simplifies eventual product of irrational numbers.
   if (e_rewritten.is_a_add()) {
     Expr terms = 0;
-    for (unsigned i = e_rewritten.nops(); i-- > 0; ) { 
+    for (unsigned int i = e_rewritten.nops(); i-- > 0; ) { 
       const Expr& term_e_rewritten = e_rewritten.op(i);
       if (term_e_rewritten.is_a_mul())
 	terms += reduce_product(term_e_rewritten);
@@ -877,7 +877,7 @@ manip_factor(const Expr& e, bool input) {
   // the rule of the term rewriting system \f$ \mathfrak{R}_o \f$.
   if (e_rewritten.is_a_add()) {
     Expr terms = 0;
-    for (unsigned i = e_rewritten.nops(); i-- > 0; ) { 
+    for (unsigned int i = e_rewritten.nops(); i-- > 0; ) { 
       const Expr& term_e_rewritten = e_rewritten.op(i);
       if (term_e_rewritten.is_a_mul())
 	terms += collect_base_exponent(term_e_rewritten);
@@ -915,12 +915,12 @@ simplify_expanded_ex_for_input(const Expr& e, bool input) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten += simplify_expanded_ex_for_input(e.op(i).expand(), input);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten *= simplify_expanded_ex_for_input(e.op(i).expand(), input);
     // In the case of expressions for input we are interesting to collect
     // powers with the same exponents when this is equal to `Recurrence::n'.
@@ -934,9 +934,9 @@ simplify_expanded_ex_for_input(const Expr& e, bool input) {
       return apply(e.functor(),
 		   simplify_expanded_ex_for_input(e.arg(0).expand(), input));
     else {
-      unsigned num_argument = e.nops();
+      unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
-      for (unsigned i = 0; i < num_argument; ++i)
+      for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = simplify_expanded_ex_for_input(e.arg(i).expand(), input);
       return apply(e.functor(), argument);
     }
@@ -964,7 +964,7 @@ simplify_expanded_ex_for_output(const Expr& e, bool input) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten += simplify_expanded_ex_for_output(e.op(i).expand(), input);
   }
   else if (e.is_a_mul())
@@ -1000,9 +1000,9 @@ simplify_expanded_ex_for_output(const Expr& e, bool input) {
       return apply(e.functor(),
 		   simplify_expanded_ex_for_output(e.arg(0).expand(), input));
     else {
-      unsigned num_argument = e.nops();
+      unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
-      for (unsigned i = 0; i < num_argument; ++i)
+      for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = simplify_expanded_ex_for_output(e.arg(i).expand(),
 						      input);
       return apply(e.functor(), argument);
@@ -1027,7 +1027,7 @@ decompose_factorial(const Expr& e) {
   if (argument.is_a_add()) {
     Number num = 0;
     Expr new_arg_fact = 0;
-    for (unsigned i = argument.nops(); i-- > 0; ) {
+    for (unsigned int i = argument.nops(); i-- > 0; ) {
       Number tmp_num;
       if (argument.op(i).is_a_number(tmp_num) && tmp_num.is_integer())
 	// We are sure that `num' is again `0' because automatically
@@ -1076,12 +1076,12 @@ rewrite_factorials_and_exponentials(const Expr& e) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten += rewrite_factorials_and_exponentials(e.op(i));
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten *= rewrite_factorials_and_exponentials(e.op(i));
   }
   else if (e.is_a_power()) {
@@ -1098,9 +1098,9 @@ rewrite_factorials_and_exponentials(const Expr& e) {
 	return apply(e.functor(),
 		     rewrite_factorials_and_exponentials(e.arg(0)));
       else {
-	unsigned num_argument = e.nops();
+	unsigned int num_argument = e.nops();
 	std::vector<Expr> argument(num_argument);
-	for (unsigned i = 0; i < num_argument; ++i)
+	for (unsigned int i = 0; i < num_argument; ++i)
 	  argument[i] = rewrite_factorials_and_exponentials(e.arg(i));
 	return apply(e.functor(), argument);
       }
@@ -1131,12 +1131,12 @@ rewrite_binomials(const Expr& e) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten += rewrite_binomials(e.op(i));
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten *= rewrite_binomials(e.op(i));
   }
   else if (e.is_a_power())
@@ -1166,9 +1166,9 @@ rewrite_binomials(const Expr& e) {
 	return apply(e.functor(),
 		     rewrite_binomials(e.arg(0)));
       else {
-	unsigned num_argument = e.nops();
+	unsigned int num_argument = e.nops();
 	std::vector<Expr> argument(num_argument);
-	for (unsigned i = 0; i < num_argument; ++i)
+	for (unsigned int i = 0; i < num_argument; ++i)
 	  argument[i] = rewrite_binomials(e.arg(i));
 	return apply(e.functor(), argument);
       }
@@ -1187,7 +1187,7 @@ factorize_base_arg_log(const Number& base, const Expr& exponent = 1) {
     return exponent * exponents[0] * log(bases[0]);
   else {
     Number new_base = bases[0];
-    for (unsigned i = exponents.size(); i-- > 1; )
+    for (unsigned int i = exponents.size(); i-- > 1; )
       if (exponents[i] != exponents[0])
 	return log(pwr(base, exponent));
       else
@@ -1200,7 +1200,7 @@ Expr
 logarithm_of_product(const Expr& arg_log) {
   assert(arg_log.is_a_mul());
   Expr sum_log = 0;
-  for (unsigned i = arg_log.nops(); i-- > 0; ) {
+  for (unsigned int i = arg_log.nops(); i-- > 0; ) {
     const Expr& factor = arg_log.op(i);
     if (factor.is_a_power() || factor.is_a_number())
       sum_log += simplify_logarithm_in_expanded_ex(log(factor));
@@ -1343,7 +1343,7 @@ prepare_simpl_power_in_logarithm(const Expr& base, const Expr& exponent) {
   // `log(a^b) = b log(a)' to the exponent.
   Expr exponent_simpl = 1;
   if (exponent.is_a_mul())
-    for (unsigned i = exponent.nops(); i-- > 0; ) {
+    for (unsigned int i = exponent.nops(); i-- > 0; ) {
       const Expr& factor = exponent.op(i);
       if (factor.is_the_log_function())
 	exponent_simpl *= apply_elementary_prop(factor, false);
@@ -1364,7 +1364,7 @@ prepare_simpl_power_in_logarithm(const Expr& base, const Expr& exponent) {
   if (exponent_simpl.is_a_mul()) {
     Expr arg_factor_log = 1;
     Expr rem = 1;
-    for (unsigned i = exponent_simpl.nops(); i-- > 0; ) {
+    for (unsigned int i = exponent_simpl.nops(); i-- > 0; ) {
       const Expr& factor = exponent_simpl.op(i);
       if (factor.is_the_log_function()
 	  && (factor.arg(0).has(Recurrence::n)
@@ -1400,7 +1400,7 @@ prepare_simpl_power_in_logarithm(const Expr& base, const Expr& exponent) {
     Number arg_log_den = 1;
     Expr rem = 1;
     bool stop_simplification = false;
-    for (unsigned i = exponent_simpl.nops(); i-- > 0; ) {
+    for (unsigned int i = exponent_simpl.nops(); i-- > 0; ) {
       const Expr& factor = exponent_simpl.op(i);
       if (factor.is_the_log_function())
 	if (arg_log_num == 1)
@@ -1437,7 +1437,7 @@ prepare_simpl_power_in_logarithm(const Expr& base, const Expr& exponent) {
     if (exponent_simpl.is_a_mul()) {
       Expr log_factors_exp = 1;
       Expr rem_factors_exp = 1;
-      for (unsigned i = exponent_simpl.nops(); i-- > 0; ) {
+      for (unsigned int i = exponent_simpl.nops(); i-- > 0; ) {
 	const Expr& factor = exponent_simpl.op(i);
 	if ((factor.is_a_power() && factor.arg(0).is_the_log_function()
 	     && factor.arg(1) == -1)
@@ -1470,7 +1470,7 @@ simpl_quotient_of_logs(const Expr& e) {
   Expr e_simplified = 1;
   Expr log_factors = 1;
   Expr inv_log_factors = 1;
-  for (unsigned i = e.nops(); i-- > 0; ) {
+  for (unsigned int i = e.nops(); i-- > 0; ) {
     const Expr& factor = e.op(i);
     if (factor.is_the_log_function())
       log_factors *= factor;
@@ -1486,11 +1486,11 @@ simpl_quotient_of_logs(const Expr& e) {
 
   // There is more than one factor of the form `log(a)'.
   if (log_factors.is_a_mul())
-    for (unsigned i = log_factors.nops(); i-- > 0; ) {
+    for (unsigned int i = log_factors.nops(); i-- > 0; ) {
       const Expr& arg_log_1 = log_factors.op(i).arg(0);
       // There is more than one factor of the form `1 / log(a)'.
       if (inv_log_factors.is_a_mul())
-	for (unsigned j = inv_log_factors.nops(); j-- > 0; ) {
+	for (unsigned int j = inv_log_factors.nops(); j-- > 0; ) {
 	  const Expr& arg_log_2 = inv_log_factors.op(j).arg(0).arg(0);
 	  if (numerator(arg_log_1) == denominator(arg_log_2)
 	      && numerator(arg_log_2) == denominator(arg_log_1)) {
@@ -1527,7 +1527,7 @@ simpl_quotient_of_logs(const Expr& e) {
     const Expr& arg_log_1 = log_factors.arg(0);
     // There is more than one factor of the form `1 / log(a)'.
     if (inv_log_factors.is_a_mul())
-      for (unsigned j = inv_log_factors.nops(); j-- > 0; ) {
+      for (unsigned int j = inv_log_factors.nops(); j-- > 0; ) {
 	const Expr& arg_log_2 = inv_log_factors.op(j).arg(0).arg(0);
 	if (numerator(arg_log_1) == denominator(arg_log_2)
 	    && numerator(arg_log_2) == denominator(arg_log_1))
@@ -1571,14 +1571,14 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten += simplify_logarithm_in_expanded_ex(e.op(i));
   }
   else if (e.is_a_mul()) {
     const Expr& tmp = simpl_quotient_of_logs(e);
     if (tmp.is_a_mul()) {
       e_rewritten = 1;
-      for (unsigned i = tmp.nops(); i-- > 0; )
+      for (unsigned int i = tmp.nops(); i-- > 0; )
 	e_rewritten *= simplify_logarithm_in_expanded_ex(tmp.op(i));
     }
     else
@@ -1596,9 +1596,9 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
     else if (e.nops() == 1)
       return apply(e.functor(), simplify_logarithm_in_expanded_ex(e.arg(0)));
     else {
-      unsigned num_argument = e.nops();
+      unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
-      for (unsigned i = 0; i < num_argument; ++i)
+      for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = simplify_logarithm_in_expanded_ex(e.arg(i));
       return apply(e.functor(), argument);
     }
@@ -1619,7 +1619,7 @@ void
 get_out_factors_from_argument(const Expr& e, const Expr& x,
 			      Expr& in, Expr& out) {
   if (e.is_a_mul())
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       const Expr& factor = e.op(i);
       if (factor.has(x))
 	in *= factor;
@@ -1711,7 +1711,7 @@ compute_sum(const Expr& e) {
 
   Expr e_rewritten = 0;
   if (vector_not_all_zero(exp_poly_coeff)) {
-    for (unsigned i = exp_poly_coeff.size(); i-- > 0; ) {
+    for (unsigned int i = exp_poly_coeff.size(); i-- > 0; ) {
       Symbol k("k");
       Expr coeff_k = exp_poly_coeff[i].substitute(e.arg(0), k);
       Expr solution = sum_poly_times_exponentials(coeff_k, k,
@@ -1731,7 +1731,7 @@ compute_sum(const Expr& e) {
     }
   }
   if (vector_not_all_zero(exp_no_poly_coeff)) {
-    for (unsigned i = exp_poly_coeff.size(); i-- > 0; ) {
+    for (unsigned int i = exp_poly_coeff.size(); i-- > 0; ) {
       Expr gosper_solution;
       if (!gosper_algorithm(symb_part_of_upper,
 			    e.arg(3).substitute(e.arg(0), symb_part_of_upper),
@@ -1778,13 +1778,13 @@ simplify_sum_in_expanded_ex(const Expr& e,
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten += simplify_sum_in_expanded_ex(e.op(i), only_verification,
 						 try_to_compute_sum);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten *= simplify_sum_in_expanded_ex(e.op(i), only_verification,
 						 try_to_compute_sum);
   }
@@ -1804,7 +1804,7 @@ simplify_sum_in_expanded_ex(const Expr& e,
 	// summand.
 	if (try_to_compute_sum && e.arg(3).is_a_add()) {
 	  e_rewritten = 0;
-	  for (unsigned i = e.arg(3).nops(); i-- > 0; )
+	  for (unsigned int i = e.arg(3).nops(); i-- > 0; )
 	    e_rewritten
 	      += simplify_sum_in_expanded_ex(sum(e.arg(0), e.arg(1), e.arg(2),
 						 e.arg(3).op(i)),
@@ -1825,9 +1825,9 @@ simplify_sum_in_expanded_ex(const Expr& e,
 	if (e.arg(2).is_a_add() && e.arg(2).nops() == 2 && only_verification)
 	  return split_sum(e);
       }
-      unsigned num_argument = e.nops();
+      unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
-      for (unsigned i = 0; i < num_argument; ++i)
+      for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = simplify_sum_in_expanded_ex(e.arg(i), only_verification,
 						  try_to_compute_sum);
       return apply(e.functor(), argument);

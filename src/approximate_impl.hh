@@ -100,7 +100,7 @@ bool
 generic_approximate(const Expr& e, const SymbolHandler& sh,
 		    Expr& ae, CInterval& aci) {
 #if 0
-  static unsigned indent = 0;
+  static unsigned int indent = 0;
   for (unsigned int i = 0; i < indent; ++i)
     std::cout << ' ';
   std::cout << "approx " << e << std::endl;
@@ -117,7 +117,7 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
     Expr accumulated_ae = 0;
     CInterval accumulated_aci(Interval::ZERO(), Interval::ZERO());
     bool non_trivial_interval = false;
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       if (generic_approximate(e.op(i), sh, operand_ae, operand_aci)) {
 	accumulated_aci += operand_aci;
 	non_trivial_interval = true;
@@ -138,7 +138,7 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
     Expr accumulated_ae = 1;
     CInterval accumulated_aci(Interval::ONE(), Interval::ZERO());
     bool non_trivial_interval = false;
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       if (generic_approximate(e.op(i), sh, operand_ae, operand_aci)) {
 	accumulated_aci *= operand_aci;
 	non_trivial_interval = true;

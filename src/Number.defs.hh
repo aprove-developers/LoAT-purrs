@@ -278,9 +278,9 @@ public:
   //! Returns the <CODE>int</CODE> corresponding to \p *this, if any.
   /*!
     \exception std::domain_error thrown if \p *this is not convertible
-                                 to <CODE>unsigned</CODE>.
+                                 to <CODE>unsigned int</CODE>.
   */
-  unsigned to_unsigned() const;
+  unsigned int to_unsigned_int() const;
 
   //! Returns the <CODE>long</CODE> corresponding to \p *this, if any.
   /*!

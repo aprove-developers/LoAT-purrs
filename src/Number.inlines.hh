@@ -334,8 +334,8 @@ Number::to_int() const {
   return n.to_int();
 }
 
-inline unsigned
-Number::to_unsigned() const {
+inline unsigned int
+Number::to_unsigned_int() const {
   // FIXME: this test is necessary to circumvent a misfeature
   // of CLN 1.1.5 and/or GiNaC 1.0.11.
   // See http://www.cs.unipr.it/pipermail/purrs-devel/2002-October/000412.html.

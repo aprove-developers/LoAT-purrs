@@ -69,7 +69,7 @@ REGISTER_FUNCTION(x,
 void
 get_out_factors_from_argument(const ex& e, const ex& x, ex& in, ex& out) {
   if (is_a<mul>(e))
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       const ex& factor = e.op(i);
       if (factor.has(x))
 	in *= factor;
@@ -456,12 +456,12 @@ substitute_critical_ex(const Expr& e, const Expr_List& y,
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten += substitute_critical_ex(e.op(i), y, blackboard);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten *= substitute_critical_ex(e.op(i), y, blackboard);
   }
   else if (e.is_a_power()) {
@@ -475,7 +475,7 @@ substitute_critical_ex(const Expr& e, const Expr_List& y,
 		 substitute_critical_ex(exponent, y, blackboard));
   }
   else if (e.is_a_function()) {
-    for (unsigned i = y.nops(); i-- > 0; )
+    for (unsigned int i = y.nops(); i-- > 0; )
       assert(e.is_a_constant_function(y.op(i).ex_to_symbol()));
     return blackboard.insert_definition(e);
   }
@@ -488,7 +488,7 @@ substitute_critical_ex(const Expr& e, const Expr_List& y,
 
 PURRS::Expr
 PURRS::sqrfree(const Expr& x, const Expr_List& y) {
-  for (unsigned i = y.nops(); i-- > 0; )
+  for (unsigned int i = y.nops(); i-- > 0; )
     assert(x.is_polynomial(y.op(i).ex_to_symbol()));
   // FIXME: temporary!
   // Substitute every critical expression with an arbitrary symbol
@@ -549,12 +549,12 @@ PURRS::Expr::substitute(const Expr& s, const Expr& r) const {
     return r;
   else if (e.is_a_add()) {
     e_substituted = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_substituted += e.op(i).substitute(s, r);
   }
   else if (e.is_a_mul()) {
     e_substituted = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_substituted *= e.op(i).substitute(s, r);
   }
   else if (e.is_a_power())
@@ -563,9 +563,9 @@ PURRS::Expr::substitute(const Expr& s, const Expr& r) const {
     if (e.nops() == 1)
       return apply(e.functor(), e.arg(0).substitute(s, r));
     else {
-      unsigned num_argument = e.nops();
+      unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
-      for (unsigned j = 0; j < num_argument; ++j)
+      for (unsigned int j = 0; j < num_argument; ++j)
 	argument[j] = e.arg(j).substitute(s, r);
       return apply(e.functor(), argument);
     }
@@ -581,19 +581,19 @@ Expr
 distribute_mul_over_add_factor(const Expr& e) {
   assert(e.is_a_mul());
   Expr distributed_e = e.op(0);
-  for (unsigned i = e.nops(); i-- > 1; ) {
+  for (unsigned int i = e.nops(); i-- > 1; ) {
     Expr factor = e.op(i);
     Expr tmp = 0;
     if (factor.is_a_add())
-      for (unsigned j = factor.nops(); j-- > 0; )
+      for (unsigned int j = factor.nops(); j-- > 0; )
 	if (distributed_e.is_a_add())
-	  for (unsigned h = distributed_e.nops(); h-- > 0; )
+	  for (unsigned int h = distributed_e.nops(); h-- > 0; )
 	    tmp += factor.op(j) * distributed_e.op(h);
 	else
 	  tmp += factor.op(j) * distributed_e;
     else
       if (distributed_e.is_a_add())
-	for (unsigned h = distributed_e.nops(); h-- > 0; )
+	for (unsigned int h = distributed_e.nops(); h-- > 0; )
 	  tmp += factor * distributed_e.op(h);
       else
 	tmp += factor * distributed_e;
@@ -610,7 +610,7 @@ PURRS::Expr::distribute_mul_over_add() const {
   Expr distributed_e;
   if (e.is_a_add()) {
     distributed_e = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       distributed_e += e.op(i).distribute_mul_over_add();
   }
   else if (e.is_a_mul())
@@ -634,13 +634,13 @@ PURRS::Expr::is_scalar_representation(const Symbol& x) const {
     return e.arg(0).is_scalar_representation(x)
       && e.arg(1).is_scalar_representation(x);
   else if (e.is_a_function()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!e.arg(i).is_scalar_representation(x))
 	return false;
     return true;
   }
   else if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!e.op(i).is_scalar_representation(x))
 	return false;
     return true;
@@ -663,7 +663,7 @@ PURRS::Expr::is_polynomial(const Symbol& x) const {
     }
   }
   else if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!e.op(i).is_polynomial(x))
 	return false;
     return true;
@@ -688,13 +688,13 @@ PURRS::Expr::is_integer_scalar_representation(const Symbol& x) const {
     }
   }
   else if (e.is_a_function()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!(e.arg(i).is_a_symbol() && e != x))
 	return false;
     return true;
   }
   else if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!e.op(i).is_integer_scalar_representation(x))
 	return false;
     return true;
@@ -717,7 +717,7 @@ PURRS::Expr::is_integer_polynomial(const Symbol& x) const {
     }
   }
   else if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!e.op(i).is_integer_polynomial(x))
 	return false;
     return true;
@@ -744,13 +744,13 @@ PURRS::Expr::is_rational_scalar_representation(const Symbol& x) const {
 	return true;
     }
   else if (e.is_a_function()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!(e.arg(i).is_a_symbol() && e != x))
 	return false;
     return true;
   }
   else if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!e.op(i).is_rational_scalar_representation(x))
 	return false;
     return true;
@@ -773,7 +773,7 @@ PURRS::Expr::is_rational_polynomial(const Symbol& x) const {
     }
   }
   else if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!e.op(i).is_rational_polynomial(x))
 	return false;
     return true;
@@ -792,13 +792,13 @@ PURRS::Expr::is_scalar_representation() const {
     return e.arg(0).is_scalar_representation()
       && e.arg(1).is_scalar_representation();
   else if (e.is_a_function()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!e.arg(i).is_scalar_representation())
 	return false;
     return true;
   }
   else if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!e.op(i).is_scalar_representation())
 	return false;
     return true;
@@ -821,7 +821,7 @@ PURRS::Expr::is_multivariate_polynomial() const {
     }
   }
   else if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!e.op(i).is_multivariate_polynomial())
 	return false;
     return true;
@@ -844,7 +844,7 @@ bool
 PURRS::Expr::has_non_rational_numbers() const {
   const Expr& e = *this;
   if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (e.op(i).has_non_rational_numbers())
 	return true;
   }
@@ -854,7 +854,7 @@ PURRS::Expr::has_non_rational_numbers() const {
       return true;
   }
   else if (e.is_a_function()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (e.arg(i).has_non_rational_numbers())
 	return true;
   }
@@ -870,7 +870,7 @@ bool
 PURRS::Expr::has_x_function(const Expr& y) const {
   const Expr& e = *this;
   if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (e.op(i).has_x_function(y))
 	return true;
   }
@@ -885,7 +885,7 @@ PURRS::Expr::has_x_function(const Expr& y) const {
 	return true;
     }
     else
-      for (unsigned i = e.nops(); i-- > 0; )
+      for (unsigned int i = e.nops(); i-- > 0; )
 	if (e.arg(i).has_x_function(y))
 	  return true;
   return false;
@@ -895,7 +895,7 @@ bool
 PURRS::Expr::has_x_function_only_ic() const {
   const Expr& e = *this;
   if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (!e.op(i).has_x_function_only_ic())
 	return false;
   }
@@ -919,7 +919,7 @@ PURRS::Expr::has_x_function_only_ic() const {
 	return false;
     }
     else
-      for (unsigned i = e.nops(); i-- > 0; )
+      for (unsigned int i = e.nops(); i-- > 0; )
 	if (!e.arg(i).has_x_function_only_ic())
 	  return false;
   return true;
@@ -934,13 +934,13 @@ PURRS::Expr::collect_term(const Expr& x, Expr& coeff_x) const {
   Expr e_rewritten = 0;
   if (e.is_a_add()) {
     Expr coeffs_of_x = 0;
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       const Expr& addend = e.op(i);
       // The i-th addend is a product.
       if (addend.is_a_mul()) {
 	bool found_x = false;
 	Expr mul_for_x = 1;
-	for (unsigned i = addend.nops(); i-- > 0; ) {
+	for (unsigned int i = addend.nops(); i-- > 0; ) {
 	  const Expr& factor = addend.op(i);
 	  if (factor == x)
 	    found_x = true;
@@ -983,14 +983,14 @@ PURRS::Expr::collect_symbols(Symbol::SymbolSet& system_generated_symbols,
   const Expr& e = *this;
   Symbol s;
   if (e.is_a_add() || e.is_a_mul())
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e.op(i).collect_symbols(system_generated_symbols, new_symbols);
   else if (e.is_a_power()) {
     e.arg(0).collect_symbols(system_generated_symbols, new_symbols);
     e.arg(1).collect_symbols(system_generated_symbols, new_symbols);
   }
   else if (e.is_a_function())
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e.arg(i).collect_symbols(system_generated_symbols, new_symbols);
   else if (e.is_a_symbol(s))
     if (s.is_system_generated())

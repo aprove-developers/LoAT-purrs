@@ -42,17 +42,17 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 #define Napier exp(Expr(1))
 
-static const unsigned
+static const unsigned int
 FACTOR_THRESHOLD = 100;
 
-static const unsigned FIND_DIVISORS_MAX = 11;
+static const unsigned int FIND_DIVISORS_MAX = 11;
 
-static const unsigned
+static const unsigned int
 FIND_DIVISORS_THRESHOLD = FIND_DIVISORS_MAX*FIND_DIVISORS_MAX;
 
 bool
 PURRS::vector_not_all_zero(const std::vector<Expr>& v) {
-  for (unsigned i = v.size(); i-- > 0; )
+  for (unsigned int i = v.size(); i-- > 0; )
     if (!v[i].is_zero())
       return true;
   return false;
@@ -83,7 +83,7 @@ PURRS::general_gcd(const Expr& p, const Expr& q, const Symbol& x) {
 PURRS::Number
 PURRS::lcm(const std::vector<Number>& v) {
   Number n = 1;
-  for (unsigned i = v.size(); i-- > 0; )
+  for (unsigned int i = v.size(); i-- > 0; )
     n = lcm(n, v[i]);
   return n;
 }
@@ -118,7 +118,7 @@ PURRS::partial_factor(const Number& n,
     bases.push_back(2);
     exponents.push_back(k);
   }
-  for (unsigned i = 3; (i < FACTOR_THRESHOLD) && (i * i <= m); i += 2) {
+  for (unsigned int i = 3; (i < FACTOR_THRESHOLD) && (i * i <= m); i += 2) {
     k = 0;
     while (mod(m, i) == 0) { // test for divisibility by the odd integer i
       m /= i;
@@ -153,15 +153,15 @@ bool
 PURRS::find_divisors(Number n, std::vector<Number>& divisors) {
   assert(n.is_positive_integer());
   if (n < FIND_DIVISORS_THRESHOLD) {
-    unsigned m = n.to_unsigned();
+    unsigned int m = n.to_unsigned_int();
     // Once a divisor `i' is found, it is pushed onto the vector `divisors'
     // along with its conjugate `j = n/i', provided that `j' is less than `i'.
     if (m == 1)
       divisors.push_back(1);
     else
-      for (unsigned i = 1, j = m; i < FIND_DIVISORS_MAX && i < j; ++i) {
+      for (unsigned int i = 1, j = m; i < FIND_DIVISORS_MAX && i < j; ++i) {
 	j = m / i;
-	unsigned r = m % i;
+	unsigned int r = m % i;
 	if (r == 0) {
 	  divisors.push_back(i);
 	  if (i < j)
@@ -228,7 +228,7 @@ PURRS::split_bases_exponents(const Expr& e,
 			     std::vector<Expr>& bases,
 			     std::vector<Expr>& exponents) {
   if (e.is_a_mul())
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       split_bases_exponents_factor(e.op(i), bases, exponents);
   else
     split_bases_exponents_factor(e, bases, exponents);
@@ -250,7 +250,7 @@ PURRS::isolate_polynomial_part(const Expr& e, const Symbol& x,
   if (e.is_a_add()) {
     polynomial = 0;
     rest = 0;
-    for (unsigned i = e.nops(); i-- > 0; ) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
       if (e.op(i).is_polynomial(x))
 	polynomial += e.op(i);
       else
@@ -277,12 +277,12 @@ PURRS::isolate_polynomial_part(const Expr& e, const Symbol& x,
 PURRS::Expr
 PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
   assert(p.is_rational_polynomial(x));
-  unsigned deg_p = p.degree(x);
+  unsigned int deg_p = p.degree(x);
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
   Expr t_lcm = denominator(p.coeff(x, deg_p));
-  for (unsigned i = 0; i <= deg_p; ++i)
+  for (unsigned int i = 0; i <= deg_p; ++i)
     t_lcm = lcm(t_lcm, denominator(p.coeff(x, i)));
   return (p * t_lcm).expand().primpart(x);
 }
@@ -297,12 +297,12 @@ PURRS::Expr
 PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x,
 				     Expr& factor) {
   assert(p.is_rational_polynomial(x));
-  unsigned deg_p = p.degree(x);
+  unsigned int deg_p = p.degree(x);
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
   Expr t_lcm = denominator(p.coeff(x, deg_p));
-  for (unsigned i = 0; i <= deg_p; ++i)
+  for (unsigned int i = 0; i <= deg_p; ++i)
     t_lcm = lcm(t_lcm, denominator(p.coeff(x, i)));
 
   const Expr& q = (p * t_lcm).expand().primpart(x);
@@ -335,25 +335,25 @@ PURRS::Expr
 PURRS::sylvester_matrix_resultant(const Expr& p, const Expr& q,
 				  const Symbol& x) {
   assert(p.is_polynomial(x) && q.is_polynomial(x));
-  unsigned deg_p = p.degree(x);
-  unsigned deg_q = q.degree(x);
+  unsigned int deg_p = p.degree(x);
+  unsigned int deg_q = q.degree(x);
   // The list `elements_sylvester_matrix' will contain all the elements
   // of the matrix `sylvester' in succession starting from the first row.
   Expr_List elements_sylvester_matrix;
-  for (unsigned i = 1; i <= deg_q; ++i) {
-    for (unsigned j = 1; j < i; ++j)
+  for (unsigned int i = 1; i <= deg_q; ++i) {
+    for (unsigned int j = 1; j < i; ++j)
       elements_sylvester_matrix.append(0);
-    for (unsigned j = i + deg_p; j >= i; --j)
+    for (unsigned int j = i + deg_p; j >= i; --j)
       elements_sylvester_matrix.append(p.coeff(x, j - i));
-    for (unsigned j = i + deg_p + 1; j <= deg_p + deg_q; ++j)
+    for (unsigned int j = i + deg_p + 1; j <= deg_p + deg_q; ++j)
       elements_sylvester_matrix.append(0);
   }
-  for (unsigned i = 1; i <= deg_p; ++i) {
-    for (unsigned j = 1; j < i; ++j)
+  for (unsigned int i = 1; i <= deg_p; ++i) {
+    for (unsigned int j = 1; j < i; ++j)
       elements_sylvester_matrix.append(0);
-    for (unsigned j = i + deg_q; j >= i; --j)
+    for (unsigned int j = i + deg_q; j >= i; --j)
       elements_sylvester_matrix.append(q.coeff(x, j - i));
-    for (unsigned j = i + deg_q + 1; j <= deg_p + deg_q; ++j)
+    for (unsigned int j = i + deg_q + 1; j <= deg_p + deg_q; ++j)
       elements_sylvester_matrix.append(0);
   }
   Matrix sylvester(deg_p + deg_q, deg_p + deg_q, elements_sylvester_matrix);
@@ -379,8 +379,8 @@ PURRS::resultant(const Expr& p, const Expr& q, const Symbol& x) {
   Expr f = p.expand();
   Expr g = q.expand();
   Expr res = 1;
-  unsigned deg_f = f.degree(x);
-  unsigned deg_g = g.degree(x);
+  unsigned int deg_f = f.degree(x);
+  unsigned int deg_g = g.degree(x);
 
   // Special case: `f' or `g' is a constant polynomial. By definition
   // `Res(f, g) = f.lcoeff(n)^g.degree(n) * g.lcoeff(n)^f.degree(n)'. 
@@ -417,7 +417,7 @@ PURRS::resultant(const Expr& p, const Expr& q, const Symbol& x) {
       // The rest of euclidean's division is given by the ratio
       // `pseudo-remainder / factor'.
       r *= pwr(factor, -1);
-      unsigned deg_r = r.expand().degree(x);
+      unsigned int deg_r = r.expand().degree(x);
       // Using rule two.
       res *= pwr(f.lcoeff(x), deg_g - deg_r);
       // Using rule one.
@@ -512,7 +512,7 @@ largest_positive_int_zero_on_expanded_ex(const Expr& e, const Symbol& x,
 	std::vector<Polynomial_Root> roots;
 	bool all_distinct;
 	if (find_roots(e_tmp, x, roots, all_distinct))
-	  for (unsigned i = roots.size(); i-- > 0; ) {
+	  for (unsigned int i = roots.size(); i-- > 0; ) {
 	    Number num_root;
 	    if (roots[i].value().is_a_number(num_root) && num_root.is_real())
 	      while (z < num_root)
@@ -523,7 +523,7 @@ largest_positive_int_zero_on_expanded_ex(const Expr& e, const Symbol& x,
     else {
       // `e' is not a polynomial in `x'.
       if (e.is_a_add() || e.is_a_mul()) {
-	for (unsigned i = e.nops(); i-- > 0; )
+	for (unsigned int i = e.nops(); i-- > 0; )
 	  if (!largest_positive_int_zero_on_expanded_ex(e.op(i), x, z))
 	    return false;
 	ok = true;
@@ -590,7 +590,7 @@ PURRS::largest_positive_int_zero(const Expr& e, const Symbol& x, Number& z) {
 bool
 PURRS::has_parameters(const Expr& e) {
   if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       if (has_parameters(e.op(i)))
 	return true;
   }
@@ -603,7 +603,7 @@ PURRS::has_parameters(const Expr& e) {
     if (e.is_the_x_function())
       return true;
     else
-      for (unsigned i = e.nops(); i-- > 0; )
+      for (unsigned int i = e.nops(); i-- > 0; )
 	if (has_parameters(e.arg(i)))
 	  return true;
   }
@@ -624,12 +624,12 @@ PURRS::substitute_x_function(const Expr& e, const Expr& k, bool do_power) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten += substitute_x_function(e.op(i), k, do_power);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten *= substitute_x_function(e.op(i), k, do_power);
   }
   else if (e.is_a_power())
@@ -644,9 +644,9 @@ PURRS::substitute_x_function(const Expr& e, const Expr& k, bool do_power) {
     else if (e.nops() == 1)
       return apply(e.functor(), substitute_x_function(e.arg(0), k, do_power));
     else {
-      unsigned num_argument = e.nops();
+      unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
-      for (unsigned i = 0; i < num_argument; ++i)
+      for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = substitute_x_function(e.arg(i), k, do_power);
       return apply(e.functor(), argument);
     }

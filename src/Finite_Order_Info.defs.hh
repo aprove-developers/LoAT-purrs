@@ -28,6 +28,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Finite_Order_Info_defs_hh 1
 
 #include "Finite_Order_Info.types.hh"
+#include "globals.hh"
 #include "Expr.defs.hh"
 #include <vector>
 
@@ -39,8 +40,8 @@ public:
   //! Constructor: sets \f$ order{\_} = k \f$,
   //! \f$ coefficients{\_} = coeffs \f$,
   //! \f$ gcd{\_}among{\_}decrements{\_} = gcd \f$,
-  Finite_Order_Info(int k, const std::vector<Expr>& coeffs,
-		    unsigned gcd);
+  Finite_Order_Info(index_type k, const std::vector<Expr>& coeffs,
+		    unsigned int gcd);
 
   //! Copy-constructor.
   Finite_Order_Info(const Finite_Order_Info& y);
@@ -52,13 +53,13 @@ public:
   Finite_Order_Info& operator=(const Finite_Order_Info& y);
 
   //! Returns <CODE>order_</CODE>.
-  unsigned int order() const;
+  index_type order() const;
 
   //! Returns <CODE>first_valid_index_</CODE>.
-  unsigned first_valid_index() const;
+  index_type first_valid_index() const;
 
   //! Sets <CODE>first_valid_index_</CODE> with \p i_c
-  void set_first_valid_index(unsigned i_c);
+  void set_first_valid_index(index_type i_c);
 
   //! Returns <CODE>coefficients_</CODE>.
   const std::vector<Expr>& coefficients() const;
@@ -67,7 +68,7 @@ public:
   std::vector<Expr>& coefficients();
 
   //! Returns <CODE>gcd_among_decrements_</CODE>.
-  unsigned gcd_among_decrements() const;
+  unsigned int gcd_among_decrements() const;
 
   //! Returns <CODE>product_factor_</CODE>.
   Expr& product_factor();
@@ -88,8 +89,8 @@ public:
   void unset_order_reduction();
 
 private:
-  //! The order of the recurrence. 
-  unsigned int order_;
+  //! The order of the recurrence.
+  index_type order_;
 
   //! Stores the coefficients of the recurrence.
   std::vector<Expr> coefficients_;
@@ -99,12 +100,12 @@ private:
   //! of the terms of the form \f$ x(n-k) \f$ contained in the right
   //! hand side of the recurrence. If the order is zero then
   //! \p gcd_among_decrements_ stores \f$ 0 \f$.
-  unsigned gcd_among_decrements_;
+  unsigned int gcd_among_decrements_;
 
   //! \brief
   //! The smallest positive integer for which the recurrence is
   //! well-defined: the initial conditions will start from it.
-  unsigned first_valid_index_;
+  index_type first_valid_index_;
 
   //! \brief
   //! In the recurrences of the first order with variable coefficient

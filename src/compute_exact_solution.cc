@@ -60,7 +60,7 @@ using namespace PURRS;
   \f]
   Opportune modifications are considered when the recurrence is not
   well-defined for every natural number, but only starting from
-  one determined value, called here \p first_well_defined.
+  one determined value, called here \p first_valid_index.
 */
 // FIXME: il vettore `coefficients' dovra' diventare di `Expr' quando
 // sapremo risolvere anche le eq. di grado superiore al primo con i
@@ -68,15 +68,15 @@ using namespace PURRS;
 Expr
 compute_term_about_initial_conditions(const Expr& g_n,
 				      const std::vector<Number>& coefficients,
-				      unsigned first_well_defined) {
+				      index_type first_valid_index) {
   Expr term = 0;
   // `coefficients.size() - 1' is equal to the order of the recurrence.
-  for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
+  for (unsigned int i = coefficients.size() - 1; i-- > 0; ) {
     const Expr& g_n_i
-      = g_n.substitute(Recurrence::n, Recurrence::n - i - first_well_defined);
-    Expr tmp = x(first_well_defined + i);
-    for (unsigned j = i; j > 0; j--)
-      tmp -= coefficients[j] * x(first_well_defined + i - j);
+      = g_n.substitute(Recurrence::n, Recurrence::n - i - first_valid_index);
+    Expr tmp = x(first_valid_index + i);
+    for (unsigned int j = i; j > 0; j--)
+      tmp -= coefficients[j] * x(first_valid_index + i - j);
     term += tmp * g_n_i;
   }
   return term;
@@ -208,7 +208,7 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
     if (!largest_positive_int_zero(denominator(inhomogeneous_term), n, z))
       return TOO_COMPLEX;
   // The initial conditions will start from `z'.
-  set_first_valid_index(z.to_unsigned());
+  set_first_valid_index(z.to_unsigned_int());
   // `product_factor' is `alpha!(n)'.
   Symbol index;
   Expr product_factor
@@ -226,7 +226,7 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
   new_roots.push_back(Polynomial_Root(Expr(1), RATIONAL));
   rec_const_coeff.finite_order_p
     = new Finite_Order_Info(1, coefficients, 1);
-  rec_const_coeff.set_first_valid_index(z.to_unsigned());
+  rec_const_coeff.set_first_valid_index(z.to_unsigned_int());
   rec_const_coeff.set_type(LINEAR_FINITE_ORDER_CONST_COEFF);
   rec_const_coeff.set_inhomogeneous_term(inhomogeneous_term/product_factor);
 
@@ -326,7 +326,7 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
 			   base_of_exps, exp_poly_coeff,
 			   order() + first_valid_index(),
 			   symbolic_sum_distinct, symbolic_sum_no_distinct);
-      for (unsigned j = symbolic_sum_distinct.size(); j-- > 0; ) {
+      for (unsigned int j = symbolic_sum_distinct.size(); j-- > 0; ) {
 	symbolic_sum_no_distinct[j] *= lambda / diff_roots;
 	symbolic_sum_distinct[j] *= lambda / diff_roots;
       }
@@ -343,8 +343,8 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
     else {
       Symbol h;
       // In this function we know the order: 2.
-      // unsigned lower = first_valid_index() + order();
-      unsigned lower = first_valid_index() + 2;
+      // unsigned int lower = first_valid_index() + order();
+      unsigned int lower = first_valid_index() + 2;
       solution = 1 / diff_roots
 	* (pwr(root_1, Recurrence::n+1)
 	   * PURRS::sum(h, lower, Recurrence::n, pwr(root_1, -h)
@@ -371,8 +371,8 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
     else {
       Symbol h;
       // In this function we know the order: 2.
-      // unsigned lower = first_valid_index() + order();
-      unsigned lower = first_valid_index() + 2;
+      // unsigned int lower = first_valid_index() + order();
+      unsigned int lower = first_valid_index() + 2;
       solution
 	= PURRS::sum(h, lower, Recurrence::n,
 		     g_n.substitute(Recurrence::n, Recurrence::n - h)
@@ -487,7 +487,7 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
     }
     else {
       Symbol h;
-      unsigned lower = first_valid_index() + order();
+      unsigned int lower = first_valid_index() + order();
       solution
 	= PURRS::sum(h, lower, Recurrence::n,
 		     g_n.substitute(Recurrence::n, Recurrence::n - h)
@@ -500,7 +500,7 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
 					      exp_poly_coeff);
     else {
       Symbol h;
-      unsigned lower = first_valid_index() + order();
+      unsigned int lower = first_valid_index() + order();
       solution
 	= PURRS::sum(h, lower, Recurrence::n,
 		     g_n.substitute(Recurrence::n, Recurrence::n - h)
@@ -543,7 +543,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
       return TOO_COMPLEX;
   }
   // The initial conditions will start from `z'.
-  set_first_valid_index(z.to_unsigned());
+  set_first_valid_index(z.to_unsigned_int());
   D_VAR(first_valid_index());
 
   std::vector<Number> num_coefficients(order() + 1);
@@ -641,7 +641,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   // Only for the output.
   if (exact_solution_.expression().is_a_add()) {
     Expr_List conditions;
-    for (unsigned i = order(); i-- > 0; )
+    for (index_type i = order(); i-- > 0; )
       conditions.append(x(first_valid_index() + i));
     // FIXME: `collect' throws an exception if the object to collect has
     // non-integer exponent. 

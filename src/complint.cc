@@ -67,7 +67,7 @@ complint::compare_same_type(const basic& other) const {
 }
 
 void
-complint::print(const print_context& c, unsigned /* level */) const {
+complint::print(const print_context& c, unsigned int /* level */) const {
   c.s << "complint(" << ci << ')';
 }
 

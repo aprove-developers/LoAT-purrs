@@ -52,10 +52,10 @@ private:
   Number_Type type_;
 
   //! Multiplicity of the root.
-  unsigned multiplicity_;
+  unsigned int multiplicity_;
 
 public:
-  Polynomial_Root(const Expr& e, Number_Type t, unsigned m = 1)
+  Polynomial_Root(const Expr& e, Number_Type t, unsigned int m = 1)
     : value_(e), type_(t), multiplicity_(m) {
   }
 
@@ -67,11 +67,11 @@ public:
     return value_;
   }
 
-  unsigned multiplicity() const {
+  unsigned int multiplicity() const {
     return multiplicity_;
   }
 
-  void set_multiplicity(unsigned m) {
+  void set_multiplicity(unsigned int m) {
     multiplicity_ = m;
   }
 

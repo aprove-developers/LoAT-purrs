@@ -53,7 +53,7 @@ using namespace PURRS;
 void
 split(const Expr& e, const Expr& d, Expr& term_with_d, Expr& other_terms) {
   assert(e.is_a_add());
-  for (unsigned i = e.nops(); i-- > 0; ) {
+  for (unsigned int i = e.nops(); i-- > 0; ) {
     const Expr& term = e.op(i);
     if (term.has(d))
       term_with_d += term;
@@ -63,7 +63,7 @@ split(const Expr& e, const Expr& d, Expr& term_with_d, Expr& other_terms) {
 }
 
 bool
-ok_inequalities(const Expr& e, unsigned condition) {
+ok_inequalities(const Expr& e, unsigned int condition) {
   assert(e.is_a_add());
   Expr term_with_n = 0;
   Expr other_terms = 0;
@@ -72,7 +72,7 @@ ok_inequalities(const Expr& e, unsigned condition) {
   if (term_with_n == Recurrence::n || term_with_n.is_a_mul()) {
     Expr coeff_n = 1;
     if (term_with_n.is_a_mul()) {
-      for (unsigned i = term_with_n.nops(); i-- > 0; ) {
+      for (unsigned int i = term_with_n.nops(); i-- > 0; ) {
 	const Expr& factor = term_with_n.op(i);
 	Number num;
 	if (!(factor == Recurrence::n || (factor.is_a_power()
@@ -98,13 +98,13 @@ ok_inequalities(const Expr& e, unsigned condition) {
 
 bool
 validation_initial_conditions_in_bound(Recurrence::Bound kind_of_bound,
-				       const Expr& bound, unsigned index) {
+				       const Expr& bound, unsigned int index) {
   Expr bound_valuated = bound.substitute(Recurrence::n, index);
   D_VAR(bound_valuated);
   if (bound_valuated != x(index))
     if (bound_valuated.is_a_mul()) {
       Expr coeff_ic = 1;
-      for (unsigned i = bound_valuated.nops(); i-- > 0; ) {
+      for (unsigned int i = bound_valuated.nops(); i-- > 0; ) {
 	const Expr& factor = bound_valuated.op(i);
 	if (factor != x(index))
 	  coeff_ic *= factor;
@@ -126,7 +126,7 @@ validation_initial_conditions_in_bound(Recurrence::Bound kind_of_bound,
 	    term_with_ic, other_terms);
       Expr coeff_ic = 1;
       if (term_with_ic.is_a_mul()) {
-	for (unsigned i = term_with_ic.nops(); i-- > 0; ) {
+	for (unsigned int i = term_with_ic.nops(); i-- > 0; ) {
 	  const Expr& factor = term_with_ic.op(i);
 	  if (factor != x(index))
 	    coeff_ic *= factor;
@@ -183,7 +183,7 @@ PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
   // `partial_bound' will contain all the other terms.
   Expr partial_bound = 0;
   if (bound.is_a_add())
-    for (unsigned i = bound.nops(); i-- > 0; ) {
+    for (unsigned int i = bound.nops(); i-- > 0; ) {
       if (!bound.op(i).has_x_function_only_ic())
 	partial_bound += bound.op(i);
     }
@@ -232,7 +232,7 @@ PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
   }
   else if (diff.is_a_mul()) {
     Expr coeff_n = 1;
-    for (unsigned i = diff.nops(); i-- > 0; ) {
+    for (unsigned int i = diff.nops(); i-- > 0; ) {
       const Expr& factor = diff.op(i);
       if (!(factor == n || (factor.is_a_power()
 			    && factor.arg(0) == n
@@ -318,9 +318,9 @@ PURRS::Recurrence::verify_exact_solution() const {
   // and non-linear recurrences of finite order. 
   if (is_linear_finite_order() || is_non_linear_finite_order()) {
     // ...
-    unsigned int order_rec;
+    index_type order_rec;
     // ...
-    unsigned int first_i_c;
+    index_type first_i_c;
     if (is_non_linear_finite_order()) {
       // order_rec = associated_linear_rec().order();
       order_rec = order_if_linear();
@@ -336,7 +336,7 @@ PURRS::Recurrence::verify_exact_solution() const {
       return PROVABLY_CORRECT;
     else {
       // Step 1: validation of initial conditions.
-      for (unsigned i = 0; i < order_rec; ++i) {
+      for (index_type i = 0; i < order_rec; ++i) {
 	Expr solution_evaluated
 	  = exact_solution_.expression().substitute(n, first_i_c + i);
 	solution_evaluated = blackboard.rewrite(solution_evaluated);
@@ -351,7 +351,7 @@ PURRS::Recurrence::verify_exact_solution() const {
       Expr homogeneous_part = 0;
       Expr non_homogeneous_part = 0;
       if (exact_solution_.expression().is_a_add())
-	for (unsigned i = exact_solution_.expression().nops(); i-- > 0; ) {
+	for (unsigned int i = exact_solution_.expression().nops(); i-- > 0; ) {
 	  if (exact_solution_.expression().op(i).has_x_function_only_ic())
 	    homogeneous_part += exact_solution_.expression().op(i);
 	  else
@@ -373,7 +373,7 @@ PURRS::Recurrence::verify_exact_solution() const {
 	= recurrence_rhs - inhmogeneous_term;
       // Substitutes in the homogeneous part of the recurrence the terms
       // of the form `x(n-i)'.
-      for (unsigned i = 0; i < order_rec; ++i) {
+      for (index_type i = 0; i < order_rec; ++i) {
 	Expr shifted_solution
 	  = simplify_all(homogeneous_part.substitute(n, n - (i + 1)));
 	shifted_solution = simplify_sum(shifted_solution, true);
@@ -405,13 +405,13 @@ PURRS::Recurrence::verify_exact_solution() const {
 	     && exp_poly_coeff.size() == exp_no_poly_coeff.size()
 	     && exp_no_poly_coeff.size() >= 1);
       
-      unsigned num_of_exponentials = bases_of_exp.size();
+      unsigned int num_of_exponentials = bases_of_exp.size();
       D_VEC(bases_of_exp, 0, num_of_exponentials-1);
       D_VEC(exp_poly_coeff, 0, num_of_exponentials-1);
       D_VEC(exp_no_poly_coeff, 0, num_of_exponentials-1);
       
-      unsigned max_polynomial_degree = 0;
-      for (unsigned i = 0; i < num_of_exponentials; ++i) {
+      unsigned int max_polynomial_degree = 0;
+      for (unsigned int i = 0; i < num_of_exponentials; ++i) {
 	if (!exp_no_poly_coeff[i].is_zero()) {
 	  DD_MSGVAR("No poly: ", exp_no_poly_coeff[i]);
 	  goto traditional;
@@ -438,16 +438,16 @@ PURRS::Recurrence::verify_exact_solution() const {
 	
 	// Find the maximum degree of a polynomial that may occur in the
 	// solution.
-	for (unsigned i = 0, nroots = roots.size(); i < nroots; ++i) {
+	for (unsigned int i = 0, nroots = roots.size(); i < nroots; ++i) {
 	  max_polynomial_degree += roots[i].multiplicity() - 1;
 	  // FIXME: this may be inefficient!
-	  for (unsigned j = 0; j < num_of_exponentials; ++j)
+	  for (unsigned int j = 0; j < num_of_exponentials; ++j)
 	    if (roots[i].value() == bases_of_exp[j])
 	      ++max_polynomial_degree;
 	}
 	
 	Expr substituted_rhs = recurrence_rhs;
-	for (unsigned i = order_rec; i-- > 0; ) {
+	for (index_type i = order_rec; i-- > 0; ) {
 	  Expr shifted_solution
 	    = non_homogeneous_part.substitute(n, n - (i + 1));
 	  //shifted_solution = simplify_sum(shifted_solution, true);
@@ -460,21 +460,21 @@ PURRS::Recurrence::verify_exact_solution() const {
 	
 	std::vector<Expr> coefficients_of_exponentials(max_polynomial_degree+1);
 	if (diff.is_a_add()) {
-	  for (unsigned i = 0; i < diff.nops(); ++i) {
+	  for (unsigned int i = 0; i < diff.nops(); ++i) {
 	    Expr summand = diff.op(i);
 #if 0
 	    if (summand.is_a_mul()) {
 	      // Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
 	      // `a' and `b' possibly 1).
 	      bool done = false;
-	      for (unsigned j = 0; j < summand.nops(); ++j) {
+	      for (unsigned int j = 0; j < summand.nops(); ++j) {
 		Expr factor = summand.op(j);
-		unsigned k;
+		unsigned int k;
 		if (factor == n)
 		  k = 1;
 		else if (factor.is_a_power() && factor.arg(0) == n) {
 		  assert(factor.arg(1).is_a_number());
-		  k = factor.arg(1).ex_to_number().to_unsigned();
+		  k = factor.arg(1).ex_to_number().to_unsigned int();
 		}
 		else
 		  continue;
@@ -492,7 +492,7 @@ PURRS::Recurrence::verify_exact_solution() const {
 	      // Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
 	      // `a' and `b' possibly 1).
 	      bool done = false;
-	      for (unsigned j = 0; (j < summand.nops()) && !done; ++j) {
+	      for (unsigned int j = 0; (j < summand.nops()) && !done; ++j) {
 		Expr factor = summand.op(j);
 		if (factor == n) {
 		  coefficients_of_exponentials[1] += summand/factor;
@@ -500,7 +500,8 @@ PURRS::Recurrence::verify_exact_solution() const {
 		}
 		else if (factor.is_a_power() && factor.arg(0) == n) {
 		  assert(factor.arg(1).is_a_number());
-		  unsigned k = factor.arg(1).ex_to_number().to_unsigned();
+		  unsigned int k
+		    = factor.arg(1).ex_to_number().to_unsigned int();
 		  assert(k < coefficients_of_exponentials.size());
 		  coefficients_of_exponentials[k] += summand/factor;
 		  done = true;
@@ -514,7 +515,8 @@ PURRS::Recurrence::verify_exact_solution() const {
 	    else if (summand.is_a_power()) {
 	      // Summand has the form `n^k' or `a^n'
 	      if (summand.arg(0) == n) {
-		unsigned k = summand.arg(1).ex_to_number().to_unsigned();
+		unsigned int k
+		  = summand.arg(1).ex_to_number().to_unsigned_int();
 		coefficients_of_exponentials[k] += 1;
 	      }
 	      else
@@ -537,14 +539,14 @@ PURRS::Recurrence::verify_exact_solution() const {
 	    // Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
 	    // `a' and `b' possibly 1).
 	    bool done = false;
-	    for (unsigned j = 0; j < summand.nops(); ++j) {
+	    for (unsigned int j = 0; j < summand.nops(); ++j) {
 	      Expr factor = summand.op(j);
-	      unsigned k;
+	      unsigned int k;
 	      if (factor == n)
 		k = 1;
 	      else if (factor.is_a_power() && factor.arg(0) == n) {
 		assert(factor.arg(1).is_a_number());
-		k = factor.arg(1).ex_to_number().to_unsigned();
+		k = factor.arg(1).ex_to_number().to_unsigned_int();
 	      }
 	      else
 		continue;
@@ -559,7 +561,7 @@ PURRS::Recurrence::verify_exact_solution() const {
 	  else if (summand.is_a_power()) {
 	    // Summand has the form `n^k' or `a^n'
 	    if (summand.arg(0) == n) {
-	      unsigned k = summand.arg(1).ex_to_number().to_unsigned();
+	      unsigned int k = summand.arg(1).ex_to_number().to_unsigned_int();
 	      coefficients_of_exponentials[k] += 1;
 	    }
 	    else
@@ -579,7 +581,7 @@ PURRS::Recurrence::verify_exact_solution() const {
 	D_VEC(coefficients_of_exponentials, 0, max_polynomial_degree);
 	
 	Number num_tests = num_of_exponentials + order_rec;
-	for (unsigned i = 0; i < max_polynomial_degree; ++i) {
+	for (unsigned int i = 0; i < max_polynomial_degree; ++i) {
 	  if (!coefficients_of_exponentials[i].is_zero()) {
 	    // Not syntactically 0: try to prove that is it semantically 0.
 	    Expr c = coefficients_of_exponentials[i];
@@ -606,7 +608,7 @@ PURRS::Recurrence::verify_exact_solution() const {
       // of the recurrence, `n' by `n - d' (where `d' is the decrement
       // of the i-th term `a(n) x(n - d)').
       Expr substituted_rhs = recurrence_rhs;
-      for (unsigned i = 0; i < order_rec; ++i) {
+      for (index_type i = 0; i < order_rec; ++i) {
 	Expr shifted_solution
 	  = simplify_all(non_homogeneous_part.substitute(n, n - (i + 1)));
 	shifted_solution = simplify_sum(shifted_solution, true);
@@ -623,7 +625,8 @@ PURRS::Recurrence::verify_exact_solution() const {
 	  // we please ourselves if is verified the reduced recurrence.
 	  Symbol r
 	    = insert_auxiliary_definition(mod(n, gcd_among_decrements()));
-	  unsigned dim = coefficients().size() / gcd_among_decrements() + 1;
+	  unsigned int dim
+	    = coefficients().size() / gcd_among_decrements() + 1;
 	  std::vector<Expr> new_coefficients(dim);
 	  Expr inhomogeneous = 0;
 	  Recurrence rec_rewritten
@@ -754,7 +757,7 @@ PURRS::Recurrence::apply_order_reduction() const {
   // `x' functions with `gcd_among_decrements * n + r' and `x(n-k)' with
   // `x(n - k / gcd_among_decrements)'.
   Symbol r = insert_auxiliary_definition(mod(n, gcd_among_decrements()));
-  unsigned dim = coefficients().size() / gcd_among_decrements() + 1;
+  unsigned int dim = coefficients().size() / gcd_among_decrements() + 1;
   std::vector<Expr> new_coefficients(dim);
   Expr inhomogeneous = 0;
   Recurrence rec_rewritten
@@ -815,7 +818,8 @@ PURRS::Recurrence::apply_order_reduction() const {
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
-compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
+compute_non_linear_recurrence(Expr& solution_or_bound,
+			      unsigned int type) const {
   // We consider the simple case of non-linear recurrence of the form
   // `x(n) = c x(n-1)^a', where `c' and `a' are constants (`a != 1').
   // In this case we already know the solution:
@@ -863,7 +867,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 	  solution_or_bound = simplify_logarithm(solution_or_bound);
 	  // Resubstitute eventual auxiliary symbols with the respective
 	  // negative number.
-	  for (unsigned i = auxiliary_symbols().size(); i-- > 0; )
+	  for (unsigned int i = auxiliary_symbols().size(); i-- > 0; )
 	    solution_or_bound
 	      = solution_or_bound.substitute(auxiliary_symbols()[i],
 					     get_auxiliary_definition
@@ -912,7 +916,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
       solution_or_bound = simplify_logarithm(solution_or_bound);
       // Resubstitute eventual auxiliary symbols with the respective
       // negative number.
-      for (unsigned i = auxiliary_symbols().size(); i-- > 0; )
+      for (unsigned int i = auxiliary_symbols().size(); i-- > 0; )
 	solution_or_bound
 	  = solution_or_bound.substitute(auxiliary_symbols()[i],
 					 get_auxiliary_definition
@@ -930,7 +934,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
   Builds the recurrence of infinite order
   \f$ x(n) = f(n) \sum_{k=n_0}^{n-1} x(k) + g(n) \f$, where
   \f$ f(n) \f$ is stored in \p weight; \f$ g(n) \f$ is stored
-  in \p inhomogeneous and \p first_well_defined contains the smallest
+  in \p inhomogeneous and \p first_valid_index contains the smallest
   positive integer starting from which the recurrence is well-defined.
   If the system is able to solve the recurrence, then this function
   returns <CODE>SUCCESS</CODE> and the solution is stored in \p solution.
@@ -938,7 +942,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::solve_new_infinite_order_rec(const Expr& weight,
 						const Expr& inhomogeneous,
-						unsigned first_well_defined,
+						index_type first_valid_index,
 						Expr& solution) const {
   Symbol h;
   Recurrence rec_rewritten(weight * PURRS::sum(h, 0, n-1, x(h))
@@ -954,7 +958,7 @@ PURRS::Recurrence::solve_new_infinite_order_rec(const Expr& weight,
 			      coeff_first_order, inhomog_first_order,
 			      weight, 0, n-1);
   rec_rewritten.set_linear_infinite_order();
-  rec_rewritten.set_first_valid_index_inf_order(first_well_defined);
+  rec_rewritten.set_first_valid_index_inf_order(first_valid_index);
   rec_rewritten.set_inhomogeneous_term(inhomogeneous);
   return rec_rewritten.compute_infinite_order_recurrence(solution);
 }
@@ -963,16 +967,16 @@ namespace {
 using namespace PURRS;
 
 Expr
-increase_argument_x_function(const Expr& e, unsigned num) {
+increase_argument_x_function(const Expr& e, unsigned int num) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten += increase_argument_x_function(e.op(i), num);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
+    for (unsigned int i = e.nops(); i-- > 0; )
       e_rewritten *= increase_argument_x_function(e.op(i), num);
   }
   else if (e.is_a_power())
@@ -984,9 +988,9 @@ increase_argument_x_function(const Expr& e, unsigned num) {
     else if (e.nops() == 1)
       return apply(e.functor(), increase_argument_x_function(e.arg(0), num));
     else {
-      unsigned num_argument = e.nops();
+      unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
-      for (unsigned j = 0; j < num_argument; ++j)
+      for (unsigned int j = 0; j < num_argument; ++j)
 	argument[j] = increase_argument_x_function(e.arg(j), num);
       return apply(e.functor(), argument);
     }
@@ -1020,7 +1024,7 @@ compute_infinite_order_recurrence(Expr& solution) const {
     return SUCCESS;
   }
   else {
-    unsigned lower = lower_bound_sum();
+    unsigned int lower = lower_bound_sum();
     const Expr& upper = upper_bound_sum();
     if (lower == 0 && upper == n-1) {
       std::vector<Expr> coefficients(2);
@@ -1052,7 +1056,7 @@ compute_infinite_order_recurrence(Expr& solution) const {
 	// the system does the substitution `x(1) = 2*x(0)+1'.
 	// FIXME: At the moment we substitute here only the initial
 	// condition `x(1)'.
-	std::map<unsigned, Expr>::const_iterator i
+	std::map<unsigned int, Expr>::const_iterator i
 	  = initial_conditions.find(1);
 	if (i != initial_conditions.end())
 	  solution = solution.substitute(x(1), get_initial_condition(1));
@@ -1166,14 +1170,14 @@ PURRS::Recurrence::
 substitute_i_c_shifting(const Expr& solution_or_bound) const {
   assert(!initial_conditions.empty());
   Expr sol_or_bound = solution_or_bound;
-  unsigned first_well_defined_rhs;
-  unsigned order_or_rank;
+  index_type first_valid_index_rhs;
+  index_type order_or_rank;
   if (is_linear_finite_order()) {
-    first_well_defined_rhs = first_valid_index();
+    first_valid_index_rhs = first_valid_index();
     order_or_rank = order();
   }
   else if (is_functional_equation()) {
-    first_well_defined_rhs = applicability_condition();
+    first_valid_index_rhs = applicability_condition();
     order_or_rank = rank();
   }
 
@@ -1183,20 +1187,20 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
   if (order_or_rank != 0) {
     // Consider the maximum index of `x' function in the map
     // `initial_conditions'.
-    unsigned max_i_c = 0;
-    for (std::map<unsigned, Expr>::const_iterator i
+    unsigned int max_i_c = 0;
+    for (std::map<unsigned int, Expr>::const_iterator i
 	   = initial_conditions.begin(),
 	   iend = initial_conditions.end(); i != iend; ++i)
       if (i->first > max_i_c)
 	max_i_c = i->first;
     
     // Shift initial conditions.
-    if (first_well_defined_rhs + order_or_rank - 1 < max_i_c) {
-      unsigned shift_forward = max_i_c - first_well_defined_rhs;
-      for (unsigned i = order_or_rank; i-- > 0; )
+    if (first_valid_index_rhs + order_or_rank - 1 < max_i_c) {
+      unsigned int shift_forward = max_i_c - first_valid_index_rhs;
+      for (index_type i = order_or_rank; i-- > 0; )
 	sol_or_bound
-	  = sol_or_bound.substitute(x(i + first_well_defined_rhs),
-				    x(i + first_well_defined_rhs
+	  = sol_or_bound.substitute(x(i + first_valid_index_rhs),
+				    x(i + first_valid_index_rhs
 				      + shift_forward - order_or_rank + 1));
       // The solution of `x(n) = a(n) x(n-1) + p(n)' is of the form
       // `x(n) = prod(k,i+1,n,a(k)) x(i)
@@ -1209,14 +1213,14 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
       //                              - sum(k,i+1,m,p(k)/prod(j,i+1,k,a(j)))]'.
       if (is_linear_finite_order_var_coeff()) {
 	const Expr& homogeneous_term = product_factor()
-	  * x(first_well_defined_rhs + shift_forward);
+	  * x(first_valid_index_rhs + shift_forward);
 	const Expr& non_homogeneous_term = sol_or_bound - homogeneous_term;
 	Symbol index;
 	sol_or_bound = homogeneous_term
-	  / PURRS::prod(index, first_well_defined_rhs+1, max_i_c,
+	  / PURRS::prod(index, first_valid_index_rhs+1, max_i_c,
 			coefficients()[1].substitute(n, index)).ex_to_number()
 	  + non_homogeneous_term - product_factor()
-	  * PURRS::sum(index, first_well_defined_rhs + 1, max_i_c,
+	  * PURRS::sum(index, first_valid_index_rhs + 1, max_i_c,
 		       (inhomogeneous_term / product_factor())
 		       .substitute(n, index));
       }
@@ -1234,7 +1238,8 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
 
   // Substitute initial conditions with the values in the map
   // `initial_conditions'.
-  for (std::map<unsigned, Expr>::const_iterator i = initial_conditions.begin(),
+  for (std::map<unsigned int, Expr>::const_iterator i
+	 = initial_conditions.begin(),
 	 iend = initial_conditions.end(); i != iend; ++i)
     sol_or_bound = sol_or_bound.substitute(x(i->first),
 					   get_initial_condition(i->first));
@@ -1328,7 +1333,7 @@ PURRS::Recurrence::compute_exact_solution() const {
 	  == SUCCESS) {
 	// FIXME: At the moment we substitute here only the initial
 	// condition `x(0)'.
-	std::map<unsigned, Expr>::const_iterator i
+	std::map<unsigned int, Expr>::const_iterator i
 	  = initial_conditions.find(0);
 	if (i != initial_conditions.end())
 	  solution = solution.substitute(x(0), get_initial_condition(0));
@@ -1496,7 +1501,8 @@ PURRS::Recurrence::dump(std::ostream& s) const {
   
   if (!initial_conditions.empty()) {
     s << "Initial conditions:" << std::endl;
-    for (std::map<unsigned, Expr>::const_iterator i = initial_conditions.begin(),
+    for (std::map<unsigned int, Expr>::const_iterator i
+	   = initial_conditions.begin(),
 	   initial_conditions_end = initial_conditions.end();
 	 i != initial_conditions_end; ++i)
       s << "  x(" << i->first << ")"

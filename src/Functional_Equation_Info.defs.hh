@@ -27,6 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Functional_Equation_Info_defs_hh 1
 
 #include "Functional_Equation_Info.types.hh"
+#include "globals.hh"
 #include "Expr.defs.hh"
 #include <map>
 
@@ -49,10 +50,10 @@ public:
   Functional_Equation_Info& operator=(const Functional_Equation_Info& y);
 
   //! Returns <CODE>applicability_condition_</CODE>.
-  unsigned applicability_condition() const;
+  index_type applicability_condition() const;
 
   //! Sets <CODE>applicability_condition_</CODE> with \p c.
-  void set_applicability_condition(unsigned c);
+  void set_applicability_condition(index_type c);
 
 private:
   //! \brief
@@ -75,7 +76,7 @@ public:
   //! Returns the rank of the functional equation, i. e., the number of terms
   //! of the form \f$ a x(n/b) \f$ where \f$ b \f$ is a rational number
   //! larger than one.
-  size_t rank() const;
+  index_type rank() const;
     
 private:
   //! \brief
@@ -86,7 +87,7 @@ private:
   //! \brief
   //! The positive integer starting from which the inhomogeneous term
   //! is a non negative, non decreasing function. 
-  unsigned applicability_condition_;
+  index_type applicability_condition_;
 
 public:
   void dump_homogeneous_terms(std::ostream& s) const;

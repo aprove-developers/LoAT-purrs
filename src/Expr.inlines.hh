@@ -362,13 +362,13 @@ Expr::get_function_name() const {
   return GiNaC::ex_to<GiNaC::function>(*this).get_name();
 }
 
-inline unsigned
+inline unsigned int
 Expr::nops() const {
   return Base::nops();
 }
 
 inline Expr
-Expr::op(unsigned i) const {
+Expr::op(unsigned int i) const {
   assert(!is_a_function() && !is_a_power());
   assert(i < nops());
   return Base::op(i);
@@ -376,21 +376,21 @@ Expr::op(unsigned i) const {
 
 #ifdef UNSAFE_ARG
 inline Expr&
-Expr::arg(unsigned i) {
+Expr::arg(unsigned int i) {
   assert(is_a_function() || is_a_power());
   assert(i < nops());
   return static_cast<Expr&>(let_op(i));
 }
 
 inline const Expr&
-Expr::arg(unsigned i) const {
+Expr::arg(unsigned int i) const {
   assert(is_a_function() || is_a_power());
   assert(i < nops());
   return static_cast<Expr&>(const_cast<Expr&>(*this).let_op(i));
 }
 #else
 inline Expr
-Expr::arg(unsigned i) const {
+Expr::arg(unsigned int i) const {
   assert(is_a_function() || is_a_power());
   assert(i < nops());
   return Base::op(i);
@@ -422,7 +422,7 @@ Expr::collect(const Expr_List& x) const {
   return Base::collect(x.l);
 }
 
-inline unsigned
+inline unsigned int
 Expr::degree(const Symbol& x) const {
   assert(is_expanded());
   assert(is_polynomial(x.s));
@@ -431,7 +431,7 @@ Expr::degree(const Symbol& x) const {
   return unsigned(d);
 }
 
-inline unsigned
+inline unsigned int
 Expr::ldegree(const Symbol& x) const {
   assert(is_expanded());
   assert(is_polynomial(x.s));
@@ -493,7 +493,7 @@ Expr::rhs() const {
 }
 
 inline Expr
-Expr::diff(const Symbol& x, unsigned nth) {
+Expr::diff(const Symbol& x, unsigned int nth) {
   return Base::diff(x.s, nth);
 }
 
@@ -503,7 +503,7 @@ Expr::unsafe_fp_approximation() const {
 }
 
 inline Functor
-find_functor(const std::string& name, unsigned num_args) {
+find_functor(const std::string& name, unsigned int num_args) {
   return GiNaC::function::find_function(name, num_args);
 }
 
@@ -539,7 +539,7 @@ apply(Functor f,
 
 inline Expr
 apply(Functor f, const std::vector<Expr>& x) {
-  unsigned x_size = x.size();
+  unsigned int x_size = x.size();
   assert(x_size > 1);
   switch (x_size) {
   case 2:
@@ -554,7 +554,7 @@ apply(Functor f, const std::vector<Expr>& x) {
   default:
     {
       std::vector<GiNaC::ex> tmp_x(x_size);
-      for (unsigned i = 0; i < x_size; ++i)
+      for (unsigned int i = 0; i < x_size; ++i)
 	tmp_x[i] = static_cast<const Expr::Base>(x[i]);
       return GiNaC::function(f, tmp_x);
     }

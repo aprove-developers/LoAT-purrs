@@ -74,8 +74,8 @@ Blackboard::operator=(const Blackboard& y) {
 inline Symbol
 Blackboard::insert_definition(const Expr& e) {
   Symbol new_symbol;
-  index.insert(std::map<Symbol, unsigned>::value_type(new_symbol,
-						      definitions.size()));
+  index.insert(std::map<Symbol, unsigned int>::value_type(new_symbol,
+							  definitions.size()));
   definitions.push_back(Definition(e));
   ++timestamp;
   return new_symbol;
@@ -83,7 +83,7 @@ Blackboard::insert_definition(const Expr& e) {
 
 inline Expr
 Blackboard::get_definition(const Symbol& z) const {
-  std::map<Symbol, unsigned>::const_iterator i = index.find(z);
+  std::map<Symbol, unsigned int>::const_iterator i = index.find(z);
   if (i != index.end())
     return definitions[i->second].rhs;
   else
@@ -92,7 +92,7 @@ Blackboard::get_definition(const Symbol& z) const {
 
 inline Symbol
 Blackboard::find_symbol(const Expr& e) {
-  std::map<Symbol, unsigned>::const_iterator j = index.begin();
+  std::map<Symbol, unsigned int>::const_iterator j = index.begin();
   for (std::deque<Definition>::const_iterator i = definitions.begin(),
 	 definitions_end = definitions.end(); i != definitions_end; ++i, ++j) {
     D_VAR(e);
@@ -109,15 +109,15 @@ Blackboard::find_symbol(const Expr& e) {
 inline void
 Blackboard::substitute(const Symbol& system_generated_symbol,
 		       const Symbol& new_symbol) {
-  std::map<Symbol, unsigned>::const_iterator i
+  std::map<Symbol, unsigned int>::const_iterator i
     = index.find(system_generated_symbol);
   // Could exist a `system_generated_symbol' symbol that are
   // not stored in the blackboard (e.g. the index of the sum).
   if (i != index.end()) {
     // Insert the equation `new_symbol = e', where `e' is the expression
     // that was associated to `system_generated_symbol'.
-    index.insert(std::map<Symbol, unsigned>::value_type(new_symbol,
-							definitions.size()));
+    index.insert(std::map<Symbol, unsigned int>::value_type(new_symbol,
+							    definitions.size()));
     definitions.push_back(Definition(definitions[i->second].rhs));
     ++timestamp;
     // Remove from the blackboard the `system_generated_symbol' element.

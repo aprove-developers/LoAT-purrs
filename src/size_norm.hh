@@ -31,11 +31,11 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 //! Returns the size-norm of \p e.
-unsigned
+unsigned int
 size_norm(const Expr& e);
 
 //! Returns the size-norm of \p ,.
-unsigned
+unsigned int
 size_norm(const Matrix& m);
 
 } // namespace Parma_Recurrence_Relation_Solver

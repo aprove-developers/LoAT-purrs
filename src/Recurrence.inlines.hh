@@ -119,18 +119,18 @@ Recurrence::replace_recurrence(const Expr& e) {
 }
 
 inline void
-Recurrence::replace_recurrence(unsigned k, const Expr& e) {
-  std::pair<std::map<unsigned, Expr>::iterator, bool> stat
-    = system_rhs.insert(std::map<unsigned, Expr>::value_type(k, e));
+Recurrence::replace_recurrence(unsigned int k, const Expr& e) {
+  std::pair<std::map<unsigned int, Expr>::iterator, bool> stat
+    = system_rhs.insert(std::map<unsigned int, Expr>::value_type(k, e));
   if (!stat.second)
     // There was already something associated to `k': overwrite it.
     stat.first->second = e;
 }
 
 inline void
-Recurrence::replace_initial_condition(unsigned k, const Expr& e) {
-  std::pair<std::map<unsigned, Expr>::iterator, bool> stat
-    = initial_conditions.insert(std::map<unsigned, Expr>::value_type(k, e));
+Recurrence::replace_initial_condition(unsigned int k, const Expr& e) {
+  std::pair<std::map<unsigned int, Expr>::iterator, bool> stat
+    = initial_conditions.insert(std::map<unsigned int, Expr>::value_type(k, e));
   if (!stat.second)
     // There was already something associated to `i': overwrite it.
     stat.first->second = e;
@@ -150,8 +150,8 @@ undefined_initial_conditions(std::set<unsigned int>& undefined) const {
 }
 
 inline Expr
-Recurrence::get_initial_condition(unsigned k) const {
-  std::map<unsigned, Expr>::const_iterator i = initial_conditions.find(k);
+Recurrence::get_initial_condition(unsigned int k) const {
+  std::map<unsigned int, Expr>::const_iterator i = initial_conditions.find(k);
   if (i != initial_conditions.end())
     return (*i).second;
   else
@@ -245,14 +245,14 @@ Recurrence::set_linear_infinite_order() const {
   type_ = LINEAR_INFINITE_ORDER;
 }
 
-inline unsigned int
+inline index_type
 Recurrence::order() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
   return finite_order_p -> order();
 }
 
-inline unsigned
+inline index_type
 Recurrence::first_valid_index() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
@@ -260,7 +260,7 @@ Recurrence::first_valid_index() const {
 }
 
 inline void
-Recurrence::set_first_valid_index(unsigned i_c) const {
+Recurrence::set_first_valid_index(index_type i_c) const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
   finite_order_p -> set_first_valid_index(i_c);
@@ -280,7 +280,7 @@ Recurrence::coefficients() {
   return finite_order_p -> coefficients();
 }
 
-inline unsigned
+inline unsigned int
 Recurrence::gcd_among_decrements() const {
   assert(is_linear_finite_order());
   assert(finite_order_p);
@@ -329,7 +329,7 @@ Recurrence::unset_order_reduction() const {
   return finite_order_p -> unset_order_reduction();
 }
 
-inline unsigned
+inline index_type
 Recurrence::applicability_condition() const {
   assert(is_functional_equation());
   assert(functional_eq_p);
@@ -337,13 +337,13 @@ Recurrence::applicability_condition() const {
 }
 
 inline void
-Recurrence::set_applicability_condition(unsigned c) const {
+Recurrence::set_applicability_condition(index_type c) const {
   assert(is_functional_equation());
   assert(functional_eq_p);
   return functional_eq_p -> set_applicability_condition(c);
 }
 
-inline size_t
+inline index_type
 Recurrence::rank() const {
   assert(is_functional_equation());
   assert(functional_eq_p);
@@ -398,19 +398,19 @@ Recurrence::auxiliary_symbols() {
   return non_linear_p -> auxiliary_symbols();
 }
 
-inline unsigned int
+inline index_type
 Recurrence::order_if_linear() const {
   assert(non_linear_p);
   return non_linear_p -> order_if_linear();
 }
 
 inline void
-Recurrence::set_order_if_linear(unsigned int x) const {
+Recurrence::set_order_if_linear(index_type x) const {
   assert(non_linear_p);
   return non_linear_p -> set_order_if_linear(x);
 }
 
-inline unsigned
+inline index_type
 Recurrence::first_valid_index_if_linear() const {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
@@ -418,7 +418,7 @@ Recurrence::first_valid_index_if_linear() const {
 }
 
 inline void
-Recurrence::set_first_valid_index_if_linear(unsigned i_c) const {
+Recurrence::set_first_valid_index_if_linear(index_type i_c) const {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
   non_linear_p -> set_first_valid_index_if_linear(i_c);
@@ -480,7 +480,7 @@ Recurrence::weight_inf_order() {
   return infinite_order_p -> weight_inf_order();
 }
 
-inline unsigned
+inline unsigned int
 Recurrence::lower_bound_sum() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
@@ -501,7 +501,7 @@ Recurrence::upper_bound_sum() {
   return infinite_order_p -> upper_bound_sum();
 }
 
-inline unsigned
+inline index_type
 Recurrence::first_valid_index_inf_order() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
@@ -509,7 +509,7 @@ Recurrence::first_valid_index_inf_order() const {
 }
 
 inline void
-Recurrence::set_first_valid_index_inf_order(unsigned i_c) const {
+Recurrence::set_first_valid_index_inf_order(index_type i_c) const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
   infinite_order_p -> set_first_valid_index_inf_order(i_c);

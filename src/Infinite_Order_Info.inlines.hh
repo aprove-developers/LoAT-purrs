@@ -34,7 +34,7 @@ Infinite_Order_Info::Infinite_Order_Info(const Expr& new_rhs,
 					 const Expr& coeff_first_order,
 					 const Expr& inhomog_first_order,
 					 const Expr& weight_inf_order,
-					 unsigned lower_bound_sum,
+					 unsigned int lower_bound_sum,
 					 const Expr& upper_bound_sum) 
   : rhs_transformed_in_first_order_(new_rhs),
     coeff_first_order_(coeff_first_order),
@@ -111,7 +111,7 @@ Infinite_Order_Info::weight_inf_order() {
   return weight_inf_order_;
 }
 
-inline unsigned
+inline unsigned int
 Infinite_Order_Info::lower_bound_sum() const {
   return lower_bound_sum_;
 }
@@ -126,13 +126,13 @@ Infinite_Order_Info::upper_bound_sum() {
   return upper_bound_sum_;
 }
 
-inline unsigned
+inline index_type
 Infinite_Order_Info::first_valid_index_inf_order() const {
   return first_valid_index_inf_order_;
 }
 
 inline void
-Infinite_Order_Info::set_first_valid_index_inf_order(unsigned i_c) {
+Infinite_Order_Info::set_first_valid_index_inf_order(index_type i_c) {
   first_valid_index_inf_order_ = i_c;
 }
 
