@@ -1158,7 +1158,7 @@ increase_argument_x_function(const Expr& e, unsigned int num) {
   - eventual rewriting in the normal form of the recurrence;
   - computation of the right hand side of the associated first order
     recurrence;
-  - shift forward of the first order recurence: \f$ n = n + 1 \f$.
+  - shift forward of the first order recurrence: \f$ n = n + 1 \f$.
   This function performs these other steps:
   - computation of the solution of the first order recurrence;
   - shift backward of the solution: \f$ n = n - 1 \f$;

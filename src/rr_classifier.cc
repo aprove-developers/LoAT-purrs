@@ -664,19 +664,22 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 }
 
 //! \brief
-//! Returns <CODE>true</CODE> if the weighted-average recurrence,
-//! whose right-hand-side is stored in \p rhs,
-//! belongs to the class the system is able to compute, i.e. is in
-//! \ref normal_form "normal form" or is possible to rewrite it in
-//! normal form \f[ x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n) \f];
-//! returns <CODE>false</CODE> otherwise.
+//! Returns <CODE>true</CODE> if \p rhs is the right-hand side of a
+//! weighted-average recurrence or it is possible to rewrite it in
+//! the form of a weighted-average recurrence
+//! \f[
+//!   x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n).
+//! \f]
+//! Returns <CODE>false</CODE> otherwise.
 /*!
-  \param rhs                  the right hand side of a weighted-average
-                              recurrence.
+  \param rhs                  the expression that we want to rewrite,
+                              if possible, in the right-hand side of
+			      a weighted-average recurrence.
   \param term_sum             the term of \p rhs containing the sum.  
-  \param weight               the expression multiplied for the sum
-                              (\f$ f(n) \f$).
-  \param inhomogeneous        the inhomogeneous term of the
+  \param weight               the weight of the weighted-average recurrence,
+                              \f$ f(n) \f$, the expression multiplied by
+			      the sum.
+   \param inhomogeneous       the inhomogeneous term of the
                               weighted-average recurrence (\f$ g(n) \f$).
   \param rhs_first_order      the right hand side of the first order
                               recurrence associated to the weighted-average
