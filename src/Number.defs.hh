@@ -32,6 +32,12 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+//! Returns \f$ x \f$.
+Number operator+(const Number& x);
+
+//! Returns \f$ -x \f$.
+Number operator-(const Number& x);
+
 //! Returns \f$ x + y \f$.
 Number operator+(const Number& x, const Number& y);
 
@@ -41,28 +47,40 @@ Number operator-(const Number& x, const Number& y);
 //! Returns \f$ x * y \f$.
 Number operator*(const Number& x, const Number& y);
 
-//! Returns \f$ x / y \f$.
+//! If \f$ y \neq 0 \f$, returns \f$ x / y \f$.
 /*!
-  \exception std::runtime_error thrown if \p y is zero.
+  \exception std::runtime_error thrown if \f$ y = 0 \f$.
 */
 Number operator/(const Number& x, const Number& y);
 
-//! Returns \f$ x \f$.
-Number operator+(const Number& x);
+//! Yields <CODE>true</CODE> if \f$ x = y \f$, <CODE>false</CODE> otherwise.
+bool operator==(const Number& x, const Number& y);
 
-//! Returns \f$ -x \f$.
-Number operator-(const Number& x);
+//! Yields <CODE>true</CODE> if \f$ x \neq y \f$, <CODE>false</CODE> otherwise.
+bool operator!=(const Number& x, const Number& y);
 
+//! Yields <CODE>true</CODE> if \f$ x > y \f$, <CODE>false</CODE> otherwise.
+bool operator>(const Number& x, const Number& y);
 
-bool operator==(long x, const Number& y);
-bool operator!=(long x, const Number& y);
-bool operator>(long x, const Number& y);
-bool operator<(long x, const Number& y);
-bool operator>=(long x, const Number& y);
-bool operator<=(long x, const Number& y);
+//! Yields <CODE>true</CODE> if \f$ x < y \f$, <CODE>false</CODE> otherwise.
+bool operator<(const Number& x, const Number& y);
 
-Number power(const Number& b, const Number& e);
+//! Yields <CODE>true</CODE> if \f$ x \geq y \f$, <CODE>false</CODE> otherwise.
+bool operator>=(const Number& x, const Number& y);
+
+//! Yields <CODE>true</CODE> if \f$ x \leq y \f$, <CODE>false</CODE> otherwise.
+bool operator<=(const Number& x, const Number& y);
+
+//! If ..., returns \f$ x^y \f$.
+Number power(const Number& x, const Number& y);
+
+//! Returns the greatest common divisor of \f$ x \f$ and \f$ y \f$.
+Number gcd(const Number& x, const Number& y);
+
+//! Returns the least common multiple of \f$ x \f$ and \f$ y \f$.
 Number lcm(const Number& x, const Number& y);
+
+//! Returns the least common multiple of \f$ x \f$ and \f$ y \f$.
 Number factorial(const Number& n);
 
 class Number {
@@ -82,9 +100,9 @@ public:
   //! Builds the integer number \p i.
   Number(unsigned long i);
 
-  //! Builds the rational number \f$ n/d \f$.
+  //! If \f$ d \neq 0 \f$, builds the rational number \f$ n/d \f$.
   /*!
-    \exception std::runtime_error thrown if \p d is zero.
+    \exception std::runtime_error thrown if \f$ d = 0 \f$.
   */
   Number(long n, long d);
 
@@ -94,8 +112,20 @@ public:
   //! Destructor.
   ~Number();
 
-  //! Assignment operator.
-  Number& operator=(const Number& s);
+  //! Ordinary assignment operator.
+  Number& operator=(const Number& y);
+
+  //! Assigns \p i to \p *this.
+  Number& operator=(int i);
+
+  //! Assigns \p i to \p *this.
+  Number& operator=(unsigned int i);
+
+  //! Assigns \p i to \p *this.
+  Number& operator=(long i);
+
+  //! Assigns \p i to \p *this.
+  Number& operator=(unsigned long i);
 
   //! Pre-increment operator.
   Number& operator++();
@@ -108,13 +138,6 @@ public:
 
   //! Post-increment operator.
   Number operator--(int);
-
-  bool operator==(const Number& num) const;
-  bool operator!=(const Number& num) const;
-  bool operator>(const Number& num) const;
-  bool operator<(const Number& num) const;
-  bool operator>=(const Number& num) const;
-  bool operator<=(const Number& num) const;
 
   bool is_positive() const;
   bool is_integer() const;
@@ -137,11 +160,27 @@ public:
 
 private:
   friend class Expr;
+
+  friend Number operator+(const Number& x);
+  friend Number operator-(const Number& x);
+
+  friend Number operator+(const Number& x, const Number& y);
+  friend Number operator-(const Number& x, const Number& y);
+  friend Number operator*(const Number& x, const Number& y);
+  friend Number operator/(const Number& x, const Number& y);
+
+  friend bool operator==(const Number& x, const Number& y);
+  friend bool operator!=(const Number& x, const Number& y);
+  friend bool operator>(const Number& x, const Number& y);
+  friend bool operator<(const Number& x, const Number& y);
+  friend bool operator>=(const Number& x, const Number& y);
+  friend bool operator<=(const Number& x, const Number& y);
+
   friend Number power(const Number& b, const Number& e);
   friend Number lcm(const Number& x, const Number& y);
   friend Number factorial(const Number& n);
 
-public:
+private:
   GiNaC::numeric n;
 
 public:

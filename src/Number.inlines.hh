@@ -82,63 +82,33 @@ Number::operator--(int) {
 }
 
 inline bool
-Number::operator==(const Number& num) const {
-  return n == num.n;
+operator==(const Number& x, const Number& y) {
+  return x.n == y.n;
 }
 
 inline bool
-Number::operator!=(const Number& num) const {
-  return n != num.n;
+operator!=(const Number& x, const Number& y) {
+  return x.n != y.n;
 }
 
 inline bool
-Number::operator>(const Number& num) const {
-  return n > num.n;
+operator>(const Number& x, const Number& y) {
+  return x.n > y.n;
 }
 
 inline bool
-Number::operator<(const Number& num) const {
-  return n < num.n;
+operator<(const Number& x, const Number& y) {
+  return x.n < y.n;
 }
 
 inline bool
-Number::operator>=(const Number& num) const {
-  return n >= num.n;
+operator>=(const Number& x, const Number& y) {
+  return x.n >= y.n;
 }
 
 inline bool
-Number::operator<=(const Number& num) const {
-  return n <= num.n;
-}
-
-inline bool
-operator==(long x, const Number& y) {
-  return y == x;
-}
-
-inline bool
-operator!=(long x, const Number& y) {
-  return y != x;
-}
-
-inline bool
-operator>(long x, const Number& y) {
-  return y < x;
-}
-
-inline bool
-operator<(long x, const Number& y) {
-  return y > x;
-}
-
-inline bool
-operator>=(long x, const Number& y) {
-  return y <= x;
-}
-
-inline bool
-operator<=(long x, const Number& y) {
-  return y >= x;
+operator<=(const Number& x, const Number& y) {
+  return x.n <= y.n;
 }
 
 inline
@@ -173,13 +143,37 @@ Number::Number(long n, long d)
 inline
 Number::Number(const Number& num)
   : n(num.n) {
-};
+}
 
 inline Number&
-Number::operator=(const Number& num) {
-  n = num.n;
+Number::operator=(const Number& y) {
+  n = y.n;
   return *this;
-};
+}
+
+inline Number&
+Number::operator=(int i) {
+  n = i;
+  return *this;
+}
+
+inline Number&
+Number::operator=(unsigned int i) {
+  n = i;
+  return *this;
+}
+
+inline Number&
+Number::operator=(long i) {
+  n = i;
+  return *this;
+}
+
+inline Number&
+Number::operator=(unsigned long i) {
+  n = i;
+  return *this;
+}
 
 inline
 Number::Number(const GiNaC::numeric& gn)
@@ -281,11 +275,6 @@ Number::denom() const {
 }
 
 inline Number
-gcd(const Number& a, const Number& b) {
-  return gcd(a, b);
-}
-
-inline Number
 irem(const Number& a, const Number& b) {
   return irem(a, b);
 }
@@ -296,8 +285,13 @@ abs(const Number& n) {
 }
 
 inline Number
-power(const Number& b, const Number& e) {
-  return GiNaC::pow(b.n, e.n);
+power(const Number& x, const Number& y) {
+  return GiNaC::pow(x.n, y.n);
+}
+
+inline Number
+gcd(const Number& x, const Number& y) {
+  return GiNaC::gcd(x.n, y.n);
 }
 
 inline Number
