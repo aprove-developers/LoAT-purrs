@@ -35,42 +35,88 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
+unsigned
+PURRS::Blackboard::size_norm(Cached<unsigned>& ce) const {
+  if (timestamp > ce.timestamp) {
+    ce.value = size_norm(ce.value);
+    ce.timestamp = timestamp;
+  }
+  return ce.value;
+}
+
+unsigned
+PURRS::Blackboard::size_norm(const Expr& e) const {
+  int count = 1;
+  if (e.is_a_add() || e.is_a_mul())
+    for (unsigned i = e.nops(); i-- > 0; )
+      count += e.op(i).size_norm();
+  else if (e.is_a_power())
+    count += e.arg(0).size_norm() + e.arg(1).size_norm();
+  else if (e.is_a_function())
+    for (unsigned i = e.nops(); i-- > 0; )
+      count += e.arg(i).size_norm();
+  else if (e.is_a_complex_interval())
+    // Four boundaries.
+    count += 4;
+  else if (e.is_a_symbol()) {
+    Symbol z = e.ex_to_symbol();
+    std::map<Symbol, unsigned>::const_iterator i = index.find(z);
+    if (i != index.end())
+      count = size_norm(definitions[i->second].size);
+  }
+  // Leave count to 1 in case e is a number, a constant, or a symbol
+  // that is not defined in the blackboard.
+  return count;
+}
+
+PURRS::Expr
+PURRS::Blackboard::rewrite(Cached<Expr>& ce) const {
+  if (timestamp > ce.timestamp) {
+    ce.value = rewrite(ce.value);
+    ce.timestamp = timestamp;
+  }
+  return ce.value;
+}
+
 PURRS::Expr
 PURRS::Blackboard::rewrite(const Expr& e) const {
-  Expr e_after_subs;
+  Expr e_rewritten;
   if (e.is_a_add()) {
-    e_after_subs = 0;
+    e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_after_subs += rewrite(e.op(i));
+      e_rewritten += rewrite(e.op(i));
   }
   else if (e.is_a_mul()) {
-    e_after_subs = 1;
+    e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_after_subs *= rewrite(e.op(i));
+      e_rewritten *= rewrite(e.op(i));
   }
   else if (e.is_a_power())
-    e_after_subs = pwr(rewrite(e.arg(0)),
+    e_rewritten = pwr(rewrite(e.arg(0)),
 		       rewrite(e.arg(1)));
   else if (e.is_a_function()) {
     if (e.nops() == 1)
-      e_after_subs = apply(e.functor(),
+      e_rewritten = apply(e.functor(),
 			   rewrite(e.arg(0)));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
 	argument[i] = rewrite(e.arg(i));
-      e_after_subs = apply(e.functor(), argument);
+      e_rewritten = apply(e.functor(), argument);
     }
   }
   else if (e.is_a_symbol()) {
-    Symbol s = e.ex_to_symbol();
-    if ((e_after_subs = get_definition(s)) != s)
-      e_after_subs = rewrite(e_after_subs);
+    Symbol z = e.ex_to_symbol();
+    std::map<Symbol, unsigned>::const_iterator i = index.find(z);
+    if (i != index.end())
+      e_rewritten = rewrite(definitions[i->second].expansion);
+    else
+      e_rewritten = e;
   }
   else
-    e_after_subs = e;
-  return e_after_subs;
+    e_rewritten = e;
+  return e_rewritten;
 }
 
 void
@@ -79,9 +125,10 @@ PURRS::Blackboard::dump(std::ostream& s) const {
     s << "Blackboard empty." << std::endl;
   else {
     s << "Blackboard contents:" << std::endl;
-    for (Map::const_iterator i = definitions.begin(),
-	   ad_end = definitions.end(); i != ad_end; ++i)
-      s << "  " << i->first << " = " << i->second << std::endl;
+    for (std::map<Symbol, unsigned>::const_iterator i = index.begin(),
+	   index_end = index.end(); i != index_end; ++i)
+      s << "  " << i->first
+	<< " = " << definitions[i->second].rhs << std::endl;
   }
   s << std::endl;
 }

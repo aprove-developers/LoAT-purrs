@@ -30,6 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr.defs.hh"
 #include "Symbol.defs.hh"
 #include <map>
+#include <deque>
 #include <iosfwd>
 
 namespace Parma_Recurrence_Relation_Solver {
@@ -54,7 +55,7 @@ public:
   Blackboard& operator=(const Blackboard& y);
 
   //! Returns a new symbol \f$ z \f$ and records the equation \f$ z = e \f$.
-  Symbol insert_definition(const Expr& e) const;
+  Symbol insert_definition(const Expr& e);
 
   //! \brief
   //! Returns the right-hand side of the auxiliary equation \f$ z = e \f$,
@@ -65,15 +66,44 @@ public:
   //! Rewrite \f$ e \f$ according to the definitions in \p *this.
   Expr rewrite(const Expr& e) const;
 
+  //! \brief
+  //! Compute the size norm of \f$ e \f$ according to the definitions
+  //! in \p *this.
+  unsigned size_norm(const Expr& e) const;
+
   //! Approximate \f$ e \f$ according to the definitions in \p *this.
   Expr approximate(const Expr& e) const;
 
   void Blackboard::dump(std::ostream& s) const;
 
 private:
-  typedef std::map<Symbol, Expr> Map;
-  mutable Map definitions;
+  template <typename T>
+  class Cached {
+  public:
+    Cached();
 
+    unsigned long timestamp;
+    T value;
+  };
+
+  Expr rewrite(Cached<Expr>& ce) const;
+  unsigned size_norm(Cached<unsigned>& ce) const;
+
+  class Definition {
+  public:
+    explicit Definition(const Expr& e);
+
+    Expr rhs;
+    Cached<unsigned> size;
+    Cached<CInterval> approximation;
+    Cached<Expr> expansion;
+  };
+
+  std::map<Symbol, unsigned> index;
+
+  mutable std::deque<Definition> definitions;
+
+  mutable unsigned long timestamp;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

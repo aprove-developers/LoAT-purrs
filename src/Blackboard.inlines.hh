@@ -30,13 +30,29 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+template <typename T>
 inline
-Blackboard::Blackboard() {
+Blackboard::Cached<T>::Cached()
+  // Please note: the following line reads "timestamp-of-zero".
+  // Since the origin of time for the blackboard is 1, this means
+  // that cached elements are constructed out-of-date.
+  : timestamp(0) {
+}
+
+inline
+Blackboard::Definition::Definition(const Expr& e)
+  : rhs(e) {
+}
+
+inline
+Blackboard::Blackboard()
+  // Please note: the following line reads "timestamp-of-one".
+  : timestamp(1) {
 }
 
 inline
 Blackboard::Blackboard(const Blackboard& y)
-  : definitions(y.definitions) {
+  : definitions(y.definitions), timestamp(y.timestamp) {
 }
 
 inline
@@ -46,6 +62,7 @@ Blackboard::~Blackboard() {
 inline Blackboard&
 Blackboard::operator=(const Blackboard& y) {
   definitions = y.definitions;
+  timestamp = y.timestamp;
   return *this;
 }
 
@@ -55,21 +72,20 @@ operator<(const Symbol& x, const Symbol& y) {
 }
 
 inline Symbol
-Blackboard::insert_definition(const Expr& e) const {
+Blackboard::insert_definition(const Expr& e) {
   Symbol new_symbol;
-  std::pair<Map::iterator, bool> r
-    = definitions.insert(Map::value_type(new_symbol, e));
-  // This is an internal error.
-  assert(r.second);
+  index.insert(std::map<Symbol, unsigned>::value_type(new_symbol,
+						      definitions.size()));
+  definitions.push_back(Definition(e));
+  ++timestamp;
   return new_symbol;
 }
 
 inline Expr
 Blackboard::get_definition(const Symbol& z) const {
-  typedef std::map<Symbol, Expr> Map;
-  Map::const_iterator i = definitions.find(z);
-  if (i != definitions.end())
-    return i->second;
+  std::map<Symbol, unsigned>::const_iterator i = index.find(z);
+  if (i != index.end())
+    return definitions[i->second].rhs;
   else
     return z;
 }
