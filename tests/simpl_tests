@@ -388,6 +388,38 @@ y	(3*n)! / (27^n * n! * (n+1)! * (n+2)!)
 
 %%%%%%%%
 
+y	(2*n+3)!
+factorial(3+2*n)
+ factorial(3+2*n)
+(3+2*n)*(2+2*n)*(1+2*n)*factorial(2*n)
+factorial(3+2*n)
+
+%%%%%%%%
+
+y	a*4*(2*n+3)!+b
+4*factorial(3+2*n)*a+b
+4*factorial(3+2*n)*a+b
+4*a*(3+2*n)*(2+2*n)*(1+2*n)*factorial(2*n)+b
+4*factorial(3+2*n)*a+b
+
+%%%%%%%%
+
+y	4*(2*n-3)!+a
+a+4*factorial(-3+2*n)
+a+4*factorial(-3+2*n)
+2*(-2+2*n)^(-1)*(-1+2*n)^(-1)*n^(-1)*factorial(2*n)+a
+a+4*factorial(-3+2*n)
+ 
+%%%%%%%%
+
+y	12*(2*n-3)!+a
+a+12*factorial(-3+2*n)
+a+12*factorial(-3+2*n)
+6*(-2+2*n)^(-1)*(-1+2*n)^(-1)*n^(-1)*factorial(2*n)+a
+a+12*factorial(-3+2*n)
+
+%%%%%%%%
+
 y	a^n*(2*a)^(-n)
 (1/2)^n
 (1/2)^n
