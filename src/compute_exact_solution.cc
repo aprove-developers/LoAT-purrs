@@ -223,6 +223,82 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
   return SUCCESS;
 }
 
+namespace {
+using namespace PURRS;
+
+Expr
+substitute_pwr_diff_symbols(const Expr& e,
+			    const Expr& diff_symbols,
+			    const Expr& subs_to_diff) {
+  Expr e_substituted;
+  if (e.is_a_add()) {
+    e_substituted = 0;
+    for (unsigned int i = e.nops(); i-- > 0; )
+      e_substituted += substitute_pwr_diff_symbols(e.op(i),
+						   diff_symbols, subs_to_diff);
+  }
+  else if (e.is_a_mul()) {
+    e_substituted = 1;
+    for (unsigned int i = e.nops(); i-- > 0; )
+      e_substituted *= substitute_pwr_diff_symbols(e.op(i),
+						   diff_symbols, subs_to_diff);
+  }
+  else if (e.is_a_power()) {
+    const Expr& base = e.arg(0);
+    const Expr& exponent = e.arg(1);
+    Number exp;
+    if (base == diff_symbols && exponent.is_a_number(exp))
+      return pwr(subs_to_diff, -exp);
+    return pwr(substitute_pwr_diff_symbols(e.arg(0),
+					   diff_symbols, subs_to_diff),
+	       substitute_pwr_diff_symbols(e.arg(1),
+					   diff_symbols, subs_to_diff));
+  }
+  else if (e.is_a_function())
+    if (e.nops() == 1)
+      return apply(e.functor(), substitute_pwr_diff_symbols(e.arg(0),
+							    diff_symbols,
+							    subs_to_diff));
+    else {
+      unsigned int num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned int j = 0; j < num_argument; ++j)
+	argument[j] = substitute_pwr_diff_symbols(e.arg(j),
+						  diff_symbols, subs_to_diff);
+      return apply(e.functor(), argument);
+    }
+  else
+    e_substituted = e;
+  return e_substituted;
+}
+
+void
+find_max_exponent_of_lambda(const Expr& e, const Symbol& lambda,
+			    unsigned int& max) {
+  if (e.is_a_add() || e.is_a_mul())
+    for (unsigned int i = e.nops(); i-- > 0; )
+      find_max_exponent_of_lambda(e.op(i), lambda, max);
+  else if (e.is_a_power()) {
+    Number exp;
+    if (e.arg(0) == lambda && e.arg(1).is_a_number(exp)) {
+      assert(exp.is_positive_integer());
+      unsigned int candidate_max = exp.to_unsigned_int();
+      if (candidate_max > max)
+	max = candidate_max;
+    }
+    else {
+      find_max_exponent_of_lambda(e.arg(0), lambda, max);
+      find_max_exponent_of_lambda(e.arg(1), lambda, max);
+    }
+  }
+  else if (e.is_a_function()) {
+    for (unsigned int i = e.nops(); i-- > 0; )
+      find_max_exponent_of_lambda(e.arg(i), lambda, max);
+  }
+}
+
+} // anonymous namespace
+
 /*!
   Consider the linear recurrence relation of the second order with
   constant coefficients
@@ -323,6 +399,54 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
       for (unsigned int j = symbolic_sum_distinct.size(); j-- > 0; ) {
 	symbolic_sum_no_distinct[j] *= lambda / diff_roots;
 	symbolic_sum_distinct[j] *= lambda / diff_roots;
+#if 0
+	// Substitute all the occurrences of `(lambda-alpha)^(-k)'
+	// with `((lambda+alpha-c)/(-alpha^2+alpha*c+d))^k',
+	// where `c' is the coefficient of `x(n-1)',
+	// `d' is the coefficient of `x(n-2)', `k' is a positive integer.
+	if (!vector_not_all_zero(symbolic_sum_no_distinct)) {
+	  const Expr& subs_to_diff = (lambda + alpha - coefficients[1])
+	    *pwr(-pwr(alpha, 2) + alpha*coefficients[1] + coefficients[2], -1);
+	  symbolic_sum_distinct[j]
+	    = substitute_pwr_diff_symbols(symbolic_sum_distinct[j],
+					  lambda - alpha, subs_to_diff);
+	  // To expand is necessary for finding the powers of `lambda'.
+	  symbolic_sum_distinct[j] = symbolic_sum_distinct[j].expand();
+#if 0
+	  // Find the maximum exponent of `lambda'.
+	  unsigned int max_exponent = 1;
+	  find_max_exponent_of_lambda(symbolic_sum_distinct[j], lambda,
+				      max_exponent);
+	  // Substitute every occurrence of powers of lambda (with
+	  // positive integer exponent):
+	  // `lambda^2 = c*lambda +d' (from the characteristic equation);
+	  // `lambda^3 = (c*lambda + d) * lambda
+	  //           = ... = c^2*lambda + c*d + d*lambda'
+	  // and so forth. In this way we no longer have powers  (with
+	  // positive integer exponent) of lambda.
+	  // First possibility.
+	  const Expr& expr_to_subs = coefficients[1]*lambda + coefficients[2];
+	  for (unsigned int i = max_exponent; i > 1; --i)
+	    symbolic_sum_distinct[j]
+	      = symbolic_sum_distinct[j].substitute(pwr(lambda, i),
+						    pwr(lambda, i - 2)
+						    * expr_to_subs).expand();
+// 	  // Second possibility.
+// 	  std::vector<Expr> powers_of_lambda(max_exponent+1);
+// 	  powers_of_lambda[2] = coefficients[1]*lambda + coefficients[2];
+// 	  for (unsigned i = 3; i <= max_exponent; ++i) {
+// 	    powers_of_lambda[i] = (powers_of_lambda[i-1]*lambda).expand();
+// 	    powers_of_lambda[i]
+// 	      = powers_of_lambda[i].substitute(pwr(lambda,2),
+// 					       powers_of_lambda[2]).expand();
+// 	  }
+// 	  for (unsigned i = 2; i <= max_exponent; ++i)
+// 	    symbolic_sum_distinct[j]
+// 	      = symbolic_sum_distinct[j].substitute(pwr(lambda, i),
+// 						    powers_of_lambda[i]);
+#endif
+	}
+#endif
       }
       D_VEC(symbolic_sum_distinct, 0, symbolic_sum_distinct.size()-1);
       D_VEC(symbolic_sum_no_distinct, 0, symbolic_sum_no_distinct.size()-1);
