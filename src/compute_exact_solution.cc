@@ -879,10 +879,106 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
     D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
 
+    /*
     // FIXME: If we are able to deal with non-zero extra terms in some cases,
     // do not give up.
     if (vector_not_all_zero(exp_no_poly_coeff))
       return TOO_COMPLEX;
+    */
+
+    // FIXME: This is a copy-and-paste of the old resolution method. It is
+    // supposed to be used, temporarily, until the new method solves all the
+    // recurrences the old method attempted to solve. At the moment only the
+    // recurrences whose inhomogeneous term cannot be expressed as sum of
+    // polynomials*exponentials require the old method.
+
+    if (vector_not_all_zero(exp_no_poly_coeff)) {
+
+      // This is the old method. It will be eventually be removed from here.
+
+      // `g_n' is defined here because it is necessary in the function
+      // `compute_term_about_initial_conditions()' (at the end of function
+      // `solve_linear_finite_order()').
+      Expr g_n;
+      switch (order()) {
+      case 1:
+	{
+	  if (is_linear_finite_order_const_coeff())
+	    // Compute the non-homogeneous part of the solution.
+	    solution = solve_constant_coeff_order_1(roots);
+	  else {
+	    Solver_Status status;
+	    // Compute the complete solution.
+	    if ((status = solve_variable_coeff_order_1(coefficients(), solution))
+		!= SUCCESS)
+	      return status;
+	  }
+	}
+	break;
+	
+      case 2:
+	if (is_linear_finite_order_const_coeff()) {
+	  // If there is some root not rational then, for efficiency, we substitute
+	  // it with an arbitrary symbol.
+	  substitute_non_rational_roots(*this, roots);
+	  // Compute the non-homogeneous part of the solution.
+	  solution = solve_constant_coeff_order_2(g_n, all_distinct,
+						  num_coefficients, roots);
+	}
+	else
+	  // For the time being, we only solve second order
+	  // recurrence relations with constant coefficients.
+	  return TOO_COMPLEX;
+	break;
+	
+      default:
+	if (is_linear_finite_order_const_coeff()) {
+	  // If there is some root not rational then, for efficiency, we substitute
+	  // it with an arbitrary symbol.
+	  substitute_non_rational_roots(*this, roots);
+	  // Compute the non-homogeneous part of the solution.
+	  solution = solve_constant_coeff_order_k(g_n, all_distinct,
+						  num_coefficients, roots);
+	}
+	else
+	  // For the time being, we only solve recurrence relations
+	  // of order 3 and more only if they have constant coefficients.
+	  return TOO_COMPLEX;
+	break;
+      }
+      D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
+      solution = simplify_ex_for_output(solution, false);
+      solution = simplify_binomials_factorials_exponentials(solution);
+      solution = simplify_logarithm(solution);
+      
+      if (is_linear_finite_order_const_coeff())
+	if (order() == 1 )
+	  // FIXME: per ora non si puo' usare la funzione
+	  // `compute_term_about_initial_conditions' perche' richiede un
+	  // vettore di `Number' come `coefficients' e voglio risolvere anche
+	  // le parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
+	  // compute_term_about_initial_conditions(g_n, coefficients, solution);
+	  exact_solution_.set_expression(x(first_valid_index)
+					 * pwr(coefficients()[1],
+					       n-(first_valid_index-order()+1))
+					 + solution);
+	else
+	  exact_solution_.set_expression(compute_term_about_initial_conditions
+					 (g_n, num_coefficients, first_valid_index)
+					 + solution);
+      else
+	// In the case of variable coefficients the expression contained in
+	// `solution' is already the sum of the homogeneous part and the
+	// non-homogeneous part of the solution of the recurrence.
+	exact_solution_.set_expression(solution);
+      
+      // Resubstitute auxiliary definitions possibly appearing in
+      // the solution with their original values.
+      //exact_solution_.set_expression(blackboard.rewrite(solution));
+      
+      return SUCCESS;
+    }
+
 
     // If there are non-rational roots, substitute them with symbols for
     // efficiency.
