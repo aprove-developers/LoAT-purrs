@@ -1228,68 +1228,75 @@ insert_coefficients(const Expr& coeff, unsigned long index,
     coefficients[index] += coeff;
 }
 
-} // anonymous namespace
-
-PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::check_powers_and_functions(const Expr& e) {
-  // If `x(n + k)' is the argument of an other function, then
-  // the recurrence is non-linear.
+/*!
+  Returns <CODE>true</CODE> in two cases:
+  - there is in \p e an \f$ x \f$ function (with the argument containing
+    \f$ n \f$) inside an other function;
+  - there is in \p e a power with an \f$ x \f$ function in the base
+    or in the exponent of it.
+  Returns <CODE>false</CODE> in all the other cases. 
+*/
+bool
+x_function_in_powers_or_functions(const Expr& e) {
+  // First case.
   if (e.is_a_function()) {
     for (unsigned i = e.nops(); i-- > 0; ) {
       const Expr& operand = e.arg(i);
       if (operand.is_the_x_function())
 	if (operand.arg(0).has(Recurrence::n))
-	  return NON_LINEAR_RECURRENCE;
+	  return true;
     }
   }
-  // If `x(n + k)' is the base or the exponent of a power, then
-  // the recurrence is non-linear.
+  // Second case.
   else if (e.is_a_power()) {
     const Expr& base = e.arg(0);
     const Expr& exponent = e.arg(1);
     if (base.is_the_x_function())
       if (base.arg(0).has(Recurrence::n))
-	return NON_LINEAR_RECURRENCE;
+	return true;
     if (exponent.is_the_x_function())
       if (exponent.arg(0).has(Recurrence::n))
-	return NON_LINEAR_RECURRENCE;
+	return true;
   }
-  return SUCCESS;
+  return false;
 }
+
+} // anonymous namespace
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::find_non_linear_recurrence(const Expr& e) {
-  Solver_Status status;
   unsigned num_summands = e.is_a_add() ? e.nops() : 1;
   if (num_summands > 1)
     for (unsigned i = num_summands; i-- > 0; ) {
       const Expr& term = e.op(i);
       unsigned num_factors = term.is_a_mul() ? term.nops() : 1;
       if (num_factors == 1) {
-	status = check_powers_and_functions(term);
-	if (status != SUCCESS)
-	  return status;
+	if (x_function_in_powers_or_functions(term)) {
+	  D_MSG("non linear");
+	  return TOO_COMPLEX;
+	}
       }
       else
-	for (unsigned j = num_factors; j-- > 0; ) {
-	  status = check_powers_and_functions(term.op(j));
-	  if (status != SUCCESS)
-	    return status;
-	}
+	for (unsigned j = num_factors; j-- > 0; )
+	  if (x_function_in_powers_or_functions(term.op(j))) {
+	    D_MSG("non linear");
+	    return TOO_COMPLEX;
+	  }
     }
   else {
     unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
     if (num_factors == 1) {
-      status = check_powers_and_functions(e);
-      if (status != SUCCESS)
-	return status;
+      if (x_function_in_powers_or_functions(e)) {
+	D_MSG("non linear");
+	return TOO_COMPLEX;
+      }
     }
     else
-      for (unsigned j = num_factors; j-- > 0; ) {
-	status = check_powers_and_functions(e.op(j));
-	if (status != SUCCESS)
-	  return status;
-      }
+      for (unsigned j = num_factors; j-- > 0; )
+	if (x_function_in_powers_or_functions(e.op(j))) {
+	  D_MSG("non linear");
+	  return TOO_COMPLEX;
+	}
   }
   return SUCCESS;
 }
@@ -1394,8 +1401,10 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	else if (argument.is_a_add() && argument.nops() == 2) {
 	  Number decrement;
 	  if (get_constant_decrement(argument, decrement)) {
-	    if (found_function_x)
-	      return NON_LINEAR_RECURRENCE;
+	    if (found_function_x) {
+	      D_MSG("non linear");
+	      return TOO_COMPLEX;
+	    }
 	    Solver_Status status
 	      = compute_order(decrement, order, index,
 			      coefficients.max_size());
@@ -1475,10 +1484,9 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
   In both the case is besides computed the non-homogeneous part
   of the recurrence.
   If the function not returns <CODE>SUCCESS</CODE> then is one of the
-  following cases: <CODE>NON_LINEAR_RECURRENCE</CODE>,
-  <CODE>HAS_NEGATIVE_DECREMENT</CODE>, <CODE>HAS_HUGE_DECREMENT</CODE>,
-  <CODE>HAS_NULL_DECREMENT</CODE>, <CODE>HAS_NON_INTEGER_DECREMENT</CODE>,
-  <CODE>TOO_COMPLEX</CODE>.
+  following cases: <CODE>HAS_NEGATIVE_DECREMENT</CODE>,
+  <CODE>HAS_HUGE_DECREMENT</CODE>, <CODE>HAS_NULL_DECREMENT</CODE>,
+  <CODE>HAS_NON_INTEGER_DECREMENT</CODE>, <CODE>TOO_COMPLEX</CODE>.
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classification_recurrence(const Expr& rhs,
@@ -1903,14 +1911,6 @@ PURRS::Recurrence::solve_try_hard() const {
 	}
 	else
 	  status = UNSOLVABLE_RECURRENCE;
-	exit_anyway = true;
-      }
-      break;
-    case NON_LINEAR_RECURRENCE:
-      {
-	D_MSG("non linear");
-	// FIXME: can we do something here to try to linearize the recurrence?
-	status = TOO_COMPLEX;
 	exit_anyway = true;
       }
       break;

@@ -158,11 +158,6 @@ public:
     HAS_NULL_DECREMENT,
 
     /*!
-      The recurrence is not linear.
-    */
-    NON_LINEAR_RECURRENCE,
-
-    /*!
       The recurrence is not solvable.
     */
     UNSOLVABLE_RECURRENCE,
@@ -439,8 +434,6 @@ private:
   mutable Blackboard blackboard;
 
 private:
-  static Solver_Status
-  check_powers_and_functions(const Expr& e);
   static Solver_Status
   find_non_linear_recurrence(const Expr& e);
   static Solver_Status
