@@ -67,29 +67,48 @@ int main() try {
 
   while (input_stream) {
     Expr solution = 0;
+    //    string default_term = "binom(n,k)^2";
+    string default_term = "(-1)^(k)*(binom(2*n,k))^3";
     string s;
 #if NOISY
     cout << endl << "Insert the hypergeometric term t(n): " << endl;
-    cout << "(Blank line to use the hard-coded hypergeometric term binom(n,k)^2  )" << endl;
+    cout << "(Blank line to use the hard-coded hypergeometric term " << default_term << " )" << endl;
 #endif
     getline(input_stream,s);
+
+    // We may be at end of file.
+    if (!input_stream)
+      break;
+      
+    // Skip comments.
+    if (s.find("%") == 0)
+      continue;
+
     if (s == "") {
-      s = "((n!) / ((k!) * (n-k)!))^2";
+      s = default_term;
     }
     Expr_List l(Recurrence::n, k, a, b, c, d);
-    Expr t_n = Expr(s,l);
+    Expr t_n;
+    try {
+      t_n = Expr(s,l);
     cout << t_n << endl;
+
     if (zeilberger_algorithm(t_n, Recurrence::n, k, solution))
 #if NOISY
-    std::cout << endl << "The sum is: " << solution << std::endl;
+      std::cout << endl << "The sum is: " << solution << std::endl;
 #endif
     else {
       Symbol h;
 #if NOISY
       std::cout << endl << "Error in Zeilberger Algorithm for term " << t_n
 		<< std::endl;
+    }
 #endif
     }
+    catch (exception& e) {
+      std::cerr << "std::exception caught: " << e.what();
+    }
+    
     cout << endl << "---------------------------------------------" << endl;
       
   }
