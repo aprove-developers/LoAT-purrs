@@ -27,6 +27,12 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "globals.hh"
 
+enum Solve_Status {
+  OK,
+  HAS_NEGATIVE_DECREMENT,
+  HAS_NULL_DECREMENT
+};
+
 bool
 solve(const GExpr& rhs, const GSymbol& n, GExpr& solution);
 
