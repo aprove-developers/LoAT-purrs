@@ -431,8 +431,39 @@ public:
   //! Returns the exact solution of \p *this, previously computed,
   //! evaluated for \f$ n = num \f$.
   /*!
-    \exception std::logic_error thrown if this method is called
-                                but no exact solution was computed.
+    This method replaces <CODE>Recurrence::n</CODE> with \p num in
+    the expression containing the exact solution.
+    \p num must be a non-negative integer in agreement with
+    the least non-negative integer \f$ j \f$ such that the 
+    recurrence is well-defined for \f$ n \geq j \f$.
+
+    If \p *this is
+    - a \ref linear_finite_order "linear finite order recurrence"
+      or a \ref non_linear "non linear finite order recurrences":
+                                     \p num must be bigger or equal to
+				     \f$ j \f$, where \f$ j \f$
+				     the maximum between \f$ 0 \f$
+				     and \p first_valid_index()-order()+1.
+
+    - a \ref weighted_average "weighted-average recurrence":
+                                     by definition and since the recurrence is
+				     rewritten so that the lower limit of
+				     the sum is equal to \f$ 0 \f$ and
+				     upper limit is equal to \f$ n-1 \f$,
+				     the solution is valid for
+				     \f$ n \geq 0 \f$.
+
+    - a \ref generalized_recurrence "functional equation":         
+                                     to be written.
+
+    \exception std::logic_error       thrown if this method is called
+                                      but no exact solution was computed.
+
+    \exception std::invalid_argument  thrown if \p num is not a non-negative
+                                      integer bigger or equal to the least
+				      non-negative integer \f$ j \f$ such
+				      that the solution is valid for
+				      \f$ n \geq j \f$.
   */
   Expr evaluate_exact_solution(const Number& num) const;
 
@@ -440,8 +471,20 @@ public:
   //! Returns the lower bound of \p *this, previously computed,
   //! evaluated for \f$ n = num \f$.
   /*!
-    \exception std::logic_error thrown if this method is called
-                                but no lower bound was computed.
+    This method replaces <CODE>Recurrence::n</CODE> with \p num in
+    the expression containing the lower bound.
+    \p num must be a non-negative integer in agreement with
+    the least non-negative integer \f$ j \f$ such that the 
+    recurrence is well-defined for \f$ n \geq j \f$.
+
+    \exception std::logic_error       thrown if this method is called
+                                      but no lower bound was computed.
+  
+    \exception std::invalid_argument  thrown if \p num is not a non-negative
+                                      integer bigger or equal to the least
+				      non-negative integer \f$ j \f$ such
+				      that the bound is valid for
+				      \f$ n \geq j \f$.
   */
   Expr evaluate_lower_bound(const Number& num) const;
 
@@ -449,8 +492,20 @@ public:
   //! Returns the upper bound of \p *this, previously computed,
   //! evaluated for \f$ n = num \f$.
   /*!
-    \exception std::logic_error thrown if this method is called
-                                but no upper bound was computed.
+    This method replaces <CODE>Recurrence::n</CODE> with \p num in
+    the expression containing the upper bound.
+    \p num must be a non-negative integer in agreement with
+    the least non-negative integer \f$ j \f$ such that the 
+    recurrence is well-defined for \f$ n \geq j \f$.
+
+    \exception std::logic_error       thrown if this method is called
+                                      but no upper bound was computed.
+  
+    \exception std::invalid_argument  thrown if \p num is not a non-negative
+                                      integer bigger or equal to the least
+				      non-negative integer \f$ j \f$ such
+				      that the bound is valid for
+				      \f$ n \geq j \f$.
   */
   Expr evaluate_upper_bound(const Number& num) const;
 
@@ -494,6 +549,8 @@ private:
   //! the maximum integer among the first elements of it;
   //! returns \f$ 0 \f$ if the map is empty.
   unsigned int get_max_index_initial_condition() const;
+
+  Expr evaluate(unsigned int kind, const Number& num) const;
 
   //! \brief
   //! Throw a <CODE>std::invalid_argument</CODE> exception

@@ -171,6 +171,21 @@ Recurrence::get_max_index_initial_condition() const {
   return max_index;
 }
 
+inline Expr
+Recurrence::evaluate_exact_solution(const Number& num) const {
+  return evaluate(0, num);
+}
+
+inline Expr
+Recurrence::evaluate_lower_bound(const Number& num) const {
+  return evaluate(1, num);
+}
+
+inline Expr
+Recurrence::evaluate_upper_bound(const Number& num) const {
+  return evaluate(2, num);
+}
+
 inline void
 Recurrence::set_inhomogeneous_term(const Expr& e) const {
   inhomogeneous_term = e;

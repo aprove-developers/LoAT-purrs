@@ -893,7 +893,7 @@ PURRS::Recurrence::set_initial_conditions(const std::map<index_type, Expr>&
 
   // FIXME: exception?
   if (classifier_status_ != CL_SUCCESS)
-    throw std::logic_error("PURRS::Recurrence::set_initial_conditions() "
+    throw std::logic_error("PURRS::Recurrence::set_initial_conditions():\n"
 			   "useless to set initial conditions because "
 			   "the system can not to solve the recurrence");
 
@@ -915,7 +915,7 @@ PURRS::Recurrence::set_initial_conditions(const std::map<index_type, Expr>&
 	throw_invalid_argument(method, s.str().c_str());
       }
       // Check that the lowest index among the indexes of the
-      // initial conditions are bigger than
+      // initial conditions is bigger than
       // `first_valid_index() - order() + 1'.
       index_type lowest = map_initial_conditions.begin()->first;
       unsigned int min_index = first_valid_index() + 1 >= order()
@@ -938,8 +938,8 @@ PURRS::Recurrence::set_initial_conditions(const std::map<index_type, Expr>&
 	  throw_invalid_argument(method,
 				 "the indexes of the initial conditions "
 				 "must be consequent");
-      break;
     }
+    break;
   case WEIGHTED_AVERAGE:
     {
       if (map_initial_conditions.size() != 1
@@ -961,7 +961,100 @@ PURRS::Recurrence::set_initial_conditions(const std::map<index_type, Expr>&
     throw std::runtime_error("PURRS internal error: "
 			     "set_initial_conditions().");
   }
+
+  // Set the private data `initial_conditions' with the map given.
   initial_conditions = map_initial_conditions;
+}
+
+Expr
+PURRS::Recurrence::evaluate(unsigned int kind, const Number& num) const {
+  const char* method;
+  const char* name;
+  Expr evaluated;
+  switch (kind) {
+  case 0:
+    method = "PURRS::Recurrence::evaluate_exact_solution()";
+    name = "solution";
+    exact_solution(evaluated);
+    break;
+  case 1:
+    method = "PURRS::Recurrence::evaluate_lower_bound()";
+    name = "lower bound";
+    lower_bound(evaluated);
+    break;
+  case 2:
+    method = "PURRS::Recurrence::evaluate_upper_bound()";
+    name = "upper bound";
+    upper_bound(evaluated);
+    break;
+  default:
+    throw std::runtime_error("PURRS internal error: "
+			     "evaluate().");    
+  }
+
+  // Check that `num' is non-negative.
+  std::ostringstream s;
+  if (num.is_negative()) {
+    s << "the " << name << " can be evaluated on non-negative numbers";
+    throw_invalid_argument(method, s.str().c_str());
+  }
+  
+  switch (type_) {
+  case ORDER_ZERO:
+    // If the recurrence has order zero, the solution is simply the
+    // right-hand side.
+    evaluated = evaluated.substitute(n, num);
+    break;
+  case LINEAR_FINITE_ORDER_CONST_COEFF:
+  case LINEAR_FINITE_ORDER_VAR_COEFF:
+    {
+      // Check that the number `num' is bigger than
+      // `first_valid_index() - order() + 1'.
+      unsigned int min_index = first_valid_index() + 1 >= order()
+	? first_valid_index() - order() + 1 : 0;
+      if (num < min_index) {
+	s << "*this is a recurrence of order " << order() << ";\n"
+	  << "the least non-negative integer `j' such that the\n"
+	  << "recurrence is well-defined for `n >= j' is "
+	  << first_valid_index()
+	  << ". Hence, you can not to evaluate the solution\n"
+	  << "for number smaller than " << min_index;
+	throw_invalid_argument(method, s.str().c_str());
+      }
+
+      // The solution or the bound is valid for the non-negative integer
+      // `n' such that `n > first_valid_index'; for `n <= first_valid_index'
+      //  the solution is represented by the initial condition with index
+      // equal to `num'.
+      if (num < first_valid_index() + 1)
+	evaluated = get_initial_condition(num.to_unsigned_int());
+      else
+	evaluated = evaluated.substitute(n, num);
+    }
+    break;
+  case WEIGHTED_AVERAGE:
+    {
+      // The solution or the bound is valid for the non-negative integer
+      // `n' such that `n > 0'; for `n == 0' the solution is represented
+      // by the initial condition `x(0)'.
+      if (num == 0)
+	evaluated = get_initial_condition(0);
+      else
+	evaluated = evaluated.substitute(n, num);
+    }
+    break;
+  case NON_LINEAR_FINITE_ORDER:
+  case FUNCTIONAL_EQUATION:
+    throw
+      "PURRS error: today the evaluation of the solution\n"  
+      "is allowed only for linear finite order recurrences and\n"  
+      "weighted-average recurrences.";
+    break;
+  default:
+    throw std::runtime_error("PURRS internal error: "
+			     "evaluate_exact_solution().");
+  }
+  return evaluated;
 }
 
 PURRS::Recurrence::Solver_Status
@@ -1463,7 +1556,9 @@ PURRS::Recurrence::compute_exact_solution_finite_order() const {
   // eventually shift the solution in according with them before to
   // substitute the values of the initial conditions to the
   // symbolic initial conditions `x(i)'.
-  if (!initial_conditions.empty()) {
+  // If the order of the recurrence is `0' no initial conditions
+  // must be substituted.
+  if (!initial_conditions.empty() && order() > 0) {
     evaluated_exact_solution_.set_expression
       (substitute_i_c_shifting(exact_solution_.expression()));
     evaluated_lower_bound_.set_expression
@@ -1618,7 +1713,7 @@ PURRS::Recurrence::exact_solution(Expr& e) const {
 
   // Substitutes all symbols generated by the system contained in
   // \p (*this).expression() with new symbols with shorter
-  // name that are not yet used
+  // name that are not yet used.
   exact_solution_
     .set_expression(exact_solution_.replace_system_generated_symbols(*this));
 
@@ -1800,7 +1895,7 @@ PURRS::Recurrence::lower_bound(Expr& e) const {
 
   // Substitutes all symbols generated by the system contained in
   // \p (*this).expression() with new symbols with shorter
-  // name that are not yet used
+  // name that are not yet used.
   lower_bound_
     .set_expression(lower_bound_.replace_system_generated_symbols(*this));
 
@@ -1820,9 +1915,10 @@ PURRS::Recurrence::upper_bound(Expr& e) const {
   if (!upper_bound_.has_expression())
     throw std::logic_error("PURRS::Recurrence::upper_bound() called, "
 			   "but no upper bounds was computed");
+
   // Substitutes all symbols generated by the system contained in
   // \p (*this).expression() with new symbols with shorter
-  // name that are not yet used
+  // name that are not yet used.
   upper_bound_
     .set_expression(upper_bound_.replace_system_generated_symbols(*this));
 
