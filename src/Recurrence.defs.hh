@@ -365,6 +365,9 @@ private:
   //! returns <CODE>false</CODE> otherwise.
   bool is_unknown() const;
 
+  //! Sets <CODE>type_recurrence = UNKNOWN</CODE>.
+  void set_unknown() const;
+
   //! \brief
   //! Returns <CODE>true</CODE> if the recurrence is a special case,
   //! i. e., is of order zero; returns <CODE>false</CODE> otherwise.

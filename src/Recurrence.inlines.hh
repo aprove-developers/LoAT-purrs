@@ -155,6 +155,11 @@ Recurrence::is_unknown() const {
   return type == UNKNOWN;
 }
 
+inline void
+Recurrence::set_unknown() const {
+  type = UNKNOWN; 
+}
+
 inline bool
 Recurrence::is_order_zero() const {
   return type == ORDER_ZERO; 
