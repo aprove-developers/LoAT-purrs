@@ -725,7 +725,7 @@ solve_constant_coeff_order_2(Expr& g_n, unsigned int order, bool all_distinct,
     }
     else {
       Symbol h;
-      solution = diff_roots
+      solution = 1 / diff_roots
 	* (pwr(root_1, Recurrence::n+1)
 	   * PURRS::sum(h, 2, Recurrence::n,
 			pwr(root_1, -h)
@@ -1798,7 +1798,7 @@ solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
       // FIXME: the summand is not hypergeometric:
       // no chance of using Gosper's algorithm.
       Symbol h;
-      solution += PURRS::sum(h, 1, n, pwr(roots[0].value(), -h)
+      solution += PURRS::sum(h, 1, n, pwr(roots[0].value(), n - h)
 			     * inhomogeneous_term.subs(n, h));
     }
   }
