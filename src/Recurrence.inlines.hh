@@ -605,7 +605,14 @@ Recurrence::get_auxiliary_definition(const Symbol& z) const {
 
 inline Expr
 Recurrence::substitute_auxiliary_definitions(const Expr& e) const {
-  return blackboard.rewrite(e);
+  // This method is called at the end of all computations in order
+  // to find the solution of `*this', hence the solution is already
+  // simplified. But since the auxiliary definitions
+  // that here are substituted could be not simple expressions, even if
+  // the solution was already simplified, some simplifications can be
+  // again necessary: this is done calling the method `expand()' which
+  // performs automatic simplifications.
+  return blackboard.rewrite(e).expand();
 }
 
 } // namespace Parma_Recurrence_Relation_Solver
