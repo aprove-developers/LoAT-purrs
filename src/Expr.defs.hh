@@ -595,9 +595,23 @@ public:
     By definition, <EM>content part</EM> of polynomial is the greatest
     common divisor of its coefficients.
     The product of content part and primitive part is the polynomial itself.
-    // FIXME: rivedere eccezioni.
+    FIXME: rivedere eccezioni.
   */
   Expr content(const Symbol& x) const;
+
+  //! Normalization of rational functions.
+  /*!
+    This function converts an expression to its normal form
+    "numerator/denominator", where numerator and denominator are (relatively
+    prime) polynomials. Any subexpressions which are not rational functions
+    (like non-rational numbers, non-integer powers or functions like sin(),
+    cos() etc.) are replaced by temporary symbols which are re-substituted by
+    the (normalized) subexpressions before normal() returns (this way, any
+    expression can be treated as a rational function). normal() is applied
+    recursively to arguments of functions etc.
+    FIXME: rivedere eccezioni.
+  */
+  Expr normalize() const;
 
   //! Returns numerator of \p *this.
   /*!

@@ -412,6 +412,11 @@ Expr::content(const Symbol& x) const {
 }
 
 inline Expr
+Expr::normalize() const {
+  return Base::normal();
+}
+
+inline Expr
 Expr::numerator() const {
   return Base::numer();
 }
