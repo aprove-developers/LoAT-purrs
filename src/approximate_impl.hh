@@ -48,7 +48,7 @@ approximate_rational(const Number& n) {
       approximate_integer(n.numerator())
       / approximate_integer(n.denominator());
   else
-    abort();
+    return Interval(n.to_double());
 }
 
 inline CInterval
@@ -60,7 +60,6 @@ approximate(const Number& n) {
     return CInterval(approximate_rational(n.real()),
 		     approximate_rational(n.imaginary()));
 }
-
 
 template <typename SymbolHandler>
 bool
@@ -83,7 +82,7 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
 	non_trivial_interval = true;
       }
       else {
-	accumulated_ae *= operand_ae;
+	accumulated_ae += operand_ae;
 	interval_result = false;
       }
     }
@@ -125,7 +124,7 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
     bool exponent_interval_result
       = generic_approximate(e.arg(1), sh, exponent_ae, exponent_aci);
     if (base_interval_result)
-      if (exponent_interval_result) 
+      if (exponent_interval_result)
 	aci = pow(base_aci, exponent_aci);
       else
 	ae = pwr(Complex_Interval(base_aci), exponent_ae);
@@ -141,7 +140,8 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
     switch (e.nops()) {
     case 1:
       {
-	if (e.is_the_x_function()) {
+	if (e.is_the_x_function()
+	    || e.is_the_factorial_function()) {
 	  ae = e;
 	  interval_result = false;
 	}
@@ -162,11 +162,13 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
 	    ae = apply(e.functor(), Complex_Interval(operand_aci));
 	    interval_result = false;
 	  }
-	else
+	else {
 	  ae = apply(e.functor(), operand_ae);
+	  interval_result = false;
+	}
       }
       break;
-    case 3:
+    case 4:
       assert(e.is_the_sum_function() || e.is_the_prod_function());
       ae = e;
       interval_result = false;

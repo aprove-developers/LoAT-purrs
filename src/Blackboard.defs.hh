@@ -92,10 +92,6 @@ private:
     T value;
   };
 
-  Expr rewrite(Cached<Expr>& ce) const;
-  unsigned size_norm(Cached<unsigned>& ce) const;
-  Expr approximate(Cached<Expr>& ce) const;
-
   class Definition {
   public:
     explicit Definition(const Expr& e);
@@ -105,6 +101,10 @@ private:
     Cached<Expr> approximation;
     Cached<Expr> expansion;
   };
+
+  Expr rewrite(Definition& d) const;
+  unsigned size_norm(Definition& d) const;
+  Expr approximate(Definition& d) const;
 
   std::map<Symbol, unsigned> index;
 

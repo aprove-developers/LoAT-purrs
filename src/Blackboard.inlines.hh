@@ -90,15 +90,6 @@ Blackboard::get_definition(const Symbol& z) const {
     return z;
 }
 
-inline unsigned
-Blackboard::size_norm(const Symbol& s) const {
-  std::map<Symbol, unsigned>::const_iterator i = index.find(s);
-  if (i != index.end())
-    return size_norm(definitions[i->second].size);
-  else
-    return 1;
-}
-
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_Blackboard_inlines_hh)

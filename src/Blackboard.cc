@@ -36,12 +36,12 @@ http://www.cs.unipr.it/purrs/ . */
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 PURRS::Expr
-PURRS::Blackboard::rewrite(Cached<Expr>& ce) const {
-  if (timestamp > ce.timestamp) {
-    ce.value = rewrite(ce.value);
-    ce.timestamp = timestamp;
+PURRS::Blackboard::rewrite(Definition& d) const {
+  if (timestamp > d.expansion.timestamp) {
+    d.expansion.value = rewrite(d.rhs);
+    d.expansion.timestamp = timestamp;
   }
-  return ce.value;
+  return d.expansion.value;
 }
 
 PURRS::Expr
@@ -58,12 +58,10 @@ PURRS::Blackboard::rewrite(const Expr& e) const {
       e_rewritten *= rewrite(e.op(i));
   }
   else if (e.is_a_power())
-    e_rewritten = pwr(rewrite(e.arg(0)),
-		       rewrite(e.arg(1)));
+    e_rewritten = pwr(rewrite(e.arg(0)), rewrite(e.arg(1)));
   else if (e.is_a_function()) {
     if (e.nops() == 1)
-      e_rewritten = apply(e.functor(),
-			   rewrite(e.arg(0)));
+      e_rewritten = apply(e.functor(), rewrite(e.arg(0)));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
@@ -76,7 +74,7 @@ PURRS::Blackboard::rewrite(const Expr& e) const {
     Symbol z = e.ex_to_symbol();
     std::map<Symbol, unsigned>::const_iterator i = index.find(z);
     if (i != index.end())
-      e_rewritten = rewrite(definitions[i->second].expansion);
+      e_rewritten = rewrite(definitions[i->second]);
     else
       e_rewritten = e;
   }
@@ -86,12 +84,12 @@ PURRS::Blackboard::rewrite(const Expr& e) const {
 }
 
 unsigned
-PURRS::Blackboard::size_norm(Cached<unsigned>& ce) const {
-  if (timestamp > ce.timestamp) {
-    ce.value = generic_size_norm(ce.value, *this);
-    ce.timestamp = timestamp;
+PURRS::Blackboard::size_norm(Definition& d) const {
+  if (timestamp > d.size.timestamp) {
+    d.size.value = generic_size_norm(d.rhs, *this);
+    d.size.timestamp = timestamp;
   }
-  return ce.value;
+  return d.size.value;
 }
 
 unsigned
@@ -99,12 +97,22 @@ PURRS::Blackboard::size_norm(const Expr& e) const {
   return generic_size_norm(e, *this);
 }
 
+unsigned
+PURRS::Blackboard::size_norm(const Symbol& s) const {
+  std::map<Symbol, unsigned>::const_iterator i = index.find(s);
+  if (i != index.end())
+    return size_norm(definitions[i->second]);
+  else
+    return 1;
+}
+
+
 bool
 PURRS::Blackboard::approximate(const Symbol& s,
 			       Expr& ae, CInterval& aci) const {
   std::map<Symbol, unsigned>::const_iterator i = index.find(s);
   if (i != index.end()) {
-    Expr e = approximate(definitions[i->second].approximation);
+    Expr e = approximate(definitions[i->second]);
     if (e.is_a_complex_interval()) {
       aci = e.ex_to_complex_interval().get_interval();
       return true;
@@ -121,12 +129,12 @@ PURRS::Blackboard::approximate(const Symbol& s,
 }
 
 PURRS::Expr
-PURRS::Blackboard::approximate(Cached<Expr>& ce) const {
-  if (timestamp > ce.timestamp) {
-    ce.value = generic_approximate(ce.value, *this);
-    ce.timestamp = timestamp;
+PURRS::Blackboard::approximate(Definition& d) const {
+  if (timestamp > d.approximation.timestamp) {
+    d.approximation.value = generic_approximate(d.rhs, *this);
+    d.approximation.timestamp = timestamp;
   }
-  return ce.value;
+  return d.approximation.value;
 }
 
 PURRS::Expr
