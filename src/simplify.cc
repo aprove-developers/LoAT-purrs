@@ -674,8 +674,6 @@ reduce_product(const Expr& e) {
 	    assert(to_reduce.nops() == 2);
 	    for (unsigned j = 2; j-- > 0; )
 	      if (to_reduce.op(j).is_a_power()) {
-		assert(to_reduce.op(j).op(0).is_a_number());
-		assert(to_reduce.op(j).op(1).is_a_number());
 		base_1 = to_reduce.op(j).op(0).ex_to_number();
 		exp_1  = to_reduce.op(j).op(1).ex_to_number();
 		factor_to_reduce = Parma_Recurrence_Relation_Solver::power(to_reduce.op(j).op(0),
@@ -685,14 +683,11 @@ reduce_product(const Expr& e) {
 		factor_no_to_reduce *= to_reduce.op(j);
 	  }
 	  else if (to_reduce.is_a_power()) {
-	    assert(to_reduce.op(0).is_a_number());
-	    assert(to_reduce.op(1).is_a_number());
 	    base_1 = to_reduce.op(0).ex_to_number();
 	    exp_1 = to_reduce.op(1).ex_to_number();
 	    factor_to_reduce = Parma_Recurrence_Relation_Solver::power(to_reduce.op(0), to_reduce.op(1));
 	  }
 	  else {
-	    assert(to_reduce.is_a_number());
 	    base_1 = to_reduce.ex_to_number();
 	    exp_1 = 1;
 	    factor_to_reduce = Parma_Recurrence_Relation_Solver::power(to_reduce, 1);

@@ -185,9 +185,6 @@ find_roots(const Expr& p, const Symbol& x,
 	   bool& all_distinct) {
   assert(p.is_integer_polynomial());
   assert(!p.is_a_number());
-  /////
-  Expr_List a;
-  /////
   // Compute a square-free decomposition for p.
   Expr q = sqrfree(p.expand(), Expr_List(x));
   // There are now 4 cases depending on the principal functor of `q':
@@ -235,7 +232,6 @@ find_power_roots(const Expr& p, const Symbol& x,
 		 std::vector<Polynomial_Root>& roots) {
   assert(p.is_a_power());
   Expr base = p.op(0);
-  assert(p.op(1).is_a_number());
   Number exponent = p.op(1).ex_to_number();
   assert(exponent.is_positive_integer() && exponent >= 2);
   if (!find_roots(base, x, roots, exponent))
@@ -258,8 +254,6 @@ find_roots(const Expr& p, const Symbol& x,
   else
     q = p;
 
-  assert(q.lcoeff(x).is_a_number());
-  assert(q.tcoeff(x).is_a_number());
   Number lc = q.lcoeff(x).ex_to_number();
   Number tc = q.tcoeff(x).ex_to_number();
   int degree = q.degree(x);
@@ -304,8 +298,6 @@ find_roots(const Expr& p, const Symbol& x,
     // - irrational, or
     // - complex.
     if (coefficients_changed) {
-      assert(q.lcoeff(x).is_a_number());
-      assert(q.tcoeff(x).is_a_number());
       lc = q.lcoeff(x).ex_to_number();
       tc = q.tcoeff(x).ex_to_number();
     }
@@ -325,7 +317,6 @@ find_roots(const Expr& p, const Symbol& x,
       }
     case 2:
       {
-	assert(q.coeff(x, 1).is_a_number());
 	Number b = q.coeff(x, 1).ex_to_number() / lc;
 	Number c = tc / lc;
 	solve_equation_2(b, c,
@@ -335,8 +326,6 @@ find_roots(const Expr& p, const Symbol& x,
       }
     case 3:
       {
-	assert(q.coeff(x, 1).is_a_number());
-	assert(q.coeff(x, 2).is_a_number());
 	Number a1 = q.coeff(x, 2).ex_to_number() / lc;
 	Number a2 = q.coeff(x, 1).ex_to_number() / lc;
 	Number a3 = tc / lc;
@@ -350,9 +339,6 @@ find_roots(const Expr& p, const Symbol& x,
       {
 	// FIXME: call `is_nested_polynomial(q, x, r)' here?
 	// Consider, for example, 1+x^4+x^2 = 0.
-	assert(q.coeff(x, 1).is_a_number());
-	assert(q.coeff(x, 2).is_a_number());
-	assert(q.coeff(x, 3).is_a_number());
 	Number a1 = q.coeff(x, 3).ex_to_number() / lc;
 	Number a2 = q.coeff(x, 2).ex_to_number() / lc;
 	Number a3 = q.coeff(x, 1).ex_to_number() / lc;

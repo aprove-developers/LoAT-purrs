@@ -90,7 +90,6 @@ compute_resultant_and_its_roots(const Expr& f, const Expr& g,
     R = convert_to_integer_polynomial(R, h);
   
   std::vector<Number> potential_roots;
-  assert(R.tcoeff(h).is_a_number());
   Number constant_term = abs(R.tcoeff(h).ex_to_number());
   // If `constant_term == 0', divide `R' by `h', and repeat.
   // The constant `0' is a root of the original resultant `R'
@@ -270,7 +269,6 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
     Expr A = a_n.coeff(n, deg_a - 1);
     Expr B = shift_b.coeff(n, deg_a - 1);
     Expr B_A_e = (B - A) * Parma_Recurrence_Relation_Solver::power(lead_a, -1);
-    assert(B_A_e.is_a_number());
     Number B_A = B_A_e.ex_to_number();
     Number possible_deg = deg_c - deg_a + 1;
     if (B_A.is_nonnegative_integer())

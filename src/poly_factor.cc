@@ -52,7 +52,6 @@ poly_factor(const Expr& p, const Symbol& x, std::vector<Expr>& factors) {
   ZZX ntl_p;
   for (int i = p.ldegree(x), d = p.degree(x); i<= d; ++i) {
     Expr e_i = p.coeff(x, i);
-    assert(e_i.is_a_number());
     Number a_i = e_i.ex_to_number();
     if (a_i < LONG_MIN || a_i > LONG_MAX)
       return 1;

@@ -215,7 +215,6 @@ convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
   Number t_lcm = p.coeff(x, deg_p).ex_to_number().denominator();
   for (unsigned i = 0; i <= deg_p; ++i) {
     Expr t_coeff = p.coeff(x, i);
-    assert(t_coeff.is_a_number());
     t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denominator());
   }
   return (p * t_lcm).primpart(x);
@@ -238,7 +237,6 @@ convert_to_integer_polynomial(const Expr& p, const Symbol& x,
   Number t_lcm = p.coeff(x, deg_p).denominator().ex_to_number();
   for (unsigned i = 0; i <= deg_p; ++i) {
     Expr t_coeff = p.coeff(x, i);
-    assert(t_coeff.is_a_number());
     t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denominator());
   }
 
