@@ -349,12 +349,12 @@ giac-0.3.0 install how-to:
 Downloading and unpacking:
   ftp://ftp.cs.unipr.it/pub/infrastructure/giac_unstable.tgz
   cd your-path-to-download-dir
-  tar zxf giac_unstable.tgz
+  tar zxf giac_unstable.tgz (or gunzip -c giac_unstable.tgz | tar -xvf -)
 
 Configuring and building:
   cd your-path-to-download-dir
   cd giac-0.3.0
-  configure --prefix=/usr/local
+  ./configure --prefix=/usr/local
   make
 
 Installing (as root):
