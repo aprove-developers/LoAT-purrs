@@ -110,6 +110,9 @@ limit_virtual_memory(unsigned int bytes) {
   }
 }
 
+#include <cerrno>
+#include <cstring>
+
 // Create a new Cgicc object containing all the CGI data.
 static Cgicc cgi;
 
@@ -223,8 +226,8 @@ main() try {
   std::set_terminate(my_uncaught_exception);
 
 #ifdef HAVE_NICE
-  // Be very nice to the system
-  if (nice(20) != 0)
+  // Be very nice to the system.
+  if (nice(20) == -1)
     error("cannot be nice");
 #endif
 
