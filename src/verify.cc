@@ -103,7 +103,10 @@ validate_initial_conditions(index_type order) const {
     index_type index =
       get_max_index_initial_condition() > first_valid_index + i
       ? get_max_index_initial_condition() : first_valid_index + i;
-    Expr e = exact_solution.substitute(n, index);
+    // The expression `e' can be more difficult to simplify.
+    // For this motive we performed simplification also
+    // before to expand blackboard's definitions.
+    Expr e = simplify_all(exact_solution.substitute(n, index));
     // Expand blackboard's definitions in order to increase the
     // opportunities for simplifications.
     e = blackboard.rewrite(e);
@@ -140,9 +143,8 @@ traditional_step_3(index_type order_rec, const Expr& e) const {
       = substituted_homogeneous_rhs.substitute(x(n - d), shifted_solution);
   }
   Expr diff = e - substituted_homogeneous_rhs;
-  // Differently from the step 1 (validation of symbolic initial condition)
-  // the expression `diff' now contains `n' and is more difficult
-  // to simplify it. For this motive we performed simplification also
+  // The expression `diff' can be more difficult to simplify.
+  // For this motive we performed simplification also
   // before to expand blackboard's definitions.
   diff = blackboard.rewrite(diff);
   diff = simplify_all(diff);
@@ -758,9 +760,8 @@ PURRS::Recurrence::verify_finite_order() const {
     substituted_rhs = substituted_rhs.substitute(x(n - d), shifted_solution);
   }
   Expr diff = summands_without_i_c - substituted_rhs;
-  // Differently from the step 1 (validation of symbolic initial condition)
-  // the expression `diff' now contains `n' and is more difficult
-  // to simplify it. For this motive we performed simplification also
+  // The expression `diff' can be more difficult to simplify.
+  // For this motive we performed simplification also
   // before to expand blackboard's definitions.
   diff = blackboard.rewrite(diff);
   diff = simplify_all(diff);
