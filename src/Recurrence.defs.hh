@@ -447,27 +447,25 @@ public:
   /*!
     This method replaces <CODE>Recurrence::n</CODE> with \p x in
     the expression containing the exact solution.
-    \p x must respect some rules depends on the type of the recurrence.
+    In general must be \f$ x \geq 0 \f$ and, moreover, \p x must respect
+    some rules depends on the type of the recurrence.
     In particular
-    FINIRE COMMENTO!!!
+    - let \p *this be a
+      a \ref linear_finite_order "linear finite order recurrence"
+      of order \f$ k \f$.
+      Let also \f$ j \f$ be the \ref first_valid_index "first valid index".
+      Then it must be \f$ x \geq \max \{ 0, j - k + 1 \} \f$ or must exist
+      an initial condition with the index equal to \p x.
 
-    If \p *this is
-    - a \ref linear_finite_order "linear finite order recurrence"
-      or a \ref non_linear "non linear finite order recurrences":
-                                     \p x must be bigger or equal to
-				     \f$ j \f$, where \f$ j \f$
-				     the maximum between \f$ 0 \f$
-				     and \p first_valid_index-order()+1.
-
-    - a \ref weighted_average "weighted-average recurrence":
-                                     by definition and since the recurrence is
-				     rewritten so that the lower limit of
-				     the sum is equal to \f$ 0 \f$ and
-				     upper limit is equal to \f$ n-1 \f$,
-				     the solution is valid for
-				     \f$ n \geq 0 \f$.
+    - Let \p *this be a \ref weighted_average "weighted-average recurrence".
+      Let also \f$ j \f$ be the \ref first_valid_index "first valid index".
+      Then it must be \f$ x > j \f$  or must exist an initial condition
+      with the index equal to \p x.
 
     - a \ref generalized_recurrence "functional equation":         
+                                     to be written.
+
+    - a \ref non_linear "non linear finite order recurrence"
                                      to be written.
 
     Notice that if the initial conditions were specified this method
@@ -476,11 +474,8 @@ public:
     \exception std::logic_error       thrown if this method is called
                                       but no exact solution was computed.
 
-    \exception std::invalid_argument  thrown if \p x is not a non-negative
-                                      integer bigger or equal to the least
-				      non-negative integer \f$ j \f$ such
-				      that the recurrence is valid for
-				      \f$ n \geq j \f$.
+    \exception std::invalid_argument  thrown if \p x is not in agreement
+                                      with the solution of the recurrence.
   */
   Expr evaluate_exact_solution(const Number& x) const;
 
@@ -504,12 +499,9 @@ public:
     \exception std::logic_error       thrown if this method is called
                                       but no exact solution was computed.
 
-    \exception std::invalid_argument  thrown if \f$ l > r \f$ 
-                                      or \p l is not a non-negative
-                                      integer bigger or equal to the least
-				      non-negative integer \f$ j \f$ such
-				      that the recurrence is well-defined
-				      for \f$ n \geq j \f$.
+    \exception std::invalid_argument  thrown if \f$ begin > end \f$ or
+                                      \p begin is not in agreement
+                                      with the solution of the recurrence.
   */
   template <class OutputIterator>
   void
@@ -521,9 +513,8 @@ public:
   /*!
     This method replaces <CODE>Recurrence::n</CODE> with \p x in
     the expression containing the lower bound.
-    \p x must be a non-negative integer in agreement with
-    the least non-negative integer \f$ j \f$ such that the 
-    recurrence is well-defined for \f$ n \geq j \f$ (for more details
+    In general must be \f$ x \geq 0 \f$ and, moreover, \p x must respect
+    some rules depends on the type of the recurrence (for more details
     see the method <CODE>evaluate_exact_solution()</CODE> with only
     one argument).
 
@@ -533,11 +524,8 @@ public:
     \exception std::logic_error       thrown if this method is called
                                       but no lower bound was computed.
   
-    \exception std::invalid_argument  thrown if \p x is not a non-negative
-                                      integer bigger or equal to the least
-				      non-negative integer \f$ j \f$ such
-				      that the recurrence is well-defined
-				      \f$ n \geq j \f$.
+    \exception std::invalid_argument  thrown if \p x is not in agreement
+                                      with the lower bound.
   */
   Expr evaluate_lower_bound(const Number& x) const;
 
@@ -546,12 +534,10 @@ public:
   //! where \f$ i \f$ assumes all the values of the interval
   //! \f$ [begin, end) \f$. Puts the results in a container marked by \p oi.
   /*!
-    This method replaces <CODE>Recurrence::n</CODE> with all numbers
-    in the interval \f$ [begin, end) \f$ in the expression containing the
-    lower bound.
-    \f$ i \in [begin, end) \f$ must be a non-negative integer in agreement with
-    the least non-negative integer \f$ j \f$ such that the 
-    recurrence is well-defined for \f$ n \geq j \f$ (for more details
+    This method replaces <CODE>Recurrence::n</CODE> with \p x in
+    the expression containing the upper bound.
+    In general must be \f$ x \geq 0 \f$ and, moreover, \p x must respect
+    some rules depends on the type of the recurrence (for more details
     see the method <CODE>evaluate_exact_solution()</CODE> with only
     one argument).
 
@@ -561,12 +547,9 @@ public:
     \exception std::logic_error       thrown if this method is called
                                       but no lower bound was computed.
 
-    \exception std::invalid_argument  thrown if \f$ l > r \f$ 
-                                      or \p l is not a non-negative
-                                      integer bigger or equal to the least
-				      non-negative integer \f$ j \f$ such
-				      that the recurrence is well-defined
-				      for \f$ n \geq j \f$.
+    \exception std::invalid_argument  thrown if \f$ begin > end \f$ or
+                                      \p begin is not in agreement
+                                      with the lower bound.
   */
   template <class OutputIterator>
   void
@@ -589,11 +572,8 @@ public:
     \exception std::logic_error       thrown if this method is called
                                       but no upper bound was computed.
   
-    \exception std::invalid_argument  thrown if \p x is not a non-negative
-                                      integer bigger or equal to the least
-				      non-negative integer \f$ j \f$ such
-				      that the recurrence is well-defined for
-				      \f$ n \geq j \f$.
+    \exception std::invalid_argument  thrown if \p x is not in agreement
+                                      with the upper bound.
   */
   Expr evaluate_upper_bound(const Number& x) const;
 
@@ -617,12 +597,9 @@ public:
     \exception std::logic_error       thrown if this method is called
                                       but no upper bound was computed.
 
-    \exception std::invalid_argument  thrown if \f$ l > r \f$ 
-                                      or \p l is not a non-negative
-                                      integer bigger or equal to the least
-				      non-negative integer \f$ j \f$ such
-				      that the recurrence is well-defined
-				      for \f$ n \geq j \f$.
+    \exception std::invalid_argument  thrown if \f$ begin > end \f$ or
+                                      \p begin is not in agreement
+                                      with the upper bound.
   */
   template <class OutputIterator>
   void
@@ -635,11 +612,7 @@ public:
                                       and the classification's process
 				      called by this method fails.
 
-    \exception std::invalid_argument  thrown if \p x is not a non-negative
-                                      integer bigger or equal to the least
-				      non-negative integer \f$ j \f$ such
-				      that the recurrence is valid for
-				      \f$ n \geq j \f$.
+    \exception std::invalid_argument  
   */
   Expr evaluate_rhs(const Number& x) const;
 
