@@ -580,6 +580,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	solution = solve_linear_constant_coeff(n, g_n, order, all_distinct,
 					       base_of_exps, exp_poly_coeff,
 					       num_coefficients, roots);
+	D_VAR(solution);
       }
       else
 	throw ("PURRS error: today we only allow inhomogeneous terms\n"
@@ -857,14 +858,12 @@ add_initial_conditions(const GExpr& g_n, const GSymbol& n,
 		       GExpr& solution) {
   // 'coefficients.size()' has 'order + 1' elements because in the first
   // position there is the value 0. 
-  std::vector<GExpr> g_n_i(coefficients.size() - 1);
-  for (unsigned i = g_n_i.size(); i-- > 0; )
-    g_n_i[i] = g_n.subs(n == n - i);
-  for (unsigned i = g_n_i.size(); i-- > 0; ) {
+  for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
+    GExpr g_n_i = g_n.subs(n == n - i);
     GExpr tmp = initial_conditions[i];
     for (unsigned j = i; j > 0; j--)
       tmp -= coefficients[j] * initial_conditions[i-j];
-    solution += tmp * g_n_i[i];
+    solution += tmp * g_n_i;
   }
 }
 
