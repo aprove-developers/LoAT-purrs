@@ -593,15 +593,6 @@ Recurrence::set_first_valid_index(index_type i) const {
   first_valid_index = i;
 }
 
-inline Expr
-Recurrence::approximated_solution() const {
-  if (exact_solution_.has_expression())
-    return blackboard.approximate(exact_solution_.expression());
-  else
-    // Well, if the client insists...
-    return blackboard.approximate(recurrence_rhs);
-}
-
 inline Symbol
 Recurrence::insert_auxiliary_definition(const Expr& e) const {
   return blackboard.insert_definition(e);

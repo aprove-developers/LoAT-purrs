@@ -190,9 +190,8 @@ main(int argc, char *argv[]) try {
 	  cout << endl;
 	}
 	if (!value.is_a_number())
-	  if (interactive) {
-	    cout << "****  x_" << i+1 << " ~= " << approximate(value) << endl;
-	  }
+	  if (interactive)
+	    cout << "****  x_" << i+1 << " = " << value << endl;
       }
     }
   }

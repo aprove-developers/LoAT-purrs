@@ -93,10 +93,6 @@ public:
   //! in \p *this.
   unsigned int size_norm(const Symbol& s) const;
 
-  //! Approximates \f$ e \f$ according to the definitions in \p *this.
-  bool approximate(const Symbol& s, Expr& ae, CInterval& aci) const;
-  Expr approximate(const Expr& e) const;
-
   void dump(std::ostream& s) const;
 
 private:
@@ -115,13 +111,11 @@ private:
 
     Expr rhs;
     Cached<unsigned int> size;
-    Cached<Expr> approximation;
     Cached<Expr> expansion;
   };
 
   Expr rewrite(Definition& d) const;
   unsigned int size_norm(Definition& d) const;
-  Expr approximate(Definition& d) const;
 
   std::map<Symbol, unsigned int, Symbol::NameCompare> index;
 

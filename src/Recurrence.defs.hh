@@ -876,8 +876,6 @@ public:
   */
   void upper_bound(Expr& e) const;
 
-  Expr approximated_solution() const;
-
   //! \brief
   //! Tries to verify the exact solution of \p *this and returns
   //! <CODE>PROVABLY_CORRECT</CODE> if the system is successful in

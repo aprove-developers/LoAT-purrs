@@ -7,7 +7,6 @@ gcc 3.2.1        (gcc 3.0.4 is enough)
 gmp 4.1.2
 cln 1.1.5
 ntl 5.3
-fi_lib++ 2.0
 ginac 1.0.13     (use our ftp version!)
 cgicc 3.2.1
 giac-0.3.0
@@ -32,7 +31,7 @@ Setting up your environment variables (once for all):
 If you use the Bash shell, add the following lines to file .bashrc into
 your home directory:
 
-  export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/filib/lib:$LD_LIBRARY_PATH
+  export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
   export CVS_RSH=your-path-to-ssh/ssh
 
 After saving it, ensure you re-read the file by calling:
@@ -42,7 +41,7 @@ To ensure that your environment variables have been updated,
 try echoing them:
   echo $LD_LIBRARY_PATH
 should output something like
-  /usr/local/lib:/usr/local/filib/lib
+  /usr/local/lib
 
 ============================================================================
 
@@ -296,28 +295,6 @@ You should obtain the following output:
   Type ?? for a list of help topics.
   > 
   <Type CTRL-D to exit the GiNaC shell>
-
-============================================================================
-
-fi_lib++ 2.0 install how-to:
-
-Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/filib++-parma.tar.bz2
-  cd your-path-to-download-dir
-  tar jxvf filib++-parma.tar.bz2
-
-Configuring and building:
-  cd your-path-to-download-dir
-  cd filib++-parma/
-  ln -s makefiles/Makefile.gcc Makefile
-  mkdir macro/lib
-  make libs
-
-Installing (as root):
-  su
-  <give your root password>
-  make install
-  exit
 
 ============================================================================
 

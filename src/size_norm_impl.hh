@@ -41,9 +41,6 @@ generic_size_norm(const Expr& e, const SymbolHandler& sh) {
   else if (e.is_a_function())
     for (unsigned int i = e.nops(); i-- > 0; )
       count += generic_size_norm(e.arg(i), sh);
-  else if (e.is_a_complex_interval())
-    // Four boundaries.
-    count += 4;
   else if (e.is_a_symbol())
     count = sh.size_norm(e.ex_to_symbol());
   // Leave count to 1 in case e is a number or a constant.

@@ -15,7 +15,7 @@ VPATH = @srcdir@
 
 SUBDIRS =
 
-INCLUDES = -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/CoStLy @extra_includes@
+INCLUDES = -I$(top_builddir) -I$(top_srcdir)/src @extra_includes@
 
 CPPFLAGS = @extra_cpp_flags@
 
@@ -23,10 +23,7 @@ lib_LIBRARIES = libpurrs.a
 
 # The ordering of the following list *matters*!
 INCLUDE_FILES = \
-CInterval.types.hh \
-complint.hh \
 globals.hh \
-Complex_Interval.types.hh \
 Bool3.types.hh \
 Expr.types.hh \
 Constant.types.hh \
@@ -48,8 +45,6 @@ Number.defs.hh \
 Number.inlines.hh \
 Constant.defs.hh \
 Constant.inlines.hh \
-Complex_Interval.defs.hh \
-Complex_Interval.inlines.hh \
 Expr.defs.hh \
 Expr_List.defs.hh \
 Expr.inlines.hh \
@@ -63,8 +58,6 @@ Matrix.inlines.hh \
 Init.defs.hh \
 Init.inlines.hh \
 initializer.hh \
-approximate.hh \
-approximate_impl.hh \
 size_norm.hh \
 size_norm_impl.hh \
 alg_eq_solver.hh \
@@ -101,7 +94,6 @@ Blackboard.cc \
 Cached_Expr.cc \
 Non_Linear_Info.cc \
 Weighted_Average_Info.cc \
-Complex_Interval.cc \
 Bool3.cc \
 Constant.cc \
 Expr.cc \
@@ -112,9 +104,7 @@ Number.cc \
 Recurrence.cc \
 Symbol.cc \
 alg_eq_solver.cc \
-approximate.cc \
 size_norm.cc \
-complint.cc \
 globals.cc \
 zeilberger.cc \
 gosper.cc \

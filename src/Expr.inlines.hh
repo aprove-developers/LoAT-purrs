@@ -29,7 +29,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr_List.defs.hh"
 #include "Symbol.defs.hh"
 #include "Constant.defs.hh"
-#include "Complex_Interval.defs.hh"
 
 #include <stdexcept>
 #include <cassert>
@@ -85,11 +84,6 @@ Expr::Expr(const Symbol& y)
 inline
 Expr::Expr(const Constant& y)
   : Base(y.c) {
-}
-
-inline
-Expr::Expr(const Complex_Interval& y)
-  : Base(y.i) {
 }
 
 inline
@@ -163,11 +157,6 @@ Expr::is_a_constant() const {
 }
 
 inline bool
-Expr::is_a_complex_interval() const {
-  return GiNaC::is_a<GiNaC::complint>(*this);
-}
-
-inline bool
 Expr::is_a_add() const {
   return GiNaC::is_a<GiNaC::add>(*this);
 }
@@ -212,12 +201,6 @@ inline Symbol
 Expr::ex_to_symbol() const {
   assert(GiNaC::is_a<GiNaC::symbol>(*this));
   return GiNaC::ex_to<GiNaC::symbol>(*this);
-}
-
-inline Complex_Interval
-Expr::ex_to_complex_interval() const {
-  assert(GiNaC::is_a<GiNaC::complint>(*this));
-  return GiNaC::ex_to<GiNaC::complint>(*this);
 }
 
 // FIXME: info, temporary

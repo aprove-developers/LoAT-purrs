@@ -29,7 +29,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include <config.h>
 
 #include "Blackboard.defs.hh"
-#include "approximate_impl.hh"
 #include "size_norm_impl.hh"
 #include <iostream>
 
@@ -104,42 +103,6 @@ PURRS::Blackboard::size_norm(const Symbol& s) const {
     return size_norm(definitions[i->second]);
   else
     return 1;
-}
-
-
-bool
-PURRS::Blackboard::approximate(const Symbol& s,
-			       Expr& ae, CInterval& aci) const {
-  std::map<Symbol, unsigned int>::const_iterator i = index.find(s);
-  if (i != index.end()) {
-    Expr e = approximate(definitions[i->second]);
-    if (e.is_a_complex_interval()) {
-      aci = e.ex_to_complex_interval().get_interval();
-      return true;
-    }
-    else {
-      ae = e;
-      return false;
-    }
-  }
-  else {
-    ae = s;
-    return false;
-  }
-}
-
-PURRS::Expr
-PURRS::Blackboard::approximate(Definition& d) const {
-  if (timestamp > d.approximation.timestamp) {
-    d.approximation.value = generic_approximate(d.rhs, *this);
-    d.approximation.timestamp = timestamp;
-  }
-  return d.approximation.value;
-}
-
-PURRS::Expr
-PURRS::Blackboard::approximate(const Expr& e) const {
-  return generic_approximate(e, *this);
 }
 
 void

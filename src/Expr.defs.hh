@@ -29,7 +29,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr_List.types.hh"
 #include "Number.types.hh"
 #include "Constant.types.hh"
-#include "Complex_Interval.types.hh"
 #include "Symbol.defs.hh"
 
 #include <set>
@@ -507,11 +506,6 @@ public:
   //! Builds the constant expression \p y.
   Expr(const Constant& y);
 
-#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
-  //! Builds the complex interval expression \p y.
-#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
-  Expr(const Complex_Interval& y);
-
   //! Builds the expression from a string \p s and a list of symbol \p y.
   Expr(const std::string& s, const Expr_List& y);
 
@@ -554,13 +548,6 @@ public:
   //! Returns <CODE>true</CODE> if and only if \p *this is a constant
   //! expression.
   bool is_a_constant() const;
-
-#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
-  //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is a complex
-  //! interval expression.
-#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
-  bool is_a_complex_interval() const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is an addition
@@ -696,13 +683,6 @@ public:
 
   //! If \p *this is symbolic, returns the corresponding symbol.
   Symbol ex_to_symbol() const;
-
-#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
-  //! \brief
-  //! If \p *this is an interval expression,
-  //! returns the corresponding complex interval.
-#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
-  Complex_Interval ex_to_complex_interval() const;
 
   // FIXME: info, temporary
   bool is_relation_equal() const;

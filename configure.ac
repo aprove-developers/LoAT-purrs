@@ -73,8 +73,6 @@ AH_BOTTOM([
 
 #define INLINE inline
 
-#define FILIB_VERSION 1
-
 #endif
 ])
 
@@ -136,10 +134,6 @@ AC_PATH_GINAC(1.0.5, [
   extra_libraries="${extra_libraries} ${GINACLIB_LIBS}"
   extra_includes="${extra_includes} $GINACLIB_CPPFLAGS"  
 ], AC_MSG_ERROR([need to have the GiNaC library installed]))
-
-# FIXME: check for filib here!
-extra_libraries="${extra_libraries} -L/usr/local/filib/lib -lfi -lieee -lprim"
-extra_includes="${extra_includes} -I/usr/local/filib/include"
 
 # Compilation flags
 
@@ -332,7 +326,6 @@ AC_SUBST(extra_libraries)
 AC_SUBST(debug_flag)
 
 AC_OUTPUT(Makefile
-          CoStLy/Makefile
           src/Makefile src/Intervals/Makefile src/Intervals/sysdep/Makefile
           m4/Makefile
           doc/Makefile
