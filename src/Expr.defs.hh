@@ -184,18 +184,85 @@ Expr pwr(const Expr& x, const Expr& y);
 //! \brief
 //! If \f$ x \f$ is an exact number, returns the number \f$ y \f$ such that
 //! \f$ y^2 = x \f$; otherwise, only for the output, returns the expression
-//! \f$ sqrt(x) \f$ not valued. 
+//! \f$ sqrt(x) \f$ not valued.
 Expr sqrt(const Expr& x);
 
-//! 
+//! \brief
+//! Returns \f$ \sin(x) \f$ if the numerical computation not introduce
+//! approximation errors; returns \f$ sin(x) \f$ not valued otherwise.
 Expr sin(const Expr& x);
+
+//! \brief
+//! Returns \f$ \cos(x) \f$ if the numerical computation not introduce
+//! approximation errors; returns \f$ cos(x) \f$ not valued otherwise.
 Expr cos(const Expr& x);
+
+//! \brief
+//! Returns \f$ \acos(x) \f$, the inverse cosine, if the numerical
+//! computation not introduce approximation errors; returns \f$ acos(x) \f$
+//! not valued otherwise.
 Expr acos(const Expr& x);
+
+//! \brief
+//! Returns \f$ \tan(x) \f$ if the numerical computation not introduce
+//! approximation errors; returns \f$ tan(x) \f$ not valued otherwise.
+/*!
+  \exception std::pole_error thrown if \f$ x = \pi / 2 + k \pi \f$,
+                             \f$ k \in \Zset \f$.
+*/
 Expr tan(const Expr& x);
+
+//! \brief
+//! Returns \f$ \exp(x) \f$ if the numerical computation not introduce
+//! approximation errors; returns \f$ exp(x) \f$ not valued otherwise.
 Expr exp(const Expr& x);
+
+//! \brief
+//! Returns \f$ \log(x) \f$ (natural logarithm) if the numerical
+//! computation not introduce approximation errors; returns \f$ log(x) \f$
+//! not valued otherwise.
+/*!
+  If \f$ x \f$ is a negative rational number, then
+  \f$ \log(x) = \log(-x) + i \pi \f$.
+
+  \exception std::pole_error thrown if \f$ x = 0 \f$.
+*/
 Expr log(const Expr& x);
+
+//! \brief
+//! If \f$ x \f$ is a natural number number, returns \f$ x! \f$;
+//! if \f$ x \f$ is a not a numeric expression, return \f$ x! \f$ not valued.
+/*!
+  \exception std::range_error thrown if \f$ x \f$ is not a natural number.
+*/
 Expr factorial(const Expr& x);
+
+//! \brief
+//! If \f$ x \f$ is a natural number, returns \f$ x! \f$;
+//! if \f$ x \f$ is a not a numeric expression, return \f$ \Gamma(x) \f$
+//! not valued.
+/*!
+  \exception std::pole_error thrown if \f$ x \f$ is non-positive integer
+                             number.
+*/
 Expr gamma(const Expr& x);
+
+//! Returns the binomial coefficient \f$ \binom(n, k) \f$.
+/*!
+  When \f$ n \in \Cset \f$ and \f$ k \in \Zset \f$, \f$ k \geq 0 \f$, use
+  the following definition:
+  \f[
+    \binom(n, k) =
+    \begin{cases}
+      1, \quad \text{if } k = 0;\\
+      \frac{\prod_{i = n-k+1}^n i}{k!}, \quad \text{if } k > 0.
+    \end{cases}
+  \f]
+
+  \exception std::range_error thrown if \f$ k \f$ is not a non-negative
+                              integer number.
+*/
+Expr binomial(const Expr& n, const Expr& k);
 
 // FIXME: what is a polynomial in a variable `x'?
 // The answer is necessary for the function quo(), rem(), prem(), gcd(),
@@ -985,6 +1052,7 @@ private:
   friend Expr log(const Expr& x);
   friend Expr factorial(const Expr& x);
   friend Expr gamma(const Expr& x);
+  friend Expr binomial(const Expr& n, const Expr& k);
   friend Expr quo(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr rem(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr prem(const Expr& a, const Expr& b, const Symbol& x);
