@@ -55,8 +55,15 @@ lcm(const std::vector<Number>& v);
 
 //! Construct a partial factorization of the integer \p n.
 void 
-partial_factor(const Number& n, std::vector<Number>& bases,
-	       std::vector<int>& exponents);
+partial_factor(const Number& n,
+	       std::vector<Number>& bases, std::vector<int>& exponents);
+
+//! \brief
+//! Returns bases and exponents of each factor of \p e in the pair of vectors
+//! \p bases and \p exponents.
+void
+split_bases_exponents(const Expr& e,
+		      std::vector<Expr>& bases, std::vector<Expr>& exponents);
 
 //! Computes the cubic root of \p e.
 Expr

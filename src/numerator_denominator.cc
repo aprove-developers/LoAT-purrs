@@ -30,8 +30,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "util.hh"
 #include "Expr.defs.hh"
 #include <vector>
-#include <algorithm>
-#include <iterator>
 
 // TEMPORARY
 #include <iostream>
@@ -165,45 +163,6 @@ take_common_and_not_factors(std::vector<Expr>& bases_1,
     if (!exponents_2[i].is_zero())
       e *= pwr(bases_2[i], exponents_2[i]);
   return e;
-}
-
-void
-split_bases_exponents_factor(const Expr& e,
-			     std::vector<Expr>& bases,
-			     std::vector<Expr>& exponents) {
-  Number e_num;
-  if (e.is_a_number(e_num) && e_num.is_integer()) {
-    std::vector<Number> e_num_bases;
-    std::vector<int> e_num_exponents;
-    partial_factor(e_num, e_num_bases, e_num_exponents);
-    copy(e_num_bases.begin(), e_num_bases.end(),
-	 inserter(bases, bases.begin()));
-    copy(e_num_exponents.begin(), e_num_exponents.end(),
-	 inserter(exponents, exponents.begin()));
-  }
-  else
-    if (e.is_a_power()) {
-      bases.push_back(e.arg(0));
-      exponents.push_back(e.arg(1));
-    }
-    else {
-      bases.push_back(e);
-      exponents.push_back(1);
-    }
-}
-
-/*!
-  Given an expression \f$ e \f$, this function returns bases and exponents of
-  each factor of \f$ e \f$ in a pair of vectors.
-*/
-void
-split_bases_exponents(const Expr& e,
-		      std::vector<Expr>& bases, std::vector<Expr>& exponents) {
-  if (e.is_a_mul())
-    for (unsigned i = e.nops(); i-- > 0; )
-      split_bases_exponents_factor(e.op(i), bases, exponents);
-  else
-    split_bases_exponents_factor(e, bases, exponents);
 }
 
 /*!

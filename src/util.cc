@@ -32,6 +32,8 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Symbol.defs.hh"
 #include "Recurrence.defs.hh"
 #include "util.hh"
+#include <algorithm>
+#include <iterator>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
@@ -97,7 +99,8 @@ PURRS::cubic_root(const Expr& e) {
   and <CODE>int</CODE>s respectively.
 */
 void 
-PURRS::partial_factor(const Number& n, std::vector<Number>& bases,
+PURRS::partial_factor(const Number& n,
+		      std::vector<Number>& bases,
 		      std::vector<int>& exponents) {
   assert(n.is_integer());
   Number m = abs(n);
@@ -126,6 +129,67 @@ PURRS::partial_factor(const Number& n, std::vector<Number>& bases,
     bases.push_back(m);
     exponents.push_back(1);
   }
+}
+
+namespace {
+using namespace PURRS;
+
+void
+split_bases_exponents_factor(const Expr& e,
+			     std::vector<Expr>& bases,
+			     std::vector<Expr>& exponents) {
+  D_MSGVAR("---", e);
+  Number e_num;
+  if (e.is_a_number(e_num) && e_num.is_integer()) {
+    std::vector<Number> e_num_bases;
+    std::vector<int> e_num_exponents;
+    partial_factor(e_num, e_num_bases, e_num_exponents);
+    D_VEC(e_num_bases, 0, e_num_bases.size()-1);
+    D_VEC(e_num_exponents, 0, e_num_exponents.size()-1);
+    // If `e_num' is a negative integer the sign minus is ignored from
+    // `partial_factor()'.
+    if (!e_num.is_nonnegative_integer()) {
+      bases.push_back(-1);
+      exponents.push_back(1);
+    }
+    // `e_num == 1' is ignored from `partial_factor()'.
+    if (e == 1) {
+      bases.push_back(1);
+      exponents.push_back(1);
+    }
+    copy(e_num_bases.begin(), e_num_bases.end(),
+	 inserter(bases, bases.begin()));
+    copy(e_num_exponents.begin(), e_num_exponents.end(),
+	 inserter(exponents, exponents.begin()));
+  }
+  else
+    if (e.is_a_power()) {
+      bases.push_back(e.arg(0));
+      exponents.push_back(e.arg(1));
+    }
+    else {
+      bases.push_back(e);
+      exponents.push_back(1);
+    }
+  D_VEC(bases, 0, bases.size()-1);
+  D_VEC(exponents, 0, exponents.size()-1);
+}
+
+} // anonymous namespace
+
+/*!
+  Given an expression \f$ e \f$, this function returns bases and exponents of
+  each factor of \f$ e \f$ in a pair of vectors.
+*/
+void
+PURRS::split_bases_exponents(const Expr& e, 
+			     std::vector<Expr>& bases,
+			     std::vector<Expr>& exponents) {
+  if (e.is_a_mul())
+    for (unsigned i = e.nops(); i-- > 0; )
+      split_bases_exponents_factor(e.op(i), bases, exponents);
+  else
+    split_bases_exponents_factor(e, bases, exponents);
 }
 
 //! \brief
