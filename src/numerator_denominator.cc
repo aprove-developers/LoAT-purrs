@@ -30,6 +30,8 @@ http://www.cs.unipr.it/purrs/ . */
 #include "util.hh"
 #include "Expr.defs.hh"
 #include <vector>
+// See FIXME below.
+//#include <algorithm>
 
 // TEMPORARY
 #include <iostream>
@@ -79,7 +81,7 @@ find_denominator_single_factor(const Expr& e, unsigned position,
   Given \f$ e \f$ the \f$ i \f$-th term of a more general expression \f$ f \f$,
   this function splits its numerator and denominator
   putting them in the \f$ i \f$-th position of the vectors \p numerators or
-  \p denominators.
+  \p denominators, respectively.
   Returns the denominator of \f$ e \f$.
 */
 Expr
@@ -100,8 +102,9 @@ find_denominator_single_term(const Expr& e, unsigned position,
 /*!
   We consider two factorized expressions \f$ e_1 \f$ and \f$ e_2 \f$
   and two vectors for each expression containing bases and exponents
-  of them.
-  FINIRE COMMENTO!
+  of their factors.
+  This function builds a new expression with all factors, common and
+  not common, of \f$ e_1 \f$ and \f$ e_2 \f$, with the maximum exponent.
 */
 Expr
 take_common_and_not_factors(std::vector<Expr>& bases_1,
@@ -109,15 +112,18 @@ take_common_and_not_factors(std::vector<Expr>& bases_1,
 			    std::vector<Expr>& bases_2,
 			    std::vector<Expr>& exponents_2) {
   Expr e = 1;
+  // We consider `base_1' the i-th element of `bases_1'.
   for (unsigned i = bases_1.size(); i-- > 0; ) {
     const Expr& base_1 = bases_1[i];
     Number exponent_1;
+    // The exponent of `base' is a positive integer number.  
     if (exponents_1[i].is_a_number(exponent_1)
 	&& exponent_1.is_positive_integer()) {
       bool added = false;
       for (unsigned j = bases_2.size(); j-- > 0; ) {
 	const Expr& base_2 = bases_2[j];
-	// The two factors have same bases.
+	// We have found an element of `bases_2' sintactically equal
+	// to `base_1'.
 	if (base_2 == base_1) {
 	  Number exponent_2;
 	  // Both exponents are positive integer numbers.
@@ -128,24 +134,32 @@ take_common_and_not_factors(std::vector<Expr>& bases_1,
 	    else
 	      e *= pwr(base_1, exponent_2);
 	  }
+	  // At least one of the two exponents is not a positive
+	  // integer number.
 	  else {
 	    e *= pwr(base_1, exponent_1);
 	    e *= pwr(base_2, exponents_2[j]);
 	  }
-	  // Marked, i.e., e' gia' stato considerato
+	  // A factor with exponent equal to `0' means that it was
+	  // already considered.
 	  exponents_2[j] = 0;
 	  added = true;
 	  break;
 	}
       }
+      // We have not found an element of `bases_2' equal to `base_1'.
       if (!added)
 	e *= pwr(base_1, exponent_1);
     }
+    // The exponent of `base_1' is not a positive integer number.
     else
       e *= pwr(base_1, exponents_1[i]);
   }
-  // Moltiplico i fattori del secondo vettore che non erano stati presi in
-  // considerazione nel precedente for perche' non fattori comuni.
+  // All the factors of the first vectors (`bases_1' and `exponents_1') were already
+  // considered. Now we must to consider the factors of the seconds vectors
+  // (`bases_2' and `exponents_2') with the exponents not equal to `0', i. e.,
+  // not considered in the previous loop because they did not have common factors
+  // with the first vectors. 
   for (unsigned i = bases_2.size(); i-- > 0; )
     if (!exponents_2[i].is_zero())
       e *= pwr(bases_2[i], exponents_2[i]);
@@ -161,10 +175,16 @@ split_bases_exponents_factor(const Expr& e,
     std::vector<Number> e_num_bases;
     std::vector<int> e_num_exponents;
     partial_factor(e_num, e_num_bases, e_num_exponents);
+#if 1
     for (unsigned i = e_num_bases.size(); i -- > 0; ) {
       bases.push_back(e_num_bases[i]);
       exponents.push_back(e_num_exponents[i]);
     }
+#else
+    // FIXME: this two rows are not equivalent to those in the #if 1?
+    copy(e_num_bases.begin(), e_num_bases.end(), bases.begin());
+    copy(e_num_exponents.begin(), e_num_exponents.end(), exponents.begin());
+#endif
   }
   else
     if (e.is_a_power()) {
@@ -178,8 +198,8 @@ split_bases_exponents_factor(const Expr& e,
 }
 
 /*!
-  Given an expression \f$ e \f$, this function returns in a pair of vectors
-  bases and relative exponents of each factor of \f$ e \f$.
+  Given an expression \f$ e \f$, this function returns bases and exponents of
+  each factor of \f$ e \f$ in a pair of vectors.
 */
 void
 split_bases_exponents(const Expr& e,
@@ -193,7 +213,7 @@ split_bases_exponents(const Expr& e,
 
 /*!
   We consider \f$ d = {d_1}^{e_1} \dots {d_k}^{e_k} \f$ and
-  \f$ f = {f_1}^{g_1} \dots {f_k}^{g_k} \f$.
+  \f$ f = {f_1}^{g_1} \dots {f_h}^{g_h} \f$.
   Let \f$ f^g \f$ be the generic factor of \f$ f \f$.
   This function builds a new expression taking all factors, common and
   not common, of the two expressions with the maximum exponent.
@@ -277,7 +297,7 @@ find_factor_for_numerator(const Expr& d, const Expr& f) {
   \p denominator contain the common denominator of \f$ d_1, \dots, d_k \f$
   in according with the explanation of the function
   <CODE>take_common_and_not_factors()</CODE>.
-  This function computes \f$ \sum_{i = 1}^k \frac{d}{d_i} n_i \f$.
+  This function returns \f$ \sum_{i = 1}^k \frac{d}{d_i} n_i \f$.
 */
 Expr
 find_numerator(const std::vector<Expr>& numerators,
@@ -298,6 +318,10 @@ find_numerator(const std::vector<Expr>& numerators,
   return numerator;
 }
 
+/*!
+  Let \f$ e \f$ be an expression, this function finds recursively its
+  numerator and denominator.
+*/
 void
 numerator_denominator_term(const Expr& e,
 			   Expr& numerator, Expr& denominator) {
@@ -305,7 +329,6 @@ numerator_denominator_term(const Expr& e,
   // and will contain the numerator and the denominator of each term of `e'.  
   std::vector<Expr> numerators;
   std::vector<Expr> denominators;
-  numerator = 1;
   denominator = 1;
   // Since this function is recursive, even if the first time `e' can not
   // be an `add', for the recursive calls `e' can be an `add'.
@@ -313,12 +336,9 @@ numerator_denominator_term(const Expr& e,
     numerators.insert(numerators.begin(), e.nops(), Number(1));
     denominators.insert(denominators.begin(), e.nops(), Number(1));
     for (unsigned i = e.nops(); i-- > 0; ) {
-      Expr factor_denominator = find_denominator_single_term(e.op(i), i,
- 							     numerators,
-							     denominators);
-      Expr old_denominator = denominator;
-      denominator = take_common_and_not_factors(old_denominator,
-						factor_denominator);
+      numerator_denominator_term(e.op(i), numerators[i], denominators[i]);
+      denominator = take_common_and_not_factors(denominator,
+						denominators[i]);
     }
     numerator = find_numerator(numerators, denominators, denominator);
   }
