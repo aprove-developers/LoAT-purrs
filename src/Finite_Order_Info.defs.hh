@@ -33,8 +33,11 @@ namespace Parma_Recurrence_Relation_Solver {
 
 class Finite_Order_Info {
 public:
-  //! Constructor: set \f$ order = k \f$.
-  Finite_Order_Info(int k);
+  //! \brief
+  //! Constructor: sets \f$ order = k \f$, \f$ decrements = decs \f$ and
+  //! \f$ coefficients = coeffs \f$.
+  Finite_Order_Info(int k, const std::vector<unsigned>& decs,
+		    const std::vector<Expr>& coeffs);
 
   //! Copy-constructor.
   Finite_Order_Info(const Finite_Order_Info& y);
@@ -54,8 +57,8 @@ public:
   //! Returns the vector <CODE>initial_conditions</CODE>.
   const std::vector<unsigned>& get_initial_conditions() const;
 
-  //! Sets the vector <CODE>decrements</CODE> from \p dec.
-  void set_decrements(const std::vector<unsigned> dec);
+  //! Sets the vector <CODE>decrements</CODE> from \p decs.
+  void set_decrements(const std::vector<unsigned> decs);
 
   //! Sets the vector <CODE>initial_conditions</CODE> from \p i_c.
   void set_initial_conditions(const std::vector<unsigned> i_c);

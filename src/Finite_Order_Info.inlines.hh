@@ -33,15 +33,19 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
-Finite_Order_Info::Finite_Order_Info(int k)
-  : order(k) {
+Finite_Order_Info::Finite_Order_Info(int k, const std::vector<unsigned>& decs,
+				     const std::vector<Expr>& coeffs)
+  : order(k),
+    decrements(decs),
+    coefficients(coeffs) {
 }
 
 inline
 Finite_Order_Info::Finite_Order_Info(const Finite_Order_Info& y) 
   : order(y.order),
     decrements(y.decrements),
-    initial_conditions(y.initial_conditions) {
+    initial_conditions(y.initial_conditions),
+    coefficients(y.coefficients) {
 }
 
 inline
@@ -53,6 +57,7 @@ Finite_Order_Info::operator=(const Finite_Order_Info& y) {
   order = y.order;
   decrements = y.decrements;
   initial_conditions = y.initial_conditions;
+  coefficients = y.coefficients;
   return *this;
 }
 
@@ -72,8 +77,8 @@ Finite_Order_Info::get_initial_conditions() const {
 }
 
 inline void
-Finite_Order_Info::set_decrements(const std::vector<unsigned> dec) {
-  copy(dec.begin(), dec.end(), inserter(decrements, decrements.begin()));
+Finite_Order_Info::set_decrements(const std::vector<unsigned> decs) {
+  copy(decs.begin(), decs.end(), inserter(decrements, decrements.begin()));
 }
 
 inline void
