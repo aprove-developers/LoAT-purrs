@@ -357,7 +357,20 @@ PURRS::Recurrence::dump(std::ostream& s) const {
   s << "recurrence_rhs_rewritten = "
     << (recurrence_rhs_rewritten ? "true" : "false") << std::endl;
   s << "recurrence_rhs = " << recurrence_rhs << std::endl;
+
   s << "auxiliary_definitions:" << std::endl;
   blackboard.dump(s);
+  
+  if (initial_conditions.empty())
+    s << "There are not defined initial conditions" << std::endl;
+  else {
+    s << "Initial conditions:" << std::endl;
+    for (std::map<unsigned, Expr>::const_iterator i = initial_conditions.begin(),
+	   initial_conditions_end = initial_conditions.end();
+	 i != initial_conditions_end; ++i)
+      s << "  x(" << i->first << ")"
+	<< " = " << i->second << std::endl;
+  }
+  
   s << std::endl;
 }

@@ -109,6 +109,11 @@ public:
   //! that are also on the blackboard with their definition.
   Expr substitute_auxiliary_definitions(const Expr& e) const;
 
+  //! \brief
+  //! Replaces the values in the \f$ k \f$-th position of the map
+  //! <CODE>initial_conditions</CODE> with the expression \p e. 
+  void replace_initial_condition(unsigned k, const Expr& e);
+
   //! Checks if all the invariants are satisfied.
   /*!
     The check is performed so as to intrude as little as possible.
@@ -126,6 +131,12 @@ private:
 
   //! Sets to \p e the <CODE>inhomogeneous_term</CODE>.
   void set_inhomogeneous_term(const Expr& e) const;
+
+  //! \brief
+  //! If in the map <CODE>initial_conditions</CODE> there is the
+  //! expression \f$ e \f$ correspondent to \p k then returns \f$ e \f$;
+  //! returns \f$ x(k) \f$ otherwise.
+  Expr get_initial_condition(unsigned k) const;
 
 public:
   enum Solver_Status {
@@ -223,6 +234,12 @@ public:
   //! this function does not realize.
   Verify_Status verify_solution() const;
 
+  //! \brief
+  //! Returns <CODE>false</CODE> if there are not undefined initial conditions;
+  //! returns <CODE>true</CODE> otherwise and stores its in the set
+  //! \p undefined.
+  bool undefined_initial_conditions(std::set<unsigned int>& undefined) const;
+
   //! The index of the recurrence.
   static const Symbol& n;
 
@@ -241,8 +258,9 @@ private:
 				       int num_term,
 				       Expr& coefficient,
 				       unsigned& divisor_arg) const;
-  void add_initial_conditions(const Expr& g_n,
-			      const std::vector<Number>& coefficients) const;
+  void
+  add_term_with_initial_conditions(const Expr& g_n,
+				   const std::vector<Number>& coefficients) const;
   Solver_Status solve_linear_finite_order() const;
   Solver_Status
   solve_constant_coeff_order_1(const std::vector<Polynomial_Root>&
@@ -452,27 +470,14 @@ private:
 
   mutable Blackboard blackboard;
 
+  std::map<unsigned, Expr> initial_conditions;
+
 private:
   static Solver_Status
   find_non_linear_recurrence(const Expr& e);
   static Solver_Status
   compute_order(const Number& decrement, unsigned int& order,
 		unsigned long& index, unsigned long max_size);
-
-#if 0
-    Expr poly_char;
-    Expr symb_solution;
-
-public:
-  insert_exact_solution(const Expr& e);
-  insert_side_condition(int n, const Expr& e);
-  // Restituisce le condizioni iniziali non assegnate.
-  std::set<unsigned int> undefined_side_conditions();
-  complex_interval approximate(const std::vector<Expr> side_conditions,
-			       int n);
-//    Expr big_o(...);
-//    Expr big_omega(...);
-#endif
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

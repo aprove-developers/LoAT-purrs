@@ -61,16 +61,17 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
 // parametri.
 void
 PURRS::Recurrence::
-add_initial_conditions(const Expr& g_n,
-		       const std::vector<Number>& coefficients) const {
+add_term_with_initial_conditions(const Expr& g_n,
+				 const std::vector<Number>& coefficients) const {
   // `coefficients.size()' has `order + 1' elements because in the first
   // position there is the value 0.
   Expr solution = exact_solution_.expression();
   for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
     Expr g_n_i = g_n.substitute(n, n - i);
-    Expr tmp = x(first_initial_condition() + i);
+    Expr tmp = get_initial_condition(first_initial_condition() + i);
     for (unsigned j = i; j > 0; j--)
-      tmp -= coefficients[j] * x(first_initial_condition() + i - j);
+      tmp -= coefficients[j]
+	* get_initial_condition(first_initial_condition() + i - j);
     solution += tmp * g_n_i;
   }
   exact_solution_.set_expression(solution);
@@ -245,14 +246,15 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
       // vedere direttamente il rapporto p(k)/alpha!(k) se e' sommabile
       // (forse prima di vedere gosper)
       Symbol h;
-      solution += alpha_factorial * x(z) + alpha_factorial 
+      solution
+	+= alpha_factorial * get_initial_condition(z.to_int()) + alpha_factorial 
 	* PURRS::sum(h, z + 1, n, inhomogeneous_term.substitute(n, h) 
 		     / alpha_factorial.substitute(n, h));
       exact_solution_.set_expression(solution);
       return SUCCESS;
     }
   }
-  solution += x(z);
+  solution += get_initial_condition(z.to_int());
   solution *= alpha_factorial;
   exact_solution_.set_expression(solution);
   return SUCCESS;
@@ -300,7 +302,7 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
   \f]
   The two sums in the previous formula correspond to the non-homogeneous
   part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
-  the function <CODE>add_initial_conditions()</CODE>), respectively.
+  the function <CODE>add_term_with_initial_conditions()</CODE>), respectively.
 */
 PURRS::Expr
 PURRS::Recurrence::
@@ -437,7 +439,7 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
   \f]
   The two sums in the previous formula correspond to the non-homogeneous
   part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
-  the function <CODE>add_initial_conditions()</CODE>), respectively.
+  the function <CODE>add_term_with_initial_conditions()</CODE>), respectively.
 */
 PURRS::Expr
 PURRS::Recurrence::
@@ -554,7 +556,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   D_VAR(first_initial_condition());
 
   // `g_n' is defined here because it is necessary in the function
-  // `add_initial_conditions()' (at the end of function
+  // `add_term_with_initial_conditions()' (at the end of function
   // `solve_linear_finite_order()').
   std::vector<Number> num_coefficients(order() + 1);
   Expr g_n;
@@ -635,16 +637,17 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   if (is_linear_finite_order_const_coeff())
     if (order() == 1 ) {
       // FIXME: per ora non si puo' usare la funzione
-      // `add_initial_conditions' perche' richiede un vettore di
+      // `add_term_with_initial_conditions' perche' richiede un vettore di
       // `Number' come `coefficients' e voglio risolvere anche le
       // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
-      // add_initial_conditions(g_n, coefficients, solution);
+      // add_term_with_initial_conditions(g_n, coefficients, solution);
       Expr solution = exact_solution_.expression();
-      solution += x(first_initial_condition()) * pwr(coefficients()[1], n);
+      solution += get_initial_condition(first_initial_condition())
+	* pwr(coefficients()[1], n);
       exact_solution_.set_expression(solution);
     }
     else
-      add_initial_conditions(g_n, num_coefficients);
+      add_term_with_initial_conditions(g_n, num_coefficients);
 
   D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
   exact_solution_.set_expression

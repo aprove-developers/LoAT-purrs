@@ -106,6 +106,37 @@ Recurrence::replace_recurrence(unsigned k, const Expr& e) {
 }
 
 inline void
+Recurrence::replace_initial_condition(unsigned k, const Expr& e) {
+  std::pair<std::map<unsigned, Expr>::iterator, bool> stat
+    = initial_conditions.insert(std::map<unsigned, Expr>::value_type(k, e));
+  if (!stat.second)
+    // There was already something associated to `i': overwrite it.
+    stat.first->second = e;
+}
+
+inline bool
+Recurrence::
+undefined_initial_conditions(std::set<unsigned int>& undefined) const {
+  return false; 
+  /*
+  assert(is_linear_finite_order() || is_functional_equation());
+  if (is_linear_finite_order()) {
+  }
+  else {
+  }
+  */
+}
+
+inline Expr
+Recurrence::get_initial_condition(unsigned k) const {
+  std::map<unsigned, Expr>::const_iterator i = initial_conditions.find(k);
+  if (i != initial_conditions.end())
+    return (*i).second;
+  else
+    return x(k);
+}
+
+inline void
 Recurrence::set_inhomogeneous_term(const Expr& e) const {
   inhomogeneous_term = e;
 }
