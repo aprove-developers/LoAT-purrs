@@ -24,7 +24,9 @@
 \usepackage{purrs}
 \makeindex
 \setcounter{tocdepth}{1}
-\setlength{\footrulewidth}{0.4pt}
+% Was setlength instead of renewcommand: why?
+%\setlength{\footrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
 
 \rfoot[\fancyplain{}{\scriptsize The Parma University's Recurrence Relation Solver Developer's Manual (version $projectnumber). See \url{http://www.cs.unipr.it/purrs/} for more information.}]{}
 \lfoot[]{\fancyplain{}{\scriptsize The Parma University's Recurrence Relation Solver Developer's Manual (version $projectnumber). See \url{http://www.cs.unipr.it/purrs/} for more information.}}
