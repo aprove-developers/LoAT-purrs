@@ -88,9 +88,12 @@ main() try {
 #endif
   }
   return 0;
-} catch (exception &p) {
+} 
+catch (exception &p) {
 #if NOISY
   cerr << "Exception caught: " << p.what() << endl;
 #endif
-  return 1;
+}
+catch (const char* s) {
+  cerr << s << endl;
 }
