@@ -1227,7 +1227,7 @@ PURRS::Recurrence::classify() const {
   rhs = simplify_ex_for_input(recurrence_rhs, true);
   // Splits the sum in many sums how many are the addends of the summand
   // and computes, when possible, symbolic sums.
-  rhs = simplify_sum(rhs, false, true);
+  rhs = simplify_sum(rhs, COMPUTE_SUM);
 
   // Date for linear finite order recurrences.
 

@@ -1744,15 +1744,16 @@ compute_sum(const Expr& e) {
 }
 
 //! \brief
-//! If \p only_verification is <CODE>true</CODE> this function rewrites
-//! the sum with the upper limit of the form `m + j' or `m - j'
-//! (`m' is a symbol and `j' is an integer), so that the upper limit is `m'.
-//! If \p try_to_compute_sum is <CODE>true</CODE> this function
-//! splits the sum in many sums how many are the addends of the summand
-//! and computes, when possible, symbolic sums.
+//! If \p simplification is equal to <CODE>REWRITE_UPPER_LIMIT</CODE>
+//! rewrite the sum with the upper limit of the form \f$ m + j \f$
+//! (\f$ m \f$ is a symbol and \f$ j \in \Zset \f$), so that the
+//! upper limit is \f$ m \f$; if \p simplification is equal to
+//! <CODE>COMPUTE_SUM</CODE> split the sum in many sums how many are
+//! the addends of the summand and compute, when possible, symbolic sums.
 /*!
-  If \p only_verification is <CODE>true</CODE> applies the following
-  property for the function representing finite sums:
+ If \p simplification is equal to <CODE>REWRITE_UPPER_LIMIT</CODE> this
+ function applies the following property for the function representing
+ finite sums:
   \f[
     \begin{cases}
       \sum_{k = a}^b f(k) =
@@ -1765,71 +1766,64 @@ compute_sum(const Expr& e) {
     \end{cases}
   \f]
 
-  If \p try_to_compute_sum is <CODE>true</CODE> splits the sum in many
-  sums how many are the addends of the summand and computes,when possible,
-  symbolic sums using two different techniques: if the summand is
-  polynomial, exponential or product of them uses the method exposed
-  in <CODE>sum_poly.{hh, cc}</CODE>; otherwise the Gosper's algorithm
-  exposed in <CODE>gosper.{hh, cc}</CODE>.
+  If \p simplification is equal to <CODE>COMPUTE_SUM</CODE> this function
+  computes, when possible, symbolic sums using two different techniques:
+  if the summand is polynomial, exponential or product of them uses the
+  method exposed in <CODE>sum_poly.{hh, cc}</CODE>; otherwise the Gosper's
+  algorithm exposed in <CODE>gosper.{hh, cc}</CODE>.
 */
 Expr
 simplify_sum_in_expanded_ex(const Expr& e,
-			    bool only_verification, bool try_to_compute_sum) {
+			    const Sum_Simplification_Kind simplification) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned int i = e.nops(); i-- > 0; )
-      e_rewritten += simplify_sum_in_expanded_ex(e.op(i), only_verification,
-						 try_to_compute_sum);
+    e_rewritten += simplify_sum_in_expanded_ex(e.op(i), simplification);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
     for (unsigned int i = e.nops(); i-- > 0; )
-      e_rewritten *= simplify_sum_in_expanded_ex(e.op(i), only_verification,
-						 try_to_compute_sum);
+    e_rewritten *= simplify_sum_in_expanded_ex(e.op(i), simplification);
   }
   else if (e.is_a_power())
-    return pwr(simplify_sum_in_expanded_ex(e.arg(0), only_verification,
-					   try_to_compute_sum),
-	       simplify_sum_in_expanded_ex(e.arg(1), only_verification,
-					   try_to_compute_sum));
+  return pwr(simplify_sum_in_expanded_ex(e.arg(0), simplification),
+	       simplify_sum_in_expanded_ex(e.arg(1), simplification));
   else if (e.is_a_function()) {
     if (e.nops() == 1)
       return apply(e.functor(),
-		   simplify_sum_in_expanded_ex(e.arg(0), only_verification,
-					       try_to_compute_sum));
+		   simplify_sum_in_expanded_ex(e.arg(0), simplification));
     else {
       if (e.is_the_sum_function()) {
 	// Splits the sum in many sums how many are the addends of the
 	// summand.
-	if (try_to_compute_sum && e.arg(3).is_a_add()) {
+	if (simplification == COMPUTE_SUM && e.arg(3).is_a_add()) {
 	  e_rewritten = 0;
 	  for (unsigned int i = e.arg(3).nops(); i-- > 0; )
 	    e_rewritten
 	      += simplify_sum_in_expanded_ex(sum(e.arg(0), e.arg(1), e.arg(2),
 						 e.arg(3).op(i)),
-					     only_verification,
-					     try_to_compute_sum);
-	  return e_rewritten;
+					     simplification);
+	    return e_rewritten;
 	}
 	// If the summand does not contain functions `x()' with the
 	// index of the sum in the argument (infinite order recurrence)
 	// and we are at the first visit to the expression, then the
 	// sum has been inserted by the user and we try to compute it.
 	if (!e.arg(3).has_x_function(e.arg(0))
-	    && try_to_compute_sum)
+	    && simplification == COMPUTE_SUM)
 	  return compute_sum(e);
 	// `upper' is a sum of two addends: if we are at the point of
 	// recurrence's verification rewrite this sum so that the upper bound
 	// is only a symbol.
-	if (e.arg(2).is_a_add() && e.arg(2).nops() == 2 && only_verification)
+	if (e.arg(2).is_a_add() && e.arg(2).nops() == 2
+	    && simplification == REWRITE_UPPER_LIMIT)
 	  return split_sum(e);
       }
       unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned int i = 0; i < num_argument; ++i)
-	argument[i] = simplify_sum_in_expanded_ex(e.arg(i), only_verification,
-						  try_to_compute_sum);
+      argument[i] = simplify_sum_in_expanded_ex(e.arg(i), simplification);
       return apply(e.functor(), argument);
     }
   }
@@ -1913,11 +1907,9 @@ PURRS::simplify_logarithm(const Expr& e) {
 
 PURRS::Expr
 PURRS::simplify_sum(const Expr& e,
-		    bool only_verification, bool try_to_compute_sum) {
-  return simplify_sum_in_expanded_ex(e.expand(), only_verification,
-				     try_to_compute_sum).expand();
+		    const Sum_Simplification_Kind simplification) {
+  return simplify_sum_in_expanded_ex(e.expand(), simplification).expand();
 }
-
 
 /*!
   Executes consecutively all simplifications described in the comment

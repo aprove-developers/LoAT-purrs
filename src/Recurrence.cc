@@ -239,7 +239,7 @@ PURRS::Recurrence::verify_finite_order() const {
   for (index_type i = 0; i < order_rec; ++i) {
     Expr shifted_solution
       = simplify_all(summands_with_i_c.substitute(n, n - (i + 1)));
-    shifted_solution = simplify_sum(shifted_solution, true);
+    shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
     substituted_homogeneous_rhs
       = substituted_homogeneous_rhs
       .substitute(x(n - (i + 1)), shifted_solution);
@@ -313,7 +313,7 @@ PURRS::Recurrence::verify_finite_order() const {
     Expr substituted_rhs = recurrence_rhs;
     for (index_type i = order_rec; i-- > 0; ) {
       Expr shifted_solution = summands_without_i_c.substitute(n, n - (i + 1));
-      //shifted_solution = simplify_sum(shifted_solution, true);
+      //shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
       substituted_rhs = substituted_rhs
 	.substitute(x(n - (i + 1)), shifted_solution);
     }
@@ -471,7 +471,7 @@ PURRS::Recurrence::verify_finite_order() const {
   for (index_type d = 1; d <= order_rec; ++d) {
     Expr shifted_solution
       = simplify_all(summands_without_i_c.substitute(n, n - d));
-    shifted_solution = simplify_sum(shifted_solution, true);
+    shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
     substituted_rhs = substituted_rhs.substitute(x(n - d), shifted_solution);
   }
   Expr diff = summands_without_i_c - substituted_rhs;
@@ -523,14 +523,10 @@ PURRS::Recurrence::verify_finite_order() const {
 
 //! Verify the exact solution of the infinite order recurrence \p *this.
 /*!
-  At the moment the system solve infinite order recurrence transforming it
-  in linear recurrence of first order, therefore in the solution will be
-  only one initial condition.
   The verification's process is divided in 2 steps:
   -  Validation of the initial condition by substitution of \f$ n \f$
-  with the value in <CODE>rec.lower_bound_sum()</CODE>, i.e., the first
-  value starting from which the solution is valid.
-  -  Validation of the solution using mathematical induction.
+     with \f$ 0 \f$.
+  -  Validation of the solution using substitution.
 */
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_infinite_order() const {
@@ -556,7 +552,7 @@ PURRS::Recurrence::verify_infinite_order() const {
     // FIXME: provably_incorrect...
     return INCONCLUSIVE_VERIFICATION;
   
-  // Step 2: validation of the solution using mathematical induction.
+  // Step 2: validation of the solution.
   // Note: with recurrences of infinite order is not true that if it is
   // homogeneous then is sufficient to verify the initial condition.
   // In fact, the recurrences could be in a non-standard form like
@@ -574,7 +570,7 @@ PURRS::Recurrence::verify_infinite_order() const {
   Symbol h;
   Expr diff
     = PURRS::sum(h, 1, n - 1, exact_solution_.expression().substitute(n, h));
-  diff = simplify_sum(diff, false, true);
+  diff = simplify_sum(diff, COMPUTE_SUM);
   diff = exact_solution_.expression()
     - diff * weight - x(0) * weight - inhomogeneous_term;
   diff = simplify_all(diff);
@@ -656,9 +652,9 @@ PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
   assert(kind_of_bound == UPPER || kind_of_bound == LOWER);
   Expr bound;
   if (kind_of_bound == UPPER)
-    bound = simplify_sum(upper_bound_.expression(), true);
+    bound = simplify_sum(upper_bound_.expression(), REWRITE_UPPER_LIMIT);
   else
-    bound = simplify_sum(lower_bound_.expression(), true);
+    bound = simplify_sum(lower_bound_.expression(), REWRITE_UPPER_LIMIT);
   
   // Step 1: validation of initial conditions.
   Verify_Status status

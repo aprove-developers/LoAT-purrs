@@ -29,6 +29,20 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+//! Kinds of sum's simplification.
+enum Sum_Simplification_Kind {
+  //! \brief
+  //! Rewrite the sum with the upper limit of the form \f$ n + j \f$
+  //! (\f$ n \f$ is a symbol and \f$ j \in \Zset \f$), so that the
+  //! upper limit is \f$ n \f$.
+  REWRITE_UPPER_LIMIT,
+  
+  //! \brief
+  //! Split the sum in many sums how many are the addends of the summand
+  //! and compute, when possible, symbolic sums.
+  COMPUTE_SUM
+};
+
 Expr
 simplify_ex_for_input(const Expr& e, bool input);
 
@@ -42,8 +56,7 @@ Expr
 simplify_binomials_factorials_exponentials(const Expr& e);
 
 Expr
-simplify_sum(const Expr& e,
-	     bool only_verification = false, bool try_to_compute_sum = false);
+simplify_sum(const Expr& e, const Sum_Simplification_Kind simplification);
 
 Expr
 simplify_logarithm(const Expr& e);
