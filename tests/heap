@@ -160,10 +160,7 @@ y 8*x(n-1)-21*x(n-2)+18*x(n-3)
 y a*b+(1-a)*x(n-1)
 y a*x(n-1)
 y a*x(n-1)+b
-
-% Causes the violation of an assertion
-%* a*x(n-1)+b+c*x(n-1)^2
-
+n a*x(n-1)+b+c*x(n-1)^2
 y a*x(n-1)+n^2
 y a+(1-a)*x(n-1)
 y a^2+a*2^c*b+3^c*b
@@ -258,3 +255,9 @@ n x(n^(1/2))+1
 n x(n^.5)+1
 n x(x(n-1))
 n x(abs(log(n)))+1
+n log(x(n-1))
+n log(x(n-1))+x(n-2)
+n log(x(n-2))+x(n-1)
+y x(0)
+y x(0)*n^2
+y x(0)+3*n
