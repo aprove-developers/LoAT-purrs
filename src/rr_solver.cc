@@ -2131,6 +2131,24 @@ print_bad_exp(const Expr& e, const Expr rhs, bool conditions) {
   outfile << e << std::endl;
 }
 
+static Expr
+find_term_without_initial_conditions(const Expr& term) {
+  if (term.is_a_mul()) {
+    bool found_initial_condition = false;
+    for (unsigned j = term.nops(); j-- > 0; )
+      if (term.op(j).is_the_x_function()) {
+	found_initial_condition = true;
+	break;
+      }
+    if (!found_initial_condition)
+      return term;
+  }
+  else
+    if (!term.is_the_x_function())
+      return term;
+  return 0;
+}
+
 /*!
   Consider the right hand side \p rhs of the order \f$ k \f$ recurrence
   relation
@@ -2203,10 +2221,11 @@ verify_solution(const Expr& solution, int order, const Expr& rhs,
   // that has all terms of `solution' minus those containing an initial
   // condition.
   Expr partial_solution = 0;
-  for (unsigned i = solution.nops(); i-- > 0; )
-    if (!solution.op(i).match(x(wild(0)))
-	&& !solution.op(i).match(wild(1) * x(wild(0))))
-      partial_solution += solution.op(i);
+  if (solution.is_a_add())
+    for (unsigned i = solution.nops(); i-- > 0; )
+      partial_solution += find_term_without_initial_conditions(solution.op(i));
+  else
+    partial_solution = find_term_without_initial_conditions(solution);
 
   std::vector<Expr> terms_to_sub(order);
   for (int i = 0; i < order; ++i)
