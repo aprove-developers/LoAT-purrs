@@ -658,14 +658,13 @@ PURRS::Recurrence::validate_initial_conditions(Bound kind_of_bound,
   return PROVABLY_CORRECT;
 }
 
-// @@@
 /*!
   Consider the right hand side \p rhs of the functional equation
   \f$ a x_{n/b} + p(n) \f$.
-  If \p upper is <CODE>true</CODE> we try to check that the upper bound
-  is correct;
-  If \p upper is <CODE>false</CODE> we try to check that the lower bound
-  is correct.
+  If \p kind_of_bound is <CODE>UPPER</CODE> we try to check the
+  correctness of the upper bound
+  If \p kind_of_bound is <CODE>LOWER</CODE> we try to check the
+  correctness of the lower bound
 */
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{

@@ -699,23 +699,43 @@ private:
 				    const std::vector<Polynomial_Root>&
 				    roots) const;
 
-  //! @@@
+  //! \brief
+  //! Performs the first step of the validation's process of exact solutions
+  //! of the recurrence relation of finite order \p *this verifying
+  //! \ref initial_conditions "symbolic initial conditions".
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
+  //! the verification.
   Verify_Status
   validate_initial_conditions(index_type order,
 			      index_type first_valid_index) const;
 
-  //! @@@
+  //! \brief
+  //! Verifies the exact solution of the finite order recurrence \p *this.
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
+  //! the verification.
   Verify_Status verify_finite_order() const;
 
-  //! @@@
+  //! \brief
+  //! Verifies the exact solution of the infinite order recurrence \p *this.
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
+  //! the verification.
   Verify_Status verify_infinite_order() const;
 
-  //! @@@
+  //! \brief
+  //! Performs the first step of the validation's process of the lower or
+  //! the upper bound of the functional equation \p *this verifying
+  //! \ref initial_conditions "symbolic initial conditions".
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
+  //! the verification.
   Verify_Status validate_initial_conditions(Bound kind_of_bound,
 					    const Expr& bound,
 					    unsigned int index) const;
 
-  //! @@@
+  //! \brief
+  //! Verifies the lower or the upper bound of the functional equation
+  //! \p *this.
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system is successful in
+  //! the verification.
   Verify_Status verify_bound(Bound kind_of_bound) const;
 
   //! \brief
