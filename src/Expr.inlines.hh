@@ -336,7 +336,7 @@ Expr::operator[](int i) const {
   return Base::operator[](i);
 }
 
-inline unsigned
+inline Functor
 Expr::functor() const {
   assert(is_a_function());
   return GiNaC::ex_to<GiNaC::function>(*this).get_serial();
@@ -459,7 +459,7 @@ wild(unsigned label) {
 }
 
 inline Expr
-function_appl(unsigned f, const Expr& x) {
+apply(Functor f, const Expr& x) {
   return GiNaC::function(f, static_cast<const Expr::Base>(x));
 }
 

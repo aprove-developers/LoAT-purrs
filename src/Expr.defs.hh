@@ -35,6 +35,9 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+//! Type of a functor object.
+typedef unsigned Functor;
+
 //! Output operator.
 /*! \relates Expr */
 std::ostream& operator<<(std::ostream& s, const Expr& x);
@@ -140,8 +143,8 @@ Expr wild(unsigned label);
 
 //! \brief
 //! Returns the application of functor \f$ f \f$ to operand \f$ x \f$,
-//! i.e., \f$ f(x) \f$.
-Expr function_appl(unsigned f, const Expr& x);
+//! i.e., the expression \f$ f(x) \f$.
+Expr apply(Functor f, const Expr& x);
 
 //! \brief
 //! If \f$ x \f$ and \f$ y \f$ are not zero or \f$ x = 0 \f$ and \f$ y \f$
@@ -449,10 +452,10 @@ public:
 
   //! Returns the functor of \p *this.
   /*!
-    It is assumed that \p *this is a function application.
-    Returns the unsigned integer encoding the functor name.
+    It is assumed that \p *this is a function application;
+    the behavior is undefined otherwise.
   */
-  unsigned functor() const;
+  Functor functor() const;
 
   //! Returns the operand's number of \p *this.
   /*!
@@ -735,7 +738,7 @@ private:
   friend bool operator==(const Expr& x, const Expr& y);
 
   friend Expr wild(unsigned label);
-  friend Expr function_appl(unsigned f, const Expr& x);
+  friend Expr apply(Functor f, const Expr& x);
   friend Expr pwr(const Expr& x, const Expr& y);
   friend Expr sqrt(const Expr& x);
   friend Expr sin(const Expr& x);

@@ -61,8 +61,8 @@ PURRS::Recurrence::substitute_auxiliary_definitions(const Expr& e) const {
       e_after_subs = prod(e.op(0), e.op(1), e.op(2),
 			  substitute_auxiliary_definitions(e.op(3)));
     else
-      e_after_subs = function_appl(e.functor(),
-				   substitute_auxiliary_definitions(e.op(0)));
+      e_after_subs
+	= apply(e.functor(), substitute_auxiliary_definitions(e.op(0)));
   }
   else if (e.is_a_symbol()) {
     Symbol s = e.ex_to_symbol();

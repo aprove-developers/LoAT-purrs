@@ -848,8 +848,8 @@ simplify_on_input_ex(const Expr& e, const Symbol& n, bool input) {
       e_rewritten = prod(e.op(0), e.op(1), e.op(2),
 			 simplify_on_input_ex(e.op(3), n, input));
     else
-      e_rewritten = function_appl(e.functor(),
-				  simplify_on_input_ex(e.op(0), n, input));
+      e_rewritten = apply(e.functor(),
+			  simplify_on_input_ex(e.op(0), n, input));
   }
   else
     e_rewritten = e;
@@ -901,8 +901,8 @@ simplify_on_output_ex(const Expr& e, const Symbol& n, bool input) {
       e_rewritten = prod(e.op(0), e.op(1), e.op(2),
 			 simplify_on_output_ex(e.op(3), n, input));
     else
-      e_rewritten = function_appl(e.functor(),
-				  simplify_on_output_ex(e.op(0), n, input));
+      e_rewritten = apply(e.functor(),
+			  simplify_on_output_ex(e.op(0), n, input));
   }
   else
     e_rewritten = e;
