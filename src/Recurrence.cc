@@ -32,7 +32,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "util.hh"
 #include "simplify.hh"
 #include "finite_order.hh"
-#include "compute_bounds.hh"
 #include "Expr.defs.hh"
 #include "Cached_Expr.defs.hh"
 #include "Order_Reduction_Info.defs.hh"
