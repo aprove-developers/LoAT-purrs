@@ -1073,7 +1073,7 @@ exp_poly_decomposition_factor(const Expr& base,
 			      std::vector<Expr>& p,
 			      std::vector<Expr>& q) {
   unsigned alpha_size = alpha.size();
-  unsigned position;
+  unsigned position = alpha_size;
   bool found = false;
   for (unsigned i = alpha_size; i-- > 0; )
     if (base == alpha[i]) {
@@ -1085,7 +1085,6 @@ exp_poly_decomposition_factor(const Expr& base,
     alpha.push_back(base);
     p.push_back(0);
     q.push_back(0);
-    position = alpha_size;
   }
   // Here `alpha[position]' contains `base' and the polynomial and
   // possibly not polynomial parts of `e' can be added to
@@ -1347,8 +1346,7 @@ solve_constant_coeff_order_1(const Symbol& n, const Expr& e,
       // FIXME: the summand is not hypergeometric:
       // no chance of using Gosper's algorithm.
       Symbol h;
-      solution += sum(Expr(h), Expr(1), Expr(n),
-		      pwr(roots[0].value(), -h) * e.subs(n, h));
+      solution += Parma_Recurrence_Relation_Solver::sum(h, 1, n, pwr(roots[0].value(), -h) * e.subs(n, h));
     }
   }
   // FIXME: per ora non si puo' usare la funzione
@@ -1646,9 +1644,10 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
     else {
       Symbol h;
       solution
-	= diff_roots * (pwr(root_1, n+1) * sum(Expr(h), Expr(2), Expr(n),
-					       pwr(root_1, -h) * e.subs(n, h))
-			- (pwr(root_2, n+1) * sum(Expr(h), Expr(2), Expr(n),
+	= diff_roots * (pwr(root_1, n+1)
+			* Parma_Recurrence_Relation_Solver::sum(h, 2, n,
+								pwr(root_1, -h) * e.subs(n, h))
+			- (pwr(root_2, n+1) * Parma_Recurrence_Relation_Solver::sum(h, 2, n,
 						  pwr(root_2, -h) * e.subs(n, h))));
     }
   }

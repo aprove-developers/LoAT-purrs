@@ -347,7 +347,7 @@ full_gosper(const Expr& t_n, const Symbol& n,
     // `t' is not Gosper-summable, i. e., there is not hypergeometric
     // solution.
     Symbol h;
-    solution = sum(Expr(h), Expr(lower), upper, t_n.subs(n, h));
+    solution = Parma_Recurrence_Relation_Solver::sum(h, lower, upper, t_n.subs(n, h));
   }
   D_MSGVAR("The sum is: ", solution);
 
@@ -381,7 +381,7 @@ partial_gosper(const Expr& t_n, Expr& r_n, const Symbol& n,
     // `t' is not Gosper-summable, i. e., there is not hypergeometric
     // solution.
     Symbol h;
-    solution = sum(Expr(h), Expr(lower), upper, t_n.subs(n, h));
+    solution = Parma_Recurrence_Relation_Solver::sum(h, lower, upper, t_n.subs(n, h));
   }
   D_MSGVAR("The sum is: ", solution);
 
