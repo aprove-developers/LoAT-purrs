@@ -416,7 +416,6 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
     // Case 4.
     else
       new_rhs = b * pwr(1 - a, -1);
-    D_VAR(new_rhs);
   }
   // Let `rhs = a*x(n)'.
   else if (new_rhs.is_a_mul())
@@ -494,8 +493,8 @@ find_non_linear_term(const Expr& e) {
   // Even if we find a `legal' (i.e. not containing two nested `x' function)
   // non-linear term we do not exit from this function because we must be
   // sure that there are not non-linear term not legal.
-  // If `non_linera_term' at the end of this function is again `2' means
-  // that we are not find non-linear terms.
+  // If `non_linear_term' at the end of this function is again `2' means
+  // that we have not find non-linear terms.
   unsigned non_linear_term = 2;
   unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
   if (num_factors == 1) {
@@ -537,11 +536,11 @@ find_non_linear_term(const Expr& e) {
 //! Returns <CODE>false</CODE> otherwise.
 /*!
   Cases of rewritable non linear recurrences:
-  -  \f$ x(n) = a * x(n-k_1)^b_1 * ... * x(n-k_h)^b_h \f$,
+  -  \f$ x(n) = a x(n-k_1)^b_1 \cdots x(n-k_h)^b_h \f$,
      where \f$ k_1, \dots, k_h, b_1, \dots, b_h \f$ are positive integers
-     and \f$ h > 1 \f$ or \f$ b_1 > 1 \f$;
-  -  \f$ x(n) = x(n-k)^b \f$,
-     where \f$ b \f$ is a positive rational numbers while \f$ k \f$ is a
+     and \f$ h > 1 \f$;
+  -  \f$ x(n) = a x(n-k)^b \f$,
+     where \f$ b \f$ is a rational number while \f$ k \f$ is a
      positive integers.
   The two cases above hold also if instead of terms like `x(n-k)' there are
   term like `x(n/k)'.
@@ -559,9 +558,13 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
       Number num_exp;
       if (factor.is_a_power() && factor.arg(0).is_the_x_function()
 	  && factor.arg(1).is_a_number(num_exp))
-	if (num_exp.is_positive()) {
+	if (num_exp != -1) {
 	  assert(num_exp.is_rational());
 	  simple_cases = true;
+	  if (num_exp.is_negative())
+	    num_exp *= -1;
+	  // If one of the two number is not integer, then `lcm()'
+	  // returns the product of them.
 	  common_exponent = lcm(num_exp, common_exponent);
 	}
 	else {
@@ -580,7 +583,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
     new_rhs = 0;
     if (simple_cases)
       if (common_exponent == 1) {
-	// Substitute any `x' function `f' with `exp(1)^f'.
+	// Substitute any function `x()' with `exp(1)^{x()}'.
 	base = Napier;
 	Expr tmp = substitute_x_function(rhs, Napier, true);
 	tmp = simplify_ex_for_input(tmp, true);
@@ -595,12 +598,10 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	    new_rhs += log(tmp.op(i));
 	}
 	new_rhs = simplify_logarithm(new_rhs);
-	D_VAR(new_rhs);
 	return true;
       }
       else {
-	D_VAR(common_exponent);
-	// Substitute any `x' function `f' with `common_exponent^f'.
+	// Substitute any function `x()' with `common_exponent^{x()}'.
 	base = common_exponent;
 	Expr tmp = substitute_x_function(rhs, common_exponent, true);
 	tmp = simplify_ex_for_input(tmp, true);
@@ -615,7 +616,6 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	    new_rhs += log(tmp.op(i)) / log(common_exponent);
 	}
 	new_rhs = simplify_logarithm(new_rhs);
-	D_VAR(new_rhs);
 	return true;
       }
   }
@@ -625,8 +625,10 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
     const Expr& exponent_rhs = rhs.arg(1);
     Number num_exp;
     if (base_rhs.is_the_x_function() && exponent_rhs.is_a_number(num_exp)
-	&& num_exp.is_positive()) {
-      // Substitute any function `x()' with `num_exp^{x()}'.
+	&& num_exp != -1) {
+      // Substitute any function `x()' with `abs(num_exp)^{x()}'.
+      if (num_exp.is_negative())
+	num_exp *= -1;
       base = num_exp;
       const Expr tmp
 	= simplify_ex_for_input(substitute_x_function(rhs, num_exp, true),
@@ -640,7 +642,6 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
       else
 	new_rhs = log(tmp) / log(num_exp);
       new_rhs = simplify_logarithm(new_rhs);
-      D_VAR(new_rhs);
       return true;
     }
     else
