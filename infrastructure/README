@@ -6,7 +6,7 @@ gcc 3.0.3
 gmp 4.0.1      (configure with -fexceptions *)
 cln 1.1.4
 ginac 1.0.4    (apply patches **)
-fi_lib++ 2.0   (apply patches ***)
+fi_lib++ 2.0   (apply patches and be careful about how you build it ***)
 
 
 (*)
@@ -22,3 +22,8 @@ patch -p1 <my/path/to/purrs/infrastructure/patch_ginac-1.0.4
 (***)
 cd my/path/to/interval/
 patch -p1 <my/path/to/purrs/infrastructure/patch_filib++-2.0
+ln -s makefiles/Makefile.gcc Makefile
+make libs
+su
+<root password>
+make install
