@@ -1,4 +1,4 @@
-/* Definition of some utility functions.
+/* To be written.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -99,7 +99,7 @@ poly_dec(const GExpr& p, const GSymbol& x, std::vector<GExpr>& summands) {
 
 /*!
   This routine computes \f$\sum_{j=0}^n p(j) \f$ for a non 
-  negative integer \f$ n \f$ and a polynomial \$ p \f$ by means 
+  negative integer \f$ n \f$ and a polynomial \f$ p \f$ by means 
   of a formula explained in purrs.tex, \S4.3.3. 
   The closed formula is returned in the expression <CODE> q </CODE>. 
 */

@@ -1,4 +1,4 @@
-/* ************************
+/* To be written
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -240,7 +240,7 @@ find_polynomial_solution(const GSymbol& n, const GNumber& deg_x,
   Returns <CODE>true</CODE> if it finds, if exists, a non-zero polynomial
   solution \f$ x(n) \f$ of \f$ a(n) * x(n+1) - b(n-1) * x(n) = c(n) \f$,
   where /f$ a(n) /f$, /f$ b(n) /f$ and /f$ c(n) /f$ are polynomials such that
-  /f$ gcd(a(n), b(n+h)) = 1 \f$, for all non-negative integers
+  \f$ gcd(a(n), b(n+h)) = 1 \f$, for all non-negative integers
   /f$ h /f$. The solution /f$ x(n) /f$ is stored in /p x_n. 
   Returns <CODE>false</CODE> otherwise, i. e., it not finds a non-zero
   polynomial solution /f$ x(n) /f$.

@@ -1,4 +1,4 @@
-/* *****************
+/* Constant class declaration.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
