@@ -34,6 +34,67 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+inline
+Expr::Expr() {
+}
+
+inline
+Expr::Expr(int i)
+  : e(i) {
+}
+
+inline
+Expr::Expr(const Number& n)
+  : e(n.n) {
+}
+
+inline
+Expr::Expr(const Symbol& s)
+  : e(s.s) {
+}
+
+inline
+Expr::Expr(const Constant& k)
+  : e(k.c) {
+}
+
+inline
+Expr::Expr(const std::string& st, const Expr_List& lst)
+  : e(st, lst.l) {
+}
+
+// FIXME: temporary
+inline
+Expr::Expr(const Expr& lh, const Expr& rh) {  
+  GiNaC::relational r(lh.e, rh.e);
+  e = r;
+};
+
+inline
+Expr::Expr(const Expr& exp)
+  : e(exp.e) {
+};
+
+inline Expr&
+Expr::operator=(const Expr& exp) {
+  e = exp.e;
+  return *this;
+};
+
+inline
+Expr::Expr(const GiNaC::ex& ge)
+  : e(ge) {
+}
+
+inline
+Expr::Expr(const GiNaC::function& gf)
+  : e(gf) {
+}
+
+inline
+Expr::~Expr() {
+}
+
 inline std::ostream&
 operator<<(std::ostream& os, const Expr& exp) {
   os << exp.e;
@@ -105,55 +166,6 @@ operator!=(const Expr& x, const Expr& y) {
 }
 #endif
 
-inline
-Expr::Expr() {
-}
-
-inline
-Expr::Expr(int i)
-  : e(i) {
-}
-
-inline
-Expr::Expr(const Number& n)
-  : e(n.n) {
-}
-
-inline
-Expr::Expr(const Symbol& s)
-  : e(s.s) {
-}
-
-inline
-Expr::Expr(const Constant& k)
-  : e(k.c) {
-}
-
-inline
-Expr::Expr(const std::string& st, const Expr_List& lst)
-  : e(st, lst.l) {
-}
-
-inline
-Expr::Expr(const Expr& exp)
-  : e(exp.e) {
-};
-
-inline Expr&
-Expr::operator=(const Expr& exp) {
-  e = exp.e;
-  return *this;
-};
-
-inline
-Expr::Expr(const GiNaC::ex& ge)
-  : e(ge) {
-}
-
-inline
-Expr::~Expr() {
-}
-
 inline Expr
 Expr::operator[](int i) const {
   return e[i];
@@ -215,17 +227,17 @@ Expr::ex_to_number() const {
   return GiNaC::ex_to<GiNaC::numeric>(e);
 }
 
-//info
+// FIXME: info, temporary
 inline bool
 Expr::is_integer_polynomial() const {
   return e.info(GiNaC::info_flags::integer_polynomial);
 }
-//info
+// FIXME: info, temporary
 inline bool
 Expr::is_rational_polynomial() const {
   return e.info(GiNaC::info_flags::rational_polynomial);
 }
-//info
+// FIXME: info, temporary
 inline bool
 Expr::is_relation_equal() const {
   return e.info(GiNaC::info_flags::relation_equal);
@@ -400,38 +412,43 @@ log(const Expr& e) {
 
 inline Expr
 quo(const Expr& a, const Expr& b, const Symbol& x) {
-  return quo(a, b, x);
+  return GiNaC::quo(a.e, b.e, x.s);
 }
 
 inline Expr
 rem(const Expr& a, const Expr& b, const Symbol& x) {
-  return rem(a, b, x);
+  return GiNaC::rem(a.e, b.e, x.s);
 }
 
 inline Expr
 prem(const Expr& a, const Expr& b, const Symbol& x) {
-  return prem(a, b, x);
+  return GiNaC::prem(a.e, b.e, x.s);
 }
 
 inline Expr
 gcd(const Expr& a, const Expr& b) {
-  return gcd(a, b);
+  return GiNaC::gcd(a.e, b.e);
 }
 
 inline Expr
 lcm(const Expr& a, const Expr& b) {
-  return lcm(a, b);
+  return GiNaC::lcm(a.e, b.e);
 }
 
 inline Expr
 sqrfree(const Expr& exp, const Expr_List& lst) {
-  return sqrfree(exp, lst);
+  return GiNaC::sqrfree(exp.e, lst.l);
 }
 
 inline Expr
 lsolve(const Expr_List& lst1, const Expr_List& lst2) {
-  return lsolve(lst1, lst2);
+  return GiNaC::lsolve(lst1.l, lst2.l);
 }
+
+inline Expr
+x(const Expr& e) {
+  return x(e);
+};
 
 inline bool
 Expr::is_the_abs_function() const {

@@ -26,7 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Expr_defs_hh 1
 
 #include "Expr.types.hh"
-#include "Symbol.types.hh"
+#include "Symbol.defs.hh"
 #include "Expr_List.types.hh"
 #include "Number.types.hh"
 #include "Constant.types.hh"
@@ -39,27 +39,48 @@ namespace Parma_Recurrence_Relation_Solver {
 /*! \relates Expr */
 std::ostream& operator<<(std::ostream& os, const Expr& exp);
 
-//! Unary operators.
+//! Returns \f$ x \f$.
 Expr operator+(const Expr& x);
+
+//! Returns \f$ - x \f$.
 Expr operator-(const Expr& x);
 
-//! Binary arithmetic operators Expr with Expr.
+//! Returns \f$ x + y \f$.
 Expr operator+(const Expr& x, const Expr& y);
+
+//! Returns \f$ x - y \f$.
 Expr operator-(const Expr& x, const Expr& y);
+
+//! Returns \f$ x \cdot y \f$.
 Expr operator*(const Expr& x, const Expr& y);
+
+//! If \f$ y \neq 0 \f$, returns \f$ x / y \f$.
+/*!
+  \exception std::runtime_error thrown if <CODE>y.is_zero()</CODE>.
+*/
 Expr operator/(const Expr& x, const Expr& y);
 
-//! Binary arithmetic assignment operators with Expr.
+//! Assigns \f$ x + y \f$ to \f$ x \f$ and returns the result.
 Expr& operator+=(Expr& x, const Expr& y);
+
+//! Assigns \f$ x - y \f$ to \f$ x \f$ and returns the result.
 Expr& operator-=(Expr& x, const Expr& y);
+
+//! Assigns \f$ x \cdot y \f$ to \f$ x \f$ and returns the result.
 Expr& operator*=(Expr& x, const Expr& y);
+
+//! If \f$ y \neq 0 \f$, assigns \f$ x / y \f$ to \f$ x \f$
+//! and returns the result.
+/*!
+  \exception std::runtime_error thrown if \f$ y = 0 \f$.
+*/
 Expr& operator/=(Expr& x, const Expr& y);
 
-//! Binary operators Expr with Expr
 #if 0
 bool operator==(const Expr& x, const Expr& y);
 bool operator!=(const Expr& x, const Expr& y);
 #endif
+
 
 // FIXME: meglio con argomento di default `unsigned label = 0'?
 Expr wild(unsigned label);
@@ -73,8 +94,6 @@ Expr tan(const Expr& e);
 Expr exp(const Expr& e);
 Expr log(const Expr& e);
 
-//! \brief
-//! Computes the quozient of expressions or polynomials??
 Expr quo(const Expr& a, const Expr& b, const Symbol& x);
 Expr rem(const Expr& a, const Expr& b, const Symbol& x);
 Expr prem(const Expr& a, const Expr& b, const Symbol& x);
@@ -103,8 +122,12 @@ public:
   //! Builds the constant expression \p k.
   Expr(const Constant& k);
 
-  //! Builds the expression from string \p st and a list of symbol \p lst.
+  //! Builds the expression from a string \p st and a list of symbol \p lst.
   Expr(const std::string& st, const Expr_List& lst);
+
+  //! Builds the relational expression \f$ lh == rh \f$.
+  // FIXME: temporary
+  Expr(const Expr& lh, const Expr& rh);
 
   //! Copy-constructor.
   Expr(const Expr& exp);
@@ -160,7 +183,7 @@ public:
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is a list of
-  //! expression.
+  //! expressions.
   bool is_a_Expr_List() const;
 
   //! \brief
@@ -179,7 +202,7 @@ public:
   //! Returns the numeric value of \p *this.
   Number ex_to_number() const;
 
-  // info
+  // FIXME: info, temporary
   bool is_integer_polynomial() const;
   bool is_rational_polynomial() const;
   bool is_relation_equal() const;
@@ -245,46 +268,23 @@ private:
 
   friend std::ostream& operator<<(std::ostream& os, const Expr& exp);
 
-  //! Returns \f$ x \f$.
   friend Expr operator+(const Expr& x);
-
-  //! Returns \f$ - x \f$.
   friend Expr operator-(const Expr& x);
-
-  //! Returns \f$ x + y \f$.
   friend Expr operator+(const Expr& x, const Expr& y);
-
-  //! Returns \f$ x - y \f$.
   friend Expr operator-(const Expr& x, const Expr& y);
-
-  //! Returns \f$ x * y \f$.
   friend Expr operator*(const Expr& x, const Expr& y);
-
-  //! If \f$ y \neq 0 \f$, returns \f$ x / y \f$.
-  /*!
-    \exception std::runtime_error thrown if <CODE>y.is_zero()</CODE>.
-  */
   friend Expr operator/(const Expr& x, const Expr& y);
-
-  //! Returns the expression \f$ x + y \f$ and assigns it to \p x.
   friend Expr& operator+=(Expr& x, const Expr& y);
-
-  //! Returns the expression \f$ x - y \f$ and assigns it to \p x.
   friend Expr& operator-=(Expr& x, const Expr& y);
-
-  //! Returns the expression \f$ x * y \f$ and assigns it to \p x.
   friend Expr& operator*=(Expr& x, const Expr& y);
-
-  //! If \f$ y \neq 0 \f$, returns \f$ x / y \f$ and assign it to \p x.
-  /*!
-    \exception std::runtime_error thrown if <CODE>y.is_zero()</CODE>.
-  */
   friend Expr& operator/=(Expr& x, const Expr& y);
 
 #if 0
   friend Expr& operator==(const Expr& x, const Expr& y);
   friend Expr& operator!=(const Expr& x, const Expr& y);
 #endif
+
+  friend Expr wild(unsigned label);
 
   friend Expr power(const Expr& b, const Expr& e);
   friend Expr sqrt(const Expr& e);
@@ -295,7 +295,19 @@ private:
   friend Expr exp(const Expr& e);
   friend Expr log(const Expr& e);
 
+  friend Expr quo(const Expr& a, const Expr& b, const Symbol& x);
+  friend Expr rem(const Expr& a, const Expr& b, const Symbol& x);
+  friend Expr prem(const Expr& a, const Expr& b, const Symbol& x);
+  friend Expr gcd(const Expr& a, const Expr& b);
+  friend Expr lcm(const Expr& a, const Expr& b);
+  friend Expr sqrfree(const Expr& e, const Expr_List& lst);
+  
+  friend Expr lsolve(const Expr_List& lst1, const Expr_List& lst2);
+  
+  friend Expr x(const Expr& e);
+
   friend class Number;
+  friend class Symbol;
   friend class Constant;
   friend class Expr_List;
   friend class Matrix;
