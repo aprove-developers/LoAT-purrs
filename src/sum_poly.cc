@@ -29,15 +29,14 @@ http://www.cs.unipr.it/purrs/ . */
 #endif
 
 #include "sum_poly.hh"
-#include "util.hh"
 #include "Expr.defs.hh"
 #include <vector>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 /*!
-  This file contains the routines that sum formally expressions of the 
-  form \f$ p(n) x^n \f$, where \f$ p \f$ is a polynomial (possibly 
+  This file contains the routines that sum formally expressions of the
+  form \f$ p(n) x^n \f$, where \f$ p \f$ is a polynomial (possibly
   constant) and \f$ x \f$ is a real number (possibly 1) or an
   <CODE> Expr </CODE>.
   The sum is always over the range \f$ n \in [0, N] \f$.
@@ -47,31 +46,28 @@ namespace {
 using namespace PURRS;
 
 /*!
-  This routine computes the falling product 
+  This routine computes the falling product
   \f$ x_{(k)} := x \cdot (x - 1) \cdots (x - k + 1) \f$,
-  where \f$ k \f$ is an integer. 
-  If \f$ k\le 0 \f$, the routine returns 1, which is the usual 
-  convention for an empty product. 
-  The result is returned in the expression <CODE>q</CODE>. 
+  where \f$ k \f$ is an integer.
+  If \f$ k\le 0 \f$, the routine returns 1, which is the usual
+  convention for an empty product.
+  The result is returned in the expression <CODE>q</CODE>.
 */
-
 void
 falling_product(const Expr& x, const Number& k, Expr& q) {
   q = 1;
-  for (Number i = 0; i < k; ++i) 
+  for (Number i = 0; i < k; ++i)
     q *= x - i;
 }
 
 /*!
-  This routine computes \f$\sum_{j=0}^N j_{(k)} x^j \f$ for a non negative 
-  integer \f$ k \f$ by means of a formula explained in purrs.tex, \S4.3.2. 
-  The closed formula is returned in the expression <CODE>q</CODE>. 
+  This routine computes \f$\sum_{j=0}^N j_{(k)} x^j \f$ for a non negative
+  integer \f$ k \f$ by means of a formula explained in purrs.tex, \S4.3.2.
+  The closed formula is returned in the expression <CODE>q</CODE>.
 */
-
 void
 sum_falling_prod_times_exp(const Number& k, const Symbol& x, const Symbol& N,
 			   Expr& q) {
-
   q = pwr(1 - x, - k - 1);
   Expr r;
   for (Number i = 0; i <= k; ++i) {
@@ -83,16 +79,14 @@ sum_falling_prod_times_exp(const Number& k, const Symbol& x, const Symbol& N,
 }
 
 /*!
-  This routine computes the polynomial decomposition 
-  \f$ p(x) = \sum_{k=0}^d b_k x_{(k)} \f$ where \f$ d \f$ is the degree 
-  of the polynomial \f$ p \f$, as explained in purrs.tex, \S4.3.2. 
-  The coefficients \f$ b_0\f$, \f$\dots\f$, \f$ b_d \f$ are stored 
-  in the vector <CODE> summands </CODE>. 
+  This routine computes the polynomial decomposition
+  \f$ p(x) = \sum_{k=0}^d b_k x_{(k)} \f$ where \f$ d \f$ is the degree
+  of the polynomial \f$ p \f$, as explained in purrs.tex, \S4.3.2.
+  The coefficients \f$ b_0\f$, \f$\dots\f$, \f$ b_d \f$ are stored
+  in the vector <CODE> summands </CODE>.
 */
-
-void 
+void
 poly_dec(const Expr& p, const Symbol& x, std::vector<Expr>& summands) {
-  
   unsigned d = p.degree(x);
   Expr q = p;
   Expr r = p.coeff(x, 0);
@@ -107,15 +101,13 @@ poly_dec(const Expr& p, const Symbol& x, std::vector<Expr>& summands) {
 }
 
 /*!
-  This routine computes \f$\sum_{j=0}^N p(j) \f$ for a non 
-  negative integer \f$ N \f$ and a polynomial \f$ p \f$ by means 
-  of a formula explained in purrs.tex, \S4.3.3. 
-  The closed formula is returned in the expression <CODE> q </CODE>. 
+  This routine computes \f$\sum_{j=0}^N p(j) \f$ for a non
+  negative integer \f$ N \f$ and a polynomial \f$ p \f$ by means
+  of a formula explained in purrs.tex, \S4.3.3.
+  The closed formula is returned in the expression <CODE> q </CODE>.
 */
-
-void 
+void
 sum_poly(const Expr& p, const Symbol& x, const Symbol& N, Expr& q) {
-  
   unsigned d = p.degree(x);
   std::vector<Expr> summands(d+1);
   poly_dec(p, x, summands);
@@ -130,30 +122,26 @@ sum_poly(const Expr& p, const Symbol& x, const Symbol& N, Expr& q) {
 } // anonymous namespace
 
 /*!
-  At this point we can sum exactly any linear combination of 
-  products of polynomials and exponentials (including extreme 
-  cases of constant polynomials or exponentials). 
+  At this point we can sum exactly any linear combination of
+  products of polynomials and exponentials (including extreme
+  cases of constant polynomials or exponentials).
 */
 
 /*!
-  This routine computes the closed formula for 
-  \f$\sum_{j=0}^N p(j) \alpha^j \f$, 
-  where \f$ p \f$ is a polynomial (possibly constant) and 
-  \f$ \alpha \f$ is a Number (possibly 1). 
-  The closed formula is returned in the expression <CODE> q </CODE>. 
+  This routine computes the closed formula for
+  \f$\sum_{j=0}^N p(j) \alpha^j \f$,
+  where \f$ p \f$ is a polynomial (possibly constant) and
+  \f$ \alpha \f$ is a Number (possibly 1).
+  The closed formula is returned in the expression <CODE> q </CODE>.
 */
-
-PURRS::Expr 
-PURRS::sum_poly_times_exponentials(const Expr& p, const Symbol& x, 
+PURRS::Expr
+PURRS::sum_poly_times_exponentials(const Expr& p, const Symbol& x,
 				   const Symbol& N, const Expr& alpha) {
-  D_VAR(p);
-  D_VAR(x);
-  D_VAR(alpha);
   Expr q;
   if (alpha == 1)
     sum_poly(p.expand(), x, N, q);
-  // we just have to compute the sum of the values of the polynomial 
   else {
+    // We just have to compute the sum of the values of the polynomial.
     Expr r;
     unsigned d = p.expand().degree(x);
     std::vector<Expr> summands(d+1);
@@ -166,73 +154,69 @@ PURRS::sum_poly_times_exponentials(const Expr& p, const Symbol& x,
     }
   }
   q = q.substitute(x, alpha).expand();
-  D_VAR(q);
   return q;
 }
 
 /*!
-  This routine computes the closed formula for 
-  \f$\sum_{j=0}^N p(j) \alpha^j \cos(j\theta) \f$, 
-  where \f$ p \f$ is a polynomial (possibly constant),  
+  This routine computes the closed formula for
+  \f$\sum_{j=0}^N p(j) \alpha^j \cos(j\theta) \f$,
+  where \f$ p \f$ is a polynomial (possibly constant),
   \f$ \alpha \f$ and \f$ \theta \f$ are <CODE> Expr </CODE>.
 */
-
 PURRS::Expr
-PURRS::sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x, 
+PURRS::sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x,
 					     const Symbol& N,
 					     const Expr& alpha,
 					     const Expr& theta) {
-  Expr q = 0;
-  if (theta.is_zero()) {
+  Expr q;
+  if (theta.is_zero())
     q = sum_poly_times_exponentials(p, x, N, alpha);
-    return q;
+  else {
+    unsigned d = p.expand().degree(x);
+    std::vector<Expr> summands(d + 1);
+    poly_dec(p.expand(), x, summands);
+    q = 0;
+    for (unsigned i = 0; i <= d; ++i) {
+      Expr r = pwr(x, N + 2) * cos(N * theta)
+	- pwr(x, N + 1) * cos((N + 1) * theta);
+      r += 1 - x * cos(theta);
+      r /= pwr(x,2) - 2* x * cos(theta) + 1;
+      r = pwr(x,i) * r.diff(x,i);
+      r = r.expand();
+      q += r * summands[i];
+    }
+    q = q.substitute(x, alpha).expand();
   }
-  unsigned d = p.expand().degree(x);
-  std::vector<Expr> summands(d + 1);
-  poly_dec(p.expand(), x, summands);
-  q = 0;
-  for (unsigned i = 0; i <= d; ++i) {
-    Expr r = pwr(x, N + 2) * cos(N * theta)
-      - pwr(x, N + 1) * cos((N + 1) * theta);
-    r += 1 - x * cos(theta);
-    r /= pwr(x,2) - 2* x * cos(theta) + 1;
-    r = pwr(x,i) * r.diff(x,i);
-    r = r.expand();
-    q += r * summands[i];
-  }
-  q = q.substitute(x, alpha).expand();
   return q;
 }
 
 /*!
-  This routine computes the closed formula for 
-  \f$\sum_{j=0}^N p(j) \alpha^j \sin(j\theta) \f$, 
-  where \f$ p \f$ is a polynomial (possibly constant),  
+  This routine computes the closed formula for
+  \f$\sum_{j=0}^N p(j) \alpha^j \sin(j\theta) \f$,
+  where \f$ p \f$ is a polynomial (possibly constant),
   \f$ \alpha \f$ and \f$ \theta \f$ are <CODE> Expr </CODE>.
 */
-
 PURRS::Expr
-PURRS::sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x, 
+PURRS::sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x,
 					     const Symbol& N,
 					     const Expr& alpha,
 					     const Expr& theta) {
   Expr q = 0;
-  if (theta.is_zero()) {
-    return q;
-  } 
-  unsigned d = p.expand().degree(x);
-  std::vector<Expr> summands(d + 1);
-  poly_dec(p.expand(), x, summands);
-  q = 0;
-  for (unsigned i = 0; i <= d; ++i) {
-    Expr r = pwr(x, N + 2) * sin(N * theta)
-      - pwr(x, N + 1) * sin((N + 1) * theta);
-    r -= x * sin(theta);
-    r /= pwr(x, 2) - 2* x * cos(theta) + 1;
-    r = pwr(x, i) * r.diff(x, i);
-    r = r.expand();
-    q += r * summands[i];
+  if (!theta.is_zero()) {
+    unsigned d = p.expand().degree(x);
+    std::vector<Expr> summands(d + 1);
+    poly_dec(p.expand(), x, summands);
+    q = 0;
+    for (unsigned i = 0; i <= d; ++i) {
+      Expr r = pwr(x, N + 2) * sin(N * theta)
+	- pwr(x, N + 1) * sin((N + 1) * theta);
+      r -= x * sin(theta);
+      r /= pwr(x, 2) - 2* x * cos(theta) + 1;
+      r = pwr(x, i) * r.diff(x, i);
+      r = r.expand();
+      q += r * summands[i];
+    }
+    q = q.substitute(x, alpha).expand();
   }
-  q = q.substitute(x, alpha).expand();
   return q;
 }
