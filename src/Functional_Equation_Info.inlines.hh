@@ -106,7 +106,7 @@ Functional_Equation_Info::set_definition_Sc() {
   std::ostringstream s;
   if (divisor != 2)
     s << "Sc(n, " << divisor
-      << ") = [ n/" << divisor <<"^[log(n)/log(" << divisor << ")] ]";
+      << ") = floor(n/" << divisor <<"^floor(log(n)/log(" << divisor << ")))";
   definition_Sc_ = s.str();
 }
 
