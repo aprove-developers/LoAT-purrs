@@ -96,6 +96,34 @@ get_constant_decrement(const Expr& e, Number& decrement) {
 }
 
 /*!
+  Returns <CODE>true</CODE> if \p e is of the form \f$ n / d \f$ with
+  \f$ d \f$ a positive integer: in this case assign \f$ d \f$ to \p divisor.
+  Returns <CODE>false</CODE> otherwise.
+*/
+bool
+get_constant_divisor(const Expr& e, Number& divisor) {
+  assert(e.is_a_mul() && e.nops() == 2);
+  // `e' is of the form a*b.
+  const Expr& a = e.op(0);
+  const Expr& b = e.op(1);
+  Number d;
+  if (a == Recurrence::n && b.is_a_number(d) && d.is_rational()
+      && numerator(d) == 1) {
+    divisor = d.denominator();
+    assert(divisor.is_positive_integer());
+    return true;
+  }
+  else if (b == Recurrence::n && a.is_a_number(d) && d.is_rational()
+	   && numerator(d) == 1) {
+    divisor = d.denominator();
+    assert(divisor.is_positive_integer());
+    return true;
+  }
+  else
+    return false;
+}
+
+/*!
   Let
   \f$ x_n = a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$
   be a recurrence relation of order \f$ k \f$ whose coefficients \f$ a_j \f$
@@ -214,7 +242,6 @@ return_sum(bool distinct, const Number& order, const Expr& coeff,
   if (distinct)
     symbolic_sum = symbolic_sum.substitute(x, alpha/lambda);
   symbolic_sum *= pwr(lambda, Recurrence::n);
-  D_VAR(symbolic_sum);
   symbolic_sum = simplify_on_output_ex(symbolic_sum.expand(), false);
   return symbolic_sum;
 }
@@ -1244,7 +1271,6 @@ rewrite_term(const Expr& e, const Symbol& r, int gcd_among_decrements) {
 Expr
 rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
 				 int gcd_among_decrements) {
-  D_VAR(gcd_among_decrements);
   unsigned num_summands = e.is_a_add() ? e.nops() : 1;
   Expr e_rewritten = 0;
   if (num_summands > 1)
@@ -1416,7 +1442,9 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 					  std::vector<Expr>& coefficients,
 					  unsigned int& order,
 					  int& gcd_among_decrements,
-					  int num_term) const {
+					  int num_term,
+					  Expr& /*coefficient*/,
+					  unsigned& /*divisor_arg*/) const {
   unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
   if (num_factors == 1)
     if (r.is_the_x_function()) {
@@ -1440,6 +1468,20 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	else
 	  return HAS_NON_INTEGER_DECREMENT;
       }
+#if 0
+      else if (argument.is_a_mul() && argument.nops() == 2) {
+	Number divisor;
+	if (get_constant_divisor(argument, divisor)
+	    && !is_functional_equation()
+	    && !is_linear_finite_order_var_coeff()) {
+	  coefficient = 1;
+	  divisor_arg = divisor.to_int(); 
+	  set_functional_equation();
+	}
+	else
+	  return TOO_COMPLEX;
+      }
+#endif
       else if (argument.has(n))
 	return TOO_COMPLEX;
       else
@@ -1477,6 +1519,19 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	  else
 	    return HAS_NON_INTEGER_DECREMENT;
 	}
+#if 0
+	else if (argument.is_a_mul() && argument.nops() == 2) {
+	  Number divisor;
+	  if (get_constant_divisor(argument, divisor)
+	      && !is_functional_equation()
+	      && !is_linear_finite_order_var_coeff()) {
+	    divisor_arg = divisor.to_int(); 
+	    set_functional_equation();
+	  }
+	  else
+	    return TOO_COMPLEX;
+	}
+#endif
 	else if (argument.has(n))
 	  return TOO_COMPLEX;
 	else
@@ -1491,10 +1546,106 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
     if (found_function_x) {
       insert_coefficients(possibly_coeff, index, coefficients);
       if (found_n)
-	set_linear_finite_order_var_coeff();
+	  set_linear_finite_order_var_coeff();
     }
     else
       e += possibly_coeff;
+  }
+  return SUCCESS;
+}
+
+/*!
+  Returns <CODE>SUCCESS</CODE> if the recurrence is linear and of finite
+  order or if is the case of functional equation.
+  In the first case are stored in the structure <CODE>Finite_Order_Info</CODE>
+  the order of the recurrence, the first initial condition
+  (i. e., the smallest positive integer for which the recurrence is
+  well-defined) and the coefficients (if the order is zero it is not necessary
+  to use the pointer to the structure <CODE>Finite_Order_Info</CODE> because
+  we already know the solution). 
+  In the second case are stored
+  in the structure <CODE>Functional_Equation_Info</CODE> the values
+  \f$ a \f$ and \f$ b \f$ of the functional equation
+  \f$ x_n = a x_{n/b} + d n^e \f$.
+  In both the case is besides computed the non-homogeneous part
+  of the recurrence.
+  If the function not returns <CODE>SUCCESS</CODE> then is one of the
+  following cases: <CODE>NON_LINEAR_RECURRENCE</CODE>,
+  <CODE>HAS_NEGATIVE_DECREMENT</CODE>, <CODE>HAS_HUGE_DECREMENT</CODE>,
+  <CODE>HAS_NULL_DECREMENT</CODE>, <CODE>HAS_NON_INTEGER_DECREMENT</CODE>,
+  <CODE>TOO_COMPLEX</CODE>.
+*/
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::classification_recurrence(const Expr& rhs,
+					     int& gcd_among_decrements) const {
+  // Initialize the computation of the order of the linear part of the
+  // recurrence.  This works like the computation of a maximum: it is
+  // the maximum `k', if it exists, such that `rhs = a*x(n-k) + b' where `a'
+  // is not syntactically 0; if not exists `k' such that `rhs = a*x(n-k) + b',
+  // then `order' is left to `0'.
+  unsigned int order = 0;
+  // We will store here the coefficients of linear part of the recurrence.
+  std::vector<Expr> coefficients;
+
+  // We will store here the coefficient of the functional equation
+  // `x(n) = a x(n/b) + d n^e'.
+  Expr coefficient;
+  // We will store here the divisor of the argument of the function `x' in
+  // the functional equation `x(n) = a x(n/b) + d n^e'.
+  unsigned divisor_arg;
+
+  Expr inhomogeneous = 0;
+
+  Solver_Status status;
+
+  unsigned num_summands = rhs.is_a_add() ? rhs.nops() : 1;
+  if (num_summands > 1)
+    // It is necessary that the following loop starts from `0'.
+    for (unsigned i = 0; i < num_summands; ++i) {
+      if ((status = classification_summand(rhs.op(i), inhomogeneous,
+					   coefficients, order,
+					   gcd_among_decrements, i,
+					   coefficient, divisor_arg))
+	  != SUCCESS)
+	return status;
+    }
+  else
+    if ((status = classification_summand(rhs, inhomogeneous,
+					 coefficients, order,
+					 gcd_among_decrements, 0,
+					 coefficient, divisor_arg))
+	!= SUCCESS)
+      return status;
+ 
+  // Check if the recurrence is non linear, i.e., there is a non-linear term
+  // containing in `e' containing `x(a*n+b)'.
+  set_inhomogeneous_term(inhomogeneous);
+  D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
+
+  // Check if the recurrence is non linear, i.e., if there is a non-linear
+  // term in the inhomogeneous_term containing `x(a*n+b)'.
+  if ((status = find_non_linear_recurrence(inhomogeneous_term)) != SUCCESS)
+    return status;
+
+  // `inhomogeneous_term' is a function of `n', the parameters and of
+  // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
+  //  non-negative integers.
+  if (order == 0)
+    set_order_zero();
+
+  if (!is_order_zero() && !is_linear_finite_order_var_coeff()
+      && !is_functional_equation())
+    set_linear_finite_order_const_coeff();
+
+  if (is_linear_finite_order()) {
+    finite_order_p = new Finite_Order_Info(order, 0, coefficients);
+    D_VAR(order);
+    D_VEC(coefficients, 1, order);
+  }
+  else if (is_functional_equation()) {
+    functional_eq_p = new Functional_Equation_Info(coefficient, divisor_arg);
+    D_VAR(coefficient);
+    D_VAR(divisor_arg);
   }
   return SUCCESS;
 }
@@ -1516,7 +1667,6 @@ add_initial_conditions(const Expr& g_n,
 		       const std::vector<Number>& coefficients) const {
   // `coefficients.size()' has `order + 1' elements because in the first
   // position there is the value 0.
-  D_VAR(g_n);
   for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
     Expr g_n_i = g_n.substitute(n, n - i);
     Expr tmp = x(first_initial_condition() + i);
@@ -1527,81 +1677,18 @@ add_initial_conditions(const Expr& g_n,
 }
 
 /*!
-  This function solves recurrences of SOME TYPE provided they are
-  supplied in SOME FORM. (Explain.)
+  Solves the linear recurrence of finite order (we have already considered
+  the banal case of order zero recurrence), i. e., linear finite
+  order recurrence with constant or variable coefficients.
 */
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::solve_easy_cases() const {
-  D_VAR(recurrence_rhs);
-  // The following code depends on the possibility of recovering
-  // the various parts of `rhs' as summands of an additive expression.
-  Expr expanded_rhs = additive_form(recurrence_rhs);
-
-  // Initialize the computation of the order of the linear part of the
-  // recurrence.  This works like the computation of a maximum: it is
-  // the maximum `k', if it exists, such that `rhs = a*x(n-k) + b' where `a'
-  // is not syntactically 0; if not exists `k' such that `rhs = a*x(n-k) + b',
-  // then `order' is left to `0'.
-  unsigned int order = 0;
-
-  // We will store here the coefficients of linear part of the recurrence.
-  std::vector<Expr> coefficients;
-
-  Expr inhomogeneous = 0;
-
-  Solver_Status status;
-
-  // We will store here the greatest common denominator among the decrements
-  // `d' of the terms `x(n-d)' contained in the linear part of the
-  // recurrence.
-  int gcd_among_decrements = 0;
-  unsigned num_summands = expanded_rhs.is_a_add() ? expanded_rhs.nops() : 1;
-  if (num_summands > 1)
-    // It is necessary that the following loop starts from `0'.
-    for (unsigned i = 0; i < num_summands; ++i) {
-      status = classification_summand(expanded_rhs.op(i), inhomogeneous,
-				      coefficients, order,
-				      gcd_among_decrements, i);
-      if (status != SUCCESS)
-	return status;
-    }
-  else {
-    status = classification_summand(expanded_rhs, inhomogeneous,
-				    coefficients, order,
-				    gcd_among_decrements, 0);
-    if (status != SUCCESS)
-      return status;
-  }
-
-  set_inhomogeneous_term(inhomogeneous);
-
-  // Check if the recurrence is non linear, i.e., if there is a non-linear
-  // term in the inhomogeneous_term containing `x(a*n+b)'.
-  status = find_non_linear_recurrence(inhomogeneous_term);
-  if (status != SUCCESS)
-    return status;
-
-  // Now we are sure that the recurrence is linear of the finite order.
-  // We know the order and the coefficients of the recurrence.
-  // The second argument represent the first positive integer for which
-  // the recurrence is well-defined and then the value DA CUI will start
-  // the initial conditions.
-  tdip = new Finite_Order_Info(order, 0, coefficients);
-
-  // `inhomogeneous_term' is a function of `n', the parameters and of
-  // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
-  //  non-negative integers.
-  if (order == 0) {
-    set_order_zero();
-    solution = inhomogeneous_term;
-    return SUCCESS;
-  }
-
-  if (!is_linear_finite_order_var_coeff())
-    set_linear_finite_order_const_coeff();
-
+PURRS::Recurrence::solve_linear_finite_order(int gcd_among_decrements) const {
   // If the greatest common divisor among the decrements is greater than one,
   // the order reduction is applicable.
+  // FIXME: the order reduction is for the moment applied only to
+  // recurrences with constant coefficients because the recurrences
+  // with variable coefficients are not allowed with parameters.
+  D_VAR(gcd_among_decrements);
   if (gcd_among_decrements > 1 && is_linear_finite_order_const_coeff()) {
     recurrence_rhs_rewritten = true;
     old_recurrence_rhs = recurrence_rhs;
@@ -1610,7 +1697,7 @@ PURRS::Recurrence::solve_easy_cases() const {
     // Build the new recurrence substituting `n' not contained in the
     // `x' functions with `gcd_among_decrements * n + r' and `x(n-k)' with
     // `x(n - k / gcd_among_decrements)'.
-    recurrence_rhs = rewrite_reduced_order_recurrence(expanded_rhs, r,
+    recurrence_rhs = rewrite_reduced_order_recurrence(recurrence_rhs, r,
 						      gcd_among_decrements);
     Solver_Status status = solve_easy_cases();
     if (status == SUCCESS) {
@@ -1628,18 +1715,12 @@ PURRS::Recurrence::solve_easy_cases() const {
     return status;
   }
 
-  D_VAR(order);
-  D_VEC(coefficients, 1, order);
-  D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
-
-  // Simplifies expanded expressions, in particular rewrites nested powers.
-  inhomogeneous_term = simplify_on_input_ex(inhomogeneous_term, true);
-
   // `g_n' is defined here because it is necessary in the function
-  // `add_initial_conditions()' (at the end of function `solve()').
-  std::vector<Number> num_coefficients(order + 1);
+  // `add_initial_conditions()' (at the end of function
+  // `solve_linear_finite_order()').
+  std::vector<Number> num_coefficients(order() + 1);
   Expr g_n;
-  switch (order) {
+  switch (order()) {
   case 1:
     {
       Solver_Status status;
@@ -1647,7 +1728,7 @@ PURRS::Recurrence::solve_easy_cases() const {
 	Expr characteristic_eq;
 	std::vector<Polynomial_Root> roots;
 	bool all_distinct = true;
-	if (!characteristic_equation_and_its_roots(order, coefficients,
+	if (!characteristic_equation_and_its_roots(order(), coefficients(),
 						   num_coefficients,
 						   characteristic_eq, roots,
 						   all_distinct))
@@ -1655,7 +1736,7 @@ PURRS::Recurrence::solve_easy_cases() const {
 	status = solve_constant_coeff_order_1(roots);
       }
       else
-	status = solve_variable_coeff_order_1(coefficients[1]);
+	status = solve_variable_coeff_order_1(coefficients()[1]);
       if (status != SUCCESS) {
 	D_MSG("Summand not hypergeometric: no chance of using Gosper's "
 	      "algorithm");
@@ -1669,7 +1750,7 @@ PURRS::Recurrence::solve_easy_cases() const {
       Expr characteristic_eq;
       std::vector<Polynomial_Root> roots;
       bool all_distinct = true;
-      if (!characteristic_equation_and_its_roots(order, coefficients,
+      if (!characteristic_equation_and_its_roots(order(), coefficients(),
 						 num_coefficients,
 						 characteristic_eq, roots,
 						 all_distinct))
@@ -1677,7 +1758,7 @@ PURRS::Recurrence::solve_easy_cases() const {
       // If there is some root not rational then, for efficiency, we substitute
       // it with an arbitrary symbol.
       substitute_non_rational_roots(*this, roots);
-      solution = solve_constant_coeff_order_2(g_n, order, all_distinct,
+      solution = solve_constant_coeff_order_2(g_n, order(), all_distinct,
 					      inhomogeneous_term,
 					      num_coefficients, roots);
     }
@@ -1692,7 +1773,7 @@ PURRS::Recurrence::solve_easy_cases() const {
       Expr characteristic_eq;
       std::vector<Polynomial_Root> roots;
       bool all_distinct = true;
-      if (!characteristic_equation_and_its_roots(order, coefficients,
+      if (!characteristic_equation_and_its_roots(order(), coefficients(),
 						 num_coefficients,
 						 characteristic_eq, roots,
 						 all_distinct)) {
@@ -1702,7 +1783,7 @@ PURRS::Recurrence::solve_easy_cases() const {
       // If there is some root not rational then, for efficiency, we substitute
       // it with an arbitrary symbol.
       substitute_non_rational_roots(*this, roots);
-      solution = solve_constant_coeff_order_k(g_n, order, all_distinct,
+      solution = solve_constant_coeff_order_k(g_n, order(), all_distinct,
 					      inhomogeneous_term,
 					      num_coefficients, roots);
     }
@@ -1714,13 +1795,13 @@ PURRS::Recurrence::solve_easy_cases() const {
   }
 
   if (is_linear_finite_order_const_coeff())
-    if (order == 1 )      
+    if (order() == 1 )      
       // FIXME: per ora non si puo' usare la funzione
       // `add_initial_conditions' perche' richiede un vettore di
       // `Number' come `coefficients' e voglio risolvere anche le
       // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
       // add_initial_conditions(g_n, coefficients, solution);
-      solution += x(first_initial_condition()) * pwr(coefficients[1], n);
+      solution += x(first_initial_condition()) * pwr(coefficients()[1], n);
     else
       add_initial_conditions(g_n, num_coefficients);
 
@@ -1734,14 +1815,59 @@ PURRS::Recurrence::solve_easy_cases() const {
   // the following `for' is temporary.
   if (solution.is_a_add()) {
     Expr_List conditions;
-    for (unsigned i = order; i-- > 0; )
+    for (unsigned i = order(); i-- > 0; )
       conditions.append(x(first_initial_condition() + i));
     // FIXME: `collect' throws an exception if the object to collect has
     // non-integer exponent. 
     solution = solution.collect(conditions);
+  }  
+  return SUCCESS;
+}
+
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::approximate_functional_equation() const {
+  return TOO_COMPLEX;
+}
+
+/*!
+  This function solves recurrences of SOME TYPE provided they are
+  supplied in SOME FORM. (Explain.)
+*/
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::solve_easy_cases() const {
+  D_VAR(recurrence_rhs);
+  // The following code depends on the possibility of recovering
+  // the various parts of `rhs' as summands of an additive expression.
+  Expr expanded_rhs = additive_form(recurrence_rhs);
+
+  // We will store here the greatest common denominator among the decrements
+  // `d' of the terms `x(n-d)' contained in the linear part of the
+  // recurrence.
+  int gcd_among_decrements = 0;
+
+  Solver_Status status;
+
+  // The function `classification_recurrence()' returns `SUCCESS' if
+  // is the order is finite or if is the case of functional equation.
+  if ((status = classification_recurrence(expanded_rhs, gcd_among_decrements))
+      != SUCCESS)
+    return status;
+  assert(is_linear_finite_order() || is_functional_equation());
+
+  if (is_order_zero()) {
+    solution = inhomogeneous_term;
+    return SUCCESS;
   }
 
-  return SUCCESS;
+  // Simplifies expanded expressions, in particular rewrites nested powers.
+  inhomogeneous_term = simplify_on_input_ex(inhomogeneous_term, true);
+
+  if (finite_order_p != 0)
+    status = solve_linear_finite_order(gcd_among_decrements);
+  else if (functional_eq_p != 0)
+    status = approximate_functional_equation();
+
+  return status;
 }
 
 /*!

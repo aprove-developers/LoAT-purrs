@@ -204,7 +204,7 @@ PURRS::Recurrence::OK() const {
   switch(type) {
   case UNKNOWN:
   case ORDER_ZERO:
-    if (tdip != 0) {
+    if (finite_order_p != 0) {
 #ifndef NDEBUG
       cerr << "Recurrence with type unknown or of order zero!" << endl;
 #endif
@@ -212,7 +212,7 @@ PURRS::Recurrence::OK() const {
     }
   case LINEAR_FINITE_ORDER_CONST_COEFF:
   case LINEAR_FINITE_ORDER_VAR_COEFF:
-    if (tdip == 0) {
+    if (finite_order_p == 0) {
 #ifndef NDEBUG
       cerr << "Recurrence of finite order!" << endl;
 #endif

@@ -28,6 +28,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Recurrence.types.hh"
 #include "Blackboard.defs.hh"
 #include "Finite_Order_Info.defs.hh"
+#include "Functional_Equation_Info.defs.hh"
 #include "Expr.defs.hh"
 #include "alg_eq_solver.hh"
 #include <map>
@@ -212,18 +213,24 @@ public:
 private:
   Solver_Status solve_easy_cases() const;
   Solver_Status solve_try_hard() const;
+  Solver_Status classification_recurrence(const Expr& rhs,
+					  int& gcd_among_decrements) const;
   Solver_Status classification_summand(const Expr& r, Expr& e,
 				       std::vector<Expr>& coefficients,
 				       unsigned int& order,
 				       int& gcd_among_decrements,
-				       int num_term) const;
+				       int num_term,
+				       Expr& coefficient,
+				       unsigned& divisor_arg) const;
   void add_initial_conditions(const Expr& g_n,
 			      const std::vector<Number>& coefficients) const;
-  Solver_Status 
+  Solver_Status solve_linear_finite_order(int gcd_among_decrements) const;
+  Solver_Status
   solve_constant_coeff_order_1(const std::vector<Polynomial_Root>&
 			       roots) const;
-  Solver_Status
-  solve_variable_coeff_order_1(const Expr& coefficient) const;
+  Solver_Status solve_variable_coeff_order_1(const Expr& coefficient) const;
+  Solver_Status approximate_functional_equation() const;
+
   //! \brief
   //! Holds the right-hand side of the global recurrence to be solved.
   //! This may have been set directly by the constructor or it may be the
@@ -311,8 +318,8 @@ private:
   };
 
   mutable Type type;
-
-  mutable Finite_Order_Info* tdip;
+  mutable Finite_Order_Info* finite_order_p;
+  mutable Functional_Equation_Info* functional_eq_p;
 
   //! \brief
   //! Returns <CODE>true</CODE> if the recurrence is a special case,
@@ -341,12 +348,25 @@ private:
   void set_linear_finite_order_var_coeff() const;
 
   //! \brief
+  //! Returns <CODE>true</CODE> if the recurrence is linear
+  //! of finite order; returns <CODE>false</CODE> otherwise.
+  bool is_linear_finite_order() const;
+
+  //! \brief
   //! Returns <CODE>true</CODE> if the recurrence is non linear
   //! of finite order; returns <CODE>false</CODE> otherwise.
   bool is_non_linear_finite_order() const;
 
   //! Sets <CODE>type_recurrence = NON_LINEAR_FINITE_ORDER</CODE>.
   void set_non_linear_finite_order() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if is the case of functional equation;
+  //! returns <CODE>false</CODE> otherwise.
+  bool is_functional_equation() const;
+
+  //! Sets <CODE>type_recurrence = FUNCTIONAL_EQUATION</CODE>.
+  void set_functional_equation() const;
 
   //! Returns the order of the finite order recurrence.
   unsigned int order() const;

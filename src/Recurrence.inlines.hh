@@ -39,7 +39,8 @@ Recurrence::Recurrence()
     recurrence_rhs_rewritten(false),
     inhomogeneous_term(0),
     type(ORDER_ZERO),
-    tdip(0),
+    finite_order_p(0),
+    functional_eq_p(0),
     solved(false) {
 }
 
@@ -52,7 +53,8 @@ Recurrence::Recurrence(const Expr& e)
     recurrence_rhs_rewritten(false),
     inhomogeneous_term(0),
     type(UNKNOWN),
-    tdip(0),
+    finite_order_p(0),
+    functional_eq_p(0),
     solved(false) {
 }
 
@@ -66,14 +68,16 @@ Recurrence::Recurrence(const Recurrence& y)
     inhomogeneous_term(y.inhomogeneous_term),
     system_rhs(y.system_rhs),
     type(y.type),
-    tdip(y.tdip),    
+    finite_order_p(y.finite_order_p),
+    functional_eq_p(y.functional_eq_p),    
     solved(y.solved),
     solution(y.solution) {
 }
 
 inline
 Recurrence::~Recurrence() {
-  delete tdip;
+  delete finite_order_p;
+  delete functional_eq_p;
 }
 
 inline Recurrence&
@@ -86,7 +90,8 @@ Recurrence::operator=(const Recurrence& y) {
   inhomogeneous_term = y.inhomogeneous_term;
   system_rhs = y.system_rhs;
   type = y.type;
-  tdip = y.tdip;
+  finite_order_p = y.finite_order_p;
+  functional_eq_p = y.functional_eq_p;
   solved = y.solved;
   solution = y.solution;
   return *this;
@@ -142,6 +147,13 @@ Recurrence::set_linear_finite_order_var_coeff() const {
 }
 
 inline bool
+Recurrence::is_linear_finite_order() const {
+  return (type == ORDER_ZERO
+	  || type == LINEAR_FINITE_ORDER_CONST_COEFF
+	  || type == LINEAR_FINITE_ORDER_VAR_COEFF);
+}
+
+inline bool
 Recurrence::is_non_linear_finite_order() const {
   return type == NON_LINEAR_FINITE_ORDER;
 }
@@ -151,14 +163,24 @@ Recurrence::set_non_linear_finite_order() const {
   type = NON_LINEAR_FINITE_ORDER;
 }
 
+inline bool
+Recurrence::is_functional_equation() const {
+  return type == FUNCTIONAL_EQUATION;
+}
+
+inline void
+Recurrence::set_functional_equation() const {
+  type = FUNCTIONAL_EQUATION;
+}
+
 inline unsigned int
 Recurrence::order() const {
   assert(is_order_zero()
 	 || is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
-  assert(tdip);
-  return tdip -> order();
+  assert(finite_order_p);
+  return finite_order_p -> order();
 }
 
 inline unsigned int&
@@ -167,8 +189,8 @@ Recurrence::order() {
 	 || is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
-  assert(tdip);
-  return tdip -> order();
+  assert(finite_order_p);
+  return finite_order_p -> order();
 }
 
 inline unsigned
@@ -177,8 +199,8 @@ Recurrence::first_initial_condition() const {
 	 || is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
-  assert(tdip);
-  return tdip -> first_initial_condition();
+  assert(finite_order_p);
+  return finite_order_p -> first_initial_condition();
 }
 
 inline unsigned&
@@ -187,8 +209,8 @@ Recurrence::first_initial_condition() {
 	 || is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
-  assert(tdip);
-  return tdip -> first_initial_condition();
+  assert(finite_order_p);
+  return finite_order_p -> first_initial_condition();
 }
 
 inline void
@@ -197,8 +219,8 @@ Recurrence::set_first_initial_condition(unsigned i_c) const {
 	 || is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
-  assert(tdip);
-  tdip -> set_first_initial_condition(i_c);
+  assert(finite_order_p);
+  finite_order_p -> set_first_initial_condition(i_c);
 }
 
 inline const std::vector<Expr>&
@@ -207,8 +229,8 @@ Recurrence::coefficients() const {
 	 || is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
-  assert(tdip);
-  return tdip -> coefficients();
+  assert(finite_order_p);
+  return finite_order_p -> coefficients();
 }
 
 inline std::vector<Expr>&
@@ -217,8 +239,8 @@ Recurrence::coefficients() {
 	 || is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
-  assert(tdip);
-  return tdip -> coefficients();
+  assert(finite_order_p);
+  return finite_order_p -> coefficients();
 }
 
 inline Recurrence::Solver_Status
