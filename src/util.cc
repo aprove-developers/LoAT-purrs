@@ -22,13 +22,13 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#include "util.hh"
-
-namespace Parma_Recurrence_Relation_Solver {
-
 #ifndef NOISY
 #define NOISY 0
 #endif
+
+#include "util.hh"
+
+namespace Parma_Recurrence_Relation_Solver {
 
 /*!
   Computes the gcd between the integers \p n and \p m.

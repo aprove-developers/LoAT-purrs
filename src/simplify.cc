@@ -22,8 +22,11 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#include "simplify.hh"
+#ifndef NOISY
+#define NOISY 0
+#endif
 
+#include "simplify.hh"
 #include "util.hh"
 #include "Expr.defs.hh"
 #include <vector>
@@ -32,10 +35,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include <iostream>
 
 namespace Parma_Recurrence_Relation_Solver {
-
-#ifndef NOISY
-#define NOISY 0
-#endif
 
 static const unsigned
 FACTOR_THRESHOLD = 100;
