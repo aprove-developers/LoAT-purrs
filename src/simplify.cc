@@ -215,17 +215,17 @@ simpl_powers_base(const Expr& base, const Expr& num_exponent,
 }
 
 /*!
-  This function applies the rules \f$ \textbf{E1}, \textbf{E2}, 
-  \textbf{E4} \f$ and \f$ \textbf{E5} \f$ of the rules' set <EM>Expand</EM>.
-  The <CODE>Expr</CODE> \p e is a <CODE>power</CODE>:
-  it finds the base and the exponent of the power (\p e could be a series
-  of nested powers). While it does this operation, it divides the exponents
-  (that can be multiplications but not additions because the expression
-  \p e is expanded) in two parts: in \p num_exponent it puts
-  numeric factors and in \p not_num_exponent put not numeric factors.
-  Afterwards it tests the base: if it is not a multiplication the checks
-  and the simplifications heve been completed;
-  otherwise we must raise every factor of the base to the exponents.
+  This function applies the rules \f$ \textbf{E1}, \textbf{E2},
+  \textbf{E4} \f$ and \f$ \textbf{E5} \f$ of the rules' set
+  <EM>Expand</EM>.  The <CODE>Expr</CODE> \p e is a <CODE>power</CODE>:
+  this function finds the base and the exponent of the power (\p e could
+  be a series of nested powers). The exponents may contain products but
+  not sums, since the expression \p e is expanded.  The function
+  separates the exponents into two parts: it puts numeric factors in \p
+  num_exponent, and non-numeric factors in \p not_num_exponent.
+  Afterwards it tests the base: if it is not a multiplication the
+  function returns; otherwise it must raise every factor of the base to
+  the exponents.
   If \p input is <CODE>true</CODE> then we use the simplifications
   which collect the special symbol \p n; otherwise, i. e. \p input
   is <CODE>false</CODE>, \p n is like the other parameters.
@@ -268,8 +268,8 @@ pow_simpl(const Expr& e, const Symbol& n, bool input) {
 
 /*!
   Applies the rule \f$ \textbf{C3} \f$ of the set of rules
-  <EM>Collect</EM> to the <CODE>Expr</CODE> \p e  under condition
-  that the common exponent of the powers is not integer
+  <EM>Collect</EM> to the <CODE>Expr</CODE> \p e  under the condition
+  that the common exponent of the powers is not an integer
   because, in this case, the power is automatically decomposed,
   i. e., \f$ (a*b)^4 \f$ is automatically transformed in
   \f$ a^4*b^4 \f$.
