@@ -62,7 +62,7 @@ Cached_Expr::has_expression() const {
 }
 
 inline const Expr&
-Cached_Expr::expression() {
+Cached_Expr::expression() const {
   return expression_;
 }
 

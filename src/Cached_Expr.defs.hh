@@ -26,6 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_Cached_Expr_defs_hh
 #define PURRS_Cached_Expr_defs_hh 1
 
+#include "Recurrence.types.hh"
 #include "Expr.defs.hh"
 
 namespace Parma_Recurrence_Relation_Solver {
@@ -50,10 +51,17 @@ public:
   bool has_expression() const;
 
   //! Returns <CODE>expression_</CODE>.
-  const Expr& expression();
+  const Expr& expression() const;
 
   //! Sets <CODE>expression_</CODE> with \p e.
   void set_expression(const Expr& e);
+
+  //! \brief
+  //! Substitutes all <EM>bad</EM> symbols contained in
+  //! \p (*this).expression() with <EM>good</EM> symbols that
+  //! are not yet used. Besides, substitutes the name of the bad
+  //! symbols also in the blackboard of the rcurrence \p rec.
+  Expr remove_bad_symbols(const Recurrence& rec) const;
 
   void set_size(unsigned long n);
   unsigned long size();
