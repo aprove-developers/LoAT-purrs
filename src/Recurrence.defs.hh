@@ -26,6 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Recurrence_defs_hh 1
 
 #include "Recurrence.types.hh"
+#include "Blackboard.defs.hh"
 #include "Expr.defs.hh"
 #include "alg_eq_solver.hh"
 #include <map>
@@ -127,8 +128,7 @@ public:
 
   //! \brief
   //! Substitutes eventually auxiliary definitions contained in
-  //! \p e with their original values stored in the map
-  //! <CODE>auxiliary_definitions</CODE>.
+  //! \p e with their original values stored in the blackboard.
   Expr substitute_auxiliary_definitions(const Expr& e) const;
 
   //! The index of the recurrence.
@@ -158,7 +158,7 @@ private:
 
   mutable Expr solution;
 
-  mutable std::map<Symbol, Expr> auxiliary_definitions;
+  mutable Blackboard blackboard;
 
 private:
   static Solver_Status

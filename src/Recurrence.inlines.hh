@@ -104,32 +104,21 @@ Recurrence::verify_solution() const {
   return true;
 }
 
-inline bool
-operator<(const Symbol& x, const Symbol& y) {
-  return x.get_name() < y.get_name();
-}
-
 inline Symbol
 Recurrence::insert_auxiliary_definition(const Expr& e) const {
-  typedef std::map<Symbol, Expr> Map;
-  Symbol new_symbol;
-  std::pair<Map::iterator, bool> r
-    = auxiliary_definitions.insert(Map::value_type(new_symbol, e));
-  // This is an internal error.
-  assert(r.second);
-  return new_symbol;
+  return blackboard.insert_definition(e);
 }
 
 inline Expr
 Recurrence::get_auxiliary_definition(const Symbol& z) const {
-  typedef std::map<Symbol, Expr> Map;
-  Map::const_iterator i = auxiliary_definitions.find(z);
-  if (i != auxiliary_definitions.end())
-    return i->second;
-  else
-    return z;
+  return blackboard.get_definition(z);
 }
- 
+
+inline Expr
+Recurrence::substitute_auxiliary_definitions(const Expr& e) const {
+  return blackboard.rewrite(e);
+}
+
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_Recurrence_inlines_hh)

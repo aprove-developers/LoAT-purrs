@@ -38,65 +38,12 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
 const PURRS::Symbol&
 PURRS::Recurrence::n = Symbol("n");
 
-PURRS::Expr
-PURRS::Recurrence::substitute_auxiliary_definitions(const Expr& e) const {
-  Expr e_after_subs;
-  if (e.is_a_add()) {
-    e_after_subs = 0;
-    for (unsigned i = e.nops(); i-- > 0; )
-      e_after_subs += substitute_auxiliary_definitions(e.op(i));
-  }
-  else if (e.is_a_mul()) {
-    e_after_subs = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
-      e_after_subs *= substitute_auxiliary_definitions(e.op(i));
-  }
-  else if (e.is_a_power())
-    e_after_subs = pwr(substitute_auxiliary_definitions(e.arg(0)),
-		       substitute_auxiliary_definitions(e.arg(1)));
-  else if (e.is_a_function()) {
-    if (e.nops() == 1)
-      e_after_subs = apply(e.functor(),
-			   substitute_auxiliary_definitions(e.arg(0)));
-    else {
-      unsigned num_argument = e.nops();
-      std::vector<Expr> argument(num_argument);
-      for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = substitute_auxiliary_definitions(e.arg(i));
-      e_after_subs = apply(e.functor(), argument);
-    }
-  }
-  else if (e.is_a_symbol()) {
-    Symbol s = e.ex_to_symbol();
-    if ((e_after_subs = get_auxiliary_definition(s)) != s)
-      e_after_subs = substitute_auxiliary_definitions(e_after_subs);
-  }
-  else
-    e_after_subs = e;
-  return e_after_subs;
-}
-
 void
 PURRS::Recurrence::dump(std::ostream& s) const {
   s << "solved = " << (solved ? "true" : "false") << std::endl;
   s << "recurrence_rhs = " << recurrence_rhs << std::endl;
-  s << "auxiliary_definitions = ";
-  if (auxiliary_definitions.empty())
-    s << "empty" << std::endl;
-  else {
-    s << std::endl;
-    typedef std::map<Symbol, Expr> Map;
-    for (Map::const_iterator i = auxiliary_definitions.begin(),
-	   ad_end = auxiliary_definitions.end();
-	 i != ad_end;
-	 ++i) {
-      s << "  " << i->first << " = " << i->second << std::endl;
-#if 1
-      s << "***  " << i->first << " = " << approximate(i->second) << std::endl;
-#endif
-    }
-  }
+  s << "auxiliary_definitions:" << std::endl;
+  blackboard.dump(s);
   //s << "solution = " << solution << std::endl;
   s << std::endl;
 }
-

@@ -32,6 +32,7 @@ Expr_List.types.hh \
 Init.types.hh \
 Matrix.types.hh \
 Number.types.hh \
+Blackboard.types.hh \
 Recurrence.types.hh \
 Symbol.types.hh \
 Complex_Interval.defs.hh \
@@ -59,28 +60,30 @@ simplify.hh \
 numerator_denominator.hh \
 sum_poly.hh \
 util.hh \
+Blackboard.defs.hh \
+Blackboard.inlines.hh \
 Recurrence.defs.hh \
 Recurrence.inlines.hh
 
 libpurrs_a_SOURCES = \
-Init.cc \
-Recurrence.cc \
-Expr.cc \
+Blackboard.cc \
 Complex_Interval.cc \
 Constant.cc \
-Symbol.cc \
+Expr.cc \
 Expr_List.cc \
-Number.cc \
+Init.cc \
 Matrix.cc \
+Number.cc \
 Recurrence.cc \
+Symbol.cc \
 alg_eq_solver.cc \
 approx_expr.cc \
 complint.cc \
+gosper.cc \
+numerator_denominator.cc \
 poly_factor.cc \
 rr_solver.cc \
-gosper.cc \
 simplify.cc \
-numerator_denominator.cc \
 sum_poly.cc \
 util.cc \
 $(INCLUDE_FILES)
