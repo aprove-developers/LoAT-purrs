@@ -541,7 +541,8 @@ find_non_linear_term(const Expr& e) {
   -  \f$ x(n) = a * x(n-k_1)^b_1 * ... * x(n-k_h)^b_h \f$,
      where \f$ k_1, \dots, k_h, b_1, \dots, b_h \f$ are positive integers
      and \f$ h > 1 \f$ or \f$ b_1 > 1 \f$;
-  -  x(n) = x(n-k)^b, where \f$ b > 1 \f$ and \f$ k \f$ are positive integers.
+  -  \f$ x(n) = x(n-k)^b \f$,
+     where \f$ b > 1 \f$ and \f$ k \f$ are positive integers.
   The two cases above hold also if instead of terms like `x(n-k)' there are
   term like `x(n/k)'.
 */
@@ -564,13 +565,18 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 	  common_exponent = lcm(num_exp, common_exponent);
 	}
 	else {
+	  // Recurrence that the system is not able to transform in linear. 
 	  simple_cases = false;
 	  break;
 	}
-      if (factor.is_the_x_function())
+      else if (factor.is_the_x_function())
 	simple_cases = true;
+      // Recurrence that the system is not able to transform in linear. 
+      else if (factor.has_x_function(false, Recurrence::n)) {
+	simple_cases = false;
+	break;
+      }
     }
-    D_VAR(common_exponent);
     new_rhs = 0;
     if (simple_cases)
       if (common_exponent == 1) {
