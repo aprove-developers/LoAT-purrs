@@ -66,8 +66,6 @@ operator*(const Expr& x, const Expr& y) {
 
 inline Expr
 operator/(const Expr& x, const Expr& y) {
-  if (y.is_zero())
-    throw std::runtime_error("PURRS internal error");
   return x.e / y.e;
 }
 
@@ -91,8 +89,6 @@ operator*=(Expr& x, const Expr& y) {
 
 inline Expr&
 operator/=(Expr& x, const Expr& y) {
-  if (y.is_zero())
-    throw std::runtime_error("PURRS internal error");
   x.e /= y.e;
   return x;
 }
