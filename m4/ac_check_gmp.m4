@@ -1,4 +1,5 @@
-dnl Copyright (C) 2001 Roberto Bagnara <bagnara@cs.unipr.it>
+dnl A function to check for the existence and usability of GMP.
+dnl Copyright (C) 2001, 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 dnl  
 dnl This file is part of the Parma Polyhedra Library (PPL).
 dnl 
@@ -47,7 +48,7 @@ AC_TRY_RUN([
 using namespace std;
 
 int main() {
-  mpz_class pie = "3141592653589793238462643383279502884";
+  mpz_class pie("3141592653589793238462643383279502884");
   exit(0);
 }
 ],
@@ -89,7 +90,7 @@ x_free(void*, size_t) {
 int main() {
   mp_set_memory_functions(x_malloc, x_realloc, x_free);
   try {
-    mpz_class pie = "3141592653589793238462643383279502884";
+    mpz_class pie("3141592653589793238462643383279502884");
   }
   catch (bad_alloc) {
     exit(0);
