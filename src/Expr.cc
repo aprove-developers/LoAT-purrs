@@ -26,6 +26,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Expr.defs.hh"
 
+#include "numerator_denominator.hh"
+
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 namespace GiNaC {
@@ -374,10 +376,10 @@ PURRS::Expr::is_polynomial(const Symbol& x) const {
 bool
 PURRS::Expr::is_rational_function(const Symbol& x) const {
   const Expr& e = *this;
-  Expr num;
-  Expr den;
-  e.numerator_denominator(num, den);
-  if (num.is_polynomial(x) && den.is_polynomial(x))
+  Expr numerator;
+  Expr denominator;
+  numerator_denominator_purrs(e, numerator, denominator);
+  if (numerator.is_polynomial(x) && denominator.is_polynomial(x))
     return true;
   return false;
 }

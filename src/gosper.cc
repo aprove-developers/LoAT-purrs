@@ -65,13 +65,7 @@ gosper_step_one(const Expr& t_n, Expr& r_n, const Symbol& n, bool full) {
     r_n = simplify_factorials_and_exponentials(t_plus_one, n)
       * pwr(simplify_factorials_and_exponentials(t_n, n), -1);
   }
-  // The following use of `numerator_denominator()' simplifies further
-  // `r_n' (we can not to call `simplify_numer_denom()' because it expandes
-  // the expressions).
-  Expr r_n_num;
-  Expr r_n_den;
-  r_n.numerator_denominator(r_n_num, r_n_den);
-  r_n = r_n_num * pwr(r_n_den, -1);
+  r_n = transform_in_single_fraction(r_n);
   D_VAR(r_n);
   if (r_n.is_rational_function(n))
     return true;
@@ -131,7 +125,7 @@ gosper_step_two(const Expr& r_n, const Symbol& n,
   // Gosper's algorithm, step 2.1.
   Expr f;
   Expr g;
-  r_n.numerator_denominator(f, g);
+  numerator_denominator_purrs(r_n, f, g);
   // It is necessary to `expand()' in order to have the right answer from
   // `lcoeff()'.
   f = f.expand();

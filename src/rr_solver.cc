@@ -1816,12 +1816,12 @@ compute_product_on_add(const Expr& e, const Symbol& n,
     // to solve cases as `a/b * n + c/d': infact consider separately
     // `a*n + c*d' (that we are able to solve if `a = 1 && c/d is
     // positive integer' or `a = 2 && c*d = 1) and `b*d'.
-    Expr num;
-    Expr den;
-    e.numerator_denominator(num, den);
-    if (den != 1) {
-      e_prod = compute_product(num, n, lower, upper)
-	* pwr(compute_product(den, n, lower, upper), -1);
+    Expr numerator;
+    Expr denominator;
+    numerator_denominator_purrs(e, numerator, denominator);
+    if (denominator != 1) {
+      e_prod = compute_product(numerator, n, lower, upper)
+	* pwr(compute_product(denominator, n, lower, upper), -1);
       e_prod_computed = true;
     }
   }
@@ -2055,11 +2055,12 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
   bool shift_initial_conditions = domain_recurrence(n, tmp, i_c);
   Expr alpha_factorial;
   if (shift_initial_conditions)
-    alpha_factorial = compute_product(transform_in_single_fraction(coefficient),
-				      n, i_c + 2, n);
+    alpha_factorial
+      = compute_product(transform_in_single_fraction(coefficient),
+			n, i_c + 2, n);
   else
-    alpha_factorial = compute_product(transform_in_single_fraction(coefficient),
- 				      n, 1, n);
+    alpha_factorial
+      = compute_product(transform_in_single_fraction(coefficient), n, 1, n);
   D_VAR(alpha_factorial);
   // Compute the non-homogeneous term for the recurrence
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.

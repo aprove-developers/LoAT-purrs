@@ -27,6 +27,8 @@ http://www.cs.unipr.it/purrs/ . */
 #endif
 
 #include "simplify.hh"
+
+#include "numerator_denominator.hh"
 #include "util.hh"
 #include "Expr.defs.hh"
 #include <vector>
@@ -906,6 +908,7 @@ simplify_on_output_ex(const Expr& e, const Symbol& n, bool input) {
 */
 Expr
 simplify_numer_denom(const Expr& e) {
+#if 1
   // Since we need both numerator and denominator, to call 'numer_denom'
   // is faster than to use 'numer()' and 'denom()' separately.
   Expr numer_e;
@@ -914,6 +917,15 @@ simplify_numer_denom(const Expr& e) {
   Expr num = numer_e.expand();
   Expr den = denom_e.expand();
   return num * pwr(den, -1);
+#else
+  Expr numer_e;
+  Expr denom_e;
+  numerator_denominator_purrs(e, numer_e, denom_e);
+  Expr num = numer_e.expand();
+  Expr den = denom_e.expand();
+  return num * pwr(den, -1);
+  //  return transform_in_single_fraction(e);
+#endif
 }
 
 /*!
@@ -1061,8 +1073,7 @@ Expr
 simplify_factorials_and_exponentials(const Expr& e, const Symbol& n) {
   Expr e_numerator;
   Expr e_denominator;
-  e.numerator_denominator(e_numerator, e_denominator);
-
+  numerator_denominator_purrs(e, e_numerator, e_denominator);
   e_numerator = rewrite_factorials(e_numerator, n);
   e_numerator = simpl_exponentials(e_numerator, n);
   e_denominator = rewrite_factorials(e_denominator, n);
