@@ -961,6 +961,8 @@ PURRS::Recurrence::classify() const {
   D_VAR(recurrence_rhs);
   // Simplifies expanded expressions, in particular rewrites nested powers.
   recurrence_rhs = simplify_ex_for_input(recurrence_rhs, true);
+  // Computes eventual symbolic sums inserted by the user.
+  recurrence_rhs = simplify_sum(recurrence_rhs, false, true);
 
   // Date for linear finite order recurrences.
 
