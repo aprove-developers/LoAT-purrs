@@ -202,7 +202,7 @@ simpl_powers_base(const GExpr& base, const GExpr& num_exponent,
 
 /*!
   Applies the rules \f$ \textbf{E1}, \textbf{E2}, \textbf{E4} \f$ and
-  \f$ \textbf{E5} \f$ of the rules'set \emph{Expand}.
+  \f$ \textbf{E5} \f$ of the rules'set <EM>Expand</EM>.
   The <CODE>GExpr</CODE> \p e is a <CODE>GiNaC::power</CODE>:
   it finds the base and the exponent of the power (\p e could be a serie
   of nested powers). While it does this operation divides the exponents
@@ -263,14 +263,15 @@ pow_simpl(const GExpr& e, const GSymbol& n, const bool& input) {
 
 /*!
   Applies the rules \f$ \textbf{C1} \f$ and \f$ \textbf{C2} \f$ of the set
-  of rules <CODE>Collect</CODE> to the <CODE>GExpr</CODE> \p e that is
+  of rules <EM>Collect</EM> to the <CODE>GExpr</CODE> \p e that is
   certainly a <CODE>GiNaC::mul</CODE>.
   The vectors \p bases and \p exponents contain rispectively all bases and
   exponents of the powers that are in \p e and, at the end, will contain
   the new bases and exponents of the powers in \p e after the simplification.
   Returns a new <CODE>GExpr</CODE> \p ris containing the modified
   expression \p e and the modified vectors \p bases and \p exponents will
-  be use by the function \p collect_same_exponent called soon afterwards this.
+  be use by the function <CODE>collect_same_exponent()</CODE> called soon
+  afterwards this.
 */
 static GExpr
 collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
@@ -337,11 +338,12 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 
 /*!
   Applies the rule \f$ \textbf{C3} \f$ of the set of rules
-  <CODE>Collect</CODE> to the <CODE>GExpr</CODE> \p e  under condition
+  <EM>Collect</EM> to the <CODE>GExpr</CODE> \p e  under condition
   that the common exponent to the powers is not integer
   because, in this case, <CODE>GiNaC</CODE> automatically decomposes the
   power, i. e., \f$ (a*b)^4 \f$ is automatically transformed in
   \f$ a^4*b^4 \f$.
+  This function is called after <CODE>collect_same_base()</CODE>
   Returns a new <CODE>GExpr</CODE> \p ris containing the modified
   expression \p e.
  */
@@ -381,7 +383,7 @@ collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
 }
 
 /*!
-  Applies the rules of the set <CODE>Collect</CODE> to <CODE>GExpr</CODE>
+  Applies the rules of the set <EM>Collect</EM> to <CODE>GExpr</CODE>
   \p e, that is certainly a <CODE>GiNaC::mul</CODE>.
   Returns a new <CODE>GExpr</CODE> containing the modified expression \p e. 
 */
@@ -459,8 +461,8 @@ partial_factor(const GNumber n, std::vector<GNumber>& bases,
   Compute the standard form for \f$ n^{1/k} \f$, where \f$ k \f$ is a non-zero 
   integer (possibly negative), and \f$ n \f$ is an integer whose partial 
   factorization \f$ n = b_1^{e_1} \cdots b_r^{e_r} \f$ computed by 
-  <CODE>partial_factor</CODE> is given. 
-  If \f$ k > 0 \f$, the exponents in the vector <CODE>exponents</CODE> are 
+  <CODE>partial_factor()</CODE> is given. 
+  If \f$ k > 0 \f$, the exponents in the vector \p exponents are 
   reduced modulo \f$ k \f$, and the value 
   \f$ m = b_1^{[e_1/k]} \cdots b_r^{[e_r/k]} \f$ is returned. 
   If \f$ k < 0 \f$ (that is, if the number \f$ n \f$ appears in the 
@@ -496,20 +498,51 @@ to_std_form(const GNumber k, const std::vector<GNumber>& bases,
 }
 
 /*!
-  Transform \f$ r^{1/k} \f$ into its standard form. 
-  If \f$ r = n / d \f$ where \f$ n \f$ and \f$ d \f$ are non-zero, coprime 
-  integers, the standard form of \f$ r^{1/k} \f$ is defined as follows: 
-  1. if \f$ n / d < 0 \f$ and \f$ k \f$ is odd, it is the opposite of the 
-  standard form of \f$ |n / d| ^ (1/k) \f$. 
-  2. if \f$ n / d < 0 \f$ and \f$ k \f$ is even, it is \f$ I \f$ times the 
-  standard form of \f$ |n / d| ^ (1/k) \f$. 
-  3. if \f$ k < 0 \f$ it is the standard form of \f$ (d/n)^{1/(-k)} \f$. 
-  4. if \f$ n \f$ and \f$ d \f$ are both positive, the standard form is 
-  the expression \f$ (n_1 / d_1) \cdot m^{1/k} \f$ where \f$ n_1 \f$, 
-  \f$ d_1 \f$ and \f$ m \f$ are positive integers and \f$ m \f$ is 
-  \f$ k\f$-free, that is, \f$ m \f$ is not divisible by the 
-  \f$ k \f$-th power of any integer larger than 1. 
-  (Note that if \f$ k = 1 \f$ then necessarily \f$ m = 1 \f$). 
+  Computes a `simple' form for \f$ r^{1/k} \f$, where \p r is a
+  rational number, and \p k is a non-zero (possibly negative) integer.
+  We need to define the <EM>standard form</EM> of \f$ r^{1/k} \f$,
+  which we denote by \f$ \stdform\bigl( r^{1/k} \bigr) \f$, so that
+  \f$ r^{1/k} = \stdform\bigl( r^{1/k} \bigr) \f$ and the expression on
+  the right is uniquely defined and as simple as possible.
+  The standard form will have the shape of the product of a complex \p sign
+  such that \f$ sign \in \{1, -1, i, -i\} \f$, a positive rational
+  number \f$ r_1 \f$ and \f$ m^{1/j} \f$, where \f$ m \f$ is
+  a positive integer which is \f$ j \f$-free (i. e., it is not divisible
+  by the \f$ j \f$-th power of any integer larger than 1),
+  and \f$ j \f$ is the smallest factor of \p k for which such an integer
+  \f$ m \f$ exists.
+
+  The definition is then as follows: we assume that
+  \f$ r = num / den \f$ where \p num and \p den are non-zero, coprime integers.
+  - If \p num and \p den are both positive, and \f$ k > 0 \f$, then
+    \f[
+      \stdform \left( \Bigl( \frac{num}{den} \Bigr)^{1/k} \right)
+      \defrel{=}
+      \frac{n_1}{d_1} \cdot m^{1/j},
+    \f]
+    where \f$ n_1, d_1 \f$ and \f$ m \f$ are positive integers, \f$ j \f$ is a
+    divisor of \p k, \f$ m \f$ is \f$ j \f$-free, and \f$ m \f$ is not a
+    \f$ j_1 \f$-th power, for any positive integer \f$ j_1 \f$ with
+    \f$ \gcd(j, j_1) > 1 \f$.
+  - If \p num and \p den are both positive, and \f$ k < 0 \f$, then
+    \f[
+      \stdform \left( \Bigl( \frac{num}{den} \Bigr)^{1/k} \right)
+      \defrel{=}
+      \stdform \left( \Bigl( \frac{den}{num} \Bigr)^{1/(-k)} \right).
+    \f]
+  - If \f$ num / den < 0 \f$ and \p k is odd, then
+    \f[
+    \stdform \left( \Bigl( \frac{num}{den} \Bigr)^{1/k} \right)
+    \defrel{=}
+    - \stdform \left( \Bigl| \frac{num}{den} \Bigr|^{1/k} \right).
+    \f]
+  - If \f$ num / den < 0 \f$ and \p k is even, then
+    \f[
+    \stdform \left( \Bigl( \frac{num}{den} \Bigr)^{1/k} \right)
+    \defrel{=}
+    \pm i \cdot \stdform \left( \Bigl| \frac{num}{den} \Bigr|^{1/k} \right),
+    \f]
+    where the sign is chosen according to the sign of \p k.
 */
 static GExpr 
 reduce_to_standard_form(const GNumber root_index, const GNumber r) {
@@ -621,7 +654,7 @@ red_prod(const GNumber& base1, const GNumber& exp1,
 }
 
 /*!
-  Applies the rules of the rules'set \f$ \mathfrak{I} \f$ to
+  Applies the rules of the set <EM>Irrationals</EM> to
   <CODE>GExpr</CODE> \p e if \p e is a <CODE>GiNaC::power</CODE> or to
   each \p e's factor which is a <CODE>GiNaC::power</CODE> if \p e is a
   <CODE>GiNaC::mul</CODE>.
@@ -669,7 +702,7 @@ reduce_product(const GExpr& e) {
 	    assert(is_a<numeric>(to_reduce));
 	    base_1 = GiNaC::ex_to<GiNaC::numeric>(to_reduce);
 	    exp_1 = 1;
- 	  factor_to_reduce = pow(to_reduce, 1);
+	    factor_to_reduce = pow(to_reduce, 1);
 	  }
 	}
 	// Base and exponent of 'tmp.op(i)' are not both numerics.
@@ -778,7 +811,7 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
   Crosses the tree of the expanded expression \p e recursevely to find
   subexpressions to which we apply the rules of the terms rewriting system
   \f$ /mathfrak{R}_i \f$. More exactly here the rules of the set
-  \emph{Expand} are implemented because the rules of the set \emph{Automatic}
+  \emph{Expand} are implemented because the rules of the set <EM>Automatic</EM>
   are automatically executed by <CODE>GiNaC</CODE>.
   We observe that the rule \f$ \textbf{E4} \f$ is automatically executed
   by <CODE>GiNaC</CODE> if the exponent is integer while the rules
@@ -821,8 +854,8 @@ simplify_on_input_ex(const GExpr& e, const GSymbol& n, const bool& input) {
   Crosses the tree of the expanded expression \p e recursevely to find
   subexpressions which we want to apply the rules of the terms rewriting system
   \f$ \mathfrak{R}_o \f$. The observations about the function
-  \p simplify_on_input_ex are correct here too, because all the rules
-  of the term rewriting system \f$ \mathfrak{R}_i \f$, minus
+  <CODE>simplify_on_input_ex()</CODE> are correct here too, because all the
+  rules of the term rewriting system \f$ \mathfrak{R}_i \f$, minus
   \f$ \textbf{E2} \f$, are also in \f$ \mathfrak{R}_o \f$.
   \p input is always <CODE>false</CODE> and this means that \p n is not
   considerated like a special symbol but like the others parameters.
@@ -837,8 +870,6 @@ simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input) {
       ris += simplify_on_output_ex(e.op(i), n, input);
   }
   else if (is_a<mul>(e))
-    // We can not call 'simplify_on_output_ex' on every factor because
-    // otherwise it is not possible to transform products.
     ris = manip_factor(e, n, input);
   else if (is_a<power>(e)) {
     GExpr base = simplify_on_output_ex(e.op(0), n, input);
