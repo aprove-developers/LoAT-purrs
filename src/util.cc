@@ -266,7 +266,15 @@ resultant(const GExpr& p, const GExpr& q, const GSymbol& x) {
 
   // Modified Euclid's algorithm starts here.
   while (deg_f > 0) {
-    GExpr r = rem(g, f, x);
+    // `prem()' computes the pseudo-remainder of `g' and `f' which satisfies
+    // `factor * g = factor * f * q + prem(g, f, x)' where `q' is the
+    // quozient of `g' and `f' and
+    // `factor = f.lcoeff(x)^(g.degree(x) - f.degree(x) + 1)'.
+    GExpr r = prem(g, f, x);
+    GExpr factor = pow(f.lcoeff(x), g.degree(x) - f.degree(x) + 1);
+    // The rest of euclidean's division is given by the ratio
+    // `pseudo-remainder / factor'.
+    r *= pow(factor, -1);
     unsigned deg_r = r.degree(x);
     GExpr a = f.lcoeff(x);
     // Using rule two.
