@@ -228,43 +228,47 @@ using namespace PURRS;
 
 Expr
 substitute_pwr_diff_symbols(const Expr& e,
-			    const Expr& diff_symbols,
+			    const Symbol& alpha, const Symbol& lambda,
 			    const Expr& subs_to_diff) {
   Expr e_substituted;
   if (e.is_a_add()) {
     e_substituted = 0;
     for (unsigned int i = e.nops(); i-- > 0; )
-      e_substituted += substitute_pwr_diff_symbols(e.op(i),
-						   diff_symbols, subs_to_diff);
+      e_substituted += substitute_pwr_diff_symbols(e.op(i), alpha, lambda,
+						   subs_to_diff);
   }
   else if (e.is_a_mul()) {
     e_substituted = 1;
     for (unsigned int i = e.nops(); i-- > 0; )
-      e_substituted *= substitute_pwr_diff_symbols(e.op(i),
-						   diff_symbols, subs_to_diff);
+      e_substituted *= substitute_pwr_diff_symbols(e.op(i), alpha, lambda,
+						   subs_to_diff);
   }
   else if (e.is_a_power()) {
     const Expr& base = e.arg(0);
     const Expr& exponent = e.arg(1);
     Number exp;
-    if (base == diff_symbols && exponent.is_a_number(exp))
-      return pwr(subs_to_diff, -exp);
-    return pwr(substitute_pwr_diff_symbols(e.arg(0),
-					   diff_symbols, subs_to_diff),
-	       substitute_pwr_diff_symbols(e.arg(1),
-					   diff_symbols, subs_to_diff));
+    if (exponent.is_a_number(exp) && exp.is_negative()) {
+      if (base == lambda - alpha)
+	return pwr(subs_to_diff, -exp);
+      if (base == alpha - lambda)
+	return pwr(-subs_to_diff, -exp);
+    }
+    return pwr(substitute_pwr_diff_symbols(e.arg(0), alpha, lambda,
+					   subs_to_diff),
+	       substitute_pwr_diff_symbols(e.arg(1), alpha, lambda,
+					   subs_to_diff));
   }
   else if (e.is_a_function())
     if (e.nops() == 1)
       return apply(e.functor(), substitute_pwr_diff_symbols(e.arg(0),
-							    diff_symbols,
+							    alpha, lambda,
 							    subs_to_diff));
     else {
       unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned int j = 0; j < num_argument; ++j)
-	argument[j] = substitute_pwr_diff_symbols(e.arg(j),
-						  diff_symbols, subs_to_diff);
+	argument[j] = substitute_pwr_diff_symbols(e.arg(j), alpha, lambda,
+						  subs_to_diff);
       return apply(e.functor(), argument);
     }
   else
@@ -400,20 +404,25 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
 	symbolic_sum_no_distinct[j] *= lambda / diff_roots;
 	symbolic_sum_distinct[j] *= lambda / diff_roots;
       }
-
 #if 1
       // Substitute all the occurrences of `(lambda-alpha)^(-k)'
       // with `((lambda+alpha-c)/(-alpha^2+alpha*c+d))^k',
       // where `c' is the coefficient of `x(n-1)',
       // `d' is the coefficient of `x(n-2)', `k' is a positive integer.
+      // Notice that GiNaC can rewrite the same expression in different
+      // ways: it is possible to have `-(alpha-lambda)^(-k)' and
+      // then it must be substituted with
+      // `(-(lambda+alpha-c)/(-alpha^2+alpha*c+d))^k'
+      // (more details are available in the paper
+      // "The Automatic Solution of Recurrence Relations
+      // V. Transforming and Simplifying the Solutions").
       if (!vector_not_all_zero(symbolic_sum_no_distinct))
 	for (unsigned int j = symbolic_sum_distinct.size(); j-- > 0; ) {
-	  //for (unsigned int j = 0; j < symbolic_sum_distinct.size(); ++j) {
 	  const Expr& subs_to_diff = (lambda + alpha - coefficients[1])
 	    *pwr(-pwr(alpha, 2) + alpha*coefficients[1] + coefficients[2], -1);
 	  symbolic_sum_distinct[j]
 	    = substitute_pwr_diff_symbols(symbolic_sum_distinct[j],
-					  lambda - alpha, subs_to_diff);
+					  alpha, lambda, subs_to_diff);
 	  // To expand is necessary for finding the powers of `lambda'.
 	  symbolic_sum_distinct[j] = symbolic_sum_distinct[j].expand();
 #if 0
@@ -465,8 +474,6 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
 #endif
 	}
 #endif
-      D_VEC(symbolic_sum_distinct, 0, symbolic_sum_distinct.size()-1);
-      D_VEC(symbolic_sum_no_distinct, 0, symbolic_sum_no_distinct.size()-1);
       // Substitutes to the sums in the vector `symbolic_sum_distinct'
       // or `symbolic_sum_no_distinct' the corresponding values of the
       // characteristic equation's roots and of the bases of the
