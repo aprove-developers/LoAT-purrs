@@ -502,6 +502,12 @@ public:
   bool has(const Expr& x) const;
 
   //! Expandes \p *this, i.e., distributes multiplication over addition.
+  Expr distribute_mul_over_add() const;
+
+  //! \brief
+  //! Expandes further \p *this, i.e., distributes multiplication over
+  //! addition and executes the powers with exponents positive integers
+  //! numbers.
   Expr expand() const;
 
   //! \brief

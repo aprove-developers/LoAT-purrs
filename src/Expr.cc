@@ -284,6 +284,47 @@ REGISTER_FUNCTION(prod,
 
 } // namespace GiNaC
 
+static PURRS::Expr
+distribute_mul_over_add_factor(const PURRS::Expr& e) {
+  assert(e.is_a_mul());
+  PURRS::Expr distributed_e = e.op(0);
+  for (unsigned i = e.nops(); i-- > 1; ) {
+    PURRS::Expr factor = e.op(i);
+    PURRS::Expr tmp = 0;
+    if (factor.is_a_add())
+      for (unsigned j = factor.nops(); j-- > 0; )
+	if (distributed_e.is_a_add())
+	  for (unsigned h = distributed_e.nops(); h-- > 0; )
+	    tmp += factor.op(j) * distributed_e.op(h);
+	else
+	  tmp += factor.op(j) * distributed_e;
+    else
+      if (distributed_e.is_a_add())
+	for (unsigned h = distributed_e.nops(); h-- > 0; )
+	  tmp += factor * distributed_e.op(h);
+      else
+	tmp += factor * distributed_e;
+    distributed_e = tmp;
+  }
+  return distributed_e;
+}
+
+PURRS::Expr
+PURRS::Expr::distribute_mul_over_add() const {
+  const Expr& e = *this;
+  Expr distributed_e;
+  if (e.is_a_add()) {
+    distributed_e = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      distributed_e += e.op(i).distribute_mul_over_add();
+  }
+  else if (e.is_a_mul())
+    distributed_e = distribute_mul_over_add_factor(e);
+  else
+    distributed_e = e;
+  return distributed_e;
+}
+
 bool
 PURRS::Expr::is_scalar_representation(const Symbol& x) const {
   const Expr& e = *this;
