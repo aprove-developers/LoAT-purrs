@@ -365,6 +365,14 @@ solve(const GExpr& rhs, const GSymbol& n) {
   std::cout << "Inhomogeneous term = " << e << std::endl;
 #endif
 
+  // We expect the right hand side of the recurrence relation (k-th order)
+  // in the form
+  // x(n-1)*a+x(n-2)*b+...+x(n-k)*h+p(n).
+  // Therefore only the inhomogeneous term need to be expanded.
+  // FIXME: expand() is necessary because GiNaC does not calculate
+  // the right polynomial's degree if it is not expanded. 
+  e = e.expand(); 
+
   // The factors of the form a^(bn+c) (a,b,c numeric) must be transformed
   // into (a^b)^n*a^c. GiNaC tranforms only a^(bn+c) in a^c*a^(bn) but not
   // a^(bn) into (a^b)^n.
@@ -580,8 +588,6 @@ solution_1_poly_times_exponentials(const GSymbol& x_0, const GSymbol& n,
     GExpr solution = 0;
     GExpr exponential = decomposition(0, i);
     GExpr coeff_of_exp = decomposition(1, i);
-    // FIXME: to insert a decent comment here.
-    coeff_of_exp = coeff_of_exp.expand();
     GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
     if (is_a<power>(exponential)) 
       solution = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
@@ -706,8 +712,6 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	GExpr solution_2 = 0;
 	GExpr exponential = decomposition(0, i);
 	GExpr coeff_of_exp = decomposition(1, i);
-	// FIXME: to insert a decent comment here.
-	coeff_of_exp = coeff_of_exp.expand();
 	GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
 	if (is_a<power>(exponential)) {
 	  solution_1 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
@@ -804,8 +808,6 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	  GExpr solution = 0;
 	  GExpr exponential = decomposition(0, i);
 	  GExpr coeff_of_exp = decomposition(1, i);
-	  // FIXME: to insert a decent comment here.
-	  coeff_of_exp = coeff_of_exp.expand();
 	  GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
 	  GExpr g_n_k = g_n.subs(n == n - k);
 	  // In this case g_n_k always contains root^(n-k).
