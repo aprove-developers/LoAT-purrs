@@ -44,7 +44,7 @@ make install
 (4)
 tar zxf ntl-5.2.tar.gz
 cd ntl-5.2/src
-./configure NTL_GMP_LIP=on NTL_STD_CXX=on GMP_PREFIX=/usr/local/lib
+./configure NTL_GMP_LIP=on NTL_STD_CXX=on GMP_PREFIX=/usr/local
 make
 make check
 su
