@@ -1,0 +1,254 @@
+\documentclass{article}[12]
+\textwidth=16.0cm
+\textheight=25cm
+\topmargin=-1.5cm
+\oddsidemargin=1cm
+\evensidemargin=1cm
+
+\begin{document}
+Ho fatto qualche calcolo e ora so trasformare 
+$$
+T(n) = n + {2\over n} \sum_{k=0}^{n-1} T(k)
+$$
+nella ricorrenza del primo ordine 
+$$
+T(n) = \left( 1 + {1\over n} \right) T(n-1) + 2 - {1\over n}.
+$$
+La prima forma d\`a quasi subito $T(n)\sim 2n\log n$ (usando opportune
+formule di 
+sommazione, cfr infra), mentre la maggiorazione $T(n)\le 2n\log n$ per
+$n\ge3$ \`e immediata dalla 
+seconda, per induzione. 
+Pi\'u in generale, so trasformare 
+$$
+T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n)
+$$
+nella ricorrenza del primo ordine 
+$$
+T(n) = {f(n)\over f(n-1)} (1+f(n-1)) T(n-1)
++ f(n) \left( {g(n)\over f(n)} - {g(n-1)\over f(n-1)} \right),
+$$
+che si tratta come in Lueker, pag. 421. C'\`e da notare che la forma
+del coefficiente davanti a 
+$T(n-1)$ non \`e affatto cattiva come pu\`o sembrare, in quanto la
+procedura illustrata da 
+Lueker introduce un prodotto che in questo caso diventa quasi
+``telescopico''. 
+
+Il trucco per la trasformazione \`e in realt\`a molto semplice: basta
+introdurre temporaneamente 
+la successione $V(n):=T(n)/f(n)$, calcolare $V(n)-V(n-1)$ e fare
+qualche semplificzione algebrica. 
+Qui \`e essenziale che il ``peso'' $f(n)$ sia uguale per tutti i $k$
+fra 0 ed $n-1$, altrimenti 
+il trucco non funziona. Il caso combinatorio di cui parlavo, invece,
+d\`a origine alla ricorrenza 
+$$
+C(n) = n! - \sum_{k=0}^{n-1} {n\choose k} C(k),
+$$
+in cui i ``pesi'' sono $n\choose k$ e variano con $k$. Qui $C(n)$
+indica il numero delle 
+permutazioni su $n$ oggetti che non hanno punti fissi. La forma della
+ricorrenza si giustifica 
+cos\'\i: ho $n!$ permutazioni su $n$ oggetti. Per trovare quante non
+hanno punti fissi, sottraggo 
+quelle che hanno esattamente $n-k$ punti fissi con $n-k>0$. Queste
+sono 
+${n\choose n-k}={n\choose k}$ (il numero di modi in cui scelgo gli
+$n-k$ punti fissi) per il 
+numero di permutazioni dei restanti $k$ oggetti che non hanno punti
+fissi. 
+
+Per il momento non sono riuscito a trasformare questa in una
+ricorrenza del primo ordine 
+(o, comunque, di ordine finito) se non attraverso diverse paginate di
+calcoli difficilmente 
+generalizzabili (magari sui libri di combinatoria della biblioteca
+c'\`e qualcosa: pu\`o essere 
+utile fare un controllo la prossima settimana). Per\`o ho guardato le
+ricorrenze del tipo 
+$$
+f(n) = n f(n-1) + h(n),
+$$
+(ricordo che $C(n)$ soddisfa, a posteriori, $C(n) = nC(n-1) +
+(-1)^n$). In questo caso il semplice 
+``trucco'' $g(n):=f(n)/n!$ d\`a 
+$$
+g(n) = {f(n)\over n!} = {n f(n-1) + h(n)\over n!}
+= {f(n-1)\over(n-1)!} + {h(n)\over n!} = g(n-1) + {h(n)\over n!},
+$$
+da cui 
+$$
+g(n) = f(0) + \sum_{k=1}^n {h(k)\over k!},
+$$
+e quindi il problema \`e ricondotto al calcolo di una somma finita. 
+Lo stesso trucco funziona se $f$ soddisfa la ricorrenza 
+$$
+f(n) = n^\alpha f(n-1) + h(n);
+$$
+qui basta porre $g(n):=f(n)/(n!)^\alpha$. Poi naturalmente c'\`e il
+problema del calcolo 
+della somma finita, ma questo dipende dalla forma di $h$. 
+
+Pi\'u in generale, se $f$ soddisfa una ricorrenza del tipo 
+$$
+f(n) = \alpha(n) f(n-1) + h(n),
+$$
+poniamo per brevit\`a (notazione non standard ma comoda, inventata per
+l'oc\-ca\-sio\-ne, 
+anche per alleggerire la notazione di Lueker) 
+$$
+\alpha!(0) = 1,
+\qquad
+\alpha!(n) = \prod_{k=1}^n \alpha(k).
+$$
+Ponendo come sopra $g(n) = f(n)/\alpha!(n)$, si trova che $g$ soddisfa
+la ricorrenza 
+$$
+g(n) = g(n-1) + {h(n)\over\alpha!(n)}
+\qquad\Longrightarrow\qquad
+g(n) = f(0) + \sum_{k=1}^n {h(k)\over\alpha!(k)}.
+$$
+Se $\alpha(n)=\alpha$ \`e costante questo \`e un caso particolare di
+quanto gi\`a visto 
+perch\'e allora $\alpha!(n)=\alpha^n$, ma evidentemente questo
+contiene molti altri casi. 
+Torniamo all'esempio di partenza: 
+$$
+T(n) = \left( 1 + {1\over n} \right) T(n-1) + 2 - {1\over n}.
+$$
+Qui $\alpha(n)=(n+1)/n$, $h(n) = (2n-1)/n$. Quindi (per
+``telescopia'') 
+$$
+\alpha!(n) = n+1
+$$
+(poteva andare peggio!), da cui 
+$$
+g(n) = T(0) + \sum_{k=1}^n \left( 2-{1\over k} \right)\cdot{1\over
+k+1}
+= T(0) + 2 \sum_{k=1}^n {1\over k+1} - \sum_{k=1}^n {1\over k(k+1)}
+$$
+Ricordo che per definizione la costante $\gamma$ di Eulero ha la
+propriet\`a 
+$$
+\sum_{k=1}^N {1\over k} = \log N + \gamma + O\left( 1\over N \right),
+$$
+e che la somma all'estrema destra \`e la somma di Mengoli (telescopica
+pure lei). In definitiva 
+$$
+g(n) = T(0) + 2\left( \log(n+1)-1+\gamma + O\left( 1\over n \right)
+\right) - \left( 1-{1\over n+1}\right)
+$$
+da cui 
+$$
+g(n) = 2\log(n+1) + T(0) - 3 + 2\gamma + O\left( 1\over n \right)
+= 2\log n + T(0) - 3 + 2\gamma + O\left( 1\over n \right).
+$$
+Ricordo che $T(n) = g(n)\cdot(n+1)$, e questo d\`a la stima cercata
+entro un errore ragionevole: 
+$$
+T(n) = 2(n+1) \log n + n (T(0)-3+2\gamma) + O(1).
+$$
+Probabilmente, con un po' di pazienza si pu\`o trasformare $O(1)$ in
+$C+o(1)$. 
+
+Come commento finale, mi sembra che il metodo ``$\alpha!$'' sia comodo
+(almeno in astratto) 
+perch\'e si adatta bene ad un gran numero di circostanze simili.
+Dall'ultima analisi, per\`o, mi 
+viene il sospetto che la sua applicabilit\`a per ottenere
+maggiorazioni o minorazioni per le 
+successioni dipenda in qualche modo dalla possibilit\`a di applicare
+opportune ``formule di 
+sommazione.'' Vedi p. es. le mie dispense, pagg. 103-104 all'indirizzo
+(spero!)
+
+\leftline{\tt
+http://www.math.unipr.it/$\sim$zaccagni/psfiles/Lezioni/Lezioni.pdf}
+
+In pratica, \`e necessario poter passare da $\sum 1/n$ a $\log N$ e
+simili. Inoltre, la cosa 
+funziona se $\alpha!(n)$ ha una forma semplice ($\alpha^n$, $n!$,
+$n+1$ come sopra, \dots), 
+altrimenti diventa difficile fare i calcoli. 
+Vediamo qualche altro esempio: 
+$$
+f(0) = 0, \qquad\qquad f(n) = 2f(n-1) + 2^n.
+$$
+Qui $\alpha(n)=2$, $h(n)=2^n$, $\alpha!(n)=2^n$. Quindi, con
+$g(n)=f(n)/2^n$, 
+$$
+g(n) = g(n-1) + {2^n\over 2^n} = g(n-1) + 1
+$$
+da cui $g(n) = n+g(0)=n$ e quindi $f(n) = n\cdot2^n$. 
+Se invece 
+$$
+f(0) = 0, \qquad\qquad f(n) = 2f(n-1) + 3^n,
+$$
+abbiamo $\alpha(n)=2$, $h(n)=3^n$, $\alpha!(n)=2^n$. Quindi, con
+$g(n)=f(n)/2^n$, 
+$$
+g(n) = g(n-1) + {3^n\over 2^n}
+$$
+da cui 
+$$
+g(n) = g(0) + \sum_{k=1}^n ({3\over2})^k = {3\over2} {(3/2)^n-1\over
+3/2-1}
+= 3 \left( ({3\over2})^n -1\right)
+$$
+e quindi $f(n) = 3(3^n-2^n)$. 
+Infine, se 
+$$
+f(0) = 0, \qquad\qquad f(n) = 3f(n-1) + 2^n,
+$$
+abbiamo $\alpha(n)=3$, $h(n)=2^n$, $\alpha!(n)=3^n$. Quindi, con
+$g(n)=f(n)/3^n$, 
+$$
+g(n) = g(n-1) + {2^n\over 3^n}
+$$
+da cui 
+$$
+g(n) = g(0) + \sum_{k=1}^n ({2\over3})^k = {2\over3} {1-(2/3)^n\over
+1-2/3}
+= 2 \left( 1 - ({2\over3})^n \right)
+$$
+e quindi $f(n) = 2(3^n-2^n)$. A questo punto, come si dice, sorge
+spontanea una domanda: 
+GiNaC sa gestire i numeri razionali? E se s\'\i, come? 
+
+\`E bene osservare che se prendo (per fare un esempio) 
+$$
+f(0)=1, \qquad\qquad f(n) = (2n+1) f(n-1) + 1,
+$$
+allora $\alpha!(n)=(2n+1)!!=(2n+1)(2n-1)\cdots3\cdot1$: in questo caso
+\`e possibile esprimere 
+$\alpha!$ in una forma chiusa e semplice $(2n+1)!! = (2n+1)!/(n!2^n)$,
+ma poi dopo \`e difficile 
+calcolare esattamente la somma finita che viene fuori. Inoltre, se
+nella ricorrenza si scrive 
+$3n+1$ invece di $2n+1$, non c'\`e pi\'u nemmeno la forma chiusa per
+$\alpha!$. In questo caso 
+temo che ci si debba accontentare di dire che posto 
+$$
+f_1(n) = 3n f_1(n-1) + 1, \qquad\qquad f_2(n) = 3(n+1) f_2(n-1) + 1,
+$$
+si ha $f_1(n)\le f(n)\le f_2(n)$ per ogni $n$, ed usare il metodo
+precedente su $f_1$ ed $f_2$. 
+Se non ho sbagliato i calcoli, questo d\`a 
+$$
+f_1(n) = 3^n \cdot  n!  \left( 1 + \sum_{k=1}^n {1\over3^k\cdot k!}
+\right)
+\approx 3^n\cdot n! \cdot e^{1/3}
+$$
+e
+$$
+f_2(n) = 3^n \cdot (n+1)! \left( 1 + \sum_{k=1}^n {1\over3^k\cdot
+(k+1)!} \right)
+\approx 3^n\cdot (n+1)! \cdot 3 \cdot (e^{1/3}-1).
+$$
+Questo significa che, essenzialmente, $f(n)$ \`e determinata entro un
+fattore $cn$, 
+dove $c=3(1-e^{-1/3})\approx0.84$. Per il momento \`e tutto. 
+
+
+\end{document}

@@ -1,0 +1,10 @@
+
+#if __GNUC__ < 3
+// Get around a bug in GCC versions prior to 3 whereby the <cassert>
+// header is wrongly guarded against multiple inclusion.
+#ifdef __CASSERT__
+#undef __CASSERT__
+#endif
+
+#endif
+

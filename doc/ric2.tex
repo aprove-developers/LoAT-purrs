@@ -1,0 +1,539 @@
+\documentclass{article}[12]
+\textwidth=16.0cm
+\textheight=25cm
+\topmargin=-1.5cm
+\oddsidemargin=1cm
+\evensidemargin=1cm
+
+\begin{document}
+
+\def\dx{{\rm d}}
+\def\N{\mathbf N}
+\def\Z{\mathbf Z}
+\def\R{\mathbf R}
+\def\C{\mathbf C}
+\def\({\bigl(}
+\def\){\bigr)}
+
+\centerline{Facciamo un po' il punto \dots}
+\bigskip
+\noindent
+Mi sembra utile fare il punto della situazione, anche per sapere
+quello che sappiamo fare e 
+quello che vorremmo saper fare. Naturalmente l'intersezione di questo
+messaggio con i 
+precedenti non \`e vuota ed \`e utile averli presenti. 
+
+Segnalo subito una cosa che non ho capito bene: \`e pi\'u utile
+cercare procedimenti molto 
+generali che si applicano ad una grande variet\`a di casi, oppure \`e
+meglio cercare soluzioni 
+dirette e semplici in alcuni casi presumibilmente frequenti e
+ricorrere alla teoria generale 
+solo nei casi pi\'u difficili? 
+
+\bigskip
+\leftline{\bf Ricorrenze lineari di ordine finito a coefficienti
+costanti}
+\bigskip\noindent
+Per noi sono ricorrenze del tipo 
+$$
+x_n = a_1 x_{n-1} + a_2 x_{n-2} + \cdots + a_k x_{n-k} + f(n)
+\eqno(1)
+$$
+in cui $k$ \`e un intero positivo fissato che chiamiamo {\it ordine
+della ricorrenza\/} 
+(implicitamente supponiamo che $a_k\ne0$, altrimenti l'ordine \`e
+pi\'u piccolo), gli $a_j$ 
+sono numeri reali o complessi, ed $f$ \`e una funzione definita sui
+numeri naturali. 
+Naturalmente una ricorrenza di questo tipo \`e data insieme ai valori
+$x_0$, $x_1$, \dots, $x_{k-1}$, 
+che supponiamo noti. Se $f\equiv0$, si dice che la ricorrenza \`e {\it
+omogenea}. 
+L'equazione omogenea associata \`e per l'appunto l'equazione  in cui
+si prende $f\equiv0$, e cio\`e, 
+per distinguerla dalla precedente scriveremo 
+$$
+g_n = a_1 g_{n-1} + a_2 g_{n-2} + \cdots + a_k g_{n-k}.
+\eqno(2)
+$$
+Questa deve comunque essere risolta per prima con il metodo dell'{\it
+equazione caratteristica\/} 
+che, per definizione, \`e l'equazione 
+$$
+\lambda^k = a_1\lambda^{k-1} + \cdots + a_{k-1}\lambda + a_k.
+$$
+In generale, questa ha $k$ radici complesse $\lambda_1$, \dots,
+$\lambda_k$. (Segnalo un problema: 
+se $k\ge5$ non esiste la formula risolutiva generale di questa
+equazione; se $k=3$ o $k=4$ esiste 
+ma \`e molto incasinata). Se queste sono tutte distinte, la soluzione
+generale della ricorrenza 
+omogenea \`e 
+$$
+g_n = \alpha_1 \lambda_1^n + \cdots + \alpha_k \lambda_k^n.
+\eqno(3)
+$$
+(Se ci sono due o pi\'u soluzioni coincidenti (per inciso, non \`e
+difficile verificare con GiNaC 
+se questo \`e il caso), la (3) deve essere opportunamente modificata).
+
+Questo significa che {\it ogni\/} successione del tipo (2) ha una
+soluzione del tipo (3), per 
+opportuni valori dei coefficienti $\alpha_j$, che devono essere
+determinati a partire dai valori 
+iniziali $g_0$, \dots $g_{k-1}$. Il problema \`e che, anche se i
+numeri $g_n$ sono tutti interi, 
+non \`e affatto detto che anche i $\lambda$ debbano essere interi:
+possono essere irrazionali (vedi 
+Fibonacci) o addirittura complessi. Presumibilmente nei casi
+interessanti per la tesi di Tatiana 
+i numeri complessi non dovrebbero comparire, ma non \`e difficile
+immaginare problemi combinatori 
+in cui compaiono i numeri di Fibonacci e quindi soluzioni irrazionali:
+come \`e possibile gestire 
+questi casi con GiNaC? 
+
+Una volta trovata la soluzione generale dell'equazione omogenea (2)
+dobbiamo risolvere l'equazione 
+completa (1): per linearit\`a \`e sufficiente trovare {\it una\/}
+qualunque soluzione dell'equazione 
+completa, sommare la soluzione generale dell'omogenea ed imporre le
+condizioni iniziali. 
+Illustro i problemi per mezzo di un esempio: se l'equazione da
+risolvere \`e la pi\'u semplice 
+possibile 
+$$
+x_n = x_{n-1} + f(n)
+\eqno(4)
+$$
+la procedura precedente d\`a $g_n=\alpha_1\cdot1^n=\alpha_1$. Osservo
+che la soluzione generale 
+di (4) \`e infatti 
+$$
+x_n = x_0 + f(1) + f(2) + \cdots + f(n).
+$$
+($g_n=\alpha_1$ corrisponde alla costante $x_0$). Per trovare una
+formula chiusa abbiamo bisogno di 
+due cose: 
+\begin{itemize}
+\item formule esplicite (o algoritmi) per il calcolo esatto nei casi
+pi\'u frequenti; 
+\item formule di sommazione (vedi Appendice in calce) per i casi che
+rimangono fuori. 
+\end{itemize} 
+Per esempio, se $f(n)={1\over n}$ allora 
+$$
+x_n = x_0 + \sum_{k=1}^n {1\over k}
+$$
+e non esiste una formula chiusa esplicita per questa somma, mentre le
+formule di sommazione qui 
+sotto danno entrambe 
+$$
+x_n = x_0 + \log n + \gamma + O\( n^{-1} \)
+$$
+(cfr il mio messaggio del 14.12), dove $\gamma\approx0.577215\dots$
+\`e la costante di Eulero. 
+Le stesse formule forniscono anche le disuguaglianze esplicite 
+$$
+0\le x_n - \( x_0 + \log n \) \le 1.
+$$
+Domanda: questo \`e di qualche utilit\`a? L'uso automatico di
+generiche formule di sommazione 
+mi sembra piuttosto complesso: forse \`e utile individuare dei casi
+interessanti o frequenti. 
+
+Per quello che riguarda le formule esplicite (o algoritmi) per il
+calcolo esatto, ho in precedenza 
+affermato che si pu\`o trovare in generale la formula chiusa se $f(n)$
+\`e una combinazione 
+lineare di polinomi ed esponenziali: in effetti vale il seguente 
+
+\noindent{\bf Lemma. }{\sl Dato $p\in\Z[n]$ di grado $d$ esistono
+interi $b_0$, \dots, $b_d$ 
+tali che 
+$$
+p(n) = \sum_{j=0}^d b_j {n\choose j}
+\qquad{\rm dove}\qquad
+{n\choose j} = {n(n-1)\cdots(n-j+1)\over j!}.
+$$}
+L'algoritmo per il calcolo dei coefficienti richiede $d$ iterazioni:
+infatti se $p(n)=a_d n^d+\cdots+a_0$ 
+dove $a_d\ne0$, allora $b_d=a_d\cdot d!$ e quindi si pu\`o continuare
+con $p(n)-b_d{n\choose d}$ 
+che ha grado $\le d-1$. Di questo ho gi\`a parlato con Tatiana, e mi
+garantisce che con GiNaC non 
+\`e un problema realizzare l'algoritmo relativo. Una volta scritto $p$
+in questa forma, possiamo 
+applicare l'algoritmo che ho descritto una volta alla lavagna: dato
+che conosciamo esplicitamente 
+$$
+\sum_{j=0}^n x^j = {1-x^{n+1}\over 1-x}
+\eqno(5)
+$$
+(per il momento suppongo $x\ne1$), abbiamo, per esempio 
+$$
+\sum_{j=k}^n j(j-1)\cdots(j-k+1) x^j
+=
+x^k {\dx^k\over \dx x^k} \sum_{j=k}^n x^j
+=
+x^k {\dx^k\over \dx x^k} \sum_{j=0}^n x^j
+=
+x^k {\dx^k\over \dx x^k} {1-x^{n+1}\over 1-x}
+$$
+e anche questo si presta al calcolo simbolico usando le primitive di
+GiNaC, a quello che ho capito. 
+Si noti che i coefficienti sono proprio quelli della forma del Lemma
+qui sopra. In definitiva, 
+se $f(n)=p(n)x^n$ (o una somma finita di quantit\`a dello stesso tipo)
+con $x\ne1$, sappiamo 
+trovare una formula chiusa per 
+$$
+\sum_{j=1}^n f(j).
+$$
+Il guaio \`e che se $x=1$ allora per calcolare la stessa quantit\`a
+sono necessarie le formule 
+di sommazione: in effetti esistono formule esatte quale che sia il
+grado di $p$, ma sono piuttosto 
+noiose da calcolare e non sono sicuro che esista un algoritmo generale
+implementabile in un 
+tempo ragionevole (si pu\`o guardare L. S. Levy, {\it Summation of the
+series $1^n+2^n+\cdots+x^n$ 
+using elementary calculus}, Amer. Math. Monthly {\bf 77} (1970),
+840--847, {\it Corrigendum, ibidem}, 
+{\bf 78} (1971), p. 987, di cui ho copia in ufficio). Comunque le
+formule per i gradi fino a 4 
+sono semplici. In generale so trovare la formula per il grado $d$
+risolvendo un sistema lineare di 
+$d+1$ equazioni: forse \`e il caso di scrivere l'algoritmo relativo
+solo in un secondo tempo? 
+
+Rapidamente, illustro qualche altro problema. Ho provato a risolvere
+ricorrenze binarie non omogenee 
+del tipo 
+$$
+x_n = \alpha x_{n-1} + \beta x_{n-2} + f(n)
+\eqno(6)
+$$
+dove $f$ \`e un polinomio. Posto come prima 
+$$
+g_n = \alpha g_{n-1} + \beta g_{n-2}
+$$
+ma con la condizione iniziale $g_0=0$, $g_1=1$, ho trovato varie
+formule per $x_n$, alcune mediante 
+il procedimento illustrato sopra, mentre ne ho ottenute altre con
+considerazioni dirette, e 
+queste ultime hanno il vantaggio di coinvolgere solo $\alpha$ e
+$\beta$ (ma sono pi\'u complesse). 
+Per dare un esempio della complessit\`a, se $f(n)=\gamma$ (cio\`e \`e
+costante) ho trovato queste 
+due formule per $x_n$ ($n\ge1$): 
+$$
+x_n = x_1 g_n + \beta x_0 g_{n-1} + 
+\gamma \sum_{k=0}^{[(n-1)/2]} \beta^k \sum_{j=0}^{2n-2k-2} {j+k\choose
+j} \alpha^j
+$$
+(non garantisco che l'estremo superiore della prima somma sia
+corretto) oppure 
+$$
+x_n = x_1 g_n + \beta x_0 g_{n-1} + 
+\gamma \sum_{k=0}^{n-1} g_k
+$$
+e questa somma si calcola esplicitamente usando il fatto che $g_k$ \`e
+combinazione lineare 
+di potenze delle soluzioni dell'equazione caratteristica, ed usando di
+nuovo la (5). 
+In questo caso, bisogner\`a poi distinguere se $\alpha+\beta=1$
+(cio\`e se $\lambda=1$ \`e 
+soluzione dell'equazione caratteristica), eccetera. Si noti che nella
+prima formula compaiono 
+solo $\alpha$ e $\beta$ (e quindi, se questi sono numeri interi, nelle
+formule si lavora solo 
+con interi), ma contiene circa $n^2$ addendi, mentre, nel secondo
+caso, alla fine del calcolo, 
+si ha una formula che contiene solo le potenze $n$-esime delle
+soluzioni dell'equazione 
+caratteristica, che per\`o possono essere irrazionali o complesse. 
+
+Pi\'u in generale, ho pi\'u o meno capito come risolvere la (6) se $f$
+\`e un polinomio: come 
+sempre, il trucco \`e sommare la ``parte omogenea'' $x_1 g_n + \beta
+x_0 g_{n-1}$ ad una 
+soluzione particolare della non omogenea, che se $f$ \`e un polinomio,
+allora \`e un polinomio 
+dello stesso grado di cui si devono determinare i coefficienti. Questo
+conduce, ancora una volta, 
+alla soluzione di un sistema lineare con $d+1$ incognite, se $d$ \`e
+il grado di $f$. 
+Tutto ci\`o se $\lambda=1$ non \`e soluzione dell'equazione
+caratteristica: se \`e una 
+soluzione di molteplicit\`a $m$, allora si deve cercare come soluzione
+un polinomio di grado $d+m$. 
+
+Esempi istruttivi (mi auguro): ometto i calcoli per brevit\`a e
+perch\'e non ho voglia di copiarli, 
+ma li ho fatti e posso mostrarveli quando serve. 
+Qui $g$ \`e la soluzione dell'omogenea associata con le condizioni
+iniziali $g_0:=0$, $g_1:=1$. 
+Alcune soluzioni, cos\'\i\ come sono, sono valide solo per $n\ge1$:
+diventano valide per $n\ge0$ 
+se si pone (come \`e ragionevole) $g_{-1}:=1$. 
+
+\begin{itemize}
+\item 
+$$
+x_n = x_{n-1} + x_{n-2} + 1.
+$$
+Soluzione: qui $g_n=f_n$, l'$n$-esimo numero di Fibonacci. 
+$$
+x_n = x_1 f_n + x_0 f_{n-1} + (f_0 + f_1 + f_2 + \cdots + f_{n-1})
+    = x_1 f_n + x_0 f_{n-1} + f_{n+1} - 1.
+$$
+Questo esempio \`e interessante perch\'e conosco un problema
+combinatorio coi grafi che d\`a 
+origine precisamente a questa successione con $x_0=0$, $x_1=1$. 
+
+\item 
+$$
+\left\{
+\begin{array}{l}
+x_n = x_{n-1} + x_{n-2} + n \\
+x_0 = 0, x_1 = 0            \\
+\end{array}
+\right.
+$$
+Soluzione: posto $q(n)=n+3$ ho 
+$$
+x_n = q(1) f_n + q(0) f_{n-1} - q(n) = 4f_n + 3f_{n-1} - n - 3.
+$$
+
+\item 
+$$
+\left\{
+\begin{array}{l}
+x_n = x_{n-1} + x_{n-2} + n^2 \\
+x_0 = 0, x_1 = 0              \\
+\end{array}
+\right.
+$$
+Soluzione: posto $q(n)=n^2+6n+13$ ho 
+$$
+x_n = q(1) f_n + q(0) f_{n-1} - q(n) = 20 f_n + 13 f_{n-1} - n^2 - 6n
+- 13.
+$$
+\item 
+$$
+\left\{
+\begin{array}{l}
+x_n = x_{n-1} + x_{n-2} + n^3 \\
+x_0 = 0, x_1 = 0              \\
+\end{array}
+\right.
+$$
+Soluzione: posto $q(n)=n^3+9n^2+30n+54$ ho 
+$$
+x_n = q(1) f_n + q(0) f_{n-1} - q(n) = 94 f_n + 54 f_{n-1} - n^3 -
+9n^2 - 30n - 54.
+$$
+In questi ultimi tre esempi la soluzione \`e sempre del tipo $x_n=q(1)
+f_n + q(0) f_{n-1} - q(n)$, 
+dove si deve determinare $q(n)$ in funzione del polinomio $p(n)$ che
+\`e la parte non omogenea 
+della ricorrenza. (Anche il primo esempio pu\`o essere trattato in
+modo analogo). 
+$q$ si determina imponendo che abbia lo stesso grado di $p$ e che
+soddisfi l'equazione funzionale 
+$$
+q(n) = q(n-1) + q(n-2) - p(n).
+\eqno(7)
+$$
+(N. B. Qui \`e essenziale che l'equazione caratteristica non abbia la
+soluzione $\lambda=1$.) 
+Infatti, se $q$ soddisfa (7), si ha 
+$$
+\begin{array}{rl}
+x_0 &= q(1) f_0 + q(0) f_{-1} - q(0) = 0 \\
+x_1 &= q(1) f_1 + q(0) f_0    - q(1) = 0 \\
+x_n &= x_{n-1} + x_{n-2} + p(n) \cr
+    &=            \( q(1) f_{n-1} + q(0) f_{n-2} - q(n-1) \) + \\
+    &\qquad\qquad \( q(1) f_{n-2} + q(0) f_{n-3} - q(n-2) \) + p(n) \\
+    &= q(1) \( f_{n-1} + f_{n-2} \) + q(0) \( f_{n-2} + f_{n-3} \) +
+\\
+    &\qquad\qquad p(n) - q(n-1) - q(n-2) \\
+    &= q(1) f_n + q(0) f_{n-1} - q(n). \\
+\end{array}
+$$
+Anche in questo caso, per determinare $q$ \`e necessario risolvere un
+sistema lineare di $d+1$ 
+equazioni, dove $d$ \`e il grado di $p$. Per esempio, se $p(n)=n^2$
+devo trovare $a$, $b$, $c$ 
+tali che 
+$$
+an^2+bn+c = \(a(n-1)^2 + b(n-1) + c\) + \(a(n-2)^2 + b(n-2) + c\) -
+n^2
+$$
+cio\`e, semplificando 
+$$
+(a-1) n^2 + (b-6a) n + (5a - 3b + c) = 0
+$$
+da cui $a=1$, $b=6$, $c=13$. Dagli esempi che ho provato sembra
+ragionevole supporre che, in 
+generale, la matrice del sistema risultante sia triangolare, che
+sarebbe una cosa buona. 
+
+\item 
+$$
+\left\{
+\begin{array}{l}
+x_n = {1\over 2} x_{n-1} + {1\over 2} x_{n-2} + 1 \\
+x_0 = 0, x_1 = 0                                  \\
+\end{array}
+\right.
+$$
+Qui c'\`e la radice $\lambda=1$ e $g(n)={2\over 3} \( 1 - ({-1\over
+2})^n \)$. 
+$$
+x_n = {2\over 3} n - {4\over 9} \left( 1 - \left(-1\over2\right)^n
+\right).
+$$
+
+\item 
+$$
+\left\{
+\begin{array}{l}
+x_n = 2 x_{n-1} - x_{n-2} + 1 \\
+x_0 = 0, x_1 = 0              \\
+\end{array}
+\right.
+$$
+Qui la radice $\lambda=1$ \`e doppia e $g(n) = n$. 
+$$
+x_n = {n(n-1)\over 2}.
+$$
+\end{itemize}
+
+Una teoria analoga vale per le ricorrenze lineare di ordine finito a
+coefficienti costanti: 
+evidentemente le cose sono pi\'u incasinate, ma la sostanza \`e la
+stessa. 
+
+\bigskip
+\leftline{\bf Ricorrenze lineari di ordine 1 a coefficienti non
+costanti}
+\bigskip\noindent
+Questo \`e in gran parte stato trattato nel messaggio del 14.12: \`e
+sostanzialmente pi\'u 
+difficile del caso precedente. Come ho gi\`a detto, si tratta di
+equazioni del tipo 
+$$
+x_n = f(n) x_{n-1} + g(n).
+$$
+Anche qui basta trovare la soluzione generale dell'equazione omogenea
+associata e sommare una 
+qualsiasi soluzione dell'equazione completa, ma determinare
+quest'ultima pu\`o essere complicato. 
+
+\bigskip
+\leftline{\bf Ricorrenze lineari non di ordine finito}
+\bigskip\noindent
+In queste rientrano quella del quicksort, che come detto si riconduce
+ad una ricorrenza di ordine 
+1 a coefficienti non costanti. Nella stessa categoria rientra quella
+del problema combinatorio 
+delle permutazioni senza punto fisso discussa nel mio messaggio
+precedente, ed in questo caso 
+non so dire molto in generale. 
+
+\bigskip
+\leftline{\bf Ricorrenze non lineari}
+\bigskip\noindent
+Sono ricorrenze molto complicate: tipico esempio (Lueker) $x_n =
+3x_{n-1}^2$. Qui non conosco una 
+teoria generale: se esiste probabilmente \`e molto complicata. La mia
+domanda \`e la solita: 
+quanto \`e rilevante questo caso? Nel caso qui sopra c\`e il trucco
+(basta porre $y_n:=\log x_n$ 
+ed allora come per magia $y_n=2y_{n-1}+\log 3$ \`e lineare a
+coefficienti costanti), ma basta 
+cambiare appena la forma ($x_n = 3x_{n-1}^2+1$) e siamo del gatto. 
+
+\bigskip
+\leftline{\bf ``Equazioni funzionali''}
+\bigskip\noindent
+Rientrano in questa categoria le ricorrenze tipo 
+$$
+x_n = 2 x_{n/2} + f(n)
+$$
+e simili, con l'opportuna interpretazione di $n/2$. Non so se si
+possono considerare vere e proprie 
+relazioni di ricorrenza (per questo uso un nome diverso): pi\'u che
+altro esprimono una relazione 
+tra i valori che la funzione assume su vari valori dell'argomento. Mi
+\`e chiaro che sono molto 
+interessanti per la tesi di Tatiana, ma a parte il ``Master Theorem''
+qui non so dire molto. 
+\`E chiaro che se non sono troppo complicate \`e possibile ricondurle
+a relazioni di ricorrenza 
+(vedi sempre Lueker): nel caso qui sopra se $n=2^m$, posto
+$y_m=x(2^m)$ la relazione diventa
+$$
+y_m = 2 y_{m-1} + f(2^m),
+$$
+che \`e lineare del primo ordine a coefficienti costanti. Se $f$ non
+\`e troppo complicata, pu\`o 
+darsi che quest'ultima ricorrenza si possa trattare come quelle viste
+sopra. Segnalo il fatto 
+che per\`o stiamo considerando una sottosuccessione di $x_n$ piuttosto
+poco densa (per questo 
+ho spesso insistito sulla monotonia). Qui (come al punto precedente)
+penso che si tratti di 
+capire quale tipo di ricorrenze possono ragionevolmente capitare,
+sempre ammesso che si possa, 
+e studiare o inventare la teoria relativa. 
+
+\bigskip
+\centerline{Appendice: formule di sommazione} 
+\bigskip
+\noindent
+Per comodit\`a, riporto senza dimostrazione le pi\'u importanti
+formule di sommazione. 
+Ne conosco anche altre, comode nel caso in cui si sappia per esempio
+che $f$ \`e monot\`ona. 
+
+\noindent{\bf Teorema (Formula di sommazione parziale di Abel). }{\sl
+Sia $(a_n)_{n\in\N}$ una successione di numeri complessi e 
+$\phi\in{\cal C}^1\(\R^{0+},\C)$ una qualsiasi funzione derivabile. 
+Posto 
+$$
+A(x) :=  \sum_{n\le x} a_n, 
+$$
+per $x\ge1$ si ha 
+$$
+\sum_{n\le x} a_n \phi(n) = A(x)\phi(x) - \int_1^x A(t) \phi'(t) \,
+\dx t.
+$$}
+
+\noindent{\bf Teorema (Formula di Sommazione di Euler-McLaurin). }{\sl
+Sia $f\colon(x,y]\to\C$ una qualunque funzione derivabile. 
+Si ha 
+$$
+\sum_{x<n\le y} f(n) = \int_x^y f(t) \, \dx t + \int_x^y \{t\} f'(t)
+\, \dx t
+- \{y\}f(y) + \{x\} f(x),
+$$
+dove $\{x\}$ indica la parte frazionaria del numero reale $x$.}
+
+\`E del tutto evidente che queste sono utilizzabili nella pratica solo
+se siamo in grado di 
+calcolare esplicitamente delle primitive: segnalo il fatto che la
+prima delle due si applica 
+spesso con $a(n)=1$ e quindi si riduce a 
+$$
+\sum_{n\le x} \phi(n) = [x]\phi(x) - \int_1^x [t] \phi'(t) \, \dx t,
+$$
+dove $[t]$ indica la parte intera di $t$. N. B. Le due formule sono
+sostanzialmente equivalenti, 
+ma in pratica una delle due potrebbe essere pi\`u comoda da applicare.
+
+\end{document}

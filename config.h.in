@@ -1,0 +1,43 @@
+/* config.h.in.  Generated from configure.ac by autoheader.  */
+
+
+#ifndef _purrs_config_h
+#define _purrs_config_h 1
+
+
+/* Not zero if GMP has been compiled with support for exceptions. */
+#undef GMP_SUPPORTS_EXCEPTIONS
+
+/* Assertions are disabled when this is defined */
+#undef NDEBUG
+
+/* Name of package */
+#undef PACKAGE
+
+/* The size of a `mp_limb_t', as computed by sizeof. */
+#undef SIZEOF_MP_LIMB_T
+
+/* Version number of package */
+#undef VERSION
+
+
+
+// Neutralize relops for GCC 2.96.
+#ifndef __SGI_STL_INTERNAL_RELOPS
+#define __SGI_STL_INTERNAL_RELOPS
+#endif
+
+#if __GNUC__ >= 3
+// Flexible array members at the end of a struct
+// are defined as in
+//   Type array[];
+#define PURRS_FLEXIBLE_ARRAY
+#else
+// Flexible array members at the end of a struct
+// are defined as in
+//   Type array[0];
+#define PURRS_FLEXIBLE_ARRAY 0
+#endif
+
+#endif
+

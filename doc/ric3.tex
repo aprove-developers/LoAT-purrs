@@ -1,0 +1,228 @@
+\documentclass{article}[12]
+\textwidth=16.0cm
+\textheight=25cm
+\topmargin=-1.5cm
+\oddsidemargin=1cm
+\evensidemargin=1cm
+
+\begin{document}
+
+\def\dx{{\rm d}}
+\def\N{\mathbf N}
+\def\Z{\mathbf Z}
+\def\R{\mathbf R}
+\def\C{\mathbf C}
+\def\({\bigl(}
+\def\){\bigr)}
+\def\dsize{\displaystyle}
+
+\bigskip
+\leftline{\bf Osservazioni varie}
+\bigskip\noindent
+\begin{itemize}
+\item Un esempio divertente di ricorrenza di ordine 2 la cui equazione
+caratteristica ha radici 
+complesse \`e il seguente: 
+$$
+x_n = 2 x_{n-1} - 2 x_{n-2}, \quad x_0=0, \quad x_1=1;
+$$
+i primi valori sono 
+$$
+0,\, 1,\, 2,\, 2,\, 0,\, -4,\, -8,\, -8,\, 0,\, 16,\, 32,\, 32,\, 0,\,
+\dots
+$$
+La formula generale d\`a 
+$$
+x_n = \frac1 {2i} \( (1+i)^n - (1-i)^n \).
+$$
+Dato che $1+i=\sqrt2 \cdot e^{i\pi/4}$, $1-i=\sqrt2 \cdot
+e^{-i\pi/4}$, si pu\`o anche scrivere 
+$$
+x_n = -i2^{n/2-1} \( e^{in\pi/4} - e^{-in\pi/4}\)
+    = 2^{n/2} \sin\frac{n\pi}4.
+$$
+\item Un esempio di ordine 3 \`e invece 
+$$
+x_n = 2 x_{n-1} - x_{n-2} + 2 x_{n-3},\quad x_0=a,\quad x_1=b,\quad
+x_2=c.
+$$
+Qui l'equazione caratteristica ha le radici $\lambda_1=2$,
+$\lambda_2=i$, $\lambda_3=-i$, e quindi 
+la soluzione \`e del tipo 
+$$
+x_n = \alpha \cdot 2^n + \beta \cdot i^n + \gamma\cdot(-i)^n.
+$$
+Facendo pazientemente tutti i calcoli si trovano i valori di
+$\alpha$, $\beta$ e $\gamma$ e in 
+definitiva 
+$$
+x_n = \frac15 (a+c) 2^n + O_{a,b,c}(1)
+$$
+dove, volendo, \`e possibile dire esplicitamente come \`e fatta la
+funzione nascosta dentro 
+$O(1)$. 
+\item Sembra necessaria una procedura per risolvere i sistemi lineari,
+dato che questa serve 
+anche per trovare la soluzione particolare delle ricorrenze di ordine
+$\ge2$. 
+\item Pu\`o essere utile consultare anche l'Enciclopedia on-line delle
+successioni di interi 
+all'indirizzo 
+\leftline{\tt http:/$\!$/www.research.att.com/$\sim$njas/sequences/ }
+Il responsabile si chiama Sloane, ed \`e citato in uno degli articoli
+sulle ricorrenze. 
+
+\item \`E possibile o utile definire un tipo Numero\_Reale che ha
+un'espressione simbolica ed anche 
+un'espressione reale o complessa approssimata? L'idea sarebbe quella
+di usare l'espressione 
+simbolica fin quando possibile e poi quella approssimata quando
+necessario. Cerco di spiegarmi: 
+invento all'uopo una notazione che potrebbe essere ridicola o (vel)
+insensata, ma spero che 
+si capisca lo stesso. Vorrei poter avere un oggetto che chiamo {\tt
+phi} con due parti, la prima 
+{\tt phi.symb} che vale $(1+\sqrt(5)/2$, la seconda {\tt phi.val} che
+vale $1.6180339887499\dots$. 
+In questo modo, se avessi un altro oggetto {\tt lambda} tale che {\tt
+lambda.symb} vale 
+$(1-\sqrt(5)/2$ e quindi {\tt lambda.val} vale
+$-0.6180339887499\dots$, detto {\tt mi} l'oggetto 
+prodotto di due, vorrei che {\tt mi.symb} valga $-1$ (esattamente),
+mentre {\tt mi.val} potrebbe 
+anche valere $-1.000000000001$. Mi sono spiegato? Ha un qualche minimo
+di senso o di utilit\`a? 
+E poi, \`e realizzabile? (NB Mathematica pi\'u o meno ha questa
+opzione: se si definisce 
+$x=(1+\sqrt(5)/2$, si ottiene il valore numerico approssimato solo se
+si chiede $N[x]$, altrimenti 
+restituisce il valore simbolico). Se si desidera che il risolutore
+simbolico di equazioni alle 
+differenze sia utilizzabile autonomamente, mi sembra utile un'opzione
+del genere. 
+
+\item Pu\`o avere senso scrivere una procedura che risolva
+approssimativam ente le equazioni di 
+grado $\ge3$ dato che il comportamento della successione ricorrente
+\`e dominato dalla radice 
+pi\'u grande in modulo? 
+
+\item \`E possibile chiedere a GiNaC di semplificare un'espressione in
+modo da raccogliere i pezzi 
+come ci fa pi\'u comodo? In altre parole, si pu\`o ottenere la
+seguente uguaglianza? 
+$$
+n\cdot 2^n + n - 3 + 3^n -n^2\cdot2^n
+=
+3^n + (-n^2+n)\cdot 2^n + (n-3).
+$$
+Il senso della domanda \`e questo: sappiamo calcolare la somma
+dell'espressione a sinistra 
+per $n=0$,\dots, $N$ con l'algoritmo di cui ho gi\`a parlato applicato
+a ciascun termine 
+singolarmente, ma \`e ovviamente pi\'u efficiente applicare lo stesso
+algoritmo ai tre termini 
+a destra. 
+\end{itemize}
+
+\bigskip
+\leftline{\bf Ricorrenze lineari di ordine 2 a coefficienti costanti
+non omogenee}
+\bigskip\noindent
+Per completare il discorso del messaggio del 24.12.2001, se vogliamo
+risolvere 
+$$
+x_n = \alpha x_{n-1} + \beta x_{n-2} + f(n),
+\eqno(1)
+$$
+dove $f$ \`e una funzione definita sui numeri naturali (in sostanza
+\`e la parte non omogenea 
+dell'equazione alle differenze), consideriamo come sopra la
+successione 
+$$
+g_n = \alpha g_{n-1} + \beta g_{n-2}
+$$
+con la condizione iniziale $g_0=0$, $g_1=1$, che si risolve
+semplicemente mediante l'equazione 
+caratt eristica. Non \`e difficile dimostrare per induzione che la
+soluzione di (1) \`e 
+$$
+x_n = g_n x_1 + \beta g_{n-1} x_0 + \sum_{k=2}^n g_{n+1-k} f(k)
+$$
+per $n\ge1$. Dato che $g_n$ ha l'espressione esplicita 
+$$
+g_n = {\lambda_1^n - \lambda_2^n\over \lambda_1-\lambda_2}
+$$
+(suppongo tacitamente $\lambda_1\ne\lambda_2$, cio\`e
+$\alpha^2+4\beta\ne0$, altrimenti la 
+formula \`e leggermente diversa ma il principio \`e lo stesso),
+abbiamo 
+$$
+\begin{array}{rl}
+x_n &= g_n x_1 + \beta g_{n-1} x_0 +
+\dsize{\sum_{k =2}^n {\lambda_1^{n+1-k} - \lambda_2^{n+1-k}\over
+\lambda_1-\lambda_2} f(k) }\\
+    &= g_n x_1 + \beta g_{n-1} x_0 +\dsize{
+{\lambda_1^{n+1}\over \lambda_1-\lambda_2}\sum_{k=2}^n \lambda_1^{-k}
+f(k) -
+{\lambda_2^{n+1}\over \lambda_1-\lambda_2}\sum_{k=2}^n \lambda_2^{-k}
+f(k) }.\\
+\end{array}
+$$
+Se $f$ \`e un polinomio o una combinazione lineare di polinomi per
+esponenziali, le somme 
+qui sopra sono ancora combinazioni lineari di polinomi per
+esponenziali, e abbiamo gi\`a 
+visto che si possono sommare espl icitamente (intendo dire che c'\`e
+un algoritmo per calcolare 
+la formula chiusa). Un procedimento simile, anche se pi\'u complicato,
+vale per le ricorrenze 
+lineari di ordine finito a coefficienti costanti non omogenee,
+qualunque sia l'ordine. 
+
+\bigskip
+\centerline{Altre formule chiuse} 
+\bigskip
+\noindent
+Per completezza, aggiungo senza dimostrazione qualche altra formula
+chiusa, presumibilmente 
+non molto interessante ai fini dell'analisi dei programmi: per
+$\theta\notin2\pi\Z$ 
+$$
+\begin{array}{rl}
+\dsize{
+\sum_{k=0}^N \sin(k\theta)} &= \dsize{{\cos(\theta/2) -
+\cos((N+1)\theta/2)\over\sin(\theta/2)} }\\
+\dsize{
+\sum_{k=0}^N \cos(k\theta)} &= \dsize{\frac12 +       
+{\sin((N+1)\theta/2)\over\sin(\theta/2)} }\\
+\end{array}
+$$
+Da ciascuna di queste segue che le due somme in questione, prese in
+valore assoluto, sono 
+$$
+\le \min\(N+1,|\sin(\theta/2)|\) = O\( \min (N+1,
+\Vert\theta/\pi\Vert^{-1} ) \)
+$$
+dove $\Vert x\Vert$ indica la distanza di $x$ dall'intero pi\'u vicino
+
+($\Vert x\Vert=\min(\{x\},1-\{x\})$). 
+
+\bigskip
+\centerline{Appendice: un'altra formula di sommazione} 
+\bigskip
+\noindent
+\noindent{\bf Teorema. }{\sl
+Sia $f\colon\R^+\to\R^+$ una funzione debolmente decrescente e
+infinitesima. 
+Esiste una costante reale $E$ tale che per $x\to\infty$ si ha 
+$$
+\sum_{n\le x} f(n) = \int_1^x f(t)\,\dx t + E + O\(f(x)\).
+$$
+In effetti 
+$$
+0\le E = \sum_{n\ge1} \left\{f(n)-\int_n^{n+1} f(t)\,\dx t\right\} \le
+f(1).
+$$} 
+
+\end{document}

@@ -1,0 +1,98 @@
+\documentclass[a4paper]{article}
+\nonstopmode
+\usepackage{a4wide}
+\usepackage{makeidx}
+\usepackage{fancyhdr}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{alltt}
+\usepackage{doxygen}
+\usepackage{times}
+\ifx\pdfoutput\undefined
+\usepackage[ps2pdf,
+            pagebackref=true,
+            colorlinks=true,
+            linkcolor=blue
+           ]{hyperref}
+\else
+\usepackage[pdftex,
+            pagebackref=true,
+            colorlinks=true,
+            linkcolor=blue
+           ]{hyperref}
+\fi
+\usepackage{purrs}
+\makeindex
+\setcounter{tocdepth}{1}
+\setlength{\footrulewidth}{0.4pt}
+
+\rfoot[\fancyplain{}{\scriptsize The Parma University's Recurrence Relation Solver Developer's Manual (version $projectnumber). See \url{http://www.cs.unipr.it/purrs/} for more information.}]{}
+\lfoot[]{\fancyplain{}{\scriptsize The Parma University's Recurrence Relation Solver Developer's Manual (version $projectnumber). See \url{http://www.cs.unipr.it/purrs/} for more information.}}
+
+\begin{document}
+\title{
+The Parma University's Recurrence Relation Solver \\
+Developer's Manual\thanks{This work
+  has been partly supported by:
+  University of Parma's FIL scientific research project (ex 60\%)
+    ``Pure and Applied Mathematics'';
+  MURST project
+    ``Automatic Program Certification by Abstract Interpretation'';
+  MURST project
+    ``Abstract Interpretation, Type Systems and Control-Flow Analysis''.
+  } \\
+(version $projectnumber)
+}
+\author{
+Roberto Bagnara\thanks{bagnara@cs.unipr.it,
+  Department of Mathematics, University of Parma, Italy.} \\
+Patricia M. Hill\thanks{hill@comp.leeds.ac.uk,
+  School of Computing, University of Leeds, U.K.} \\
+Elisa Ricci\thanks{ericci@cs.unipr.it,
+  Department of Mathematics, University of Parma, Italy.} \\
+Enea Zaffanella\thanks{zaffanella@cs.unipr.it,
+  Department of Mathematics, University of Parma, Italy.} \\
+\ \\
+based on previous work also by \\
+\ \\
+Sara Bonini		\\
+Andrea Pescetti		\\
+Angela Stazzone		\\
+Tatiana Zolo\thanks{zolo@cs.unipr.it,
+  Department of Mathematics, University of Parma, Italy.}
+}
+\maketitle
+
+\newpage
+Copyright \copyright\ 2001 Roberto Bagnara (bagnara@cs.unipr.it).
+
+This document describes the Parma Polyhedra Library (PPL).
+
+Permission is granted to copy, distribute and/or modify this document
+under the terms of the GNU Free Documentation License, Version 1.1 or
+any later version published by the
+\href{http://www.fsf.org}{Free Software Foundation}; with no Invariant
+Sections, with no Front-Cover Texts, and with no Back-Cover Texts.
+A copy of the license is included in the section entitled
+``\hyperlink{GFDL}{GNU Free Documentation License}''.
+
+The PPL is free software; you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the
+\href{http://www.fsf.org}{Free Software Foundation}; either version 2
+of the License, or (at your option) any later version.
+A copy of the license is included in the section entitled
+``\hyperlink{GPL}{GNU GENERAL PUBLIC LICENSE}''.
+
+The PPL is distributed in the hope that it will be useful, but WITHOUT
+ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+for more details.
+
+For the most up-to-date information see the PURRS WWW site:
+\begin{center}
+\href{http://www.cs.unipr.it/ppl/}{\tt http://www.cs.unipr.it/purrs/}
+\end{center}
+
+\pagenumbering{roman}
+\tableofcontents
+\pagenumbering{arabic}

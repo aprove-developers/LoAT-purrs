@@ -1,0 +1,797 @@
+//  Copyright (C) 2001 Roberto Bagnara <bagnara@cs.unipr.it>
+//
+//  This document describes the Parma Polyhedra Library (PPL).
+//
+//  Permission is granted to copy, distribute and/or modify this document
+//  under the terms of the GNU Free Documentation License, Version 1.1 or
+//  any later version published by the Free Software Foundation; with no
+//  Invariant Sections, with no Front-Cover Texts, and with no Back-Cover
+//  Texts.
+//
+//  The PPL is free software; you can redistribute it and/or modify it
+//  under the terms of the GNU General Public License as published by the
+//  Free Software Foundation; either version 2
+//  of the License, or (at your option) any later version.
+//
+//  The PPL is distributed in the hope that it will be useful, but WITHOUT
+//  ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+//  FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+//  for more details.
+//
+//  For the most up-to-date information see the Parma Polyhedra Library
+//  site: http://www.cs.unipr.it/ppl/
+
+/*! \mainpage Convex Polyhedra and the PPL
+\section introduction An Introduction to Convex Polyhedra
+
+Most of the following definitions and results are taken from:
+- G. L. Nemhauser and L. A. Wolsey - Integer and Combinatorial Optimization - 
+  Wiley Interscience Series in Discrete Mathematics and Optimization, 1988.
+- D. K. Wilde - A library for doing polyhedral operations - IRISA Publication
+  interne n. 785, December 1993.
+- K. Fukuda - Polyhedral Computation FAQ - Swiss Federal Institute of 
+  Technology, Lausanne and Zurich, Switzerland, October 2000.
+
+<B>Combination</B>
+
+Let \f$\lambda_1, \ldots, \lambda_k \in \Rset\f$ and 
+\f$\vect{x}_1, \ldots, \vect{x}_k \in \Rset^n\f$. The linear combination
+\f$\sum_{j = 1}^k \lambda_j\vect{x}_j\f$
+is said to be
+
+- a <EM>positive combination</EM>,
+  if \f$\forall j \in \{ 1, \ldots, k \} \itc \lambda_j \geq 0\f$;
+- an <EM>affine combination</EM>, if \f$\sum_{j = 1}^k \lambda_j = 1\f$;
+- a <EM>convex combination</EM>, if both the previous conditions hold.
+
+Note that, when \f$k=0\f$, we have
+\f$\sum_{j = 1}^k \lambda_j\vect{x}_j = \vect{0}\f$
+and \f$\sum_{j = 1}^k \lambda_j = 0\f$.
+Therefore, the origin \f$\vect{0} \in \Rset^n\f$ can always be regarded
+as a positive (but not affine) linear combination of an empty set
+of vectors.
+
+<B>Scalar product</B>
+
+Let \f$\vect{x} = (x_0, \ldots, x_{n-1})^\transpose\f$,
+\f$\vect{y} = (y_0, \ldots, y_{n-1})^\transpose \in \Rset^n\f$.
+The <EM>scalar product</EM> of \f$\vect{x}\f$ and \f$\vect{y}\f$ 
+is defined as
+\f[
+   \langle \vect{x}, \vect{y} \rangle = \sum_{i=0}^{n-1} x_i y_i.
+\f]  
+The vectors \f$\vect{x}\f$ and \f$\vect{y}\f$ are <EM>orthogonal</EM> if 
+\f$\langle \vect{x}, \vect{y} \rangle = 0\f$.
+
+<B>Convex hull</B>
+
+The <EM>convex hull</EM> of a set \f$K \sseq \Rset^n\f$ is the set of all
+the convex combinations of the points in \f$K\f$.
+The set \f$K\f$ is convex if it is its own convex hull.
+
+<B>Affine transformation</B>
+
+An <EM>affine transformation</EM> is a function mapping a 
+point \f$\vect{x} \in \Rset^n\f$ to a point \f$\vect{x}' \in \Rset^m\f$
+such that
+\f[
+  \vect{x}' = A\vect{x} + \vect{b}
+\f]
+where \f$A \in \Rset^m \times \Rset^n\f$ and 
+\f$\vect{b} \in \Rset^m\f$.
+
+<B>Linear independence</B>
+
+A finite set of points
+\f$\{ \vect{x}_1, \ldots, \vect{x}_k \} \sseq \Rset^n\f$
+is <EM>linearly independent</EM> if,
+for all \f$\lambda_1, \ldots, \lambda_k \in \Rset\f$,
+the set of equations
+\f[
+  \sum_{i = 1}^k \lambda_i \vect{x}_i = \vect{0}
+\f]
+implies that, for each \f$i = 1\f$, \f$\dots\f$, \f$k\f$,
+\f$\lambda_i = 0\f$.
+
+Note that the maximum number of linearly independent points in 
+\f$\Rset^n\f$ is \f$n\f$.
+
+<B><EM>Proposition</EM></B>
+
+If \f$A\f$ is an \f$m \times n\f$ matrix, the maximum number of 
+linearly independent rows of \f$A\f$, viewed as vectors of \f$\Rset^n\f$, 
+equals the maximum number of linearly independent columns of \f$A\f$, 
+viewed as vectors of \f$\Rset^m\f$.
+
+<B>Rank</B>
+
+The maximum number of linearly independent rows (columns) of a 
+matrix \f$A\f$ is the <EM>rank</EM> of \f$A\f$ and is denoted by 
+\f$\prank(A)\f$.
+
+<B>Affine independence</B>
+
+A finite set of points
+\f$\{ \vect{x}_1, \ldots, \vect{x}_k \} \sseq \Rset^n\f$ is 
+<EM>affinely independent</EM> if,
+for all \f$\lambda_1, \ldots, \lambda_k \in \Rset\f$,
+the set of equations
+\f[
+  \sum_{i = 1}^k \lambda_i \vect{x}_i = \vect{0},
+    \quad
+  \sum_{i = 1}^k \lambda_i = 0
+\f]
+implies that, for each \f$i = 1, \ldots, k\f$, \f$\lambda_i = 0\f$.
+
+Note that linear independence implies affine independence, but the 
+converse is not true. Moreover the maximum number of affinely independent
+points in \f$\Rset^n\f$ is \f$n + 1\f$
+(e.g., \f$n\f$ linearly independent points and the origin \f$\vect{0}\f$).
+
+
+<B>Polyhedron</B>
+
+A set \f$P \sseq \Rset^n\f$ is called a <EM>polyhedron</EM> 
+if it is the set of solutions to a finite number of linear equalities 
+and inequalities: 
+\f[
+  P = \{\,
+        \vect{x} \in \Rset^n
+      \mid
+        A\vect{x} = \vect{b}, C\vect{x} \geq \vect{d}
+      \,\},
+\f]
+where, if \f$m_1\f$ is the number of linear equalities and
+\f$m_2\f$ the number of linear inequalities,
+\f$A \in \Rset^{m_1} \times \Rset^n\f$,
+\f$\vect{b} \in \Rset^{m_1}\f$, 
+\f$C \in \Rset^{m_2} \times \Rset^n\f$ and
+\f$\vect{d} \in \Rset^{m_2}\f$. 
+
+In the sequel, we will simply write ``equality'' and ``inequality''
+to mean ``linear equality'' and ``linear inequality'', respectively;
+also, we will refer to either an equality or an inequality
+as a <EM>constraint</EM>.
+
+<B>Constraints representation</B>
+
+By definition, any polyhedron \f$P \sseq \Rset^n\f$ can be represented
+by a <EM>system of constraints</EM>:
+namely, the system given by the union of
+the equalities specified by matrix \f$A\f$ and vector \f$\vect{b}\f$
+and
+the inequalities specified by matrix \f$C\f$ and vector \f$\vect{d}\f$.
+
+Note that,
+if \f$\vect{c}, \vect{x} \in \Rset^n\f$ and \f$\lambda \in \Rset\f$
+and the system of constraints contains the equality
+\f$\langle \vect{c}, \vect{x} \rangle = \lambda\f$,
+then this one can be replaced by the two equivalent inequalities 
+\f$\langle \vect{c}, \vect{x} \rangle \geq \lambda\f$ and
+\f$\langle \vect{c}, \vect{x} \rangle \leq \lambda\f$
+(i.e., \f$\langle -\vect{c}, \vect{x} \rangle \geq -\lambda\f$).
+It follows that a polyhedron \f$P \sseq \Rset^n\f$ can always
+be represented as a system of <EM>inequality</EM> constraints
+\f[
+  P = \{\,
+        \vect{x} \in \Rset^n
+      \mid
+        A\vect{x} \geq \vect{b}
+      \,\}
+\f]
+for some matrix \f$ A \in \Rset^{m} \times \Rset^n\f$
+and vector \f$\vect{b} \in \Rset^{m}\f$.
+
+
+<B>Rational polyhedron</B>
+
+A polyhedron \f$P \sseq \Rset^n\f$ is said to be <EM>rational</EM>
+if there exists a matrix
+\f$A \in \Rset^{m'} \times \Rset^n\f$
+and a vector \f$\vect{b} \in \Rset^{m'}\f$
+with rational coefficients such that 
+\f[
+  P = \{\,
+        \vect{x} \in \Rset^n
+      \mid
+        A\vect{x} \geq \vect{b}
+      \,\}.
+\f]
+
+In the sequel, we will consider only rational polyhedra
+and assume that, if
+\f$\{\,\vect{x} \in \Rset^n \mid A\vect{x} \geq \vect{b}\,\}\f$
+is a system of constraints representing a polyhedron,
+then \f$A\f$ and \f$\vect{b}\f$ have rational coefficients.
+
+<B>Universe polyhedron</B>
+
+A polyhedron \f$P \sseq \Rset^n\f$ is called <EM>universe polyhedron</EM>
+if it is the whole space (i.e., \f$P = \Rset^n\f$).
+
+<B>Polytope</B>
+
+A polyhedron \f$P \sslt \Rset^n\f$ is <EM>bounded</EM> if there 
+exists a \f$\lambda \in \Rset, \lambda \geq 0\f$ such that 
+\f[
+  P \sseq
+   \bigl\{\,
+     (x_0, \ldots, x_{n-1})^\transpose \in \Rset^n
+   \bigm| 
+     - \lambda \leq x_j \leq \lambda \text{ for } j = 0, \ldots, n-1
+    \,\bigr\}.
+\f]
+A bounded polyhedron is called a <EM>polytope</EM>.
+
+<B><EM>Proposition</EM></B>
+
+A polyhedron is a closed convex set.
+
+<B>Polyhedron dimension</B>
+
+A non-empty polyhedron \f$P \sseq \Rset^n\f$
+is of <EM>dimension</EM> \f$k\f$,
+denoted by \f$\pdim(P) = k\f$, if the maximum number of 
+affinely independent points in \f$P\f$ is \f$k + 1\f$.
+
+\note
+What is the dimension of the <EM>empty</EM> polyhedron?
+If the above definition is applied to an empty polyhedron,
+then the answer would be \f$-1\f$.
+
+<B>Vertex</B>
+
+A <EM>vertex</EM> of a polyhedron \f$P\f$ is any point in \f$P\f$ 
+which cannot be expressed as a convex combination of any other 
+distinct points in \f$P\f$.
+
+<B>Ray</B>
+
+Let \f$P, P_0\f$ be the polyhedra
+\f[
+  P = \{\,
+        \vect{x} \in \Rset^n
+      \mid
+        A\vect{x} \geq \vect{b}
+      \,\}
+        \neq \emptyset
+\quad \text{and }
+  P_0
+    = \{\,
+        \vect{r} \in \Rset^n
+      \mid
+        A\vect{r} \geq \vect{0}
+      \,\}
+\f]
+where 
+\f$A \in \Rset^m \times \Rset^n\f$, \f$\vect{b} \in \Rset^m\f$.
+Then any point
+\f$\vect{r} \in P_0 \setminus \{ \vect{0} \}\f$
+is called a <EM>ray</EM> of \f$P\f$.
+
+A ray indicates a direction in which the polyhedron \f$P\f$ is infinite
+(i.e., unbounded).
+
+<B><EM>Proposition</EM></B>
+
+A point \f$\vect{r} \in \Rset^n \setminus \{ \vect{0} \}\f$
+is a ray of a non-empty polyhedron \f$P \sseq \Rset^n\f$
+if and only if, for any point \f$\vect{x} \in P\f$,
+\f$(\vect{x} + \lambda \vect{r}) \in P\f$
+for all \f$\lambda \in \Rset, \lambda \geq 0\f$.
+
+<B>Extreme ray</B>
+
+A ray \f$\vect{r}\f$ of a polyhedron \f$P\f$ is an <EM>extreme ray</EM>
+if and only if it cannot be expressed as
+a positive combination of any other pair
+\f$\vect{r}_1\f$ and \f$\vect{r}_2\f$ of rays of \f$P\f$,
+where
+\f$\vect{r} \neq \lambda \vect{r}_1\f$,
+\f$\vect{r} \neq \lambda \vect{r}_2\f$ and
+\f$\vect{r}_1 \neq \lambda \vect{r}_2\f$
+for all \f$\lambda \in \Rset, \lambda \geq 0\f$.
+
+<B>Line</B>
+
+A <EM>line</EM> (or <EM>bidirectional ray</EM>) of a polyhedron
+\f$P \sseq \Rset^n\f$ is a ray \f$\vect{l}\f$ of \f$P\f$
+such that \f$-\vect{l}\f$ is another ray of \f$P\f$.
+
+<B>Cone</B>
+
+A set \f$C \sseq \Rset^n\f$ is a <EM>cone</EM> if 
+\f[
+  \vect{x} \in C \Rightarrow \lambda \vect{x} \in C 
+  \text{ for all } \lambda \in \Rset, \lambda \geq 0.
+\f]
+
+<B>Polyhedral cone</B>
+
+The polyhedron
+\f$P = \{\,\vect{x} \in \Rset^n \mid A\vect{x} \geq \vect{0}\,\}\f$ 
+is a convex cone and is called <EM>polyhedral cone</EM>. 
+
+A polyhedral cone is either <EM>pointed</EM>,
+having the origin as its only vertex, or has no vertices at all.
+
+<B>Lineality space</B>
+
+Given a polyhedron
+\f$P = \{\,\vect{x} \in \Rset^n \mid A\vect{x} \geq \vect{b}\,\}\f$, 
+the <EM>lineality space</EM> of \f$P\f$ is the set
+\f[
+  \{\, \vect{x} \in P \mid A\vect{x} = \vect{0} \,\}
+\f]
+and it is denoted by \f$\linspace(P)\f$. 
+
+<B>Minkowski's sum</B>
+
+Let \f$R, S \sseq \Rset^n\f$ be two sets of vectors.
+Then the <EM>Minkowski's sum</EM> of 
+\f$R\f$ and \f$S\f$ is:
+\f[
+  R + S = \{\,r + s \mid r \in R, s \in S\,\}.
+\f]
+
+<B>Generators representation</B>
+
+A polyhedron \f$P \sseq \Rset^n\f$ can also be represented by
+a finite set \f$V\f$ of points of \f$P\f$,
+a finite set \f$R\f$ of rays of \f$P\f$ and
+a finite set \f$L\f$ of lines of \f$P\f$.
+The elements of these three sets are the <EM>generators</EM> of \f$P\f$,
+in the sense that
+\f[
+  P = \mathcal{V} + \mathcal{R} + \mathcal{L},
+\f]
+where the symbol '\f$+\f$' denotes the Minkowski's sum and
+ - \f$\mathcal{V}\f$ is the set of all the convex combinations
+   of the points in \f$V\f$;
+ - \f$\mathcal{R}\f$ is the set of all the positive combinations
+   of the rays in \f$R\f$; and
+ - \f$\mathcal{L}\f$ is the set of all the linear combinations
+   of the lines in \f$L\f$.
+
+Note that
+\f$\mathcal{V}\f$ is a polytope,
+\f$\mathcal{R}\f$ is a pointed cone, and
+\f$\mathcal{L}\f$ is \f$\mathop{\mathrm{lin.space}}(P)\f$.
+Moreover,
+if \f$V = \emptyset\f$,
+we obtain \f$\mathcal{V} = \emptyset\f$,
+so that \f$P = \emptyset\f$.
+In contrast,
+if both \f$R = L = \emptyset\f$,
+we obtain \f$\mathcal{R} = \mathcal{L} = \{ \vect{0} \}\f$,
+so that \f$P = \mathcal{V}\f$.
+
+Also note that \f$V\f$ must contain all the vertices of \f$P\f$
+(hence the choice for its name).
+However, if \f$P\f$ is a non-empty polyhedron having no vertices at all,
+then \f$V\f$ necessarily contains points that are <EM>not</EM> vertices
+of \f$P\f$.
+For instance, the half-space of \f$\Rset^2\f$ corresponding to the single
+constraint \f$y \geq 0\f$ can be represented by taking the generators
+\f$V = \bigl\{ (0, 0)^\transpose \bigr\}\f$,
+\f$R = \bigl\{ (0, 1)^\transpose \bigr\}\f$ and
+\f$L = \bigl\{ (1, 0)^\transpose \bigr\}\f$.
+Note also that the only ray in \f$R\f$ is <EM>not</EM> an extreme ray
+of \f$P\f$.
+
+The following theorem states that,
+whenever a polyhedron \f$P\f$ has a vertex,
+there exists a decomposition such that
+- \f$V\f$ is the set of all <EM>vertices</EM> of \f$P\f$;
+- \f$R\f$ is the set of all <EM>extreme</EM> rays of \f$P\f$; and
+- \f$L = \emptyset\f$.
+
+<B>Minkowski's theorem</B>
+
+Let
+\f$P = \{\, \vect{x} \in \Rset^n \mid A\vect{x} \geq \vect{b} \,\}\f$
+be a non-empty polyhedron where \f$\prank(A) = n\f$.
+Let \f$V\f$ be the set of vertices and
+\f$R\f$ the set of extreme rays of \f$P\f$.
+Let also \f$\mathcal{V}\f$ be the set of convex combinations of \f$V\f$
+and \f$\mathcal{R}\f$ the set of positive combinations of \f$R\f$.
+Then
+\f[
+  P = \mathcal{V} + \mathcal{R}.
+\f]
+
+The conditions that \f$P\f$ is not empty and \f$\prank(A) = n\f$
+are equivalent to the condition that \f$P\f$ has a vertex.
+(See also Nemhauser and Wolsey - Integer and Combinatorial Optimization -
+propositions 4.1 and 4.2 on pages 92 and 93).
+
+<B><EM>Proposition</EM></B>
+
+Under the same hypotheses of Minkowsky's theorem,
+if \f$P\f$ is a rational polyhedron then
+all the vertices in \f$V\f$ have rational coefficients and
+we can consider a set \f$R\f$ of extreme rays having
+rational coefficients only.
+
+The second theorem, called Weil's theorem, states that any system of
+generators having rational coefficients defines a rational polyhedron:
+
+<B>Weil's theorem</B>
+
+If \f$A\f$ is a rational \f$m \times n\f$ matrix,
+\f$B\f$ is a rational \f$m' \times n\f$ matrix and 
+\f[
+  Q = \sset{
+        \vect{x} \in \Rset^n
+      }{
+        \vect{x}^\transpose = \vect{y}^\transpose A + \vect{z}^\transpose B, \\
+        \vect{y} = (y_0, \ldots, y_{m-1})^\transpose \in \Rset_+^{m},
+        \sum_{k=0}^{m-1} y_k = 1, \\
+	\vect{z} \in \Rset_+^{m'}
+      },
+\f]
+then \f$Q\f$ is a rational polyhedron.
+
+In fact, since \f$Q\f$ consists of the sum of convex combinations of 
+the rows of \f$A\f$ with positive combinations of the rows of \f$B\f$, 
+we can think of \f$A\f$ as the matrix of vertices and \f$B\f$ as
+the matrix of rays.
+
+<B>Dual representation</B>
+
+Thus a rational polyhedron \f$P\f$ has <EM>dual representations</EM>.
+That is, \f$P\f$ can be represented by a system of constraints
+or a system of generators.
+Moreover, given one of the representations, there is an algorithm for
+computing the other.
+
+<B>Space dimension and dimension-compatibility</B>
+
+The <EM>space dimension</EM> of a polyhedron \f$P \sseq \Rset^n\f$
+is the dimension \f$n \in \Nset\f$ of the corresponding vector space.
+The space dimension of constraints, generators and other objects
+of the PPL are defined similarly.
+The space dimension of objects is important because most of the
+operations defined on polyhedra are well-defined if and only if
+the various arguments are space dimension-compatible.
+
+The following (space) <EM>dimension-compatibility</EM> rules are defined:
+- the polyhedra \f$P \sseq \Rset^n\f$ and \f$Q \sseq \Rset^m\f$ are
+  dimension-compatible if and only if \f$n = m\f$;
+- the constraint \f$\langle \vect{a}, \vect{x} \rangle = \lambda\f$
+  (or \f$\langle \vect{a}, \vect{x} \rangle \geq \lambda\f$),
+  where \f$\vect{a}, \vect{x} \in \Rset^m\f$,
+  is dimension-compatible with polyhedron \f$P \sseq \Rset^n\f$
+  if and only if \f$m \leq n\f$;
+- the generator \f$\vect{x} \in \Rset^m\f$ is dimension-compatible
+  with polyhedron \f$P \sseq \Rset^n\f$ if and only if \f$m \leq n\f$;
+- a system of constraints (resp., generators) is dimension-compatible with
+  a polyhedron if and only if all the constraints (resp., generators)
+  in the system are dimension-compatible with the polyhedron.
+
+Be careful not to confuse the dimension \f$k \leq n\f$ of a polyhedron
+\f$P \sseq \Rset^n\f$ with the <EM>space</EM> dimension \f$n\f$ of \f$P\f$,
+which is the dimension of the enclosing vector space.
+In particular, we can have \f$\pdim(P) \neq \pdim(Q)\f$ even though
+\f$P\f$ and \f$Q\f$ are dimension-compatible;
+and vice versa, \f$P\f$ and \f$Q\f$ may be dimension-incompatible polyhedra
+even though \f$\pdim(P) = \pdim(Q)\f$.
+
+\if Implementation_Info
+
+FIXME: We should find a way to have a decent bibliography
+and also to refer to the cited papers/books as usual.
+
+The following definitions and results are taken, in addition
+to the references mentioned before, from:
+- G. B Dantzig - Linear programming and extensions - Princeton University 
+  Press, New Jersey 1963.
+
+
+\section homogeneous Homogeneous Systems
+
+To simplify both the constraints and generators 
+representations of a polyhedron \f$P \in \Rset^n\f$,
+it is useful to map each point \f$\vect{x} \in \Rset^n\f$
+to a point \f$\vect{x}' = (\xi \vect{x}, \xi)^\transpose \in \Rset^{n + 1}\f$ 
+where \f$\xi \geq 0\f$.
+
+The transformation changes an inhomogeneous system of constraints
+in \f$n\f$ variables, representing a polyhedron \f$P\f$, into a 
+homogeneous system in \f$n + 1\f$ variables, representing a 
+polyhedral cone \f$C\f$:
+\f[
+  P = \{\,\vect{x} \mid A\vect{x} \geq \vect{b}\,\} 
+    = \{\,\vect{x} \mid A\vect{x} - \vect{b} \geq \vect{0}\,\} 
+\f]
+\f[
+  C = \{\,(\xi \vect{x}, \xi)^\transpose \mid \xi A\vect{x} - \xi \vect{b} 
+	\geq \vect{0}, \xi \geq 0\,\} 
+    = \{\,\vect{x}' \mid A'\vect{x}' \geq \vect{0}\,\} 
+\f]
+where \f$\vect{x}' = (\xi \vect{x}, \xi) \in \Rset^{n + 1}\f$ 
+and \f$A'\f$ is the \f$(m+1) \times (n+1)\f$ matrix having for
+its first \f$m\f$ rows the submatrix
+\f$(A, b) \in \Rset^m \times \Rset^{n + 1}\f$ 
+and for the \f$m + 1\f$ row the vector
+\f$(0, \ldots, 0, 1) \in \Rset^{n + 1}\f$.
+The cone \f$C\f$, which has a homogeneous representation, we call the
+<EM>corresponding polyhedral cone for \f$P\f$</EM>
+
+<B>The positivity constraint</B>
+
+<EM>The positivity constraint</EM> is the trivial constraint \f$1 \geq 0\f$.
+
+A polyhedra \f$P\f$ is contained in its corresponding polyhedral cone \f$C\f$
+since the intersection of \f$C\f$ with
+the hyperplane defined by the equality \f$\xi = 1\f$ is \f$P\f$.
+Therefore, it is always possible to 
+transform  a polyhedron \f$P\f$ to its corresponding polyhedral cone
+\f$C\f$ and then recover \f$P\f$ by means of this intersection.
+
+As the representation of a polyhedral cone \f$C\f$
+is homogeneous and simpler than that for its corresponding polyhedron
+\f$P\f$, the PPL uses the two representations of \f$C\f$ 
+as a means of representing \f$P\f$.
+This means that, in PPL, a polyhedron 
+is always changed to a representation of its corresponding cone 
+before performing any operation on it.
+Moreover, in the sequel, by "representation of a polyhedra \f$P\f$"
+we are referring to a representation of its corresponding cone.
+
+This choice of representation has three consequences:
+-# the matrix of constraints acquires a new line  \f$(0, \ldots, 0, 1)\f$
+   so that the system of constraints acquires the positivity constraint;
+-# in the transformation from a polyhedron to its corresponding cone, 
+   vertices are transformed into rays and the only vertex is the origin.
+-# since for any polyhedron (including the empty polyhedron), 
+   the corresponding cone \f$C\f$ includes the origin \f$0\f$ as a vertex,
+   \f$C\f$ can always be represented both by a system of constraints and
+   by a system of generators.
+
+<B>Double Description</B>
+
+Thus, in the PPL, every polyhedron is represented by a
+<EM>double description</EM> consisting of
+a system of constraints and a system of generators 
+both defining its corresponding cone.
+Thus, in a double description for a polyhedron \f$P\f$
+the system of constraints will always contain the positivity constraint 
+while the system of generators will always contain the 
+origin as a vertex.
+
+In addition, in this representation of a polyhedron,
+vertices differ from rays only in that, for a vertex,
+the \f$n+1\f$'th term of its vector is different from zero and,
+for a ray, it is zero.
+In all other ways, vertices and rays are the same.
+
+<B>Valid linear inequalities</B>
+
+Let \f$P\f$ be a convex polyhedron (or polytope) in 
+\f$\Rset^n\f$. For a real \f$n\f$-vector \f$\vect{c}\f$ and a real number 
+\f$b\f$, a linear inequality \f$\langle \vect{c}, \vect{x} \rangle \geq b\f$ 
+(briefly denoted by \f$(\vect{c},b)\f$) is called <EM>valid</EM> 
+for \f$P\f$ if it is satisfied by all points \f$\vect{x} \in P\f$. 
+
+<B>Redundancy</B>
+
+-# In a system of equalities, if an equality is a linear combination
+   of the others, it is said to be <EM>dependent</EM> upon them;
+   the dependent equality is called <EM>redundant</EM>.
+   A system containing no redundant equality is called <EM>independent</EM>. 
+-# In a system of inequalities, an inequality is said to be <EM>redundant</EM>
+   if it can be eliminated from the system obtaining a system 
+   equivalent to the previous one, i.e., having the same solutions.
+
+Given a polyhedron \f$P\f$ generated by \f$V\f$ vertices,
+\f$R\f$ rays and \f$L\f$ lines, we say that:
+
+-# \f$L\f$ is <EM>irredundant</EM> if
+  \f$L\f$ is a set of linearly independent lines; and
+-# a ray \f$\vect{r}_1\in R\f$ is <EM>redundant</EM> 
+  if there exists another ray \f$\vect{r}_2 \in R\f$ and
+  there exists \f$\lambda \in \Rset, \lambda > 0\f$
+  such that \f$\vect{r}_1 = \lambda \vect{r}_2\f$.
+
+Note that, in the PPL representation of a polyhedron \f$P\f$,
+vertices are represented as rays so that
+this concept of a redundant ray also applies to the vertices of \f$P\f$.
+
+
+<B>Face</B>
+
+If \f$(\vect{c},b)\f$ is a valid inequality for \f$P\f$, and 
+\f$F = \{\,\vect{x} \in P \mid \langle \vect{c}, \vect{x} \rangle = b\,\}\f$,
+ \f$F\f$ is called a <EM>face</EM> of \f$P\f$ and we say that the inequality 
+represents \f$F\f$. 
+A face \f$F\f$ is said to be <EM>proper</EM> if \f$F \neq \emptyset\f$ and
+\f$F \neq P\f$.
+
+When \f$F\f$ is non-empty, we say that \f$(\vect{c},b)\f$ <EM>supports</EM>
+ \f$P\f$.
+
+<B>Facet</B>
+
+A face \f$F\f$ of \f$P\f$ is a <EM>facet</EM> of \f$P\f$ if 
+\f$\pdim(F) = \pdim(P) - 1\f$. 
+
+<B><EM>Proposition</EM></B>
+
+Let \f$C = \{\vect{x} \mid A\vect{x} \geq \vect{0}\}\f$
+be a polyhedral cone and \f$\vect{y} \in C\f$, then:
+  
+-# the set of all faces of \f$C\f$  is a lattice under inclusion;
+-# the only <EM>minimal face</EM> (relative to inclusion) of \f$C\f$
+   is its <EM>lineality space</EM>;
+-# if the set \f$G = \textit{cone}\{\vect{y}\} + \textit{lin.space } C\f$ is 
+   a face of \f$C,\f$ then \f$\vect{y}\f$ is an <EM>extremal ray</EM> 
+   of \f$C\f$ and \f$G\f$ a <EM>minimal proper face</EM> of \f$C.\f$
+ 
+<B>Ray space</B>
+
+Given the decomposition \f$\mathcal{V} + \mathcal{R} + \mathcal{L}\f$ 
+of a polyhedron \f$P\f$ the set \f$\mathit{V} + \mathit{R}\f$ 
+is called the <EM>ray space</EM> of \f$P\f$
+and denoted by \f$\mathop{\mathrm{ray space}}(P)\f$.
+
+Thus a polyhedron \f$P\f$ can be always decomposed in its 
+\f$\linspace\f$ and its \f$\mathop{\mathrm{ray space}}\f$.
+
+Note that, since \f$\linspace(P)\f$ and 
+\f$\mathop{\mathrm{ray space}}(P)\f$ are special polyhedra, their 
+dimension can be computed using the definition of dimension given for 
+polyhedra.
+
+The spaces defined are connected by some consistency rules shown below.
+
+<B>Dimensionality rules</B>
+
+In \f$\Rset^n\f$
+
+- The dimension of the \f$\linspace\f$
+  is the rank of any set of lines that span the space.
+- The dimension of the polyhedron is the dimension of the 
+  \f$\mathop{\mathrm{ray space}}\f$ plus the dimension of the 
+  \f$\linspace\f$.
+- The dimension of the \f$\mathop{\mathrm{ray space}}\f$ 
+  is \f$n\f$ minus the number of irredundant 
+  lines minus the number of irredundant equalities.
+
+The proofs of these properties can be obtained considering the definitions of 
+dimension and the decomposition of a polyhedron.
+
+<B>Saturation</B>
+
+Let us consider a ray \f$\vect{r} \in \Rset^n\f$ and an inequality 
+\f$(\vect{a}, 0)\f$ where \f$\vect{a} \in \Rset^n\f$. 
+Then we say that: 
+- \f$r\f$ <EM>saturates</EM> the inequality
+  if \f$\langle \vect{a}, \vect{r} \rangle = 0\f$;
+- \f$r\f$ <EM>verifies</EM>  the inequality
+  if \f$\langle \vect{a}, \vect{r} \rangle > 0\f$;
+- \f$r\f$ <EM>violates</EM>  the inequality
+  if \f$\langle \vect{a}, \vect{r} \rangle < 0\f$.
+
+Similarly, considering an equality 
+\f$\langle \vect{a}, \vect{x} \rangle = 0\f$:
+- \f$\vect{r}\f$ <EM>saturates</EM> the equality
+if \f$\langle \vect{a}, \vect{r} \rangle = 0\f$;
+- \f$\vect{r}\f$ <EM>does not verify</EM> the equality
+if \f$\langle \vect{a}, \vect{r} \rangle \neq 0\f$.
+
+A constraint (i.e., an equality or an inequality) is
+<EM>satisfied</EM> by a ray if the ray saturates or verifies the constraint.
+
+<B> Saturation matrix</B>
+
+A <EM>saturation matrix</EM> is a 
+Boolean matrix that represent the connection between constraints and 
+generators of a polyhedron. 
+There are two kinds of saturation matrix one having rows indexed 
+by constraints and columns indexed by generators (<EM>sat_g</EM>), 
+and one (that is the transposed version of the previous one) having 
+rows indexed by generators and columns indexed by constraints (<EM>sat_c</EM>).
+
+For instance, in the saturation matrix sat_g, the elements are defined 
+as follows:
+\f[
+s_{ij} =
+\begin{cases}
+0, \text{if the constraint indexed by } i \text{ is saturated by 
+   the generator indexed by } j;\\
+1, \text{if the constraint indexed by } i \text{ is only 
+  verified by the generator indexed by } j.
+\end{cases}
+\f]
+For efficiency reasons, the PPL uses both the sat_g and sat_c matrices.
+
+<B>Saturation rule</B>
+
+In an \f$n\f$-dimensional \f$\mathop{\mathrm{ray space}}\f$,
+-# Every inequality must be saturated by at least \f$n\f$ vertices/rays.
+-# Every vertex must saturate at least \f$n\f$ inequalities and a ray 
+   must saturate at least \f$n - 1\f$ inequalities plus the 
+   positivity constraint.
+-# Every equality must be saturated by all lines and vertices/rays.
+-# Every line must saturate all equalities and inequalities.
+
+These rules are a consequence of the saturation concept.
+
+<B><EM>Proposition</EM></B>
+
+Let \f$C = \{\vect{x} \mid A\vect{x} \geq \vect{0}\}\f$ be a polyhedral cone.
+Then any minimal proper face of \f$C\f$ in an 
+\f$n\f$-dimensional space can also be represented as 
+\f$
+  G = \{\,\vect{x} \mid A'\vect{x} = 0,
+  \langle\vect{a}_i\vect{x}\rangle \geq 0\,\}
+\f$
+where \f$A'\f$ is a submatrix of \f$A\f$, \f$\vect{a}_i\f$ is a row of \f$A\f$ 
+and the rank of the matrix built starting from \f$A'\f$ and adding the row 
+\f$\vect{a}_i\f$ is \f$n - t\f$
+where \f$t = \dim\bigl(\linspace(C)\bigr)\f$.
+
+To see this, note that
+a minimal proper face \f$G\f$ generated by the extremal ray 
+\f$\vect{y}\f$ is composed of all the points that are combination of this ray
+and all the lines of \f$\linspace(C)\f$. This mean that all the constraints
+saturated by \f$\vect{y}\f$ are also saturated by all points of \f$G\f$. Since 
+in a \f$m\f$-ray space an extreme ray must saturate \f$ m - 1\f$ constraints. 
+So the matrix composed by \f$A'\f$ (that is composed by the constraints
+saturated by all points of \f$G\f$) and by \f$\vect{a}_i\f$ has rank equal to
+\f$m - 1 + 1\f$ (\f$+1\f$ is for the constraint \f$\vect{a}_i\f$) and so
+the rank is equal to \f$n - t\f$. 
+ 
+<B>Adjacent rays</B>
+	
+Let \f$A\f$ be representing matrix of constraints of a cone \f$C\f$
+and \f$Q\f$ the set of rays that generate \f$C\f$. Then two rays 
+\f$\vect{r}_1\f$ and \f$\vect{r}_2\f$ are <EM>adjacent rays</EM> if
+-# there exist at least one row of \f$A\f$ (i.e., a constraint) that 
+   is saturated by both \f$\vect{r}_1\f$ and \f$\vect{r}_2\f$
+-# and none of the rays of \f$Q\f$, except \f$\vect{r}_1\f$ and 
+   \f$\vect{r}_2\f$, saturates all the constraints saturated by both 
+   \f$\vect{r}_1\f$ and \f$\vect{r}_2\f$. 
+ 
+<B>Independence rule</B>
+
+-# No inequality is a positive combination of any other two inequalities 
+   or equalities.
+-# No ray is a linear combination of any other two rays or lines.
+-# The set of equalities must be linearly independent.
+-# The set of lines must be linearly independent.
+  
+To remove redundant constraints/generators we will use the following 
+characterization:
+
+<B>Redundancy rules</B>
+
+- An inequality is not redundant if it 
+  satisfies both point (1) of the saturation rule and point (1) 
+  of the independence rule.
+- A vertex/ray is irredundant if it satisfies 
+  both point (2) of the saturation rule and point (2) of the independence rule.
+
+It is useful to note that:
+- All rays saturate the positivity constraint and no vertex saturates 
+  the positivity constraint; in fact in the homogeneous form
+  the positivity constraint is represented by the vector 
+  \f$\vect{a}^\transpose = (0, \ldots, 0, 1)\f$, rays are of the form 
+  \f$\vect{r} = (r_0, \ldots, r_{n-1}, 0)^\transpose\f$ and vertices 
+  \f$\vect{v} = (v_0, \ldots, v_{n-1}, d)^\transpose\f$ with \f$d \neq 0\f$, 
+  thus \f$\langle \vect{a}, \vect{r} \rangle = 0\f$ for each ray 
+  \f$\vect{r}\f$ and \f$\langle \vect{a}, \vect{v} \rangle \neq 0\f$ 
+  for each vertex \f$\vect{v}\f$.
+- The positivity constraint will be irredundant if and only if 
+  the size of the set
+  of rays is \f$\geq n\f$, where \f$n\f$ is the dimension of the ray space, 
+  and the rank of the ray set is \f$n\f$; in fact a constraint is 
+  irredundant if it is saturated by at least \f$n\f$ vertices/rays (see 
+  above), but since only rays saturate the positivity constraint, then in 
+  a system with \f$n\f$ vertices/rays the positivity constraint 
+  is irredundant.
+
+\endif
+
+*/
