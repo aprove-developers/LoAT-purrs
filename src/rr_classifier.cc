@@ -738,14 +738,14 @@ PURRS::Recurrence::compute_order(const Number& decrement, unsigned int& order,
 }
 
 /*!
-  Analyzes the \f$ i \f$-th addend of the right hand side of the
+  Analyzes the \f$ i \f$-th addend of the right hand side \p rhs of the
   recurrence \p *this collecting and updating all necessary informations
   of which the system it will have need during the computations of the
   solution or of the bounds, or during the verification of the obtained
   results.
 */
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::classification_summand(const Expr& addend,
+PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 					  Expr& inhomogeneous,
 					  unsigned int& order,
 					  std::vector<Expr>& coefficients,
@@ -760,7 +760,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
     Expr new_rhs;
     Expr base;
     std::vector<Symbol> auxiliary_symbols;
-    if (rewrite_non_linear_recurrence(*this, recurrence_rhs, new_rhs, base,
+    if (rewrite_non_linear_recurrence(*this, rhs, new_rhs, base,
 				      auxiliary_symbols)) {
       set_non_linear_finite_order();
       non_linear_p = new Non_Linear_Info(new_rhs, base, auxiliary_symbols);
@@ -798,8 +798,8 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	    set_linear_finite_order_const_coeff();
 	  else if (is_functional_equation())
 	    return TOO_COMPLEX;
-	  // `num_term == 0' if `r' is the unique term of `recurrence_rhs'
-	  // or if it is the first term of `recurrence_rhs' (i.e. is the
+	  // `num_term == 0' if `r' is the unique term of `rhs'
+	  // or if it is the first term of `rhs' (i.e. is the
 	  // first time that the system entry in this function).
 	  if (num_term == 0)
 	    gcd_among_decrements = index;
@@ -837,8 +837,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	Expr coeff_first_order;
 	Expr inhomog_first_order;
 	unsigned first_well_defined;
-	if (known_class_of_infinite_order(recurrence_rhs, addend, 1,
-					  first_well_defined,
+	if (known_class_of_infinite_order(rhs, addend, 1, first_well_defined,
 					  coeff_first_order,
 					  inhomog_first_order)) {
 	  // The lower bound of the sum must be greater or equal than
@@ -854,7 +853,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 						     inhomog_first_order, 1);
 	  set_linear_infinite_order();
 	  set_infinite_order_fwdr(first_well_defined);
-	  inhomogeneous = recurrence_rhs - addend;
+	  inhomogeneous = rhs - addend;
 	  return SUCCESS;
 	}
 	else
@@ -932,7 +931,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	  Expr coeff_first_order;
 	  Expr inhomog_first_order;
 	  unsigned first_well_defined;
-	  if (known_class_of_infinite_order(recurrence_rhs, factor, weight,
+	  if (known_class_of_infinite_order(rhs, factor, weight,
 					    first_well_defined,
 					    coeff_first_order,
 					    inhomog_first_order)) {
@@ -950,7 +949,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 						       weight);
 	    set_linear_infinite_order();
 	    set_infinite_order_fwdr(first_well_defined);
-	    inhomogeneous = recurrence_rhs - addend;
+	    inhomogeneous = rhs - addend;
 	    return SUCCESS;
 	  }
 	  else
@@ -1068,7 +1067,6 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classify() const {
-  D_VAR(recurrence_rhs);
   // Simplifies expanded expressions, in particular rewrites nested powers.
   Expr rhs = simplify_ex_for_input(recurrence_rhs, true);
   // Splits the sum in many sums how many are the addends of the summand
@@ -1104,7 +1102,7 @@ PURRS::Recurrence::classify() const {
   if (num_summands > 1)
     // It is necessary that the following loop starts from `0'.
     for (unsigned i = 0; i < num_summands; ++i) {
-      if ((status = classification_summand(rhs.op(i), inhomogeneous,
+      if ((status = classification_summand(rhs, rhs.op(i), inhomogeneous,
 					   order, coefficients,
 					   gcd_among_decrements, i,
 					   homogeneous_terms))
@@ -1117,7 +1115,7 @@ PURRS::Recurrence::classify() const {
 	break;
     }
   else
-    if ((status = classification_summand(rhs, inhomogeneous,
+    if ((status = classification_summand(rhs, rhs, inhomogeneous,
 					 order, coefficients,
 					 gcd_among_decrements, 0,
 					 homogeneous_terms))

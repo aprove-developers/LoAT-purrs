@@ -321,10 +321,10 @@ private:
   Solver_Status classify_and_catch_special_cases() const;
 
   //! \brief
-  //! Analyzes the \f$ i \f$-th addend of the right hand side of the
-  //! recurrence \p *this.
-  Solver_Status classification_summand(const Expr& r, Expr& e,
-				       unsigned int& order,
+  //! Analyzes the \f$ i \f$-th addend of the right hand side \p rhs
+  //! of the recurrence \p *this.
+  Solver_Status classification_summand(const Expr& rhs, const Expr& r,
+				       Expr& e, unsigned int& order,
 				       std::vector<Expr>& coefficients,
 				       int& gcd_among_decrements,
 				       int num_term,
