@@ -109,21 +109,27 @@ ok_inequalities(const Expr& e, unsigned int condition) {
 
 } // anonymous namespace
 
-
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::
 validate_initial_conditions(index_type order,
 			    index_type first_valid_index) const {
+  Expr exact_solution;
+  if (evaluated_exact_solution_.has_expression())
+    exact_solution = evaluated_exact_solution_.expression();
+  else
+    exact_solution = exact_solution_.expression();
+
   for (index_type i = 0; i < order; ++i) {
     // 
-    unsigned int index =
+    index_type index =
       get_max_index_initial_condition() > first_valid_index + i
       ? get_max_index_initial_condition() : first_valid_index + i;
-    Expr e = exact_solution_.expression().substitute(n, index);
+    Expr e = exact_solution.substitute(n, index);
     // Expand blackboard's definitions in order to increase the
     // opportunities for simplifications.
     e = blackboard.rewrite(e);
     e = simplify_all(e);
+
     // If in the map `initial_conditions' there is an expression
     // `e' correspondent to the integer `first_valid_index + i'
     // (the index of the initial condition), then returns `e';
@@ -243,7 +249,11 @@ PURRS::Recurrence::verify_finite_order() const {
   // `summands_without_i_c'.
   Expr summands_with_i_c = 0;
   Expr summands_without_i_c = 0;
-  const Expr& exact_solution = exact_solution_.expression();
+  Expr exact_solution;
+  if (evaluated_exact_solution_.has_expression())
+    exact_solution = evaluated_exact_solution_.expression();
+  else
+    exact_solution = exact_solution_.expression();
   if (exact_solution.is_a_add())
     for (unsigned int i = exact_solution.nops(); i-- > 0; ) {
       const Expr& addend_exact_solution = exact_solution.op(i);
@@ -602,9 +612,14 @@ PURRS::Recurrence::verify_weighted_average() const {
     return PROVABLY_CORRECT;
   
   // Note: the solution is valid only for `n > 0'.
- 
+  Expr exact_solution;
+  if (evaluated_exact_solution_.has_expression())
+    exact_solution = evaluated_exact_solution_.expression();
+  else
+    exact_solution = exact_solution_.expression();
+
   // Step 1: validation of the initial condition.
-  Expr e = exact_solution_.expression().substitute(n, 1);
+  Expr e = exact_solution.substitute(n, 1);
   e = simplify_all(e);
   if (e != weight_rec.substitute(n, 1) * get_initial_condition(0)
       + inhomogeneous_term.substitute(n, 1))
@@ -616,13 +631,12 @@ PURRS::Recurrence::verify_weighted_average() const {
   // the solution, and tries to semplify it.
   Symbol h;
   Expr diff
-    = PURRS::sum(h, 1, n - 1, exact_solution_.expression().substitute(n, h));
+    = PURRS::sum(h, 1, n - 1, exact_solution.substitute(n, h));
   diff = simplify_sum(diff, COMPUTE_SUM);
   // Consider the difference
   // `x(n) - (f(n) x(0) + f(n) sum(k, 1, n - 1, x(k)) + g(n))'
   // and tries to simplify it.
-  diff = exact_solution_.expression()
-    - diff * weight_rec
+  diff = exact_solution - diff * weight_rec
     - get_initial_condition(0) * weight_rec - inhomogeneous_term;
   diff = simplify_all(diff);
   if (diff == 0)
@@ -871,6 +885,9 @@ PURRS::Recurrence::replace_initial_condition(unsigned int k, const Expr& e) {
 void
 PURRS::Recurrence::set_initial_conditions(const std::map<index_type, Expr>&
 					  map_initial_conditions) {
+  if (!initial_conditions.empty())
+    reset_initial_conditions();
+
   if (classifier_status_ == NOT_CLASSIFIED_YET)
     classify_and_catch_special_cases();
 
@@ -982,19 +999,19 @@ PURRS::Recurrence::apply_order_reduction() const {
     // We must copy the values in the blackboard of the reduced recurrence
     // in the blackboard of the original recurrences.
     blackboard = rec_rewritten.blackboard;
+    exact_solution_.set_expression
+      (simplify_ex_for_output(exact_solution_.expression(), false));
+
     // If there are defined initial conditions in the map
     // `initial_conditions' then we must to deduce the exact form
     // of the solution and substitute to it the defined initial
     // conditions.
     if (!initial_conditions.empty()) {
-      exact_solution_.set_expression
-	(simplify_ex_for_output(exact_solution_.expression(), false));
       Expr expanded_solution
 	= write_expanded_solution(*this, gcd_among_decrements());
       exact_solution_.set_expression(expanded_solution);
     }
-    exact_solution_.set_expression
-      (simplify_ex_for_output(exact_solution_.expression(), false));
+    
     bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
     rec_rewritten = true;
     return SUCCESS;
@@ -1438,16 +1455,22 @@ PURRS::Recurrence::compute_exact_solution_finite_order() const {
   else
     if ((status = solve_linear_finite_order()) != SUCCESS)
       return status;
+
+  lower_bound_.set_expression(exact_solution_.expression());
+  upper_bound_.set_expression(exact_solution_.expression());
   
   // Check if there are specified initial conditions and in this case
   // eventually shift the solution in according with them before to
   // substitute the values of the initial conditions to the
-  // symbolic initial condition `x(i)'.
-  if (!initial_conditions.empty())
-    exact_solution_.set_expression
+  // symbolic initial conditions `x(i)'.
+  if (!initial_conditions.empty()) {
+    evaluated_exact_solution_.set_expression
       (substitute_i_c_shifting(exact_solution_.expression()));
-  lower_bound_.set_expression(exact_solution_.expression());
-  upper_bound_.set_expression(exact_solution_.expression());
+    evaluated_lower_bound_.set_expression
+      (evaluated_exact_solution_.expression());
+    evaluated_upper_bound_.set_expression
+      (evaluated_exact_solution_.expression());
+  }
   return SUCCESS;
 }
 
@@ -1457,15 +1480,20 @@ PURRS::Recurrence::compute_exact_solution_functional_equation() const {
   if ((status = approximate_functional_equation(LOWER)) == SUCCESS
       && (status = approximate_functional_equation(UPPER)) == SUCCESS
       && lower_bound_.expression() == upper_bound_.expression()) {
+    exact_solution_.set_expression(lower_bound_.expression());
+
     // Check if there are specified initial conditions and in this case
     // eventually shift the solution in according with them before to
     // substitute the values of the initial conditions to the
     // symbolic initial condition `x(i)'.
-    if (!initial_conditions.empty())
-      lower_bound_.set_expression
+    if (!initial_conditions.empty()) {
+      evaluated_lower_bound_.set_expression
 	(substitute_i_c_shifting(lower_bound_.expression()));
-    upper_bound_.set_expression(lower_bound_.expression());
-    exact_solution_.set_expression(lower_bound_.expression());
+      evaluated_upper_bound_.set_expression
+	(evaluated_lower_bound_.expression());
+      evaluated_exact_solution_.set_expression
+	(evaluated_lower_bound_.expression());
+    }
     return SUCCESS;
   }
   else
@@ -1479,6 +1507,9 @@ PURRS::Recurrence::compute_exact_solution_non_linear() const {
   if (status != SUCCESS)
     return status;  
 
+  exact_solution_.set_expression(solution);
+  lower_bound_.set_expression(solution);
+  upper_bound_.set_expression(solution);
 #if 0
   // FIXME: before to substitute the initial conditions in the
   // non-linear recurrences we must be sure to have sufficiently
@@ -1489,14 +1520,12 @@ PURRS::Recurrence::compute_exact_solution_non_linear() const {
   // substitute the values of the initial conditions to the
   // symbolic initial condition `x(i)'.
   if (!initial_conditions.empty())
-    exact_solution_.set_expression
+    evaluated_exact_solution_.set_expression
       (substitute_i_c_shifting(solution));
-  lower_bound_.set_expression(exact_solution_.expression());
-  upper_bound_.set_expression(exact_solution_.expression());
-#else
-  exact_solution_.set_expression(solution);
-  lower_bound_.set_expression(solution);
-  upper_bound_.set_expression(solution);
+  evaluated_lower_bound_.set_expression
+    (evaluated_exact_solution_.expression());
+  evaluated_upper_bound_.set_expression
+    (evaluated_exact_solution_.expression());
 #endif
   return SUCCESS;
 }
@@ -1508,11 +1537,16 @@ PURRS::Recurrence::compute_exact_solution_weighted_average() const {
   if (status != SUCCESS)
     return status;
 
-  if (!initial_conditions.empty())
-    solution = solution.substitute(x(0), get_initial_condition(0));
   exact_solution_.set_expression(solution);
   lower_bound_.set_expression(solution);
   upper_bound_.set_expression(solution);
+
+  if (!initial_conditions.empty()) {
+    solution = solution.substitute(x(0), get_initial_condition(0));
+    evaluated_exact_solution_.set_expression(solution);
+    evaluated_lower_bound_.set_expression(solution);
+    evaluated_upper_bound_.set_expression(solution);
+  }
   
   return SUCCESS;
 }
@@ -1527,8 +1561,22 @@ PURRS::Recurrence::compute_exact_solution() const {
   tried_to_compute_exact_solution = true;
 
   // See if we already have the exact solution.
-  if (exact_solution_.has_expression())
+  if (exact_solution_.has_expression()) {
+    // Check if there are specified initial conditions and in this case
+    // eventually shift the solution in according with them before to
+    // substitute the values of the initial conditions to the
+    // symbolic initial conditions `x(i)'.
+    if (!initial_conditions.empty()
+	&& !evaluated_exact_solution_.has_expression()) {
+      evaluated_exact_solution_.set_expression
+	(substitute_i_c_shifting(exact_solution_.expression()));
+      evaluated_lower_bound_.set_expression
+	(evaluated_exact_solution_.expression());
+      evaluated_upper_bound_.set_expression
+	(evaluated_exact_solution_.expression());
+    }
     return SUCCESS;
+  }
 
   // We may not have the exact solution explicitely, yet we may have
   // the lower and the upper bounds equal among themselves.
@@ -1562,6 +1610,29 @@ PURRS::Recurrence::compute_exact_solution() const {
     return map_status(classifier_status);
 }
 
+void
+PURRS::Recurrence::exact_solution(Expr& e) const {
+  if (!exact_solution_.has_expression())
+    throw std::logic_error("PURRS::Recurrence::exact_solution() called, "
+			   "but no exact solution was computed");
+
+  // Substitutes all symbols generated by the system contained in
+  // \p (*this).expression() with new symbols with shorter
+  // name that are not yet used
+  exact_solution_
+    .set_expression(exact_solution_.replace_system_generated_symbols(*this));
+
+  // If `evaluated_exact_solution_' is set means that the user
+  // has specified the initial conditions; otherwise means that
+  // no initial conditions have been specified.
+  if (evaluated_exact_solution_.has_expression())
+    e = evaluated_exact_solution_.replace_system_generated_symbols(*this);
+  else
+    e = exact_solution_.expression();
+  
+  assert(has_symbolic_initial_conditions(e));
+}
+
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
 compute_bound_functional_equation(Bound kind_of_bound) const {
@@ -1575,12 +1646,12 @@ compute_bound_functional_equation(Bound kind_of_bound) const {
   // symbolic initial condition `x(i)'.
   if (!initial_conditions.empty())
     if (kind_of_bound == LOWER)
-      lower_bound_.set_expression
+      evaluated_lower_bound_.set_expression
 	(substitute_i_c_shifting(lower_bound_.expression()));
     else
-      upper_bound_.set_expression
+      evaluated_upper_bound_.set_expression
 	(substitute_i_c_shifting(upper_bound_.expression()));
-
+  
   return SUCCESS;
 }
 
@@ -1604,16 +1675,36 @@ compute_bound_non_linear(Bound kind_of_bound) const {
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_lower_bound() const {
   // See if we already have the lower bound.
-  if (lower_bound_.has_expression())
+  if (lower_bound_.has_expression()) {
+    // Check if there are specified initial conditions and in this case
+    // eventually shift the solution in according with them before to
+    // substitute the values of the initial conditions to the
+    // symbolic initial conditions `x(i)'.
+    if (!initial_conditions.empty()
+	&& !evaluated_lower_bound_.has_expression())
+      evaluated_lower_bound_.set_expression
+	(substitute_i_c_shifting(lower_bound_.expression()));
     return SUCCESS;
+  }
 
   // We may not have the lower bound explicitely, yet we may have
   // the exact solution.
   if (exact_solution_.has_expression()) {
+    // Check if there are specified initial conditions and in this case
+    // eventually shift the solution in according with them before to
+    // substitute the values of the initial conditions to the
+    // symbolic initial conditions `x(i)'.
+    if (!initial_conditions.empty()
+	&& !evaluated_lower_bound_.has_expression()) {
+      evaluated_exact_solution_.set_expression
+	(substitute_i_c_shifting(exact_solution_.expression()));
+      evaluated_lower_bound_.set_expression
+	(evaluated_exact_solution_.expression());
+    }
     lower_bound_.set_expression(exact_solution_.expression());
     return SUCCESS;
   }
-
+  
   Classifier_Status classifier_status = classify_and_catch_special_cases();
   if (classifier_status == CL_SUCCESS)
     switch (type_) {
@@ -1644,12 +1735,32 @@ PURRS::Recurrence::compute_lower_bound() const {
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_upper_bound() const {
   // See if we already have the upper bound.
-  if (upper_bound_.has_expression())
+  if (upper_bound_.has_expression()) {
+    // Check if there are specified initial conditions and in this case
+    // eventually shift the solution in according with them before to
+    // substitute the values of the initial conditions to the
+    // symbolic initial conditions `x(i)'.
+    if (!initial_conditions.empty()
+	&& !evaluated_upper_bound_.has_expression())
+      evaluated_upper_bound_.set_expression
+	(substitute_i_c_shifting(upper_bound_.expression()));
     return SUCCESS;
+  }
 
   // We may not have the upper bound explicitely, yet we may have
   // the exact solution.
   if (exact_solution_.has_expression()) {
+    // Check if there are specified initial conditions and in this case
+    // eventually shift the solution in according with them before to
+    // substitute the values of the initial conditions to the
+    // symbolic initial conditions `x(i)'.
+    if (!initial_conditions.empty()
+	&& !evaluated_upper_bound_.has_expression()) {
+      evaluated_exact_solution_.set_expression
+	(substitute_i_c_shifting(exact_solution_.expression()));
+      evaluated_upper_bound_.set_expression
+	(evaluated_exact_solution_.expression());
+    }
     upper_bound_.set_expression(exact_solution_.expression());
     return SUCCESS;
   }
@@ -1679,6 +1790,51 @@ PURRS::Recurrence::compute_upper_bound() const {
   else
     // return the `Solver_Status' associated to `classifier_status'.
     return map_status(classifier_status);
+}
+
+void
+PURRS::Recurrence::lower_bound(Expr& e) const {
+  if (!lower_bound_.has_expression())
+    throw std::logic_error("PURRS::Recurrence::lower_bound() called, "
+			   "but no lower bounds was computed");
+
+  // Substitutes all symbols generated by the system contained in
+  // \p (*this).expression() with new symbols with shorter
+  // name that are not yet used
+  lower_bound_
+    .set_expression(lower_bound_.replace_system_generated_symbols(*this));
+
+  // If `evaluated_lower_bound_' is set means that the user
+  // has specified the initial conditions; otherwise means that
+  // no initial conditions have been specified.
+  if (evaluated_lower_bound_.has_expression())
+    e = evaluated_lower_bound_.replace_system_generated_symbols(*this);
+  else
+    e = lower_bound_.expression();
+
+  assert(has_symbolic_initial_conditions(e));
+}
+
+void
+PURRS::Recurrence::upper_bound(Expr& e) const {
+  if (!upper_bound_.has_expression())
+    throw std::logic_error("PURRS::Recurrence::upper_bound() called, "
+			   "but no upper bounds was computed");
+  // Substitutes all symbols generated by the system contained in
+  // \p (*this).expression() with new symbols with shorter
+  // name that are not yet used
+  upper_bound_
+    .set_expression(upper_bound_.replace_system_generated_symbols(*this));
+
+  // If `evaluated_upper_bound_' is set means that the user
+  // has specified the initial conditions; otherwise means that
+  // no initial conditions have been specified.
+  if (evaluated_upper_bound_.has_expression())
+    e = evaluated_upper_bound_.replace_system_generated_symbols(*this);
+  else
+    e = upper_bound_.expression();
+
+  assert(has_symbolic_initial_conditions(e));
 }
 
 bool
