@@ -758,10 +758,19 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     }
   }
 
-
   D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
   exact_solution_.set_expression
     (simplify_ex_for_output(exact_solution_.expression(), false));
+
+  // The linear finite order recurrence that the system has solved now
+  // has been deduced from a non linear recurrence.
+  if (non_linear_p) {
+    Expr solution = pwr(base_exp_log(), exact_solution_.expression());
+    solution = substitute_x_function(solution, base_exp_log(), false);
+    solution = simplify_ex_for_input(solution, true);
+    exact_solution_.set_expression(simplify_logarithm(solution));
+  }
+
   // Resubstitutes eventually auxiliary definitions contained in
   // the solution with their original values.
   //exact_solution_.set_expression(blackboard.rewrite(solution));

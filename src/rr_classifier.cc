@@ -422,8 +422,7 @@ insert_coefficients(const Expr& coeff, unsigned long index,
   Returns <CODE>true</CODE> in two cases:
   - there is in \p e an \f$ x \f$ function (with the argument containing
     \f$ n \f$) inside an other function;
-  - there is in \p e a power with an \f$ x \f$ function in the base
-    or in the exponent of it.
+  - there is in \p e a power with an \f$ x \f$ function in the base.
   Returns <CODE>false</CODE> in all the other cases. 
 */
 bool
@@ -440,56 +439,150 @@ x_function_in_powers_or_functions(const Expr& e) {
   // Second case.
   else if (e.is_a_power()) {
     const Expr& base = e.arg(0);
-    const Expr& exponent = e.arg(1);
     if (base.is_the_x_function())
       if (base.arg(0).has(Recurrence::n))
-	return true;
-    if (exponent.is_the_x_function())
-      if (exponent.arg(0).has(Recurrence::n))
 	return true;
   }
   return false;
 }
 
-} // anonymous namespace
-
-PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::find_non_linear_recurrence(const Expr& e) {
+/*!
+  Returns <CODE>true</CODE> if finds non linear term;
+  returns <CODE>false</CODE> otherwise.
+*/
+bool
+find_non_linear_recurrence(const Expr& e) {
   unsigned num_summands = e.is_a_add() ? e.nops() : 1;
   if (num_summands > 1)
     for (unsigned i = num_summands; i-- > 0; ) {
       const Expr& term = e.op(i);
       unsigned num_factors = term.is_a_mul() ? term.nops() : 1;
       if (num_factors == 1) {
-	if (x_function_in_powers_or_functions(term)) {
-	  D_MSG("non linear");
-	  return TOO_COMPLEX;
+	if (x_function_in_powers_or_functions(term))
+	  return true;
+      }
+      else {
+	bool found_function_x = false;
+	for (unsigned j = num_factors; j-- > 0; ) {
+	  const Expr& factor = term.op(j);
+	  if (x_function_in_powers_or_functions(factor))
+	    return true;
+	  if (factor.is_the_x_function())
+	    if (found_function_x)
+	      return true;
+	    else
+	      if (factor.arg(0).has(Recurrence::n))
+		found_function_x = true;
 	}
       }
-      else
-	for (unsigned j = num_factors; j-- > 0; )
-	  if (x_function_in_powers_or_functions(term.op(j))) {
-	    D_MSG("non linear");
-	    return TOO_COMPLEX;
-	  }
     }
   else {
     unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
     if (num_factors == 1) {
-      if (x_function_in_powers_or_functions(e)) {
-	D_MSG("non linear");
-	return TOO_COMPLEX;
+      if (x_function_in_powers_or_functions(e))
+	return true;
+    }
+    else {
+      bool found_function_x = false;
+      for (unsigned j = num_factors; j-- > 0; ) {
+	const Expr& factor = e.op(j);
+	if (x_function_in_powers_or_functions(factor))
+	  return true;
+	if (factor.is_the_x_function())
+	  if (found_function_x)
+	    return true;
+	  else
+	    if (factor.arg(0).has(Recurrence::n))
+	      found_function_x = true;
       }
     }
-    else
-      for (unsigned j = num_factors; j-- > 0; )
-	if (x_function_in_powers_or_functions(e.op(j))) {
-	  D_MSG("non linear");
-	  return TOO_COMPLEX;
-	}
   }
-  return SUCCESS;
+  return false;
 }
+
+//! \brief
+//! Returns <CODE>true</CODE> if the non linear recurrence \f$ x(n) = rhs \f$
+//! is rewritable as linear recurrence \f$ x(n) = new_rhs \f$.
+//! Returns <CODE>false</CODE> otherwise.
+/*!
+  Cases of rewritable non linear recurrences:
+  -  \f$ x(n) = a * x(n-k_1)^b_1 * ... * x(n-k_h)^b_h \f$,
+     where \f$ k_1, \dots, k_h, b_1, \dots, b_h \f$ are positive integers
+     and \f$ h > 1 \f$ or \f$ b_1 > 1 \f$;
+  -  x(n) = x(n-k)^b, where \f$ b > 1 \f$ and \f$ k \f$ are positive integers.
+*/
+bool
+rewrite_non_linear_recurrence(const Expr& rhs, Expr& new_rhs, Expr& base) {
+  D_MSGVAR("*** ", rhs);
+  // First case.
+  if (rhs.is_a_mul()) {
+    bool simple_cases = false;
+    Number common_exponent = 1;
+    for (unsigned i = rhs.nops(); i-- > 0; ) {
+      const Expr& factor = rhs.op(i);
+      Number num_exp;
+      if (factor.is_a_power() && factor.arg(0).is_the_x_function()
+	  && factor.arg(1).is_a_number(num_exp)
+	  && num_exp.is_positive_integer()) {
+	simple_cases = true;
+	common_exponent = lcm(num_exp, common_exponent);
+      }
+      if (factor.is_the_x_function()) {
+	simple_cases = true;
+	common_exponent = lcm(1, common_exponent);
+      }
+    }
+    D_VAR(common_exponent);
+    new_rhs = 0;
+    if (simple_cases)
+      if (common_exponent == 1) {
+	// Substitute any `x' function `f' with `exp(1)^f'.
+	base = exp(Expr(1));
+	Expr tmp = substitute_x_function(rhs, exp(Expr(1)), true);
+	tmp = simplify_ex_for_input(tmp, true);
+	for (unsigned i = tmp.nops(); i-- > 0; )
+	  new_rhs += log(tmp.op(i));
+	new_rhs = simplify_logarithm(new_rhs);
+	D_VAR(new_rhs);
+	return true;
+      }
+      else {
+	D_VAR(common_exponent);
+	// Substitute any `x' function `f' with `common_exponent^f'.
+	base = common_exponent;
+	Expr tmp = substitute_x_function(rhs, common_exponent, true);
+	tmp = simplify_ex_for_input(tmp, true);
+	for (unsigned i = tmp.nops(); i-- > 0; )
+	  new_rhs += log(tmp.op(i)) / log(Expr(common_exponent));
+	new_rhs = simplify_logarithm(new_rhs);
+	D_VAR(new_rhs);
+	return true;
+      }
+  }
+  // Second case.
+  else if (rhs.is_a_power()) {
+    const Expr& base_rhs = rhs.arg(0);
+    const Expr& exponent_rhs = rhs.arg(1);
+    Number num_exp;
+    if (base_rhs.is_the_x_function() && exponent_rhs.is_a_number(num_exp)
+	&& num_exp.is_positive_integer()) {
+      unsigned exponent_x_function = num_exp.to_unsigned();
+      // Substitute any `x' function `f' with `exponent_x_function^f'.
+      base = exponent_x_function;
+      Expr tmp = substitute_x_function(rhs, exponent_x_function, true);
+      tmp = simplify_ex_for_input(tmp, true);
+      new_rhs += log(tmp) / log(Expr(exponent_x_function));
+      new_rhs = simplify_logarithm(new_rhs);
+      D_VAR(new_rhs);
+      return true;
+    }
+    else
+      return false;
+  }
+  return false;
+}
+
+} // anonymous namespace
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_order(const Number& decrement, unsigned int& order,
@@ -595,10 +688,14 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	else if (argument.is_a_add() && argument.nops() == 2) {
 	  Number decrement;
 	  if (get_constant_decrement(argument, decrement)) {
+#if 0
 	    if (found_function_x) {
-	      D_MSG("non linear");
-	      return TOO_COMPLEX;
+	      set_non_linear_finite_order();
+	      return SUCCESS;
 	    }
+#else
+	    assert(!found_function_x);
+#endif
 	    Solver_Status status
 	      = compute_order(decrement, order, index,
 			      coefficients.max_size());
@@ -689,6 +786,12 @@ PURRS::Recurrence::classification_recurrence(const Expr& rhs,
   if (rhs.has_floating_point_numbers())
     return MALFORMED_RECURRENCE;
 
+  if (find_non_linear_recurrence(rhs)) {
+    set_non_linear_finite_order();
+    D_MSG("NON LINEAR");
+    return SUCCESS;
+  }
+
   // Initialize the computation of the order of the linear part of the
   // recurrence.  This works like the computation of a maximum: it is
   // the maximum `k', if it exists, such that `rhs = a*x(n-k) + b' where `a'
@@ -727,15 +830,10 @@ PURRS::Recurrence::classification_recurrence(const Expr& rhs,
 					 coefficient, divisor_arg))
 	!= SUCCESS)
       return status;
- 
+
   set_inhomogeneous_term(inhomogeneous);
   D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
   
-  // Check if the recurrence is non linear, i.e., if there is a non-linear
-  // term in the inhomogeneous_term containing `x(a*n+b)'.
-  if ((status = find_non_linear_recurrence(inhomogeneous_term)) != SUCCESS)
-    return status;
-
   if (!is_functional_equation())
     // `inhomogeneous_term' is a function of `n', the parameters and of
     // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
@@ -747,7 +845,7 @@ PURRS::Recurrence::classification_recurrence(const Expr& rhs,
     finite_order_p = new Finite_Order_Info(order, 0, coefficients);
   else if (is_functional_equation())
     functional_eq_p = new Functional_Equation_Info(coefficient, divisor_arg);
-
+  
   return SUCCESS;
 }
 
@@ -774,7 +872,8 @@ PURRS::Recurrence::classify() const {
   if ((status = classification_recurrence(rhs, gcd_among_decrements))
       != SUCCESS)
     return status;
-  assert(is_linear_finite_order() || is_functional_equation());
+  assert(is_linear_finite_order() || is_functional_equation()
+	 || is_non_linear_finite_order());
 
   D_VAR(gcd_among_decrements);
   if (finite_order_p != 0)
@@ -795,6 +894,20 @@ PURRS::Recurrence::classify() const {
 							gcd_among_decrements);
       status = classify();
     }
+
+  if (is_non_linear_finite_order()) {
+    Expr new_rhs;
+    Expr base;
+    if (rewrite_non_linear_recurrence(rhs, new_rhs, base)) {
+      recurrence_rhs_rewritten = true;
+      non_linear_p = new Non_Linear_Info(recurrence_rhs, base);
+      recurrence_rhs = new_rhs;
+      status = classify();
+    }
+    else
+      return TOO_COMPLEX;
+  }
+  
   return status;
 }
 
@@ -806,7 +919,6 @@ PURRS::Recurrence::classify() const {
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classify_and_catch_special_cases() const {
-  D_MSG("classify");
   bool exit_anyway = false;
   Solver_Status status;
   do {

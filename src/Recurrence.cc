@@ -35,6 +35,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr.defs.hh"
 #include "Cached_Expr.defs.hh"
 #include "Order_Reduction_Info.defs.hh"
+#include "Non_Linear_Info.defs.hh"
 #include "Blackboard.defs.hh"
 #include <algorithm>
 #include <iostream>
@@ -113,6 +114,9 @@ PURRS::Recurrence::verify_solution() const {
       D_VAR(old_recurrence_rhs());
       D_VAR(gcd_decrements_old_rhs());
     }
+
+    if (non_linear_p)
+      recurrence_rhs = original_recurrence_rhs();
     if (order() == 0)
       return PROVABLY_CORRECT;
     else {
