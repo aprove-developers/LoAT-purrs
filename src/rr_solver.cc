@@ -238,7 +238,7 @@ return_sum(bool distinct, const Symbol& n, const Number& order,
   the number of exponentials, and we assume that the \f$ \alpha_j \f$'s
   are distinct complex numbers).
   We let \f$ \lambda \f$ denote the generic root of the characteristic 
-  equation and \$f \alpha \f$ the generic base of an exponential.
+  equation and \f$ \alpha \f$ the generic base of an exponential.
 
   This function fills the two vectors of <CODE>Expr</CODE>
   \p symbolic_sum_distinct and \p symbolic_sum_no_distinct,
@@ -1014,7 +1014,7 @@ domain_recurrence(const Symbol& n, const Expr& e, Number& i_c) {
 }
 
 //! \brief
-//! When possible, computes \f$ \prod_{k=lower}^upper \e(k) \f$
+//! When possible, computes \f$ \prod_{k=lower}^upper e(k) \f$
 //! if \f$ e \f$ is a sum of terms, otherwise returns the symbolic product.
 static Expr
 compute_product_on_add(const Expr& e, const Symbol& n,
@@ -1080,7 +1080,7 @@ compute_product_on_add(const Expr& e, const Symbol& n,
 }
 
 //! \brief
-//! When possible, computes \f$ \prod_{k=lower}^upper \e(k) \f$
+//! When possible, computes \f$ \prod_{k=lower}^upper e(k) \f$
 //! if \f$ e \f$ is a power, otherwise returns the symbolic product.
 static Expr
 compute_product_on_power(const Expr& e, const Symbol& n,
@@ -1137,11 +1137,11 @@ compute_product_on_power(const Expr& e, const Symbol& n,
 
 //! \brief
 //! Let \f$ e(n) \f$ be an expression in the variable \f$ n \f$.
-//! This functions computes \f$ \e!(n) \f$ defined as follows:
+//! This function computes \f$ e!(n) \f$ defined as follows:
 //! \f[
-//!   \e!(0) \defeq 1,
+//!   e!(0) \defeq 1,
 //!   \qquad
-//!   \e!(n) \defeq \prod_{k=lower}^upper e(k).
+//!   e!(n) \defeq \prod_{k=lower}^upper e(k).
 //! \f]
 /*!
   When possible to find the closed form for \f$ \prod_{k=lower}^upper e(k) \f$,

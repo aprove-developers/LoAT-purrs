@@ -36,17 +36,17 @@ public:
   //! Default constructor.
   Matrix();
 
-  //! Builds the matrix with \p i rows and \j columns.
+  //! Builds the matrix with \p i rows and \p j columns.
   Matrix(unsigned i, unsigned j);
 
   //! \brief
-  //! Builds the matrix with \p i rows and \j columns containing the
+  //! Builds the matrix with \p i rows and \p j columns containing the
   //! expression in \p lst.
   /*!
-    If the list has fewer elements than the matrix, the remaining matrix
-    elements are set to zero.
-    If the list has more elements than the matrix, the excessive elements are
-    thrown away.
+    If the list has fewer elements than the matrix, the remaining
+    matrix elements are set to zero.
+    If the list has more elements than the matrix, the excessive
+    elements are thrown away.
   */
   Matrix(unsigned i, unsigned j, const Expr_List& y);
 

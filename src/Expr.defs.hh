@@ -531,7 +531,7 @@ public:
     returns the function's argument.
     
     \exception std::out_of_range thrown if
-                                 \f$ i \notin \{0, \dotsc, nops() - 1 \}.
+                                 \f$ i \notin \{0, \dotsc, nops() - 1 \} \f$.
   */
   Expr op(unsigned i) const;
 

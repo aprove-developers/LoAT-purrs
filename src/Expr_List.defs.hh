@@ -67,7 +67,7 @@ public:
   //! Returns the \f$ i \f$-th element of \p *this.
   /*!
     \exception std::out_of_range thrown if
-                                 \f$ i \notin \{0, \dotsc, nops() - 1 \}.
+                                 \f$ i \notin \{0, \dotsc, nops() - 1 \} \f$.
   */
   // FIXME: ginac -> wrong answer!
   Expr op(unsigned i) const;
