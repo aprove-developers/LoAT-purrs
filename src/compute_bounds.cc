@@ -581,29 +581,14 @@ PURRS::Recurrence::add_term_with_initial_condition(const Expr& q_upper,
 						   Expr& ub, Expr& lb) const {
   Expr index_initial_condition
     = simplify_logarithm(n / pwr(functional_eq_p->ht_begin()->first, q_upper));
-  Number index = 0;
-  if (index_initial_condition.is_a_number()) {
-    index = index_initial_condition.ex_to_number();
-    D_VAR(index);
-    D_VAR(applicability_condition());
-    if (index < applicability_condition())
-      index = applicability_condition();
-    assert(index.is_positive_integer());
-  }
-  // The index of the initial condition is not a number.
-  if (index == 0) {
-    ub += pwr(functional_eq_p->ht_begin()->second, q_upper)
-      * x(index_initial_condition);
-    lb += pwr(functional_eq_p->ht_begin()->second, q_lower)
-      * x(index_initial_condition);
-  }
-  // The index of the initial condition is a number.
-  else {
-    ub += pwr(functional_eq_p->ht_begin()->second, q_upper)
-      * get_initial_condition(index.to_unsigned());
-    lb += pwr(functional_eq_p->ht_begin()->second, q_lower)
-      * get_initial_condition(index.to_unsigned());
-  }
+  if (index_initial_condition.is_a_number()
+      && index_initial_condition.ex_to_number() < applicability_condition())
+    index_initial_condition = applicability_condition();
+  
+  ub += pwr(functional_eq_p->ht_begin()->second, q_upper)
+    * x(index_initial_condition);
+  lb += pwr(functional_eq_p->ht_begin()->second, q_lower)
+    * x(index_initial_condition);
 }
 
 /*
