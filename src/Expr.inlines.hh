@@ -253,6 +253,11 @@ Expr::is_rational_polynomial() const {
 }
 // FIXME: info, temporary
 inline bool
+Expr::is_rational_function() const {
+  return info(GiNaC::info_flags::rational_function);
+}
+// FIXME: info, temporary
+inline bool
 Expr::is_relation_equal() const {
   return info(GiNaC::info_flags::relation_equal);
 }

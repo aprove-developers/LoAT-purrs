@@ -368,7 +368,9 @@ public:
   // FIXME: info, temporary
   bool is_integer_polynomial() const;
   bool is_rational_polynomial() const;
+  bool is_rational_function() const;
   bool is_relation_equal() const;
+
 
   //! Returns the operand's number of \p *this.
   /*!
