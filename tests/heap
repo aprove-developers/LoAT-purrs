@@ -1,9 +1,10 @@
 % Each recurrence is marked with one or more characters
 % whose meaning is as follows:
 %
-% Y expected to be solved with a provably correct result
 % y expected to be solved
-% N expected to be solved with a provably wrong result
+%   v with a provably correct result
+%   w with a provably wrong result
+%   d with a result whose correctness can neither be proved nor be disproved
 % n expected not to be solved
 % U unsolvable: expect the system to diagnose this
 % u unsolvable: expect the system not to diagnose this
