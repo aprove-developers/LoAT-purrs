@@ -1611,7 +1611,12 @@ PURRS::Recurrence::dump(std::ostream& s) const {
       || lower_bound_.has_expression() || upper_bound_.has_expression())
     s << "first_valid_index_for_solution = "
       << first_valid_index_for_solution() << std::endl;
-  
+  if ((lower_bound_.has_expression() || upper_bound_.has_expression())
+      && !exact_solution_.has_expression()) {
+    std::string Sc_function = definition_Sc();
+    if (!Sc_function.empty())
+      s << Sc_function << std::endl;
+  }
   s << "auxiliary_definitions:" << std::endl;
   blackboard.dump(s);
   
