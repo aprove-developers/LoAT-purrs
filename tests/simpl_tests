@@ -452,6 +452,22 @@ y	(2*a+b+3)!*c+9
 
 %%%%%%%%
 
+y	binom(n,k)
+binom(n,k)
+binom(n,k)
+factorial(-k+n)^(-1)*factorial(k)^(-1)*factorial(n)
+binom(n,k)
+ 
+%%%%%%%%
+ 
+y	binom(n+1,k)/binom(n,k)
+binom(n,k)^(-1)*binom(1+n,k)
+binom(n,k)^(-1)*binom(1+n,k)
+(1-k+n)^(-1)*(1+n)
+binom(n,k)^(-1)*binom(1+n,k)
+
+%%%%%%%%
+
 y	a^(-n)*(2*a)^(n)*c
 2^n*c
 2^n*c
