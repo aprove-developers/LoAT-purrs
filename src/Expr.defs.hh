@@ -133,16 +133,6 @@ bool operator==(const Expr& x, const Expr& y);
 bool operator!=(const Expr& x, const Expr& y);
 
 //! \brief
-//! Builds an arbitrary expression, called <EM>wildcard</EM>, with the
-//! specified label \p label.
-/*!
-  The label allows to have multiple different
-  wildcard in a single expression.
-*/
-// FIXME: meglio con argomento di default `unsigned label = 0'?
-Expr wild(unsigned label);
-
-//! \brief
 //! Returns the application of functor \f$ f \f$ to operand \f$ x \f$,
 //! i.e., the expression \f$ f(x) \f$.
 Expr apply(Functor f, const Expr& x);
@@ -563,17 +553,6 @@ public:
   //! expressions in \p y.
   Expr subs(const Expr_List& x, const Expr_List& y) const;
 
-  //! Returns <CODE>true</CODE> if and only if \p *this matches \p x.
-  // FIXME: devo spiegare meglio cosa vuol dire `matches \p x'?
-  bool match(const Expr& x) const;
-
-  //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this matches \p x;
-  //! in this case \p y contains a list of relations
-  //! \f$ wildcard == expression \f$.
-  //! If returns <CODE>false</CODE> then the state of \p y is undefined.
-  bool match(const Expr& x, Expr_List& y) const;
-
   //! \brief
   //! Returns <CODE>true</CODE> if and only if a subexpression of \p *this
   //! matches \p x.
@@ -799,7 +778,6 @@ private:
 
   friend bool operator==(const Expr& x, const Expr& y);
 
-  friend Expr wild(unsigned label);
   friend Expr apply(Functor f, const Expr& x);
   friend Expr apply(Functor f, const Expr& x1, const Expr& x2);
   friend Expr apply(Functor f, const Expr& x1, const Expr& x2, const Expr& x3);

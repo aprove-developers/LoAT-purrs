@@ -400,16 +400,6 @@ Expr::subs(const Expr_List& x,
 }
 
 inline bool
-Expr::match(const Expr& x) const {
-  return Base::match(x);
-}
-
-inline bool
-Expr::match(const Expr& x, Expr_List& y) const {
-  return Base::match(x, y.l);
-}
-
-inline bool
 Expr::has(const Expr& x) const {
   return Base::has(x);
 }
@@ -482,11 +472,6 @@ Expr::rhs() const {
 inline Expr
 Expr::diff(const Symbol& x, unsigned nth) {
   return Base::diff(x.s, nth);
-}
-
-inline Expr
-wild(unsigned label) {
-  return GiNaC::wild(label);
 }
 
 inline Expr
