@@ -30,15 +30,78 @@
   and Compound indexes for additional information.
 */
 
+
+
 /*! \mainpage Recurrence Relations and the PURRS
 \section preamble A C++ library for the (possibly approximate) solution of recurrence relations.
 
 FIXME: Abstract to be written.
 
-\section introduction An Introduction to Recurrence Relation
+<B>Preliminaries</B>
 
-In this section we introduce recurrence relations,
-as considered by the library, in more detail.
+We will use the following conventions:
+we denote by \f$ \Nset \f$ the set of nonnegative integers, so that
+\f$ 0 \in \Nset \f$; the value of an empty sum is \f$ 0 \f$.
+
+We let \f$ \Cset[n] \f$ denote the <EM>ring of polynomials</EM> in the
+<EM>indeterminate</EM> \f$ n \f$ with coefficients in \f$ \Cset \f$.
+This is the smallest set (with respect to inclusion) that contains the
+set of complex numbers \f$ \Cset \f$, the indeterminate \f$ n \notin \Cset \f$,
+and is closed with respect to addition and multiplication.
+The rings \f$ \Zset[n] \f$, \f$ \Qset[n] \f$ and \f$ \Rset[n] \f$ are
+defined similarly.
+Let \f$ p \in \Cset[n] \setminus \{ 0 \} \f$:
+we denote by \f$ \deg(p) \f$ the <EM>degree</EM> of the polynomial \f$ p \f$
+and by \f$ \lead(p) \f$ its <EM>leading coefficient</EM>, that is,
+the coefficient of the monomial \f$ n^{\deg(p)} \f$.
+We also let \f$ \coeff_j(p) \f$ denote the coefficient of the monomial
+of degree \f$ j \f$ of the polynomial \f$ p \f$.
+With this notation, \f$ \lead(p) = \coeff_{\deg(p)}(p) \f$.
+
+We are particularly interested in deriving, when possible,
+mathematical formulas that are <EM>in closed form</EM>, a concept
+that we define informally as follows:
+a mathematical expression denoting a function \f$ \fund{f}{\Nset}{\Cset} \f$
+is said to be in <EM>elementary closed form</EM> if it is,
+<EM>syntactically</EM>, a linear combination of a fixed number, \f$ r \f$,
+say, of products of polynomials in \f$ \Cset[n] \f$ and (complex)
+exponentials.
+The number \f$ r \f$ must be an absolute constant, that is, it must be
+independent of all variables and parameters of the problem.
+As an example, the left hand side of the identity
+\f[
+  \sum_{k=0}^n \binom nk
+  =
+  2^n
+\f]
+is not in closed form, while the right hand side is.
+
+Generally speaking, we focus on effectively computable methods
+that can constitute the basis of practical, efficient algorithms.
+As a consequence, very often we refer to <EM>syntax</EM>
+instead of <EM>semantics</EM>.
+Moreover, in an attempt to keep the discussion more fluid,
+we do that implicitly.
+Thus, when we say ``\f$ p \f$ is a polynomial'' we actually mean
+``\f$ p \f$ is an expression that, syntactically, is a polynomial''
+or
+``\f$ p \f$ is, syntactically, of the form
+  \f$ a_0\lambda^k + a_1\lambda^{k-1} + \cdots + a_{k-1}\lambda + a_k \f$
+  where \f$ \dots \f$''.
+
+We prefer to use the term ``recurrence relations,'' but in the
+literature it is also possible to encounter the term
+<EM>difference equations</EM>.
+The latter is mainly used in a mathematical context, in order to give
+prominence to the tie with the differential equations.
+In fact, difference equations can be considered the discrete analogue
+of differential equations, and there exists a collection of
+mathematical tools, called <EM>difference calculus</EM>, which is quite
+similar to <EM>differential calculus</EM>.
+
+
+
+\section introduction An Introduction to Recurrence Relation
 
 <B>Recurrence relation</B>
 
@@ -100,11 +163,31 @@ We denote with \f$ x(k) \f$, with \f$ k \in \Nset \f$,
 <EM>symbolic initial conditions</EM>, i.e. initial condition not still
 defined by the user.
 
-homogeneous
+In the following section we will consider the different types of
+recurrences that the system is able to deal.
 
-linear
 
-first_valid_index:
-it is the least non-negative integer \f$ j \f$ such that
-the recurrence is well-defined for \f$ n \geq j \f$.
+\section linear_finite_order_const_coeff Linear Recurrences of Finite Order with Constant Coefficients
+
+A <EM>linear recurrence of finite order with constant coefficients</EM>
+is a recurrence of the form
+\f[
+   x_n
+   =
+   a_1 x_{n-1} + a_2 x_{n-2} + \cdots + a_k x_{n-k} + p(n),
+\f]
+for \f$ n \geq k \f$, where \f$ k \f$ is a fixed positive integer that
+is called <EM>order of the recurrence relation</EM>.
+We implicitly assume that \f$ a_k \neq 0 \f$, for otherwise the order
+would be smaller.
+The <EM>coefficients</EM> \f$a_j\f$ are real or complex numbers.
+The function \f$ p \f$ is defined on \f$ \Nset \cap [k, +\infty) \f$,
+and is the <EM>non-homogeneous part</EM> of the recurrence.
+If \f$ p \doteq 0 \f$ (that is, \f$ p \f$ vanishes identically from a
+syntactical point of view), we say that the recurrence is
+<EM>homogeneous</EM>.
+Every recurrence is given with a set of \f$ k \f$
+<EM>initial conditions</EM> \f$ x_0 \f$, \f$ x_1 \f$, \f$ \dots \f$,
+\f$ x_{k-1} \f$, which we assume to be known.
+
 */

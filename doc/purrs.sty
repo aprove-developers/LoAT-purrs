@@ -25,6 +25,10 @@
                                \begin{array}{@{}l@{}}#2\end{array}
                       \right.   \,\right\}}}
 
+%% Polynomial notation.
+\def\coeff{\operatorname{coeff}}
+\def\lead{\operatorname{lead}}
+
 %% Logic notation.
 \newcommand*{\entails}{\mathrel{\vdash}}
 \newcommand*{\bigland}{\mathop{\bigwedge}\limits}
@@ -34,22 +38,12 @@
 \newcommand*{\pimplied}{\mathrel{\leftarrow}}
 \newcommand{\st}{\mathrel{.}}
 \newcommand{\itc}{\mathrel{:}}
+\newcommand*{\fund}[3]{\mathord{#1}\colon#2\rightarrow#3}  % Function
 
 %% Things that hold by definition.
 \newcommand{\defrel}[1]{\mathrel{\buildrel \mathrm{def} \over {#1}}}
 \newcommand{\defeq}{\defrel{=}}
 \newcommand{\defiff}{\defrel{\Longleftrightarrow}}
-
-% Vectors.
-\newcommand{\vect}[1]{\mathbf{#1}}
-
-% Matrix functions.
-\newcommand*{\transpose}{\mathrm{T}}
-
-% Polyhedron functions.
-\newcommand{\prank}{\mathop{\mathrm{rank}}}
-\newcommand{\pdim}{\mathop{\mathrm{dim}}}
-\newcommand{\linspace}{\mathop{\mathrm{lin. space}}}
 
 %
 \def\stdform{\operatorname{stdform}}
