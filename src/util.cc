@@ -248,39 +248,32 @@ PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
-  assert(p.coeff(x, deg_p).is_a_number());
-  Number t_lcm = p.coeff(x, deg_p).ex_to_number().denominator();
-  for (unsigned i = 0; i <= deg_p; ++i) {
-    Expr t_coeff = p.coeff(x, i);
-    t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denominator());
-  }
-  return (p * t_lcm).primpart(x);
+  Expr t_lcm = denominator(p.coeff(x, deg_p));
+  for (unsigned i = 0; i <= deg_p; ++i)
+    t_lcm = lcm(t_lcm, denominator(p.coeff(x, i)));
+  return (p * t_lcm).expand().primpart(x);
 }
 
 /*!
   Converts a polynomial with rational coefficients into the 
   associate primitive polynomial with integer coefficients.
-  This version also returns a Number containing the factor used to 
-  convert.
+  This version also returns an expression containing the factor
+  used to convert.
 */
 PURRS::Expr
 PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x,
-				     Number& factor) {
+				     Expr& factor) {
   assert(p.is_rational_polynomial(x));
   unsigned deg_p = p.degree(x);
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
-  assert(p.coeff(x, deg_p).is_a_number());
-  Number t_lcm = p.coeff(x, deg_p).ex_to_number().denominator();
-  for (unsigned i = 0; i <= deg_p; ++i) {
-    Expr t_coeff = p.coeff(x, i);
-    t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denominator());
-  }
+  Expr t_lcm = denominator(p.coeff(x, deg_p));
+  for (unsigned i = 0; i <= deg_p; ++i)
+    t_lcm = lcm(t_lcm, denominator(p.coeff(x, i)));
 
-  Expr q = (p * t_lcm).primpart(x);
-  factor  = p.lcoeff(x).ex_to_number();
-  factor *= pwr(q.lcoeff(x), -1).ex_to_number();
+  const Expr& q = (p * t_lcm).expand().primpart(x);
+  factor = p.lcoeff(x) * pwr(q.lcoeff(x), -1);
   return q;
 }
 

@@ -80,7 +80,7 @@ convert_to_integer_polynomial(const Expr& p, const Symbol& x);
 //! Finds associate primitive polynomial with integer coefficients.
 Expr
 convert_to_integer_polynomial(const Expr& p, const Symbol& x,
-			      Number& factor);
+			      Expr& factor);
 
 //! \brief
 //! Returns the resultant between the polynomials \p p and \p q
