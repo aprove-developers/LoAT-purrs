@@ -55,12 +55,15 @@ Expr
 compute_product_on_add(const Expr& e, const Number& lower, const Expr& upper,
 		       bool is_denominator) {
   Expr e_prod;
-  Expr_List substitution;
   bool e_prod_computed = false;
-  if (e.match(Recurrence::n + wild(0), substitution)) {
-    Expr tmp = get_binding(substitution, 0);
+  if (e.is_a_add() && e.nops() == 2) {
+    // `e' is of the form a + b.
+    const Expr& a = e.op(0);
+    const Expr& b = e.op(1);
     Number num;
-    if (tmp.is_a_number(num))
+    // `e' is of the form n + p with p a number.
+    if ((a == Recurrence::n && b.is_a_number(num))
+	|| (b == Recurrence::n && a.is_a_number(num)))
       if (num.is_positive_integer()) {
 	e_prod = factorial(e) / factorial(lower + num - 1);
 	e_prod_computed = true;
