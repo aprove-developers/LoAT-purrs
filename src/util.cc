@@ -240,7 +240,7 @@ PURRS::isolate_polynomial_part(const Expr& e, const Symbol& x,
 */
 PURRS::Expr
 PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
-  assert(p.is_rational_polynomial());
+  assert(p.is_rational_polynomial(x));
   unsigned deg_p = p.degree(x);
 
   // Choose non-zero starting value and compute least common
@@ -262,7 +262,7 @@ PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
 PURRS::Expr
 PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x,
 				     Number& factor) {
-  assert(p.is_rational_polynomial());
+  assert(p.is_rational_polynomial(x));
   unsigned deg_p = p.degree(x);
 
   // Choose non-zero starting value and compute least common
@@ -301,8 +301,8 @@ sylvester_matrix_resultant(const Expr& /*p*/, const Expr& /*q*/) {
 */
 PURRS::Expr
 PURRS::resultant(const Expr& p, const Expr& q, const Symbol& x) {
-  assert(p.is_rational_polynomial());
-  assert(q.is_rational_polynomial());
+  assert(p.is_rational_polynomial(x));
+  assert(q.is_rational_polynomial(x));
   Expr f = p.expand();
   Expr g = q.expand();
   Expr res = 1;
@@ -323,19 +323,19 @@ PURRS::resultant(const Expr& p, const Expr& q, const Symbol& x) {
       // `prem()' wants only rational polynomials. The expressions
       // `f' and `g' are surely polynomials but in this point they could be
       // not enough simplified so that the system could not recognize them.
-      if (!f.is_rational_polynomial()) {
+      if (!f.is_rational_polynomial(x)) {
 	Expr common_factor;
 	Expr rem;
 	factorize(f, common_factor, rem);
 	f = (common_factor * rem).expand();
       }
-      if (!g.is_rational_polynomial()) {
+      if (!g.is_rational_polynomial(x)) {
 	Expr common_factor;
 	Expr rem;
 	factorize(g, common_factor, rem);
 	g = (common_factor * rem).expand();
       }
-      if (!f.is_rational_polynomial() || !g.is_rational_polynomial())
+      if (!f.is_rational_polynomial(x) || !g.is_rational_polynomial(x))
 	// The last chanche to compute the resultant is to use the
 	// method of the Sylvester matrix
 	// (see http://mathworld.wolfram.com/SylvesterMatrix.html).
@@ -435,7 +435,7 @@ largest_positive_int_zero_on_expanded_ex(const Expr& e, const Symbol& x,
     if (e.is_polynomial(x)) {
       // Polynomials are always well-defined.
       ok = true;
-      if (e.is_rational_polynomial()) {
+      if (e.is_rational_polynomial(x)) {
 	Expr e_tmp = convert_to_integer_polynomial(e, x);
 	std::vector<Polynomial_Root> roots;
 	bool all_distinct;
