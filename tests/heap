@@ -212,26 +212,18 @@ ulv	x(n/2)+9*n
 ulv	x(n/3)+5
 ulv	x(n/5)+3
 y	(x(n-3)+x(n-4))/2
-y	-(x(n-1)^2)
 y	2*x(n-1)*x(n-2)
 y	2*x(n-1)+3*x(n-3)
 y	2*x(n-1)+x(n-2)+n^3
 y	2*x(n-1)-4*x(n-2)+4*x(n-3)
 y	2*x(n-1)-4*x(n-3)
 y	3*x(n-1)*x(n-2)
-y	3*x(n-1)^2
 y	3*x(n-1)^2*x(n-2)
-y	3*x(n-1)^2*x(n-2)^3
 y	3-5*x(n-2)+x(n-1)
 y	3/4-5/4*x(n-2)+1/4*x(n-1)
 y	4*x(n+1)+5*x(n-1)-3
-y	n*x(n-1)^2
 y	n+x(n-1)+x(n-2)+x(n-3)+x(n-4)+1
-y	x(n)*(x(n-1))^2
-y	x(n)*x(n)
-y	x(n)*x(n+1)
 y	x(n+1)+5*x(n-1)-3
-y	x(n-1)*x(n-1)
 y	x(n-1)*x(n-2)
 y	x(n-1)+3*x(n-4)+1
 y	x(n-1)+7*x(n-4)
@@ -246,7 +238,6 @@ y	x(n-1)+x(n-3)-3*x(n-2)
 y	x(n-1)+x(n-3)-3*x(n-2)+7*x(n-4)
 y	x(n-1)-3*x(n-3)
 y	x(n-1)-4*x(n-2)+2^n+1
-y	x(n-1)^2
 y	x(n-1)^2*x(n-2)
 y	x(n-2)*x(n-1)
 y	x(n/2)
@@ -277,6 +268,7 @@ yv	-3*x(n-1)
 yv	-3*x(n-1)+4*x(n-2)
 yv	-n^2*exp(-n)
 yv	-x(n-1)-x(n-2)
+yv	-(x(n-1)^2)
 yv	0
 yv	1
 yv	1*x(n)+1*x(n-1)
@@ -415,6 +407,8 @@ yv	3*x(n-1)-2*x(n-2)+3*2^(n-1)
 yv	3*x(n-1)-2*x(n-2)+5
 yv	3*x(n-1)-3*x(n-2)
 yv	3*x(n-1)-4*n+3*2^n
+yv	3*x(n-1)^2
+yv	3*x(n-1)^2*x(n-2)^3
 yv	3*x(n-2)-2*x(n-3)
 yv	3*x(n-8)
 yv	3*x(n-8)+n^2
@@ -495,6 +489,7 @@ yv	n*x(n-1)+n!
 yv	n*x(n-1)+n*n*n
 yv	n*x(n-1)+n^n
 yv	n*x(n-1)-1/(n+1)
+yv	n*x(n-1)^2
 yv	n+(-1)^n
 yv	n+1
 yv	n+x(n-1)
@@ -507,7 +502,10 @@ yv	sum(a,1,n,log(a)^2)
 yv	x(0)
 yv	x(0)*n^2
 yv	x(0)+3*n
+yv	x(n)*(x(n-1))^2
 yv	x(n)*3
+yv	x(n)*x(n)
+yv	x(n)*x(n+1)
 yv	x(n)+2*x(n-1)
 yv	x(n)+x(n)
 yv	x(n)+x(n+2)
@@ -530,6 +528,7 @@ yv	x(n-1)*n*log(n)
 yv	x(n-1)*n+1
 yv	x(n-1)*n^n
 yv	x(n-1)*x(0)
+yv	x(n-1)*x(n-1)
 yv	x(n-1)+(((n+1)^5)-n^5)
 yv	x(n-1)+(1+1/n)^n
 yv	x(n-1)+(27^n)^(-1)*((1+n)!)^(-1)*((2+n)!)^(-1)*(n!)^(-1)*(3*n)!
@@ -597,6 +596,7 @@ yv	x(n-1)-n^1
 yv	x(n-1)-x(n-2)
 yv	x(n-1)-x(n-2)+1
 yv	x(n-1)/2
+yv	x(n-1)^2
 yv	x(n-2)
 yv	x(n-2)*6-5*x(n-1)
 yv	x(n-2)+(n-2)^2
