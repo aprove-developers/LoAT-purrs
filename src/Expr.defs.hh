@@ -58,10 +58,12 @@ Expr operator-(const Expr& lh);
 //! Binary operators Expr with Expr
 bool operator==(const Expr& lh, const Expr& rh);
 bool operator!=(const Expr& lh, const Expr& rh);
+#if 0
 bool operator<(const Expr& lh, const Expr& rh);
 bool operator>(const Expr& lh, const Expr& rh);
 bool operator<=(const Expr& lh, const Expr& rh);
 bool operator>=(const Expr& lh, const Expr& rh);
+#endif
 
 // FIXME: meglio con argomento di default `unsigned label = 0'?
 Expr wild(unsigned label);
