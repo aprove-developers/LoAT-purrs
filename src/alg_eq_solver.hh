@@ -45,8 +45,13 @@ enum Number_Type {
 
 class Polynomial_Root {
 private:
+  //! Value of the root.
   Expr value_;
+
+  //! Type of the root: <CODE>RATIONAL</CODE> or <CODE>NON_RATIONAL</CODE>.
   Number_Type type_;
+
+  //! Multiplicity of the root.
   Number multiplicity_;
 
 public:

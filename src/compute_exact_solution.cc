@@ -207,7 +207,7 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
     D_MSG("Variable coefficient with parameters");
     return TOO_COMPLEX;
   }
-  // `z' will contain the largest positive or null integer, if it exist,
+  // `z' will contain the largest positive or null integer, if it exists,
   // that cancel the denominator of the coefficient.
   // If this integer does not exist then `z' is left to 0.
   Number z = 0;
