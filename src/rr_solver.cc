@@ -480,12 +480,12 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
 
 /*!
   Calculates the solution of the first order recurrence
-  x(n) = \alpha * x(n-1) + p(n) with x_0 as
+  \f$x(n) = \alpha * x(n-1) + p(n)\f$ with \p x_0 as
   initial condition.
   The solution is given by the closed formula
-  x(n) = \alpha^n * x_0 + sum_{k=1}^n \alpha^(n-k)*p(k).
-  'decomposition' is a matrix that contains a decomposition of
-  the inhomogeneous term p(n) and 'coefficients' a vector that
+  \f$x(n) = \alpha^n * x_0 + sum_{k=1}^n \alpha^(n-k)*p(k)\f$.
+  \p decomposition is a matrix that contains a decomposition of
+  the inhomogeneous term \p p(n) and \p coefficients a vector that
   contains the coefficients of the recurrence.
  */
 static bool
@@ -550,17 +550,17 @@ build_characteristic_equation(GExpr& p, const GSymbol x,
 
 /*!
   Calculates the solution of the second order recurrence
-  x(n) = \alpha * x(n-1) + \beta * x(n-2) + p(n), (\beta \ne 0),
-  with x_0 and x_1 as initials conditions.
+  \f$x(n) = \alpha * x(n-1) + \beta * x(n-2) + p(n)\f$, (\f$ beta \neq 0\f$),
+  with \p x_0 and \p x_1 as initials conditions.
   We consider the homogeneous recurrence
-  g(n) = \alpha * g(n-1) + \beta * g(n-2)
-  with g_0 = 1 and g_1 = \alpha as initials conditions for the
+  \f$g(n) = \alpha * g(n-1) + \beta * g(n-2)\f$
+  with \f$g_0 = 1\f$ and \f$g_1 = \alpha\f$ as initials conditions for the
   fundamental solution.
   The complete solution is given by the formula
-  x(n) = g(n-1) * x_1 + \beta g(n-2) * x_0 +
-         \sum_{k=2}^n g(n-k) * p(k),   for n \ge 2. 
-  'decomposition' is a matrix that contains a decomposition of
-  the inhomogeneous term p(n) and 'coefficients' a vector that
+  \f$x(n) = g(n-1) * x_1 + \beta g(n-2) * x_0 +
+         \sum_{k=2}^n g(n-k) * p(k)\f$,   for \f$n \ge 2\f$. 
+  \p decomposition is a matrix that contains a decomposition of
+  the inhomogeneous term \p p(n) and \p coefficients a vector that
   contains the coefficients of the recurrence.
  */
 static bool
@@ -663,57 +663,73 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
       // x^2 + \alpha * x + \beta = 0 has a double root.
       assert(roots[0].multiplicity() == 2);
       
-      // The solution of the homogeneous recurrence is of the form
-      // g_n = (a + b * n) \lambda^n where
-      // \lambda is the root with multiplicity 2.
-      // In this case we must to solve a linear system:
-      //             a = x_0
-      //             (a + b) * \lambda = x_1.
       GSymbol a("a"), b("b");
       GExpr root = roots[0].value();
 #if NOISY
       std::cout << "root " << root << std::endl;
 #endif
-      GExpr g_n = (a + b * n) * pow(root, n);
-      // Solved the system with the inverse matrix'method.
-      GMatrix vars(2, 2, lst(1, 0, root, root));
-      GMatrix rhs(2, 1, lst(x_0, x_1));
-      GMatrix sol(2, 1);
-      sol = vars.inverse();
-      sol = sol.mul(rhs);
-#if NOISY
-      std::cout << "matrix solution " << sol << std::endl;
-#endif
-      g_n = g_n.subs(a == sol(0,0));
-      g_n = g_n.subs(b == sol(1,0));
       
-      if (decomposition(1 ,0).is_zero())
+      if (decomposition(1, 0).is_zero()) {
 	// The binary recurrence is homogeneous.
-	solution_tot = g_n;
+	// The solution of the homogeneous recurrence is of the form
+	// x_n = (a + b * n) \lambda^n where
+	// \lambda is the root with multiplicity 2.
+	// In this case we must to solve a linear system:
+	//             a = x_0
+	//             (a + b) * \lambda = x_1.
+	solution_tot = (a + b * n) * pow(root, n);
+	// Solved the system with the inverse matrix'method.
+	GMatrix vars(2, 2, lst(1, 0, root, root));
+	GMatrix rhs(2, 1, lst(x_0, x_1));
+	GMatrix sol(2, 1);
+	sol = vars.inverse();
+	sol = sol.mul(rhs);
+#if NOISY
+	std::cout << "matrix solution " << sol << std::endl;
+#endif
+	solution_tot = solution_tot.subs(a == sol(0,0));
+	solution_tot = solution_tot.subs(b == sol(1,0));
+      }
       else {
-	// FIXME: this case is not finished.
 	// The binary recurrence is non-homogeneous.
-	GSymbol k("k");
-	// The complete solution is given by the formula
-
+	// We set
+	// g(n) = \alpha * g(n-1) + \beta * g(n-2)
+	// with g_0 = 1 and g_1 = \alpha as initials conditions for the
+	// fundamental solution.
+	// g_n = (a + b * n) \lambda^n where
+	// \lambda is the root with multiplicity 2.
+	// In this case we must to solve a linear system:
+	//             a = 1
+	//             (a + b) * \lambda = \alpha.
+	GExpr g_n = (a + b * n) * pow(root, n);
+	// Solved the system with the inverse matrix'method.
+	GMatrix vars(2, 2, lst(1, 0, root, root));
+	GMatrix rhs(2, 1, lst(1, coefficients[1]));
+	GMatrix sol(2, 1);
+	sol = vars.inverse();
+	sol = sol.mul(rhs);
+#if NOISY
+	std::cout << "matrix solution " << sol << std::endl;
+#endif
+	g_n = g_n.subs(a == sol(0,0));
+	g_n = g_n.subs(b == sol(1,0));
+	
 	// FIXME: this is necessary for a bug of GiNaC about subs
 	// (in the next release of GiNaC it must be fix and then
 	// the GSymbol k will be useless).
+	GSymbol k("k");
 	GExpr g_n_1 = g_n.subs(n == k-1);
 	GExpr g_n_2 = g_n.subs(n == k-2);
 	g_n_1 = g_n_1.subs(k == n);
 	g_n_2 = g_n_2.subs(k == n);
-	//std::cout << "g_n_1 " << g_n_1 << std::endl;
-	//std::cout << "g_n_2 " << g_n_2 << std::endl;
 	
-	solution_tot = x_1 * g_n_1 + x_0 * g_n_2 * coefficients[1];
+	solution_tot = x_1 * g_n_1 + x_0 * g_n_2 * coefficients[2];
 	for (size_t i = 0; i < num_columns; ++i) {
 	  GExpr solution = 0;
 	  GExpr exponential = decomposition(0, i);
 	  GExpr coeff_of_exp = decomposition(1, i);
 	  GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
 	  GExpr g_n_k = g_n.subs(n == n - k);
-	  //std::cout << "g_n_k " << g_n_k << std::endl;
 	  if (is_a<power>(exponential))
 	    solution = sum_poly_times_exponentials(coeff_of_exp_k * g_n_k,
 						   k, n, exponential.op(0));
@@ -723,13 +739,10 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 						   k, n, 1);
 	  // 'sum_poly_times_exponentials' calculates the sum from 0 while
 	  // we want to start from 2.
-	  //
 	  solution = solution.expand();
-	  //std::cout << "sol formula " << solution << std::endl; 
 	  solution -= (coeff_of_exp_k * g_n_k).subs(k == 0) +
 	              (coeff_of_exp_k * g_n_k).subs(k == 1) * (1/root);
 	  solution = solution.expand();
-	  //std::cout << "sol formula dopo subs " << solution << std::endl; 
 	  solution_tot += solution;
 	}
 	solution_tot = solution_tot.expand();
