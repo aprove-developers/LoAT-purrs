@@ -27,3 +27,16 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Functional_Equation_Info.defs.hh"
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
+
+void
+PURRS::Functional_Equation_Info::
+dump_homogeneous_terms(std::ostream& s) const {
+  if (!homogeneous_terms.empty()) {
+    s << "Homogeneous term:" << std::endl;
+    for (std::map<Number, Expr>::const_iterator i = homogeneous_terms.begin(),
+	   homogeneous_terms_end = homogeneous_terms.end();
+	 i != homogeneous_terms_end; ++i)
+      s << "div = " << i->first
+	<< ", coeff = " << i->second << std::endl;
+  }
+}

@@ -42,6 +42,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <climits>
 #include <string>
 #include <vector>
+#include <map>
 #include <algorithm>
 
 // TEMPORARY
@@ -440,58 +441,6 @@ insert_coefficients_lfo(const Expr& coeff, unsigned long index,
     coefficients[index] += coeff;
 }
 
-void
-insert_divisors(const Number& divisor, std::vector<Number>& divisors,
-		unsigned& position) {
-  // The vector `divisors' has the elements in increasing order.
-  unsigned divisors_size = divisors.size();
-  if (divisors_size == 0) {
-    divisors.push_back(divisor);
-    position = 0;
-  }
-  else {
-    position = divisors_size;
-    for (unsigned i = 0; i < divisors_size; ++i)
-      if (divisors[i] > divisor) {
-	if (i == 0)
-	  position = 0;
-	else
-	  position = i;
-	break;
-      }
-    D_VAR(position);
-    std::vector<Number> tmp(divisors_size + 1);
-    for (unsigned i = 0; i < position; ++i)
-      tmp[i] = divisors[i];
-    tmp[position] = divisor;
-    for (unsigned i = position + 1; i <= divisors_size; ++i)
-      tmp[i] = divisors[i-1];    
-    divisors.resize(divisors_size + 1);
-    copy(tmp.begin(), tmp.end(), divisors.begin());
-  }
-  D_VEC(divisors, 0, divisors.size()-1);
-}
-
-void
-insert_coefficients_fe(unsigned position, const Expr& possibly_coeff,
-		       std::vector<Expr>& coefficients) {
-  D_VAR(position);
-  unsigned coefficients_size = coefficients.size();
-  if (coefficients_size == 0)
-    coefficients.push_back(possibly_coeff);
-  else {
-    std::vector<Expr> tmp(coefficients_size + 1);
-    for (unsigned i = 0; i < position; ++i)
-      tmp[i] = coefficients[i];
-    tmp[position] = possibly_coeff;
-    for (unsigned i = position + 1; i <= coefficients_size; ++i)
-      tmp[i] = coefficients[i-1];
-    coefficients.resize(coefficients_size + 1);
-    copy(tmp.begin(), tmp.end(), coefficients.begin());
-  }
-  D_VEC(coefficients, 0, coefficients.size()-1);
-}
-
 /*!
   - If there is in \p e an \f$ x \f$ function (with the argument containing
     \f$ n \f$) inside an other function different from \f$ x \f$ function
@@ -743,9 +692,8 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 					  std::vector<Expr>& coefficients_lfo,
 					  int& gcd_among_decrements,
 					  int num_term,
-					  unsigned int& rank,
-					  std::vector<Expr>& coefficients_fe,
-					  std::vector<Number>& divisors) const {
+					  std::map<Number, Expr>&
+					  homogeneous_terms) const {
   unsigned num_factors = addend.is_a_mul() ? addend.nops() : 1;
   if (num_factors == 1)
     if (addend.is_the_x_function()) {
@@ -788,10 +736,8 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	    set_functional_equation();
 	  else if (is_linear_finite_order())
 	    return TOO_COMPLEX;
-	  ++rank;
-	  unsigned position;
-	  insert_divisors(divisor, divisors, position);
-	  insert_coefficients_fe(position, 1, coefficients_fe);
+	  homogeneous_terms
+	    .insert(std::map<Number, Expr>::value_type(divisor, 1));
 	}
 	else
 	  return TOO_COMPLEX;
@@ -812,10 +758,10 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
       inhomogeneous += addend;
   else {
     Expr possibly_coeff = 1;
-    unsigned position;
     bool found_function_x = false;
     bool found_n = false;
     unsigned long index;
+    Number divisor;
     for (unsigned i = num_factors; i-- > 0; ) {
       const Expr& factor = addend.op(i);
       if (factor.is_the_x_function()) {
@@ -846,7 +792,6 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	    return HAS_NON_INTEGER_DECREMENT;
 	}
 	else if (argument.is_a_mul() && argument.nops() == 2) {
-	  Number divisor;
 	  if (get_constant_divisor(argument, divisor)) {
 	    // The non linear terms have already been considered before.
 	    assert(!found_function_x);
@@ -854,8 +799,6 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	      set_functional_equation();
 	    else if (is_linear_finite_order())
 	      return TOO_COMPLEX;
-	    ++rank;
-	    insert_divisors(divisor, divisors, position);
 	    found_function_x = true;
 	  }
 	  else
@@ -881,7 +824,8 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
     }
     if (found_function_x) {
       if (is_functional_equation())
-	insert_coefficients_fe(position, possibly_coeff, coefficients_fe);
+	homogeneous_terms
+	  .insert(std::map<Number, Expr>::value_type(divisor, possibly_coeff));
       else {
 	insert_coefficients_lfo(possibly_coeff, index, coefficients_lfo);
 	if (!is_linear_finite_order_var_coeff())
@@ -960,13 +904,7 @@ PURRS::Recurrence::classify() const {
   // recurrence.
   int gcd_among_decrements = 0;
 
-  unsigned int rank = 0;
-  // We will store here the coefficients of the functional equation.
-  std::vector<Expr> coefficients_fe;
-  // We will store here the positive integer divisors of the arguments of the
-  // function `x' in the terms of the form `a x(n/b)' contained in the
-  // recurrence.
-  std::vector<Number> divisors_arg;
+  std::map<Number, Expr> homogeneous_terms;
 
   Expr inhomogeneous = 0;
 
@@ -980,8 +918,7 @@ PURRS::Recurrence::classify() const {
       if ((status = classification_summand(recurrence_rhs.op(i), inhomogeneous,
 					   order, coefficients_lfo,
 					   gcd_among_decrements, i,
-					   rank, coefficients_fe,
-					   divisors_arg))
+					   homogeneous_terms))
 	  != SUCCESS)
 	return status;
     }
@@ -989,7 +926,7 @@ PURRS::Recurrence::classify() const {
     if ((status = classification_summand(recurrence_rhs, inhomogeneous,
 					 order, coefficients_lfo,
 					 gcd_among_decrements, 0,
-					 rank, coefficients_fe, divisors_arg))
+					 homogeneous_terms))
 	!= SUCCESS)
       return status;
 
@@ -997,8 +934,7 @@ PURRS::Recurrence::classify() const {
   D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
 
   if (is_functional_equation())
-    functional_eq_p = new Functional_Equation_Info(rank, coefficients_fe,
-						   divisors_arg);
+    functional_eq_p = new Functional_Equation_Info(homogeneous_terms);
   else {
     // `inhomogeneous_term' is a function of `n', the parameters and of
     // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are

@@ -580,7 +580,7 @@ PURRS::Recurrence::add_term_with_initial_condition(const Expr& q_upper,
 						   const Expr& q_lower,
 						   Expr& ub, Expr& lb) const {
   Expr index_initial_condition
-    = simplify_logarithm(n / pwr(divisors_arg()[0], q_upper));
+    = simplify_logarithm(n / pwr(functional_eq_p->ht_begin()->first, q_upper));
   Number index = 0;
   if (index_initial_condition.is_a_number()) {
     index = index_initial_condition.ex_to_number();
@@ -592,14 +592,16 @@ PURRS::Recurrence::add_term_with_initial_condition(const Expr& q_upper,
   }
   // The index of the initial condition is not a number.
   if (index == 0) {
-    ub += pwr(coefficients_fe()[0], q_upper) * x(index_initial_condition);
-    lb += pwr(coefficients_fe()[0], q_lower) * x(index_initial_condition);
+    ub += pwr(functional_eq_p->ht_begin()->second, q_upper)
+      * x(index_initial_condition);
+    lb += pwr(functional_eq_p->ht_begin()->second, q_lower)
+      * x(index_initial_condition);
   }
   // The index of the initial condition is a number.
   else {
-    ub += pwr(coefficients_fe()[0], q_upper)
+    ub += pwr(functional_eq_p->ht_begin()->second, q_upper)
       * get_initial_condition(index.to_unsigned());
-    lb += pwr(coefficients_fe()[0], q_lower)
+    lb += pwr(functional_eq_p->ht_begin()->second, q_lower)
       * get_initial_condition(index.to_unsigned());
   }
 }
@@ -617,9 +619,9 @@ PURRS::Recurrence::add_term_with_initial_condition(const Expr& q_upper,
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::approximate_functional_equation() const {
-  if (rank() == 1) {
-    Number divisor_arg = divisors_arg()[0];
-    Expr coefficient = coefficients_fe()[0];
+  if (functional_eq_p->rank() == 1) {
+    Number divisor_arg = functional_eq_p->ht_begin()->first;
+    Expr coefficient = functional_eq_p->ht_begin()->second;    
 
     D_VAR(divisor_arg);
     assert(divisor_arg.is_rational() && divisor_arg.is_positive());

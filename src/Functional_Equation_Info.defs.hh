@@ -28,21 +28,16 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Functional_Equation_Info.types.hh"
 #include "Expr.defs.hh"
+#include <map>
 
 namespace Parma_Recurrence_Relation_Solver {
 
 /*!
-  x_n = a x_{n/b} + d n^e
+  ...
 */
 class Functional_Equation_Info {
 public:
-  //! \brief
-  //! Constructor: sets \f$ rank{\_} = k \f$,
-  //! \f$ coefficients{\_}fe{\_} = coeffs \f$,
-  //! \f$ divisors{\_}arg{\_} = divisors \f$
-  //! and \f$ applicability{\_}condition{\_} = c \f$
-  Functional_Equation_Info(unsigned int k, const std::vector<Expr>& coeffs,
-			   const std::vector<Number>& divisors,
+  Functional_Equation_Info(const std::map<Number, Expr>& hom_terms,
 			   unsigned c = 1);
 
   //! Copy-constructor.
@@ -54,24 +49,6 @@ public:
   //! Assignment operator.
   Functional_Equation_Info& operator=(const Functional_Equation_Info& y);
 
-  //! Returns <CODE>rank_</CODE>.
-  unsigned int rank() const;
-
-  //! Returns <CODE>rank_</CODE>.
-  unsigned int& rank();
-
-  //! Returns <CODE>coefficients_fe_</CODE>.
-  const std::vector<Expr>& coefficients_fe() const;
-
-  //! Returns <CODE>coefficients_fe_</CODE>.
-  std::vector<Expr>& coefficients_fe();
-
-  //! Returns <CODE>divisors_arg_</CODE>.
-  const std::vector<Number>& divisors_arg() const;
-
-  //! Returns <CODE>divisors_arg_</CODE>.
-  std::vector<Number>& divisors_arg();
-
   //! Returns <CODE>applicability_condition_</CODE>.
   unsigned applicability_condition() const;
 
@@ -82,25 +59,37 @@ public:
   void set_applicability_condition(unsigned c);
 
 private:
+  typedef std::map<Number, Expr> Homogeneous_Terms; 
+  
+public:
+  typedef Homogeneous_Terms::iterator ht_iterator;
+  typedef Homogeneous_Terms::const_iterator ht_const_iterator;
+
+  ht_iterator ht_begin();
+  ht_iterator ht_end();
+
+  ht_const_iterator ht_begin() const;
+  ht_const_iterator ht_end() const;
+
   //! \brief
-  //! The rank of the functional equation, i. e., the number of terms
+  //! Returns the rank of the functional equation, i. e., the number of terms
   //! of the form \f$ a x(n/b) \f$ where \f$ b \f$ is a rational number
   //! larger than one.
-  unsigned int rank_;
-
-  //! Stores the coefficients of the functional equation.
-  std::vector<Expr> coefficients_fe_;
-
+  size_t rank() const;
+    
+private:
   //! \brief
-  //! Stores the divisors \f$ b \f$ of the argument of the function
-  //! \f$ x \f$ in the terms of the form \f$ a x_{n/b} \f$ contained in
-  //! the functional equation.
-  std::vector<Number> divisors_arg_;
+  //! Stores the divisor \f$ b \f$ and the coefficient \f$ a \f$ of the
+  //! homogeneous terms \f$ a x(n/b) \f$ in \p *this. 
+  std::map<Number, Expr> homogeneous_terms;
 
   //! \brief
   //! The positive integer starting from which the inhomogeneous term
   //! is a non negative, non decreasing function. 
   unsigned applicability_condition_;
+
+public:
+  void dump_homogeneous_terms(std::ostream& s) const;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

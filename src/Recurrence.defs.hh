@@ -276,9 +276,8 @@ private:
 				       std::vector<Expr>& coefficients_lfo,
 				       int& gcd_among_decrements,
 				       int num_term,
-				       unsigned int& rank,
-				       std::vector<Expr>& coefficients_fe,
-				       std::vector<Number>& divisors) const;
+				       std::map<Number, Expr>&
+				       homogeneous_terms) const;
   void
   add_term_with_initial_conditions(const Expr& g_n,
 				   const std::vector<Number>& coefficients) const;
@@ -492,28 +491,6 @@ private:
 
 
   // Methods to access to private data of `Functional_Equation_Info'.
-
-  //! Returns the rank of the functional equation.
-  unsigned int rank() const;
-
-  //! Returns the rank of the functional equation.
-  unsigned int& rank();
-
-  //! Returns the coefficients of the functional equation.
-  const std::vector<Expr>& coefficients_fe() const;
-
-  //! Returns the coefficients of the functional equation.
-  std::vector<Expr>& coefficients_fe();
-
-  //! \brief
-  //! Returns the divisors \f$ b \f$ of the arguments of \f$ x \f$ functions
-  //! of the form \f$ x(n/b) \f$ of the functional equation.
-  const std::vector<Number>& divisors_arg() const;
-
-  //! \brief
-  //! Returns the divisors \f$ b \f$ of the arguments of \f$ x \f$ functions
-  //! of the form \f$ x(n/b) \f$ of the functional equation.
-  std::vector<Number>& divisors_arg();
 
   //! \brief
   //! Returns the positive integer starting from which the inhomogeneous term

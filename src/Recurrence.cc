@@ -36,6 +36,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr.defs.hh"
 #include "Cached_Expr.defs.hh"
 #include "Non_Linear_Info.defs.hh"
+#include "Functional_Equation_Info.defs.hh"
 #include "Blackboard.defs.hh"
 #include <algorithm>
 #include <iostream>
@@ -346,10 +347,11 @@ PURRS::Recurrence::verify_bound(bool upper) const {
 	return INCONCLUSIVE_VERIFICATION;
       
       // Step 4: verification of the inductive step.
-      Expr partial_bound_sub = partial_bound.substitute(n,
-							n / divisors_arg()[0]);
-      Expr approx = recurrence_rhs.substitute(x(n / divisors_arg()[0]),
-					      partial_bound_sub);
+      Expr partial_bound_sub
+	= partial_bound.substitute(n, n / functional_eq_p->ht_begin()->first);
+      Expr approx
+	= recurrence_rhs.substitute(x(n / functional_eq_p->ht_begin()->first),
+				    partial_bound_sub);
       D_VAR(approx);
       approx = simplify_ex_for_input(approx, true);
       approx = simplify_logarithm(approx);
@@ -755,5 +757,6 @@ PURRS::Recurrence::dump(std::ostream& s) const {
 	<< " = " << i->second << std::endl;
   }
   
+  //(*functional_eq_p).dump_homogeneous_terms(s);
   s << std::endl;
 }

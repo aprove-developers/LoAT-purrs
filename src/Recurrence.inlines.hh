@@ -299,48 +299,6 @@ Recurrence::gcd_among_decrements() {
   return finite_order_p -> gcd_among_decrements();
 }
 
-inline unsigned int
-Recurrence::rank() const {
-  assert(is_functional_equation());
-  assert(functional_eq_p);
-  return functional_eq_p -> rank();
-}
-
-inline unsigned int&
-Recurrence::rank() {
-  assert(is_functional_equation());
-  assert(functional_eq_p);
-  return functional_eq_p -> rank();
-}
-
-inline const std::vector<Expr>&
-Recurrence::coefficients_fe() const {
-  assert(is_functional_equation());
-  assert(functional_eq_p);
-  return functional_eq_p -> coefficients_fe();
-}
-
-inline std::vector<Expr>&
-Recurrence::coefficients_fe() {
-  assert(is_functional_equation());
-  assert(functional_eq_p);
-  return functional_eq_p -> coefficients_fe();
-}
-
-inline const std::vector<Number>&
-Recurrence::divisors_arg() const {
-  assert(is_functional_equation());
-  assert(functional_eq_p);
-  return functional_eq_p -> divisors_arg();
-}
-
-inline std::vector<Number>&
-Recurrence::divisors_arg() {
-  assert(is_functional_equation());
-  assert(functional_eq_p);
-  return functional_eq_p -> divisors_arg();
-}
-
 inline unsigned
 Recurrence::applicability_condition() const {
   assert(is_functional_equation());
