@@ -179,16 +179,14 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
-solve_variable_coeff_order_1(const Expr& coefficient) const {
-  if (has_parameters(coefficient)) {
-    D_MSG("Variable coefficient with parameters");
+solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
+  if (has_parameters(coefficients[1]))
     return TOO_COMPLEX;
-  }
   // `z' will contain the largest positive or null integer, if it exists,
   // that cancel the denominator of the coefficient.
   // If this integer does not exist then `z' is left to 0.
   Number z = 0;
-  if (!largest_positive_int_zero(coefficient, n, z))
+  if (!largest_positive_int_zero(coefficients[1], n, z))
     return TOO_COMPLEX;
   // Find the largest positive or null integer that cancel the denominator of
   // `inhomogeneous_term' and store it in `z' if it is bigger than the
@@ -201,55 +199,28 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
   Symbol index;
   Expr alpha_factorial
     = compute_product(index, z + 1,
-		      transform_in_single_fraction(coefficient
+		      transform_in_single_fraction(coefficients[1]
 						   .substitute(n, index)));
   // FIXME: this simplification simplifies the value of `alpha_factorial'
   // but not the solution because we need to the simplification about
   // factorials and exponentials for the output.
   //alpha_factorial = simplify_factorials_and_exponentials(alpha_factorial);
-  D_VAR(alpha_factorial);
-  // Compute the non-homogeneous term for the recurrence
+
+  // Build the recurrence with constant coefficient of the first order
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
-  // In this case is better to jump a part of Gosper's step one:
-  // `r(n) = \frac{t(n+1)}{t(n)}
-  //       = \frac{p(n+1)}{\alpha!(n+1)} * \frac{\alpha!(n)}{p(n)}
-  //       = \frac{p(n+1)}{p(n) * \alpha(n+1)}'.
-  Expr new_inhomogeneous_term;
-  Expr solution = 0;
-  if (!inhomogeneous_term.is_zero()) {
-    new_inhomogeneous_term = inhomogeneous_term.substitute(n, n+1) 
-      / (inhomogeneous_term * coefficient.substitute(n, n+1));
-    new_inhomogeneous_term = simplify_all(new_inhomogeneous_term);
-    D_VAR(new_inhomogeneous_term);
-    std::vector<Expr> base_of_exps;
-    std::vector<Expr> exp_poly_coeff;
-    std::vector<Expr> exp_no_poly_coeff;
-    exp_poly_decomposition(new_inhomogeneous_term, Recurrence::n,
-			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
-    std::vector<Polynomial_Root> new_roots;
-    new_roots.push_back(Polynomial_Root(Expr(1), RATIONAL));
-    if (!compute_sum_with_gosper_algorithm(first_well_defined_rhs_linear() + 1,
-					   n, base_of_exps, exp_poly_coeff,
-					   exp_no_poly_coeff, new_roots,
-					   inhomogeneous_term/alpha_factorial,
-					   solution)) {
-      // FIXME: the summand is not hypergeometric:
-      // no chance of using Gosper's algorithm.
-      // vedere direttamente il rapporto p(k)/alpha!(k) se e' sommabile
-      // (forse prima di vedere gosper)
-      Symbol h;
-      solution
-	+= alpha_factorial * x(z)
-	+ alpha_factorial * PURRS::sum(h, z + 1, n,
-				       inhomogeneous_term.substitute(n, h) 
-				       / alpha_factorial.substitute(n, h));
-      exact_solution_.set_expression(solution);
-      return SUCCESS;
-    }
-  }
-  solution += x(z);
-  solution *= alpha_factorial;
-  exact_solution_.set_expression(solution);
+  Recurrence rec_const_coeff(x(n-1)+inhomogeneous_term/alpha_factorial);
+  std::vector<Polynomial_Root> new_roots;
+  new_roots.push_back(Polynomial_Root(Expr(1), RATIONAL));
+  rec_const_coeff.finite_order_p
+    = new Finite_Order_Info(1, coefficients, 1);
+  rec_const_coeff.set_first_well_defined_rhs_linear(z.to_unsigned());
+  rec_const_coeff.set_type(LINEAR_FINITE_ORDER_CONST_COEFF);
+  rec_const_coeff.set_inhomogeneous_term(inhomogeneous_term/alpha_factorial);
+
+  exact_solution_
+    .set_expression(alpha_factorial
+		    * (rec_const_coeff.solve_constant_coeff_order_1(new_roots)
+		       + x(z)));
   return SUCCESS;
 }
 
@@ -583,7 +554,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 	  .set_expression(solve_constant_coeff_order_1(roots));
       else {
 	Solver_Status status;
-	if ((status = solve_variable_coeff_order_1(coefficients()[1]))
+	if ((status = solve_variable_coeff_order_1(coefficients()))
 	    != SUCCESS)
 	  return status;
       }

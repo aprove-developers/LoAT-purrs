@@ -299,7 +299,8 @@ private:
   Solver_Status solve_linear_finite_order() const;
   Expr solve_constant_coeff_order_1(const std::vector<Polynomial_Root>&
 				    roots) const;
-  Solver_Status solve_variable_coeff_order_1(const Expr& coefficient) const;
+  Solver_Status
+  solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const;
   Expr solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
 				    const std::vector<Number>& coefficients,
 				    const std::vector<Polynomial_Root>&
