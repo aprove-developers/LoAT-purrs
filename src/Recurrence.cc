@@ -166,11 +166,11 @@ validation_initial_conditions_in_bound(bool upper, const Expr& bound,
   is well-defined.
   The verification's process is divided in 4 steps:
   -  Validation of initial conditions.
-     If <CODE>recurrence_rhs</CODE> is equal to \f$ x(i), \cdots, x(i+k) \f$
+     If <CODE>recurrence_rhs</CODE> is equal to \f$ x(i), \cdots, x(i+k-1) \f$
      for \f$ n = i, \cdots, i+k-1 \f$ respectively, then
      the initial conditions are verified and we can continue the verification;
-     otherwise return <CODE>false</CODE> because the solution can be wrong or
-     it is not enough simplified.
+     otherwise return <CODE>INCONCLUSIVE_VERIFICATION</CODE> because the
+     solution can be wrong or it is not enough simplified.
   -  Splits the solution in 2 parts: \p homogeneous_part contains the terms
      of the solution with the initial conditions \f$ x(i), \cdots, x(i+k) \f$,
      \p non_homogeneous_part all the other terms.
@@ -554,7 +554,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
     // `x(n) = - sum(k, 0, n-1, x(k)) + g(n)', is special:
     // the solution is simply `x(n) = g(n) - g(n-1)'.
     // FIXME: the traditional validation' process does not work,
-    // it is true?
+    // is it true?
     if (rec.weight_inf_order() == -1)
       return PROVABLY_CORRECT;
 
