@@ -76,6 +76,11 @@ Finite_Order_Info::get_initial_conditions() const {
   return initial_conditions;
 }
 
+inline const std::vector<Expr>&
+Finite_Order_Info::get_coefficients() const {
+  return coefficients;
+}
+
 inline void
 Finite_Order_Info::set_decrements(const std::vector<unsigned> decs) {
   copy(decs.begin(), decs.end(), inserter(decrements, decrements.begin()));

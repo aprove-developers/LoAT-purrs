@@ -57,6 +57,9 @@ public:
   //! Returns the vector <CODE>initial_conditions</CODE>.
   const std::vector<unsigned>& get_initial_conditions() const;
 
+  //! Returns the vector <CODE>coefficients</CODE>.
+  const std::vector<Expr>& get_coefficients() const;
+
   //! Sets the vector <CODE>decrements</CODE> from \p decs.
   void set_decrements(const std::vector<unsigned> decs);
 
