@@ -117,6 +117,11 @@ Recurrence::set_inhomogeneous_term(const Expr& e) const {
 }
 
 inline bool
+Recurrence::is_unknown() const {
+  return type == UNKNOWN;
+}
+
+inline bool
 Recurrence::is_order_zero() const {
   return type == ORDER_ZERO; 
 }
@@ -241,6 +246,34 @@ Recurrence::coefficients() {
 	 || is_non_linear_finite_order());
   assert(finite_order_p);
   return finite_order_p -> coefficients();
+}
+
+inline Expr
+Recurrence::coefficient() const {
+  assert(is_functional_equation());
+  assert(functional_eq_p);
+  return functional_eq_p -> coefficient();
+}
+
+inline Expr&
+Recurrence::coefficient() {
+  assert(is_functional_equation());
+  assert(functional_eq_p);
+  return functional_eq_p -> coefficient();
+}
+
+inline unsigned
+Recurrence::divisor_arg() const {
+  assert(is_functional_equation());
+  assert(functional_eq_p);
+  return functional_eq_p -> divisor_arg();
+}
+
+inline unsigned&
+Recurrence::divisor_arg() {
+  assert(is_functional_equation());
+  assert(functional_eq_p);
+  return functional_eq_p -> divisor_arg();
 }
 
 inline Recurrence::Solver_Status

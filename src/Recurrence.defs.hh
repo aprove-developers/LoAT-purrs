@@ -322,6 +322,11 @@ private:
   mutable Functional_Equation_Info* functional_eq_p;
 
   //! \brief
+  //! Returns <CODE>true</CODE> if the recurrence's type is unknown;
+  //! returns <CODE>false</CODE> otherwise.
+  bool is_unknown() const;
+
+  //! \brief
   //! Returns <CODE>true</CODE> if the recurrence is a special case,
   //! i. e., is of order zero; returns <CODE>false</CODE> otherwise.
   bool is_order_zero() const;
@@ -394,6 +399,26 @@ private:
 
   //! Returns the coefficients of the finite order recurrence.
   std::vector<Expr>& coefficients();
+
+  //! \brief
+  //! Returns the coefficient \f$ a \f$ of the functional equation
+  //! \f$ x_n = a x_{n/b} + p(n).
+  Expr coefficient() const;
+
+  //! \brief
+  //! Returns the coefficient \f$ a \f$ of the functional equation
+  //! \f$ x_n = a x_{n/b} + p(n).
+  Expr& coefficient();
+
+  //! \brief
+  //! Returns \f$ b \f$, the divisor of \f$ n \f$ in the functional equation
+  //! \f$ x_n = a x_{n/b} + p(n)..
+  unsigned divisor_arg() const;
+
+  //! \brief
+  //! Returns \f$ b \f$, the divisor of \f$ n \f$ in the functional equation
+  //! \f$ x_n = a x_{n/b} + p(n)..
+  unsigned& divisor_arg();
 
   mutable bool solved;
 
