@@ -23,6 +23,7 @@
 %   w with a provably wrong result
 %   d with a result whose correctness can neither be proved nor be disproved
 % E explodes
+% b triggers a bug in the solver
 % X of mixed type
 % B bizarre: even assuming it makes sense, we have no plans to deal with it
 % * no expectations
@@ -298,7 +299,7 @@ n	x(n/(5/3))+3
 n	x(n!)
 n	x(n)+2*x(n/2)
 n	x(n)+3
-yv	x(n)^2-2*x(n)
+byv	x(n)^2-2*x(n)
 n	x(n*n+n)
 n	x(n+1)+(a-1)*(2*x(n+1)+1)
 n	x(n+1)+(z-1)*(2*x(n+1)+1)
