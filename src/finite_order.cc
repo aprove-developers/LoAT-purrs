@@ -245,6 +245,11 @@ characteristic_equation_and_its_roots(index_type order,
   in the first case, and of \p symbolic_sum_distinct, in the second case,
   so that the two vectors have always the same dimensions.
 */
+// FIXME: to add a comment about the difference between the following
+// cases:
+// - all the bases of the exponentials are different from all the roots
+//   of the characteristic equation (special case);
+// - otherwise.
 void
 PURRS::compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
 			    const std::vector<Polynomial_Root>& roots,
@@ -255,42 +260,65 @@ PURRS::compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
 			    std::vector<Expr>& symbolic_sum_no_distinct) {
   // Compute the order of the recurrence relation.
   Number order = 0;
+
   for (unsigned int i = roots.size(); i-- > 0; )
     order += roots[i].multiplicity();
 
-  unsigned int r = 0;
+  // `true' if each exponential's base is different from each root.
+  bool bases_and_roots_all_distinct = true;
   for (unsigned int i = base_of_exps.size(); i-- > 0; )
-    for (unsigned int j = roots.size(); j-- > 0; ) {
-      bool distinct = true;
-      if (roots[j].value() == base_of_exps[i])
-	distinct = false;
-      
-      // The root is different from the exponential's base.
-      if (distinct) {
-	if (order <= 2)
-	  symbolic_sum_distinct.push_back(return_sum(true, lower_bound_sum,
-						     exp_poly_coeff[i],
-						     alpha, lambda));
-	else
-	  symbolic_sum_distinct.push_back(return_sum(true, lower_bound_sum,
-						     exp_poly_coeff[r],
-						     alpha, lambda));
-	symbolic_sum_no_distinct.push_back(0);
+    for (unsigned int j = roots.size(); j-- > 0; )
+      if (roots[j].value() == base_of_exps[i]) {
+	bases_and_roots_all_distinct = false;
+	break;
       }
-      // The root is equal to the exponential's base.
-      else {
-	if (order <= 2)
-	  symbolic_sum_no_distinct.push_back(return_sum(false, lower_bound_sum,
-							exp_poly_coeff[i],
-							alpha, lambda));
-	else
-	  symbolic_sum_no_distinct.push_back(return_sum(false, lower_bound_sum,
-							exp_poly_coeff[r],
-							alpha, lambda));
-	symbolic_sum_distinct.push_back(0);
-      }
-      ++r;
+
+  unsigned int r = 0;
+  for (unsigned int i = base_of_exps.size(); i-- > 0; ) {
+    // Special case: FIXME to finish comment...
+    if (bases_and_roots_all_distinct && order == 2) {
+      const Expr& tmp = return_sum(true, lower_bound_sum, exp_poly_coeff[i],
+				   alpha, lambda);
+      symbolic_sum_distinct.push_back(tmp);
+      symbolic_sum_no_distinct.push_back(0);
     }
+    else
+      for (unsigned int j = roots.size(); j-- > 0; ) {
+	bool distinct = true;
+	// `true' if the i-th exponential's base is different from
+	// the j-th root.
+	if (roots[j].value() == base_of_exps[i])
+	  distinct = false;
+	
+	// The root is different from the exponential's base.
+	if (distinct) {
+	  if (order <= 2)
+	    symbolic_sum_distinct.push_back(return_sum(true, lower_bound_sum,
+						       exp_poly_coeff[i],
+						       alpha, lambda));
+	  else
+	    symbolic_sum_distinct.push_back(return_sum(true, lower_bound_sum,
+						       exp_poly_coeff[r],
+						       alpha, lambda));
+	  symbolic_sum_no_distinct.push_back(0);
+	}
+	// The root is equal to the exponential's base.
+	else {
+	  if (order <= 2)
+	    symbolic_sum_no_distinct.push_back(return_sum(false,
+							  lower_bound_sum,
+							  exp_poly_coeff[i],
+							  alpha, lambda));
+	  else
+	    symbolic_sum_no_distinct.push_back(return_sum(false,
+							  lower_bound_sum,
+							  exp_poly_coeff[r],
+							  alpha, lambda));
+	  symbolic_sum_distinct.push_back(0);
+	}
+	++r;
+      }
+  }
   D_VEC(symbolic_sum_distinct, 0, symbolic_sum_distinct.size()-1);
   D_VEC(symbolic_sum_no_distinct, 0, symbolic_sum_no_distinct.size()-1);
 }
@@ -307,6 +335,11 @@ PURRS::compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
   Returns a new expression containing the sum of all sums of the vectors
   after the substitutions.
 */
+// FIXME: to add a comment about the difference between the following
+// cases:
+// - all the bases of the exponentials are different from all the roots
+//   of the characteristic equation (special case);
+// - otherwise.
 PURRS::Expr
 PURRS::subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
 				   const std::vector<Polynomial_Root>& roots,
@@ -319,23 +352,39 @@ PURRS::subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
     order += roots[i].multiplicity();
   Expr solution = 0;
   unsigned int r = 0;
-  for (unsigned int i = base_of_exps.size(); i-- > 0; )
-    for (unsigned int j = roots.size(); j-- > 0; ) {
-      const Expr& base_exp = base_of_exps[i];
-      Expr tmp;
-      if (base_exp != roots[j].value())
-	tmp = symbolic_sum_distinct[r];
-      else
-	tmp = symbolic_sum_no_distinct[r];
-      tmp = tmp.substitute(alpha, base_exp);
-      tmp = tmp.substitute(lambda, roots[j].value());
-      if (order == 2 && (j & 1) == 1)
-	solution -= tmp;
-      else
-	// order != 2 or j even.
-	solution += tmp;
+  for (unsigned int i = base_of_exps.size(); i-- > 0; ) {
+    const Expr& base_exp = base_of_exps[i];
+    // Special case: FIXME to finish comment...
+    if (order == 2 && !vector_not_all_zero(symbolic_sum_no_distinct)) {
+      for (unsigned int j = roots.size(); j-- > 0; ) {
+	Expr tmp = symbolic_sum_distinct[r];
+	tmp = tmp.substitute(alpha, base_exp);
+	tmp = tmp.substitute(lambda, roots[j].value());
+	if (order == 2 && (j & 1) == 1)
+	  solution -= tmp;
+	else
+	  // order != 2 or j even.
+	  solution += tmp;
+      }
       ++r;
     }
+    else
+      for (unsigned int j = roots.size(); j-- > 0; ) {
+	Expr tmp;
+	if (base_exp != roots[j].value())
+	  tmp = symbolic_sum_distinct[r];
+	else
+	  tmp = symbolic_sum_no_distinct[r];
+	tmp = tmp.substitute(alpha, base_exp);
+	tmp = tmp.substitute(lambda, roots[j].value());
+	if (order == 2 && (j & 1) == 1)
+	  solution -= tmp;
+	else
+	  // order != 2 or j even.
+	  solution += tmp;
+	++r;
+      }
+  }
   return solution;
 }
 
