@@ -25,6 +25,7 @@ lib_LIBRARIES = libpurrs.a
 INCLUDE_FILES = \
 CInterval.types.hh \
 complint.hh \
+globals.hh \
 Complex_Interval.types.hh \
 Bool3.types.hh \
 Constant.types.hh \
@@ -114,6 +115,7 @@ alg_eq_solver.cc \
 approximate.cc \
 size_norm.cc \
 complint.cc \
+globals.cc \
 zeilberger.cc \
 gosper.cc \
 numerator_denominator.cc \
@@ -134,6 +136,7 @@ $(INCLUDE_FILES)
 
 # The ordering of the following list *matters*!
 DOC_FILES = \
+globals.hh \
 Expr.types.hh \
 Symbol.types.hh \
 Number.types.hh \
