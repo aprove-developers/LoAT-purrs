@@ -1301,6 +1301,16 @@ come_back_to_original_variable(const Expr& e, const Symbol& r, const Expr& m,
   return e_rewritten;
 }
 
+void
+substitute_non_rational_roots(const Recurrence& rec,
+			      std::vector<Polynomial_Root>& roots) {
+  for (unsigned i = roots.size(); i-- > 0; )
+    if (roots[i].is_non_rational())
+      roots[i].value() = rec.insert_auxiliary_definition(roots[i].value());
+  for (unsigned i = roots.size(); i-- > 0; )
+    D_VAR(roots[i].value());
+}
+
 } // anonymous namespace
 
 PURRS::Recurrence::Solver_Status
@@ -1489,16 +1499,6 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
   return SUCCESS;
 }
 
-void
-substitute_non_rational_roots(const Recurrence& rec,
-			      std::vector<Polynomial_Root>& roots) {
-  for (unsigned i = roots.size(); i-- > 0; )
-    if (roots[i].is_non_rational())
-      roots[i].value() = rec.insert_auxiliary_definition(roots[i].value());
-  for (unsigned i = roots.size(); i-- > 0; )
-    D_VAR(roots[i].value());
-}
-
 /*!
   Adds to the sum already computed those corresponding to the initial
   conditions:
@@ -1513,8 +1513,7 @@ substitute_non_rational_roots(const Recurrence& rec,
 void
 PURRS::Recurrence::
 add_initial_conditions(const Expr& g_n,
-		       const std::vector<Number>& coefficients,
-		       Expr& solution) const {
+		       const std::vector<Number>& coefficients) const {
   // `coefficients.size()' has `order + 1' elements because in the first
   // position there is the value 0.
   D_VAR(g_n);
@@ -1548,7 +1547,8 @@ PURRS::Recurrence::solve_easy_cases() const {
   // We will store here the coefficients of linear part of the recurrence.
   std::vector<Expr> coefficients;
 
-  Expr inhomogeneous_term = 0;
+  Expr inhomogeneous = 0;
+
   Solver_Status status;
 
   // We will store here the greatest common denominator among the decrements
@@ -1559,22 +1559,24 @@ PURRS::Recurrence::solve_easy_cases() const {
   if (num_summands > 1)
     // It is necessary that the following loop starts from `0'.
     for (unsigned i = 0; i < num_summands; ++i) {
-      status = classification_summand(expanded_rhs.op(i), inhomogeneous_term,
+      status = classification_summand(expanded_rhs.op(i), inhomogeneous,
 				      coefficients, order,
 				      gcd_among_decrements, i);
       if (status != SUCCESS)
 	return status;
     }
   else {
-    status = classification_summand(expanded_rhs, inhomogeneous_term,
+    status = classification_summand(expanded_rhs, inhomogeneous,
 				    coefficients, order,
 				    gcd_among_decrements, 0);
     if (status != SUCCESS)
       return status;
   }
 
-  // Check if the recurrence is non linear, i.e., there is a non-linear term
-  // containing in `e' containing `x(a*n+b)'.
+  set_inhomogeneous_term(inhomogeneous);
+
+  // Check if the recurrence is non linear, i.e., if there is a non-linear
+  // term in the inhomogeneous_term containing `x(a*n+b)'.
   status = find_non_linear_recurrence(inhomogeneous_term);
   if (status != SUCCESS)
     return status;
@@ -1650,12 +1652,10 @@ PURRS::Recurrence::solve_easy_cases() const {
 						   characteristic_eq, roots,
 						   all_distinct))
 	  return TOO_COMPLEX;
-	status = solve_constant_coeff_order_1(inhomogeneous_term, roots,
-					      solution);
+	status = solve_constant_coeff_order_1(roots);
       }
       else
-	status = solve_variable_coeff_order_1(inhomogeneous_term,
-					      coefficients[1], solution);
+	status = solve_variable_coeff_order_1(coefficients[1]);
       if (status != SUCCESS) {
 	D_MSG("Summand not hypergeometric: no chance of using Gosper's "
 	      "algorithm");
@@ -1722,7 +1722,7 @@ PURRS::Recurrence::solve_easy_cases() const {
       // add_initial_conditions(g_n, coefficients, solution);
       solution += x(first_initial_condition()) * pwr(coefficients[1], n);
     else
-      add_initial_conditions(g_n, num_coefficients, solution);
+      add_initial_conditions(g_n, num_coefficients);
 
   D_MSGVAR("Before calling simplify: ", solution);
   solution = simplify_on_output_ex(solution.expand(), false);
@@ -1826,9 +1826,7 @@ PURRS::Recurrence::solve_try_hard() const {
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
-solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
-			     const std::vector<Polynomial_Root>& roots,
-			     Expr& solution) const {
+solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
   // We search exponentials in `n' (for this the expression
   // `inhomogeneous_term' must be expanded).
   // The vector `base_of_exps' contains the exponential's bases
@@ -1919,23 +1917,23 @@ solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
-solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
-			     Expr& solution) const {
+solve_variable_coeff_order_1(const Expr& coefficient) const {
   if (find_parameters(coefficient)) {
     D_MSG("Variable coefficient with parameters");
     return TOO_COMPLEX;
   }
   D_VAR(coefficient);
-  D_VAR(p_n);
+  D_VAR(inhomogeneous_term);
   // `z' will contain the biggest positive or null integer, if it exist,
   // that cancel the denominator of the coefficient.
   // If this integer does not exist then `z' is left to 0.
   Number z = 0;
   domain_recurrence(coefficient.expand(), z);
   // Find the biggest positive or null integer that cancel the denominator of
-  // `p_n' and store it in `z' if it is bigger than the current `z'.
-  if (!p_n.is_zero())
-    domain_recurrence(denominator(p_n).expand(), z);
+  // `inhomogeneous_term' and store it in `z' if it is bigger than the
+  // current `z'.
+  if (!inhomogeneous_term.is_zero())
+    domain_recurrence(denominator(inhomogeneous_term).expand(), z);
   // The initial conditions will start from `z'.
   set_first_initial_condition(z.to_int());
   Expr alpha_factorial
@@ -1951,21 +1949,22 @@ solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
   // `r(n) = \frac{t(n+1)}{t(n)}
   //       = \frac{p(n+1)}{\alpha!(n+1)} * \frac{\alpha!(n)}{p(n)}
   //       = \frac{p(n+1)}{p(n) * \alpha(n+1)}'.
-  Expr new_p_n;
-  if (!p_n.is_zero()) {
-    new_p_n = p_n.substitute(n, n+1) / (p_n * coefficient.substitute(n, n+1));
-    new_p_n = simplify_all(new_p_n);
-    D_VAR(new_p_n);
+  Expr new_inhomogeneous_term;
+  if (!inhomogeneous_term.is_zero()) {
+    new_inhomogeneous_term = inhomogeneous_term.substitute(n, n+1) 
+      / (inhomogeneous_term * coefficient.substitute(n, n+1));
+    new_inhomogeneous_term = simplify_all(new_inhomogeneous_term);
+    D_VAR(new_inhomogeneous_term);
     std::vector<Expr> base_of_exps;
     std::vector<Expr> exp_poly_coeff;
     std::vector<Expr> exp_no_poly_coeff;
-    exp_poly_decomposition(new_p_n,
+    exp_poly_decomposition(new_inhomogeneous_term,
 			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
     std::vector<Polynomial_Root> new_roots;
     new_roots.push_back(Polynomial_Root(Expr(1), RATIONAL));
-    if (!compute_sum_with_gosper_algorithm(1, n, base_of_exps,
-					   exp_poly_coeff, exp_no_poly_coeff,
-					   new_roots, p_n/alpha_factorial,
+    if (!compute_sum_with_gosper_algorithm(1, n, base_of_exps, exp_poly_coeff,
+					   exp_no_poly_coeff, new_roots,
+					   inhomogeneous_term/alpha_factorial,
 					   solution)) {
       // FIXME: the summand is not hypergeometric:
       // no chance of using Gosper's algorithm.
@@ -1973,14 +1972,14 @@ solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
       // (forse prima di vedere gosper)
       Symbol h;
       solution += alpha_factorial * x(z) + alpha_factorial 
-	* PURRS::sum(h, z + 1, n,
-		     p_n.substitute(n, h) / alpha_factorial.substitute(n, h));
+	* PURRS::sum(h, z + 1, n, inhomogeneous_term.substitute(n, h) 
+		     / alpha_factorial.substitute(n, h));
       return SUCCESS;
     }
     // To do this cycle or to consider `z + 1' as the lower limit of
     // the sum is the same thing,  but so is better for the output.
     for (Number i = 1; i < z + 1; ++i)
-      solution -= (p_n / alpha_factorial).substitute(n, i);
+      solution -= (inhomogeneous_term / alpha_factorial).substitute(n, i);
   }
   solution += x(z);
   solution *= alpha_factorial;

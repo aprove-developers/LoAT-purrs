@@ -37,6 +37,7 @@ Recurrence::Recurrence()
     gcd_decrements_old_rhs(0),
     solution_order_reduced(0),
     recurrence_rhs_rewritten(false),
+    inhomogeneous_term(0),
     type(ORDER_ZERO),
     tdip(0),
     solved(false) {
@@ -49,6 +50,7 @@ Recurrence::Recurrence(const Expr& e)
     gcd_decrements_old_rhs(0),
     solution_order_reduced(0),
     recurrence_rhs_rewritten(false),
+    inhomogeneous_term(0),
     type(UNKNOWN),
     tdip(0),
     solved(false) {
@@ -61,6 +63,7 @@ Recurrence::Recurrence(const Recurrence& y)
     gcd_decrements_old_rhs(y.gcd_decrements_old_rhs),
     solution_order_reduced(y.solution_order_reduced),
     recurrence_rhs_rewritten(y.recurrence_rhs_rewritten),
+    inhomogeneous_term(y.inhomogeneous_term),
     system_rhs(y.system_rhs),
     type(y.type),
     tdip(y.tdip),    
@@ -80,6 +83,7 @@ Recurrence::operator=(const Recurrence& y) {
   gcd_decrements_old_rhs = y.gcd_decrements_old_rhs;
   solution_order_reduced = y.solution_order_reduced;
   recurrence_rhs_rewritten = y.recurrence_rhs_rewritten;
+  inhomogeneous_term = y.inhomogeneous_term;
   system_rhs = y.system_rhs;
   type = y.type;
   tdip = y.tdip;
@@ -100,6 +104,11 @@ Recurrence::replace_recurrence(unsigned k, const Expr& e) {
   if (!stat.second)
     // There was already something associated to `k': overwrite it.
     stat.first->second = e;
+}
+
+inline void
+Recurrence::set_inhomogeneous_term(const Expr& e) const {
+  inhomogeneous_term = e;
 }
 
 inline bool

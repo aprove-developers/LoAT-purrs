@@ -121,6 +121,9 @@ private:
   //! returns the expression \f$ z \f$ otherwise.
   Expr get_auxiliary_definition(const Symbol& z) const;
 
+  //! Sets to \p e the <CODE>inhomogeneous_term</CODE>.
+  void set_inhomogeneous_term(const Expr& e) const;
+
 public:
   enum Solver_Status {
     /*!
@@ -215,15 +218,12 @@ private:
 				       int& gcd_among_decrements,
 				       int num_term) const;
   void add_initial_conditions(const Expr& g_n,
-			      const std::vector<Number>& coefficients,
-			      Expr& solution) const;
+			      const std::vector<Number>& coefficients) const;
+  Solver_Status 
+  solve_constant_coeff_order_1(const std::vector<Polynomial_Root>&
+			       roots) const;
   Solver_Status
-  solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
-			       const std::vector<Polynomial_Root>& roots,
-			       Expr& solution) const;
-  Solver_Status
-  solve_variable_coeff_order_1(const Expr& inhomogeneous_term,
-			       const Expr& coefficient, Expr& solution) const;
+  solve_variable_coeff_order_1(const Expr& coefficient) const;
   //! \brief
   //! Holds the right-hand side of the global recurrence to be solved.
   //! This may have been set directly by the constructor or it may be the
@@ -256,6 +256,12 @@ private:
   //! in the case there are null or negative decrements or if has been applied
   //! the order reduction; it is <CODE>false</CODE> in all the other cases.
   mutable bool recurrence_rhs_rewritten;
+
+  //! \brief
+  //! Stores the inhomogeneous part of \p *this, i. e., those terms
+  //! that not involve \f$ x \f$ functions like \f$ x(n-k) \f$ or
+  //! \f$ x(n/k) \f$, where \f$ k \f$ is a positive integer.
+  mutable Expr inhomogeneous_term;
 
   //! \brief
   //! Holds the right-hand sides of a system of  recurrence equations.
@@ -381,8 +387,8 @@ private:
   static Solver_Status
   find_non_linear_recurrence(const Expr& e);
   static Solver_Status
-  compute_order(const Number& decrement, unsigned int& order, unsigned long& index,
-		unsigned long max_size);
+  compute_order(const Number& decrement, unsigned int& order,
+		unsigned long& index, unsigned long max_size);
 
 #if 0
     Expr poly_char;
