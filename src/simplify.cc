@@ -47,15 +47,16 @@ Expr
 simplify_on_output_ex(const Expr& e, const Symbol& n, bool input);
 
 
+//! Applies the rule `E2' of the set \emph{Expand}.
 /*!
-  There are three cases:
-  1. the <CODE>Expr</CODE> \p e is a <CODE>mul</CODE> and has like a factor \p n:
-     returns the <CODE>Expr</CODE> \p e_minus_n with all the factors of \p e
-     minus \p n;
-  2. the <CODE>Expr</CODE> \p e is not a <CODE>mul</CODE> and it is equal to \p n:
-     returns the <CODE>Expr</CODE> \p e_minus_n equal to \f$ 1 \f$; 
-  3. the <CODE>Expr</CODE> \p e not contains \p n:
-     returns the <CODE>Expr</CODE> \p e_minus_n equal to \p e.
+  If \f$ e = e_1 \cdots \e_k \f$ and
+  \f$ \exists i \in \{1, \dotsc , k\} \st e_i == n \f$,
+  then returns <CODE>true</CODE> and \f$ e \f$ becomes
+  \f$ e_1 \cdots e_{i-1} \cdot e_{i+1} \cdots \e_k \f$.
+  If \f$ e = n \f$ then returns <CODE>true</CODE> and \f$ e \f$
+  becomes \f$ 1 \f$.
+  For all the other cases returns <CODE>false</CODE> and \f$ e \f$
+  not changes.
 */
 static bool
 erase_factor(Expr& e, const Symbol& n) {
@@ -66,7 +67,7 @@ erase_factor(Expr& e, const Symbol& n) {
      if (e[i] == n)
        break;
    if (i < num_factors) {
-     // Found an occurrence of th symbol `n'.
+     // Found an occurrence of the symbol `n'.
      Expr r = 1;
      for (unsigned j = 0; j < num_factors; ++j)
        if (i != j)
@@ -206,10 +207,12 @@ simpl_powers_base(const Expr& base, const Expr& num_exponent,
   Expr tot = 1;
   for (unsigned i = base.nops(); i-- > 0; )
     if (!vect_base[i].is_a_number())
-      tot *= return_power(false, vect_base[i], vect_num_exp[i], vect_not_num_exp[i],
+      tot *= return_power(false, vect_base[i],
+			  vect_num_exp[i], vect_not_num_exp[i],
 			  n, input);
     else
-      tot *= return_power(true, vect_base[i], vect_num_exp[i], vect_not_num_exp[i],
+      tot *= return_power(true, vect_base[i],
+			  vect_num_exp[i], vect_not_num_exp[i],
 			  n, input);
   return tot;
 }
@@ -220,7 +223,7 @@ simpl_powers_base(const Expr& base, const Expr& num_exponent,
   The <CODE>Expr</CODE> \p e is a <CODE>power</CODE>:
   it finds the base and the exponent of the power (\p e could be a serie
   of nested powers). While it does this operation divides the exponents
-  (that can be multiplications but not addictions because the expression
+  (that can be multiplications but not additions because the expression
   \p e is expanded) in two parts: in \p num_exponent put
   numeric factors and in \p not_num_exponent put not numeric factors.
   Therefore tests the base: if it is not a multiplication the checks and the
@@ -375,7 +378,8 @@ collect_same_base(const Expr& e, std::vector<Expr>& bases,
 	}
       // Applies rule `C1'.
       if (to_sum)
-	e_rewritten = e_rewritten.subs(pwr(e.op(i), wild(0)), pwr(e.op(i), wild(0) + 1));
+	e_rewritten = e_rewritten.subs(pwr(e.op(i), wild(0)),
+				       pwr(e.op(i), wild(0) + 1));
       else
 	e_rewritten *= e.op(i);
     }
@@ -618,13 +622,10 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
   // because otherwise the number, since it is irrational, is rounded.
   Expr irr_part = 1;
   for (unsigned i = 0; i < num_size; ++i)
-    irr_part *= pwr(num_bases[i],
-							num_exponents[i]);
+    irr_part *= pwr(num_bases[i], num_exponents[i]);
   for (unsigned i = 0; i < den_size; ++i)
-    irr_part *= pwr(den_bases[i],
-							den_exponents[i]);
-  Expr q = sign * reduced_num * pwr(reduced_den,
-									-1);
+    irr_part *= pwr(den_bases[i], den_exponents[i]);
+  Expr q = sign * reduced_num * pwr(reduced_den, -1);
   if (irr_part.ex_to_number() > 1)
     q *= pwr(irr_part, Number(1, k));
   return q;
@@ -689,8 +690,7 @@ reduce_product(const Expr& e) {
 		base_1 = to_reduce.op(j).op(0).ex_to_number();
 		exp_1  = to_reduce.op(j).op(1).ex_to_number();
 		factor_to_reduce
-		  = pwr(to_reduce.op(j).op(0),
-							    to_reduce.op(j).op(1));
+		  = pwr(to_reduce.op(j).op(0), to_reduce.op(j).op(1));
 	      }
 	      else
 		factor_no_to_reduce *= to_reduce.op(j);
@@ -699,14 +699,12 @@ reduce_product(const Expr& e) {
 	    base_1 = to_reduce.op(0).ex_to_number();
 	    exp_1 = to_reduce.op(1).ex_to_number();
 	    factor_to_reduce
-	      = pwr(to_reduce.op(0),
-							to_reduce.op(1));
+	      = pwr(to_reduce.op(0), to_reduce.op(1));
 	  }
 	  else {
 	    base_1 = to_reduce.ex_to_number();
 	    exp_1 = 1;
-	    factor_to_reduce = pwr(to_reduce,
-								       1);
+	    factor_to_reduce = pwr(to_reduce, 1);
 	  }
 	}
 	// Base and exponent of `tmp.op(i)' are not both numerics.
@@ -743,11 +741,9 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
       Expr base = simplify_on_output_ex(e.op(i).op(0), n, input);
       Expr exp = simplify_on_output_ex(e.op(i).op(1), n, input);
       if (base.is_a_number() && exp.is_a_number())
-	e_rewritten *= reduce_product(pwr(base,
-									      exp));
+	e_rewritten *= reduce_product(pwr(base, exp));
       else
-	e_rewritten *= pow_simpl(pwr(base, exp),
-				 n, input);
+	e_rewritten *= pow_simpl(pwr(base, exp), n, input);
     }
     else
       e_rewritten *= e.op(i);
@@ -887,11 +883,9 @@ simplify_on_output_ex(const Expr& e, const Symbol& n, bool input) {
     Expr base = simplify_on_output_ex(e.op(0), n, input);
     Expr exp = simplify_on_output_ex(e.op(1), n, input);
     if (base.is_a_number() && exp.is_a_number())
-      e_rewritten
-	= reduce_product(pwr(base, exp));
+      e_rewritten = reduce_product(pwr(base, exp));
     else
-      e_rewritten
-	= pow_simpl(pwr(base, exp), n, input);
+      e_rewritten = pow_simpl(pwr(base, exp), n, input);
     // Necessary for l'output: for example if `e = sqrt(18)^a' then
     // `e_rewritten = sqrt(2)^a*3^a'.
     if (e_rewritten.is_a_mul())
@@ -1036,19 +1030,15 @@ simpl_exponentials(const Expr& e, const Symbol& n) {
   else if (e.is_a_mul()) {
     e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
-      if (e.op(i)
-	  .match(pwr(wild(0), n + wild(1)))
-	  || e.op(i)
-	  .match(pwr(wild(0),
-							 wild(2) * n + wild(1))))
+      if (e.op(i).match(pwr(wild(0), n + wild(1)))
+	  || e.op(i).match(pwr(wild(0), wild(2) * n + wild(1))))
 	e_rewritten *= e.op(i).expand();
       else
 	e_rewritten *= e.op(i);
   }
   else
     if (e.match(pwr(wild(0), n + wild(1)))
-	|| e.match(pwr(wild(0),
-							   wild(2) * n + wild(1))))
+	|| e.match(pwr(wild(0), wild(2) * n + wild(1))))
       e_rewritten += e.expand();
     else
       e_rewritten += e;
