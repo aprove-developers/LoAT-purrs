@@ -62,11 +62,11 @@ const char* program_name = 0;
 void
 print_usage() {
   cerr << "Usage: " << program_name << " [OPTION]...\n\n"
-    "  -R, --rhs \"<expr>\"       set the right-hand side of the recurrence\n"
+    "  -R, --rhs \"<expr>\"     set the right-hand side of the recurrence\n"
     "                           that has to be solved/approximated\n" 
     "  -I, --initial-condition \"<expr>\"\n"
     "                           set an initial condition for the recurrence\n"
-    "  -E, --exact              try to solve the solution\n"
+    "  -E, --exact              try to solve the recurrence\n"
     "  -L, --lower-bound        try to approximate the solution of the\n"
     "                           recurrence from below\n"
     "  -U, --upper-bound        try to approximate the solution of the\n"
