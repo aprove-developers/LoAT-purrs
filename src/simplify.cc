@@ -638,10 +638,8 @@ red_prod(const Number& base1, const Number& exp1,
 }
 
 /*!
-  Applies the rules of the set <EM>Irrationals</EM> to
-  <CODE>Expr</CODE> \p e if \p e is a <CODE>power</CODE> or to
-  each \p e's factor which is a <CODE>power</CODE> if \p e is a
-  <CODE>mul</CODE>.
+  Applies the rules of the set <EM>Irrationals</EM> to each \p e's factor
+  which is a <CODE>power</CODE>.
 */
 Expr
 reduce_product(const Expr& e) {
@@ -703,13 +701,12 @@ reduce_product(const Expr& e) {
 /*!
   Applies all rules of term rewriting system \f$ \mathfrak{R}_o \f$ which
   are applicable on factors.
-  Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
+  Returns an expression containing the modified expression \p e.
 */
 Expr
 manip_factor(const Expr& e, bool input) {
   assert(e.is_a_mul());
   Expr e_rewritten = 1;
-
   // Simplifies each factor that is a `power'.
   for (unsigned i = e.nops(); i-- > 0; ) {
     const Expr& factor_e = e.op(i);
@@ -732,9 +729,7 @@ manip_factor(const Expr& e, bool input) {
       e_rewritten *= factor_e;
   }
   D_MSGVAR("e_rewritten dopo nested: ", e_rewritten);
-
   // From this time forward we do not know if `e_rewritten' is a again `mul'.
-  
   // Simplifies recursively the factors which are functions simplifying
   // their arguments.
   if (e_rewritten.is_a_mul()) {
@@ -742,7 +737,7 @@ manip_factor(const Expr& e, bool input) {
     Expr factor_no_function = 1;
     for (unsigned i = e_rewritten.nops(); i-- > 0; ) {
       const Expr& factor_e_rewritten = e_rewritten.op(i);
-      if (factor_e_rewritten.is_a_function()) {
+      if (factor_e_rewritten.is_a_function())
 	if (factor_e_rewritten.nops() == 1)
 	  factor_function
 	    *= apply(factor_e_rewritten.functor(),
@@ -754,7 +749,6 @@ manip_factor(const Expr& e, bool input) {
 	    argument[i] = simplify_on_output_ex(factor_e_rewritten.arg(i), input);
 	  factor_function *= apply(factor_e_rewritten.functor(), argument);
 	}
-      }
       else
 	factor_no_function *= factor_e_rewritten;
     }
@@ -773,7 +767,6 @@ manip_factor(const Expr& e, bool input) {
     }
   }
   D_MSGVAR("e_rewritten dopo function: ", e_rewritten);
-  
   // Special case: the exponential `exp' is a `function' but it has
   // the same properties of the powers.
   if (e_rewritten.is_a_mul()) {
@@ -789,7 +782,6 @@ manip_factor(const Expr& e, bool input) {
     e_rewritten = exp(argument) * rem;
   D_MSGVAR("e_rewritten dopo `exp': ", e_rewritten);
   }
-  
   // Simplifies eventual product of irrational numbers.
   if (e_rewritten.is_a_add()) {
     Expr terms = 0;
@@ -805,8 +797,8 @@ manip_factor(const Expr& e, bool input) {
   else
     if (e_rewritten.is_a_mul())
       e_rewritten = reduce_product(e_rewritten);
-
-  // Simplifies eventual powers with same base or same exponents.
+  // Simplifies eventual powers with same base or same exponents applying
+  // the rule of the term rewriting system \f$ \mathfrak{R}_o \f$.
   if (e_rewritten.is_a_add()) {
     Expr terms = 0;
     for (unsigned i = e_rewritten.nops(); i-- > 0; ) { 
@@ -1002,7 +994,7 @@ PURRS::simplify_on_input_ex(const Expr& e, bool input) {
   \f$, except for \f$ \textbf{E2} \f$, are also in \f$ \mathfrak{R}_o
   \f$.  \p input is always <CODE>false</CODE> and this means that \p n
   is not considerated like a special symbol but like the others
-  parameters.  The function returns a <CODE>Expr</CODE> that contains
+  parameters.  The function returns a new expression containing
   the modified expression \p e.
 */
 PURRS::Expr
@@ -1033,9 +1025,9 @@ PURRS::simplify_on_output_ex(const Expr& e, bool input) {
       else
 	e_rewritten = tmp;
     }
-    D_VAR(e_rewritten);
-    // Necessary for l'output: for example if `e = sqrt(18)^a' then
-    // `e_rewritten = sqrt(2)^a*3^a'.
+    // Necessary for the output: for example if `e = sqrt(18)^a' then
+    // with the following rows `e_rewritten = (3*sqrt(2))^a'
+    // (without the following rows `e_rewritten = sqrt(2)^a*3^a').
     if (e_rewritten.is_a_mul())
       e_rewritten = collect_base_exponent(e_rewritten);
   }
