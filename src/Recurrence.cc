@@ -183,12 +183,14 @@ PURRS::Recurrence::set_first_valid_index_for_solution() const {
       ++index;
   }
   else {
-    if (is_linear_finite_order() || is_non_linear_finite_order()) {
+    if (is_linear_finite_order_const_coeff()
+	|| is_linear_finite_order_var_coeff()
+	|| is_non_linear_finite_order()) {
       index_type order_rec;
-      if (is_linear_finite_order())
-	order_rec = order();
-      else
+      if (is_non_linear_finite_order())
 	order_rec = associated_linear_rec().order();
+      else
+	order_rec = order();
       std::map<index_type, Expr>::const_reverse_iterator i
 	= initial_conditions_.rbegin();
       for (index_type j = 0; j < order_rec-1; j++)
