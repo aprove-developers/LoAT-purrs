@@ -291,6 +291,7 @@ main() try {
   Expr exact_solution;
   Expr lower_bound;
   Expr upper_bound;
+  unsigned int first_valid_index_for_solution;
 
   time_unit_t start_time;
 
@@ -305,6 +306,8 @@ main() try {
       recurrence.exact_solution(exact_solution);
       exact_solution
         = recurrence.substitute_auxiliary_definitions(exact_solution);
+      first_valid_index_for_solution
+	= recurrence.first_valid_index_for_solution();
       solution_time_usecs += time_unit_to_usecs(get_time() - start_time);
 
       start_time = get_time();
@@ -340,6 +343,8 @@ main() try {
     case Recurrence::SUCCESS:
       have_lower_bound = true;
       recurrence.lower_bound(lower_bound);
+      first_valid_index_for_solution
+	= recurrence.first_valid_index_for_solution();
       solution_time_usecs += time_unit_to_usecs(get_time() - start_time);
 
       start_time = get_time();
@@ -374,6 +379,8 @@ main() try {
     case Recurrence::SUCCESS:
       have_upper_bound = true;
       recurrence.upper_bound(upper_bound);
+      first_valid_index_for_solution
+	= recurrence.first_valid_index_for_solution();
       solution_time_usecs += time_unit_to_usecs(get_time() - start_time);
 
       start_time = get_time();
@@ -489,7 +496,9 @@ main() try {
       cout << "x(n) <= " << upper_bound << endl;
     }
   }
-
+  if (have_exact_solution || have_lower_bound || have_upper_bound)
+    cout << br() << "for each n >= " << first_valid_index_for_solution << endl;
+  
   // Get a pointer to the environment.
   const CgiEnvironment& env = cgi.getEnvironment();
 
