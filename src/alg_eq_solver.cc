@@ -286,7 +286,7 @@ is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
 bool
 find_roots(const Expr& p, const Symbol& x,
 	   std::vector<Polynomial_Root>& roots,
-	   Number multiplicity) {
+	   unsigned multiplicity) {
   unsigned ldegree = p.ldegree(x);
   assert(ldegree <= 1);
   Expr q;
@@ -457,7 +457,7 @@ find_power_roots(const Expr& p, const Symbol& x,
   const Expr& base = p.arg(0);
   Number exponent = p.arg(1).ex_to_number();
   assert(exponent.is_positive_integer() && exponent >= 2);
-  if (!find_roots(base, x, roots, exponent))
+  if (!find_roots(base, x, roots, exponent.to_unsigned()))
     // No way: we were unable to solve the base.
     return false;
   return true;
@@ -576,7 +576,7 @@ PURRS::find_roots(const Expr& p, const Symbol& x,
 //! Output operator.
 std::ostream&
 operator<<(std::ostream& s, const Polynomial_Root& r) {
-  Number multiplicity = r.multiplicity();
+  unsigned multiplicity = r.multiplicity();
   if (multiplicity != 1)
     s << "mult: " << multiplicity << ", val: ";
   s << r.value();
