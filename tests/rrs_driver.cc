@@ -53,7 +53,11 @@ main() try {
 #endif
 
   GSymbol n("n");
-  GList symbols(n);
+  GSymbol a("a");
+  GSymbol b("b");
+  GSymbol c("c");
+  GSymbol d("d");
+  GList symbols(n, a, b, c, d);
   GExpr rhs;
   while (INPUT_STREAM) {
     string s;

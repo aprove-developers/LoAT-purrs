@@ -125,11 +125,46 @@ split_exp(GExpr& p, const GSymbol& x, const GList lst_of_exp) {
 }
 
 /*!
+  Transforms expressions of the form \f$a^b*a^c)\f$ in the expression \p p
+  into \f$a^(b+c)^x\f$.
+*/
+static GExpr
+union_exp(GExpr& p, /*const GSymbol& x,*/ const GList lst_of_exp) {
+  GExpr q = 0;
+
+  //FIXME: this part must be finished!!
+//   std::cout << "p " << p << std::endl; 
+  for (size_t i = lst_of_exp.nops(); i-- > 0; ) {
+    GExpr tmp = lst_of_exp.op(i);
+    tmp = tmp.subs(pow(wild(0),wild(1))*pow(wild(0), wild(2)) ==
+		   pow(wild(0), wild(1)+wild(2)));
+    // Finds coefficient of exponential 'lst_of_exp.op(i)'.
+    GList substitution;
+    clear(substitution);
+    if (match(p, lst_of_exp.op(i)*wild(0), substitution) ||
+	match(p, lst_of_exp.op(i)*wild(0) + wild(1), substitution)) {
+      GExpr coeff = get_binding(substitution, 0);
+      q += tmp*coeff;
+      p -= coeff*lst_of_exp.op(i);
+    }
+    // The exponential's coefficient is 1.
+    else {
+      q += tmp;
+      p -= lst_of_exp.op(i);
+    }
+  }
+  // Now p does not contain other exponential of the form a^(b*x). 
+  q += p;
+
+  return q;
+}
+
+/*!
   Transforms expressions of the form \f$a^x*b^x\f$ in the expression \p p
   into \f$(a^b)^x\f$.
 */
 static GExpr 
-union_exp(GExpr& p, const GSymbol& x, const GList lst_of_exp,
+mul_base_exp(GExpr& p, const GSymbol& x, const GList lst_of_exp,
 	  const unsigned n) {
   GExpr q = 0;
 
@@ -160,7 +195,7 @@ union_exp(GExpr& p, const GSymbol& x, const GList lst_of_exp,
 }
 
 static void
-transform_exponentials(GExpr& e, const GSymbol& n) {
+transform_exponentials(GExpr& e, const GSymbol& n, const bool input) {
   GList lst_of_exp;
 
   // Transforms (a^n)^b into a^(b*n).
@@ -170,23 +205,37 @@ transform_exponentials(GExpr& e, const GSymbol& n) {
     clear(lst_of_exp);
   }
 
-  // Transforms a^(b*n+c) into (a^b)^n*a^c.
-  static GExpr a_bn = pow(wild(0), n*wild(1));
-  static GExpr a_n_c = pow(wild(0), n+wild(1));
-  static GExpr a_bn_c = pow(wild(0), n*wild(1)+wild(2));
-  if (e.find(a_bn_c, lst_of_exp) || e.find(a_n_c, lst_of_exp)) 
-    e = e.expand();
-  if (e.find(a_bn, lst_of_exp))
-    e = split_exp(e, n, lst_of_exp);
+  if (input == true) {
+    // Transforms a^(b*n+c) into (a^b)^n*a^c
+    // (to do only on input expression).
+    static GExpr a_bn = pow(wild(0), n*wild(1));
+    static GExpr a_n_c = pow(wild(0), n+wild(1));
+    static GExpr a_bn_c = pow(wild(0), n*wild(1)+wild(2));
+    if (e.find(a_bn_c, lst_of_exp) || e.find(a_n_c, lst_of_exp)) 
+      e = e.expand();
+    if (e.find(a_bn, lst_of_exp))
+      e = split_exp(e, n, lst_of_exp);
+  }
+  else {
+    //FIXME: this part must be finished!!
+ //    // Transforms a^b*a^c into a^(b+c)
+//     // (to do only on output expression).
+//     static GExpr a_b_times_a_c = pow(wild(1)*wild(0), wild(2)) *
+//                                  pow(wild(3)*wild(0), wild(4));
+//     if (e.find(a_b_times_a_c, lst_of_exp)) {
+//       std::cout << "lst_of_exp " << lst_of_exp << std::endl;   
+//       e = union_exp(e, n, lst_of_exp);
+//     }
+  }
 
   // Transforms a^n*b^n into (a*b)^n.
   static GExpr a_n_b_n = pow(wild(0), n)*pow(wild(1), n);
   static GExpr c_a_n_b_n = pow(wild(0), n)*pow(wild(1), n)*wild(2);
   while (e.find(a_n_b_n, lst_of_exp) || e.find(c_a_n_b_n, lst_of_exp)) { 
     if (e.find(a_n_b_n, lst_of_exp))
-	e = union_exp(e, n, lst_of_exp, 1);
+	e = mul_base_exp(e, n, lst_of_exp, 1);
     else
-      e = union_exp(e, n, lst_of_exp, 2);
+      e = mul_base_exp(e, n, lst_of_exp, 2);
     clear(lst_of_exp);
   }
 }
@@ -197,7 +246,7 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n);
 static bool
 solution_1_poly_times_exponentials(const GSymbol& x_0, const GSymbol& n,
 				   const GMatrix& decomposition,
-				   const std::vector<GNumber>& coefficients,
+				   const std::vector<GExpr>& coefficients,
 				   GExpr& solution);
 
 static bool
@@ -216,8 +265,8 @@ solve(const GExpr& rhs, const GSymbol& n) {
 
   static GList substitution;
 
-  int order = -1;
-  std::vector<GNumber> coefficients;
+ int order = -1;
+  std::vector<GExpr> coefficients;
   GExpr e = rhs;
   bool failed = false;
   do {
@@ -262,18 +311,20 @@ solve(const GExpr& rhs, const GSymbol& n) {
       failed = true;
       break;
     }
-    if (!GiNaC::is_a<GiNaC::numeric>(a)) {
-      failed = true;
-      break;
+    // For the moment the coefficients of recurrence relation
+    // must be constants, i. e., it does not contains the variable n.
+    if (a.has(n)) {
+      throw ("PURRS error: at the moment we solve the recurrence "
+	     "relation with constant coefficients. ");
     }
-    GNumber coefficient = GiNaC::ex_to<GiNaC::numeric>(a);
+    GExpr coefficient = a;
     // FIXME: turn this assertion into something more appropriate.
     assert(decrement >= LONG_MIN && decrement <= LONG_MAX);
     unsigned long index = decrement.to_long();
     if (order < 0 || index > unsigned(order))
       order = index;
-    // FIXME: why 'coefficients' is created with one useless element, 
-    // the first, that is always zero?
+    // The vector 'coefficients' contains in the i-th position
+    // the i-th coefficient, i. e., the coefficient of x(n-i).
     if (index > coefficients.size())
       coefficients.insert(coefficients.end(),
 			  index - coefficients.size(),
@@ -311,7 +362,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
   // a^(bn) into (a^b)^n.
   // Besides transform factor of the form (a^n)^b into a a^(b*n)
   // (GiNaC do not make this).
-  transform_exponentials(e, n);
+  transform_exponentials(e, n, true);
 
   // Now certainly the inhomogeneous term contains only exponential
   // with exponent n (or a power of n).
@@ -338,9 +389,12 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	GExpr coeff_of_exp = decomposition(1, i);
 	// Check if the inhomogeneous term is a polynomial or a the
 	// product of a polynomial and an exponential.
-	if (is_a<power>(exponential) &&
-	    !GiNaC::is_a<GiNaC::numeric>(exponential.op(0)))
-	  poly_times_exp = false;
+	if (is_a<power>(exponential))
+	  // The base of exponent must be numeric or an expression that
+	  // contains the parameters (a, b, c, d) but not the variable n.
+	  if (!GiNaC::is_a<GiNaC::numeric>(exponential.op(0)))
+	    if (exponential.op(0).has(n))
+	      poly_times_exp = false;
 	if (!is_a<power>(exponential) && exponential != 1) {
 	  poly_times_exp = false;
 	}
@@ -352,7 +406,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	// the inhomogeneous term is a polynomial or the product of a
 	// polynomial and an exponential.      
 	GSymbol x_0("x_0");
-	solution_1_poly_times_exponentials(x_0, n, decomposition,
+	solution_1_poly_times_exponentials(x_0, n,decomposition,
 					   coefficients, solution);
       }
       else 
@@ -364,6 +418,19 @@ solve(const GExpr& rhs, const GSymbol& n) {
     }
   case 2:
     {
+      // Check that the vector 'coefficients' does not contains
+      // parameters and in this case creates a vector of GNumber.
+      // This is temporary until will supports also the second order
+      // recurrence relation with parameters.
+      std::vector<GNumber>  num_coefficients(order+1);
+      for (int i = 1; i <= order; ++i) {
+	if (coefficients[i].info(info_flags::numeric))
+	  num_coefficients[i] = GiNaC::ex_to<GiNaC::numeric>(coefficients[i]);
+	else
+	  throw("The second order recurrent relations does not "
+		"support the parametric case. ");
+      }
+
       bool poly_times_exp = true;
       for (size_t i = 0; i < num_columns; ++i) {
 	GExpr exponential = decomposition(0, i);
@@ -384,7 +451,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	// polynomial and an exponential.      
 	GSymbol x_0("x_0"), x_1("x_1");
 	solution_2_poly_times_exponentials(x_0, x_1, n, decomposition,
-					   coefficients, solution);
+					   num_coefficients, solution);
       }	
       else 
 	throw ("PURRS error: at the moment the recurrence "
@@ -491,7 +558,7 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
 static bool
 solution_1_poly_times_exponentials(const GSymbol& x_0, const GSymbol& n,
 				   const GMatrix& decomposition,
-				   const std::vector<GNumber>& coefficients,
+				   const std::vector<GExpr>& coefficients,
 				   GExpr& solution_tot) {
   // The closed formula of the solution can be rewritten as
   // x(n) = \alpha^n * ( x_0 - p(0) + sum_{k=0}^n \alpha^(-k)*p(k) ).
@@ -506,7 +573,7 @@ solution_1_poly_times_exponentials(const GSymbol& x_0, const GSymbol& n,
     GExpr coeff_of_exp = decomposition(1, i);
     GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
     if (is_a<power>(exponential)) 
-      solution = sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
+      solution = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
 					     exponential.op(0) *
 					     pow(coefficients[1], -1));
     else
@@ -519,8 +586,12 @@ solution_1_poly_times_exponentials(const GSymbol& x_0, const GSymbol& n,
     solution_tot += solution;
   }
   solution_tot *= alpha_n;
+  //std::cout << "sol prima di expand " << solution_tot << std::endl;
+  //
+  //transform_exponentials(solution_tot, n);
   solution_tot = solution_tot.expand();
-  transform_exponentials(solution_tot, n);
+  //std::cout << "sol dopo expand " << solution_tot << std::endl << std::endl;
+  transform_exponentials(solution_tot, n, false);
 
   return true;
 } 
@@ -630,18 +701,18 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	GExpr coeff_of_exp = decomposition(1, i);
 	GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
 	if (is_a<power>(exponential)) {
-	  solution_1 = sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
+	  solution_1 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
 						   exponential.op(0)*
 						   pow(root_1, -1));
-	  solution_2 = sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
-						   exponential.op(0)*
+	  solution_2 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
+						  exponential.op(0)*
 						   pow(root_2, -1));
 	}     
 	else {
 	  // This is the case of the constant exponential.
-	  solution_1 = sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
+	  solution_1 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
 						   pow(root_1, -1));
-	  solution_2 = sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
+	  solution_2 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
 						   pow(root_2, -1));
 	}
 	// 'sum_poly_times_exponentials' calculates the sum from 0 while
@@ -656,7 +727,7 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
       }
       solution_tot = solution_tot.expand();
       solution_tot = solution_tot.collect(lst(x_0, x_1));
-      transform_exponentials(solution_tot, n);
+      transform_exponentials(solution_tot, n, false);
     }
     else {
       // 'all_distinct == false': the characteristic equation
@@ -747,7 +818,7 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	}
 	solution_tot = solution_tot.expand();
 	solution_tot = solution_tot.collect(lst(x_0, x_1));
-	transform_exponentials(solution_tot, n);
+	transform_exponentials(solution_tot, n, false);
       }
     }
 
