@@ -134,17 +134,18 @@ build_characteristic_equation(const Symbol& x,
 
 /*
   Builds the characteristic equation and computes its roots.
-  Returns <CODE>true<CODE> if all roots are distinct, i.e., every
-  roots has multiplicity equal to one.
-  Returns <CODE>false<CODE> otherwise. 
+  The boolean \p all_distinct is true if all roots are distinct, i.e., every
+  roots has multiplicity equal to one, false otherwise.
+  Returns <CODE>false<CODE> if it does not succeed to find roots of the
+  characteristic equations; returns <CODE>true<CODE> otherwise. 
 */
 static bool
 characteristic_equation_and_its_roots(int order,
 				      const std::vector<Expr>& coefficients,
 				      std::vector<Number>& num_coefficients,
 				      Expr& characteristic_eq,
-				      std::vector<Polynomial_Root>& roots) {
-  bool all_distinct = true;
+				      std::vector<Polynomial_Root>& roots,
+				      bool& all_distinct) {
   Symbol y("y");
   // FIXME: il seguente if sull'ordine e' temporaneo perche' cosi' si
   // riescono a fare le parametriche del primo ordine almeno.
@@ -167,13 +168,13 @@ characteristic_equation_and_its_roots(int order,
 	  "Please come back tomorrow.";
     characteristic_eq = build_characteristic_equation(y, num_coefficients);
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
-      return TOO_COMPLEX;
+      return false;
   }
 #if NOISY
   D_VEC(roots, 0, roots.size()-1);
   D_MSG("");
 #endif
-  return all_distinct;
+  return true;
 }
 
 //! \brief
@@ -567,9 +568,12 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
     if (!has_non_constant_coefficients) {
       Expr characteristic_eq;
       std::vector<Polynomial_Root> roots;
-      characteristic_equation_and_its_roots(order, coefficients,
-					    num_coefficients,
-					    characteristic_eq, roots);
+      bool all_distinct = true;
+      if (!characteristic_equation_and_its_roots(order, coefficients,
+						 num_coefficients,
+						 characteristic_eq, roots,
+						 all_distinct))
+	return TOO_COMPLEX;
       solution = solve_constant_coeff_order_1(n, order, base_of_exps,
 					      exp_poly_coeff,
 					      exp_no_poly_coeff, roots,
@@ -590,10 +594,12 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
     if (!has_non_constant_coefficients) {
       Expr characteristic_eq;
       std::vector<Polynomial_Root> roots;
-      bool all_distinct
-	= characteristic_equation_and_its_roots(order, coefficients,
-						num_coefficients,
-						characteristic_eq, roots);
+      bool all_distinct = true;
+      if (!characteristic_equation_and_its_roots(order, coefficients,
+						 num_coefficients,
+						 characteristic_eq, roots,
+						 all_distinct))
+	return TOO_COMPLEX;
       solution = solve_constant_coeff_order_2(n, g_n, order, all_distinct,
 					      base_of_exps, exp_poly_coeff,
 					      exp_no_poly_coeff, 
@@ -609,10 +615,12 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
     if (!has_non_constant_coefficients) {
       Expr characteristic_eq;
       std::vector<Polynomial_Root> roots;
-      bool all_distinct
-	= characteristic_equation_and_its_roots(order, coefficients,
-						num_coefficients,
-						characteristic_eq, roots);
+      bool all_distinct = true;
+      if (!characteristic_equation_and_its_roots(order, coefficients,
+						 num_coefficients,
+						 characteristic_eq, roots,
+						 all_distinct))
+	return TOO_COMPLEX;
       solution = solve_constant_coeff_order_k(n, g_n, order, all_distinct,
 					      base_of_exps, exp_poly_coeff,
 					      exp_no_poly_coeff,
