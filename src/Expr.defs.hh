@@ -26,12 +26,13 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Expr_defs_hh 1
 
 #include "Expr.types.hh"
-#include "Symbol.types.hh"
 #include "Expr_List.types.hh"
 #include "Number.types.hh"
 #include "Constant.types.hh"
 #include "Complex_Interval.types.hh"
+#include "Symbol.defs.hh"
 
+#include <set>
 #include <ginac/ginac.h>
 
 namespace Parma_Recurrence_Relation_Solver {
@@ -914,6 +915,12 @@ public:
 
   //! Returns \p *this evaluated numerically. 
   Expr unsafe_fp_approximation() const;
+
+  //! Collects all symbols contained in \p *this in two sets dividing
+  //! <EM>bad</EM> symbols (i.e., symbols with the name of the shape
+  //! "symbol" followed by a number) form <EM>good</EM> symbols.
+  void collect_symbols(Symbol::SymbolSet& bad_symbols,
+		       Symbol::SymbolSet& good_symbols) const;
 
 private:
   friend class Number;
