@@ -654,36 +654,22 @@ split(const GExpr& e, GExpr& numerica, GExpr& symbolic) {
 
 static GExpr
 manip_factor(const GExpr& e) {
-  // In input 'e' e' sicuramente una 'mul'. Poi durante la
-  // funzione potrebbe anche non esserlo piu'.
+  // In input 'e' e' sicuramente una 'mul'.
   assert(is_a<mul>(e));
-  GExpr tmp = e;
-  // Simplifies bases and exponents of eventual powers..
-  for (unsigned i = tmp.nops(); i-- > 0; ) {
-    bool repeat = true;
-    while (repeat) {
-      GExpr input = tmp.op(i);
-      if (is_a<power>(tmp.op(i))) {
-	GExpr base = simplify_on_output_ex(tmp.op(i).op(0));
-	GExpr exp = simplify_on_output_ex(tmp.op(i).op(1));
-	tmp = tmp.subs(tmp.op(i) == pow_simpl(pow(base, exp)));
-      }
-      if (!is_a<mul>(tmp) || tmp.op(i).is_equal(input))
-	repeat = false;
+
+  GExpr tmp = 1;
+  // Simplifies each factor.
+  for (unsigned i = e.nops(); i-- > 0; )
+    if (is_a<power>(e.op(i))) {
+      GExpr base = simplify_on_output_ex(e.op(i).op(0));
+      GExpr exp = simplify_on_output_ex(e.op(i).op(1));
+      tmp *= pow_simpl(pow(base, exp));
     }
-  }
-  // Simplifies nested powers.
+    else
+      tmp *= e.op(i);
+  // Simplifies eventual powers with same base or same exponents.
   if (is_a<mul>(tmp))
-    for (unsigned i = tmp.nops(); i-- > 0; ) {
-      bool repeat = true;
-      while (repeat) {
-	GExpr input = tmp.op(i);
-	if (is_a<power>(tmp.op(i)))
-	  tmp = tmp.subs(tmp.op(i) == pow_simpl(tmp.op(i)));
-	if (!is_a<mul>(tmp) || tmp.op(i).is_equal(input))
-	  repeat = false;
-      }
-    }
+    tmp = collect_base_exponent(tmp);
 #if NOISY
   std::cout << "tmp dopo nested... " << tmp << std::endl;
 #endif
