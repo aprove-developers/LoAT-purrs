@@ -57,8 +57,18 @@ Finite_Order_Info::operator=(const Finite_Order_Info& y) {
 }
 
 inline int
-Finite_Order_Info::get_order() {
+Finite_Order_Info::get_order() const {
   return order;
+}
+
+inline const std::vector<unsigned>&
+Finite_Order_Info::get_decrements() const {
+  return decrements; 
+}
+
+inline const std::vector<unsigned>&
+Finite_Order_Info::get_initial_conditions() const {
+  return initial_conditions;
 }
 
 inline void
