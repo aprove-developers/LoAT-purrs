@@ -253,12 +253,9 @@ PURRS::Expr
 PURRS::compute_product(const Symbol& index, const Number& lower,
 		       const Expr& e) {
   assert(lower.is_integer());
-  D_VAR(lower);
   Expr common_factor;
   Expr rem;
-  factorize(e, common_factor, rem);
-  D_VAR(common_factor);
-  D_VAR(rem);
+  factorize(e.expand(), common_factor, rem);
   // `e' has been factorized: `e = common_factor * rem'.
   return comp_prod(index, lower, common_factor)
     * comp_prod(index, lower, rem);
