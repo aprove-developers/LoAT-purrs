@@ -30,53 +30,55 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 inline Number
-operator+(const Number& lh, const Number& rh) {
-  return lh + rh;
+operator+(const Number& x, const Number& y) {
+  return x.n + y.n;
 }
 
 inline Number
-operator-(const Number& lh, const Number& rh) {
-  return lh - rh;
+operator-(const Number& x, const Number& y) {
+  return x.n - y.n;
 }
 
 inline Number
-operator*(const Number& lh, const Number& rh) {
-  return lh * rh;
+operator*(const Number& x, const Number& y) {
+  return x.n * y.n;
 }
 
 inline Number
-operator/(const Number& lh, const Number& rh) {
-  return lh / rh;
+operator/(const Number& x, const Number& y) {
+  return x.n / y.n;
 }
 
 inline Number
-operator+(const Number& lh) {
-  return +lh;
+operator+(const Number& x) {
+  return x;
 }
 
 inline Number
-operator-(const Number& lh) {
-  return -lh;
+operator-(const Number& x) {
+  return -x.n;
 }
 
 inline Number&
-operator++(Number& rh) {
-  return ++rh;
+Number::operator++() {
+  ++n;
+  return *this;
 }
 
 inline Number&
-operator--(Number& rh) {
-  return --rh;
+Number::operator--() {
+  --n;
+  return *this;
 }
 
 inline Number
-operator++(Number& lh, int) {
-  return lh++;
+Number::operator++(int) {
+  return n++;
 }
 
 inline Number
-operator--(Number& lh, int) {
-  return lh--;
+Number::operator--(int) {
+  return n--;
 }
 
 inline bool
@@ -164,8 +166,8 @@ Number::Number(unsigned long i)
 }
 
 inline
-Number::Number(long numer, long denom)
-  : n(numer, denom) {
+Number::Number(long n, long d)
+  : n(n, d) {
 }
 
 inline

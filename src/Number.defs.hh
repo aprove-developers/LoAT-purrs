@@ -1,4 +1,4 @@
-/* *****************
+/* Number class declaration.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -32,21 +32,27 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-//! Binary arithmetic operators Number with Number.
-Number operator+(const Number& lh, const Number& rh);
-Number operator-(const Number& lh, const Number& rh);
-Number operator*(const Number& lh, const Number& rh);
-Number operator/(const Number& lh, const Number& rh);
+//! Returns \f$ x + y \f$.
+Number operator+(const Number& x, const Number& y);
 
-//! Unary operators.
-Number operator+(const Number &lh);
-Number operator-(const Number &lh);
+//! Returns \f$ x - y \f$.
+Number operator-(const Number& x, const Number& y);
 
-//! Increment / decrement operators.
-Number& operator++(Number& rh);
-Number& operator--(Number& rh);
-Number operator++(Number& lh, int);
-Number operator--(Number& lh, int);
+//! Returns \f$ x * y \f$.
+Number operator*(const Number& x, const Number& y);
+
+//! Returns \f$ x / y \f$.
+/*!
+  \exception std::runtime_error thrown if \p y is zero.
+*/
+Number operator/(const Number& x, const Number& y);
+
+//! Returns \f$ x \f$.
+Number operator+(const Number& x);
+
+//! Returns \f$ -x \f$.
+Number operator-(const Number& x);
+
 
 bool operator==(long x, const Number& y);
 bool operator!=(long x, const Number& y);
@@ -76,8 +82,11 @@ public:
   //! Builds the integer number \p i.
   Number(unsigned long i);
 
-  //! Builds the number \p numer / denom.
-  Number(long numer, long denom);
+  //! Builds the rational number \f$ n/d \f$.
+  /*!
+    \exception std::runtime_error thrown if \p d is zero.
+  */
+  Number(long n, long d);
 
   //! Copy-constructor.
   Number(const Number& s);
@@ -87,6 +96,18 @@ public:
 
   //! Assignment operator.
   Number& operator=(const Number& s);
+
+  //! Pre-increment operator.
+  Number& operator++();
+
+  //! Pre-decrement operator.
+  Number& operator--();
+
+  //! Post-increment operator.
+  Number operator++(int);
+
+  //! Post-increment operator.
+  Number operator--(int);
 
   bool operator==(const Number& num) const;
   bool operator!=(const Number& num) const;
@@ -120,6 +141,7 @@ private:
   friend Number lcm(const Number& x, const Number& y);
   friend Number factorial(const Number& n);
 
+public:
   GiNaC::numeric n;
 
 public:
