@@ -66,18 +66,16 @@ int main() try {
     cout << "1. For the input (to put in evidence the symbol `n')" << endl;
     cout << "2. For the output" << endl;
     cout << "3. Containing factorials" << endl;
-    Expr_List l(x, n, a, b, c, d);
-    string s;
-    Expr tmp;
+    int choice = 0;
     do {
-      getline(input_stream, s);
       if (!input_stream)
 	return 0;
-      tmp = Expr(s, l);
-    } while (!tmp.is_equal(1) && !tmp.is_equal(2) && !tmp.is_equal(3)); 
-    Number choice;
-    choice = tmp.ex_to_number();
+      input_stream >> choice;
+    } while (choice < 1 || choice > 3); 
+
     cout << endl << "Insert an expression: ";
+    Expr_List l(x, n, a, b, c, d);
+    string s;
     getline(input_stream, s);
     
     if (!input_stream)
@@ -94,7 +92,7 @@ int main() try {
     cout << "Expanded expression = " << e << endl;
 #endif
     Expr solution;
-    switch (choice.to_int()) {
+    switch (choice) {
     case 1:
       solution = simplify_on_input_ex(e, n, true);
       break;
