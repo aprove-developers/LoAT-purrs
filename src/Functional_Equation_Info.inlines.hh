@@ -31,10 +31,9 @@ namespace Parma_Recurrence_Relation_Solver {
 
 inline
 Functional_Equation_Info::
-Functional_Equation_Info(const std::map<Number, Expr>& hom_terms,
-			 unsigned c)
+Functional_Equation_Info(const std::map<Number, Expr>& hom_terms)
   : homogeneous_terms(hom_terms),
-    applicability_condition_(c) {
+    applicability_condition_(1) {
 }
 
 inline

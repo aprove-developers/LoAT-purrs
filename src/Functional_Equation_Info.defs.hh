@@ -37,8 +37,7 @@ namespace Parma_Recurrence_Relation_Solver {
 */
 class Functional_Equation_Info {
 public:
-  Functional_Equation_Info(const std::map<Number, Expr>& hom_terms,
-			   unsigned c = 1);
+  Functional_Equation_Info(const std::map<Number, Expr>& hom_terms);
 
   //! Copy-constructor.
   Functional_Equation_Info(const Functional_Equation_Info& y);
