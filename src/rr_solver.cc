@@ -132,8 +132,7 @@ return_sum(const bool distinct, const GSymbol& n, const int order,
   GSymbol k("k");
   GSymbol x("x");
   GExpr q_k = coeff.subs(n == k);
-  GExpr symbolic_sum;
-  
+  GExpr symbolic_sum;  
   if (distinct)
     symbolic_sum = sum_poly_times_exponentials(q_k, k, n, x);
   else
@@ -142,7 +141,7 @@ return_sum(const bool distinct, const GSymbol& n, const int order,
   // we want to start from 'order'.
   symbolic_sum -= q_k.subs(k == 0);
   for (int j = 1; j < order; ++j)
-    symbolic_sum -= q_k.subs(k == j) * pow(lambda, -1);
+    symbolic_sum -= q_k.subs(k == j) * alpha * pow(lambda, -1);
   if (distinct)
     symbolic_sum = symbolic_sum.subs(x == alpha/lambda);
   symbolic_sum *= pow(lambda, n);
@@ -160,21 +159,24 @@ return_sum(const bool distinct, const GSymbol& n, const int order,
   and \p alpha the generic base of an exponential.
 
   This function fills the two vectors of <CODE>GExpr</CODE>
-  \p symbolic_sum_distinct and \p symbolic_sum_no_distinct, with dimension
-  equal to \p base_of_exps.size(), with two different sums:
+  \p symbolic_sum_distinct and \p symbolic_sum_no_distinct
+  with two different sums:
   fixed tha base \p alpha_i, for each root \p lambda 
   - if \f$ \alpha_i \neq \lambda \f$ then
     \f[
-      symbolic_sum_distinct[i]
+      symbolic\_sum\_distinct[i]
         = \lambda^n * f_i(\alpha_i / \lambda)
         = \lambda^n * \sum_{k=order}^n (\alpha_i / \lambda)^k \cdot p_i(k);
     \f]
   - if \f$ \alpha_i = \lambda \f$ then
     \f[
-      symbolic_sum_no_distinct[i]
+      symbolic\_sum\_no\_distinct[i]
         = \lambda^n * f_i(1)
         = \lambda^n * \sum_{k=order}^n p_i(k).
     \f]
+    In the i-th position of \p symbolic_sum_no_distinct, in the first case,
+    and of \p symbolic_sum_distinct, in the second case, is put \f$ 0 \f$
+    so that the two vector have always the same dimensions.
 */
 static void
 compute_symbolic_sum(const int order, const GSymbol& n,
@@ -189,34 +191,69 @@ compute_symbolic_sum(const int order, const GSymbol& n,
     for (unsigned j = roots.size(); j-- > 0; ) {
       if (roots[j].value().is_equal(base_of_exps[i]))
 	distinct = false;
-
+      
       // The root is different from the exponential's base.
-      if (distinct)
-	symbolic_sum_distinct[i] = return_sum(true, n, order,
-					      exp_poly_coeff[i],
-					      alpha, lambda);
+      if (distinct) {
+	symbolic_sum_distinct.push_back(return_sum(true, n, order,
+						   exp_poly_coeff[i],
+						   alpha, lambda));
+	symbolic_sum_no_distinct.push_back(0);
+      }
       // The root is equal to the exponential's base.
-      else
-	symbolic_sum_no_distinct[i] = return_sum(false, n, order,
-						 exp_poly_coeff[i],
-						 alpha, lambda);
+      else {
+	symbolic_sum_no_distinct.push_back(return_sum(false, n, order,
+						      exp_poly_coeff[i],
+						      alpha, lambda));
+	symbolic_sum_distinct.push_back(0);
+      }
     }
   }
 }
 
-static void
-exp_poly_decomposition(const GExpr& e, const GSymbol& n,
-		       std::vector<GExpr>& alpha,
-		       std::vector<GExpr>& p,
-		       std::vector<GExpr>& q);
-
+/*!
+  Consider the vectors \p symbolic_sum_distinct and \p symbolic_sum_no_distinct
+  that contain all the symbolic sums of the inhomogeneous term's terms that
+  are polynomial or the product of a polynomial and an exponential,
+  For each sum this function
+  - substitutes to \p lambda the corresponding value of the characteristic
+    equation's root;
+  - substitutes to \p alpha the corresponding base of the eventual
+    exponential.
+  Returns a <CODE>GExpr</CODE> \p solution with the sum of all sums of the
+  vectors.
+ */
 static void
 subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
 			    const std::vector<Polynomial_Root>& roots,
 			    std::vector<GExpr>& base_of_exps,
 			    std::vector<GExpr>& symbolic_sum_distinct,
 			    std::vector<GExpr>& symbolic_sum_no_distinct,
-			    GExpr& solution);
+			    GExpr& solution) {
+  solution = 0;
+  unsigned ind = 0;
+  for (unsigned i = base_of_exps.size(); i-- > 0; )
+    for (unsigned j = roots.size(); j-- > 0; ) {
+      GExpr base_exp = base_of_exps[i];
+      GExpr tmp;
+      if (!base_exp.is_equal(roots[j].value()))
+	tmp = 
+	  symbolic_sum_distinct[ind].subs(lst(alpha == base_exp,
+					      lambda == roots[j].value()));
+      else
+	tmp = 
+	  symbolic_sum_no_distinct[ind].subs(lst(alpha == base_exp,
+						 lambda == roots[j].value()));
+      solution += tmp * pow(-1, j);
+      ++ind;
+    }
+}
+
+
+static void
+exp_poly_decomposition(const GExpr& e, const GSymbol& n,
+		       std::vector<GExpr>& alpha,
+		       std::vector<GExpr>& p,
+		       std::vector<GExpr>& q);
 
 static void
 add_initial_conditions(const GExpr& g_n, const GSymbol& n,
@@ -450,16 +487,17 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 
   GSymbol alpha("alpha");
   GSymbol lambda("lambda");
-  std::vector<GExpr> symbolic_sum_distinct(base_of_exps.size());
-  std::vector<GExpr> symbolic_sum_no_distinct(base_of_exps.size());
+  std::vector<GExpr> symbolic_sum_distinct;
+  std::vector<GExpr> symbolic_sum_no_distinct;
 
-  if (all_distinct)
+  if (all_distinct) {
     // Fills the two vector 'symbolic_sum_distinct' and
     // 'symbolic_sum_no_distinct' with two different symbolic sum
     // in according to the roots are equal or not to the exponential's bases.
     compute_symbolic_sum(order, n, alpha, lambda, roots,
 			 base_of_exps, exp_poly_coeff,
 			 symbolic_sum_distinct, symbolic_sum_no_distinct);
+  }
   GExpr g_n;
   switch (order) {
   case 1:
@@ -515,7 +553,6 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 				      symbolic_sum_no_distinct, solution);
 	  g_n = (pow(root_1, n+1) - pow(root_2, n+1)) / diff_roots;
 	  // FIXME: forse conviene semplificare g_n
-
 	  D_VAR(g_n);
 	}
 	else 
@@ -568,9 +605,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   if (!verify_solution(solution, order, rhs, n))
     D_MSG("ATTENTION: the following solution can be wrong\n"
 	  "or not enough simplified.");
-
+  
   return true;
-}
+  }
 
 /*
   GExpr p, q;
@@ -800,40 +837,6 @@ exp_poly_decomposition(const GExpr& e, const GSymbol& n,
       exp_poly_decomposition_summand(e.op(i), n, alpha, p, q);
   else
     exp_poly_decomposition_summand(e, n, alpha, p, q);
-}
-
-/*!
-  Consider the vectors \p symbolic_sum_distinct and \p symbolic_sum_no_distinct
-  that contain all the symbolic sums of the inhomogeneous term's terms that
-  are polynomial or the product of a polynomial and an exponential,
-  For each sum this function
-  - substitutes to \p lambda the corresponding value of the characteristic
-    equation's root;
-  - substitutes to \p alpha the corresponding base of the eventual
-    exponential.
-  Returns a <CODE>GExpr</CODE> \p solution with the sum of all sums of the
-  vectors.
- */
-static void
-subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
-			    const std::vector<Polynomial_Root>& roots,
-			    std::vector<GExpr>& base_of_exps,
-			    std::vector<GExpr>& symbolic_sum_distinct,
-			    std::vector<GExpr>& symbolic_sum_no_distinct,
-			    GExpr& solution) {
-  solution = 0;
-  for (unsigned i = roots.size(); i-- > 0; )
-    for (unsigned j = symbolic_sum_distinct.size(); j-- > 0; ) {
-      GExpr base_exp = base_of_exps[j];
-      GExpr tmp;
-      if (base_exp.is_equal(roots[i].value()))
-	tmp = symbolic_sum_no_distinct[j].subs(lst(alpha == base_exp,
-						   lambda== roots[i].value()));
-      else
-	tmp = symbolic_sum_distinct[j].subs(lst(alpha == base_exp,
-						lambda == roots[i].value()));
-      solution += tmp * pow(-1, i);
-    }
 }
 
 /*!
