@@ -162,6 +162,7 @@ ul	2*x(n/2)+2^n
 ul	2*x(n/2)+log(n)
 ul	2*x(n/2)+n*log(log(n))
 ul	2*x(n/2)+n*log(n)
+ul	2*x(n/2)+n^n
 ul	2+x(2*n/3)
 ul	3*x(n/2)+n*log(n)
 ul	3*x(n/2)+n*log(n)+n
