@@ -166,7 +166,8 @@ static void
 invalid_initial_condition(const char* culprit) {
   cerr << program_name << ": invalid initial condition `" << culprit << "';\n"
        << "must be of the form `x(i)=k'"
-       << "for `i' a positive integer and `k' any number" << endl;
+       << "for `i' a positive integer\n"
+       << "and `k' not a floating point number." << endl;
   my_exit(1);
 }
 
@@ -238,7 +239,8 @@ process_options(int argc, char* argv[]) {
 	Expr r;
 	if (!parse_expression(rhs, r))
 	  invalid_initial_condition(optarg);
-	if (!r.is_a_number())
+	Number value;
+	if (!r.is_a_number(value) || !value.is_rational())
 	  invalid_initial_condition(optarg);
 	init_production_recurrence();
 	precp->replace_initial_condition(index.to_unsigned(), r);
