@@ -1087,6 +1087,11 @@ private:
   Solver_Status compute_exact_solution_weighted_average() const;
 
   //! \brief
+  //! Computes the exact solution of \p *this, where \p *this is a
+  //! recurrencs defined as the maximum of two quantities.
+  Solver_Status compute_exact_solution_max() const;
+
+  //! \brief
   //! Computes the requested bound (lower or upper, specified by
   //! \p kind_of_bound) of the functional equation \p *this.
   Solver_Status
@@ -1302,6 +1307,12 @@ public:
       Special recurrence of the form \f$ x(n) = a x(n / b) + d n^e \f$ . 
     */
     FUNCTIONAL_EQUATION,
+
+    /*!
+      Special recurrence of the form 
+      \f$ x(n) = max(f(x(0),..x(n)), g(x(0),..x(n))) \f$ . 
+    */
+    MAX_FUNCTION,
 
     /*!
       The recurrence is not yet classified, then the type of the

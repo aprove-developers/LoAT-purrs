@@ -1436,7 +1436,7 @@ PURRS::Recurrence::classify() const {
   // expression containing logarithms and rewrites nested powers.
   rhs = simplify_logarithm(recurrence_rhs);
   rhs = simplify_ex_for_input(rhs, true);
-  // Splits the sum in many sums how many are the addends of the summand
+  // Splits the sum in as many sums as the addends of the summand
   // and computes, when possible, symbolic sums.
   rhs = simplify_sum(rhs, COMPUTE_SUM);
 
@@ -1464,6 +1464,14 @@ PURRS::Recurrence::classify() const {
   Expr inhomogeneous = 0;
 
   Classifier_Status status;
+
+  // We also accept recurrences defined as 
+  // x(n)=max(f(x(0),...,x(n-1)), g(x(0),...,x(n-1))). As this classifier
+  // will we invoked recursively in this case, we can return immediately.
+  if (rhs.is_the_max_function()) {
+    type_ = MAX_FUNCTION;
+    return CL_SUCCESS;
+  }
 
   unsigned int num_summands = rhs.is_a_add() ? rhs.nops() : 1;
   if (num_summands > 1)

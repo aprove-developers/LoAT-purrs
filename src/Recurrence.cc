@@ -1257,6 +1257,55 @@ PURRS::Recurrence::compute_exact_solution_weighted_average() const {
 }
 
 PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::compute_exact_solution_max() const {
+  Expr solution;
+  assert(recurrence_rhs.is_the_max_function());
+  // Any well-formed expression containing a max is expressed as
+  //   x(n) = max(f(x(0), ..., x(n-1)), a)
+  // We interpret it as follows:
+  //   x(0) = a
+  //   x(n) = max(f(x(0), ..., x(n-1)), a) for all n >= 1.
+  Expr numeric_arg;
+  Expr functional_arg;
+  if (recurrence_rhs.arg(0).is_a_number()) {
+    numeric_arg = recurrence_rhs.arg(0);
+    functional_arg = recurrence_rhs.arg(1);
+  }
+  else if (recurrence_rhs.arg(1).is_a_number()) {
+    numeric_arg = recurrence_rhs.arg(1);
+    functional_arg = recurrence_rhs.arg(0);
+  }
+  else return TOO_COMPLEX;
+
+  Recurrence aux_rec(functional_arg);
+
+  aux_rec.classify();
+  if (!aux_rec.is_linear_finite_order())
+    return TOO_COMPLEX;
+  
+  // FIXME: check that the coefficients are positive.
+  Solver_Status status = aux_rec.compute_exact_solution();
+  if (status != SUCCESS)
+    return status;
+
+
+  if (!initial_conditions_.empty()) {
+    solution = compute_solution_or_bound_on_i_c(solution);
+    evaluated_exact_solution_.set_expression(solution);
+    evaluated_lower_bound_.set_expression(solution);
+    evaluated_upper_bound_.set_expression(solution);
+  }
+  
+  std::map<index_type, Expr> initial_conditions;
+  initial_conditions[0] = numeric_arg;
+  aux_rec.set_initial_conditions(initial_conditions);
+  aux_rec.exact_solution(solution);
+
+  exact_solution_.set_expression(solution);
+  return SUCCESS;
+}
+
+PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_exact_solution() const {
   // It can happen that there is not the exact solution although
   // the system tried to compute it (for example the recurrence is
@@ -1306,6 +1355,8 @@ PURRS::Recurrence::compute_exact_solution() const {
       return compute_exact_solution_non_linear();
     case WEIGHTED_AVERAGE:
       return compute_exact_solution_weighted_average();
+    case MAX_FUNCTION:
+      return compute_exact_solution_max();
     default:
       throw std::runtime_error("PURRS internal error: "
 			       "compute_exact_solution().");
