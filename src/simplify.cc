@@ -870,6 +870,8 @@ simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input) {
       ris += simplify_on_output_ex(e.op(i), n, input);
   }
   else if (is_a<mul>(e))
+    // We can not call 'simplify_on_output_ex' on every factor because
+    // otherwise it is not possible to transform products.
     ris = manip_factor(e, n, input);
   else if (is_a<power>(e)) {
     GExpr base = simplify_on_output_ex(e.op(0), n, input);
