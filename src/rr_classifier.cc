@@ -51,7 +51,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
-#define Nepero exp(Expr(1))
+#define Napier exp(Expr(1))
 
 namespace {
 using namespace PURRS;
@@ -564,8 +564,8 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
     if (simple_cases)
       if (common_exponent == 1) {
 	// Substitute any `x' function `f' with `exp(1)^f'.
-	base = Nepero;
-	Expr tmp = substitute_x_function(rhs, Nepero, true);
+	base = Napier;
+	Expr tmp = substitute_x_function(rhs, Napier, true);
 	tmp = simplify_ex_for_input(tmp, true);
 	for (unsigned i = tmp.nops(); i-- > 0; ) {
 	  Number num;
