@@ -58,14 +58,14 @@ get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
 }
 
 /*!
-  Give a vector of <CODE>GNumber</CODE> with a number of elements like
+  Given a vector of <CODE>GNumber</CODE> with a number of elements like
   the order \p order of the recurrence relation, builds the characteristic
   equation in the variable \p x.
-  Whence, if we have the recurrence relation of the order \f$ k \f$
-  \f$ x_n = a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$
-  then the coefficients \f$ a_j \f$ are in the vector \p coefficients and the
-  function returns the characteristic equation \p
-  \f$ x^k = a_1 * x^{k-1} + \dotsb + a^{k-1} * x + a_k \f$.
+  Therefore, if we have the order \f$ k \f$ recurrence relation
+  \f$ x_n = a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$,
+  the coefficients \f$ a_j \f$ are in the vector \p coefficients and the
+  function returns the characteristic equation
+  \f$ x^k - ( a_1 * x^{k-1} + \dotsb + a^{k-1} * x + a_k ) = 0 \f$.
 */
 static GExpr
 build_characteristic_equation(const int order, const GSymbol& x,
@@ -79,7 +79,7 @@ build_characteristic_equation(const int order, const GSymbol& x,
   for (unsigned i = 1; i < coefficients_size; ++i)
     if (!coefficients[i].is_integer() && coefficients[i].denom() > c) 
       c = coefficients[i].denom();
-  if (c != 0) {
+  if (c != 0) { //FIXME!!!
     // Build the vector 'int_coefficients' with the elements of
     // 'coefficients' multiplies for a factor 'c' that is the
     // bigger among the denominator of the elements of 'coefficients'.
@@ -100,12 +100,13 @@ build_characteristic_equation(const int order, const GSymbol& x,
 
 /*!
   Returns <CODE>true</CODE> if and only if the inhomogeneous term (that is
-  decomposed in a matrix \p decomposition is a polynomial or the
-  product of a polynomial and an exponential; <CODE>false</CODE> otherwise.
+  decomposed in the matrix \p decomposition) is a polynomial or the
+  product of a polynomial and an exponential.
+  Returns <CODE>false</CODE> otherwise.
 */
 static bool
 check_poly_times_exponential(const GMatrix& decomposition) {
-  // Calculates the number of columns of the matrix 'decomposition'.
+  // Computes the number of columns of the matrix 'decomposition'.
   unsigned num_columns = decomposition.cols();
   bool poly_times_exp = true;
   for (size_t i = 0; i < num_columns; ++i)
@@ -116,20 +117,20 @@ check_poly_times_exponential(const GMatrix& decomposition) {
 
 /*!
   We consider the recurrence relation's inhomogeneous term 
-  \f$ p(n) = \sum_{i=0}^decomposition.cols() q(n)_i alpha_i^{n} \f$ and the
-  vector \p roots of the characteristic equation's roots and we call
-  \p \lambda the generic root.
+  \f$ p(n) = \sum_{i=0}^{decomposition.cols()} q_i(n) \alpha_i^{n} \f$
+  and the vector \p roots of the characteristic equation's roots 
+  and we call \f$ \lambda \f$ the generic root.
   This function fills the two <CODE>vector<GExpr></CODE>
   \p symbolic_sum_distinct and \p symbolic_sum_no_distinct, with dimension
-  equal to \p decomposition.cols(), with two different sum:
+  equal to \p decomposition.cols(), with two different sums:
   for \f$ j = 0, \dotsc, roots.size() \f$ and for
   \f$ i = 0, \dotsc, decomposition.cols() \f$
-  -  if \f$ alpha_i \neq \lambda_j \f$ then
-     \f$ symbolic_sum_distinct[i] = f_{n_i}(\alpha / \lambda)
-          = \lambda^n * \sum_{k=order}^n {\alpha / \lambda}^k \cdot q(k)_i \f$;
-  -  if \f$ alpha_i = \lambda_j \f$ then
-     \f$ symbolic_sum_no_distinct[i] = f_{n_i}(\lambda)
-          = \lambda^n * \sum_{k=order}^n q(k)_i \f$.
+  -  if \f$ \alpha_i \neq \lambda_j \f$ then
+     \p symbolic_sum_distinct \f$[i] = f_i(\alpha / \lambda)
+          = \lambda^n * \sum_{k=order}^n (\alpha / \lambda)^k \cdot q_i(k) \f$;
+  -  if \f$ \alpha_i = \lambda_j \f$ then
+     \p symbolic_sum_no_distinct \f$[i] = f_i(\lambda)
+          = \lambda^n * \sum_{k=order}^n q_i(k) \f$.
 */
 static void
 compute_symbolic_sum(const int order, const GSymbol& n,
@@ -226,11 +227,11 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 
   int order = -1;
   std::vector<GExpr> coefficients;
-  // 'expand()' is necessary to simplify expressions,to find coefficients
+  // 'expand()' is necessary to simplify expressions, to find coefficients
   // and to decompose the inhomogeneous term of the recurrence relation.  
   GExpr e = rhs.expand();
 
-  // Special case: 'e' is only a function in n or a constant.
+  // Special case: 'e' is only a function in \p n or a constant.
   // If there is not in 'e' 'x(argument)' or there is but with
   // 'argument' that not contains the variable 'n', then the solution
   // is obviously 'e'.
@@ -529,13 +530,15 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   This function makes a matrix with three rows and a number of columns
   does not exceed the number of exponentials in the inhomogeneous term
   plus one.
-  The function gives the decomposition 
-  \f$ e(n) = \sum_{i=0}^k \alpha_i^j \cdot p(n)_i \f$ with
-  - \f$ \alpha_i \ne \alpha_j \f$ if \f$ i \ne j \f$
+  The function gives the decomposition
+  \f$ e(n) = \sum_{i=0}^k \alpha_i^j \cdot p_i(n) \f$ with
+  - \f$ \alpha_i \f$ is a complex number (different from 0);
+  - \f$ \alpha_i \ne \alpha_j \f$ if \f$ i \ne j \f$;
   - \p p does not contains exponentials.
+
   It returns the matrix whose \f$ i\f$-th column, for \f$ i = 1, \ldots, k \f$,
-  contains \f$ \alpha_i^n \f$ in the first row and \f$ p(n)_i \f$
-  in the second and third row: the polynomial part of \f$ p(n)_i \f$ in the
+  contains \f$ \alpha_i^n \f$ in the first row and \f$ p_i(n) \f$
+  in the second and third row: the polynomial part of \f$ p_i(n) \f$ in the
   second row and the non polynomial part in the third row.
   The <CODE>GExpr</CODE> \p e must be expanded. 
 */
@@ -622,7 +625,7 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
 }
 
 /*!
-  Give a vector \p symbolic_sum that contains all the symbolic sums of the
+  Given a vector \p symbolic_sum that contains all the symbolic sums of the
   inhomogeneous term's terms that are polynomial or the product of a
   polynomial and an exponential, this function substitutes to the sums the
   corresponding values of the characteristic equation's roots and of the bases
@@ -657,7 +660,7 @@ subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
 }
 
 /*!
-  Adds to sum about the inhmogeneous terms the sum
+  Adds to sum related to the inhmogeneous terms the sum
   \f$ \sum_{i=0}^{order - 1} g_{n-i}
     \bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \bigr) \f$
   corresponding to the initial conditions'part.

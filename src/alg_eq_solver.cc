@@ -432,6 +432,14 @@ solve_equation_2(const GExpr& b, const GExpr& c,
   Solve the equation \f$x^3 + a_1 x^2 + a_2 x + a_3 = 0\f$
   and return <CODE>true</CODE> if and only if all the solutions are real.
   \f$x_1\f$ is guaranteed to be a real solution.
+  The quantity \f$ d \f$ is the <EM>discriminant</EM> of the equation.
+  The roots are real and distinct if and only if \f$ d < 0 \f$, and
+  there are two complex conjugate roots if and only if \f$ d > 0 \f$.
+  When \f$ d = 0 \f$ there is one double (or triple) real root.
+  We avoid computations with complex numbers as far as possible:
+  note that since the coefficients of the equation above are rational
+  numbers, the quantities \f$ d \f$, \f$ Q \f$ and \f$ R \f$ are
+  rational numbers themselves, and we can safely compare them with 0.
 */
 bool
 solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
@@ -441,7 +449,7 @@ solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
   GNumber R = (9*a1*a2 - 27*a3 -2*a1*a1*a1) / 54;
   GNumber d = Q*Q*Q + R*R;
   GNumber a1_div_3 = a1/3;
-  if (d < 0) {
+  if (d < 0) { // This implies that Q < 0 
     GExpr sqrt_minus_Q = sqrt(-Q);
     GExpr theta = acos(-R/(Q*sqrt_minus_Q));
     x1 = -a1_div_3 + 2*sqrt_minus_Q*cos(theta/3);
