@@ -20,6 +20,10 @@
 /* Version number of package */
 #undef VERSION
 
+/* Define if your processor stores words with the most significant byte first
+   (like Motorola and SPARC, unlike Intel and VAX). */
+#undef WORDS_BIGENDIAN
+
 
 
 // Neutralize relops for GCC 2.96.
@@ -38,6 +42,21 @@
 //   Type array[0];
 #define PURRS_FLEXIBLE_ARRAY 0
 #endif
+
+#ifndef LITTLE_ENDIAN
+#define LITTLE_ENDIAN 1234
+#define BIG_ENDIAN 4321
+#endif
+
+#ifndef __BYTE_ORDER
+#ifdef WORDS_BIGENDIAN
+#define __BYTE_ORDER BIG_ENDIAN
+#else
+#define __BYTE_ORDER LITTLE_ENDIAN
+#endif
+#endif
+
+#define INLINE inline
 
 #endif
 

@@ -49,6 +49,21 @@ AH_BOTTOM([
 #define PURRS_FLEXIBLE_ARRAY 0
 #endif
 
+#ifndef LITTLE_ENDIAN
+#define LITTLE_ENDIAN 1234
+#define BIG_ENDIAN 4321
+#endif
+
+#ifndef __BYTE_ORDER
+#ifdef WORDS_BIGENDIAN
+#define __BYTE_ORDER BIG_ENDIAN
+#else
+#define __BYTE_ORDER LITTLE_ENDIAN
+#endif
+#endif
+
+#define INLINE inline
+
 #endif
 ])
 
@@ -267,6 +282,9 @@ AC_ARG_WITH(cxxflags,
 [  --with-cxxflags=xxx     use XXX as options for the C++ compiler],
 CXXFLAGS=$with_cxxflags)
 
+dnl Check for machine architecture features
+AC_C_BIGENDIAN
+
 dnl Checks for programs.
 AC_PROG_MAKE_SET
 AC_PROG_INSTALL
@@ -295,7 +313,7 @@ AC_SUBST(debug_flag)
 AC_SUBST(extra_if_Prolog_subdirs)
 
 AC_OUTPUT(Makefile
-          src/Makefile
+          src/Makefile src/Intervals/Makefile src/Intervals/sysdep/Makefile
           tests/Makefile
           m4/Makefile
           doc/Makefile
