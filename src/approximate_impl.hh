@@ -166,8 +166,14 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
     bool exponent_interval_result
       = generic_approximate(e.arg(1), sh, exponent_ae, exponent_aci);
     if (base_interval_result)
-      if (exponent_interval_result)
+      if (exponent_interval_result) {
+#if 1
 	aci = mypow(base_aci, exponent_aci);
+#else
+	std::cout << "Trying " << base_aci << " ^ " << exponent_aci << std::endl;
+	aci = pow(base_aci, exponent_aci);
+#endif
+      }
       else
 	ae = pwr(Complex_Interval(base_aci), exponent_ae);
     else
@@ -191,7 +197,7 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
 	  if (e.is_the_exp_function())
 	    aci = exp(operand_aci);
 	  else if (e.is_the_log_function())
-	    aci = ln(operand_aci);
+	    aci = log(operand_aci);
 	  else if (e.is_the_sin_function())
 	    aci = sin(operand_aci);
 	  else if (e.is_the_cos_function())
