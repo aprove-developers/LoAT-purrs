@@ -1,5 +1,5 @@
 /* Simple program to test the recurrence relation solver.
-   Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
+   Copyright (C) 2005 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
 Solver (PURRS).
@@ -41,66 +41,36 @@ http://www.cs.unipr.it/purrs/ . */
 #include <memory>
 #endif
 
-#define PROFILE_VERIFICATION 0
-
 using namespace std;
 using namespace Parma_Recurrence_Relation_Solver;
 
 static struct option long_options[] = {
-  {"rhs",               required_argument, 0, 'R'},
-  {"initial-condition", required_argument, 0, 'I'},
-  {"exact",             no_argument,       0, 'E'},
-  {"lower-bound",       no_argument,       0, 'L'},
-  {"upper-bound",       no_argument,       0, 'U'},
-  {"check-solution",    no_argument,       0, 'C'},
-  {"prolog-term",       no_argument,       0, 'P'},
-  {"timeout",           required_argument, 0, 'T'},
+  {"recurrences",       required_argument, 0, 'R'},
+  //  {"initial-condition", required_argument, 0, 'I'},
   {"help",              no_argument,       0, 'h'},
-  {"interactive",       no_argument,       0, 'i'},
-  // FIXME: Option -l is deprecated.
-  {"latex",             no_argument,       0, 'l'},
-  // FIXME: Option -m is deprecated.
-  {"mathml",            no_argument,       0, 'm'},
-  {"output",            required_argument, 0, 'o'},
-  {"regress-test",      optional_argument, 0, 'r'},
-  {"verbose",           no_argument,       0, 'v'},
+  {"format",            required_argument, 0, 'f'},
   {"version",           no_argument,       0, 'V'},
   {0, 0, 0, 0}
 };
 
-enum Formats {TEXT, LATEX, MATHML};
+enum Formats {TEXT, PROLOG, LATEX, MATHML};
 
 const char* program_name = 0;
 
 void
 print_usage() {
   cerr << "Usage: " << program_name << " [OPTION]...\n\n"
-    "  -R, --rhs \"<expr>\"       set the right-hand side of the recurrence\n"
+    "  -R, --recurrences \"<recs>\"       set the right-hand side of the recurrence\n"
     "                           that has to be solved/approximated\n" 
-    "  -I, --initial-condition \"<expr>\"\n"
-    "                           set an initial condition for the recurrence\n"
-    "  -E, --exact              try to solve the recurrence\n"
-    "  -L, --lower-bound        try to approximate the solution of the\n"
-    "                           recurrence from below\n"
-    "  -U, --upper-bound        try to approximate the solution of the\n"
-    "                           recurrence from above\n"
-    "  -C, --check-solution     try to verify the solution/approximation\n"
-    "  -P, --prolog-term        print the solution/approximation as a prolog term\n"
-    "  -T, --timeout N          interrupt computation after N seconds\n"
-    "  -h, --help               print this help text\n"
-    "  -i, --interactive        set interactive mode on\n"
-    "  -o, --output=FORMAT      give output in the specified FORMAT:\n"
-    "                           text (default), latex, mathml\n"
-    // Deprecated: accept them but hide them from help screen.
-    //    "  -l, --latex              output LaTeX code\n"
-    //    "  -m, --mathml             output MathML code\n"
+        "  -h, --help               print this help text\n"
+        "  -f, --format=FORMAT      give output in the specified FORMAT:\n"
+       "                           text (default), Prolog\n"
     "  -r, --regress-test [N]   set regression-testing mode on (N tries)\n"
-    "  -v, --verbose            be verbose\n"
     "  -V, --version            show version number and exit"
        << endl;
 }
 
-#define OPTION_LETTERS "CEI:LPR:T:Uhilmo:r::vV"
+#define OPTION_LETTERS "I:R:f:hr::vV"
 
 // To avoid mixing incompatible options.
 static bool production_mode = false;
@@ -110,34 +80,19 @@ static bool test_mode = false;
 static bool have_recurrence = false;
 
 // When true, the exact solution is required.
-static bool exact_solution_required = false;
-
-// When true, an approximation from below of the solution is required.
-static bool lower_bound_required = false;
-
-// When true, an approximation from above of the solution is required.
-static bool upper_bound_required = false;
+// static bool exact_solution_required = false;
 
 // When true, the validation of the solution or the approximation is required.
-static bool validation_solution_required = false;
+// static bool validation_solution_required = false;
 
 // When true, the output has the form of prolog term.
 static bool prolog_term_required = false;
 
-// When greater than zero, gives the timeout threshold.
-static long timeout_threshold = 0;
-
 // Interactive mode is on when true.
-static bool interactive = false;
+// static bool interactive = false;
 
 // Output format, defaults to text.
 static int output = TEXT;
-
-// Regression-testing mode is on when true.
-static bool regress_test = false;
-
-// Number of tries for each recurrence. Useful to diagnose weird bugs.
-static long tries = 1;
 
 // Verbose mode is on when true.
 static bool verbose = false;
@@ -162,28 +117,12 @@ init_symbols() {
     }
 }
 
-string itos(const int num)
-{
-    ostringstream buffer;
-    buffer << num;
-    return buffer.str();
-}
-
-string dump_vector(const vector<unsigned>& vec) {
-  const string separator = ", ";
-  string tmp="";
-  unsigned int vec_size = vec.size();
-  if (vec_size == 0)
-    return "";
-  else
-    tmp = itos(vec[0]);
-  unsigned int i = 1;
-  while (i < vec_size) {
-      tmp += separator + itos(vec[i]);
-      ++i;
-  }
-  return tmp;
-}
+// If 'n' happens to be among the arguments, it will be temporary 
+// replaced by a new symbol.
+// Global scope is needed because these symbols will be used troughout
+// the program.
+Symbol n_replacement;
+Expr real_var_symbol;
 
 static string parse_error_message;
 
@@ -257,12 +196,19 @@ invalid_initial_condition(const char* culprit) {
 }
 
 static Recurrence* precp = 0;
+static Expr prhs = 0;
+std::vector<Expr> recs;
+std::vector<Expr> conds;
+
 
 static void
 init_production_recurrence() {
   if (precp == 0)
     precp = new Recurrence();
 }
+
+  std::map<index_type, Expr> function_args;
+
 
 static void
 process_options(int argc, char* argv[]) {
@@ -285,7 +231,7 @@ process_options(int argc, char* argv[]) {
         production_mode = true;
         do_not_mix_modes();
         if (!optarg) {
-          cerr << program_name << ": an expression must follow `-R'"
+          cerr << program_name << ": a recurrence with initial conditions must follow `-R'"
                << endl;
           my_exit(1);
         }
@@ -294,9 +240,24 @@ process_options(int argc, char* argv[]) {
         Expr rec;
         if (!parse_expression(optarg, rec))
           invalid_recurrence(optarg);
+	if (!rec.is_a_Expr_List() || rec.nops() != 2 ) {
+	  invalid_recurrence(optarg);
+	}
+	Expr rec_list = rec.op(0);
+	Expr cond_list = rec.op(1);
+	for (size_t i = 0; i < rec_list.nops(); ++i) {
+	  recs.push_back(rec_list.op(i));
+	}
+	for (size_t i = 0; i < cond_list.nops(); ++i) {
+	  conds.push_back(rec_list.op(i));
+	}
+	// cerr << recs[0] << "." << rec_list << "." << cond_list;
         have_recurrence = true;
         init_production_recurrence();
-        precp->replace_recurrence(rec);
+        // precp->replace_recurrence(rec);
+	// We need to also save the rhs in case it is detected 
+	// as a multivariate recurrence.
+	// prhs=rec;
       }
       break;
       
@@ -335,85 +296,21 @@ process_options(int argc, char* argv[]) {
       }
       break;
 
-    case 'E':
-      production_mode = true;
-      do_not_mix_modes();
-      exact_solution_required = true;
-      break;
-
-    case 'L':
-      production_mode = true;
-      do_not_mix_modes();
-      lower_bound_required = true;
-      break;
-
-    case 'U':
-      production_mode = true;
-      do_not_mix_modes();
-      upper_bound_required = true;
-      break;
-
-    case 'C':
-      production_mode = true;
-      do_not_mix_modes();
-      validation_solution_required = true;
-      break;
-
-    case 'P':
-      production_mode = true;
-      do_not_mix_modes();
-      prolog_term_required = true;
-      break;
-
-    case 'T':
-      {
-        char* endptr;
-        long secs = strtol(optarg, &endptr, 10);
-        if (*endptr || secs < 0) {
-          cerr << program_name << ": a non-negative integer must follow `-T'"
-               << endl;
-          my_exit(1);
-        }
-        else
-          timeout_threshold = secs;
-      }
-      break;
-
     case '?':
     case 'h':
       print_usage();
       my_exit(0);
       break;
 
-    case 'i':
-      interactive = true;
-      test_mode = true;
-      do_not_mix_modes();
-      break;
-
-    // Deprecated: use --output=latex instead.
-    case 'l':
-      cerr << program_name 
-	   << ": WARNING: Option -l is deprecated. Use --output=latex instead." << endl;
-      output = LATEX;
-      break;
-
-    // Deprecated: use --output=mathml instead.
-    case 'm':
-      cerr << program_name 
-	   << ": WARNING: Option -m is deprecated. Use --output=mathml instead." << endl;
-      output = MATHML;
-      break;
-
-    case 'o':
+    case 'f':
       {
 	string output_format = optarg;
-	if (output_format=="text")
+	if (output_format=="text" || output_format=="t")
 	  output = TEXT;
-	else if (output_format=="latex")
-	  output = LATEX;
-	else if (output_format=="mathml")
-	  output= MATHML;
+	else if (output_format=="prolog" || output_format=="p") {
+	  output = PROLOG;
+	  prolog_term_required = true;
+	}
 	else {
           cerr << program_name << ": Invalid output format '" << output_format << "'."
                << endl;
@@ -422,6 +319,7 @@ process_options(int argc, char* argv[]) {
       }
       break;
 
+      /*
     case 'r':
       {
 	if (optarg) {
@@ -438,6 +336,7 @@ process_options(int argc, char* argv[]) {
       do_not_mix_modes();
       }
       break;
+      */
 
     case 'v':
       verbose = true;
@@ -481,16 +380,6 @@ static void
 error(const string& s) {
   message(s);
   my_exit(1);
-}
-
-void 
-errors_summary(const vector<unsigned>& errors_vec, const string& message, bool& failed) {
-  if (errors_vec.size() > 0) {
-    failed = true;
-      cerr << errors_vec.size() << " " << message
-	   << " at lines " << dump_vector(errors_vec)
-           << endl;
-  }
 }
 
 static bool explodes;
@@ -637,31 +526,6 @@ operator<<(ostream& s, const Recurrence::Verify_Status& v) {
   }
   return s;
 }
-
-#if PROFILE_VERIFICATION
-class Profiler {
-private:
-  time_unit_t accumulator;
-  std::string name;
-
-public:
-  Profiler(const std::string& n)
-    : name(n) {
-  }
-
-  void accumulate(time_unit_t i) {
-    accumulator += i;
-  }
-
-  ~Profiler() {
-    std::cerr << "Time spent in " << name
-	      << ": " << time_unit_to_usecs(accumulator)/1000 << " ms"
-	      << std::endl;
-  }
-};
-
-Profiler ves_profiler("verify_exact_solution()");
-#endif
 
 string
 set_string_validation(const Recurrence::Verify_Status& v) {
@@ -836,6 +700,8 @@ prepare_for_the_output(const Kind& kind,
   }
 }
 
+#if 0
+
 void
 do_production_mode() {
   if (!have_recurrence) {
@@ -844,34 +710,60 @@ do_production_mode() {
     my_exit(1);
   }
 
+  /*
   // If nothing has been explicitely requested, we take it
   // as an implicit request for the exact solution.
   if (!exact_solution_required
       && !lower_bound_required
       && !upper_bound_required)
     exact_solution_required = true;
+  */
+
+  // See if we have multiple variables.
+  // Detect whether x depends on one or more parameters.
+  bool multivar_mode = false;
+  int num_param;
+ 
+  std::vector<Expr> terms_with_x;
+
+  Expr rhs = prhs;
+
+  if (!find_terms_with_x(rhs, terms_with_x)) {
+    std::cerr << "Inconsistent number of parameters for the function x()." << std::endl
+	      << std::endl;
+    abort();
+  }
+
+  if (terms_with_x.size() != 0) {
+    multivar_mode = true;
+    num_param = terms_with_x[0].arg(0).nops();
+  }
+
+  Recurrence::Solver_Status solver_status;
+
+  if (multivar_mode) {
+    multivar_solve(rhs, num_param, terms_with_x, n_replacement, real_var_symbol);
+    // FIXME: Track problems.
+    solver_status = Recurrence::SUCCESS;
+  }
+  else {
+    solver_status=compute_exact_solution_wrapper(*precp);
+  }
 
   if (exact_solution_required) {
-    switch (compute_exact_solution_wrapper(*precp)) {
-    case Recurrence::SUCCESS:
-      {
-	// OK: get the exact solution and print it.
 	Expr exact_solution;
+    
+	switch (solver_status) {
+	case Recurrence::SUCCESS: {
+	// OK: get the exact solution and print it.
 	precp->exact_solution(exact_solution);
 	exact_solution
 	  = precp->substitute_auxiliary_definitions(exact_solution);
 	string validation;
 	// Try to verify the solution.
 	if (validation_solution_required) {
-#if PROFILE_VERIFICATION
-	  time_unit_t time_begin = get_time();
-#endif
 	  Recurrence::Verify_Status status = precp->verify_exact_solution();
 	  validation = set_string_validation(status);
-#if PROFILE_VERIFICATION
-	  time_unit_t time_end = get_time(); 
-	  ves_profiler.accumulate(time_end-time_begin);
-#endif
 	}
 	// Get all informations about this recurrence.
 	std::vector<string> conditions;
@@ -888,7 +780,7 @@ do_production_mode() {
 	  output_solution(EXACT, exact_solution, conditions,
 			  initial_conditions, blackboard, validation);
 	goto exit;
-      }
+	}
 
     case Recurrence::UNSOLVABLE_RECURRENCE:
       cout << "unsolvable." << endl;
@@ -913,129 +805,12 @@ do_production_mode() {
     }
   }
 
-  if (lower_bound_required) {
-    switch (precp->compute_lower_bound()) {
-    case Recurrence::SUCCESS:
-      {
-	// OK: get the lower bound and print it.
-	Expr lower;
-	precp->lower_bound(lower);
-	string validation;
-	// Try to verify the solution.
-	if (validation_solution_required) {
-#if PROFILE_VERIFICATION
-	  time_unit_t time_begin = get_time();
-#endif
-	  Recurrence::Verify_Status status = precp->verify_lower_bound();
-	  validation = set_string_validation(status);
-#if PROFILE_VERIFICATION
-	  time_unit_t time_end = get_time(); 
-	  ves_profiler.accumulate(time_end-time_begin);
-#endif
-	}
-	// Get all informations about this recurrence.
-	std::vector<string> conditions;
-	std::map<index_type, Expr> initial_conditions
-	  = precp->get_initial_conditions();
-	std::vector<string> blackboard;
-	prepare_for_the_output(LOWER, conditions, initial_conditions,
-			       blackboard);
-	// Output must have the form of a prolog term.
-	if (prolog_term_required)
-	  output_solution_prolog_term(LOWER, lower, conditions,
-				      initial_conditions, blackboard,
-				      validation);
-	else
-	  output_solution(LOWER, lower, conditions,
-			  initial_conditions, blackboard, validation);
-      }
-      break;
 
-    case Recurrence::UNSOLVABLE_RECURRENCE:
-      cout << "unsolvable." << endl;
-      goto exit;
-
-    case Recurrence::INDETERMINATE_RECURRENCE:
-      cout << "indeterminate." << endl;
-      goto exit;
-
-    case Recurrence::MALFORMED_RECURRENCE:
-      cout << "malformed." << endl;
-      goto exit;
-
-    case Recurrence::DOMAIN_ERROR:
-      cout << "domain error." << endl;
-      goto exit;
-
-    case Recurrence::TOO_COMPLEX:
-    default:
-      cout << "lower_bound(too_complex)." << endl;
-      break;
-    }
-  }
-
-  if (upper_bound_required) {
-    switch (precp->compute_upper_bound()) {
-    case Recurrence::SUCCESS:
-      {
-	// OK: get the upper bound and print it.
-	Expr upper;
-	precp->upper_bound(upper);
-	string validation;
-	// Try to verify the solution.
-	if (validation_solution_required) {
-#if PROFILE_VERIFICATION
-	  time_unit_t time_begin = get_time();
-#endif
-	  Recurrence::Verify_Status status = precp->verify_upper_bound();
-	  validation = set_string_validation(status);
-#if PROFILE_VERIFICATION
-	  time_unit_t time_end = get_time(); 
-	  ves_profiler.accumulate(time_end-time_begin);
-#endif
-	}
-	// Get all informations about this recurrence.
-	std::vector<string> conditions;
-	std::map<index_type, Expr> initial_conditions
-	  = precp->get_initial_conditions();
-	std::vector<string> blackboard;
-	prepare_for_the_output(LOWER, conditions, initial_conditions,
-			       blackboard);
-	// Output must have the form of a prolog term.
-	if (prolog_term_required)
-	  output_solution_prolog_term(UPPER, upper, conditions,
-				      initial_conditions, blackboard,
-				      validation);
-	else
-	  output_solution(UPPER, upper, conditions,
-			  initial_conditions, blackboard, validation);
-      }
-      break;
-    case Recurrence::UNSOLVABLE_RECURRENCE:
-      cout << "unsolvable." << endl;
-      goto exit;
-
-    case Recurrence::INDETERMINATE_RECURRENCE:
-      cout << "indeterminate." << endl;
-      goto exit;
-
-    case Recurrence::MALFORMED_RECURRENCE:
-      cout << "malformed." << endl;
-      goto exit;
-
-    case Recurrence::DOMAIN_ERROR:
-      cout << "domain error." << endl;
-      goto exit;
-
-    case Recurrence::TOO_COMPLEX:
-    default:
-      cout << "upper_bound(too_complex)." << endl;
-      break;
-    }
-  }
  exit:
   my_exit(0);
 }
+
+#endif
 
 void
 result_of_the_verification(unsigned type,
@@ -1104,27 +879,18 @@ result_of_the_verification(unsigned type,
 
 
 bool find_terms_with_x(const Expr& this_term, vector<Expr>& terms_with_x) {
-  // Expr this_term;
-  static int num_param;
-  if (this_term.is_the_x_function() && this_term.arg(0).is_a_Expr_List()) {
-    int this_num_param = this_term.arg(0).nops();
+  if (this_term.is_the_x2_function()) {
+    // FIXME: Check that it is well-formed.
+    // FIXME: Check arity.
     terms_with_x.push_back(this_term);
-    //    std::cerr << "Found a new term with x: " << this_term << std::endl;
-    // If we found other terms with x, check that the number of parameters is consistent.
-    if (terms_with_x.size() > 1) {
-      if (this_num_param != num_param) {
-	// FIXME: Die gracefully.
-	return false;
-      }
-    }
-    else
-      num_param = this_num_param;
+  }
+  else if (this_term.is_the_x1_function()) {
+    invalid_recurrence("The x() function must have two arguments: a unique number and a list of arguments.");
   }
   else if (this_term.nops() == 0)
     return true;
   else { 	   
     for (int i = this_term.nops()-1; i >= 0; --i) {
-      // std::cerr << "rhs.nops() = " << rhs.nops() << "\n";
       // FIXME: why do we use different names for the op() and arg() functions?
       // Write a generalized op().
       Expr inner_term=(this_term.is_a_function() || this_term.is_a_power()?this_term.arg(i):this_term.op(i));
@@ -1137,7 +903,57 @@ bool find_terms_with_x(const Expr& this_term, vector<Expr>& terms_with_x) {
   return true;
 }
       
-
+void multivar_solve(Expr& rhs, const int num_param, const vector<Expr>& terms_with_x, 
+		    const Symbol& n_replacement, Expr& real_var_symbol) {
+  vector<int> dummy(num_param);
+  for (int i = num_param - 1 ; i >= 0; --i) {
+    dummy[i] = true;
+    for (vector<Expr>::const_iterator j = terms_with_x.begin(); j != terms_with_x.end(); ++j) {
+      if (j->arg(1).op(i).is_a_symbol() || j->arg(1).op(i).is_a_number()) {
+	// FIXME: This is not enough now. Check that symbols in the rhs match corresponding
+	// symbols in the lhs.
+      }
+      else {
+	dummy[i] = false;
+	break;
+      }
+    }
+  }
+  const int real_var_index_unassigned = -1;
+  int real_var_index = real_var_index_unassigned;
+  
+  for (int i = num_param - 1; i >= 0; --i) {
+    if (!dummy[i]) {
+      if (real_var_index != real_var_index_unassigned) {
+	std::cerr << "Too many true parameters. Resolution can succeed only if" << std::endl
+		  << "all the parameters of x() but one are useless." << std::endl;
+	// FIXME: Die gracefully.
+	abort();
+      }
+      else
+	real_var_index = i;
+    }
+  }
+  
+  rhs=rhs.substitute(Recurrence::n, n_replacement);
+  
+  for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
+    const Expr& this_term = (*i);
+    Expr real_var_expr = this_term.arg(1).op(real_var_index);
+    // FIXME: Assert that the considered parameter contains at most one symbol.
+    bool symbol_found = false;
+    for (int j = real_var_expr.nops() - 1; j >=0; --j) {
+      if (real_var_expr.op(j).is_a_symbol()) {
+	if (symbol_found) {
+	  assert (real_var_symbol == real_var_expr.op(j));
+	}
+	else
+	  real_var_symbol = real_var_expr.op(j);
+      }
+    }
+    rhs=rhs.substitute(this_term,x(real_var_expr.substitute(real_var_symbol, Recurrence::n)));
+  }
+}
 
 int
 main(int argc, char *argv[]) try {
@@ -1149,627 +965,110 @@ main(int argc, char *argv[]) try {
 
   process_options(argc, argv);
 
-  if (production_mode)
-    do_production_mode();
-
-  vector<unsigned int> unexpected_solution_or_bounds_for_it;
-  vector<unsigned int> unexpected_exact_failures;
-  vector<unsigned int> unexpected_lower_failures;
-  vector<unsigned int> unexpected_upper_failures;
-  vector<unsigned int> unexpected_unsolvability_diagnoses;
-  vector<unsigned int> unexpected_failures_to_diagnose_unsolvability;
-  vector<unsigned int> unexpected_failures_to_diagnose_indeterminably;
-  vector<unsigned int> unexpected_failures_to_diagnose_malformation;
-  vector<unsigned int> unexpected_failures_to_diagnose_domain_error;
-  vector<unsigned int> unexpected_failures_to_verify;
-  vector<unsigned int> unexpected_failures_to_partially_verify;
-  vector<unsigned int> unexpected_failures_to_disprove;
-  vector<unsigned int> unexpected_conclusive_verifications;
-
-  readlinebuf* prdlb = 0;
-  istream* pinput_stream;
-
-#ifdef USE_READLINE
-  if (interactive) {
-    prdlb = new readlinebuf();
-    pinput_stream = new istream(prdlb);
+  if (recs.size() > 1) {
+    cerr << "Systems are not supported yet.\n";
+    my_exit(1);
   }
-  else
-    pinput_stream = &cin;
-#else
-  pinput_stream = &cin;
-#endif
-  istream& input_stream = *pinput_stream;
 
-  if (output==LATEX)
-    cout << "\\documentclass{article}\n\\begin{document}" << endl;
-  else if (output==MATHML)
-    cout << "<?xml version=\"1.0\"?>\n"
-      "<?xml-stylesheet type=\"text/xsl\" href=\"mathml.xsl\"?>\n"
-      "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
-      "<head><title>MathML Output</title></head>\n"
-      "<body>\n";
+  Expr this_rec=recs[0];
 
-  long try_number = 0;
-  string the_line;
+  // FIXME: Check that it is actually an equality.
+  assert (this_rec.is_a_relational());
 
-  while (input_stream) {
+  Expr lhs=this_rec.op(0);
+  Expr rhs=this_rec.op(1);
 
-    if (try_number == 0) { 
-      ++line_number;
-      getline(input_stream, the_line);
-    };
-      
-    // We may be at end of file.
-    if (!input_stream)
-      break;
-      
-    // Skip comments.
-    if (the_line.find("%") == 0)
-      continue;
+  if (!lhs.is_the_x2_function())
+    invalid_recurrence("Invalid lhs: must be in the form x(index, {arg_list})");
 
-    istringstream line(the_line);
-    string rhs_string;
-    
-    if (regress_test) {
-      // Read the expectations' string and use it.
-      string expectations;
-      line >> expectations;
-      
-      // Skip empty lines.
-      if (!line)
-	continue;
-      
-      set_expectations(expectations);
-      
-      // Avoid exploding.
-      if (explodes)
-	continue;
-      
-      getline(line, rhs_string);
-      // Premature end of file?
-      if (!line)
-	error("premature end of file after expectations' string");
-    }
-    else
-      getline(line, rhs_string);
-    
-    // The string may be constituted by white space only.
-    if (all_space(rhs_string))
-      continue;
-    
-    Expr rhs;
-    if (!parse_expression(rhs_string, rhs)) {
-      message(parse_error_message);
-      continue;
-    }
+  if (!lhs.arg(0).is_a_number())
+    invalid_recurrence("Invalid lhs: must be in the form x(index, {arg_list})");
 
-    // Detect whether x depends on one or more parameters.
-    bool multivar_mode = false;
+  if (!lhs.arg(1).is_a_Expr_List())
+    invalid_recurrence("Invalid lhs: must be in the form x(index, {arg_list})");
+
+  unsigned int index=lhs.arg(0).ex_to_number().to_unsigned_int();
+
+  function_args.insert(std::map<index_type, Expr>
+		       ::value_type(index, rhs));
+
+
     int num_param;
-    //list<int> terms_with_x;
 
     std::vector<Expr> terms_with_x;
 
     if (!find_terms_with_x(rhs, terms_with_x)) {
-      std::cerr << "Inconsistent number of parameters for the function x()." << std::endl
-	//		<< "Expected " << num_param <<", found " << this_num_param << "." 
+      std::cerr << "Inconsistent number of arguments for the function x()." << std::endl
 		<< std::endl;
       abort();
     }
 
     if (terms_with_x.size() != 0) {
-      multivar_mode = true;
-      num_param = terms_with_x[0].arg(0).nops();
+      num_param = terms_with_x[0].arg(1).nops();
     }
 
-    //    std::cerr << "terms with x = " << terms_with_x.size() << "\n";
-    //    std::cerr << "num_param: " << num_param << "\n";
-    
-    // If 'n' happens to be among the arguments, it will be temporary 
-    // replaced by a new symbol.
-    // Global scope is needed because these symbols will be used troughout
-    // the program.
-    Symbol n_replacement;
-    Expr real_var_symbol;
+    multivar_solve(rhs, num_param, terms_with_x, n_replacement, real_var_symbol);
 
-    // Find and eliminate dummy variables.
-    if (multivar_mode) {
-	// List mode.
-	vector<int> dummy(num_param);
-	//	std::cout << "List mode.\n";
-	for (int i = num_param - 1 ; i >= 0; --i) {
-	  dummy[i] = true;
-	  for (vector<Expr>::const_iterator j = terms_with_x.begin(); j != terms_with_x.end(); ++j) {
-	    if ((*j).arg(0).op(i).is_a_symbol() || (*j).arg(0).op(i).is_a_number()) {
-	      // FIXME: Check that it is named consistently across the rhs.
-	      // If it's not, it's not a dummy symbol.
-	    }
-	    else {
-	      dummy[i] = false;
-	      break;
-	    }
-	  }
-	}
-	const int real_var_index_unassigned = -1;
-	int real_var_index = real_var_index_unassigned;
-
-	for (int i = num_param - 1; i >= 0; --i) {
-	  if (!dummy[i]) {
-	    if (real_var_index != real_var_index_unassigned) {
-	      std::cerr << "Too many real parameters. Resolution can succeed only if" << std::endl
-			<< "all the parameters of x() but one are useless." << std::endl;
-	      // FIXME: Die gracefully.
-	      abort();
-	    }
-	    else
-	      real_var_index = i;
-	  }
-	}
-	//	std::cerr << "real_var_index: " << real_var_index << std::endl;
-
-	rhs=rhs.substitute(Recurrence::n, n_replacement);
-
-	for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
-	  const Expr& this_term = (*i);
-	  Expr real_var_expr = this_term.arg(0).op(real_var_index);
-	  // FIXME: Assert that the considered parameter contains at most one symbol.
-	  bool symbol_found = false;
-	  for (int j = real_var_expr.nops() - 1; j >=0; --j) {
-	    if (real_var_expr.op(j).is_a_symbol()) {
-	      if (symbol_found) {
-		assert (real_var_symbol == real_var_expr.op(j));
-	      }
-	      else
-		real_var_symbol = real_var_expr.op(j);
-	    }
-	  }
-	  rhs=rhs.substitute(this_term,x(real_var_expr.substitute(real_var_symbol, Recurrence::n)));
-	}
-    }
-    
-    if (verbose) {
-      if (output==LATEX)
-	cout << "\\bigskip\n\n\\noindent\n\\textbf{Line";
-      if (!interactive) {
-	cout << line_number;
-	if (tries == 1)
-	  cout << ": ";
-	else
-	  cout << "/" << try_number << ": ";
-      };
-      if (output==LATEX)
-	cout << "} $";
-      cout << "x(n) = ";
-      if (output==LATEX) {
-	rhs.latex_print(cout);
-	cout << "$";
-      }
-      else
-	cout << rhs;
+#ifdef DEBUG
+      cout << rhs;
       cout << endl;
-      if (output==LATEX)
-	cout << endl;
-    }
-    
+#endif
+
     Recurrence rec(rhs);
     Expr lower;
     Expr upper;
     Expr exact_solution;
     
-    // *** regress test
-    if (regress_test) {
-      if (expect_exactly_solved) {
-	if (compute_exact_solution_wrapper(rec) == Recurrence::SUCCESS) {
-	  // Get the exact solution.
-	  rec.exact_solution(exact_solution);
-	  if (expect_provably_correct_result
-	      || expect_partial_provably_correct_result
-	      || expect_provably_wrong_result
-	      || expect_inconclusive_verification) {
-#if PROFILE_VERIFICATION
-	    time_unit_t time_begin = get_time();
-#endif
-	    Recurrence::Verify_Status status = rec.verify_exact_solution();
-#if PROFILE_VERIFICATION
-	    time_unit_t time_end = get_time(); 
-	    ves_profiler.accumulate(time_end-time_begin);
-#endif
-	    result_of_the_verification(0, status,
-				       unexpected_failures_to_verify,
-				       unexpected_failures_to_partially_verify,
-				       unexpected_failures_to_disprove,
-				       unexpected_conclusive_verifications);
-	  }
-	  if (interactive) {
-	    if (output==MATHML)
-	      cout << "<p>\n";
-	    cout << "*** EXACT SOLUTION ***" << endl;
-	    if (output==MATHML)
-	      cout << "</p>\n";
-	    switch (output) {
-	    case TEXT:
-	      cout << exact_solution;
-	      break;
-	    case MATHML:
-	      exact_solution.mathml_output(cout);
-	      break;
-	    case LATEX:
-	      cout << "\\medskip\\indent\n\n $$ x(n) = ";
-	      exact_solution.latex_print(cout);
-	      cout << " $$\n\n";
-	      break;
-	    }
-	    cout << endl
-		 << (output==MATHML?"<p>\n":"")
-		 << "**********************"
-		 << (output==MATHML?"</p>\n":"")
-		 << endl << endl;
-#if 0
-	    cout << "*** APPROXIMATED SOLUTION ***"
-		 << endl
-		 << rec.approximated_solution()
-		 << endl
-		 << "*****************************"
-		 << endl << endl;
-#endif
-	  }
-	  // FIXME: Double LaTeX output in non-interactive mode.
-	  if (output==LATEX) {
-	    cout << "\\medskip\\indent\n\\(\n x(n) = ";
-	    exact_solution.latex_print(cout);
-	  }
-	}
-	else
-	  // There is not the exact solution.
-	  if (verbose) {
-	    cerr << "*** unexpected failure to find exact solution" << endl;
-	    unexpected_exact_failures.push_back(line_number);
-	  }
-      }
-      if (expect_lower_bound)
-	if (rec.compute_lower_bound() == Recurrence::SUCCESS) {
-	  // Get the lower bound.
-	  rec.lower_bound(lower);
-	  if (expect_provably_correct_result
-	      || expect_partial_provably_correct_result
-	      || expect_provably_wrong_result
-	      || expect_inconclusive_verification) {
-	    Recurrence::Verify_Status status = rec.verify_lower_bound();
-	    result_of_the_verification(1, status,
-				       unexpected_failures_to_verify,
-				       unexpected_failures_to_partially_verify,
-				       unexpected_failures_to_disprove,
-				       unexpected_conclusive_verifications);
-	  }
-	  if (interactive)
-	    cout << "*** LOWER BOUND ***"
-		 << endl
-		 << lower
-		 << endl
-		 << "*******************"
-		 << endl << endl;
-	  if (output==LATEX) {
-	    cout << "\\medskip\\indent\n\\(\n x(n) = ";
-	    lower.latex_print(cout);
-	  }
-	}
-	else {
-	  // There is not the lower bound.
-	  if (verbose)
-	    cerr << "*** unexpected failure to find lower bound for "
-		 << "the solution" << endl;
-	  unexpected_lower_failures.push_back(line_number);
-	}
-      if (expect_upper_bound)
-	if (rec.compute_upper_bound() == Recurrence::SUCCESS) {
-	  // Get the upper bound.
-	  rec.upper_bound(upper);
-	  if (expect_provably_correct_result
-	      || expect_partial_provably_correct_result
-	      || expect_provably_wrong_result
-	      || expect_inconclusive_verification) {
-	    Recurrence::Verify_Status status = rec.verify_upper_bound();
-	    result_of_the_verification(2, status,
-				       unexpected_failures_to_verify,
-				       unexpected_failures_to_partially_verify,
-				       unexpected_failures_to_disprove,
-				       unexpected_conclusive_verifications);
-	  }
-	  if (interactive)
-	    cout << "*** UPPER BOUND ***"
-		 << endl
-		 << upper
-		 << endl
-		 << "*******************"
-		 << endl << endl;
-	  if (output==LATEX) {
-	    cout << "\\medskip\\indent\n\\(\n x(n) = ";
-	    upper.latex_print(cout);
-	  }
-	}
-	else {
-	  // There is not the upper bound.
-	  if (verbose)
-	    cerr << "*** unexpected failure to find upper bound for "
-		 << "the solution" << endl;
-	  unexpected_upper_failures.push_back(line_number);
-	}
-      if (expect_not_to_be_solved)
-	if (compute_exact_solution_wrapper(rec) == Recurrence::SUCCESS
-	    || rec.compute_lower_bound() == Recurrence::SUCCESS
-	    || rec.compute_upper_bound() == Recurrence::SUCCESS) {
-	  if (verbose)
-	    cerr << "*** unexpected solution or bounds for it" << endl;
-	  unexpected_solution_or_bounds_for_it.push_back(line_number);
-	}
-      if (expect_not_diagnose_unsolvable)
-	if (compute_exact_solution_wrapper(rec)
-	    == Recurrence::UNSOLVABLE_RECURRENCE
-	    || rec.compute_lower_bound()
-	    == Recurrence::UNSOLVABLE_RECURRENCE
-	    || rec.compute_upper_bound()
-	    == Recurrence::UNSOLVABLE_RECURRENCE) {
-	  if (verbose)
-	    cerr << "*** unexpected unsolvability diagnosis" << endl;
-	  unexpected_unsolvability_diagnoses.push_back(line_number);
-	    if (interactive)
-	      cout << "Unsolvable." << endl;
-	  }
-	if (expect_diagnose_unsolvable)
-	  if (compute_exact_solution_wrapper(rec)
-	      != Recurrence::UNSOLVABLE_RECURRENCE
-	      || rec.compute_lower_bound()
-	      != Recurrence::UNSOLVABLE_RECURRENCE
-	      || rec.compute_upper_bound()
-	      != Recurrence::UNSOLVABLE_RECURRENCE) {
-	    if (verbose)
-	      cerr << "*** unexpected failure to diagnose unsolvability" << endl;
-	    unexpected_failures_to_diagnose_unsolvability.push_back(line_number);
-	  }
-	if (expect_diagnose_indeterminate)
-	  if (compute_exact_solution_wrapper(rec)
-	      != Recurrence::INDETERMINATE_RECURRENCE
-	      || rec.compute_lower_bound()
-	      != Recurrence::INDETERMINATE_RECURRENCE
-	      || rec.compute_upper_bound()
-	      != Recurrence::INDETERMINATE_RECURRENCE) {
-	    if (verbose)
-	      cerr << "*** unexpected failure to diagnose indeterminably"
-		   << endl;
-	    unexpected_failures_to_diagnose_indeterminably.push_back(line_number);
-	  }
-	if (expect_diagnose_malformed)
-	  if (compute_exact_solution_wrapper(rec)
-	      != Recurrence::MALFORMED_RECURRENCE
-	      || rec.compute_lower_bound()
-	      != Recurrence::MALFORMED_RECURRENCE
-	      || rec.compute_upper_bound()
-	      != Recurrence::MALFORMED_RECURRENCE) {
-	    if (verbose)
-	      cerr << "*** unexpected failure to diagnose malformation"
-		   << endl;
-	    unexpected_failures_to_diagnose_malformation.push_back(line_number);
-	  }
-	if (expect_diagnose_domain_error)
-	  if (compute_exact_solution_wrapper(rec)
-	      != Recurrence::DOMAIN_ERROR
-	      || rec.compute_lower_bound()
-	      != Recurrence::DOMAIN_ERROR
-	      || rec.compute_upper_bound()
-	      != Recurrence::DOMAIN_ERROR) {
-	    if (verbose)
-	      cerr << "*** unexpected failure to diagnose domain error"
-		   << endl;
-	    unexpected_failures_to_diagnose_domain_error.push_back(line_number);
-	  }
-      
-      } // *** regress test
-      else {
+       {
 	switch (compute_exact_solution_wrapper(rec)) {
-	case Recurrence::SUCCESS:
+	case Recurrence::SUCCESS: {
 	  // OK: get the exact solution and print it.
 	  rec.exact_solution(exact_solution);
 
-	  // Multivar mode: replace the substituted symbols back to their place.
+	  // Replace the substituted symbols back to their place.
 	  exact_solution=exact_solution.substitute(Recurrence::n, real_var_symbol);
 	  exact_solution=exact_solution.substitute(n_replacement, Recurrence::n);
 
-	  if (interactive) {
-	    if (output==MATHML)
-	      cout << "<p>\n";
-            cout << "*** EXACT SOLUTION ***" << endl;
-	    if (output==MATHML)
-	      cout << "</p>\n";
+	  // FIXME: Replace back the original x() index and anguments list.
+
 	    switch (output) {
+	      // FIXME: Prolog must be handled differently. Other formats
+	      // must be removed.
+	    case PROLOG:
 	    case TEXT:
-	      cout << exact_solution;
-	      break;
-	    case MATHML:
-	      exact_solution.mathml_output(cout);
-	      break;
 	    case LATEX:
-	      cout << "\\medskip\\indent\n\n $$ x(n) = ";
-	      exact_solution.latex_print(cout);
-	      cout << " $$\n\n";
+	    case MATHML:
+	      cout << lhs << " = " << exact_solution << endl;
 	      break;
 	    }
-	    cout << endl
-		 << (output==MATHML?"<p>\n":"")
-		 << "**********************"
-		 << (output==MATHML?"</p>\n":"")
-		 << endl << endl;
-#if 0
-          cout << "*** APPROXIMATED SOLUTION ***"
-               << endl
-               << rec.approximated_solution()
-               << endl
-               << "*****************************"
-               << endl << endl;
-#endif
-        }
         goto finish;
         break;
+	}
       case Recurrence::UNSOLVABLE_RECURRENCE:
-        if (interactive)
           cout << endl << "Unsolvable" << endl << endl;
         goto finish;
         break;
       case Recurrence::INDETERMINATE_RECURRENCE:
-        if (interactive)
           cout << endl << "Indeterminate" << endl << endl;
         goto finish;
         break;
       case Recurrence::MALFORMED_RECURRENCE:
-        if (interactive)
           cout << endl << "Malformed" << endl << endl;
         goto finish;
         break;
       case Recurrence::DOMAIN_ERROR:
-        if (interactive)
           cout << endl << "Domain error" << endl << endl;
         goto finish;
         break;
       case Recurrence::TOO_COMPLEX:
-      default:
-        break;
-      }
-      bool too_complex_printed = false;
-      switch (rec.compute_lower_bound()) {
-      case Recurrence::SUCCESS:
-        // OK: get the lower bound and print it.
-        rec.lower_bound(lower);
-        if (interactive)
-          cout << "*** LOWER BOUND ***"
-               << endl
-               << lower
-               << endl
-               << "*******************"
-               << endl << endl;
-        break;
-      case Recurrence::UNSOLVABLE_RECURRENCE:
-        if (interactive)
-          cout << endl << "Unsolvable" << endl << endl;
-        goto finish;
-        break;
-      case Recurrence::INDETERMINATE_RECURRENCE:
-        if (interactive)
-          cout << endl << "Indeterminate" << endl;
-        goto finish;
-        break;
-      case Recurrence::MALFORMED_RECURRENCE:
-        if (interactive)
-          cout << endl << "Malformed" << endl;
-        goto finish;
-        break;
-      case Recurrence::DOMAIN_ERROR:
-        if (interactive)
-          cout << endl << "Domain error" << endl;
-        goto finish;
-        break;
-      case Recurrence::TOO_COMPLEX:
-        if (!too_complex_printed && interactive) {
           cout << endl << "Too complex" << endl << endl;
-          too_complex_printed = true;
-        }
-        break;
       default:
         break;
       }
-      switch (rec.compute_upper_bound()) {
-      case Recurrence::SUCCESS:
-        // OK: get the upper bound and print it.
-        rec.upper_bound(upper);
-        if (interactive)
-          cout << "*** UPPER BOUND ***"
-               << endl
-               << upper
-               << endl
-               << "*******************"
-               << endl << endl;
-        break;
-      case Recurrence::UNSOLVABLE_RECURRENCE:
-        if (interactive)
-          cout << endl << "Unsolvable" << endl << endl;
-        goto finish;
-        break;
-      case Recurrence::INDETERMINATE_RECURRENCE:
-        if (interactive)
-          cout << "Indeterminate" << endl;
-        goto finish;
-        break;
-      case Recurrence::MALFORMED_RECURRENCE:
-        if (interactive)
-          cout << "Malformed" << endl;
-        goto finish;
-        break;
-      case Recurrence::DOMAIN_ERROR:
-        if (interactive)
-          cout << "Domain error" << endl;
-        goto finish;
-        break;
-      case Recurrence::TOO_COMPLEX:
-        if (!too_complex_printed && interactive)
-          cout << endl << "Too complex" << endl << endl;
-        break;
-      default:
-        break;
-      }
-    }
+
+       }
   finish:
-    if (interactive) {
-      switch (output) {
-      case MATHML:
-	cout << "<p>\n";
-	break;
-      case LATEX:
-	cout << "\\begin{verbatim}\n";
-	break;
-      }
-      rec.dump(cout);
-      switch (output) {
-      case MATHML:
-	cout << "</p>\n";
-	break;
-      case LATEX:
-	cout << "\\end{verbatim}\n";
-	break;
-      }
-    }
-  
-    try_number++;
-
-    // Exit regression testing after <CODE>tries</CODE> attempts.
-    if (try_number == tries) {
-      try_number = 0;
-      continue;
-    }
-
-  } // while (input_stream)
-  
-  if (output==LATEX)
-    cout << "\\end{document}" << endl;
-  else if (output==MATHML)
-    cout << "</body></html>\n";
-
-  if (regress_test) {
-    bool failed = false;
-    errors_summary(unexpected_failures_to_partially_verify, "unexpected failures to partially verify solutions", failed);
-    errors_summary(unexpected_failures_to_disprove,  "unexpected failures to disprove", failed);
-    errors_summary(unexpected_conclusive_verifications, "unexpected conclusive verifications", failed);
-    errors_summary(unexpected_solution_or_bounds_for_it, "unexpected solution or bounds for it", failed);
-    errors_summary(unexpected_exact_failures, "unexpected failures to find exact solutions", failed);
-    errors_summary(unexpected_lower_failures, "unexpected failures to find lower bound for solutions", failed);
-    errors_summary(unexpected_upper_failures, "unexpected failures to find upper bound for solutions", failed);
-    errors_summary(unexpected_unsolvability_diagnoses, "unexpected unsolvability diagnoses", failed);
-    errors_summary(unexpected_failures_to_diagnose_unsolvability, "unexpected failures to diagnose unsolvability", failed);
-    errors_summary(unexpected_failures_to_diagnose_indeterminably, "unexpected failures to diagnose indeterminably", failed);
-    errors_summary(unexpected_failures_to_diagnose_malformation, "unexpected failures to diagnose malformation", failed);
-    errors_summary(unexpected_failures_to_diagnose_domain_error, "unexpected failures to diagnose a domain error", failed);
-    if (failed)
-      my_exit(1);
-  }
-  my_exit(0);
+       my_exit(0);
 } 
 catch (exception &p) {
   cerr << "std::exception caught: " << p.what() << endl;
