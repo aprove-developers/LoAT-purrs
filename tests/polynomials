@@ -79,12 +79,23 @@ x^3+2*x^2-4*x-1
 % Polynomial with 4 complex distinct roots (primitive 12-th roots of unity)
 x^4+x^2+1
 
+% Some test polynomials to check GiNaC's function sqrfree (they check OK)
+(x+1)^3 * (x-2)^2 * (x+4)
 
+(x+1)^4 * (x-2)^2 * (x+4)
 
-% Some comments: 
-%
-% Polynomials of special shape such as $x^n\pm a$ should be treated directly,
-% since they can be easily split as a product of polynomials of lower degree.
-% Other special polynomials are $ax^{2n}+bx^n+c$ and indeed any polynomial
-% of the form $p(x^a)$ where $p$ is a polynomail and $a\ge2$
-% is some fixed integer.
+(x+1)^3 * (x-2) * (x+4)
+
+(x+1) * (x-2) * (x+4)
+
+(x+1) * (1+x^2)^2
+
+% Some more test polynomials to check the function solve_equation_4
+% Disable all options (such as find_roots, for rational roots) 
+% before using this 
+% WARNING: there is something wrong with the second one! 
+x^4 - 1
+
+x^4 - 4 
+
+x^4 - 16 
