@@ -37,7 +37,7 @@ namespace Parma_Recurrence_Relation_Solver {
 
 //! Output operator.
 /*! \relates Expr */
-std::ostream& operator<<(std::ostream& os, const Expr& exp);
+std::ostream& operator<<(std::ostream& s, const Expr& x);
 
 //! Returns \f$ x \f$.
 Expr operator+(const Expr& x);
@@ -56,7 +56,7 @@ Expr operator*(const Expr& x, const Expr& y);
 
 //! If \f$ y \neq 0 \f$, returns \f$ x / y \f$.
 /*!
-  \exception std::runtime_error thrown if <CODE>y.is_zero()</CODE>.
+  \exception std::logic_error thrown if \f$ y = 0 \f$.
 */
 Expr operator/(const Expr& x, const Expr& y);
 
@@ -72,7 +72,7 @@ Expr& operator*=(Expr& x, const Expr& y);
 //! If \f$ y \neq 0 \f$, assigns \f$ x / y \f$ to \f$ x \f$
 //! and returns the result.
 /*!
-  \exception std::runtime_error thrown if \f$ y = 0 \f$.
+  \exception std::logic_error thrown if \f$ y = 0 \f$.
 */
 Expr& operator/=(Expr& x, const Expr& y);
 
@@ -81,29 +81,40 @@ bool operator==(const Expr& x, const Expr& y);
 bool operator!=(const Expr& x, const Expr& y);
 #endif
 
-
+//! Builds an arbitrary expression, called <EM>wildacard</EM>, with the
+//! specified label \p label. The label allows to have multiple different
+//! wildcard in a single expression.
 // FIXME: meglio con argomento di default `unsigned label = 0'?
 Expr wild(unsigned label);
 
-Expr power(const Expr& b, const Expr& e);
-Expr sqrt(const Expr& e);
-Expr sin(const Expr& e);
-Expr cos(const Expr& e);
-Expr acos(const Expr& e);
-Expr tan(const Expr& e);
-Expr exp(const Expr& e);
-Expr log(const Expr& e);
+//! If \f$ x \f$ and \f$ y \f$ are not zero or \f$ x = 0 \f$ and \f$ y \f$
+//! is a positive rational number, returns \f$ x^y \f$.
+/*!
+  \exception std::logic_error thrown if \f$ x = y = 0 \f$.
+  \exception std::logic_error thrown if \f$ x = 0 \f$ and \f$ y \f$
+                              is not a positive rational number.
+*/
+Expr power(const Expr& x, const Expr& y);
+
+//! 
+Expr sqrt(const Expr& x);
+Expr sin(const Expr& x);
+Expr cos(const Expr& x);
+Expr acos(const Expr& x);
+Expr tan(const Expr& x);
+Expr exp(const Expr& x);
+Expr log(const Expr& x);
 
 Expr quo(const Expr& a, const Expr& b, const Symbol& x);
 Expr rem(const Expr& a, const Expr& b, const Symbol& x);
 Expr prem(const Expr& a, const Expr& b, const Symbol& x);
 Expr gcd(const Expr& a, const Expr& b);
 Expr lcm(const Expr& a, const Expr& b);
-Expr sqrfree(const Expr& e, const Expr_List& lst);
+Expr sqrfree(const Expr& x, const Expr_List& y);
 
-Expr lsolve(const Expr_List& lst1, const Expr_List& lst2);
+Expr lsolve(const Expr_List& x, const Expr_List& y);
 
-Expr x(const Expr& e);
+Expr x(const Expr& y);
 
 class Expr : private GiNaC::ex {
 private:
@@ -116,30 +127,30 @@ public:
   //! Builds the integer expression \p i.
   Expr(int i);
 
-  //! Builds the numeric expression \p n.
-  Expr(const Number& n);
+  //! Builds the numeric expression \p y.
+  Expr(const Number& y);
 
-  //! Builds the symbolic expression \p s.
-  Expr(const Symbol& s);
+  //! Builds the symbolic expression \p y.
+  Expr(const Symbol& y);
 
-  //! Builds the constant expression \p k.
-  Expr(const Constant& k);
+  //! Builds the constant expression \p y.
+  Expr(const Constant& y);
 
-  //! Builds the expression from a string \p st and a list of symbol \p lst.
-  Expr(const std::string& st, const Expr_List& lst);
+  //! Builds the expression from a string \p s and a list of symbol \p y.
+  Expr(const std::string& s, const Expr_List& y);
 
-  //! Builds the relational expression \f$ lh == rh \f$.
+  //! Builds the relational expression \f$ x == y \f$.
   // FIXME: temporary
-  Expr(const Expr& lh, const Expr& rh);
+  Expr(const Expr& x, const Expr& y);
 
   //! Copy-constructor.
-  Expr(const Expr& exp);
+  Expr(const Expr& y);
 
   //! Destructor.
   ~Expr();
 
   //! Assignment operator.
-  Expr& operator=(const Expr& exp);
+  Expr& operator=(const Expr& y);
 
   //! \brief
   //! Accedes to \f$ i \f$-th term/factor of an addiction/multiplication of
@@ -228,46 +239,46 @@ public:
 
   //! Returns <CODE>true</CODE> if and only if \p *this is sinctatically
   //! equal to \p e.
-  bool is_equal(const Expr& e) const;
+  bool is_equal(const Expr& x) const;
 
   //! Returns <CODE>true</CODE> if and only if \p *this is sinctatically
   //! zero.
   bool is_zero() const;
 
-  //! Substitutes in \p *this the occurrences of \p exp1 with \p exp2.
-  Expr subs(const Expr& exp1, const Expr& exp2) const;
+  //! Substitutes in \p *this the occurrences of \p x with \p y.
+  Expr subs(const Expr& x, const Expr& y) const;
 
   //! Allows the substitution at the same time of the occurences in \p *this
-  //! of the expressions contained in \p to_replace with the relative
-  //! expressions in \p replacements.
-  Expr subs(const Expr_List& to_replace, const Expr_List& replacements) const;
+  //! of the expressions contained in \p x with the relative
+  //! expressions in \p y.
+  Expr subs(const Expr_List& x, const Expr_List& y) const;
 
-  //! Returns <CODE>true</CODE> if and only if \p *this matches \p pattern.
-  bool match(const Expr& pattern) const;
+  //! Returns <CODE>true</CODE> if and only if \p *this matches \p x.
+  bool match(const Expr& x) const;
 
-  bool match(const Expr& pattern, Expr_List& replacements) const;
-  bool has(const Expr& pattern) const;
+  bool match(const Expr& x, Expr_List& y) const;
+  bool has(const Expr& x) const;
 
   Expr expand() const;
-  Expr collect(const Expr_List& lst) const;
-  int degree(const Symbol& symb) const;
-  int ldegree(const Symbol& symb) const;
-  Expr coeff(const Symbol& symb, int k) const;
-  Expr lcoeff(const Symbol& symb) const;
-  Expr tcoeff(const Symbol& symb) const;
-  Expr primpart(const Symbol& symb) const;
+  Expr collect(const Expr_List& x) const;
+  int degree(const Symbol& x) const;
+  int ldegree(const Symbol& x) const;
+  Expr coeff(const Symbol& x, int k) const;
+  Expr lcoeff(const Symbol& x) const;
+  Expr tcoeff(const Symbol& x) const;
+  Expr primpart(const Symbol& x) const;
   Expr numerator() const;
   Expr denominator() const;
-  void numerator_denominator(Expr& numer, Expr& denom) const;
+  void numerator_denominator(Expr& x, Expr& y) const;
   Expr lhs() const;
   Expr rhs() const;
 
-  Expr diff(const Symbol& symb, unsigned nth = 1);
+  Expr diff(const Symbol& x, unsigned nth = 1);
 
-  Expr to_rational(Expr_List& lst);
+  Expr to_rational(Expr_List& x);
 
 private:
-  friend std::ostream& operator<<(std::ostream& os, const Expr& exp);
+  friend std::ostream& operator<<(std::ostream& s, const Expr& x);
 
   friend Expr operator+(const Expr& x);
   friend Expr operator-(const Expr& x);
@@ -287,25 +298,25 @@ private:
 
   friend Expr wild(unsigned label);
 
-  friend Expr power(const Expr& b, const Expr& e);
-  friend Expr sqrt(const Expr& e);
-  friend Expr sin(const Expr& e);
-  friend Expr cos(const Expr& e);
-  friend Expr acos(const Expr& e);
-  friend Expr tan(const Expr& e);
-  friend Expr exp(const Expr& e);
-  friend Expr log(const Expr& e);
+  friend Expr power(const Expr& x, const Expr& y);
+  friend Expr sqrt(const Expr& x);
+  friend Expr sin(const Expr& x);
+  friend Expr cos(const Expr& x);
+  friend Expr acos(const Expr& x);
+  friend Expr tan(const Expr& x);
+  friend Expr exp(const Expr& x);
+  friend Expr log(const Expr& x);
 
   friend Expr quo(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr rem(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr prem(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr gcd(const Expr& a, const Expr& b);
   friend Expr lcm(const Expr& a, const Expr& b);
-  friend Expr sqrfree(const Expr& e, const Expr_List& lst);
+  friend Expr sqrfree(const Expr& x, const Expr_List& y);
   
-  friend Expr lsolve(const Expr_List& lst1, const Expr_List& lst2);
+  friend Expr lsolve(const Expr_List& x, const Expr_List& y);
   
-  friend Expr x(const Expr& e);
+  friend Expr x(const Expr& y);
 
   friend class Number;
   friend class Symbol;

@@ -54,30 +54,30 @@ Expr::Expr(int i)
 }
 
 inline
-Expr::Expr(const Number& n)
-  : Base(n.n) {
+Expr::Expr(const Number& y)
+  : Base(y.n) {
 }
 
 inline
-Expr::Expr(const Symbol& s)
-  : Base(s.s) {
+Expr::Expr(const Symbol& y)
+  : Base(y.s) {
 }
 
 inline
-Expr::Expr(const Constant& k)
-  : Base(k.c) {
+Expr::Expr(const Constant& y)
+  : Base(y.c) {
 }
 
 inline
-Expr::Expr(const std::string& st, const Expr_List& lst)
-  : Base(st, lst.l) {
+Expr::Expr(const std::string& s, const Expr_List& y)
+  : Base(s, y.l) {
 }
 
 // FIXME: temporary
 inline
-Expr::Expr(const Expr& lh, const Expr& rh)
-  :  Base(GiNaC::relational(static_cast<const Base&>(lh),
-			    static_cast<const Base&>(rh))) {
+Expr::Expr(const Expr& x, const Expr& y)
+  :  Base(GiNaC::relational(static_cast<const Base&>(x),
+			    static_cast<const Base&>(y))) {
 }
 
 inline
@@ -106,8 +106,8 @@ Expr::~Expr() {
 }
 
 inline std::ostream&
-operator<<(std::ostream& s, const Expr& e) {
-  s << static_cast<const Expr::Base&>(e);
+operator<<(std::ostream& s, const Expr& x) {
+  s << static_cast<const Expr::Base&>(x);
   return s;
 };
 
@@ -265,8 +265,8 @@ Expr::op(unsigned i) const {
 }
 
 inline bool
-Expr::is_equal(const Expr& exp) const {
-  return Base::is_equal(exp);
+Expr::is_equal(const Expr& x) const {
+  return Base::is_equal(x);
 }
 
 inline bool
@@ -275,29 +275,29 @@ Expr::is_zero() const {
 }
 
 inline Expr
-Expr::subs(const Expr& exp1, const Expr& exp2) const {
-  return Base::subs(exp1 == exp2);
+Expr::subs(const Expr& x, const Expr& y) const {
+  return Base::subs(x == y);
 }
 
 inline Expr
-Expr::subs(const Expr_List& to_replace,
-	   const Expr_List& replacements) const {
-  return Base::subs(to_replace.l, replacements.l);
+Expr::subs(const Expr_List& x,
+	   const Expr_List& y) const {
+  return Base::subs(x.l, y.l);
 }
 
 inline bool
-Expr::match(const Expr& pattern) const {
-  return Base::match(pattern);
+Expr::match(const Expr& x) const {
+  return Base::match(x);
 }
 
 inline bool
-Expr::match(const Expr& pattern, Expr_List& replacements) const {
-  return Base::match(pattern, replacements.l);
+Expr::match(const Expr& x, Expr_List& y) const {
+  return Base::match(x, y.l);
 }
 
 inline bool
-Expr::has(const Expr& pattern) const {
-  return Base::has(pattern);
+Expr::has(const Expr& x) const {
+  return Base::has(x);
 }
 
 inline Expr
@@ -306,38 +306,38 @@ Expr::expand() const {
 }
 
 inline Expr
-Expr::collect(const Expr_List& lst) const {
-  return Base::collect(lst.l);
+Expr::collect(const Expr_List& x) const {
+  return Base::collect(x.l);
 }
 
 inline int
-Expr::degree(const Symbol& symb) const {
-  return Base::degree(symb.s);
+Expr::degree(const Symbol& x) const {
+  return Base::degree(x.s);
 }
 
 inline int
-Expr::ldegree(const Symbol& symb) const {
-  return Base::ldegree(symb.s);
+Expr::ldegree(const Symbol& x) const {
+  return Base::ldegree(x.s);
 }
 
 inline Expr
-Expr::coeff(const Symbol& symb, int k) const {
-  return Base::coeff(symb.s, k);
+Expr::coeff(const Symbol& x, int k) const {
+  return Base::coeff(x.s, k);
 }
 
 inline Expr
-Expr::lcoeff(const Symbol& symb) const {
-  return Base::lcoeff(symb.s);
+Expr::lcoeff(const Symbol& x) const {
+  return Base::lcoeff(x.s);
 }
 
 inline Expr
-Expr::tcoeff(const Symbol& symb) const {
-  return Base::tcoeff(symb.s);
+Expr::tcoeff(const Symbol& x) const {
+  return Base::tcoeff(x.s);
 }
 
 inline Expr
-Expr::primpart(const Symbol& symb) const {
-  return Base::primpart(symb.s);
+Expr::primpart(const Symbol& x) const {
+  return Base::primpart(x.s);
 }
 
 inline Expr
@@ -351,9 +351,9 @@ Expr::denominator() const {
 }
 
 inline void
-Expr::numerator_denominator(Expr& numer, Expr& denom) const {
-  numer =  Base::numer_denom().op(0);
-  denom =  Base::numer_denom().op(1);
+Expr::numerator_denominator(Expr& x, Expr& y) const {
+  x =  Base::numer_denom().op(0);
+  y =  Base::numer_denom().op(1);
 }
 
 inline Expr
@@ -367,13 +367,13 @@ Expr::rhs() const {
 }
 
 inline Expr
-Expr::to_rational(Expr_List& lst) {
-  return Base::to_rational(lst.l);
+Expr::to_rational(Expr_List& x) {
+  return Base::to_rational(x.l);
 }
 
 inline Expr
-Expr::diff(const Symbol& symb, unsigned nth) {
-  return Base::diff(symb.s, nth);
+Expr::diff(const Symbol& x, unsigned nth) {
+  return Base::diff(x.s, nth);
 }
 
 inline Expr
@@ -448,13 +448,13 @@ lcm(const Expr& a, const Expr& b) {
 }
 
 inline Expr
-sqrfree(const Expr& x, const Expr_List& lst) {
-  return GiNaC::sqrfree(x, lst.l);
+sqrfree(const Expr& x, const Expr_List& y) {
+  return GiNaC::sqrfree(x, y.l);
 }
 
 inline Expr
-lsolve(const Expr_List& lst1, const Expr_List& lst2) {
-  return GiNaC::lsolve(lst1.l, lst2.l);
+lsolve(const Expr_List& x, const Expr_List& y) {
+  return GiNaC::lsolve(x.l, y.l);
 }
 
 inline Expr
