@@ -1,0 +1,29 @@
+Please report bugs to the purrs-devel mailing list (see
+http://www.cs.unipr.it/purrs/ for details); provide a short description and
+a step-by-step way to reproduce the bug.
+
+Known bugs are listed below.
+
+-----
+
+Bug #1
+Title: 		Cannot solve x^n-1=0
+Description:	eqs_driver can easily solve x^n-K=0 for all values of K but 1.
+Status:		ASSIGNED (pescetti)
+Priority:	High
+Reproducible:	Always
+Steps to reproduce:
+  1. run eqs_driver -i
+  2. type "x^5-3"
+  3. type "x^5-1"
+  4. Note that the second solution is unexpectedly cumbersome
+  5. Same with x^7-3, x^7-1
+  6. Solving x^7-1=0 is "Too difficult"... but x^7-3=0 is fine.
+Comments:
+  2004-04-14 pescetti
+    Seems to apply only for N>=5, K=+1 or K=-1.
+  2004-04-14 pescetti
+    It happens whenever the real root can be easily calculated. Try x^5-32.
+
+-----
+
