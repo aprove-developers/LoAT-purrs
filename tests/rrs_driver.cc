@@ -763,7 +763,7 @@ main(int argc, char *argv[]) try {
 	  if (expect_provably_correct_result
 	      || expect_provably_wrong_result
 	      || expect_inconclusive_verification) {
-	    Recurrence::Verify_Status status = rec.verify_solution();
+	    Recurrence::Verify_Status status = rec.verify('e');
 	    result_of_the_verification(0, status,
 				       unexpected_failures_to_verify,
 				       unexpected_failures_to_disprove,
@@ -804,7 +804,7 @@ main(int argc, char *argv[]) try {
 	  if (expect_provably_correct_result
 	      || expect_provably_wrong_result
 	      || expect_inconclusive_verification) {
-	    Recurrence::Verify_Status status = rec.verify_bound(false);
+	    Recurrence::Verify_Status status = rec.verify('l');
 	    result_of_the_verification(1, status,
 				       unexpected_failures_to_verify,
 				       unexpected_failures_to_disprove,
@@ -836,7 +836,7 @@ main(int argc, char *argv[]) try {
 	  if (expect_provably_correct_result
 	      || expect_provably_wrong_result
 	      || expect_inconclusive_verification) {
-	    Recurrence::Verify_Status status = rec.verify_bound(true);
+	    Recurrence::Verify_Status status = rec.verify('u');
 	    result_of_the_verification(2, status,
 				       unexpected_failures_to_verify,
 				       unexpected_failures_to_disprove,
