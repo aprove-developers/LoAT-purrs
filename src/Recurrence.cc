@@ -249,17 +249,15 @@ PURRS::Recurrence::verify_solution() const {
 #else
       std::vector<Expr> terms_to_sub(order());
       for (unsigned i = order(); i-- > 0; )
-	terms_to_sub[i] = partial_solution.subs(Recurrence::n,
-						Recurrence::n - i - 1);
+	terms_to_sub[i] = partial_solution.subs(n, n-i-1);
       D_VEC(terms_to_sub, 0, terms_to_sub.size()-1);
       Expr substituted_rhs = simplify_on_input_ex(recurrence_rhs.expand(),
 						  true);
       for (unsigned i = terms_to_sub.size(); i-- > 0; )
-	substituted_rhs = substituted_rhs.subs(x(Recurrence::n - i - 1),
-					       terms_to_sub[i]);
+	substituted_rhs = substituted_rhs.subs(x(n-i-1), terms_to_sub[i]);
 #endif
       D_VAR(substituted_rhs);
-      Expr diff = (partial_solution - substituted_rhs);
+      Expr diff = partial_solution - substituted_rhs;
       D_VAR(diff);
       // `simplify_factorials_and_exponentials()' must be call on not
       // expanded expression.
