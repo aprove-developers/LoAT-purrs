@@ -1623,7 +1623,9 @@ verify_solution(const Expr& solution, const int& order, const Expr& rhs,
   Expr substituted_rhs = simplify_on_input_ex(rhs.expand(), n, true);
   for (unsigned i = terms_to_sub.size(); i-- > 0; )
     substituted_rhs = substituted_rhs.subs(x(n - i - 1), terms_to_sub[i]);
-  Expr diff = (partial_solution - substituted_rhs).expand();
+  Expr diff = (partial_solution - substituted_rhs);
+  // `simplify_factorials_and_exponentials()' must be call on not expanded expression.
+  diff = simplify_factorials_and_exponentials(diff, n).expand();
   diff = simplify_numer_denom(diff);
   if (!diff.is_zero()) {
     diff = simplify_factorials_and_exponentials(diff, n).expand();
