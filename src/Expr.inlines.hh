@@ -349,11 +349,6 @@ operator!=(const Expr& x, const Expr& y) {
   return !(x == y);
 }
 
-inline Expr
-Expr::operator[](int i) const {
-  return Base::operator[](i);
-}
-
 inline Functor
 Expr::functor() const {
   assert(is_a_function());
@@ -368,6 +363,7 @@ Expr::nops() const {
 inline Expr
 Expr::op(unsigned i) const {
   assert(!is_a_function() && !is_a_power());
+  assert(i < nops());
   return Base::op(i);
 }
 
@@ -375,18 +371,21 @@ Expr::op(unsigned i) const {
 inline Expr&
 Expr::arg(unsigned i) {
   assert(is_a_function() || is_a_power());
+  assert(i < nops());
   return static_cast<Expr&>(let_op(i));
 }
 
 inline const Expr&
 Expr::arg(unsigned i) const {
   assert(is_a_function() || is_a_power());
+  assert(i < nops());
   return static_cast<Expr&>(const_cast<Expr&>(*this).let_op(i));
 }
 #else
 inline Expr
 Expr::arg(unsigned i) const {
   assert(is_a_function() || is_a_power());
+  assert(i < nops());
   return Base::op(i);
 }
 #endif

@@ -362,11 +362,6 @@ public:
   Expr& operator=(const Expr& y);
 
   //! \brief
-  //! Accedes to \f$ i \f$-th term/factor of an addiction/multiplication of
-  //! expressions.
-  Expr operator[](int i) const;
-
-  //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is a symbolic
   //! expression.
   bool is_a_symbol() const;
@@ -572,11 +567,11 @@ public:
   //! matches \p x.
   bool has(const Expr& x) const;
 
-  //! Expandes \p *this, i.e., distributes multiplication over addition.
+  //! Expands \p *this, i.e., distributes multiplication over addition.
   Expr distribute_mul_over_add() const;
 
   //! \brief
-  //! Expandes further \p *this, i.e., distributes multiplication over
+  //! Expands further \p *this, i.e., distributes multiplication over
   //! addition and executes the powers with exponents positive integers
   //! numbers.
   Expr expand() const;
