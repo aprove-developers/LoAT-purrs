@@ -273,11 +273,11 @@ subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
 	  = symbolic_sum_no_distinct[r]
 	  .subs(Expr_List(alpha, lambda),
 		Expr_List(base_exp, roots[j].value()));
-      if (order != 2 || j & 1 == 0)
-	solution += tmp;
-      else
-	// `order' is 2 or `j' is odd.
+      if (order == 2 && j & 1 == 1)
 	solution -= tmp;
+      else
+	// order != 2 or j even.
+	solution += tmp;
       ++r;
     }
   return solution;
@@ -1033,13 +1033,7 @@ solve_system(const bool all_distinct,
   for (unsigned i = coefficients_size - 1; i-- > 0; )
     vars(i, 0) = Symbol();
   Matrix solution = coeff_alpha.solve(vars, rhs);
-#if NOISY
-  std::cout << "g_i: " << g_i << std::endl;
-  std::cout << "equations: " << coeff_equations << std::endl;
-  std::cout << "system: " << coeff_alpha << std::endl;
-  std::cout << "rhs: " << rhs << std::endl;
-  std::cout << "alpha_i: " << sol << std::endl;
-#endif
+
   return solution;
 }
 
