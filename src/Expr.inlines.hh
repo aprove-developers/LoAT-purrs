@@ -706,6 +706,27 @@ Expr::latex_print(std::ostream& s) {
   print(GiNaC::print_latex(s));
 }
 
+template <typename SymbolHandler>
+unsigned
+generic_size_norm(const Expr& e, const SymbolHandler& sh) {
+  int count = 1;
+  if (e.is_a_add() || e.is_a_mul())
+    for (unsigned i = e.nops(); i-- > 0; )
+      count += generic_size_norm(e.op(i), sh);
+  else if (e.is_a_power())
+    count += generic_size_norm(e.arg(0), sh) + generic_size_norm(e.arg(1), sh);
+  else if (e.is_a_function())
+    for (unsigned i = e.nops(); i-- > 0; )
+      count += generic_size_norm(e.arg(i), sh);
+  else if (e.is_a_complex_interval())
+    // Four boundaries.
+    count += 4;
+  else if (e.is_a_symbol())
+    count = sh.size_norm(e.ex_to_symbol());
+  // Leave count to 1 in case e is a number or a constant.
+  return count;
+}
+
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_Expr_inlines_hh)

@@ -762,21 +762,6 @@ public:
   */
   bool is_rational_function(const Symbol& x) const;
 
-  //! Returns the size-norm of \p *this.
-  /*
-    Let \f$ e \f$ an expression, <EM>size-norm(e)</EM> is defined
-    in the following way:
-    - if \f$ e \f$ is a symbol or a number or a constant,
-      then \f$ size-norm(e) = 1 \f$;
-    - if \f$ e = e_1 + e_2 \f$ or \f$ e = e_1 e_2 \f$,
-      then \f$ size-norm(e) = size-norm(e_1) + size-norm(e_2) + 1 \f$;
-    - if \f$ e = {e_1}^{e_2} \f$,
-      then \f$ size-norm(e) = size-norm(e_1) + size-norm(e_2) + 1 \f$;
-    - if \f$ e = f(e_1, \dots, e_k) \f$,
-      then \f$ size-norm(e) = \sum_{i = 1}^k size-norm(e_i) + 1;
-  */
-  int size_norm() const;
-
 private:
   friend class Number;
   friend class Symbol;
@@ -841,6 +826,18 @@ private:
   //! Builds the function corresponding to \p gf.
   Expr(const GiNaC::function& gf);
 };
+
+/*!
+  Assuming <CODE>sh.size_norm(const Symbol& s)</CODE> computes
+  the norm of <CODE>s</CODE>, returns the size-norm of \p e.
+*/
+template <typename SymbolHandler>
+unsigned
+generic_size_norm(const Expr& e, const SymbolHandler& sh);
+
+//! Returns the size-norm of \p e.
+unsigned
+size_norm(const Expr& e);
 
 } // namespace Parma_Recurrence_Relation_Solver
 

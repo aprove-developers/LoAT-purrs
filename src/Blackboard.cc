@@ -35,40 +35,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
-unsigned
-PURRS::Blackboard::size_norm(Cached<unsigned>& ce) const {
-  if (timestamp > ce.timestamp) {
-    ce.value = size_norm(ce.value);
-    ce.timestamp = timestamp;
-  }
-  return ce.value;
-}
-
-unsigned
-PURRS::Blackboard::size_norm(const Expr& e) const {
-  int count = 1;
-  if (e.is_a_add() || e.is_a_mul())
-    for (unsigned i = e.nops(); i-- > 0; )
-      count += e.op(i).size_norm();
-  else if (e.is_a_power())
-    count += e.arg(0).size_norm() + e.arg(1).size_norm();
-  else if (e.is_a_function())
-    for (unsigned i = e.nops(); i-- > 0; )
-      count += e.arg(i).size_norm();
-  else if (e.is_a_complex_interval())
-    // Four boundaries.
-    count += 4;
-  else if (e.is_a_symbol()) {
-    Symbol z = e.ex_to_symbol();
-    std::map<Symbol, unsigned>::const_iterator i = index.find(z);
-    if (i != index.end())
-      count = size_norm(definitions[i->second].size);
-  }
-  // Leave count to 1 in case e is a number, a constant, or a symbol
-  // that is not defined in the blackboard.
-  return count;
-}
-
 PURRS::Expr
 PURRS::Blackboard::rewrite(Cached<Expr>& ce) const {
   if (timestamp > ce.timestamp) {
@@ -117,6 +83,20 @@ PURRS::Blackboard::rewrite(const Expr& e) const {
   else
     e_rewritten = e;
   return e_rewritten;
+}
+
+unsigned
+PURRS::Blackboard::size_norm(Cached<unsigned>& ce) const {
+  if (timestamp > ce.timestamp) {
+    ce.value = generic_size_norm(ce.value, *this);
+    ce.timestamp = timestamp;
+  }
+  return ce.value;
+}
+
+unsigned
+PURRS::Blackboard::size_norm(const Expr& e) const {
+  return generic_size_norm(e, *this);
 }
 
 void

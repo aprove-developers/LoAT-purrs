@@ -71,6 +71,11 @@ public:
   //! in \p *this.
   unsigned size_norm(const Expr& e) const;
 
+  //! \brief
+  //! Compute the size norm of \f$ e \f$ according to the definitions
+  //! in \p *this.
+  unsigned size_norm(const Symbol& s) const;
+
   //! Approximate \f$ e \f$ according to the definitions in \p *this.
   Expr approximate(const Expr& e) const;
 
@@ -88,6 +93,7 @@ private:
 
   Expr rewrite(Cached<Expr>& ce) const;
   unsigned size_norm(Cached<unsigned>& ce) const;
+  Expr approximate(Cached<Expr>& ce) const;
 
   class Definition {
   public:
@@ -95,7 +101,7 @@ private:
 
     Expr rhs;
     Cached<unsigned> size;
-    Cached<CInterval> approximation;
+    Cached<Expr> approximation;
     Cached<Expr> expansion;
   };
 

@@ -388,30 +388,17 @@ PURRS::Expr::is_rational_function(const Symbol& x) const {
   return false;
 }
 
-int
-PURRS::Expr::size_norm() const {
-  const Expr& e = *this;
-  int count = 0;
-  if (e.is_a_add() || e.is_a_mul()) {
-    unsigned e_nops = e.nops();
-    for (unsigned i = e_nops; i-- > 0; )
-      count += e.op(i).size_norm();
-    // Number of operation's symbols.
-    count += e_nops - 1;
-  }
-  else if (e.is_a_power()) {
-    count += e.arg(0).size_norm();
-    count += e.arg(1).size_norm();
-    ++count;
-  }
-  else if (e.is_a_function()) {
-    // The functor.
-    count += 1;
-    for (unsigned i = e.nops(); i-- > 0; )
-      count += e.arg(i).size_norm();
-  }
-  else
-    // This is the case of a `Number' or a `Symbol' or a `Constant'.
+namespace {
+
+struct Norm_1 {
+  unsigned size_norm(const PURRS::Symbol&) const {
     return 1;
-  return count;
+  }
+};
+
+}
+
+unsigned
+PURRS::size_norm(const Expr& e) {
+  return generic_size_norm(e, Norm_1());
 }
