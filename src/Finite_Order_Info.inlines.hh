@@ -83,13 +83,24 @@ Finite_Order_Info::set_initial_conditions(const std::vector<unsigned> i_c) {
 }
 
 inline void
-Finite_Order_Info::add_decrements(unsigned d) {
+Finite_Order_Info::set_coefficients(const std::vector<Expr> coeffs) {
+  copy(coeffs.begin(), coeffs.end(),
+       inserter(coefficients, coefficients.begin()));
+}
+
+inline void
+Finite_Order_Info::add_decrement(unsigned d) {
   decrements.push_back(d);
 }
 
 inline void
-Finite_Order_Info::add_initial_conditions(unsigned i) {
+Finite_Order_Info::add_initial_condition(unsigned i) {
   initial_conditions.push_back(i);
+}
+
+inline void
+Finite_Order_Info::add_coefficient(const Expr& c) {
+  coefficients.push_back(c);
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

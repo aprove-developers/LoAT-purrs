@@ -26,6 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Finite_Order_Info_defs_hh 1
 
 #include "Finite_Order_Info.types.hh"
+#include "Expr.defs.hh"
 #include <vector>
 
 namespace Parma_Recurrence_Relation_Solver {
@@ -59,23 +60,34 @@ public:
   //! Sets the vector <CODE>initial_conditions</CODE> from \p i_c.
   void set_initial_conditions(const std::vector<unsigned> i_c);
 
+  //! Sets the vector <CODE>coefficients</CODE> from \p coeffs.
+  void set_coefficients(const std::vector<Expr> coeffs);
+
   //! Adds \p d to the vector <CODE>decrements</CODE>.
-  void add_decrements(unsigned d);
+  void add_decrement(unsigned d);
 
   //! Adds \p i to the vector <CODE>initial_conditions</CODE>.
-  void add_initial_conditions(unsigned i);
+  void add_initial_condition(unsigned i);
+
+  //! Adds \p c to the vector <CODE>coefficients</CODE>.
+  void add_coefficient(const Expr& c);
 
 private:
   //! The order of the recurrence. 
   int order;
 
+  //! \brief
   //! Stores the positive integers \f$ d \f$ of all the \f$ x(n-d) \f$
   //! contained in the right hand side of the recurrence.
   std::vector<unsigned> decrements;
 
+  //! \brief
   //! Stores the positive integers that represent the initial conditions
   //! for the recurrences. For these integers the recurrence is well defined.
   std::vector<unsigned> initial_conditions;
+
+  //! Stores the coefficients of the recurrence.
+  std::vector<Expr> coefficients;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver
