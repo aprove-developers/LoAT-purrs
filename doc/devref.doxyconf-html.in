@@ -410,10 +410,6 @@ INPUT                  = ../../../purrs/doc/../src/alg_eq_solver.cc \
                          ../../../purrs/doc/../src/Number.cc \
                          ../../../purrs/doc/../src/numerator_denominator.cc \
                          ../../../purrs/doc/../src/numerator_denominator.hh \
-		 	 ../../../purrs/doc/../src/Order_Reduction_Info.defs.hh \
-                         ../../../purrs/doc/../src/Order_Reduction_Info.types.hh \
-                         ../../../purrs/doc/../src/Order_Reduction_Info.inlines.hh \
-                         ../../../purrs/doc/../src/Order_Reduction_Info.cc \
                          ../../../purrs/doc/../src/poly_factor.cc \
                          ../../../purrs/doc/../src/poly_factor.hh \
 			 ../../../purrs/doc/../src/Recurrence.defs.hh \
