@@ -30,7 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-class Parma_Recurrence_Relation_Solver::Matrix : public Expr {
+class Parma_Recurrence_Relation_Solver::Matrix {
 public:
   //! Ordinary copy-constructor.
   Matrix();
@@ -44,8 +44,11 @@ public:
   //! Assignment operator.
   Matrix& operator=(const Matrix& x);
 
-  //  Matrix solve(const Matrix & vars, const Matrix & rhs,
-  //	       unsigned algo = solve_algo::automatic) const;
+  Matrix solve(const Matrix& vars, const Matrix& rhs) const;
+private:
+  GiNaC::matrix m;
+
+  Matrix(const GiNaC::matrix& gm);
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

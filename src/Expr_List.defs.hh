@@ -26,24 +26,33 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Expr_List_defs_hh 1
 
 #include "Expr_List.types.hh"
-#include "Expr.defs.hh"
+#include "Expr.types.hh"
+#include "Symbol.types.hh"
+
+#include <ginac/ginac.h>
 
 namespace Parma_Recurrence_Relation_Solver {
 
-class Parma_Recurrence_Relation_Solver::Expr_List : public Expr {
+class Parma_Recurrence_Relation_Solver::Expr_List {
 public:
   //! Ordinary copy-constructor.
   Expr_List();
 
+  explicit Expr_List(const Symbol& symb);
+
   //! Copy-constructor.
-  Expr_List(const Expr_List& x);
+  Expr_List(const Expr_List& l);
 
   //! Destructor.
   ~Expr_List();
 
   //! Assignment operator.
-  Expr_List& operator=(const Expr_List& x);
+  Expr_List& operator=(const Expr_List& l);
 
+private:
+  GiNaC::lst l;
+
+  friend class Expr;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

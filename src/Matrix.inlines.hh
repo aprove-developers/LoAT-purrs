@@ -25,4 +25,37 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_Matrix_inlines_hh
 #define PURRS_Matrix_inlines_hh
 
+namespace Parma_Recurrence_Relation_Solver {
+
+inline
+Matrix::Matrix() {
+}
+
+inline
+Matrix::Matrix(const Matrix& mat)
+  : m(mat.m) {
+};
+
+inline Matrix&
+Matrix::operator=(const Matrix& mat) {
+  m = mat.m;
+  return *this;
+};
+
+inline
+Matrix::Matrix(const GiNaC::matrix& gm)
+  : m(gm) {
+}
+
+inline
+Matrix::~Matrix() {
+}
+
+inline Matrix
+Matrix::solve(const Matrix& vars, const Matrix& rhs) const {
+  return m.solve(vars.m, rhs.m);
+}
+
+} // namespace Parma_Recurrence_Relation_Solver
+
 #endif // !defined(PURRS_Matrix_inlines_hh)

@@ -67,7 +67,7 @@ void
 find_divisors(GNumber n, std::vector<GNumber>& divisors) {
   assert(n.is_pos_integer());
   assert(n > 0 && n < FIND_DIVISORS_THRESHOLD);
-  unsigned m = n.to_int();
+  unsigned m = to_int(n);
   // Once a divisor `i' is found, it is pushed onto the vector `divisors'
   // along with its conjugate `j = n/i', provided that `j' is less than `i'.
   if (m == 1)
@@ -98,7 +98,7 @@ is_nested_polynomial(const GExpr& p, const GSymbol& x, GExpr& q) {
     return 0;
   }
   // Here the degree is at least 1.
-  if (p.coeff(x, 1) != 0) {
+  if (!(p.coeff(x, 1)).is_zero()) {
     // The gcd of the coefficients is 1.
     q = p;
     return 1;
@@ -107,7 +107,7 @@ is_nested_polynomial(const GExpr& p, const GSymbol& x, GExpr& q) {
   // linear term.  Look for the first non-zero coefficient (apart from
   // the constant term).
   unsigned i = 2;
-  while(p.coeff(x, i) == 0)
+  while(p.coeff(x, i).is_zero())
     ++i;
 
   // Here i >= 2 and the polynomial has the form a_0 + a_i x^i + ... 
@@ -121,7 +121,7 @@ is_nested_polynomial(const GExpr& p, const GSymbol& x, GExpr& q) {
   unsigned n = i;
   for (unsigned j = i+1; j <= degree && n > 1; ++j)
     // If n == 1 there is no need to read the rest of the polynomial.
-    if (p.coeff(x, j) !=0)
+    if (!(p.coeff(x, j)).is_zero())
       n = gcd(n, j);
 
   // Here n is the largest integer such that there is 
@@ -184,10 +184,10 @@ bool
 find_roots(const GExpr& p, const GSymbol& x,
 	   std::vector<Polynomial_Root>& roots,
 	   bool& all_distinct) {
-  assert(p.info(info_flags::integer_polynomial));
-  assert(!is_a<numeric>(p));
+  assert(p.is_integer_polynomial());
+  assert(!p.is_a_number());
   // Compute a square-free decomposition for p.
-  GExpr q = sqrfree(p.expand(), lst(x));
+  GExpr q = sqrfree(p.expand(), Expr_List(x));
   // There are now 4 cases depending on the principal functor of `q':
   //
   // 1) q is a product of two or more factors: e.g., (1+x)^2*(2+x);
@@ -198,15 +198,15 @@ find_roots(const GExpr& p, const GSymbol& x,
   //
   // In cases 1 and 2 there are multiple roots,
   // in cases 3 and 4 there are not.
-  if (is_a<add>(q)) {
+  if (q.is_a_add()) {
     all_distinct = true;
     return find_roots(q, x, roots, 1);
   }
-  else if (is_a<mul>(q)) {
+  else if (q.is_a_mul()) {
     all_distinct = false;
     for (unsigned i = 0, n = q.nops(); i < n; ++i) {
       GExpr factor = q.op(i);
-      if (is_a<power>(factor)) {
+      if (factor.is_a_power()) {
 	if (!find_power_roots(factor, x, roots))
 	  return false;
       }
@@ -215,12 +215,12 @@ find_roots(const GExpr& p, const GSymbol& x,
     }
     return true;
   }
-  else if (is_a<power>(q)) {
+  else if (q.is_a_power()) {
     all_distinct = false;
     return find_power_roots(q, x, roots);
   }
   else {
-    assert(is_a<symbol>(q));
+    assert(q.is_a_symbol());
     // 0 is the only solution of x = 0.
     all_distinct = true;
     roots.push_back(zero);
@@ -231,10 +231,10 @@ find_roots(const GExpr& p, const GSymbol& x,
 static bool
 find_power_roots(const GExpr& p, const GSymbol& x,
 		 std::vector<Polynomial_Root>& roots) {
-  assert(is_a<power>(p));
+  assert(p.is_a_power());
   GExpr base = p.op(0);
-  assert(is_a<numeric>(p.op(1)));
-  GNumber exponent = ex_to<numeric>(p.op(1));
+  assert(p.op(1).is_a_number());
+  GNumber exponent = p.op(1).ex_to_number();
   assert(exponent.is_pos_integer() && exponent >= 2);
   if (!find_roots(base, x, roots, exponent))
     // No way: we were unable to solve the base.
@@ -256,10 +256,10 @@ find_roots(const GExpr& p, const GSymbol& x,
   else
     q = p;
 
-  assert(is_a<numeric>(q.lcoeff(x)));
-  assert(is_a<numeric>(q.tcoeff(x)));
-  GNumber lc = ex_to<numeric>(q.lcoeff(x));
-  GNumber tc = ex_to<numeric>(q.tcoeff(x));
+  assert(q.lcoeff(x).is_a_number());
+  assert(q.tcoeff(x).is_a_number());
+  GNumber lc = q.lcoeff(x).ex_to_number();
+  GNumber tc = q.tcoeff(x).ex_to_number();
   int degree = q.degree(x);
   if (degree == 1) {
     roots.push_back(Polynomial_Root(-tc/lc, multiplicity));
@@ -302,10 +302,10 @@ find_roots(const GExpr& p, const GSymbol& x,
     // - irrational, or
     // - complex.
     if (coefficients_changed) {
-      assert(is_a<numeric>(q.lcoeff(x)));
-      assert(is_a<numeric>(q.tcoeff(x)));
-      lc = ex_to<numeric>(q.lcoeff(x));
-      tc = ex_to<numeric>(q.tcoeff(x));
+      assert(q.lcoeff(x).is_a_number());
+      assert(q.tcoeff(x).is_a_number());
+      lc = q.lcoeff(x).ex_to_number();
+      tc = q.tcoeff(x).ex_to_number();
     }
   }
 
@@ -323,8 +323,8 @@ find_roots(const GExpr& p, const GSymbol& x,
       }
     case 2:
       {
-	assert(is_a<numeric>(q.coeff(x, 1)));
-	GNumber b = ex_to<numeric>(q.coeff(x, 1)) / lc;
+	assert(q.coeff(x, 1).is_a_number());
+	GNumber b = q.coeff(x, 1).ex_to_number() / lc;
 	GNumber c = tc / lc;
 	solve_equation_2(b, c,
 			 roots[position].value(),
@@ -333,10 +333,10 @@ find_roots(const GExpr& p, const GSymbol& x,
       }
     case 3:
       {
-	assert(is_a<numeric>(q.coeff(x, 1)));
-	assert(is_a<numeric>(q.coeff(x, 2)));
-	GNumber a1 = ex_to<numeric>(q.coeff(x, 2)) / lc;
-	GNumber a2 = ex_to<numeric>(q.coeff(x, 1)) / lc;
+	assert(q.coeff(x, 1).is_a_number());
+	assert(q.coeff(x, 2).is_a_number());
+	GNumber a1 = q.coeff(x, 2).ex_to_number() / lc;
+	GNumber a2 = q.coeff(x, 1).ex_to_number() / lc;
 	GNumber a3 = tc / lc;
 	solve_equation_3(a1, a2, a3,
 			 roots[position].value(),
@@ -348,12 +348,12 @@ find_roots(const GExpr& p, const GSymbol& x,
       {
 	// FIXME: call `is_nested_polynomial(q, x, r)' here?
 	// Consider, for example, 1+x^4+x^2 = 0.
-	assert(is_a<numeric>(q.coeff(x, 1)));
-	assert(is_a<numeric>(q.coeff(x, 2)));
-	assert(is_a<numeric>(q.coeff(x, 3)));
-	GNumber a1 = ex_to<numeric>(q.coeff(x, 3)) / lc;
-	GNumber a2 = ex_to<numeric>(q.coeff(x, 2)) / lc;
-	GNumber a3 = ex_to<numeric>(q.coeff(x, 1)) / lc;
+	assert(q.coeff(x, 1).is_a_number());
+	assert(q.coeff(x, 2).is_a_number());
+	assert(q.coeff(x, 3).is_a_number());
+	GNumber a1 = q.coeff(x, 3).ex_to_number() / lc;
+	GNumber a2 = q.coeff(x, 2).ex_to_number() / lc;
+	GNumber a3 = q.coeff(x, 1).ex_to_number() / lc;
 	GNumber a4 = tc / lc;
 	solve_equation_4(a1, a2, a3, a4,
 			 roots[position].value(),

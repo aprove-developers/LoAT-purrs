@@ -2,10 +2,16 @@
 #ifndef PURRS_globals_hh
 #define PURRS_globals_hh 1
 
+#include "Expr.defs.hh"
+#include "Symbol.defs.hh"
+#include "Expr_List.defs.hh"
+#include "Number.defs.hh"
+#include "Matrix.defs.hh"
+
 #include <ginac/ginac.h>
 #include <cln/complex.h>
 
-#if 1
+#if 0
 typedef GiNaC::ex GExpr;
 typedef GiNaC::symbol GSymbol;
 typedef GiNaC::lst GList;

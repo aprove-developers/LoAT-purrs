@@ -21,8 +21,8 @@ USA.
 For the most up-to-date information see the Parma Polyhedra Library
 site: http://www.cs.unipr.it/purrs/ . */
 
-#include "Expr_List.defs.hh"
-
 #include <config.h>
+
+#include "Expr_List.defs.hh"
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;

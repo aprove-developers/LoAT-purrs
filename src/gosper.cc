@@ -89,7 +89,7 @@ compute_resultant_and_its_roots(const GExpr& f, const GExpr& g,
     R = convert_to_integer_polynomial(R, h);
   
   std::vector<GNumber> potential_roots;
-  assert(is_a<numeric>(R.tcoeff(h)));
+  assert(R.tcoeff(h).is_a_number());
   GNumber constant_term = abs(ex_to<GiNaC::numeric>(R.tcoeff(h)));
   // If `constant_term == 0', divide `R' by `h', and repeat.
   // The constant `0' is a root of the original resultant `R'
@@ -269,8 +269,9 @@ gosper_step_three(const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
     GExpr shift_b = b_n.subs(n == n - 1);
     GExpr A = a_n.coeff(n, deg_a - 1);
     GExpr B = shift_b.coeff(n, deg_a - 1);
-    assert(is_a<numeric>((B - A) * pow(lead_a, -1)));
-    GNumber B_A = ex_to<numeric>((B - A) * pow(lead_a, -1));
+    GExpr B_A_e = (B - A) * pow(lead_a, -1);
+    assert(B_A_e.is_a_number());
+    GNumber B_A = ex_to<numeric>(B_A_e);
     GNumber possible_deg = deg_c - deg_a + 1;
     if (B_A.is_nonneg_integer())
       if (B_A > possible_deg)

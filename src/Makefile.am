@@ -29,17 +29,17 @@ Expr_List.types.hh \
 Number.types.hh \
 Matrix.types.hh \
 Recurrence.types.hh \
-globals.hh \
-Expr.defs.hh \
-Expr.inlines.hh \
+Number.defs.hh \
+Number.inlines.hh \
 Symbol.defs.hh \
 Symbol.inlines.hh \
 Expr_List.defs.hh \
 Expr_List.inlines.hh \
-Number.defs.hh \
-Number.inlines.hh \
+Expr.defs.hh \
+Expr.inlines.hh \
 Matrix.defs.hh \
 Matrix.inlines.hh \
+globals.hh \
 Recurrence.defs.hh \
 Recurrence.inlines.hh \
 alg_eq_solver.hh \
@@ -81,11 +81,11 @@ BUILT_SOURCES = purrs.hh purrs_install.hh
 
 MORE_INCLUDE_FILES = /dev/null
 
-purrs.hh:	$(DOC_FILES)
+purrs.hh:	$(DOC_FILES) Makefile
 	(cd $(srcdir) ; cat $(DOC_FILES)) \
 		| sed -e "s/PURRS_INTERNAL/private/g" >purrs.hh
 
-purrs_install.hh:	purrs_header.top $(top_builddir)/config.h purrs_header.middle $(INCLUDE_FILES) $(MORE_INCLUDE_FILES) purrs_header.bottom
+purrs_install.hh:	purrs_header.top $(top_builddir)/config.h purrs_header.middle $(INCLUDE_FILES) $(MORE_INCLUDE_FILES) purrs_header.bottom Makefile
 	mkdir -p tmp
 	(cd $(srcdir) ; cat $(MORE_INCLUDE_FILES) $(INCLUDE_FILES)) >tmp/concat
 	grep -e "^#include <" <tmp/concat | sort -u >tmp/includes

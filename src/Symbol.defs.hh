@@ -26,24 +26,31 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Symbol_defs_hh 1
 
 #include "Symbol.types.hh"
-#include "Expr.defs.hh"
+#include "Expr.types.hh"
+
+#include <ginac/ginac.h>
 
 namespace Parma_Recurrence_Relation_Solver {
 
-class Parma_Recurrence_Relation_Solver::Symbol : public Expr {
+class Parma_Recurrence_Relation_Solver::Symbol {
 public:
   //! Ordinary copy-constructor.
   Symbol();
 
   //! Copy-constructor.
-  Symbol(const Symbol& x);
+  Symbol(const Symbol& s);
 
   //! Destructor.
   ~Symbol();
 
   //! Assignment operator.
-  Symbol& operator=(const Symbol& x);
+  Symbol& operator=(const Symbol& s);
 
+private:
+  GiNaC::symbol s;
+
+  friend class Expr;
+  friend class Expr_List;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

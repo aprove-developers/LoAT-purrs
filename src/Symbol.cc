@@ -21,8 +21,8 @@ USA.
 For the most up-to-date information see the Parma Polyhedra Library
 site: http://www.cs.unipr.it/purrs/ . */
 
-#include "Symbol.defs.hh"
-
 #include <config.h>
+
+#include "Symbol.defs.hh"
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;

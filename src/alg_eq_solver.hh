@@ -37,6 +37,7 @@ public:
   Polynomial_Root(const GExpr& e, GNumber m = 1)
     : value_(e), multiplicity_(m) {
   }
+
   const GExpr& value() const {
     return value_;
   }

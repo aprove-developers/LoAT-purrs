@@ -25,4 +25,27 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_Symbol_inlines_hh
 #define PURRS_Symbol_inlines_hh
 
+namespace Parma_Recurrence_Relation_Solver {
+
+inline
+Symbol::Symbol() {
+}
+
+inline
+Symbol::Symbol(const Symbol& symb)
+  : s(symb.s) {
+};
+
+inline Symbol&
+Symbol::operator=(const Symbol& symb) {
+  s = symb.s;
+  return *this;
+};
+
+inline
+Symbol::~Symbol() {
+}
+
+} // namespace Parma_Recurrence_Relation_Solver
+
 #endif // !defined(PURRS_Symbol_inlines_hh)

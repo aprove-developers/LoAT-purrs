@@ -26,36 +26,73 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Number_defs_hh 1
 
 #include "Number.types.hh"
-#include "Expr.defs.hh"
+#include "Expr.types.hh"
+
+#include <ginac/ginac.h>
 
 namespace Parma_Recurrence_Relation_Solver {
 
-class Parma_Recurrence_Relation_Solver::Number : public Expr {
+// binary arithmetic operators Number with Number
+Number operator+(const Number& lh, const Number& rh);
+Number operator-(const Number& lh, const Number& rh);
+Number operator*(const Number& lh, const Number& rh);
+Number operator/(const Number& lh, const Number& rh);
+
+Number operator+(const Number &lh);
+Number operator-(const Number &lh);
+
+class Parma_Recurrence_Relation_Solver::Number {
 public:
   //! Ordinary copy-constructor.
   Number();
 
+  //! Builds the integer number \p i.
+  Number(int i);
+
+  Number(Expr& exp);
+
   //! Copy-constructor.
-  Number(const Number& x);
+  Number(const Number& s);
 
   //! Destructor.
   ~Number();
 
   //! Assignment operator.
-  Number& operator=(const Number& x);
+  Number& operator=(const Number& s);
 
-  bool is_positive(const Number& n) const;
-  bool is_integer(const Number& n) const;
-  bool is_pos_integer(const Number& n) const;
-  bool is_nonnes_integer(const Number& n) const;
-  bool is_even(const Number& n) const;
-  bool is_odd(const Number& n) const;
-  bool is_prime(const Number& n) const;
-  bool is_rational(const Number& n) const;
-  bool is_real(const Number& n) const;
-  bool is_cinteger(const Number& n) const;
-  bool is_crational(const Number& n) const;
+  bool operator==(const Number &num) const;
+  bool operator!=(const Number &num) const;
+  bool operator>(const Number& num) const;
+  bool operator<(const Number& num) const;
+  bool operator>=(const Number& num) const;
+  bool operator<=(const Number& num) const;
+
+  //  relational operator==(const Symbol& lh, const Number& rh);
+
+  bool is_positive();
+  bool is_integer();
+  bool is_pos_integer();
+  bool is_nonneg_integer();
+  bool is_even();
+  bool is_odd();
+  bool is_prime();
+  bool is_rational();
+  bool is_real();
+  bool is_cinteger();
+  bool is_crational();
+private:
+  friend class Expr;
+
+  GiNaC::numeric n;
+
+  Number(const GiNaC::numeric& gn);
 };
+
+int to_int(const Number& n);
+long to_long(const Number& n);
+
+Number abs(const Number& n);
+Number sqrt(const Number &n);
 
 } // namespace Parma_Recurrence_Relation_Solver
 

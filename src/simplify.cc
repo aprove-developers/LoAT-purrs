@@ -49,7 +49,7 @@ simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input);
 */
 static void
 split_exponent(GExpr& num, GExpr& not_num, const GExpr& e) {
-  if (!is_a<numeric>(e))
+  if (!e.is_a_number())
     not_num *= e;
   else
     num *= e;
@@ -103,7 +103,7 @@ static bool
 perfect_root(const GExpr& base, const GNumber& exp_num) {
   if (exp_num.is_rational()) {
     GExpr pow_base_num_exp = pow(base, exp_num);
-    if (is_a<numeric>(pow_base_num_exp)) {
+    if (pow_base_num_exp.is_a_number()) {
       GNumber tmp = GiNaC::ex_to<GiNaC::numeric>(pow_base_num_exp);
       if (tmp.is_rational())
 	return true;
@@ -190,7 +190,7 @@ simpl_powers_base(const GExpr& base, const GExpr& num_exponent,
   // and not numeric part of its exponent.
   GExpr tot = 1;
   for (unsigned i = base.nops(); i-- > 0; )
-    if (!is_a<numeric>(vect_base[i]))
+    if (!vect_base[i].is_a_number())
       tot *= return_power(false, input, vect_num_exp[i], vect_not_num_exp[i],
 			  vect_base[i], n);
     else
@@ -244,7 +244,7 @@ pow_simpl(const GExpr& e, const GSymbol& n, const bool& input) {
   // The base is not a multiplication: is not necessary to use the vectors,
   // i.e., call the function `simpl_powers_base'.
   else {
-    if (is_a<numeric>(base)) {
+    if (base.is_a_number()) {
       GNumber num_exp = GiNaC::ex_to<GiNaC::numeric>(num_exponent);
       // The function `perfect_root' allows to apply the rule `E1'.
       if (num_exp.is_integer() || perfect_root(base, num_exp))
@@ -358,7 +358,7 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 	  // If the base is `integer' GiNaC automatically transforms for
 	  // instance `2^(3/2)' in `2*sqrt(2)': in this case we do not add
 	  // 1 to the exponent. 
-	  if (!is_a<numeric>(bases[j]) || !is_a<numeric>(exponents[j]))
+	  if (!bases[j].is_a_number() || !exponents[j].is_a_number())
 	    exponents[j] = exponents[j] + 1;
 	  else {
 	    GNumber base = GiNaC::ex_to<GiNaC::numeric>(bases[j]);
@@ -688,14 +688,14 @@ reduce_product(const GExpr& e) {
 		factor_no_to_reduce *= to_reduce.op(j);
 	  }
 	  else if (is_a<power>(to_reduce)) {
-	    assert(is_a<numeric>(to_reduce.op(0)));
-	    assert(is_a<numeric>(to_reduce.op(1)));
+	    assert(to_reduce.op(0).is_a_number());
+	    assert(to_reduce.op(1).is_a_number());
 	    base_1 = GiNaC::ex_to<GiNaC::numeric>(to_reduce.op(0));
 	    exp_1 = GiNaC::ex_to<GiNaC::numeric>(to_reduce.op(1));
 	    factor_to_reduce = pow(to_reduce.op(0), to_reduce.op(1));
 	  }
 	  else {
-	    assert(is_a<numeric>(to_reduce));
+	    assert(to_reduce.is_a_number());
 	    base_1 = GiNaC::ex_to<GiNaC::numeric>(to_reduce);
 	    exp_1 = 1;
 	    factor_to_reduce = pow(to_reduce, 1);
@@ -735,7 +735,7 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
     if (is_a<power>(e.op(i))) {
       GExpr base = simplify_on_output_ex(e.op(i).op(0), n, input);
       GExpr exp = simplify_on_output_ex(e.op(i).op(1), n, input);
-      if (is_a<numeric>(base) && is_a<numeric>(exp))
+      if (is_a<numeric>(base) && exp.is_a_number())
 	tmp *= reduce_product(pow(base, exp));
       else
 	tmp *= pow_simpl(pow(base, exp), n, input);
@@ -872,7 +872,7 @@ simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input) {
   else if (is_a<power>(e)) {
     GExpr base = simplify_on_output_ex(e.op(0), n, input);
     GExpr exp = simplify_on_output_ex(e.op(1), n, input);
-    if (is_a<numeric>(base) && is_a<numeric>(exp))
+    if (base.is_a_number() && exp.is_a_number())
       ris = reduce_product(pow(base, exp));
     else
       ris = pow_simpl(pow(base, exp), n, input);

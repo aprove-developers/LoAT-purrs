@@ -25,4 +25,34 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_Expr_List_inlines_hh
 #define PURRS_Expr_List_inlines_hh
 
+#include "Symbol.defs.hh"
+
+namespace Parma_Recurrence_Relation_Solver {
+
+inline
+Expr_List::Expr_List() {
+}
+
+inline
+Expr_List::Expr_List(const Symbol& symb)
+  : l(symb.s) {
+};
+
+inline
+Expr_List::Expr_List(const Expr_List& lst)
+  : l(lst.l) {
+};
+
+inline Expr_List&
+Expr_List::operator=(const Expr_List& lst) {
+  l = lst.l;
+  return *this;
+};
+
+inline
+Expr_List::~Expr_List() {
+}
+
+} // namespace Parma_Recurrence_Relation_Solver
+
 #endif // !defined(PURRS_Expr_List_inlines_hh)

@@ -25,4 +25,119 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_Number_inlines_hh
 #define PURRS_Number_inlines_hh
 
+#include "Expr.defs.hh"
+
+namespace Parma_Recurrence_Relation_Solver {
+
+Number
+operator+(const Number& lh, const Number& rh) {
+  return lh + rh;
+}
+
+Number
+operator-(const Number& lh, const Number& rh) {
+  return lh - rh;
+}
+
+Number
+operator*(const Number& lh, const Number& rh) {
+  return lh * rh;
+}
+
+Number
+operator/(const Number& lh, const Number& rh) {
+  return lh / rh;
+}
+
+Number
+operator+(const Number& lh) {
+  return +lh;
+}
+
+Number
+operator-(const Number& lh) {
+  return -lh;
+}
+
+inline bool
+Number::operator==(const Number& num) const {
+  return n == num.n;
+}
+
+inline bool
+Number::operator!=(const Number& num) const {
+  return n != num.n;
+}
+
+inline bool
+Number::operator>(const Number& num) const {
+  return n > num.n;
+}
+
+inline bool
+Number::operator<(const Number& num) const {
+  return n < num.n;
+}
+
+inline bool
+Number::operator>=(const Number& num) const {
+  return n >= num.n;
+}
+
+inline bool
+Number::operator<=(const Number& num) const {
+  return n <= num.n;
+}
+
+// inline relational
+// Number::operator==(const Symbol& lh, const Number& rh) const {
+//   return lh == rh;
+// }
+
+inline
+Number::Number() {
+}
+
+inline
+Number::Number(int i)
+  : n(i) {
+}
+
+inline
+Number::Number(Expr& exp)
+  : n(exp.e) {
+}
+
+inline
+Number::Number(const Number& num)
+  : n(num.n) {
+};
+
+inline Number&
+Number::operator=(const Number& num) {
+  n = num.n;
+  return *this;
+};
+
+inline
+Number::Number(const GiNaC::numeric& gn)
+  : n(gn) {
+}
+
+inline
+Number::~Number() {
+}
+
+inline Number
+abs(const Number& n) {
+  return abs(n);
+}
+
+inline Number
+sqrt(const Number &n) {
+  return sqrt(n);
+};
+
+} // namespace Parma_Recurrence_Relation_Solver
+
 #endif // !defined(PURRS_Number_inlines_hh)

@@ -21,58 +21,74 @@ USA.
 For the most up-to-date information see the Parma Polyhedra Library
 site: http://www.cs.unipr.it/purrs/ . */
 
-#include "Number.defs.hh"
-
 #include <config.h>
+
+#include "Number.defs.hh"
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
-#if 0
+int
+PURRS::to_int(const Number& n) {
+  return to_int(n);
+}
+
+long
+PURRS::to_long(const Number& n) {
+  return to_long(n);
+}
+
+
 bool
-PURRS::Symbol::is_positive(const Number& n) const{
+PURRS::Number::is_positive() {
+  return n.is_positive();
 }
 
 bool
-PURRS::Symbol::is_positive(const Number& n) const{
+PURRS::Number::is_integer() {
+  return n.is_integer();
 }
 
 bool
-PURRS::Symbol::is_integer(const Number& n) const{
+PURRS::Number::is_pos_integer() {
+  return n.is_pos_integer();
 }
 
 bool
-PURRS::Symbol::is_pos_integer(const Number& n) const{
+PURRS::Number::is_nonneg_integer() {
+  return n.is_nonneg_integer();
 }
 
 bool
-PURRS::Symbol::is_nonnes_integer(const Number& n) const{
+PURRS::Number::is_even() {
+  return n.is_even();
 }
 
 bool
-PURRS::Symbol::is_even(const Number& n) const{
+PURRS::Number::is_odd() {
+  return n.is_odd();
 }
 
 bool
-PURRS::Symbol::is_odd(const Number& n) const{
+PURRS::Number::is_prime() {
+  return n.is_prime();
 }
 
 bool
-PURRS::Symbol::is_prime(const Number& n) const{
+PURRS::Number::is_rational() {
+  return n.is_rational();
 }
 
 bool
-PURRS::Symbol::is_rational(const Number& n) const{
+PURRS::Number::is_real() {
+  return n.is_real();
 }
 
 bool
-PURRS::Symbol::is_real(const Number& n) const{
+PURRS::Number::is_cinteger() {
+  return n.is_cinteger();
 }
 
 bool
-PURRS::Symbol::is_cinteger(const Number& n) const{
+PURRS::Number::is_crational() {
+  return n.is_crational();
 }
-
-bool
-PURRS::Symbol::is_crational(const Number& n) const{
-}
-#endif

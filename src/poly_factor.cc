@@ -48,7 +48,7 @@ poly_factor(const GExpr& p, const GSymbol& x, std::vector<GExpr>& factors) {
   ZZX ntl_p;
   for (int i = p.ldegree(x), d = p.degree(x); i<= d; ++i) {
     GExpr e_i = p.coeff(x, i);
-    assert(GiNaC::is_a<GiNaC::numeric>(e_i));
+    assert(e_i.is_a_number());
     GNumber a_i = GiNaC::ex_to<GiNaC::numeric>(e_i);
     if (a_i < LONG_MIN || a_i > LONG_MAX)
       return 1;

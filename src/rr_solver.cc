@@ -56,7 +56,7 @@ get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
   GList substitution;
   if (match(e, n_plus_d, substitution)) {
     GExpr d = get_binding(substitution, 0);
-    if (is_a<numeric>(d)) {
+    if (d.is_a_number()) {
       GNumber i = ex_to<numeric>(d);
       if (i.is_integer())
 	decrement = -i;
@@ -498,7 +498,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   // Check if the vector `coefficients' contains only numeric
   // elements and in this case use a vector of GNumber.
     for (unsigned i = coefficients.size(); i--> 0; )
-      if (is_a<numeric>(coefficients[i]))
+      if (coefficients[i].is_a_number())
 	num_coefficients[i] = ex_to<numeric>(coefficients[i]);
       else
 	throw
