@@ -673,20 +673,34 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
 */
 bool
 known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
-			      const Expr& weight,
+			      const Expr& weight, unsigned& first_well_defined,
 			      Expr& coeff_first_order,
 			      Expr& inhomog_first_order) {
   Expr inhomog_infinite_order_rec = rhs - weight * term_sum;
 
   // If `f(n)' or `g(n)' contain other `x' function with `n' in the
-  // argument then the recurrence is too complex for the system.
+  // argument or conatin the parameters then the recurrence is too
+  // complex for the system.
   // FIXME: the last two conditions are temporary until that we do
   // not understand like behaving itself when the bounds of the sum
   // are different from `0' and `n-1'.
   if (weight.has_x_function(false, Recurrence::n)
       || inhomog_infinite_order_rec.has_x_function(false, Recurrence::n)
+      || has_parameters(weight)
       || !term_sum.arg(1).is_zero() || term_sum.arg(2) != Recurrence::n - 1)
     return false;
+
+  // `z' will contain the largest positive or null integer, if it exists,
+  // that cancel the denominator of `f(n)'.
+  // If this integer does not exist then `z' is left to 0.
+  Number z = 0;
+  if (!largest_positive_int_zero(weight, Recurrence::n, z))
+    return false;
+  // Find the largest positive or null integer that cancel the denominator of
+  // `f(n)' and store it in `z' if it is bigger than the current `z'.
+  if (!largest_positive_int_zero(denominator(weight), Recurrence::n, z))
+    return false;
+  first_well_defined = z.to_unsigned();
 
   Expr weight_shifted = weight.substitute(Recurrence::n, Recurrence::n-1);
   coeff_first_order = weight / weight_shifted * (1 + weight_shifted);
@@ -822,16 +836,25 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
       if (is_order_zero()) {
 	Expr coeff_first_order;
 	Expr inhomog_first_order;
+	unsigned first_well_defined;
 	if (known_class_of_infinite_order(recurrence_rhs, addend, 1,
+					  first_well_defined,
 					  coeff_first_order,
 					  inhomog_first_order)) {
+	  // The lower bound of the sum must be greater or equal than
+	  // the positive integer `n_0' starting from which `weight'
+	  // is well defined, i. e., for each `n' greater or equal to
+	  // `n_0' `weight' evaluated in `n' is well-defined.
+	  if (addend.arg(1).ex_to_number() < first_well_defined)
+	    return DOMAIN_ERROR;
 	  infinite_order_p = new Infinite_Order_Info(coeff_first_order
 						     * x(Recurrence::n - 1)
 						     + inhomog_first_order,
 						     coeff_first_order,
 						     inhomog_first_order, 1);
-	  inhomogeneous = recurrence_rhs - addend;
 	  set_linear_infinite_order();
+	  set_infinite_order_fwdr(first_well_defined);
+	  inhomogeneous = recurrence_rhs - addend;
 	  return SUCCESS;
 	}
 	else
@@ -908,17 +931,26 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 	      weight *= addend.op(j);
 	  Expr coeff_first_order;
 	  Expr inhomog_first_order;
+	  unsigned first_well_defined;
 	  if (known_class_of_infinite_order(recurrence_rhs, factor, weight,
+					    first_well_defined,
 					    coeff_first_order,
 					    inhomog_first_order)) {
+	    // The lower bound of the sum must be greater or equal than
+	    // the positive integer `n_0' starting from which `weight'
+	    // is well defined, i. e., for each `n' greater or equal to
+	    // `n_0' `weight' evaluated in `n' is well-defined.
+	    if (factor.arg(1).ex_to_number() < first_well_defined)
+	      return DOMAIN_ERROR;
 	    infinite_order_p = new Infinite_Order_Info(coeff_first_order
 						       * x(Recurrence::n - 1)
 						       + inhomog_first_order,
 						       coeff_first_order,
 						       inhomog_first_order,
 						       weight);
-	    inhomogeneous = recurrence_rhs - addend;
 	    set_linear_infinite_order();
+	    set_infinite_order_fwdr(first_well_defined);
+	    inhomogeneous = recurrence_rhs - addend;
 	    return SUCCESS;
 	  }
 	  else
@@ -980,6 +1012,8 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 					   solution techniques;
   - <CODE>MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
                                            any sense;
+  - <CODE>DOMAIN_ERROR</CODE>              if the recurrence is not
+                                           well-defined;
   - <CODE>UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not solvable;
   - <CODE>INDETERMINATE_RECURRENCE</CODE>  if the recurrence is indeterminate,
                                            hence it has infinite solutions.
@@ -1137,6 +1171,8 @@ PURRS::Recurrence::classify() const {
 					   solution techniques;
   - <CODE>MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
                                            any sense;
+  - <CODE>DOMAIN_ERROR</CODE>              if the recurrence is not
+                                           well_defined;
   - <CODE>UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not solvable;
   - <CODE>INDETERMINATE_RECURRENCE</CODE>  if the recurrence is indeterminate,
                                            hence it has infinite solutions.
@@ -1161,6 +1197,7 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
     case HAS_NON_INTEGER_DECREMENT:
     case HAS_HUGE_DECREMENT:
     case MALFORMED_RECURRENCE:
+    case DOMAIN_ERROR:
     case TOO_COMPLEX:
       exit_anyway = true;
       break;
