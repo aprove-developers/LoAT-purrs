@@ -42,6 +42,9 @@ simplify_numer_denom(const Expr& e);
 Expr
 simplify_factorials_and_exponentials(const Expr& e);
 
+Expr
+simplify_all(const Expr& e);
+
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif
