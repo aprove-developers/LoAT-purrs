@@ -48,14 +48,22 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
 namespace {
 using namespace PURRS;
 
+//! Kinds of bounds for the solution to compute.
+enum Type_Bound {
+  /*! An upper bound. */
+  UPPER_BOUND,
+    
+  /*! A lower bound. */
+  LOWER_BOUND
+};
 
 bool
-compute_bounds_for_exp_function(bool lower, const Number& coeff,
+compute_bounds_for_exp_function(Type_Bound type, const Number& coeff,
 				const Number& divisor, const Number& base,
 				Expr& bound) {
   
   // Lower bound.
-  if (lower)
+  if (type == LOWER_BOUND)
     bound = pwr(base, Recurrence::n);
   // Upper bound.
   else {
@@ -79,7 +87,7 @@ compute_bounds_for_exp_function(bool lower, const Number& coeff,
 }
 
 bool
-compute_bounds_for_power_of_n(bool lower,
+compute_bounds_for_power_of_n(Type_Bound type,
 			      const Number& coeff, const Number& divisor,
 			      const Number& k, Expr& bound) {
   assert(!k.is_negative());
@@ -88,7 +96,7 @@ compute_bounds_for_power_of_n(bool lower,
   const Expr& pow_n_k = pwr(Recurrence::n, k);
   const Expr& frac_log = log(Recurrence::n) / log(divisor);
   // Lower bound.
-  if (lower) {
+  if (type == LOWER_BOUND) {
     // FIXME: for the moment use only the theorem in order to compute
     // lower bound in the case `g(n) = n^k'. 
 #if 0
@@ -191,10 +199,10 @@ compute_bounds_for_power_of_n(bool lower,
 }
 
 bool
-compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
+compute_bounds_for_logarithm_function(Type_Bound type, const Number& coeff,
 				      const Number& divisor, Expr& bound) {
   // Lower bound.
-  if (lower)
+  if (type == LOWER_BOUND)
     // FIXME: for the moment use only the theorem in order to compute
     // lower bound in the case `g(n) = log(n)'.
 #if 0
@@ -230,7 +238,7 @@ compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
 }
 
 bool
-compute_bounds_for_power_times_logarithm_function(bool lower,
+compute_bounds_for_power_times_logarithm_function(Type_Bound type,
 						  const Number& coeff,
 						  const Number& divisor,
 						  const Number& k,
@@ -239,7 +247,7 @@ compute_bounds_for_power_times_logarithm_function(bool lower,
   int diff_coeff_pow_div_k = compare(coeff, pow_div_k);
   const Expr& pow_n_k = pwr(Recurrence::n, k);
   // Lower bound.
-  if (lower)
+  if (type == LOWER_BOUND)
     // FIXME: for the moment use only the theorem in order to compute
     // lower bound in the case `g(n) = n^k log(n)'.
 #if 0
@@ -280,11 +288,16 @@ compute_bounds_for_power_times_logarithm_function(bool lower,
   return true;
 }
 
+// Swap the type of the bound.
+Type_Bound swap_type(Type_Bound type) {
+  return type == LOWER_BOUND ? UPPER_BOUND : LOWER_BOUND;
+}
+
 /*!
   g(n) = a * n^k.
 */
 bool
-sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
+sharper_bounds_for_polynomial_function(Type_Bound type, const Expr& poly_coeff,
 				       const Number& coeff,
 				       const Number& divisor,
 				       Expr& bound) {
@@ -297,12 +310,13 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
     Expr tmp_bound;
     if (cmp == 1) {
       // `a' positive number.
-      if (!compute_bounds_for_power_of_n(lower, coeff, divisor, 0, tmp_bound))
+      if (!compute_bounds_for_power_of_n(type, coeff, divisor, 0, tmp_bound))
 	return false;
     }
     else if (cmp == -1) {
       // `a' negative number -> swap lower with upper or upper with lower.
-      if (!compute_bounds_for_power_of_n(!lower, coeff, divisor, 0, tmp_bound))
+      if (!compute_bounds_for_power_of_n(swap_type(type), coeff, divisor, 0,
+					 tmp_bound))
 	return false;
     }
     else
@@ -313,7 +327,7 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
   // Case `g(n) = n^1'.
   else if (poly_coeff == Recurrence::n) {
     Expr tmp_bound;
-    if (!compute_bounds_for_power_of_n(lower, coeff, divisor, 1, tmp_bound))
+    if (!compute_bounds_for_power_of_n(type, coeff, divisor, 1, tmp_bound))
       return false;
     bound += tmp_bound;
     return true;
@@ -321,7 +335,8 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
   // Case `g(n) = -n^1' -> swap lower with upper or upper with lower.
   else if (poly_coeff == -Recurrence::n) {
     Expr tmp_bound;
-    if (!compute_bounds_for_power_of_n(!lower, coeff, divisor, 1, tmp_bound))
+    if (!compute_bounds_for_power_of_n(swap_type(type), coeff, divisor, 1,
+				       tmp_bound))
       return false;
     bound += tmp_bound;
     return true;
@@ -333,7 +348,7 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
     Number k = poly_coeff.arg(1).ex_to_number();
     if (k.is_positive()) {
       Expr tmp_bound;
-      if (!compute_bounds_for_power_of_n(lower, coeff, divisor, k, tmp_bound))
+      if (!compute_bounds_for_power_of_n(type, coeff, divisor, k, tmp_bound))
 	return false;
       bound += tmp_bound;
       return true;
@@ -365,12 +380,13 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
     Expr tmp_bound;
     // `a' positive number.
     if (cmp == 1) {
-      if (!compute_bounds_for_power_of_n(lower, coeff, divisor, k, tmp_bound))
+      if (!compute_bounds_for_power_of_n(type, coeff, divisor, k, tmp_bound))
 	return false;
     }
     // `a' negative number -> swap lower with upper or upper with lower.
     else if (cmp == -1) {
-      if (!compute_bounds_for_power_of_n(!lower, coeff, divisor, k, tmp_bound))
+      if (!compute_bounds_for_power_of_n(swap_type(type), coeff, divisor, k,
+					 tmp_bound))
 	return false;
     }
     else
@@ -385,7 +401,7 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
   g(n) = a n^k or g(n) = a log(n) or g(n) = a * n^k log(n).
 */
 bool
-sharper_bounds_for_no_polynomial_function(bool lower,
+sharper_bounds_for_no_polynomial_function(Type_Bound type,
 					  const Expr& no_poly_coeff,
 					  const Number& coeff,
 					  const Number& divisor,
@@ -395,7 +411,7 @@ sharper_bounds_for_no_polynomial_function(bool lower,
   Expr tmp_bound;
   if (no_poly_coeff.is_the_log_function()
       && no_poly_coeff.arg(0) == Recurrence::n
-      && compute_bounds_for_logarithm_function(lower, coeff, divisor,
+      && compute_bounds_for_logarithm_function(type, coeff, divisor,
 					       tmp_bound)) {
     bound += tmp_bound;
     return true;
@@ -406,7 +422,7 @@ sharper_bounds_for_no_polynomial_function(bool lower,
 	   && no_poly_coeff.arg(1).is_a_number(k)
 	   && k.is_positive()) {
     Expr tmp_bound;
-    if (!compute_bounds_for_power_of_n(lower, coeff, divisor, k, tmp_bound))
+    if (!compute_bounds_for_power_of_n(type, coeff, divisor, k, tmp_bound))
       return false;
     bound += tmp_bound;
     return true;
@@ -443,14 +459,14 @@ sharper_bounds_for_no_polynomial_function(bool lower,
       // `a' positive number.
       Expr tmp_bound;
       if (cmp == 1) {
-	if (!compute_bounds_for_logarithm_function(lower, coeff, divisor,
+	if (!compute_bounds_for_logarithm_function(type, coeff, divisor,
 						   tmp_bound))
 	  return false;
       }
       // `a' negative number -> swap lower with upper or upper with lower.
       else if (cmp == -1) {
-	if (!compute_bounds_for_logarithm_function(!lower, coeff, divisor,
-						   tmp_bound))
+	if (!compute_bounds_for_logarithm_function(swap_type(type), coeff,
+						   divisor, tmp_bound))
 	  return false;
       }
       else
@@ -463,13 +479,13 @@ sharper_bounds_for_no_polynomial_function(bool lower,
       Expr tmp_bound;
       // `a' positive number.
       if (cmp == 1) {
-	if (!compute_bounds_for_power_of_n(lower, coeff, divisor, k,
+	if (!compute_bounds_for_power_of_n(type, coeff, divisor, k,
 					   tmp_bound))
 	  return false;
       }
       // `a' negative number -> swap lower with upper or upper with lower.
       else if (cmp == -1) {
-	if (!compute_bounds_for_power_of_n(!lower, coeff, divisor, k,
+	if (!compute_bounds_for_power_of_n(swap_type(type), coeff, divisor, k,
 					   tmp_bound))
 	  return false;
       }
@@ -483,16 +499,16 @@ sharper_bounds_for_no_polynomial_function(bool lower,
       Expr tmp_bound;
       // `a' positive number.
       if (cmp == 1) {
-	if (!compute_bounds_for_power_times_logarithm_function(lower, coeff,
+	if (!compute_bounds_for_power_times_logarithm_function(type, coeff,
 							       divisor, k,
 							       tmp_bound))
 	  return false;
       }
       // `a' negative number -> swap lower with upper or upper with lower.
       else if (cmp == -1) {
-	if (!compute_bounds_for_power_times_logarithm_function(!lower, coeff,
-							       divisor, k,
-							       tmp_bound))
+	if (!compute_bounds_for_power_times_logarithm_function(swap_type(type),
+							       coeff, divisor,
+							       k, tmp_bound))
 	  return false;
       }
       else
@@ -508,7 +524,7 @@ sharper_bounds_for_no_polynomial_function(bool lower,
   g(n) = a c^n, c > 1, a number.
 */
 bool
-sharper_bounds_for_exponential(bool lower,
+sharper_bounds_for_exponential(Type_Bound type,
 			       const Number& base, const Expr& poly_coeff,
 			       const Number& coeff, const Number& divisor,
 			       Expr& bound) {
@@ -522,14 +538,14 @@ sharper_bounds_for_exponential(bool lower,
       Expr tmp_bound;
       if (cmp == 1) {
 	// `a' positive number.
-	if (!compute_bounds_for_exp_function(lower, coeff, divisor, base,
+	if (!compute_bounds_for_exp_function(type, coeff, divisor, base,
 					     tmp_bound))
 	  return false;
       }
       else if (cmp == -1) {
 	// `a' negative number -> swap lower with upper or upper with lower.
-	if (!compute_bounds_for_exp_function(!lower, coeff, divisor, base,
-					     tmp_bound))
+	if (!compute_bounds_for_exp_function(swap_type(type), coeff, divisor,
+					     base, tmp_bound))
 	  return false;
       }
       else
@@ -554,14 +570,14 @@ sharper_bounds_for_exponential(bool lower,
       // `a' positive number.
       Expr tmp_bound;
       if (cmp == 1) {
-	if (!compute_bounds_for_exp_function(lower, coeff, divisor, base,
+	if (!compute_bounds_for_exp_function(type, coeff, divisor, base,
 					     tmp_bound))
 	return false;
       }
       else if (cmp == -1) {
 	// `a' negative number -> swap lower with upper or upper with lower.
-	if (!compute_bounds_for_exp_function(!lower, coeff, divisor, base,
-					     tmp_bound))
+	if (!compute_bounds_for_exp_function(swap_type(type), coeff, divisor,
+					     base, tmp_bound))
 	  return false;
       }
       else
@@ -574,21 +590,22 @@ sharper_bounds_for_exponential(bool lower,
 }
 
 /*!
-  If \p for_lower is true then this function compute the sum
-  \f$ G(n) = sum_{k = 1}^n a^{n-k} p(b^k) \f$, otherwise
-  compute the sum \f$ H(n) = sum_{k = 2}^n a^{n-k} p(b^k-1) \f$,
+  If \p type is <CODE>LOWER_BOUND</CODE> then this function computes
+  the sum \f$ G(n) = sum_{k = 1}^n a^{n-k} p(b^k) \f$, otherwise, when
+  \p type is <CODE>UPPER_BOUND</CODE> computes the sum
+  \f$ H(n) = sum_{k = 2}^n a^{n-k} p(b^k-1) \f$,
   where \f$ a \f$ is stored in \p coefficient, \f$ b \f$ is stored
   in \p divisor and \f$ p(n) \f$ is stored in \p summand.
 */
 bool
-compute_sum(bool for_lower, const Expr& summand,
+compute_sum(Type_Bound type, const Expr& summand,
 	    const Number& coefficient, const Number& divisor,
 	    Expr& sum) {
   std::vector<Expr> bases_of_exp;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
   Expr tmp;
-  if (for_lower)
+  if (type == LOWER_BOUND)
     tmp = summand.substitute(Recurrence::n,
 			     pwr(divisor, Recurrence::n));
   else
@@ -612,15 +629,16 @@ compute_sum(bool for_lower, const Expr& summand,
 					 Recurrence::n,
 					 bases_of_exp[i] / coefficient);
       // `sum_poly_times_exponentials' computes the sum from 0, whereas
-      // we want that the sum starts from `1' if `for_lower' is true
-      // or from `2' if `for_lower' is false.
+      // we want that the sum starts from `1' in the case of lower bound
+      // (type = LOWER_BOUND) or from `2' in the case of upper bound
+      // (type = UPPER_BOUND).
       sum -= exp_poly_coeff[i].substitute(Recurrence::n, 0);
-      if (!for_lower)
+      if (type == UPPER_BOUND)
 	sum -= exp_poly_coeff[i].substitute(Recurrence::n, 1)
 	  * bases_of_exp[i] / coefficient;
     }
   else {
-    Number index = for_lower ? 1 : 2;
+    Number index = type == LOWER_BOUND ? 1 : 2;
     for (unsigned int i = bases_of_exp.size(); i-- > 0; ) {
       Expr gosper_sum;
       if (!gosper_algorithm(Recurrence::n,
@@ -645,15 +663,15 @@ compute_sum(bool for_lower, const Expr& summand,
   in \p divisor and \f$ p(n) \f$ is stored in \p summand.
 */
 void
-try_to_compute_sum(bool lower, const Expr& summand,
+try_to_compute_sum(Type_Bound type, const Expr& summand,
 		   const Number& coefficient, const Number& divisor,
 		   Expr& sum) {
   D_VAR(summand);
-  if (lower) {
+  if (type == LOWER_BOUND) {
     // Compute `G(n)' used for the lower bound.
-    if (!compute_sum(true, summand, coefficient, divisor, sum))
+    if (!compute_sum(LOWER_BOUND, summand, coefficient, divisor, sum))
       // We try to compute `H(n)' because `H(q) <= G(q)'.
-      if (!compute_sum(false, summand, coefficient, divisor, sum)) {
+      if (!compute_sum(UPPER_BOUND, summand, coefficient, divisor, sum)) {
 	Symbol h;
 	sum = PURRS::sum(h, 1, Recurrence::n, pwr(coefficient, Recurrence::n-h)
 			 * summand.substitute(Recurrence::n, pwr(divisor, h)));
@@ -661,9 +679,9 @@ try_to_compute_sum(bool lower, const Expr& summand,
   }
   else
     // Compute `H(n)' used for the upper bound.
-    if (!compute_sum(false, summand, coefficient, divisor, sum))
+    if (!compute_sum(UPPER_BOUND, summand, coefficient, divisor, sum))
       // We try to compute `G(n)' because `H(q+1) <= G(q+1)'.
-      if (!compute_sum(true, summand, coefficient, divisor, sum)) {
+      if (!compute_sum(LOWER_BOUND, summand, coefficient, divisor, sum)) {
 	Symbol h;
 	sum = PURRS::sum(h, 2, Recurrence::n, pwr(coefficient, Recurrence::n-h)
 			 * summand.substitute(Recurrence::n,
@@ -707,9 +725,9 @@ known_class_of_functional_eq_rank_1(const Expr& coefficient,
                       \p Recurrence::n the whose base is \p base.
   \param base         The base of the exponential in the variable
                       \p Recurrence::n.
-  \param lower        <CODE>true</CODE> if the system is computing the lower
-                      bound, <CODE>false</CODE> if it is computing the upper
-		      bound.
+  \param type         hold <CODE>LOWER_BOUND</CODE> if the system is
+                      computing the lower bound, <CODE>UPPER_BOUND</CODE>
+		      if it is computing the upper bound.
   \param coeff        The coefficient \f$ \alpha \f$ of the functional
                       equation \f$ x(n) = \alpha x(n / \beta) + g(n) \f$.
   \param divisor_arg  The positive number \f$ \beta \f$ of the functional
@@ -728,17 +746,17 @@ known_class_of_functional_eq_rank_1(const Expr& coefficient,
 */
 bool
 compute_poly_or_no_poly(bool poly, const Expr& e, const Number& base,
-			bool lower,
+			Type_Bound type,
 			const Number& coeff, const Number& divisor_arg,
 			Expr& bound, Number& condition) {
   if (e.is_a_add())
     for (unsigned int i = e.nops(); i-- > 0; ) {
       const Expr& addend = e.op(i);
-      if ((poly && !sharper_bounds_for_polynomial_function(lower, addend,
+      if ((poly && !sharper_bounds_for_polynomial_function(type, addend,
 							   coeff, divisor_arg,
 							   bound))
 	  || (!poly
-	      && !sharper_bounds_for_no_polynomial_function(lower, addend,
+	      && !sharper_bounds_for_no_polynomial_function(type, addend,
 							    coeff, divisor_arg,
 							    bound))
 	  || base != 1) {
@@ -749,9 +767,9 @@ compute_poly_or_no_poly(bool poly, const Expr& e, const Number& base,
 					    condition))
 	  return false ;
 	Expr sum;
-	try_to_compute_sum(lower, addend * pwr(base, Recurrence::n),
+	try_to_compute_sum(type, addend * pwr(base, Recurrence::n),
 			   coeff, divisor_arg, sum);
-	if (lower)
+	if (type == LOWER_BOUND)
 	  bound += sum.substitute(Recurrence::n,
 				  log(Recurrence::n) / log(divisor_arg) - 1);
 	else
@@ -761,11 +779,11 @@ compute_poly_or_no_poly(bool poly, const Expr& e, const Number& base,
     }
   else
     if (!e.is_zero()
-	&& ((poly && !sharper_bounds_for_polynomial_function(lower, e, coeff,
+	&& ((poly && !sharper_bounds_for_polynomial_function(type, e, coeff,
 							     divisor_arg,
 							     bound))
 	    || (!poly
-		&& !sharper_bounds_for_no_polynomial_function(lower, e, coeff,
+		&& !sharper_bounds_for_no_polynomial_function(type, e, coeff,
 							      divisor_arg,
 							      bound)))
 	|| base != 1) {
@@ -774,8 +792,8 @@ compute_poly_or_no_poly(bool poly, const Expr& e, const Number& base,
 					  condition))
 	return false;
       Expr sum;
-      try_to_compute_sum(lower, e, coeff, divisor_arg, sum);
-      if (lower)
+      try_to_compute_sum(type, e, coeff, divisor_arg, sum);
+      if (type == LOWER_BOUND)
 	bound += sum.substitute(Recurrence::n,
 				log(Recurrence::n) / log(divisor_arg) - 1);
       else
@@ -797,7 +815,7 @@ compute_poly_or_no_poly(bool poly, const Expr& e, const Number& base,
   Each expression \f$ \alpha_i^n p_i(n) \f$ and \f$ \alpha_i^n q_i(n) \f$
   is ulteriorly divided in many expression how many are the addends
   of \f$ p_i(n) \f$ and \f$ q_i(n) \f$.
-  For each expression computes the lower and the upper bounds:
+  For each expression computes the lower and the upper bound:
   - try to apply the sharper bounds;
   - try to apply the theorem 2.1 of ...
   - if the previous tests are failed returns the symbolic sum.
@@ -807,7 +825,7 @@ compute_poly_or_no_poly(bool poly, const Expr& e, const Number& base,
   <CODE>false</CODE> otherwise.
 */
 bool
-compute_non_homogeneous_part(bool lower,
+compute_non_homogeneous_part(Type_Bound type,
 			     const Number& coeff, const Number& divisor_arg,
 			     const Expr& inhomogeneous,
 			     Expr& bound, Number& condition) {
@@ -825,11 +843,11 @@ compute_non_homogeneous_part(bool lower,
       // Base of exponential is equal to `1'.
       if (num_base == 1) {
 	// Consider the eventual polynomial part.
-	if (!compute_poly_or_no_poly(true, poly_coeff, 1, lower,
+	if (!compute_poly_or_no_poly(true, poly_coeff, 1, type,
 				     coeff, divisor_arg, bound, condition))
 	  return false;
 	// Consider the eventual non-polynomial part.
-	if (!compute_poly_or_no_poly(false, no_poly_coeff, 1, lower,
+	if (!compute_poly_or_no_poly(false, no_poly_coeff, 1, type,
 				     coeff, divisor_arg, bound, condition))
 	  return false;
       }
@@ -837,10 +855,10 @@ compute_non_homogeneous_part(bool lower,
       else {
 	if (!poly_coeff.is_zero())
 	  // Apply, if it possible, the sharper bounds for the exponential.
-	  if (!sharper_bounds_for_exponential(lower, num_base, poly_coeff,
+	  if (!sharper_bounds_for_exponential(type, num_base, poly_coeff,
 					      coeff, divisor_arg, bound))
 	    // Consider the eventual polynomial part.
-	    if (!compute_poly_or_no_poly(true, poly_coeff, num_base, lower,
+	    if (!compute_poly_or_no_poly(true, poly_coeff, num_base, type,
 					 coeff, divisor_arg, bound, condition))
 	      return false;
 	if (!no_poly_coeff.is_zero())
@@ -848,7 +866,7 @@ compute_non_homogeneous_part(bool lower,
 	  // bounds for the exponential.
 	  // Consider the eventual non-polynomial part.
 	  if (!compute_poly_or_no_poly(false, no_poly_coeff, num_base,
-				       lower, coeff, divisor_arg,
+				       type, coeff, divisor_arg,
 				       bound, condition))
 	    return false;
       }
@@ -869,12 +887,12 @@ compute_non_homogeneous_part(bool lower,
   is stored \p divisor.
 */
 void
-compute_term_about_initial_condition(bool lower, unsigned int condition,
+compute_term_about_initial_condition(Type_Bound type, unsigned int condition,
 				     const Number& divisor,
 				     const Expr& coefficient,
 				     const Expr& q, Expr& bound) {
   Expr index_initial_condition;
-  if (lower)
+  if (type == LOWER_BOUND)
     index_initial_condition 
       = simplify_logarithm(Recurrence::n / pwr(divisor, q + 1));
   else
@@ -912,14 +930,15 @@ PURRS::Recurrence::approximate_functional_equation_lower() const {
 
     Number condition = -1;
     if (!inhomogeneous_term.is_zero()
-	&& !compute_non_homogeneous_part(true, coeff, divisor_arg,
+	&& !compute_non_homogeneous_part(LOWER_BOUND, coeff, divisor_arg,
 					 inhomogeneous_term,
 					 lower_bound, condition))
       return TOO_COMPLEX;
 
     if (condition > 1)
       set_applicability_condition(condition.to_unsigned_int());
-    compute_term_about_initial_condition(true, applicability_condition(),
+    compute_term_about_initial_condition(LOWER_BOUND,
+					 applicability_condition(),
 					 divisor_arg, coefficient, q_lower,
 					 lower_bound);
     
@@ -952,14 +971,15 @@ PURRS::Recurrence::approximate_functional_equation_upper() const {
 
     Number condition = -1;    
     if (!inhomogeneous_term.is_zero()
-	&& !compute_non_homogeneous_part(false, coeff, divisor_arg,
+	&& !compute_non_homogeneous_part(UPPER_BOUND, coeff, divisor_arg,
 					 inhomogeneous_term,
 					 upper_bound, condition))
       return TOO_COMPLEX;
 
     if (condition > 1)
       set_applicability_condition(condition.to_unsigned_int());
-    compute_term_about_initial_condition(false, applicability_condition(),
+    compute_term_about_initial_condition(UPPER_BOUND,
+					 applicability_condition(),
 					 divisor_arg, coefficient, q_upper,
 					 upper_bound);
     
