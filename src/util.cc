@@ -264,30 +264,36 @@ resultant(const GExpr& p, const GExpr& q, const GSymbol& x) {
   unsigned deg_f = f.degree(x);
   unsigned deg_g = g.degree(x);
 
-  // Modified Euclid's algorithm starts here.
-  while (deg_f > 0) {
-    // `prem()' computes the pseudo-remainder of `g' and `f' which satisfies
-    // `factor * g = factor * f * q + prem(g, f, x)' where `q' is the
-    // quozient of `g' and `f' and
-    // `factor = f.lcoeff(x)^(g.degree(x) - f.degree(x) + 1)'.
-    GExpr r = prem(g, f, x);
-    GExpr factor = pow(f.lcoeff(x), g.degree(x) - f.degree(x) + 1);
-    // The rest of euclidean's division is given by the ratio
-    // `pseudo-remainder / factor'.
-    r *= pow(factor, -1);
-    unsigned deg_r = r.degree(x);
-    GExpr a = f.lcoeff(x);
-    // Using rule two.
-    res *= pow(a, deg_g - deg_r);
-    // Using rule one.
-    res *= pow(-1, deg_f * deg_r);
-    g = f;
-    f = r;
-    deg_f = f.degree(x);
-    deg_g = g.degree(x);
+  // Special case: `f' or `g' is a constant polynomial. By definition
+  // `Res(f, g) = f.lcoeff(n)^g.degree(n) * g.lcoeff(n)^f.degree(n)'. 
+  if (deg_f == 0 || deg_g == 0)
+    res = pow(f.lcoeff(n), deg_g) * pow(g.lcoeff(n), deg_f);
+  else {
+    // Modified Euclid's algorithm starts here.
+    while (deg_f > 0) {
+      // `prem()' computes the pseudo-remainder of `g' and `f' which satisfies
+      // `factor * g = factor * f * q + prem(g, f, x)' where `q' is the
+      // quozient of `g' and `f' and
+      // `factor = f.lcoeff(x)^(g.degree(x) - f.degree(x) + 1)'.
+      GExpr r = prem(g, f, x);
+      GExpr factor = pow(f.lcoeff(x), g.degree(x) - f.degree(x) + 1);
+      // The rest of euclidean's division is given by the ratio
+      // `pseudo-remainder / factor'.
+      r *= pow(factor, -1);
+      unsigned deg_r = r.degree(x);
+      GExpr a = f.lcoeff(x);
+      // Using rule two.
+      res *= pow(a, deg_g - deg_r);
+      // Using rule one.
+      res *= pow(-1, deg_f * deg_r);
+      g = f;
+      f = r;
+      deg_f = f.degree(x);
+      deg_g = g.degree(x);
+    }
+    // Here `f' is a constant: use rule three.
+    res *= pow(f, deg_g);
   }
-  // Here `f' is a constant: use rule three.
-  res *= pow(f, deg_g);
 #if NOISY
   std::cout << "Resultant(f(x), g(x)) = " << res << std::endl;
 #endif
