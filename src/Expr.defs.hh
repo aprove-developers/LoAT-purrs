@@ -38,7 +38,9 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 //! Type of a functor object.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 typedef unsigned Functor;
 
 //! Output operator.
@@ -210,7 +212,7 @@ Expr sin(const Expr& x);
 Expr cos(const Expr& x);
 
 //! \brief
-//! Returns \f$ \acos(x) \f$, the inverse cosine, if the numerical
+//! Returns \f$ \arccos(x) \f$, the inverse cosine, if the numerical
 //! computation not introduce approximation errors; returns \f$ acos(x) \f$
 //! not valued otherwise.
 Expr acos(const Expr& x);
