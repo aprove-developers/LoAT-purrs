@@ -74,7 +74,6 @@ Expr acos(const Expr& e);
 Expr tan(const Expr& e);
 Expr exp(const Expr& e);
 Expr log(const Expr& e);
-Expr factorial(const Expr& e);
 
 Expr quo(const Expr& a, const Expr& b, const Symbol& x);
 Expr rem(const Expr& a, const Expr& b, const Symbol& x);
@@ -189,7 +188,6 @@ private:
   friend Expr tan(const Expr& e);
   friend Expr exp(const Expr& e);
   friend Expr log(const Expr& e);
-  friend Expr factorial(const Expr& e);
 
   friend class Number;
   friend class Constant;

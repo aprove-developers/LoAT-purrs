@@ -37,6 +37,8 @@ http://www.cs.unipr.it/purrs/ . */
 #include "sum_poly.hh"
 #include <vector>
 
+using namespace Parma_Recurrence_Relation_Solver;
+
 /*!
   This routine computes the falling product 
   \f$ x \cdot (x - 1) \cdots (x - k + 1) \f$. 
@@ -62,13 +64,13 @@ static void
 sum_falling_prod_times_exp(const GSymbol& n, GNumber k, 
 			   const GSymbol& x, GExpr& q) {
   
-  q = pow(1-x, -k-1);
+  q = power(1-x, -k-1);
   GExpr r;
   for (unsigned i = 0; i < k + 1; ++i) {
     falling_product(n + 1, i, r);
-    q -= r / factorial(i) * pow(x, n+1-i) * pow(1-x, i-k-1);
+    q -= r / factorial(i) * power(x, n+1-i) * power(1-x, i-k-1);
   }
-  q *= factorial(k) * pow(x, k);
+  q *= factorial(k) * power(x, k);
 }
 
 /*!
@@ -175,10 +177,10 @@ sum_poly_times_exponentials_times_cos(const GExpr& p, const GSymbol& x,
   poly_dec(p, x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
-    GExpr r = pow(x, n+2) * cos(n*theta) - pow(x, n+1) * cos((n+1)*theta);
+    GExpr r = power(x, n+2) * cos(n*theta) - power(x, n+1) * cos((n+1)*theta);
     r += 1 - x * cos(theta);
-    r /= pow(x,2) - 2* x * cos(theta) + 1;
-    r = pow(x,i) * r.diff(x,i);
+    r /= power(x,2) - 2* x * cos(theta) + 1;
+    r = power(x,i) * r.diff(x,i);
     r = r.expand();
     q += r * summands[i];
   }
@@ -206,10 +208,10 @@ sum_poly_times_exponentials_times_sin(const GExpr& p, const GSymbol& x,
   poly_dec(p, x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
-    GExpr r = pow(x, n+2) * sin(n*theta) - pow(x, n+1) * sin((n+1)*theta);
+    GExpr r = power(x, n+2) * sin(n*theta) - power(x, n+1) * sin((n+1)*theta);
     r -= x * sin(theta);
-    r /= pow(x,2) - 2* x * cos(theta) + 1;
-    r = pow(x,i) * r.diff(x,i);
+    r /= power(x,2) - 2* x * cos(theta) + 1;
+    r = power(x,i) * r.diff(x,i);
     r = r.expand();
     q += r * summands[i];
   }

@@ -643,8 +643,8 @@ red_prod(const GNumber& base1, const GNumber& exp1,
   
   GNumber g = gcd(k1_den, k2_den);
   GNumber k = k1_den * k2_den / g;
-  GNumber b1 = power(base_1, k2_den / g).ex_to_number();
-  GNumber b2 = power(base_2, k1_den / g).ex_to_number();
+  GNumber b1 = power(base_1, k2_den / g);
+  GNumber b2 = power(base_2, k1_den / g);
   GNumber b = b1 * b2;
   return reduce_to_standard_form(k, b);
 }

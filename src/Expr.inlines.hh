@@ -416,11 +416,6 @@ log(const Expr& e) {
 };
 
 inline Expr
-factorial(const Expr& e) {
-  return GiNaC::factorial(e.e);
-};
-
-inline Expr
 quo(const Expr& a, const Expr& b, const Symbol& x) {
   return quo(a, b, x);
 }
