@@ -203,7 +203,6 @@ return_sum(bool distinct, const Symbol& n, const Number& order,
     symbolic_sum = symbolic_sum.subs(x, alpha/lambda);
   symbolic_sum *= pwr(lambda, n);
   symbolic_sum = simplify_on_output_ex(symbolic_sum.expand(), n, false);
-
   return symbolic_sum;
 }
 
@@ -342,7 +341,7 @@ add_initial_conditions(const Expr& g_n, const Symbol& n,
 		       Expr& solution);
 
 static Expr
-solve_constant_coeff_order_1(const Symbol& n, int order,
+solve_constant_coeff_order_1(const Symbol& n,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff,
 			     const std::vector<Expr>& exp_no_poly_coeff,
@@ -372,7 +371,9 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
 			     const Expr& coefficient);
 
 static Expr
-compute_alpha_factorial(const Expr& alpha, const Symbol& n);
+compute_alpha_factorial(const Expr& alpha, const Symbol& n,
+			const Number& lower, const Expr& upper,
+			bool is_denominator = false);
 
 static bool
 verify_solution(const Expr& solution, int order, const Expr& rhs,
@@ -708,7 +709,6 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
 
   // Simplifies expanded expressions, in particular rewrites nested powers.
   e = simplify_on_input_ex(e, n, true);
-
   // We search exponentials in `n' (for this the expression `e'
   // must be expanded).
   // The vector `base_of_exps' contains the exponential's bases
@@ -750,20 +750,13 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
 						 characteristic_eq, roots,
 						 all_distinct))
 	return TOO_COMPLEX;
-      solution = solve_constant_coeff_order_1(n, order, base_of_exps,
+      solution = solve_constant_coeff_order_1(n, base_of_exps,
 					      exp_poly_coeff,
 					      exp_no_poly_coeff, roots,
 					      initial_conditions);
     }
-    else {
-#if 1
-      // For the time being, we only solve recurrence relations
-      // with constant coefficients.
-      return TOO_COMPLEX;
-#else
+    else
       solution = solve_variable_coeff_order_1(n, e, coefficients[1]);
-#endif
-    }
     break;
 
   case 2:
@@ -1195,6 +1188,7 @@ add_initial_conditions(const Expr& g_n, const Symbol& n,
   }
 }
 
+// FIXME: to rewrite, comment and code.
 /*!
   Applies the Gosper's algorithm to express in closed form, if it is
   possible, sum with the summand an hypergeometric term not polynomials
@@ -1206,28 +1200,52 @@ add_initial_conditions(const Expr& g_n, const Symbol& n,
   Returns <CODE>false</CODE> otherwise.
 */
 static bool
-gosper_algorithm(int order, const Symbol& n,
+gosper_algorithm(const Symbol& n, Expr& t_n, Number lower, const Expr& upper,
 		 const std::vector<Expr>& base_of_exps,
+		 const std::vector<Expr>& exp_poly_coeff,
 		 const std::vector<Expr>& exp_no_poly_coeff,
-		 const std::vector<Polynomial_Root>& roots,
-       Expr& solution) {
+		 const std::vector<Polynomial_Root>& roots, Expr& solution) {
   solution = 0;
-  for (unsigned i = exp_no_poly_coeff.size(); i-- > 0; ) {
-    Expr tmp;
-    if (!exp_no_poly_coeff[i].is_zero()) {
-      // FIXME: the lower bound for the sum is not `order'
-      // ex. \sum 1/(n^2-1) must be start from 2.
-      // FIXME: this is a temporary assert untile he generalization of
-      // this function.
-      assert(order == 1);
-      Expr t = pwr(base_of_exps[i], n) * exp_no_poly_coeff[i]
-	* pwr(roots[0].value(), -n);
-      //std::cout << "t(n) = " << t << std::endl;
-      if (!gosper(t, n, Number(order), n, tmp))
-	return false;
+  // `t_n' is zero if the caller is `solve_constant_coeff_order_1()':
+  // in this case exponentials and polynomials times exponentials have just
+  // been summed.
+  if (t_n == 0)
+    for (unsigned i = exp_no_poly_coeff.size(); i-- > 0; ) {
+      Expr tmp;
+      if (!exp_no_poly_coeff[i].is_zero()) {
+	// FIXME: for the moment use this function only when the `order' is one,
+	// then `roots' have only one elements.
+	t_n = pwr(base_of_exps[i], n) * exp_no_poly_coeff[i]
+	  * pwr(roots[0].value(), -n);
+	D_VAR(t_n);
+	// FIXME: non c'e' modo di evitare di creare Expr apposta ma passare
+	// direttamente 0 a gosper?
+	Expr r_n = 0;
+	if (!gosper(t_n, r_n, n, lower, upper, tmp))
+	  return false;
+      }
+      solution += tmp;
     }
-    solution += tmp;
-  }
+  // `t_n' is different to zero if the caller is `solve_variable_coeff_order_1()':
+  // we use only Gosper independently from the type of the summand.
+  else
+    for (unsigned i = exp_poly_coeff.size(); i-- > 0; ) {
+      Expr tmp;
+      Expr coefficient = 1;
+      if (!exp_poly_coeff[i].is_zero())
+	coefficient *= exp_poly_coeff[i];
+      if (!exp_no_poly_coeff[i].is_zero())
+	coefficient *= exp_no_poly_coeff[i];
+      // If `t_n' is different from zero then we pass to Gosper's
+      // algorithm the ratio `r(n) = t(n+1) / t(n)'.
+      Expr r_n = pwr(base_of_exps[i], n) * coefficient
+	* pwr(roots[0].value(), -n);
+      D_VAR(t_n);
+      D_VAR(r_n);
+      if (!gosper(t_n, r_n, n, lower, upper, tmp))
+	return false;
+      solution += tmp;
+    }
   return true;
 }
 
@@ -1247,7 +1265,7 @@ gosper_algorithm(int order, const Symbol& n,
   \f]
 */
 static Expr
-solve_constant_coeff_order_1(const Symbol& n, int order,
+solve_constant_coeff_order_1(const Symbol& n,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff,
 			     const std::vector<Expr>& exp_no_poly_coeff,
@@ -1276,11 +1294,18 @@ solve_constant_coeff_order_1(const Symbol& n, int order,
   }
   // Computes the sum when `\lambda^{n-k} p(k)' is not a polynomial or
   // a product of a polynomial times an exponential.
-  // The summand must be an hypergeometric term
+  // The summand must be an hypergeometric term.
   if (vector_not_all_zero(exp_no_poly_coeff)) {
     Expr gosper_solution;
-    if (gosper_algorithm(order, n, base_of_exps, exp_no_poly_coeff, roots,
-			 gosper_solution))
+    // The first argument setted to `0' indicates that this is not the
+    // case of variable coefficient or is case of variable coefficient but
+    // homogeneous.
+    // FIXME: non c'e' modo di evitare di creare Expr apposta ma passare
+    // direttamente 0 a gosper?
+    Expr t_n = 0;
+    if (gosper_algorithm(n, t_n, 1, n,
+			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff,
+			 roots, gosper_solution))
       solution += gosper_solution;
     else {
       // FIXME: the summand is not hypergeometric:
@@ -1294,7 +1319,7 @@ solve_constant_coeff_order_1(const Symbol& n, int order,
   // add_initial_conditions(g_n, n, coefficients, initial_conditions,
   //		              solution);
   solution += initial_conditions[0] * pwr(roots[0].value(), n);
-
+  D_MSGVAR("SOLUTION = ", solution);
   return solution;
 }
 
@@ -1679,11 +1704,35 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
   return solution;
 }
 
+static Number
+domain_recurrence(const Symbol& n, const Expr& e) {
+  Number i_c = 0;
+  Expr denominator = (e.denominator()).expand();
+  if (denominator != 1) {
+    std::vector<Number> potential_roots;
+    Number constant_term = abs(denominator.tcoeff(n).ex_to_number());
+    while (constant_term == 0) {
+      denominator = quo(denominator, n, n);
+      constant_term = abs(denominator.tcoeff(n).ex_to_number());
+    }
+    find_divisors(constant_term, potential_roots);
+    // Find non-negative integral roots of the denominator.
+    for(unsigned i = potential_roots.size(); i-- > 0; ) {
+      Number temp = denominator.subs(n, potential_roots[i]).ex_to_number();
+      if (temp == 0 &&  potential_roots[i] > i_c)
+	i_c = potential_roots[i];
+    }
+  }
+  return i_c;
+}
+
 //! \brief
 //! When possible, computes \f$ alpha!(n) \f$ if \f$ alpha \f$ is a sum
 //! or terms, otherwise returns the symbolic product.
 static Expr
-alpha_factorial_if_add(const Expr& alpha, const Symbol& n) {
+alpha_factorial_if_add(const Expr& alpha, const Symbol& n,
+		       const Number& lower, const Expr& upper,
+		       bool is_denominator) {
   Expr alpha_factorial;
   Expr_List substitution;
   bool alpha_factorial_computed = false;
@@ -1691,14 +1740,29 @@ alpha_factorial_if_add(const Expr& alpha, const Symbol& n) {
     Expr tmp = get_binding(substitution, 0);
     if (tmp.is_a_number()) {
       Number num = tmp.ex_to_number();
+      D_VAR(num);
       if (num.is_positive_integer()) {
 	alpha_factorial = factorial(alpha) / factorial(num);
 	alpha_factorial_computed = true;
       }
+      else
+	if (lower > -num) {
+	  alpha_factorial = factorial(alpha) / factorial(lower + num - 1);
+	  alpha_factorial_computed = true;
+	}
+	else
+	  if (is_denominator)
+	    throw std::domain_error("Cannot compute a product at the denominator"
+				    "if one of the factor is zero");
+	    else
+	    {
+	    alpha_factorial = 0;
+	    alpha_factorial_computed = true;
+	  }
     }
   }
   else if (alpha == 2*n+1) {
-    alpha_factorial = factorial(2*n+1) / (pwr(2, n) * factorial(n));
+    alpha_factorial = factorial(2*n+1) * pwr(2, -n) / factorial(n);
     alpha_factorial_computed = true;
   }
   else {
@@ -1706,8 +1770,8 @@ alpha_factorial_if_add(const Expr& alpha, const Symbol& n) {
     // (`a' not rational).
     Expr a = alpha.content(n);
     if (a != 1) {
-      alpha_factorial = compute_alpha_factorial(alpha.primpart(n), n)
-	* compute_alpha_factorial(a, n);
+      alpha_factorial = compute_alpha_factorial(alpha.primpart(n), n, lower, upper)
+	* compute_alpha_factorial(a, n, lower, upper);
       alpha_factorial_computed = true;
     }
     // To compute numerator and denominator is useful because allows
@@ -1718,15 +1782,15 @@ alpha_factorial_if_add(const Expr& alpha, const Symbol& n) {
     Expr den;
     alpha.numerator_denominator(num, den);
     if (den != 1) {
-      alpha_factorial = compute_alpha_factorial(num, n)
-	* pwr(compute_alpha_factorial(den, n), -1);
+      alpha_factorial = compute_alpha_factorial(num, n, lower, upper)
+	* pwr(compute_alpha_factorial(den, n, lower, upper), -1);
       alpha_factorial_computed = true;
     }
   }
   if (!alpha_factorial_computed) {
     Symbol h("h");
     Expr alpha_h = alpha.subs(n, h);
-    alpha_factorial = prod(Expr(h), Expr(1), Expr(n), alpha_h);
+    alpha_factorial = prod(Expr(h), Expr(lower), upper, alpha_h);
   }
   return alpha_factorial;
 }
@@ -1735,13 +1799,15 @@ alpha_factorial_if_add(const Expr& alpha, const Symbol& n) {
 //! When possible, computes \f$ alpha!(n) \f$ if \f$ alpha \f$ is a
 //! power, otherwise returns the symbolic product.
 static Expr
-alpha_factorial_if_power(const Expr& alpha, const Symbol& n) {
+alpha_factorial_if_power(const Expr& alpha, const Symbol& n,
+			 const Number& lower, const Expr& upper) {
   Expr alpha_factorial;
   bool alpha_factorial_computed = false;
   if (alpha.op(0).has(n)) {
     if (alpha.op(1).is_a_number()) {
-      alpha_factorial = pwr(compute_alpha_factorial(alpha.op(0), n),
-			    alpha.op(1));
+      alpha_factorial
+	= pwr(compute_alpha_factorial(alpha.op(0), n, lower, upper, true),
+	      alpha.op(1));
       alpha_factorial_computed = true;
     }
   }
@@ -1775,7 +1841,7 @@ alpha_factorial_if_power(const Expr& alpha, const Symbol& n) {
   if (!alpha_factorial_computed) {
     Symbol h("h");
     Expr alpha_h = alpha.subs(n, h);
-    alpha_factorial = prod(Expr(h), Expr(1), Expr(n), alpha_h);
+    alpha_factorial = prod(Expr(h), Expr(lower), upper, alpha_h);
   }
   return alpha_factorial;
 }
@@ -1812,25 +1878,46 @@ alpha_factorial_if_power(const Expr& alpha, const Symbol& n) {
     then \f$ alpha!(n) =  alpha_1!(n) \cdots alpha_k!(n) \f$.  
 */
 static Expr
-compute_alpha_factorial(const Expr& alpha, const Symbol& n) {
+compute_alpha_factorial(const Expr& alpha, const Symbol& n,
+			const Number& lower, const Expr& upper,
+			bool is_denominator) {
+  assert(lower.is_integer());
+  if (upper.is_a_number()) {
+    Number num_upper = upper.ex_to_number();
+    if (lower > num_upper)
+      return 1;
+    else if (lower == num_upper)
+      return alpha.subs(n, lower);
+    else {
+      Expr tmp = 1;
+      for (Number i = lower; i <= num_upper; ++i)
+	tmp *= alpha.subs(n, i);
+      return tmp;
+    }
+  }
+  Expr exp_power = upper - lower + 1;
   Expr alpha_factorial;
   if (!alpha.has(n))
-    alpha_factorial = pwr(alpha, n);
-  else if (alpha == n)
-    alpha_factorial = factorial(alpha);
+    alpha_factorial = pwr(alpha, exp_power);
+  else if (alpha == n) {
+    alpha_factorial = factorial(upper);
+    if (lower > 1)
+      alpha_factorial *= 1 / factorial(lower - 1);
+  }
   else if (alpha.is_a_add())
-    alpha_factorial = alpha_factorial_if_add(alpha, n);
+    alpha_factorial = alpha_factorial_if_add(alpha, n, lower, upper,
+					     is_denominator);
   else if (alpha.is_a_power())
-    alpha_factorial = alpha_factorial_if_power(alpha, n);
+    alpha_factorial = alpha_factorial_if_power(alpha, n, lower, upper);
   else if (alpha.is_a_mul()) {
     alpha_factorial = 1;
     for (unsigned i = alpha.nops(); i-- > 0; )
-      alpha_factorial *= compute_alpha_factorial(alpha.op(i), n);
+      alpha_factorial *= compute_alpha_factorial(alpha.op(i), n, lower, upper);
   }
   else {
     Symbol h("h");
     Expr alpha_h = alpha.subs(n, h);
-    alpha_factorial = prod(Expr(h), Expr(1), Expr(n), alpha_h);
+    alpha_factorial = prod(Expr(h), Expr(lower), upper, alpha_h);
   }
   return alpha_factorial;
 }
@@ -1866,8 +1953,16 @@ compute_alpha_factorial(const Expr& alpha, const Symbol& n) {
 static Expr
 solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
 			     const Expr& coefficient) {
+  // `i_c' is the positive integer, if exists, that cancels the common
+  // denominator of the recurrence; 0 otherwise.
+  Number i_c;
+  if (p_n == 0)
+    i_c = domain_recurrence(n, coefficient);
+  else
+    i_c = domain_recurrence(n, (p_n * coefficient));
+  D_VAR(i_c);
   // Compute `\alpha!(n)' when possible.
-  Expr alpha_factorial = compute_alpha_factorial(coefficient, n);
+  Expr alpha_factorial = compute_alpha_factorial(coefficient, n, i_c + 2, n);
   D_VAR(alpha_factorial);
   // Compute the non-homogeneous term for the recurrence
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
@@ -1875,49 +1970,36 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
   // `r(n) = \frac{t(n+1)}{t(n)}
   //       = \frac{p(n+1)}{\alpha!(n+1)} * \frac{\alpha!(n)}{p(n)}
   //       = \frac{p(n+1)}{p(n) * \alpha(n+1)}'.
+  Expr solution;
   Expr new_p_n;
   if (!p_n.is_zero()) {
-    Expr p_n_plus_one = p_n.subs(n, n+1);
-    D_VAR(p_n_plus_one);
-    Expr alpha_plus_one = coefficient.subs(n, n+1);
-    D_VAR(alpha_plus_one);
-    new_p_n = p_n_plus_one / (p_n * alpha_plus_one);
+    new_p_n = p_n.subs(n, n+1) / (p_n * coefficient.subs(n, n+1));
     D_VAR(new_p_n);
+    std::vector<Expr> base_of_exps;
+    std::vector<Expr> exp_poly_coeff;
+    std::vector<Expr> exp_no_poly_coeff;
+    exp_poly_decomposition(new_p_n, n,
+			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
+    std::vector<Polynomial_Root> new_roots;
+    new_roots.push_back(Expr(1));
+    
+    // FIXME: perche' non posso passare direttamente `p_n/alpha_factorial'
+    // a gosper_algorithm senza dovermi definire un'altra Expr?
+    Expr t_n = p_n/alpha_factorial;
+    if (!gosper_algorithm(n, t_n, 1, n,
+			  base_of_exps, exp_poly_coeff, exp_no_poly_coeff,
+			  new_roots, solution)) {
+      // FIXME: the summand is not hypergeometric:
+      // no chance of using Gosper's algorithm.
+    }
+    for (Number i = 1; i <= i_c + 1; ++i)
+      solution -= t_n.subs(n, i);
   }
+  if ((p_n.denominator() * coefficient.denominator()).has(n))
+    solution += x(i_c + 1);
   else
-    new_p_n = 0;
-  Expr new_rhs = x(n-1) + new_p_n;
-//    D_VAR(new_rhs);
-//    std::vector<Expr> base_of_exps;
-//    std::vector<Expr> exp_poly_coeff;
-//    std::vector<Expr> exp_no_poly_coeff;
-//    exp_poly_decomposition(new_p_n, n,
-//  			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
-//    std::vector<Polynomial_Root> new_roots;
-//    new_roots.push_back(Expr(1));
-
-//    Expr solution;
-//  #if 1
-//    int order = 1;
-//    Expr t_n = p_n/alpha_factorial;
-//    if (!gosper_algorithm(t_n, order, n, base_of_exps,
-//  			exp_poly_coeff, exp_no_poly_coeff,
-//  			new_roots, solution)) {
-//      // FIXME: the summand is not hypergeometric:
-//      // no chance of using Gosper's algorithm.
-//    }
-//    solution += x(0);
-//  #else
-//    Expr solution = solve_constant_coeff_order_1(n, 1, base_of_exps,
-//  					       exp_poly_coeff,
-//  					       exp_no_poly_coeff, new_roots,
-//  					       initial_conditions);
-//  #endif
-  //solution *= alpha_factorial;
-  Expr solution;
-  D_VAR(new_p_n);
-  D_VAR(new_rhs);
-  D_MSGVAR("Solution new_rhs = ", solution);
+    solution += x(i_c);
+  solution *= alpha_factorial;
   return solution;
 }
 
@@ -1969,7 +2051,6 @@ verify_solution(const Expr& solution, int order, const Expr& rhs,
   // FIXME: the initial conditions can not start always from 0:
   // `order' is temporary until we will consider a method in order to
   // know the right initial conditions.
-
   // Validation of initial conditions.
   for (int i = order; i-- > 0; ) {
     Expr g_i = x(i);
@@ -1979,6 +2060,29 @@ verify_solution(const Expr& solution, int order, const Expr& rhs,
       return false;
     }
   }
+//   Number i_c = domain_recurrence(n, rhs);
+//   D_VAR(i_c);
+//   bool shift_initial_conditions = false;
+//   if ((rhs.denominator()).has(n) && rhs.is_rational_function())
+//     shift_initial_conditions = true;
+//   // Validation of initial conditions.
+//   Expr sol_subs;
+//   for (int i = order; i-- > 0; ) {
+//     Expr g_i;
+//     if (shift_initial_conditions) {
+//       g_i = x(i_c + 1);
+//       sol_subs = simplify_numer_denom(solution.subs(n, i_c + i));
+//     }
+//     else {
+//       g_i = x(i_c);
+//       sol_subs = simplify_numer_denom(solution.subs(n, i_c));
+//     }
+//     D_VAR(g_i);
+//     if (g_i != sol_subs) {
+//       print_bad_exp(sol_subs, rhs, true);
+//       return false;
+//     }
+//   }
   // The initial conditions are verified. Build an other expression
   // that has all terms of `solution' minus those containing an initial
   // condition.
