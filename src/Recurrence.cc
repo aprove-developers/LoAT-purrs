@@ -454,7 +454,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 
   Solver_Status status;
   // Classify the linear recurrence `rec_rewritten'.
-  if ((status == rec_rewritten.classify_and_catch_special_cases())
+  if ((status = rec_rewritten.classify_and_catch_special_cases())
       == SUCCESS) {
     assert(rec_rewritten.is_linear_finite_order()
 	   || rec_rewritten.is_functional_equation());
