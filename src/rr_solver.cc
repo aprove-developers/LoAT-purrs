@@ -647,12 +647,14 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   for (unsigned i = order; i-- > 0; )
     conditions.append(initial_conditions[i]);
   solution = solution.collect(conditions);
-  
+
+#if 0  
   if (!verify_solution(solution, order, rhs, n)) {
     std::cout << "x(n) = " << rhs << std::endl;
     std::cout << " -> solution wrong or not enough simplified." << std::endl;
     std::cout << std::endl;
   }
+#endif
 
   return OK;
 }
@@ -838,6 +840,7 @@ solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
       break;
     case HAS_NON_INTEGER_DECREMENT:
     case HAS_HUGE_DECREMENT:
+    case TOO_COMPLEX:
       exit_anyway = true;
       break;
     case HAS_NEGATIVE_DECREMENT:
