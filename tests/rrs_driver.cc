@@ -389,6 +389,7 @@ static bool expect_diagnose_unsolvable;
 static bool expect_not_diagnose_unsolvable;
 static bool expect_diagnose_indeterminate;
 static bool expect_diagnose_malformed;
+static bool expect_diagnose_domain_error;
 
 void
 set_expectations(const string& s) {
@@ -405,6 +406,7 @@ set_expectations(const string& s) {
     = expect_not_diagnose_unsolvable
     = expect_diagnose_indeterminate
     = expect_diagnose_malformed
+    = expect_diagnose_domain_error
     = false;
 
   const char* p = s.c_str();
@@ -450,6 +452,9 @@ set_expectations(const string& s) {
     case 'M':
       expect_diagnose_malformed = true;
       break;
+    case 'D':
+      expect_diagnose_domain_error = true;
+      break; 
     case '*':
       break;
     default:
@@ -543,6 +548,10 @@ do_production_mode() {
       cout << "malformed." << endl;
       goto exit;
 
+    case Recurrence::DOMAIN_ERROR:
+      cout << "domain error." << endl;
+      goto exit;
+
     case Recurrence::HAS_NON_INTEGER_DECREMENT:
     case Recurrence::HAS_HUGE_DECREMENT:
     case Recurrence::TOO_COMPLEX:
@@ -573,6 +582,10 @@ do_production_mode() {
       cout << "malformed." << endl;
       goto exit;
 
+    case Recurrence::DOMAIN_ERROR:
+      cout << "domain error." << endl;
+      goto exit;
+
     case Recurrence::HAS_NON_INTEGER_DECREMENT:
     case Recurrence::HAS_HUGE_DECREMENT:
     case Recurrence::TOO_COMPLEX:
@@ -600,6 +613,10 @@ do_production_mode() {
 
     case Recurrence::MALFORMED_RECURRENCE:
       cout << "malformed." << endl;
+      goto exit;
+
+    case Recurrence::DOMAIN_ERROR:
+      cout << "domain error." << endl;
       goto exit;
 
     case Recurrence::HAS_NON_INTEGER_DECREMENT:
@@ -685,6 +702,7 @@ main(int argc, char *argv[]) try {
   unsigned unexpected_failures_to_diagnose_unsolvability = 0;
   unsigned unexpected_failures_to_diagnose_indeterminably = 0;
   unsigned unexpected_failures_to_diagnose_malformation = 0;
+  unsigned unexpected_failures_to_diagnose_domain_error = 0;
   unsigned unexpected_failures_to_verify = 0;
   unsigned unexpected_failures_to_disprove = 0;
   unsigned unexpected_conclusive_verifications = 0;
@@ -944,6 +962,19 @@ main(int argc, char *argv[]) try {
 		 << endl;
 	  ++unexpected_failures_to_diagnose_malformation;
 	}
+      if (expect_diagnose_domain_error)
+	if (compute_exact_solution_wrapper(rec)
+	    != Recurrence::DOMAIN_ERROR
+	    || rec.compute_lower_bound()
+	    != Recurrence::DOMAIN_ERROR
+	    || rec.compute_upper_bound()
+	    != Recurrence::DOMAIN_ERROR) {
+	  if (verbose)
+	    cerr << "*** unexpected failure to diagnose domain error"
+		 << endl;
+	  ++unexpected_failures_to_diagnose_domain_error;
+	}
+      
     } // *** regress test
     else {
       switch (compute_exact_solution_wrapper(rec)) {
@@ -983,6 +1014,11 @@ main(int argc, char *argv[]) try {
 	  cout << endl << "Malformed" << endl << endl;
 	goto finish;
 	break;
+      case Recurrence::DOMAIN_ERROR:
+	if (interactive)
+	  cout << endl << "Domain error" << endl << endl;
+	goto finish;
+	break;
       case Recurrence::HAS_NON_INTEGER_DECREMENT:
       case Recurrence::HAS_HUGE_DECREMENT:
       case Recurrence::TOO_COMPLEX:
@@ -1015,6 +1051,11 @@ main(int argc, char *argv[]) try {
       case Recurrence::MALFORMED_RECURRENCE:
 	if (interactive)
 	  cout << endl << "Malformed" << endl;
+	goto finish;
+	break;
+      case Recurrence::DOMAIN_ERROR:
+	if (interactive)
+	  cout << endl << "Domain error" << endl;
 	goto finish;
 	break;
       case Recurrence::HAS_NON_INTEGER_DECREMENT:
@@ -1053,6 +1094,11 @@ main(int argc, char *argv[]) try {
       case Recurrence::MALFORMED_RECURRENCE:
 	if (interactive)
 	  cout << "Malformed" << endl;
+	goto finish;
+	break;
+      case Recurrence::DOMAIN_ERROR:
+	if (interactive)
+	  cout << "Domain error" << endl;
 	goto finish;
 	break;
       case Recurrence::HAS_NON_INTEGER_DECREMENT:
@@ -1139,6 +1185,12 @@ main(int argc, char *argv[]) try {
       failed = true;
       cerr << unexpected_failures_to_diagnose_malformation
 	   << " unexpected failures to diagnose malformation"
+	   << endl;
+    }
+    if (unexpected_failures_to_diagnose_domain_error > 0) {
+      failed = true;
+      cerr << unexpected_failures_to_diagnose_domain_error
+	   << " unexpected failures to diagnose a domain error"
 	   << endl;
     }
 
