@@ -524,29 +524,28 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 
   // We call recurrences of `order zero' special recurrences of the
   // form `x(n) = rhs', where `rhs' contains only functions of `n',
-  // parameters and `x(k_1),...,x(k_m)' where `m >= 0' and
-  // `k_1,...,k_m' are non-negative integers.
-  // In these cases are not mathematical relationship expressing `x(n)'
-  // as some combination of `x(i)', with i < n and the solution
+  // parameters and `x(k_1)', ..., `x(k_m)' where `m >= 0' and
+  // `k_1', ..., `k_m' are non-negative integers.
+  // In this case `*this' is not a proper recurrence and the solution
   // is simply `rhs' (now equal to `inhomogeneous_term').
-  if (is_order_zero()) {
-    exact_solution_.set_expression(inhomogeneous_term);
-    exact_solution_.set_expression
-      (simplify_ex_for_output(exact_solution_.expression(), false));
-    exact_solution_.set_expression(simplify_binomials_factorials_exponentials
-				   (exact_solution_.expression()));
-    exact_solution_.set_expression
-      (simplify_logarithm(exact_solution_.expression()));
+  if (order() == 0) {
+    Expr solution = inhomogeneous_term;
+    solution = simplify_ex_for_output(solution, false);
+    solution = simplify_binomials_factorials_exponentials(solution);
+    solution = simplify_logarithm(solution);
+    exact_solution_.set_expression(solution);
     return SUCCESS;
   }
   // Find the largest positive or null integer that cancel the denominator of
   // `inhomogeneous_term' and store it in `z' if it is bigger than `0'.
   Number z = 0;
   if (!inhomogeneous_term.is_zero()) {
-    if (has_parameters(denominator(inhomogeneous_term)))
+    const Expr& denom_inhomogeneous_term = denominator(inhomogeneous_term);
+    if (has_parameters(denom_inhomogeneous_term))
       return TOO_COMPLEX;
-    if (!largest_positive_int_zero(denominator(inhomogeneous_term), n, z))
-      // The system not finds an integer that cancel `inhomogeneous_term' or
+    // FIXME: find_largest_zero_or_singularity() pole???
+    if (!largest_positive_int_zero(denom_inhomogeneous_term, n, z))
+      // The system did not find an integer cancelling `inhomogeneous_term' or
       // starting from which `inhomogeneous_term' is well-defined
       // (polynomials are always well-defined).
       return TOO_COMPLEX;
@@ -555,6 +554,9 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   set_first_valid_index(z.to_unsigned_int());
   D_VAR(first_valid_index());
 
+  // FIXME: usare i vettori solo dall'ordine 2 in su.
+  // L'ordine 1 gestirlo a parte senza equazione caratteristica.
+  // numeric_coefficients()
   std::vector<Number> num_coefficients(order() + 1);
   std::vector<Polynomial_Root> roots;
   bool all_distinct = true;

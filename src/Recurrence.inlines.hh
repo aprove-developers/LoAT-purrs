@@ -181,12 +181,6 @@ Recurrence::set_type(const Type& t) const {
   classifier_status_ = CL_SUCCESS;
 }
 
-inline bool
-Recurrence::is_order_zero() const {
-  assert(classifier_status_ != NOT_CLASSIFIED_YET);
-  return type_ == ORDER_ZERO; 
-}
-
 inline void
 Recurrence::set_order_zero() const {
   type_ = ORDER_ZERO; 

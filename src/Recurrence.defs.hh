@@ -692,11 +692,6 @@ private:
   //! Sets <CODE>type_</CODE> with \p t.
   void set_type(const Type& t) const;
 
-  //! \brief
-  //! Returns <CODE>true</CODE> if the recurrence is a special case,
-  //! i. e., is of order zero; returns <CODE>false</CODE> otherwise.
-  bool is_order_zero() const;
-
   //! Sets <CODE>type_recurrence = ORDER_ZERO</CODE>.
   void set_order_zero() const;
 

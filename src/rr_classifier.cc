@@ -927,7 +927,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 			    coefficients.max_size());
 	  if (status != CL_SUCCESS)
 	    return status;
-	  if (classifier_status_ == NOT_CLASSIFIED_YET || is_order_zero())
+	  if (classifier_status_ == NOT_CLASSIFIED_YET || type_ == ORDER_ZERO)
 	    set_linear_finite_order_const_coeff();
 	  else if (is_functional_equation())
 	    return CL_TOO_COMPLEX;
@@ -947,7 +947,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
       else if (argument.is_a_mul() && argument.nops() == 2) {
 	Number divisor;
 	if (get_constant_divisor(argument, divisor)) {
-	  if (classifier_status_ == NOT_CLASSIFIED_YET || is_order_zero())
+	  if (classifier_status_ == NOT_CLASSIFIED_YET || type_ == ORDER_ZERO)
 	    set_functional_equation();
 	  else if (is_linear_finite_order())
 	    return CL_TOO_COMPLEX;
@@ -969,7 +969,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
   // dependently from the index of the sum.
     else if (addend.is_the_sum_function() && addend.arg(2).has(n)
 	     && addend.arg(3).has_x_function(addend.arg(0))) {
-      if (classifier_status_ == NOT_CLASSIFIED_YET || is_order_zero()) {
+      if (classifier_status_ == NOT_CLASSIFIED_YET || type_ == ORDER_ZERO) {
 	// If there are many terms equal to the sum stored in `addend'
 	// we must collect them in order to find the weight `f(n)' of
 	// the recurrence of infinite order
@@ -1049,7 +1049,8 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	  if (get_constant_divisor(argument, divisor)) {
 	    // The non linear terms have already been considered before.
 	    assert(!has_x);
-	    if (classifier_status_ == NOT_CLASSIFIED_YET || is_order_zero())
+	    if (classifier_status_ == NOT_CLASSIFIED_YET
+		|| type_ == ORDER_ZERO)
 	      set_functional_equation();
 	    else if (is_linear_finite_order())
 	      return CL_TOO_COMPLEX;
@@ -1067,7 +1068,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
       // dependently from the index of the sum.
       else if (factor.is_the_sum_function() && factor.arg(2).has(n)
 	       && factor.arg(3).has_x_function(factor.arg(0))) {
-	if (classifier_status_ == NOT_CLASSIFIED_YET || is_order_zero()) {
+	if (classifier_status_ == NOT_CLASSIFIED_YET || type_ == ORDER_ZERO) {
 	  // If there are many terms equal to the sum in `factor' stored
 	  // in `rhs', we must collect them in order to find the weight
 	  // `f(n)' of the recurrence of infinite order
@@ -1366,7 +1367,7 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	Expr& rhs = const_cast<Expr&>(recurrence_rhs);
 	rhs = new_rhs;
 	classifier_status_ = NOT_CLASSIFIED_YET;
-	type_ = ORDER_ZERO;
+	type_ = UNKNOWN;
 	status = classify_and_catch_special_cases();
       }
       break;
@@ -1381,7 +1382,7 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	  Expr& rhs = const_cast<Expr&>(recurrence_rhs);
 	  rhs = new_rhs;
 	  classifier_status_ = NOT_CLASSIFIED_YET;
-	  type_ = ORDER_ZERO;
+	  type_ = UNKNOWN;
 	  status = classify_and_catch_special_cases();
 	}
 	else if (result == 1)
