@@ -387,9 +387,9 @@ find_roots(const Expr& p, const Symbol& x,
     roots_r.reserve(r.degree(x));
     if (find_roots(r, x, roots_r, 1)) {
       size_t num_r_roots = roots_r.size();
-      const Expr& theta = 2*Constant::Pi/nested_degree;
+      Expr theta = 2*Constant::Pi/nested_degree;
       for (int j = 0; j < nested_degree; ++j) {
-	const Expr& root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
+	Expr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
 	for (size_t i = 0; i < num_r_roots; ++i)
 	  roots.push_back(Polynomial_Root(pwr(roots_r[i].value(),
 					      Number(1, nested_degree))
@@ -450,8 +450,8 @@ solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
   Number d = Q*Q*Q + R*R;
   Number a1_div_3 = a1/3;
   if (d < 0) { // This implies that Q < 0 
-    const Expr& sqrt_minus_Q = sqrt(-Q);
-    const Expr& theta = acos(-R/(Q*sqrt_minus_Q));
+    Expr sqrt_minus_Q = sqrt(-Q);
+    Expr theta = acos(-R/(Q*sqrt_minus_Q));
     x1 = -a1_div_3 + 2*sqrt_minus_Q*cos(theta/3);
     x2 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+2 * Constant::Pi)/3);
     x3 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+4 * Constant::Pi)/3);
@@ -466,9 +466,9 @@ solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
     // - if Q < 0 and R < 0 then a similar argument shows that 
     //   A < 0 and B < 0; 
     // - if Q < 0 and R >= 0 then A > 0 and B > 0.
-    const Expr& sqrt_d = sqrt(d);
-    const Expr& A = R + sqrt_d;
-    const Expr& B = R - sqrt_d;
+    Expr sqrt_d = sqrt(d);
+    Expr A = R + sqrt_d;
+    Expr B = R - sqrt_d;
     Expr S;
     Expr T;
     if (Q >= 0) {
@@ -493,13 +493,13 @@ solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
     T = simplify_on_output_ex(T, n, false);
     D_VAR(S); 
     D_VAR(T);
-    const Expr& S_plus_T = S + T;
+    Expr S_plus_T = S + T;
 
     // FIXME: S+T are of the form (a+b)^(1/3) + (a-b)^(1/3).
     // Is there a way to simplify this?
 
-    const Expr& t1 = -S_plus_T/2 - a1_div_3;
-    const Expr& t2 = (S - T) * Number::I * sqrt(Expr(3))/2;
+    Expr t1 = -S_plus_T/2 - a1_div_3;
+    Expr t2 = (S - T) * Number::I * sqrt(Expr(3))/2;
     x1 = S_plus_T - a1_div_3;
     x2 = t1 + t2;
     x3 = t1 - t2;
@@ -557,7 +557,7 @@ solve_equation_4(const Number& a1, const Number& a2,
   Expr r = -g/(8*p*q);
   D_MSGVAR("Before: ", r); 
   r = simplify_on_output_ex(r, n, false);
-  const Expr& s = a1/4;
+  Expr s = a1/4;
   D_VAR(r); 
   D_VAR(s); 
 

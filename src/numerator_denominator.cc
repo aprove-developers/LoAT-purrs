@@ -53,7 +53,7 @@ find_denominator_single_factor(const Expr& e, unsigned position,
   // `e' is a denominator.
   if (e.is_a_power() && e.arg(1).is_a_number(exponent)
       && !exponent.is_nonnegative_integer()) {
-    const Expr& den = pwr(e.arg(0), -exponent);
+    Expr den = pwr(e.arg(0), -exponent);
     denominators[position] *= den;
     return den;
   }
@@ -252,8 +252,7 @@ take_common_factors(const Expr& d, const Expr& f) {
   Expr temp_d = d;
   if (f.is_a_mul())
     for (unsigned i = f.nops(); i-- > 0; ) {
-      const Expr& factor = f.op(i);
-      take_common_single_factors(temp_d, factor, common_factors);
+      take_common_single_factors(temp_d, f.op(i), common_factors);
       temp_d = common_factors;
     }
   else

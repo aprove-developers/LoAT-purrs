@@ -195,7 +195,7 @@ return_sum(bool distinct, const Symbol& n, const Number& order,
 	   const Expr& coeff, const Symbol& alpha, const Symbol& lambda) {
   Symbol k("k");
   Symbol x("x");
-  const Expr& q_k = coeff.subs(n, k);
+  Expr q_k = coeff.subs(n, k);
   Expr symbolic_sum;  
   if (distinct)
     symbolic_sum = sum_poly_times_exponentials(q_k, k, n, x);
@@ -1223,7 +1223,7 @@ add_initial_conditions(const Expr& g_n, const Symbol& n,
   // `coefficients.size()' has `order + 1' elements because in the first
   // position there is the value 0. 
   for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
-    const Expr& g_n_i = g_n.subs(n, n - i);
+    Expr g_n_i = g_n.subs(n, n - i);
     Expr tmp = initial_conditions[i];
     for (unsigned j = i; j > 0; j--)
       tmp -= coefficients[j] * initial_conditions[i-j];
@@ -1254,7 +1254,7 @@ compute_sum_with_gosper_algorithm(const Symbol& n,
     if (!exp_no_poly_coeff[i].is_zero()) {
       // FIXME: for the moment use this function only when the `order'
       // is one, then `roots' has only one elements.
-      const Expr& t_n = pwr(base_of_exps[i], n) * exp_no_poly_coeff[i]
+      Expr t_n = pwr(base_of_exps[i], n) * exp_no_poly_coeff[i]
 	* pwr(roots[0].value(), -n);
       D_VAR(t_n);
       if (!full_gosper(t_n, n, lower, upper, gosper_solution))
@@ -1538,8 +1538,8 @@ compute_non_homogeneous_part(const Symbol& n, const Expr& g_n, int order,
     for (unsigned j = base_of_exps.size(); j-- > 0; ) {
       Expr solution = 0;
       Symbol k("k");
-      const Expr& g_n_coeff_k = g_n_poly_coeff[i].subs(n, n - k);
-      const Expr& exp_poly_coeff_k = exp_poly_coeff[j].subs(n, k);
+      Expr g_n_coeff_k = g_n_poly_coeff[i].subs(n, n - k);
+      Expr exp_poly_coeff_k = exp_poly_coeff[j].subs(n, k);
       solution = sum_poly_times_exponentials(g_n_coeff_k * exp_poly_coeff_k,
 					     k, n, 1/bases_exp_g_n[i]
 					     * base_of_exps[j]);
@@ -1615,7 +1615,7 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
     if (all_distinct) {
       const Expr& root_1 = roots[0].value();
       const Expr& root_2 = roots[1].value();
-      const Expr& diff_roots = root_1 - root_2;
+      Expr diff_roots = root_1 - root_2;
       Symbol alpha("alpha");
       Symbol lambda("lambda");
       std::vector<Expr> symbolic_sum_distinct;
@@ -1886,7 +1886,7 @@ compute_product_on_power(const Expr& e, const Symbol& n,
     if (vector_not_all_zero(exp_poly_coeff)) {
       Symbol k("k");
       for (unsigned i = base_of_exps.size(); i-- > 0; ) {
-	const Expr& coeff_k = exp_poly_coeff[i].subs(n, k);
+	Expr coeff_k = exp_poly_coeff[i].subs(n, k);
 	new_exponent += sum_poly_times_exponentials(coeff_k, k, n,
 						    base_of_exps[i]);
 	// `sum_poly_times_exponentials' computes the sum from 0, whereas
