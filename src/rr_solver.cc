@@ -1956,21 +1956,19 @@ solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
   }
   D_VAR(coefficient);
   D_VAR(p_n);
-  // `z' will contain the biggest positive integer, if it exist,
-  // that cancel the numerator or the denominator of the coefficient.
-  // If this positive integer do not exist then `z' is left to -1.
-  Number z = -1;
+  // `z' will contain the biggest positive or null integer, if it exist,
+  // that cancel the denominator of the coefficient.
+  // If this integer does not exist then `z' is left to 0.
+  Number z = 0;
   domain_recurrence(coefficient.expand(), z);
-  // Find the biggest positive integer that cancel the denominator of
+  // Find the biggest positive or null integer that cancel the denominator of
   // `p_n' and store it in `z' if it is bigger than the current `z'.
   if (!p_n.is_zero())
     domain_recurrence(denominator(p_n).expand(), z);
-  // The initial conditions will start from `z + 1'.
-  set_first_initial_condition((z + 1).to_int());
-
-  Expr alpha_factorial;
-  alpha_factorial = compute_product(transform_in_single_fraction(coefficient),
-				    z + 2, n);
+  // The initial conditions will start from `z'.
+  set_first_initial_condition(z.to_int());
+  Expr alpha_factorial
+    = compute_product(transform_in_single_fraction(coefficient), z + 1, n);
   // FIXME: this simplification simplifies the value of `alpha_factorial'
   // but not the solution because we need to the simplification about
   // factorials and exponentials for the output.
@@ -2003,17 +2001,17 @@ solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
       // vedere direttamente il rapporto p(k)/alpha!(k) se e' sommabile
       // (forse prima di vedere gosper)
       Symbol h;
-      solution += alpha_factorial * x(z + 1) + alpha_factorial 
-	* PURRS::sum(h, z + 2, n,
+      solution += alpha_factorial * x(z) + alpha_factorial 
+	* PURRS::sum(h, z + 1, n,
 		     p_n.substitute(n, h) / alpha_factorial.substitute(n, h));
       return SUCCESS;
     }
-    // To do this cycle or to consider `z + 2' as the lower limit of
+    // To do this cycle or to consider `z + 1' as the lower limit of
     // the sum is the same thing,  but so is better for the output.
-    for (Number i = 1; i < z + 2; ++i)
+    for (Number i = 1; i < z + 1; ++i)
       solution -= (p_n / alpha_factorial).substitute(n, i);
   }
-  solution += x(z + 1);
+  solution += x(z);
   solution *= alpha_factorial;
   return SUCCESS;
 }
