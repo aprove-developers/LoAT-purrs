@@ -31,6 +31,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 using namespace GiNaC;
 
+#define NOISY 0
+
 static const unsigned
 FACTOR_THRESHOLD = 100;
 
@@ -160,11 +162,11 @@ pow_simpl(const GExpr& e) {
   // The base is not a multiplication.
   else
     if (is_a<numeric>(b)) {
-      GNumber num = GiNaC::ex_to<GiNaC::numeric>(num_exponent);
-      if (num.is_integer())
-	return pow(pow(b, num), not_num_exponent);
+      GNumber exp_num = GiNaC::ex_to<GiNaC::numeric>(num_exponent);
+      if (exp_num.is_integer())
+	return pow(pow(b, exp_num), not_num_exponent);
       else
-	return pow(b, num_exponent * not_num_exponent);
+	return pow(b, exp_num * not_num_exponent);
     }
     else
       return pow(b, num_exponent * not_num_exponent);
@@ -220,6 +222,7 @@ simplify_on_input_ex(const GExpr& e) {
 static GExpr
 collect_same_base(const GExpr& e, const std::vector<GExpr>& bases,
 		  std::vector<GExpr>& exponents) {
+  assert(is_a<mul>(e));
   // At the end of the cycle 'ris' will contain the powers of 'e', with
   // the same bases, simplified in only one power with the exponents summed
   // (rule 6).
@@ -318,14 +321,13 @@ collect_base_exponent(const GExpr& e) {
   GExpr tmp = e;
   // Simplifies nested powers.
   for (unsigned i = tmp.nops(); i-- > 0; )
-    if (is_a<power>(tmp.op(i))
-	&& (is_a<power>(tmp.op(i).op(0)) || is_a<mul>(tmp.op(i).op(0)))) {
-      if (is_a<power>(tmp.op(i).op(0)) || has(tmp.op(i).op(0), sqrt(wild())))
+    if (is_a<power>(tmp.op(i)))
+      if (is_a<power>(tmp.op(i).op(0))
+	  || has(tmp.op(i).op(0), sqrt(wild())))
 	tmp = tmp.subs(tmp.op(i) == pow_simpl(tmp.op(i)));
-      if (is_a<power>(tmp.op(i)) && is_a<mul>(tmp.op(i).op(0)))
+      else if (is_a<mul>(tmp.op(i).op(0)))
 	tmp = tmp.subs(tmp.op(i).op(0)
 		       == collect_base_exponent(tmp.op(i).op(0)));
-    }
 #if NOISY
   std::cout << "tmp dopo nested... " << tmp << std::endl;
 #endif
