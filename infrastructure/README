@@ -8,7 +8,7 @@ gmp 4.1.2
 cln 1.1.5
 ntl 5.3
 fi_lib++ 2.0
-ginac            (use our CVS version!)
+ginac 1.0.13     (use our ftp version!)
 cgicc 3.2.1
 
 ============================================================================
@@ -262,35 +262,17 @@ Installing (as root):
 
 GiNaC install how-to:
 
-Downloading:
+Downloading and unpacking:
+  ftp://ftp.cs.unipr.it/pub/infrastructure/GiNaC-1.0.13-parma.tar.bz2
   cd your-path-to-download-dir
-  cvs -d :pserver:anoncvs@cvs.cs.unipr.it:/cvs/GiNaC login
-  <Type Return when requested for a password>
-  cvs -d :pserver:anoncvs@cvs.cs.unipr.it:/cvs/GiNaC checkout GiNaC
-  cvs -d :pserver:anoncvs@cvs.cs.unipr.it:/cvs/GiNaC logout
+  tar jxvf GiNaC-1.0.13-parma.tar.bz2
 
-=====
-NOTE: (this may be needed due to what seems to be a bug in CVS).
-      Make sure that the last #define in the file GiNac/ginac/function.h
-      reads exactly as follows:
-
-#define is_ex_the_function(OBJ, FUNCNAME) \
-	(GiNaC::is_exactly_a<GiNaC::function>(OBJ) && GiNaC::ex_to<GiNaC::function>(OBJ).get_serial() == GiNaC::function_index_##FUNCNAME)
-
-If you see "function_index_##FUNCNAME" without the prefixed namespace
-qualification "GiNaC::", then you should add this qualification manually.
-=====
-
-Configuring and building (and optionally check the build):
+Configuring and building:
   cd your-path-to-download-dir
-  cd GiNaC
-  touch Makefile.in aclocal.m4 configure
-  cd ..
   mkdir obj-GiNaC
   cd obj-GiNaC
   ../GiNaC/configure --prefix=/usr/local
   make
-  make check
 
 Installing (as root):
   su
@@ -301,7 +283,7 @@ Installing (as root):
 Checking whether you built right executable:
   ginsh --version
 You should obtain the following output:
-  ginsh - GiNaC Interactive Shell (GiNaC V1.0.12)
+  ginsh - GiNaC Interactive Shell (GiNaC V1.0.13)
     __,  _______  Copyright (C) 1999-2002 Johannes Gutenberg University Mainz,
    (__) *       | Germany.  This is free software with ABSOLUTELY NO WARRANTY.
     ._) i N a C | You are welcome to redistribute it under certain conditions.
