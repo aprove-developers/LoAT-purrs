@@ -683,13 +683,9 @@ known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
   // If `f(n)' or `g(n)' contain other functions `x()' with `n' in the
   // argument or contain the parameters then the recurrence is too
   // complex for the system.
-  // FIXME: the last two conditions are temporary until that we do
-  // not understand like behaving itself when the bounds of the sum
-  // are different from `0' and `n-1'.
   if (weight.has_x_function(Recurrence::n)
       || inhomog_infinite_order_rec.has_x_function(Recurrence::n)
-      || has_parameters(weight)
-      || !term_sum.arg(1).is_zero() || term_sum.arg(2) != Recurrence::n - 1)
+      || has_parameters(weight))
     return false;
 
   // `z' will contain the largest positive or null integer, if it exists,
@@ -856,7 +852,8 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 						     + inhomog_first_order,
 						     coeff_first_order,
 						     inhomog_first_order, 1,
-						     lower_bound_sum);
+						     lower_bound_sum,
+						     addend.arg(2));
 	  set_linear_infinite_order();
 	  set_infinite_order_fwdr(first_well_defined);
 	  inhomogeneous = rhs - addend;
@@ -955,7 +952,8 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 						       coeff_first_order,
 						       inhomog_first_order,
 						       weight,
-						       lower_bound_sum);
+						       lower_bound_sum,
+						       factor.arg(2));
 	    set_linear_infinite_order();
 	    set_infinite_order_fwdr(first_well_defined);
 	    inhomogeneous = rhs - addend;
