@@ -11,8 +11,8 @@
 % M malformed: expect the system to gracefully deal with it
 % m malformed: expect the system to die badly
 % U expected to find upper bound with a provably correct result	
-% u expected to find upper bound with a provably correct result
-% L expected to find lower bound
+% u expected to find upper bound 
+% L expected to find lower bound with a provably correct result
 % l expected to find lower bound
 % E explodes
 % * no expectations
