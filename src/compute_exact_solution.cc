@@ -672,13 +672,14 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     else
       add_term_with_initial_conditions(g_n, num_coefficients);
 
+  // Resubstitutes eventually auxiliary definitions contained in
+  // the solution with their original values.
+  //exact_solution_.set_expression(blackboard.rewrite(solution));
+
   D_MSGVAR("Before calling simplify: ", exact_solution_.expression());
   exact_solution_.set_expression
     (simplify_ex_for_output(exact_solution_.expression(), false));
 
-  // Resubstitutes eventually auxiliary definitions contained in
-  // the solution with their original values.
-  //exact_solution_.set_expression(blackboard.rewrite(solution));
   // Only for the output.
   if (exact_solution_.expression().is_a_add()) {
     Expr_List conditions;
