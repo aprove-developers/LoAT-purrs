@@ -186,11 +186,7 @@ find_polynomial_solution(const Symbol& n, const Number& deg_x,
   unsigned deg_c = c_n.degree(n);
   // `number_of_coeffs' is the number of coefficients of 
   // the polynomial `p', that is, 1 + deg_x.
-  // FIXME: is it possible to convert a GiNaC integer to an int or an unsigned?
-  // For the moment, we use a dirty trick.
-  unsigned number_of_coeffs = 0;
-  for (unsigned i = 0; i <= deg_x; ++i)
-    ++number_of_coeffs;
+  unsigned number_of_coeffs = (1 + deg_x).to_int();
 
   // Compute the real number of unknowns of the polynomial equation
   // `a(n) * p(n+1) - b(n-1) * p(n) - c(n) = 0'.
