@@ -590,12 +590,12 @@ private:
   //! Analyzes the \f$ i \f$-th addend of the right hand side \p rhs
   //! of the recurrence \p *this.
   Classifier_Status classification_summand(const Expr& r, Expr& rhs,
-				       Expr& e, index_type& order,
-				       std::vector<Expr>& coefficients,
-				       int& gcd_among_decrements,
-				       int num_term,
-				       std::map<Number, Expr>&
-				       homogeneous_terms) const;
+					   Expr& e, index_type& order,
+					   std::vector<Expr>& coefficients,
+					   int& gcd_among_decrements,
+					   int num_term,
+					   std::map<Number, Expr>&
+					   homogeneous_terms) const;
 
   //! \brief
   //! Computes the exact solution of \p *this, where \p *this is a
@@ -611,11 +611,23 @@ private:
   //! Computes the exact solution of \p *this, where \p *this is a
   //! non linear recurrence of finite order.
   Solver_Status compute_exact_solution_non_linear() const;
-
+  
   //! \brief
   //! Computes the exact solution of \p *this, where \p *this is a
   //! linear recurrence of infinite order.
   Solver_Status compute_exact_solution_infinite_order() const;
+
+  //! \brief
+  //! Computes the requested bound (lower or upper, specified by
+  //! \p kind_of_bound) of the functional equation \p *this.
+  Solver_Status
+  compute_bound_functional_equation(Bound kind_of_bound) const;
+
+  //! \brief
+  //! Computes the requested bound (lower or upper, specified by
+  //! \p kind_of_bound) of the non-linear recurrence \p *this.
+  Solver_Status
+  compute_bound_non_linear(Bound kind_of_bound) const;
 
   //! \brief
   //! Computes the solution of \p *this applying the order reduction method:
@@ -706,11 +718,11 @@ private:
   //! @@@
   Verify_Status verify_bound(Bound kind_of_bound) const;
 
-  //! Computes the lower bound for the functional equation. 
-  Solver_Status approximate_functional_equation_lower() const;
-
-  //! Computes the upper bound for the functional equation. 
-  Solver_Status approximate_functional_equation_upper() const;
+  //! \brief
+  //! If \p kind_of_bound is <CODE>LOWER</CODE> computes the lower bound
+  //! for the functional equation \p *this; otherwise, if \p kind_of_bound
+  //! is <CODE>UPPER</CODE> computes the upper bound.
+  Solver_Status approximate_functional_equation(Bound kind_of_bound) const;
 
   //! \brief
   //! Holds the right-hand side of the global recurrence to be solved.

@@ -910,12 +910,14 @@ compute_term_about_initial_condition(Type_Bound type, unsigned int condition,
 					     
 } // anonymous namespace
 
-
 /*!
-  Computes the lower bound for the functional equation.
+  If \p kind_of_bound is <CODE>LOWER</CODE> computes the lower bound
+  for the functional equation \p *this; otherwise, if \p kind_of_bound
+  is <CODE>UPPER</CODE>, computes the upper bound.
 */
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::approximate_functional_equation_lower() const {
+PURRS::Recurrence::approximate_functional_equation(Bound kind_of_bound) const {
+  assert(kind_of_bound == LOWER || kind_of_bound == UPPER);
   if (functional_eq_p->rank() == 1) {
     Number divisor_arg = functional_eq_p->ht_begin()->first;
     Expr coefficient = functional_eq_p->ht_begin()->second;    
@@ -925,68 +927,38 @@ PURRS::Recurrence::approximate_functional_equation_lower() const {
       return TOO_COMPLEX;
 
     Number coeff = coefficient.ex_to_number();
-    Expr q_lower = log(n) / log(divisor_arg) - 1;
-    Expr lower_bound;
+    Expr q;
+    if (kind_of_bound == LOWER)
+      q = log(n) / log(divisor_arg) - 1;
+    else
+      q = log(n) / log(divisor_arg);
 
+    Expr bound;
     Number condition = -1;
+    Type_Bound type = kind_of_bound == LOWER ? LOWER_BOUND : UPPER_BOUND;
     if (!inhomogeneous_term.is_zero()
-	&& !compute_non_homogeneous_part(LOWER_BOUND, coeff, divisor_arg,
+	&& !compute_non_homogeneous_part(type, coeff, divisor_arg,
 					 inhomogeneous_term,
-					 lower_bound, condition))
+					 bound, condition))
       return TOO_COMPLEX;
 
     if (condition > 1)
       set_applicability_condition(condition.to_unsigned_int());
-    compute_term_about_initial_condition(LOWER_BOUND,
-					 applicability_condition(),
-					 divisor_arg, coefficient, q_lower,
-					 lower_bound);
-    
-    lower_bound_.set_expression(simplify_logarithm(lower_bound));
-    if (upper_bound_.has_expression()
-	&& upper_bound_.expression() == lower_bound_.expression())
-      exact_solution_.set_expression(upper_bound_.has_expression());
-    return SUCCESS;
-  }
-  else
-    return TOO_COMPLEX;
-}
+    compute_term_about_initial_condition(type, applicability_condition(),
+					 divisor_arg, coefficient, q, bound);
 
-/*!
-  Computes the upper bound for the functional equation.
-*/
-PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::approximate_functional_equation_upper() const {
-  if (functional_eq_p->rank() == 1) {
-    Number divisor_arg = functional_eq_p->ht_begin()->first;
-    Expr coefficient = functional_eq_p->ht_begin()->second;    
-    
-    if (!known_class_of_functional_eq_rank_1(coefficient, divisor_arg,
-					     inhomogeneous_term))
-      return TOO_COMPLEX;
-
-    Number coeff = coefficient.ex_to_number();
-    Expr q_upper = log(n) / log(divisor_arg);
-    Expr upper_bound;
-
-    Number condition = -1;    
-    if (!inhomogeneous_term.is_zero()
-	&& !compute_non_homogeneous_part(UPPER_BOUND, coeff, divisor_arg,
-					 inhomogeneous_term,
-					 upper_bound, condition))
-      return TOO_COMPLEX;
-
-    if (condition > 1)
-      set_applicability_condition(condition.to_unsigned_int());
-    compute_term_about_initial_condition(UPPER_BOUND,
-					 applicability_condition(),
-					 divisor_arg, coefficient, q_upper,
-					 upper_bound);
-    
-    upper_bound_.set_expression(simplify_logarithm(upper_bound));
-    if (lower_bound_.has_expression()
-	&& upper_bound_.expression() == lower_bound_.expression())
-      exact_solution_.set_expression(lower_bound_.has_expression());
+    if (kind_of_bound == LOWER) {
+      lower_bound_.set_expression(simplify_logarithm(bound));
+      if (upper_bound_.has_expression()
+	  && upper_bound_.expression() == lower_bound_.expression())
+	exact_solution_.set_expression(upper_bound_.has_expression());
+    }
+    else {
+      upper_bound_.set_expression(simplify_logarithm(bound));
+      if (lower_bound_.has_expression()
+	  && upper_bound_.expression() == lower_bound_.expression())
+	exact_solution_.set_expression(lower_bound_.has_expression());
+    }
     return SUCCESS;
   }
   else

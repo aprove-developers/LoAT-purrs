@@ -603,8 +603,8 @@ PURRS::Recurrence::verify_infinite_order() const {
 
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::validate_initial_conditions(Bound kind_of_bound,
-						 const Expr& bound,
-						 unsigned int index) const {
+					       const Expr& bound,
+					       unsigned int index) const {
   Expr bound_valuated = bound.substitute(n, index);
   D_VAR(bound_valuated);
   if (bound_valuated != x(index))
@@ -972,30 +972,32 @@ compute_non_linear_recurrence(Expr& solution_or_bound,
 
     // Functional equation.
     else {
-      if (type == 1)
-	if ((status
-	     = associated_linear_rec().approximate_functional_equation_lower())
-	    == SUCCESS)
+      if (type == 1) {
+	status
+	  = associated_linear_rec().approximate_functional_equation(LOWER);
+	if (status == SUCCESS)
 	  solution_or_bound
 	    = pwr(base_exp_log(),
 		  associated_linear_rec().lower_bound_.expression());
 	else
 	  return status;
-      else if (type == 2)
-	if ((status
-	     = associated_linear_rec().approximate_functional_equation_upper())
-	    == SUCCESS)
+      }
+      else if (type == 2) {
+	status
+	  = associated_linear_rec().approximate_functional_equation(UPPER);
+	if (status == SUCCESS)
 	  solution_or_bound
 	    = pwr(base_exp_log(),
 		  associated_linear_rec().upper_bound_.expression());
 	else
 	  return status;
+      }
       else {// type == 0
 	if ((status
-	     = associated_linear_rec().approximate_functional_equation_lower())
+	     = associated_linear_rec().approximate_functional_equation(LOWER))
 	    != SUCCESS
 	    || (status
-		= associated_linear_rec().approximate_functional_equation_upper())
+		= associated_linear_rec().approximate_functional_equation(UPPER))
 	    != SUCCESS)
 	  return status;
 	if (associated_linear_rec().lower_bound_.expression()
@@ -1310,8 +1312,8 @@ PURRS::Recurrence::compute_exact_solution_finite_order() const {
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_exact_solution_functional_equation() const {
   Solver_Status status;
-  if ((status = approximate_functional_equation_lower()) == SUCCESS
-      && (status = approximate_functional_equation_upper()) == SUCCESS
+  if ((status = approximate_functional_equation(LOWER)) == SUCCESS
+      && (status = approximate_functional_equation(UPPER)) == SUCCESS
       && lower_bound_.expression() == upper_bound_.expression()) {
     // Check if there are specified initial conditions and in this case
     // eventually shift the solution in according with them before to
@@ -1332,7 +1334,8 @@ PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_exact_solution_non_linear() const {
   Solver_Status status;
   Expr solution;
-  if ((status = compute_non_linear_recurrence(solution, 0)) == SUCCESS) {
+  if ((status = compute_non_linear_recurrence(solution, 0))
+      == SUCCESS) {
     exact_solution_.set_expression(solution);
     lower_bound_.set_expression(solution);
     upper_bound_.set_expression(solution);
@@ -1408,8 +1411,47 @@ PURRS::Recurrence::compute_exact_solution() const {
 }
 
 PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::
+compute_bound_functional_equation(Bound kind_of_bound) const {
+  Solver_Status status = approximate_functional_equation(kind_of_bound);
+  if (status != SUCCESS)
+    return status;
+
+  // Check if there are specified initial conditions and in this case
+  // eventually shift the solution in according with them before to
+  // substitute the values of the initial conditions to the
+  // symbolic initial condition `x(i)'.
+  if (!initial_conditions.empty())
+    if (kind_of_bound == LOWER)
+      lower_bound_.set_expression
+	(substitute_i_c_shifting(lower_bound_.expression()));
+    else
+      upper_bound_.set_expression
+	(substitute_i_c_shifting(upper_bound_.expression()));
+
+  return SUCCESS;
+}
+
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::
+compute_bound_non_linear(Bound kind_of_bound) const {
+  assert(kind_of_bound == LOWER || kind_of_bound == UPPER);
+  Expr bound;
+  unsigned int type = kind_of_bound == LOWER ? 1 : 2;
+  Solver_Status status = compute_non_linear_recurrence(bound, type);
+  if (status != SUCCESS)
+    return status;
+
+  if (kind_of_bound == LOWER)
+    lower_bound_.set_expression(bound);
+  else
+    upper_bound_.set_expression(bound);
+  return SUCCESS;
+}
+
+PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_lower_bound() const {
-  // See if we have the lower bound already.
+  // See if we already have the lower bound.
   if (lower_bound_.has_expression())
     return SUCCESS;
 
@@ -1421,41 +1463,35 @@ PURRS::Recurrence::compute_lower_bound() const {
   }
 
   Classifier_Status classifier_status = classify_and_catch_special_cases();
-  if (classifier_status == CL_SUCCESS) {
-    Solver_Status status;
-    if (is_linear_finite_order() || is_linear_infinite_order())
+  if (classifier_status == CL_SUCCESS)
+    switch (type_) {
+    case ORDER_ZERO:
+    case LINEAR_FINITE_ORDER_CONST_COEFF:
+    case LINEAR_FINITE_ORDER_VAR_COEFF:
+    case LINEAR_INFINITE_ORDER:
       if (!tried_to_compute_exact_solution)
-	// There is an exact solution.
 	return compute_exact_solution();
       else
 	return TOO_COMPLEX;
-    // Functional equation.
-    else if (is_functional_equation()) {
-      if ((status = approximate_functional_equation_lower()) != SUCCESS)
-	return status;
-      if (!initial_conditions.empty())
-	lower_bound_.set_expression
-	  (substitute_i_c_shifting(lower_bound_.expression()));
-      return SUCCESS;
+      break;
+    case FUNCTIONAL_EQUATION:
+      return compute_bound_functional_equation(LOWER); 
+      break;
+    case NON_LINEAR_FINITE_ORDER:
+      return compute_bound_non_linear(LOWER); 
+      break;
+    default:
+      throw std::runtime_error("PURRS internal error: "
+			       "compute_lower_bound().");
     }
-    // Non linear finite order.
-    else {
-      Expr bound;
-      if ((status = compute_non_linear_recurrence(bound, 1)) == SUCCESS) {
-	lower_bound_.set_expression(bound);
-	return SUCCESS;
-      }
-      else
-	return status;
-    }
-  }
   else
+    // return the `Solver_Status' associated to `classifier_status'.
     return map_status(classifier_status);
 }
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_upper_bound() const {
-  // See if we have the upper bound already.
+  // See if we already have the upper bound.
   if (upper_bound_.has_expression())
     return SUCCESS;
 
@@ -1467,36 +1503,29 @@ PURRS::Recurrence::compute_upper_bound() const {
   }
 
   Classifier_Status classifier_status = classify_and_catch_special_cases();
-  if (classifier_status == CL_SUCCESS) {
-    Solver_Status status;
-    if (is_linear_finite_order() || is_linear_infinite_order())
+  if (classifier_status == CL_SUCCESS)
+    switch (type_) {
+    case ORDER_ZERO:
+    case LINEAR_FINITE_ORDER_CONST_COEFF:
+    case LINEAR_FINITE_ORDER_VAR_COEFF:
+    case LINEAR_INFINITE_ORDER:
       if (!tried_to_compute_exact_solution)
-	// There is an exact solution.
 	return compute_exact_solution();
       else
 	return TOO_COMPLEX;
-    // Functional equation.
-    else if (is_functional_equation()) {
-      if ((status = approximate_functional_equation_upper()) != SUCCESS)
-	return status;
-      if (!initial_conditions.empty())
-	upper_bound_.set_expression
-	  (substitute_i_c_shifting(upper_bound_.expression()));
-      return SUCCESS;
+      break;
+    case FUNCTIONAL_EQUATION:
+      return compute_bound_functional_equation(UPPER); 
+      break;
+    case NON_LINEAR_FINITE_ORDER:
+      return compute_bound_non_linear(UPPER);
+      break;
+    default:
+      throw std::runtime_error("PURRS internal error: "
+			       "compute_upper_bound().");
     }
-    // Non linear finite order.
-    else {
-      Expr bound;
-      if ((status = compute_non_linear_recurrence(bound, 2))
-	  == SUCCESS) {
-	upper_bound_.set_expression(bound);
-	return SUCCESS;
-      }
-      else
-	return status;
-    }
-  }
   else
+    // return the `Solver_Status' associated to `classifier_status'.
     return map_status(classifier_status);
 }
 
