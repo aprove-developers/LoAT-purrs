@@ -42,26 +42,40 @@ public:
   //! \brief
   //! Builds the matrix with \p i rows and \j columns containing the
   //! expression in \p lst.
-  Matrix(unsigned i, unsigned j, const Expr_List& lst);
+  Matrix(unsigned i, unsigned j, const Expr_List& y);
 
   //! Copy-constructor.
-  Matrix(const Matrix& x);
+  Matrix(const Matrix& y);
 
   //! Destructor.
   ~Matrix();
 
   //! Assignment operator.
-  Matrix& operator=(const Matrix& x);
+  Matrix& operator=(const Matrix& y);
 
-  // FIXME: dovrebbe tornare Expr&?
-  Expr operator()(unsigned r, unsigned c) const;
+  //! Accesses to element in \p r row and \p c column of \p *this for reading.
+  const Expr& operator()(unsigned r, unsigned c) const;
 
+  //! Accesses to element in \p r row and \p c column of \p *this for writing.
+  Expr& operator()(unsigned r, unsigned c);
+
+  //! \brief
+  //! Solves a linear system consisting of a m x n matrix \p *this and a
+  //! m x p right hand side \p rhs.
+  /*!
+    \param vars    n x p matrix, all elements must be symbols.
+    \param rhs     m x p matrix.
+
+    Returns a n x p solution matrix.
+  */
   Matrix solve(const Matrix& vars, const Matrix& rhs) const;
+
 private:
   GiNaC::matrix m;
 
   friend class Expr;
 
+  //! Builds the matrix corresponding to \p gm.
   Matrix(const GiNaC::matrix& gm);
 };
 

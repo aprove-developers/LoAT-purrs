@@ -40,18 +40,18 @@ Matrix::Matrix(unsigned i, unsigned j)
 };
 
 inline
-Matrix::Matrix(unsigned i, unsigned j, const Expr_List& lst)
-  : m(i, j, lst.l) {
+Matrix::Matrix(unsigned i, unsigned j, const Expr_List& y)
+  : m(i, j, y.l) {
 };
 
 inline
-Matrix::Matrix(const Matrix& mat)
-  : m(mat.m) {
+Matrix::Matrix(const Matrix& y)
+  : m(y.m) {
 };
 
 inline Matrix&
-Matrix::operator=(const Matrix& mat) {
-  m = mat.m;
+Matrix::operator=(const Matrix& y) {
+  m = y.m;
   return *this;
 };
 
@@ -64,9 +64,13 @@ inline
 Matrix::~Matrix() {
 }
 
-// FIXME: dovrebbe tornare Expr&?
-inline Expr
+inline const Expr&
 Matrix::operator()(unsigned r, unsigned c) const {
+  return m(r, c);
+};
+
+inline Expr&
+Matrix::operator()(unsigned r, unsigned c) {
   return m(r, c);
 };
 
