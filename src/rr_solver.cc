@@ -884,18 +884,16 @@ solve_constant_coeff_order_k(Expr& g_n, unsigned int order, bool all_distinct,
 /*!
   Let \f$ e(n) \f$ be the expression in \p n contained in \p e,
   which is assumed to be already expanded.
-  This function returns <CODE>true</CODE> if exist a positive integer
-  that cancel the numerator or the denominator of \f$ e(n) \f$;
-  returns <CODE>false</CODE> otherwise.
-  In the first case \p i_c is equal to the biggest positive integer that
-  cancel the numerator or the denominator of \f$ e(n) \f$; in the second
-  case \f$ i_c = 0 \f$.
+  This function find the biggest positive integer that cancel the
+  numerator or the denominator of \f$ e(n) \f$ and, if it is
+  bigger than \p z, store it in \p z; if do not exist a positive
+  integer that cancel numerator or denominator of \f$ e(n) \f$ or
+  exist but smaller than \p z, then \p z is left unchanged.
   Note: this function works only if \f$ e(n) \f$ is a rational function
   in \p n.
 */
-bool
-domain_recurrence(const Expr& e, Number& i_c) {
-  bool shift_initial_conditions = false;
+void
+domain_recurrence(const Expr& e, Number& z) {
   if (e.is_rational_function(Recurrence::n)) {
     Expr numerator;
     Expr denominator;
@@ -910,7 +908,8 @@ domain_recurrence(const Expr& e, Number& i_c) {
       while (lower_degree > 0) {
 	partial_e = quo(partial_e, Recurrence::n, Recurrence::n);
 	lower_degree = partial_e.ldegree(Recurrence::n);
-	shift_initial_conditions = true;
+	if (z < 0)
+	  z = 0;
       }
       std::vector<Number> potential_roots;
       D_VAR(partial_e);
@@ -924,15 +923,12 @@ domain_recurrence(const Expr& e, Number& i_c) {
       for(unsigned i = potential_roots.size(); i-- > 0; ) {
 	Number temp = partial_e.subs(Recurrence::n,
 				     potential_roots[i]).ex_to_number();
-	if (temp == 0 &&  potential_roots[i] > i_c) {
-	  i_c = potential_roots[i];
-	  shift_initial_conditions = true;
-	}
+	if (temp == 0 &&  potential_roots[i] > z)
+	  z = potential_roots[i];
       }
     }
   }
-  D_VAR(i_c);
-  return shift_initial_conditions;
+  D_VAR(z);
 }
 
 //! Returns <CODE>true</CODE> if \p e contains parameters;
@@ -1384,7 +1380,8 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	    if (found_function_x)
 	      return NON_LINEAR_RECURRENCE;
 	    Solver_Status status
-	      = compute_order(decrement, order, index, coefficients.max_size());
+	      = compute_order(decrement, order, index,
+			      coefficients.max_size());
 	    if (status != RECURRENCE_OK)
 	      return status;
 	    if (num_term == 0)
@@ -1631,9 +1628,17 @@ PURRS::Recurrence::solve_easy_cases() const {
       return TOO_COMPLEX;
     break;
   }
-  
-  if (order > 1)
-    add_initial_conditions(g_n, num_coefficients, solution);
+
+  if (is_linear_finite_order_const_coeff())
+    if (order == 1 )      
+      // FIXME: per ora non si puo' usare la funzione
+      // `add_initial_conditions' perche' richiede un vettore di
+      // `Number' come `coefficients' e voglio risolvere anche le
+      // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
+      // add_initial_conditions(g_n, coefficients, solution);
+      solution += x(first_initial_condition()) * pwr(coefficients[1], n);
+    else
+      add_initial_conditions(g_n, num_coefficients, solution);
 
   D_MSGVAR("Before calling simplify: ", solution);
   solution = simplify_on_output_ex(solution.expand(), false);
@@ -1651,13 +1656,6 @@ PURRS::Recurrence::solve_easy_cases() const {
     // non-integer exponent. 
     solution = solution.collect(conditions);
   }
-#if 0
-  if (!verify_solution(solution, order, recurrence_rhs)) {
-    std::cout << "x(n) = " << recurrence_rhs << std::endl;
-    std::cout << " -> solution wrong or not enough simplified." << std::endl;
-    std::cout << std::endl;
-  }
-#endif
 
   return RECURRENCE_OK;
 }
@@ -1739,6 +1737,8 @@ PURRS::Recurrence::solve_try_hard() const {
     x_n = \lambda^n * x_0
           + \sum_{k=1}^n \lambda^{n-k} p(k).
   \f]
+  In this function we compute, when possible, the sum of the previous
+  formula; when this is not possible, we return the symbolic sum.
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
@@ -1802,13 +1802,6 @@ solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
 			     * inhomogeneous_term.subs(n, h));
     }
   }
-  // FIXME: per ora non si puo' usare la funzione
-  // `add_initial_conditions' perche' richiede un vettore di
-  // `Number' come `coefficients' e voglio risolvere anche le
-  // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
-  // add_initial_conditions(g_n, n, coefficients, initial_conditions,
-  //		              solution);
-  solution += x(first_initial_condition()) * pwr(roots[0].value(), n);
   return RECURRENCE_OK;
 }
 
@@ -1850,27 +1843,21 @@ solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
   }
   D_VAR(coefficient);
   D_VAR(p_n);
-  // `shift_initial_conditions' is true if exist a positive integer
+  // `z' will contain the biggest positive integer, if it exist,
   // that cancel the numerator or the denominator of the coefficient.
-  // In this case `i_c' contains the biggest positive integer found.
-  // If `shift_initial_conditions' is false then `i_c = 0'.
-  Number i_c = 0;
-  bool shift_initial_conditions = domain_recurrence(coefficient.expand(), i_c);
-  // Consider the biggest positive integer that cancel the denominator of
-  // `p_n' if it is bigger than `i_c'.
+  // If this positive integer do not exist then `z' is left to -1.
+  Number z = -1;
+  domain_recurrence(coefficient.expand(), z);
+  // Find the biggest positive integer that cancel the denominator of
+  // `p_n' and store it in `z' if it is bigger than the current `z'.
   if (!p_n.is_zero())
-    if (shift_initial_conditions)
-      domain_recurrence(denominator(p_n).expand(), i_c);
-    else
-      shift_initial_conditions = domain_recurrence(denominator(p_n).expand(),
-						   i_c);
+    domain_recurrence(denominator(p_n).expand(), z);
+  // The initial conditions will start from `z + 1'.
+  set_first_initial_condition((z + 1).to_int());
+
   Expr alpha_factorial;
-  if (shift_initial_conditions)
-    alpha_factorial
-      = compute_product(transform_in_single_fraction(coefficient), i_c + 2, n);
-  else
-    alpha_factorial
-      = compute_product(transform_in_single_fraction(coefficient), 1, n);
+  alpha_factorial = compute_product(transform_in_single_fraction(coefficient),
+				    z + 2, n);
   // FIXME: this simplification simplifies the value of `alpha_factorial'
   // but not the solution because we need to the simplification about
   // factorials and exponentials for the output.
@@ -1903,26 +1890,16 @@ solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
       // vedere direttamente il rapporto p(k)/alpha!(k) se e' sommabile
       // (forse prima di vedere gosper)
       Symbol h;
-      solution += PURRS::sum(h, 1, n, pwr(coefficient, -h)
-			     * p_n.subs(n, h));
+      solution += alpha_factorial * x(z + 1) + alpha_factorial 
+	* PURRS::sum(h, 1, n, p_n.subs(n, h) / alpha_factorial.subs(n, h));
       return RECURRENCE_OK;
     }
-    // To do this cycle or to consider `c_i + 2' as the lower limit of
+    // To do this cycle or to consider `z + 2' as the lower limit of
     // the sum is the same thing,  but so is better for the output.
-    Number j = 1;
-    if (shift_initial_conditions)
-      j = i_c + 2;
-    for (Number i = 1; i < j; ++i)
+    for (Number i = 1; i < z + 2; ++i)
       solution -= (p_n / alpha_factorial).subs(n, i);
   }
-  if (shift_initial_conditions) {
-    solution += x(i_c + 1);
-    set_first_initial_condition((i_c + 1).to_int());
-  }
-  else {
-    solution += x(i_c);
-    set_first_initial_condition(i_c.to_int());
-  }
+  solution += x(z + 1);
   solution *= alpha_factorial;
   return RECURRENCE_OK;
 }
