@@ -50,6 +50,7 @@ static struct option long_options[] = {
   {"exact",             no_argument,       0, 'E'},
   {"lower-bound",       no_argument,       0, 'L'},
   {"upper-bound",       no_argument,       0, 'U'},
+  {"check-solution",    no_argument,       0, 'C'},
   {"prolog-term",       no_argument,       0, 'P'},
   {"timeout",           required_argument, 0, 'T'},
   {"help",              no_argument,       0, 'h'},
@@ -75,6 +76,8 @@ print_usage() {
     "                           recurrence from below\n"
     "  -U, --upper-bound        try to approximate the solution of the\n"
     "                           recurrence from above\n"
+    "  -C, --check-solution     try to verify the solution or the\n"
+    "                           approximation\n"
     "  -P, --prolog-term        print the solution or the approximation\n"
     "                           in the form of prolog term\n"
     "  -T, --timeout N          interrupt computation after N seconds\n"
@@ -87,7 +90,7 @@ print_usage() {
        << endl;
 }
 
-#define OPTION_LETTERS "EI:LPR:T:UhilrvV"
+#define OPTION_LETTERS "CEI:LPR:T:UhilrvV"
 
 // To avoid mixing incompatible options.
 static bool production_mode = false;
@@ -104,6 +107,9 @@ static bool lower_bound_required = false;
 
 // When true, an approximation from above of the solution is required.
 static bool upper_bound_required = false;
+
+// When true, the validation of the solution or the approximation is required.
+static bool validation_solution_required = false;
 
 // When true, the output has the form of prolog term.
 static bool prolog_term_required = false;
@@ -165,7 +171,7 @@ static void
 do_not_mix_modes() {
   if (production_mode && test_mode) {
     cerr << program_name
-         << ": production mode options (-R, -I, -E, -L, -U, ,-P, -T) and\n"
+         << ": production mode options (-R, -I, -E, -L, -U, -C, -P, -T) and\n"
          << "test mode options (-i, -l, -r, -v) are mutually exclusive"
          << endl;
     my_exit(1);
@@ -309,6 +315,12 @@ process_options(int argc, char* argv[]) {
       production_mode = true;
       do_not_mix_modes();
       upper_bound_required = true;
+      break;
+
+    case 'C':
+      production_mode = true;
+      do_not_mix_modes();
+      validation_solution_required = true;
       break;
 
     case 'P':
@@ -522,7 +534,7 @@ all_space(const string& s) {
 }
 
 ostream&
-operator<<(ostream& s, Recurrence::Verify_Status v) {
+operator<<(ostream& s, const Recurrence::Verify_Status& v) {
   switch (v) {
   case Recurrence::PROVABLY_CORRECT:
     s << "PROVABLY_CORRECT";
@@ -536,8 +548,53 @@ operator<<(ostream& s, Recurrence::Verify_Status v) {
   case Recurrence::INCONCLUSIVE_VERIFICATION:
     s << "INCONCLUSIVE_VERIFICATION";
     break;
+  default:
+    throw std::runtime_error("PURRS internal error: "
+			     "operator<<(ostream&, Verify_Status&).");
   }
   return s;
+}
+
+#if PROFILE_VERIFICATION
+class Profiler {
+private:
+  time_unit_t accumulator;
+  std::string name;
+
+public:
+  Profiler(const std::string& n)
+    : name(n) {
+  }
+
+  void accumulate(time_unit_t i) {
+    accumulator += i;
+  }
+
+  ~Profiler() {
+    std::cerr << "Time spent in " << name
+	      << ": " << time_unit_to_usecs(accumulator)/1000 << " ms"
+	      << std::endl;
+  }
+};
+
+Profiler ves_profiler("verify_exact_solution()");
+#endif
+
+string
+set_string_validation(const Recurrence::Verify_Status& v) {
+  switch (v) {
+  case Recurrence::PROVABLY_CORRECT:
+    return "provably_correct";
+  case Recurrence::PARTIAL_PROVABLY_CORRECT:
+    return "partial_provably_correct";
+  case Recurrence::PROVABLY_INCORRECT:
+    return "provably_incorrect";
+  case Recurrence::INCONCLUSIVE_VERIFICATION:
+    return "inconclusive_verification";
+  default:
+    throw std::runtime_error("PURRS internal error: "
+			     "set_string_validation().");
+  }
 }
 
 //! Kinds of solution or approximation required.
@@ -548,7 +605,8 @@ void
 output_solution(const Kind& kind, const Expr& solution_or_bound,
 		const std::vector<string>& conditions,
 		const std::map<index_type, Expr>& initial_conditions,
-		const std::vector<string>& blackboard) {
+		const std::vector<string>& blackboard,
+		const string& validation) {
   std::ostringstream s;
   switch (kind) {
   case EXACT:
@@ -596,8 +654,12 @@ output_solution(const Kind& kind, const Expr& solution_or_bound,
       if (++j != initial_conditions_end)
 	cout << ", ";
     }
-    cout << endl;
+    if (!initial_conditions.empty())
+      cout << endl;
   }
+  // Result of the validation's process.
+  if (!validation.empty())
+    cout << validation << endl;
 }
 
 // Print the solution and all informations about it in the form of
@@ -607,8 +669,10 @@ output_solution_prolog_term(const Kind& kind, const Expr& solution_or_bound,
 			    const std::vector<string>& conditions,
 			    const std::map<index_type, Expr>&
 			    initial_conditions,
-			    const std::vector<string>& blackboard) {
+			    const std::vector<string>& blackboard,
+			    const string& validation) {
   std::ostringstream s;
+  // Beginning of the Prolog term.
   switch (kind) {
   case EXACT:
     s << "exact_solution(";
@@ -650,8 +714,13 @@ output_solution_prolog_term(const Kind& kind, const Expr& solution_or_bound,
     if (i != blackboard_size - 1)
       s << ", ";
   }
-  s << "]).";
-
+  s << "]";
+  // Result of the validation's process.
+  if (!validation.empty())
+    s << ", " << validation;
+  // End of the Prolog term.
+  s << ").";
+  
   cout << s.str() << endl;
 }
 
@@ -704,6 +773,19 @@ do_production_mode() {
 	precp->exact_solution(exact_solution);
 	exact_solution
 	  = precp->substitute_auxiliary_definitions(exact_solution);
+	string validation;
+	// Try to verify the solution.
+	if (validation_solution_required) {
+#if PROFILE_VERIFICATION
+	  time_unit_t time_begin = get_time();
+#endif
+	  Recurrence::Verify_Status status = precp->verify_exact_solution();
+	  validation = set_string_validation(status);
+#if PROFILE_VERIFICATION
+	  time_unit_t time_end = get_time(); 
+	  ves_profiler.accumulate(time_end-time_begin);
+#endif
+	}
 	// Get all informations about this recurrence.
 	std::vector<string> conditions;
 	std::vector<string> blackboard;
@@ -713,10 +795,11 @@ do_production_mode() {
 			       blackboard);
 	if (prolog_term_required)
 	  output_solution_prolog_term(EXACT, exact_solution, conditions,
-				      initial_conditions, blackboard);
+				      initial_conditions, blackboard,
+				      validation);
 	else
 	  output_solution(EXACT, exact_solution, conditions,
-			  initial_conditions, blackboard); 
+			  initial_conditions, blackboard, validation);
 	goto exit;
       }
 
@@ -750,6 +833,19 @@ do_production_mode() {
 	// OK: get the lower bound and print it.
 	Expr lower;
 	precp->lower_bound(lower);
+	string validation;
+	// Try to verify the solution.
+	if (validation_solution_required) {
+#if PROFILE_VERIFICATION
+	  time_unit_t time_begin = get_time();
+#endif
+	  Recurrence::Verify_Status status = precp->verify_lower_bound();
+	  validation = set_string_validation(status);
+#if PROFILE_VERIFICATION
+	  time_unit_t time_end = get_time(); 
+	  ves_profiler.accumulate(time_end-time_begin);
+#endif
+	}
 	// Get all informations about this recurrence.
 	std::vector<string> conditions;
 	std::map<index_type, Expr> initial_conditions
@@ -760,10 +856,11 @@ do_production_mode() {
 	// Output must have the form of a prolog term.
 	if (prolog_term_required)
 	  output_solution_prolog_term(LOWER, lower, conditions,
-				      initial_conditions, blackboard);
+				      initial_conditions, blackboard,
+				      validation);
 	else
 	  output_solution(LOWER, lower, conditions,
-			  initial_conditions, blackboard);
+			  initial_conditions, blackboard, validation);
       }
       break;
 
@@ -797,6 +894,19 @@ do_production_mode() {
 	// OK: get the upper bound and print it.
 	Expr upper;
 	precp->upper_bound(upper);
+	string validation;
+	// Try to verify the solution.
+	if (validation_solution_required) {
+#if PROFILE_VERIFICATION
+	  time_unit_t time_begin = get_time();
+#endif
+	  Recurrence::Verify_Status status = precp->verify_upper_bound();
+	  validation = set_string_validation(status);
+#if PROFILE_VERIFICATION
+	  time_unit_t time_end = get_time(); 
+	  ves_profiler.accumulate(time_end-time_begin);
+#endif
+	}
 	// Get all informations about this recurrence.
 	std::vector<string> conditions;
 	std::map<index_type, Expr> initial_conditions
@@ -807,10 +917,11 @@ do_production_mode() {
 	// Output must have the form of a prolog term.
 	if (prolog_term_required)
 	  output_solution_prolog_term(UPPER, upper, conditions,
-				      initial_conditions, blackboard);
+				      initial_conditions, blackboard,
+				      validation);
 	else
 	  output_solution(UPPER, upper, conditions,
-			  initial_conditions, blackboard);
+			  initial_conditions, blackboard, validation);
       }
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
@@ -904,30 +1015,6 @@ result_of_the_verification(unsigned type,
   }  
 }
 
-#if PROFILE_VERIFICATION
-class Profiler {
-private:
-  time_unit_t accumulator;
-  std::string name;
-
-public:
-  Profiler(const std::string& n)
-    : name(n) {
-  }
-
-  void accumulate(time_unit_t i) {
-    accumulator += i;
-  }
-
-  ~Profiler() {
-    std::cerr << "Time spent in " << name
-	      << ": " << time_unit_to_usecs(accumulator)/1000 << " ms"
-	      << std::endl;
-  }
-};
-
-Profiler ves_profiler("verify_exact_solution()");
-#endif
 
 int
 main(int argc, char *argv[]) try {
