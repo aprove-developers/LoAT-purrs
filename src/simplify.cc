@@ -761,19 +761,39 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
   if (e_rewritten.is_a_mul()) {
     Expr factor_function = 1;
     Expr factor_no_function = 1;
-    for (unsigned i = e_rewritten.nops(); i-- > 0; )
-      if (e_rewritten.op(i).is_a_function()) {
-	Expr argument = simplify_on_output_ex(e_rewritten.op(i).op(0), n, input);
-	factor_function *= e_rewritten.op(i).subs(e_rewritten.op(i).op(0),
-						  argument);
+    for (unsigned i = e_rewritten.nops(); i-- > 0; ) {
+      const Expr& op_i = e_rewritten.op(i);
+      if (op_i.is_a_function()) {
+	if (op_i.is_the_sum_function())
+	  factor_function *= sum(op_i.op(0), op_i.op(1), op_i.op(2),
+				 simplify_on_output_ex(op_i.op(3), n, input));
+	else if (op_i.is_the_prod_function())
+	  factor_function *= prod(op_i.op(0), op_i.op(1), op_i.op(2),
+				  simplify_on_output_ex(op_i.op(3), n, input));
+	else
+	  factor_function
+	    *= apply(op_i.functor(),
+		     simplify_on_output_ex(op_i.op(0), n, input));
       }
       else
-	factor_no_function *= e_rewritten.op(i);
+	factor_no_function *= op_i;
+    }
     e_rewritten = factor_function * factor_no_function;
   }
   else if (e_rewritten.is_a_function()) {
-    Expr argument = simplify_on_output_ex(e_rewritten.op(0), n, input);
-    e_rewritten = e_rewritten.subs(e_rewritten.op(0), argument);
+    if (e_rewritten.is_the_sum_function())
+      e_rewritten = sum(e_rewritten.op(0),
+			e_rewritten.op(1),
+			e_rewritten.op(2),
+			simplify_on_output_ex(e_rewritten.op(3), n, input));
+    else if (e_rewritten.is_the_prod_function())
+      e_rewritten = prod(e_rewritten.op(0),
+			 e_rewritten.op(1),
+			 e_rewritten.op(2),
+			 simplify_on_output_ex(e_rewritten.op(3), n, input));
+    else
+      e_rewritten = apply(e_rewritten.functor(),
+			  simplify_on_output_ex(e_rewritten.op(0), n, input));
   }
   D_MSGVAR("e_rewritten dopo function: ", e_rewritten);
 
@@ -782,13 +802,11 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
   if (e_rewritten.is_a_mul()) {
     Expr argument = 0;
     Expr rem = 1;
-    for (unsigned i = e_rewritten.nops(); i-- > 0; ) {
-      Expr_List l;
-      if (e_rewritten.op(i).match(exp(wild(0)), l))
-	argument += l.op(0).rhs();
+    for (unsigned i = e_rewritten.nops(); i-- > 0; )
+      if (e_rewritten.op(i).is_the_exp_function())
+	argument += e_rewritten.op(i).op(0);
       else
 	rem *= e_rewritten.op(i);
-    }
     e_rewritten = exp(argument) * rem;
   D_MSGVAR("e_rewritten dopo `exp': ", e_rewritten);
   }
