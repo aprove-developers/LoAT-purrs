@@ -842,7 +842,7 @@ bool insert_initial_conditions(Expr& solution) {
 }
 
       
-Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr>& terms_with_x, 
+Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& terms_with_x, 
 		    const Symbol& n_replacement, Expr& real_var_symbol, Expr& solution) {
   const int num_param = lhs.arg(1).nops();
   vector<int> dummy(num_param);
@@ -850,13 +850,20 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
   // We need a symbol different from any used symbol.
   Symbol different_symbol;
 
-  for (int i = num_param - 1 ; i >= 0; --i) {
+  lhs = lhs.substitute(Recurrence::n, n_replacement);
+  rhs = rhs.substitute(Recurrence::n, n_replacement);
+  for (unsigned i = terms_with_x.size(); i-- > 0; )
+    terms_with_x[i] = terms_with_x[i].substitute(Recurrence::n, n_replacement);
+  for (unsigned i = conds.size(); i-- > 0; )
+    conds[i] = conds[i].substitute(Recurrence::n, n_replacement);
+  
+  for (unsigned i = num_param; i-- > 0; ) {
     dummy[i] = true;
     for (vector<Expr>::const_iterator j = terms_with_x.begin(); j != terms_with_x.end(); ++j) 
       if (lhs.arg(0) == j->arg(0)) {
 	if (!dummy[i])
 	  break;
-	for (int k = j->arg(1).nops() - 1; k >= 0; --k) {
+	for (unsigned k = j->arg(1).nops(); k-- > 0; ) {
 	  const Expr& examined_arg = lhs.arg(1).op(i);
 	  const Expr& this_arg = j->arg(1).op(k);
 	  // An argument can be neglected if it always occurs as itself or as a number...
@@ -889,8 +896,6 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
 	real_var_index.push_back(i);
     }
   }
-  
-  rhs = rhs.substitute(Recurrence::n, n_replacement);
   
   // One of the x2() functions will be converted into the x1() function.
   index_type converted_x_index;
@@ -946,7 +951,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
       // Replace the substituted symbols back to their place.
       solution = solution.substitute(Recurrence::n, real_var_symbol);
       solution = solution.substitute(n_replacement, Recurrence::n);
-      
+      lhs = lhs.substitute(n_replacement, Recurrence::n);
       
     }
   }
@@ -1038,15 +1043,13 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
 	  }
 	}
 	
-	//      cout << solution << " - " << rendl;
-	
 	insert_initial_conditions(solution_0);
 	insert_initial_conditions(solution_1);
+
 	// Replace the substituted symbols back to their place.
 	solution_0 = solution_0.substitute(Recurrence::n, real_var_symbol_0);
-	solution_0 = solution_0.substitute(n_replacement, Recurrence::n);
 	solution_1 = solution_1.substitute(Recurrence::n, real_var_symbol_1);
-	solution_1 = solution_1.substitute(n_replacement, Recurrence::n);
+       
 	Expr zero = 0;
 	// FIXME: Use min if it is allowed.
 	// FIXME: Handle the case m = n as well.
@@ -1054,6 +1057,11 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
 	  (real_var_symbol_0 - real_var_symbol_1) * solution_0 +
 	  max(real_var_symbol_1 - real_var_symbol_0, zero) / 
 	  (real_var_symbol_1 - real_var_symbol_0) * solution_1;
+
+	// If 'n` was substituted, perform the inverse substitution.
+	solution = solution.substitute(n_replacement, Recurrence::n);
+	lhs = lhs.substitute(n_replacement, Recurrence::n);
+
       }
     }
     else {
@@ -1097,6 +1105,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
 	  // Replace the substituted symbols back to their place.
 	  solution = solution.substitute(Recurrence::n, real_var_symbol_0);
 	  solution = solution.substitute(n_replacement, Recurrence::n);
+	  lhs = lhs.substitute(n_replacement, Recurrence::n);
 	}
       }
     }
