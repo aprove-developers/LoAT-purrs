@@ -30,10 +30,11 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
-Non_Linear_Info::Non_Linear_Info(const Expr& new_rhs, const Expr& base_exp_log,
+Non_Linear_Info::Non_Linear_Info(const Expr& new_rhs,
+				 const std::pair<Number, Expr>& coeff_and_base,
 				 const std::vector<Symbol> auxiliary_symbols)
   : rhs_transformed_in_linear_(new_rhs),
-    base_exp_log_(base_exp_log),
+    coeff_and_base_(coeff_and_base),
     auxiliary_symbols_(auxiliary_symbols),
     order_if_linear_(0),
     non_linear_to_linear_fwdr_(0) {
@@ -42,7 +43,7 @@ Non_Linear_Info::Non_Linear_Info(const Expr& new_rhs, const Expr& base_exp_log,
 inline
 Non_Linear_Info::Non_Linear_Info(const Non_Linear_Info& y)
   : rhs_transformed_in_linear_(y.rhs_transformed_in_linear_),
-    base_exp_log_(y.base_exp_log_),
+    coeff_and_base_(y.coeff_and_base_),
     auxiliary_symbols_(y.auxiliary_symbols_),
     order_if_linear_(y.order_if_linear_),
     non_linear_to_linear_fwdr_(y.non_linear_to_linear_fwdr_) {
@@ -55,7 +56,7 @@ Non_Linear_Info::~Non_Linear_Info() {
 inline Non_Linear_Info&
 Non_Linear_Info::operator=(const Non_Linear_Info& y) {
   rhs_transformed_in_linear_ = y.rhs_transformed_in_linear_;
-  base_exp_log_ = y.base_exp_log_;
+  coeff_and_base_ = y.coeff_and_base_;
   auxiliary_symbols_ = y.auxiliary_symbols_;
   order_if_linear_ = y.order_if_linear_;
   non_linear_to_linear_fwdr_ = y.non_linear_to_linear_fwdr_;
@@ -72,14 +73,24 @@ Non_Linear_Info::rhs_transformed_in_linear() {
   return rhs_transformed_in_linear_;
 }
 
+inline Number
+Non_Linear_Info::coeff_simple_non_linear_rec() const {
+  return coeff_and_base_.first;
+}
+
+inline Number&
+Non_Linear_Info::coeff_simple_non_linear_rec() {
+  return coeff_and_base_.first;
+}
+
 inline Expr
 Non_Linear_Info::base_exp_log() const {
-  return base_exp_log_;
+  return coeff_and_base_.second;
 }
 
 inline Expr&
 Non_Linear_Info::base_exp_log() {
-  return base_exp_log_;
+  return coeff_and_base_.second;
 }
 
 inline const std::vector<Symbol>&
