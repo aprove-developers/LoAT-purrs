@@ -146,12 +146,14 @@ error(const string& s) {
 
 static bool expect_exactly_solved;
 static bool expect_not_exactly_solved;
+static bool explodes;
 
 void
 set_expectations(const string& s) {
   // No expectations by default.
   expect_exactly_solved
     = expect_not_exactly_solved
+    = explodes
     = false;
 
   const char* p = s.c_str();
@@ -159,6 +161,9 @@ set_expectations(const string& s) {
     if (isspace(c))
       return;
     switch (c) {
+    case 'E':
+      explodes = true;
+      break;
     case 'y':
       expect_exactly_solved = true;
       break;
@@ -268,6 +273,10 @@ main(int argc, char *argv[]) try {
 	continue;
 
       set_expectations(expectations);
+
+      // Avoid exploding.
+      if (explodes)
+	continue;
 
       getline(line, rhs_string);
       // Premature end of file?
