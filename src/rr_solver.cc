@@ -1286,9 +1286,12 @@ PURRS::Recurrence::find_non_linear_recurrence(const Expr& e) {
 }
 
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::compute_order(const Number& decrement, 
-				 int& order, unsigned long& index,
-				 unsigned long max_size) {
+PURRS::Recurrence::compute_order_inserting_decrement(const Number& decrement, 
+						     int& order,
+						     unsigned long& index,
+						     std::vector<unsigned>&
+						     decrements,
+						     unsigned long max_size) {
   if (decrement < 0)
     return HAS_NEGATIVE_DECREMENT;
   // Make sure that (1) we can represent `decrement' as a long, and
@@ -1299,6 +1302,7 @@ PURRS::Recurrence::compute_order(const Number& decrement,
   
   // The `order' is defined as the maximum value of `index'.
   index = decrement.to_long();
+  decrements.push_back(index);
   if (order < 0 || index > unsigned(order))
     order = index;
   return OK;
@@ -1323,6 +1327,7 @@ PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 					  std::vector<Expr>& coefficients,
 					  int& order,
+					  std::vector<unsigned>& decrements,
 					  int& gcd_among_decrements,
 					  int num_term) const {
   unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
@@ -1335,8 +1340,10 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	Number decrement;
 	if (get_constant_decrement(argument, decrement)) {
 	  unsigned long index;
-	  Solver_Status status = compute_order(decrement, order, index,
-					       coefficients.max_size());
+	  Solver_Status status
+	    = compute_order_inserting_decrement(decrement, order, index,
+						decrements,
+						coefficients.max_size());
 	  if (status != OK)
 	    return status;
 	  if (num_term == 0)
@@ -1371,8 +1378,10 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	  if (get_constant_decrement(argument, decrement)) {
 	    if (found_function_x)
 	      return NON_LINEAR_RECURRENCE;
-	    Solver_Status status = compute_order(decrement, order, index,
-						 coefficients.max_size());
+	    Solver_Status status
+	      = compute_order_inserting_decrement(decrement, order, index,
+						  decrements,
+						  coefficients.max_size());
 	    if (status != OK)
 	      return status;
 	    if (num_term == 0)
@@ -1435,97 +1444,10 @@ PURRS::Recurrence::solve_easy_cases() const {
   // We will store here the coefficients of linear part of the recurrence.
   std::vector<Expr> coefficients;
 
-#if 0
-  do {
-    // These patterns are used repeatedly for pattern matching.
-    // We avoid recreating them over and over again by declaring
-    // them static.
-    static Expr x_i = x(wild(0));
-    static Expr x_i_plus_r = x_i + wild(1);
-    static Expr a_times_x_i = wild(1)*x_i;
-    static Expr a_times_x_i_plus_r = a_times_x_i + wild(2);
+  // We will store here the decrements `d' of `x(n-d)' of linear part of
+  // the recurrence.
+  std::vector<unsigned> decrements;
 
-    // This will hold the substitutions produced by the various match
-    // operations.
-    Expr_List substitution;
-    
-    // This will hold the index `i' in contexts of the form `x(i)'.
-    Expr i;
-    
-    // This will hold the coefficient `a' in contexts of the form
-    // `a*x(i)'.
-    Expr a;
-
-    // The following matches are attempted starting from the most
-    // common, then the second most common and so forth.  The check
-    // `if (!i.has(n))' is necessary because otherwise do not accept
-    // `x(i)' with `i' numeric in a general recurrence relation
-    // (es. x(n) = x(n-1)+x(0) or x(n) = x(n-1)*x(0)).
-    if (clear(substitution), e.match(x_i_plus_r, substitution)) {
-      i = get_binding(substitution, 0);
-      if (!i.has(n))
-	break;
-      a = 1;
-      e = get_binding(substitution, 1);
-    }
-    else if (clear(substitution), e.match(a_times_x_i_plus_r, substitution)) {
-      i = get_binding(substitution, 0);
-      if (!i.has(n))
-	break;
-      a = get_binding(substitution, 1);
-      e = get_binding(substitution, 2);
-    }
-    else if (clear(substitution), e.match(a_times_x_i, substitution)) {
-      i = get_binding(substitution, 0);
-      if (!i.has(n))
-	break;
-      a = get_binding(substitution, 1);
-      e = 0;
-    }
-    else if (clear(substitution), e.match(x_i, substitution)) {
-      i = get_binding(substitution, 0);
-      if (!i.has(n))
-	break;
-      a = 1;
-      e = 0;
-    }
-    else
-      break;
- 
-    Number decrement;
-    if (!get_constant_decrement(i, decrement))
-      return HAS_NON_INTEGER_DECREMENT;
-    if (decrement == 0)
-      return HAS_NULL_DECREMENT;
-    if (decrement < 0)
-      return HAS_NEGATIVE_DECREMENT;
-    // Make sure that (1) we can represent `decrement' as a long, and
-    // (2) we will be able to store the coefficient into the
-    // appropriate position of the `coefficients' vector.
-    if (decrement >= LONG_MAX || decrement >= coefficients.max_size())
-      return HAS_HUGE_DECREMENT;
-
-    // Detect non-constant coefficients, i.e., those with occurrences of `n'.
-    if (a.has(n))
-      has_non_constant_coefficients = true;
-
-    // The `order' is defined as the maximum value of `index'.
-    unsigned long index = decrement.to_long();
-    if (order < 0 || index > unsigned(order))
-      order = index;
-
-    // The vector `coefficients' contains in the `i'-th position the
-    // coefficient of `x(n-i)'.  The first position always contains 0.
-    if (index > coefficients.size())
-      coefficients.insert(coefficients.end(),
-			  index - coefficients.size(),
-			  Number(0));
-    if (index == coefficients.size())
-      coefficients.push_back(a);
-    else
-      coefficients[index] += a;
-  } while (!e.is_zero());
-#else
   Expr inhomogeneous_term = 0;
   Solver_Status status;
   int gcd_among_decrements = 0;
@@ -1534,25 +1456,26 @@ PURRS::Recurrence::solve_easy_cases() const {
     // It is necessary that the following loop starts from `0'.
     for (unsigned i = 0; i < num_summands; ++i) {
       status = classification_summand(expanded_rhs.op(i), inhomogeneous_term,
-				      coefficients, order,
+				      coefficients, order, decrements,
 				      gcd_among_decrements, i);
       if (status != OK)
 	return status;
     }
   else {
     status = classification_summand(expanded_rhs, inhomogeneous_term,
-				    coefficients, order,
+				    coefficients, order, decrements,
 				    gcd_among_decrements, 0);
     if (status != OK)
       return status;
   }
-#endif
 
-  // Check if the recurrence is non linear, i.e. there is a non-linear term
+  // Check if the recurrence is non linear, i.e., there is a non-linear term
   // containing in `e' containing `x(a*n+b)'.
   status = find_non_linear_recurrence(inhomogeneous_term);
   if (status != OK)
     return status;
+
+  tdip = new Finite_Order_Info(order, decrements, coefficients);
 
   // `inhomogeneous_term' is a function of `n', the parameters and of
   // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
@@ -1561,6 +1484,10 @@ PURRS::Recurrence::solve_easy_cases() const {
     solution = inhomogeneous_term;
     return OK;
   }
+
+  if (!is_linear_finite_order_var_coeff())
+    set_linear_finite_order_const_coeff();
+
   // If the greatest common divisor among the decrements is greater than one,
   // the order reduction is applicable.
   if (gcd_among_decrements > 1 && is_linear_finite_order_const_coeff()) {
@@ -1582,6 +1509,7 @@ PURRS::Recurrence::solve_easy_cases() const {
   }
 
   D_VAR(order);
+  D_VEC(decrements, 0, decrements.size()-1);
   D_VEC(coefficients, 1, order);
   D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
 
