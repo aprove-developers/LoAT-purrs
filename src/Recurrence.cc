@@ -25,8 +25,29 @@ http://www.cs.unipr.it/purrs/ . */
 #include <config.h>
 
 #include "Recurrence.defs.hh"
+#include <iostream>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 const PURRS::Symbol&
 PURRS::Recurrence::n = Symbol("n");
+
+void
+PURRS::Recurrence::dump(std::ostream& s) const {
+  s << "solved = " << (solved ? "true" : "false") << std::endl;
+  s << "recurrence_rhs = " << recurrence_rhs << std::endl;
+  s << "auxiliary_definitions = ";
+  if (auxiliary_definitions.empty())
+    s << "empty" << std::endl;
+  else {
+    s << std::endl;
+    typedef std::map<Symbol, Expr> Map;
+    for (Map::const_iterator i = auxiliary_definitions.begin(),
+	   ad_end = auxiliary_definitions.end();
+	 i != ad_end;
+	 ++i)
+      s << "  " << i->first << " = " << i->second << std::endl;
+  }
+  //s << "solution = " << solution << std::endl;
+}
+
