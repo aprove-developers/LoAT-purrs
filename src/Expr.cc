@@ -106,6 +106,37 @@ REGISTER_FUNCTION(floor,
 		  derivative_func(floor_deriv));
 
 
+/* Sc() function */
+
+ex
+Sc_eval(const ex& x, const ex& y) {
+  return Sc(x, y).hold();
+}
+
+ex
+Sc_evalf(const ex& x, const ex& y) {
+  return Sc(x, y).hold();
+}
+
+ex
+Sc_deriv(const ex&, const ex&, unsigned int) {
+  abort();
+}
+
+/*!
+  We define the symbolic function
+  \f[
+    Sc(x, y) = \lfloor
+                 \frac{x}{y^{\lfloor \frac{\log x}{\log y} \rfloor}}
+               \rfloor.
+  \f]
+*/
+REGISTER_FUNCTION(Sc,
+		  eval_func(Sc_eval).
+		  evalf_func(Sc_evalf).
+		  derivative_func(Sc_deriv));
+
+
 /* mod() function */
 
 //! Evaluation of the <CODE>mod(x, y)</CODE>.

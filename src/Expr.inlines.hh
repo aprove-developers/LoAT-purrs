@@ -38,6 +38,7 @@ namespace GiNaC {
 
 DECLARE_FUNCTION_1P(x);
 DECLARE_FUNCTION_1P(floor);
+DECLARE_FUNCTION_2P(Sc);
 DECLARE_FUNCTION_2P(mod);
 DECLARE_FUNCTION_2P(binom);
 DECLARE_FUNCTION_4P(sum);
@@ -698,6 +699,12 @@ floor(const Expr& x) {
 }
 
 inline Expr
+Sc(const Expr& x, const Expr& y) {
+  return Sc(static_cast<const Expr::Base>(x),
+	    static_cast<const Expr::Base>(y));
+}
+
+inline Expr
 mod(const Expr& x, const Expr& y) {
   return mod(static_cast<const Expr::Base>(x),
 	     static_cast<const Expr::Base>(y));
@@ -779,6 +786,11 @@ Expr::is_the_x_function() const {
 inline bool
 Expr::is_the_floor_function() const {
   return is_ex_the_function(*this, floor);
+}
+
+inline bool
+Expr::is_the_Sc_function() const {
+  return is_ex_the_function(*this, Sc);
 }
 
 inline bool

@@ -456,6 +456,10 @@ Expr x(const Expr& y);
 /*! \relates Expr */
 Expr floor(const Expr& x);
 
+//! Returns the function \f$ Sc(x, y) \f$.
+/*! \relates Expr */
+Expr Sc(const Expr& x, const Expr& y);
+
 //! Returns the function \f$ mod(x, y) \f$.
 /*! \relates Expr */
 Expr mod(const Expr& x, const Expr& y);
@@ -666,6 +670,11 @@ public:
   //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
   //! function <CODE>floor()</CODE>.
   bool is_the_floor_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>Sc()</CODE>.
+  bool is_the_Sc_function() const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
@@ -1247,12 +1256,13 @@ private:
   friend Expr sqrfree(const Expr& x, const Expr_List& y);
   friend Expr lsolve(const Expr_List& x, const Expr_List& y);
   friend Expr x(const Expr& y);
+  friend Expr floor(const Expr& x);
+  friend Expr Sc(const Expr& x, const Expr& y);
+  friend Expr mod(const Expr& x, const Expr& y);
   friend Expr sum(const Expr& index, const Expr& lower, const Expr& upper,
 		  const Expr& summand);
   friend Expr prod(const Expr& index, const Expr& lower, const Expr& upper,
 		   const Expr& factor);
-  friend Expr mod(const Expr& x, const Expr& y);
-  friend Expr floor(const Expr& x);
 
   //! Builds the expression corresponding to \p ge.
   Expr(const Base& ge);
