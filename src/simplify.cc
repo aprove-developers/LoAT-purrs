@@ -642,7 +642,12 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
 }
 
 /*!
-  ...
+  Let \f$ a_1 = b_1^{n_1 / d_1} \f$ and \f$ a_2 = b_2^{n_2 / d_2} \f$ be
+  irrational numbers. This function computes \f$ a b = r^{n / d} \f$,
+  where \f$ a b \f$ is in the standard form.
+  To do this \f$ a \f$ and \f$ b \f$ are before transformed in two equivalent
+  irrational numbers with the same denominator in the exponents
+  (reduction to same index of two roots).
 */
 static Expr
 red_prod(const Number& base1, const Number& exp1, 
@@ -656,7 +661,7 @@ red_prod(const Number& base1, const Number& exp1,
   Number k1_den = exp1.denominator();
   Number k2_num = exp2.numerator();
   Number k2_den = exp2.denominator();
-  
+
   base_1 = pwr(base_1, k1_num);
   base_2 = pwr(base_2, k2_num);
   
@@ -677,69 +682,59 @@ red_prod(const Number& base1, const Number& exp1,
 */
 static Expr
 reduce_product(const Expr& e) {
-  if (e.is_a_mul()) {
-    Expr factor_to_reduce = 1;
-    Expr factor_no_to_reduce = 1;
-    Number base_1 = 1;
-    Number exp_1 = 1;
-    for (unsigned i = e.nops(); i-- > 0; ) {
-      const Expr& factor_e = e.op(i);
-      if (factor_e.is_a_power()) {
-	// Base and exponent of `factor_e' are both numerics.
-	Number base_2;
-	Number exp_2;
-	if (factor_e.arg(0).is_a_number(base_2) &&
-	    factor_e.arg(1).is_a_number(exp_2)) {
-	  Expr to_reduce = red_prod(base_1, exp_1, base_2, exp_2);
-	  // red_prod returns `numeric' or `numeric^numeric' or
-	  // `numeric * numeric^numeric'.
-	  if (to_reduce.is_a_mul()) {
-	    assert(to_reduce.nops() == 2); 
-	    for (unsigned j = 2; j-- > 0; ) {
-	      const Expr& factor = to_reduce.op(j);
-	      if (factor.is_a_power()) {
-		const Expr& base_factor = factor.arg(0);
-		const Expr& exponent_factor = factor.arg(1);
-		base_1 = base_factor.ex_to_number();
-		exp_1  = exponent_factor.ex_to_number();
-		factor_to_reduce = pwr(base_factor, exponent_factor);
-	      }
-	      else
-		factor_no_to_reduce *= factor;
+  assert(e.is_a_mul());
+  Expr factor_to_reduce = 1;
+  Expr factor_no_to_reduce = 1;
+  Number base_1 = 1;
+  Number exp_1 = 1;
+  for (unsigned i = e.nops(); i-- > 0; ) {
+    const Expr& factor_e = e.op(i);
+    if (factor_e.is_a_power()) {
+      // Base and exponent of `factor_e' are both numerics.
+      Number base_2;
+      Number exp_2;
+      if (factor_e.arg(0).is_a_number(base_2) &&
+	  factor_e.arg(1).is_a_number(exp_2)) {
+	Expr to_reduce = red_prod(base_1, exp_1, base_2, exp_2);
+	// red_prod returns `numeric' or `numeric^numeric' or
+	// `numeric * numeric^numeric'.
+	if (to_reduce.is_a_mul()) {
+	  assert(to_reduce.nops() == 2); 
+	  for (unsigned j = 2; j-- > 0; ) {
+	    const Expr& factor = to_reduce.op(j);
+	    if (factor.is_a_power()) {
+	      const Expr& base_factor = factor.arg(0);
+	      const Expr& exponent_factor = factor.arg(1);
+	      base_1 = base_factor.ex_to_number();
+	      exp_1  = exponent_factor.ex_to_number();
+	      factor_to_reduce = pwr(base_factor, exponent_factor);
 	    }
-	  }
-	  else if (to_reduce.is_a_power()) {
-	    const Expr& base_to_reduce = to_reduce.arg(0);
-	    const Expr& exponent_to_reduce = to_reduce.arg(1);
-	    base_1 = base_to_reduce.ex_to_number();
-	    exp_1 = exponent_to_reduce.ex_to_number();
-	    factor_to_reduce = pwr(base_to_reduce, exponent_to_reduce);
-	  }
-	  else {
-	    base_1 = to_reduce.ex_to_number();
-	    exp_1 = 1;
-	    factor_to_reduce = pwr(to_reduce, 1);
+	    else
+	      factor_no_to_reduce *= factor;
 	  }
 	}
-	else
-	  // Base and exponent of `factor_e' are not both numerics.
-	  factor_no_to_reduce *= factor_e;
+	else if (to_reduce.is_a_power()) {
+	  const Expr& base_to_reduce = to_reduce.arg(0);
+	  const Expr& exponent_to_reduce = to_reduce.arg(1);
+	  base_1 = base_to_reduce.ex_to_number();
+	  exp_1 = exponent_to_reduce.ex_to_number();
+	  factor_to_reduce = pwr(base_to_reduce, exponent_to_reduce);
+	}
+	else {
+	  base_1 = to_reduce.ex_to_number();
+	  exp_1 = 1;
+	  factor_to_reduce = pwr(to_reduce, 1);
+	}
       }
-      // `factor_e' is not a `power'.
       else
+	// Base and exponent of `factor_e' are not both numerics.
 	factor_no_to_reduce *= factor_e;
     }
-    return factor_to_reduce * factor_no_to_reduce;
+    // `factor_e' is not a `power'.
+    else
+      factor_no_to_reduce *= factor_e;
   }
-  else if (e.is_a_power()) {
-    const Expr& base_e = e.arg(0);
-    const Expr& exponent_e = e.arg(1);
-    Number base;
-    Number exponent;
-    if (base_e.is_a_number(base) && exponent_e.is_a_number(exponent))
-      return red_prod(base, exponent, 1, 1);
-  }
-  return e;
+  return factor_to_reduce * factor_no_to_reduce;
 }
 
 /*!
@@ -758,10 +753,17 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
     if (factor_e.is_a_power()) {
       Expr base = simplify_on_output_ex(factor_e.arg(0), n, input);
       Expr exp = simplify_on_output_ex(factor_e.arg(1), n, input);
-      if (base.is_a_number() && exp.is_a_number())
-	e_rewritten *= reduce_product(pwr(base, exp));
-      else
-	e_rewritten *= pow_simpl(pwr(base, exp), n, input);
+      Number num_base;
+      Number num_exp;
+      if (base.is_a_number(num_base) && exp.is_a_number(num_exp))
+	e_rewritten *= red_prod(num_base, num_exp, 1, 1);
+      else {
+	Expr tmp = pwr(base, exp);
+	if (tmp.is_a_power())
+	  e_rewritten *= pow_simpl(tmp, n, input);
+	else
+	  e_rewritten *= tmp;
+      }
     }
     else
       e_rewritten *= factor_e;
@@ -827,6 +829,22 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
   D_MSGVAR("e_rewritten dopo `exp': ", e_rewritten);
   }
   
+  // Simplifies eventual product of irrational numbers.
+  if (e_rewritten.is_a_add()) {
+    Expr terms = 0;
+    for (unsigned i = e_rewritten.nops(); i-- > 0; ) { 
+      const Expr& term_e_rewritten = e_rewritten.op(i);
+      if (term_e_rewritten.is_a_mul())
+	terms += reduce_product(term_e_rewritten);
+      else
+	terms += term_e_rewritten;
+    }
+    e_rewritten = terms;
+  }
+  else
+    if (e_rewritten.is_a_mul())
+      e_rewritten = reduce_product(e_rewritten);
+
   // Simplifies eventual powers with same base or same exponents.
   if (e_rewritten.is_a_add()) {
     Expr terms = 0;
@@ -919,12 +937,22 @@ simplify_on_output_ex(const Expr& e, const Symbol& n, bool input) {
     // otherwise it is not possible to transform products.
     e_rewritten = manip_factor(e, n, input);
   else if (e.is_a_power()) {
+    // Is necessary to call `red_prod()' in order to rewrite irrational
+    // numbers, i.e., powers with base and exponent both numerics. 
     Expr base = simplify_on_output_ex(e.arg(0), n, input);
     Expr exp = simplify_on_output_ex(e.arg(1), n, input);
-    if (base.is_a_number() && exp.is_a_number())
-      e_rewritten = reduce_product(pwr(base, exp));
-    else
-      e_rewritten = pow_simpl(pwr(base, exp), n, input);
+    Number num_base;
+    Number num_exp;
+    if (base.is_a_number(num_base) && exp.is_a_number(num_exp))
+      e_rewritten = red_prod(num_base, num_exp, 1, 1);
+    else {
+      Expr tmp = pwr(base, exp);
+      if (tmp.is_a_power())
+	e_rewritten = pow_simpl(tmp, n, input);
+      else
+	e_rewritten = tmp;
+    }
+    D_VAR(e_rewritten);
     // Necessary for l'output: for example if `e = sqrt(18)^a' then
     // `e_rewritten = sqrt(2)^a*3^a'.
     if (e_rewritten.is_a_mul())
