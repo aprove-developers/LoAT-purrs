@@ -250,7 +250,40 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
       else
 	non_homogeneous_part = rec.exact_solution_.expression();
 
-    // FIXME: to add step 3!!!
+#if 0
+    // Step 3: by substitution, verifies that `homogeneous_part'
+    // satisfies the homogeneous part of the recurrence.
+    // Finds the homogeneous part of the recurrence
+    // `substituted_homogeneous_rhs' and substitute to it `n' by
+    // `n - d' (where `d' is the decrement of the i-th term
+    // `a_i(n) x(n - d)').
+    Expr substituted_homogeneous_rhs = 0;
+    // Finds the non homogeneous part of the recurrence.
+    if (rec.recurrence_rhs.is_a_add())
+      for (unsigned i = rec.recurrence_rhs.nops(); i-- > 0; ) {
+	if (rec.recurrence_rhs.op(i).has_x_function(true))
+	  substituted_homogeneous_rhs += rec.recurrence_rhs.op(i);
+      }
+    else if (rec.recurrence_rhs.has_x_function(true))
+      substituted_homogeneous_rhs = rec.recurrence_rhs;
+    // Substitutes in the homogeneous part of the recurrence the terms
+    // of the form `x(n-i)'.
+    for (unsigned i = 0; i < order_rec; ++i) {
+      Expr shifted_solution
+	= simplify_all(homogeneous_part.substitute(n, n - (i + 1)));
+      shifted_solution = simplify_sum(shifted_solution, true);
+      substituted_homogeneous_rhs = substituted_homogeneous_rhs
+	.substitute(x(n - (i + 1)), shifted_solution);
+    }
+    Expr diff = rec.blackboard.rewrite(homogeneous_part
+				       - substituted_homogeneous_rhs);
+    diff = simplify_all(diff);
+    if (!diff.is_zero()) {
+      diff = simplify_all(diff);
+      if (!diff.is_zero())
+	return INCONCLUSIVE_VERIFICATION;
+    }
+#endif
 
     // The recurrence is homogeneous.
     if (non_homogeneous_part == 0)
