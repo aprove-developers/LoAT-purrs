@@ -26,6 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Functional_Equation_Info_inlines_hh
 
 #include "Functional_Equation_Info.types.hh"
+#include <sstream>
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -33,14 +34,16 @@ inline
 Functional_Equation_Info::
 Functional_Equation_Info(const std::map<Number, Expr>& hom_terms)
   : homogeneous_terms(hom_terms),
-    applicability_condition_(1) {
+    applicability_condition_(1),
+    definition_Sc_() {
 }
 
 inline
 Functional_Equation_Info::
 Functional_Equation_Info(const Functional_Equation_Info& y)
   : homogeneous_terms(y.homogeneous_terms),
-    applicability_condition_(y.applicability_condition_) {
+    applicability_condition_(y.applicability_condition_),
+    definition_Sc_(y.definition_Sc_) {
 }
 
 inline
@@ -51,6 +54,7 @@ inline Functional_Equation_Info&
 Functional_Equation_Info::operator=(const Functional_Equation_Info& y) {
   homogeneous_terms = y.homogeneous_terms;
   applicability_condition_ = y.applicability_condition_;
+  definition_Sc_ = y.definition_Sc_;
   return *this;
 }
 
@@ -87,6 +91,23 @@ Functional_Equation_Info::ht_end() const {
 inline index_type
 Functional_Equation_Info::rank() const {
   return homogeneous_terms.size();
+}
+
+inline std::string
+Functional_Equation_Info::definition_Sc() const {
+  return definition_Sc_;
+}
+
+inline void
+Functional_Equation_Info::set_definition_Sc() {
+  assert(!homogeneous_terms.empty());
+  assert(homogeneous_terms.size() == 1);
+  const Number& divisor = ht_begin()->first;
+  std::ostringstream s;
+  if (divisor != 2)
+    s << "Sc(n, " << divisor
+      << ") = [ n/" << divisor <<"^[log(n)/log(" << divisor << ")] ]";
+  definition_Sc_ = s.str();
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

@@ -30,6 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "globals.hh"
 #include "Expr.defs.hh"
 #include <map>
+#include <string>
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -77,7 +78,17 @@ public:
   //! of the form \f$ a x(n/b) \f$ where \f$ b \f$ is a rational number
   //! larger than one.
   index_type rank() const;
+
+  //! Returns <CODE>definition_Sc_</CODE>.
+  std::string definition_Sc() const;
     
+  //! \brief
+  //! If the divisor \f$ b \f$ of the homogeneous term \f$ a x(n/b) \f$
+  //! in \p *this is different from \f$ 2 \f$ then set
+  //! <CODE>definition_Sc_</CODE> with the definition of the function
+  //! \f$ Sc() \f$.
+  void set_definition_Sc();
+
 private:
   //! \brief
   //! Stores the divisor \f$ b \f$ and the coefficient \f$ a \f$ of the
@@ -89,6 +100,16 @@ private:
   //! is a non negative, non decreasing function. 
   index_type applicability_condition_;
 
+  //! \brief
+  //! If the divisor \f$ b \f$ of the homogeneous term \f$ a x(n/b) \f$
+  //! in \p *this is \f$ 2 \f$ then is the empty string; otherwise
+  //! the string conatins the definition of the function \f$ Sc() \f$:
+  //! \f[
+  //!   Sc(n, b) = \lfloor
+  //!                \frac{n}{b^{\lfloor \frac{\log n}{\log b} \rfloor}}
+  //!              \rfloor.
+  //! \f]
+  std::string definition_Sc_;
 public:
   void dump_homogeneous_terms(std::ostream& s) const;
 };
