@@ -26,7 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Expr_defs_hh 1
 
 #include "Expr.types.hh"
-#include "Symbol.defs.hh"
+#include "Symbol.types.hh"
 #include "Expr_List.types.hh"
 #include "Number.types.hh"
 #include "Constant.types.hh"
