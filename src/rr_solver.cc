@@ -61,40 +61,39 @@ get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
   Given a vector of <CODE>GNumber</CODE> with a number of elements like
   the order \p order of the recurrence relation, builds the characteristic
   equation in the variable \p x.
-  Therefore, if we have the order \f$ k \f$ recurrence relation
-  \f$ x_n = a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$,
-  the coefficients \f$ a_j \f$ are in the vector \p coefficients and the
-  function returns the characteristic equation
-  \f$ x^k - ( a_1 * x^{k-1} + \dotsb + a^{k-1} * x + a_k ) = 0 \f$.
+  Therefore, if we have the recurrence relation
+  \f$ x_n = a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$
+  of order \f$ k \f$ with the coefficients \f$ a_j \f$ in the vector
+  \p coefficients, this function returns the characteristic equation
+  \f$ x^k - ( a_1 * x^{k-1} + \dotsb + a^{k-1} * x + a_k ) \f$.
+
+  Since <CODE>find_roots()</CODE> solve equations only with integer
+  coefficients the \p coefficients' elements must be rationals and,
+  if they are not integer, builds an other vector, \p int_coefficients,
+  with the element of \p coefficients multiplied for the lcm among their
+  denominators.
 */
 static GExpr
 build_characteristic_equation(const int order, const GSymbol& x,
 			      const std::vector<GNumber>& coefficients) {
-  GExpr p;
-  p = 0;
-  unsigned coefficients_size = coefficients.size();
-  
-  // We know taht the coefficients are 'numerics', but we want only
-  // rationals.
+  unsigned coefficients_size = coefficients.size();  
   for (unsigned i = 1; i < coefficients_size; ++i)
     if (!coefficients[i].is_rational())
       throw("PURRS error: today the algebraic equation solver works\n"
             "only with integer coefficients.\n"
             "Please come back tomorrow.");
-
-  // The function 'find_roots' wants only integer coefficients
-  // for to calculates the roots of the equation.
   std::vector<GNumber> denominators;
   // Find the least common multiple among the denominators of the
   // rational elements of 'coefficients'.
   for (unsigned i = 1; i < coefficients_size; ++i)
     if (!coefficients[i].is_integer())
       denominators.push_back(coefficients[i].denom());
+  GExpr p = 0;
+  // Build the vector 'int_coefficients' with the elements of
+  // 'coefficients' multiplied for the least common multiple
+  // 'least_com_mul'.
   if (denominators.size() != 0) {
     GNumber least_com_mul = lcm(denominators);
-    // Build the vector 'int_coefficients' with the elements of
-    // 'coefficients' multiplies for the least common multiple
-    // 'least_com_mul'.
     std::vector<GNumber> int_coefficients(coefficients);
     for (unsigned i = 1; i < coefficients_size; ++i)
       int_coefficients[i] *= least_com_mul;
@@ -127,25 +126,29 @@ check_poly_times_exponential(const std::vector<GExpr>& exp_no_poly_coeff) {
 }
 
 /*!
-  We consider
-  - the recurrence relation's inhomogeneous term when is in the form
-    polynomials times exponentials:
-    \f$ e(n) = \sum_{i=0}^k \alpha_i^{n} p_i(n) \f$ (where \f$ k \f$ is
-    the number of exponentials);
-  - the vector \p roots of the characteristic equation's roots. 
-  We call \f$ \lambda \f$ the generic root.
+  Let the recurrence relation with the inhomogeneous term \f$ e(n) \f$
+  in the form polynomials times exponentials:
+  \f$ e(n) = \sum_{i=0}^k \alpha_i^{n} p_i(n) \f$ (where \f$ k \f$ is
+  the number of exponentials).
+  We call \p \lambda the generic root of the characteristic equation
+  and \p alpha the generic base of an exponential.
 
   This function fills the two vectors of <CODE>GExpr</CODE>
   \p symbolic_sum_distinct and \p symbolic_sum_no_distinct, with dimension
   equal to \p base_of_exps.size(), with two different sums:
-  for \f$ j = 0, \dotsc, roots.size() \f$ and for
-  \f$ i = 0, \dotsc, base_of_exps.size() \f$
-  -  if \f$ \alpha_i \neq \lambda_j \f$ then
-     \p symbolic_sum_distinct[i] = \f$ f_i(\alpha_i / \lambda)
-        = \lambda^n * \sum_{k=order}^n (\alpha_i / \lambda)^k \cdot q_i(k) \f$;
-  -  if \f$ \alpha_i = \lambda_j \f$ then
-     \p symbolic_sum_no_distinct[i] = \f$ f_i(\lambda)
-        = \lambda^n * \sum_{k=order}^n q_i(k) \f$.
+  fixed tha base \p alpha_i, for each root \p lambda 
+  - if \f$ \alpha_i \neq \lambda \f$ then
+    \f[
+      symbolic_sum_distinct[i]
+        = \lambda^n * f_i(\alpha_i / \lambda)
+        = \lambda^n * \sum_{k=order}^n (\alpha_i / \lambda)^k \cdot p_i(k);
+    \f]
+  - if \f$ \alpha_i = \lambda \f$ then
+    \f[
+      symbolic_sum_no_distinct[i]
+        = \lambda^n * f_i(1)
+        = \lambda^n * \sum_{k=order}^n p_i(k).
+    \f]
 */
 static void
 compute_symbolic_sum(const int order, const GSymbol& n,
@@ -375,14 +378,13 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   // must be expanded because otherwise the function not recognizes the
   // the exponentials in the variable 'n' (i.e. 2^(n-1) is not considerated
   // while 1/2*2^n, obtained from previous by 'expand()', yes).
-  // In every column there is a exponential in the first row and its
-  // coefficient in the second and third row: in the second row there is
-  // the polynomial part of the coefficient and in the third row there is
-  // non polynomial part of the coefficients. If the coefficient is not
-  // polynomial then in the second row there is zero and, similarly, in the
-  // third row there is zero if the coefficient is a polynomial.
-  // In the last column there is the constant exponential with its
-  // coefficients.
+  // The vector 'base_of_exps' contains the exponential's bases of all
+  // exponentials in 'e'. In the i-th position of the vectors 'exp_poly_coeff'
+  // and 'exp_no_poly_coeff' there are respectively the polynomial part and
+  // non polynomial part of the coefficient of the exponential with the base
+  // in i-th position of 'base_of_exp' so that
+  // exp_poly_coeff[i] + exp_no_poly_coeff[i] represents the coefficient of
+  // base_of_exps[i]^n. 
   std::vector<GExpr> base_of_exps;
   std::vector<GExpr> exp_poly_coeff;
   std::vector<GExpr> exp_no_poly_coeff;
@@ -669,20 +671,20 @@ exp_poly_decomposition_factor(const GExpr& base,
 }
 
 /*!
-  Definition of a <CODE>valid_base</CODE> for an exponential in inductive way:
-  - every <CODE>GiNaC::numeric</CODE> is a <CODE>valid_base</CODE>;
-  - every <CODE>GiNaC::constant</CODE> is a <CODE>valid_base</CODE>;
+  Definition of a <EM>valid_base</EM> for an exponential in inductive way:
+  - every <CODE>GiNaC::numeric</CODE> is a <EM>valid_base</EM>;
+  - every <CODE>GiNaC::constant</CODE> is a <EM>valid_base</EM>;
   - every <CODE>GiNaC::symbol</CODE> different from \p n is a
-    <CODE>valid_base</CODE>;
+    <EM>valid_base</EM>;
   - given \f$ e \f$ a <CODE>GiNaC::power</CODE>,
-    if \f$ e.op(0) \f$ and \f$ e.op(1) \f$ are <CODE>valid_base</CODE>
-    then \f$ e \f$ is a <CODE>valid_base</CODE>;
+    if \f$ e.op(0) \f$ and \f$ e.op(1) \f$ are <EM>valid_base</EM>
+    then \f$ e \f$ is a <EM>valid_base</EM>;
   - given \f$ f \f$ a <CODE>GiNaC::function</CODE>,
-    if \f$ f.op(0) \f$ is <CODE>valid_base</CODE>
-    then \f$ f \f$ is a <CODE>valid_base</CODE>;
+    if \f$ f.op(0) \f$ is <EM>valid_base</EM>
+    then \f$ f \f$ is a <EM>valid_base</EM>;
   - given the binary operations sum (\f$ + \f$) and multiplication (\f$ * \f$),
-    if \f$ a \f$ and \f$ b \f$ are <CODE>valid_base</CODE> then
-    \f$ a + b \f$ and \f$ a * b \f$ are <CODE>valid_base</CODE>.
+    if \f$ a \f$ and \f$ b \f$ are <EM>valid_base</EM> then
+    \f$ a + b \f$ and \f$ a * b \f$ are <EM>valid_base</EM>.
 */
 static bool
 valid_base(const GExpr& e, const GSymbol& n) {
@@ -818,8 +820,10 @@ subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
 
 /*!
   Adds to sum related to the inhmogeneous terms the sum
-  \f$ \sum_{i=0}^{order - 1} g_{n-i}
-    \bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \bigr) \f$
+  \f[
+    \sum_{i=0}^{order - 1} g_{n-i}
+      \bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \bigr)
+  \f]
   corresponding to the initial conditions'part.
 */
 // FIXME: il vettore 'coefficients' dovra' diventare di 'GExpr' quando
