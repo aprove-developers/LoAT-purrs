@@ -535,7 +535,7 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   x3 = -p + q - r - s;
   x4 = -p - q + r - s;
 }
-// The old method used to solve equation of degree 4 was wrong, like you
+// The old method used to solve equation of degree 4 was wrong, as you
 // can see by the following examples:
 // 1. Trying to solve 2+x^4-x = 0
 //    The four solutions, estimated, are
@@ -543,7 +543,7 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
 //    x_2= -0.849848 - 0.654272*I
 //    x_3= 0.849848 + 1.008172*I
 //    x_4= 0.849848 - 1.008172*I
-//    Instead those correcting are
+//    Instead the correct ones are
 //    x_1= -0.849848 + 1.00817*I
 //    x_2= -0.849848 - 1.00817*I
 //    x_3= 0.849848 + 0.654272*I
@@ -553,11 +553,13 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
 //    x_2 = -2-1/2*sqrt(12)    <- real!!
 //    x_3 = 1/2*sqrt(-20)
 //    x_4 = -1/2*sqrt(-20)
-//    Instead those correcting are
+//    Instead the correct ones are
 //    x_1 = I
 //    x_2 = -I
 //    x_3 = -2+I
 //    x_4 = -2-I
+// Strangely the equation x^4+4 = 0 gave the right solutions.
+// Several equations gave the right solutions (for example x^4+3*x^3-1 = 0).
 // 
 // OLD CODE:
 //
