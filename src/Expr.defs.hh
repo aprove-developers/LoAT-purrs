@@ -50,8 +50,15 @@ Expr& operator-=(Expr& lh, const Expr& rh);
 Expr& operator*=(Expr& lh, const Expr& rh);
 Expr& operator/=(Expr& lh, const Expr& rh);
 
-Expr operator+(const Expr &lh);
-Expr operator-(const Expr &lh);
+Expr operator+(const Expr& lh);
+Expr operator-(const Expr& lh);
+
+bool operator==(const Expr& lh, const Expr& rh);
+bool operator!=(const Expr& lh, const Expr& rh);
+bool operator<(const Expr& lh, const Expr& rh);
+bool operator>(const Expr& lh, const Expr& rh);
+bool operator<=(const Expr& lh, const Expr& rh);
+bool operator>=(const Expr& lh, const Expr& rh);
 
 class Parma_Recurrence_Relation_Solver::Expr {
 public:

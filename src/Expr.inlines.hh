@@ -88,6 +88,36 @@ operator/=(const Expr& lh, const Expr& rh) {
   return lh /= rh;
 }
 
+bool
+operator==(const Expr& lh, const Expr& rh) {
+  return lh == rh;
+}
+
+bool
+operator!=(const Expr& lh, const Expr& rh) {
+  return lh != rh;
+}
+
+bool
+operator<(const Expr& lh, const Expr& rh) {
+  return lh < rh;
+}
+
+bool
+operator>(const Expr& lh, const Expr& rh) {
+  return lh > rh;
+}
+
+bool
+operator<=(const Expr& lh, const Expr& rh) {
+  return lh <= rh;
+}
+
+bool
+operator>=(const Expr& lh, const Expr& rh) {
+  return lh >= rh;
+}
+
 inline
 Expr::Expr() {
 }

@@ -362,7 +362,7 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 	    exponents[j] = exponents[j] + 1;
 	  else {
 	    GNumber base = bases[j].ex_to_number();
-	    if (!base.is_integer() || base.is_equal(-1))
+	    if (!base.is_integer() || base == -1)
 	      exponents[j] = exponents[j] + 1;
 	  }
 	}

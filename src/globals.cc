@@ -1,6 +1,7 @@
 
 #include "globals.hh"
 
+using namespace GiNaC;
 using namespace Parma_Recurrence_Relation_Solver;
 
 GExpr
