@@ -34,6 +34,13 @@ http://www.cs.unipr.it/purrs/ . */
 #include <vector>
 #include <cassert>
 
+#define USE_TSC 1
+#if USE_TSC
+#include "tsc.hh"
+#endif
+
+#undef HAVE_GETRUSAGE
+
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -236,6 +243,67 @@ mark_verified_solution() {
        << " ";
 }
 
+#if USE_TSC
+
+typedef tsc_t time_unit_t;
+
+inline time_unit_t
+get_time() {
+  return read_tsc();
+}
+
+inline long
+time_unit_to_msecs(time_unit_t t) {
+  return tsc_to_msecs(t);
+}
+
+#elif HAVE_GETRUSAGE
+
+typedef timeval time_unit_t;
+
+inline time_unit_t
+get_time() {
+  rusage rsg;
+  if (getrusage(RUSAGE_SELF, &rsg) != 0)
+    error("getrusage failed");
+  return rsg.ru_utime;
+}
+
+inline time_unit_t
+operator-(const time_unit_t& t1, const time_unit_t& t2) {
+  time_unit_t t;
+  if (t1.tv_usec < t2.tv_usec) {
+    t.tv_sec = t1.tv_sec - t2.tv_sec - 1;
+    t.tv_usec = (1000000 - t2.tv_usec) + t1.tv_usec;
+  }
+  else {
+    t.tv_sec = t1.tv_sec - t2.tv_sec;
+    t.tv_usec = t1.tv_usec - t2.tv_usec;
+  }
+  return t;
+}
+
+inline long
+time_unit_to_msecs(time_unit_t t) {
+  return (t.tv_sec*1000000 + t.tv_usec)/1000;
+}
+
+#else
+
+typedef long time_unit_t;
+
+inline time_unit_t
+get_time() {
+  return 0;
+}
+
+inline long
+time_unit_to_msecs(time_unit_t t) {
+  return t;
+}
+
+#endif
+
 int
 main() try {
   // Limit the amount of resources we may consume.
@@ -279,14 +347,7 @@ main() try {
   Expr rhs = Expr(**expr, symbols);
   Recurrence recurrence(rhs);
 
-#if HAVE_GETRUSAGE
-  timeval start;
-  rusage rsg;
-  if (getrusage(RUSAGE_SELF, &rsg) != 0)
-    error("getrusage failed");
-  else
-    start = rsg.ru_utime;
-#endif
+  time_unit_t start_time = get_time();
 
   bool have_exact_solution = false;
   bool have_lower_bound = false;
@@ -394,16 +455,8 @@ main() try {
 
  done:
 
-#if HAVE_GETRUSAGE
-  timeval end;
-  if (getrusage(RUSAGE_SELF, &rsg) != 0)
-    error("getrusage failed");
-  else
-    end = rsg.ru_utime;
-
-  long us_of_cpu_time = ((end.tv_sec - start.tv_sec) * 1000000)
-    + (end.tv_usec - start.tv_usec);
-#endif
+  time_unit_t end_time = get_time();
+  long ms_of_cpu_time = time_unit_to_msecs(end_time - start_time);
 
   // Output the HTTP headers for an HTML document, and the HTML 4.0 DTD info.
   cout << HTTPHTMLHeader() << HTMLDoctype(HTMLDoctype::eStrict) << endl
@@ -492,11 +545,9 @@ main() try {
   // Timings and thank you.
   cout << br() << br()
        <<cgicc::div().set("align", "center").set("class", "bigger") << endl;
-#if HAVE_GETRUSAGE
   cout << "The computation took about "
-       << (double) (us_of_cpu_time/1000000.0) << " s of CPU time."
+       << ms_of_cpu_time << " ms of CPU time."
        << br() << br() << endl;
-#endif
   string host = env.getRemoteHost();
   if (host.empty())
     host = env.getRemoteAddr();
