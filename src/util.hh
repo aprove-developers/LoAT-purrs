@@ -22,16 +22,22 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#ifndef _util_defs_hh
-#define _util_defs_hh 1
+#ifndef _util_hh
+#define _util_hh 1
 
 #include "globals.hh"
 
+//! Removes all the elements from \p l.
 void
 clear(GList& l);
+
+//! Returns the expression that \p substitution binds
+//! to the wildcard of index \p wild_index.
+GExpr
+get_binding(const GList& substitution, unsigned wild_index);
 
 void
 assign_poly_part_and_no_poly_part(const GExpr& p, const GSymbol& var,
 				  GExpr& p_poly, GExpr& p_no_poly);
 
-#endif
+#endif // _util_hh

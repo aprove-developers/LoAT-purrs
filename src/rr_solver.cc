@@ -38,14 +38,6 @@ using namespace GiNaC;
 
 #define NOISY 0
 
-static GExpr
-get_binding(const GList& l, unsigned wild_index) {
-  assert(wild_index < l.nops());
-  assert(l.op(wild_index).info(GiNaC::info_flags::relation_equal));
-  assert(l.op(wild_index).lhs() == GiNaC::wild(wild_index));
-  return l.op(wild_index).rhs();
-}
-
 /*!
   Returns <CODE>true</CODE> if and only if the <CODE>GExpr</CODE> \p e
   is of the form \f$ n + d \f$ with \f$ d \f$ a <CODE>GiNaC::numeric</CODE>;

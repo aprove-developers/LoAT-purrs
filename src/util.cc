@@ -34,6 +34,19 @@ clear(GList& l) {
 }
 
 /*!
+  We assume that \p substitution has been produced by GiNaC::match()
+  and that the binding for the wildcard of index \p wild_index
+  is in the position \p wild_index of \p substitution.
+*/
+GExpr
+get_binding(const GList& substitution, unsigned wild_index) {
+  assert(wild_index < substitution.nops());
+  assert(substitution.op(wild_index).info(GiNaC::info_flags::relation_equal));
+  assert(substitution.op(wild_index).lhs() == GiNaC::wild(wild_index));
+  return substitution.op(wild_index).rhs();
+}
+
+/*!
   Return <CODE>true</CODE> if the <CODE>GiNaC::GExpr</CODE> \p p is a
   polynomial in a variable 'var', <CODE>false</CODE> otherwise.
 */
