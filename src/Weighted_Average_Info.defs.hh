@@ -57,9 +57,15 @@ public:
   //! Returns <CODE>associated_first_order_rec_</CODE>.
   Recurrence& associated_first_order_rec();
 
-  //! Sets <CODE>original_rhs__</CODE> with \p original_rhs
+  //! Sets <CODE>original_rhs_</CODE> with \p original_rhs.
   void set_original_rhs(const Expr& original_rhs);
 
+  //! Returns <CODE>lower_limit_</CODE>.
+  unsigned int lower_limit() const;
+
+  //! Sets <CODE>lower_limit_</CODE> with \p lower.
+  void set_lower_limit(unsigned int lower);
+  
   //! Returns <CODE>weight_</CODE>.
   const Expr& weight() const;
 
@@ -68,25 +74,36 @@ public:
 
 private:
   //! \brief
-  //! In the case which the system is able to rewrite the weighted-average
-  //! recurrence \p *this in a first order recurrence, this method stores
-  //! the first order recurrence computed (in order to know the cases of
+  //! Contains the first order recurrence associated to \p *this,
+  //! if it is possible to obtain it (in order to know the cases of
   //! rewritable weighted-average recurrences see the function
   //! <CODE>rewrite_weighted_average_recurrence()</CODE>).
   Recurrence associated_first_order_rec_;
 
   //! \brief
-  //! When the recurrence is not in normal form, this data contains
-  //! its right hand side before the transformation in normal form.
-  //! If the recurrence is already in normal form it is undefined.
+  //! Contains the right hand side of the recurrence before the rewriting
+  //! of the system in a weighted-average recurrence
+  //! \f[
+  //!   x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n).
+  //! \f]
+  //! If the recurrence is already in form of weighted-average recurrence
+  //! then this data is undefined.
   Expr original_rhs_;
 
   //! \brief
   //! Contains the factor \f$ f(n) \f$ of the weighted-average recurrence
   //! \f[
-  //!   x(n) = f(n) \sum_{k=n_0}^{u(n)} x(k) + g(n).
+  //!   x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n).
   //! \f]
   Expr weight_;
+
+  //! \brief
+  //! Contains the lower limit of the sum \f$ n_0 \f$ of a recurrence
+  //! \f[
+  //!   x(n) = f(n) \sum_{k=n_0}^{u(n)} x(k) + g(n).
+  //! \f]
+  //! rewritable in a weighted-average recurrence.
+  unsigned int lower_limit_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

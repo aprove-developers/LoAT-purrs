@@ -70,6 +70,16 @@ Weighted_Average_Info::set_original_rhs(const Expr& original_rhs) {
   original_rhs_ = original_rhs;
 }
 
+inline unsigned int
+Weighted_Average_Info::lower_limit() const {
+  return lower_limit_;
+}
+
+inline void
+Weighted_Average_Info::set_lower_limit(unsigned int lower) {
+  lower_limit_ = lower;
+}
+
 inline const Expr&
 Weighted_Average_Info::weight() const {
   return weight_;
