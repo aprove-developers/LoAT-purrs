@@ -35,29 +35,29 @@ Expr_List::Expr_List() {
 }
 
 inline
-Expr_List::Expr_List(const Symbol& symb)
-  : l(symb.s) {
+Expr_List::Expr_List(const Symbol& x)
+  : l(x.s) {
 };
 
 inline
-Expr_List::Expr_List(const Expr& exp1, const Expr& exp2)
-  : l(exp1.e, exp2.e) {
+Expr_List::Expr_List(const Expr& e1, const Expr& e2)
+  : l(e1.e, e2.e) {
 };
 
 inline
-Expr_List::Expr_List(const Expr& exp1, const Expr& exp2, const Expr& exp3,
-		     const Expr& exp4, const Expr& exp5)
-  : l(exp1.e, exp2.e, exp3.e, exp4.e, exp5.e) {
+Expr_List::Expr_List(const Expr& e1, const Expr& e2, const Expr& e3,
+		     const Expr& e4, const Expr& e5)
+  : l(e1.e, e2.e, e3.e, e4.e, e5.e) {
 };
 
 inline
-Expr_List::Expr_List(const Expr_List& lst)
-  : l(lst.l) {
+Expr_List::Expr_List(const Expr_List& x)
+  : l(x.l) {
 };
 
 inline Expr_List&
-Expr_List::operator=(const Expr_List& lst) {
-  l = lst.l;
+Expr_List::operator=(const Expr_List& x) {
+  l = x.l;
   return *this;
 };
 
@@ -81,14 +81,14 @@ Expr_List::op(unsigned i) const {
 }
 
 inline Expr_List&
-Expr_List::append(const Expr& exp) {
-  l.append(exp.e);
+Expr_List::append(const Expr& x) {
+  l.append(x.e);
   return *this;
 }
 
 inline Expr_List&
-Expr_List::prepend(const Expr& exp) {
-  l.prepend(exp.e);
+Expr_List::prepend(const Expr& x) {
+  l.prepend(x.e);
   return *this;
 }
 

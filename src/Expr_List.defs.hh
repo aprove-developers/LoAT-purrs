@@ -38,42 +38,50 @@ public:
   //! Default constructor.
   Expr_List();
 
-  //! Builds a list containing \p symb.
-  explicit Expr_List(const Symbol& symb);
+  //! Builds a list containing \p x.
+  explicit Expr_List(const Symbol& x);
 
-  //! Builds a list containing \p exp1 and \p exp2.
-  explicit Expr_List(const Expr& exp1, const Expr& exp2);
+  //! Builds a list containing \p e1 and \p e2.
+  explicit Expr_List(const Expr& e1, const Expr& e2);
 
-  //! Builds a list containing \p exp1, \p exp2, \p exp3, \p exp4 and \p exp5.
-  explicit Expr_List(const Expr& exp1, const Expr& exp2, const Expr& exp3,
-		     const Expr& exp4, const Expr& exp5);
+  //! Builds a list containing \p e1, \p e2, \p e3, \p e4 and \p e5.
+  explicit Expr_List(const Expr& e1, const Expr& e2, const Expr& e3,
+		     const Expr& e4, const Expr& e5);
 
   //! Copy-constructor.
-  Expr_List(const Expr_List& lst);
+  Expr_List(const Expr_List& x);
 
   //! Destructor.
   ~Expr_List();
 
   //! Assignment operator.
-  Expr_List& operator=(const Expr_List& lst);
+  Expr_List& operator=(const Expr_List& x);
 
+  //! Returns the number of expressions of \p *this.
   unsigned nops() const;
+
+  //! Returns th \f$ i \f$-th element of \p *this.
   Expr op(unsigned i) const;
 
-  Expr_List& append(const Expr& exp);
-  Expr_List& prepend(const Expr& exp);
+  //! Appends \p x to \p *this.
+  Expr_List& append(const Expr& x);
+
+  //! Prepends \p x to \p *this.
+  Expr_List& prepend(const Expr& x);
+
+  //! Removes the first element from \p *this.
   Expr_List& remove_first();
 
 private:
   GiNaC::lst l;
 
   friend Expr sqrfree(const Expr& e, const Expr_List& lst);
-  
   friend Expr lsolve(const Expr_List& lst1, const Expr_List& lst2);
 
   friend class Expr;
   friend class Matrix;
 
+  //! Builds the expression corresponding to \p gl.
   Expr_List(const GiNaC::lst& gl);
 };
 
