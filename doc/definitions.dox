@@ -166,8 +166,8 @@ A <EM>linear recurrence of order \f$ k \f$</EM> is a recurrence of the form
 	+ \alpha_k(n) x_{n-k} + p(n),
 \f]
 for \f$ n \geq k \f$.
-We implicitly assume that \f$ \alpha_k(n) \neq 0 \f$, for otherwise the order
-would be smaller.
+We implicitly assume that \f$ \alpha_k(n) \neq 0 \f$ "syntactically",
+for otherwise the order would be smaller.
 The <EM>coefficients</EM> \f$ \alpha_j(n) \f$, for \f$ j = 1, \dots, k \f$,
 are real or complex numbers.
 The function \f$ p \f$ is defined on \f$ \Nset \cap [k, +\infty) \f$,
