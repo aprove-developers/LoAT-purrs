@@ -16,6 +16,7 @@
 % * no expectations
 
 E	2*x(n-1)+n^100
+yv	sum(a,0,n-1,x(a))+1
 n	(1/2)*(x(n-1)+2/x(n-1))
 n	(1/n)*((2*n+a-1))*x(n-1)^a-(n-1+a)*x(n-2)^a
 n	(4*x(n-2))/((n+1)*(n+2))
