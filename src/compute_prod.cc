@@ -233,16 +233,17 @@ comp_prod(const Symbol& index, const Number& lower, const Expr& e,
       else \f$ \prod_{k=l}^n e(k) = 0 \f$;
   - if \f$ e = k + h \f$ where \f$ h \in \Zset \f$
       if \f$ l > -h \f$
-        \f$ e_prod = (n+h)! / (l + h - 1)! \f$;
+        \f$ e_prod = (n + h)! / (l + h - 1)! \f$;
       else \f$ \prod_{k=l}^n e(k) = 0 \f$;
   - if \f$ e = 2*k+1 \f$,
     then \f$ \prod_{k=l}^n e(k) = \frac{(2*n + 1)!}{2^n * n!} \f$;
   - if \f$ e \f$ is a power there are two cases.
     We consider \f$ a \f$ and \f$ b \f$ so that \f$ e = a^b \f$, 
-    - if \f$ a \f$ contains \f$ n \f$ and \f$ b \f$ is a number,
+    - if \f$ a \f$ contains \f$ k \f$ and \f$ b \f$ is a number,
       then \f$ \prod_{k=l}^n e(k) = (\prod_{k=l}^n a(k))^b;
-    - if \f$ a \f$ not contains \f$ n, i.e. \f$ a \f$ is a constant,
-      then \f$ \prod_{k=l}^n e(k) = k^{\sum_{h=l}^n f(h)} \f$;
+    - if \f$ a \f$ not contains \f$ k, i.e. \f$ a \f$ is a constant,
+      and \f$ b \f$ contain \f$ k \f$,
+      then \f$ \prod_{k=l}^n e(k) = a^{\sum_{k=l}^n b(k)} \f$;
   - if \f$ e(k) = e_1(k) \cdots e_m(k) \f$, then
     \f$ \prod_{k=l}^n e(k) =  \prod_{k=l}^n e_1(k) \cdots
     \prod_{k=l}^n e_m(k) \f$.
