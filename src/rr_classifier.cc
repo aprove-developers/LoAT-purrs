@@ -314,8 +314,13 @@ find_coeff_x_n_and_remainder(const Expr& e,
 */
 unsigned
 eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
-  // Let `rhs = a*x(n) + b' and that `b' does different to zero
-  // and does not contain `x(n)'.  The following cases are possible:
+  D_MSG("*** eliminate null decrements");
+  // Collect the terms `x(n)' so that the right hand side of the recurrence
+  // `rhs' is in the form `rhs = a*x(n) + b' and that `b' does different to
+  // zero and does not contain `x(n)'.
+  new_rhs = rhs.collect(Expr_List(x(Recurrence::n)));
+
+  // The following cases are possible:
   // 1. If `a = 1' and `b = 0' then the recurrence is indeterminate. 
   // 2. If `a = 1' and `b != 0' does not contain any occurrence of `x(n-k)'
   //    where `k' is a positive integer, the recurrence is impossible.
@@ -326,11 +331,11 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
   // 4. If `a != 1' we move `a*x(n)' to the left-hand side, and divide
   //    through by `1 - a', obtaining the standard form, which is 
   //    `(rhs - a*x(n)) / (1-a)'.
-  if (rhs.is_a_add()) {
+  if (new_rhs.is_a_add()) {
     // Finds `a' and `b'.
     Expr a = 0;
-    Expr b = rhs;
-    find_coeff_x_n_and_remainder(rhs, a, b);
+    Expr b = new_rhs;
+    find_coeff_x_n_and_remainder(new_rhs, a, b);
     D_VAR(a);
     D_VAR(b);
     if (a == 1) {
@@ -412,16 +417,17 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
     // Case 4.
     else
       new_rhs = b * pwr(1 - a, -1);
+    D_VAR(new_rhs);
   }
   // Let `rhs = a*x(n)'.
-  else if (rhs.is_a_mul())
-    for (unsigned i = rhs.nops(); i-- > 0; ) {
-      const Expr& factor = rhs.op(i);
+  else if (new_rhs.is_a_mul())
+    for (unsigned i = new_rhs.nops(); i-- > 0; ) {
+      const Expr& factor = new_rhs.op(i);
       if (factor == x(Recurrence::n))
 	new_rhs = 0;
     }
   // Let `rhs = x(n)'.
-  else if (rhs == x(Recurrence::n))
+  else if (new_rhs == x(Recurrence::n))
     return 2;
   return 0;
 }
