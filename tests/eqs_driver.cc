@@ -104,6 +104,14 @@ process_options(int argc, char* argv[]) {
   }
 }
 
+bool
+all_space(const string& s) {
+  for (unsigned i = s.length(); i-- > 0; )
+    if (!isspace(s[i]))
+      return false;
+  return true;
+}
+
 int
 main(int argc, char *argv[]) try {
   set_handlers();
@@ -134,6 +142,10 @@ main(int argc, char *argv[]) try {
 
     if (!input_stream)
       return 0;
+
+    // The string may be constituted by white space only.
+    if (all_space(s))
+      continue;
 
     // Skip comments.
     if (s.find("%") == 0)
