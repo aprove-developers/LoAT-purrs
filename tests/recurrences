@@ -160,7 +160,7 @@ x(n-2) + (n - 2)^2
 
 % 9. Order 1, variable coefficients 
 % x(n) =
-b^(-2 * a * (n-1) ) * x(n-1) + b^(- a * (n-1)^2)
+%b^(-2 * a * (n-1) ) * x(n-1) + b^(- a * (n-1)^2)
 % Solution: x(n) = 
 
 % 10. Order 1, variable coefficients 
