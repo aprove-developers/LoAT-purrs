@@ -25,11 +25,11 @@ http://www.cs.unipr.it/purrs/ . */
 #include <iostream>
 #include <stdexcept>
 #include <string>
-#include <giac/giac.h>
-
-#include "factorize_giac.hh"
 
 #include "purrs_install.hh"
+
+#include <giac/giac.h>
+#include "factorize_giac.hh"
 
 #ifdef USE_READLINE
 #include "readlinebuf.hh"
