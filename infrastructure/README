@@ -5,7 +5,7 @@ automake 1.5
 libtool 1.4.2
 gcc 3.0.3
 gmp 4.0.1      (configure with --enable-cxx and using -fexceptions) (1)
-cln 1.1.4      (manually copy cln.m4) (2)
+cln 1.1.4      (ignore the errors given by `make install') (2)
 ginac 1.0.5
 fi_lib++ 2.0   (follow the instructions) (3)
 ntl 5.2        (4)
@@ -22,10 +22,8 @@ Your configure command should be something like
 CPPFLAGS=-fexceptions my/path/to/gmp-4.0.1/configure --prefix=/usr/local --enable-cxx
 
 (2)
-If you build cln out of the source tree, then before installing
-you will need to manually copy the file cln.m4 into your build-dir.
-Namely,
-  cp my/path/to/cln/sources/cln.m4 my/path/to/build/dir
+Build cln out of the source tree, then ignore the error about
+a missing cln.m4 when you do `make install'.
 
 (3)
 mkdir filib++

@@ -89,47 +89,37 @@ AC_PROG_CXXCPP
 
 dnl GMP library
 
-AC_ARG_WITH(gmp-includes,
-            [  --with-gmp-includes=DIR GMP include files are in DIR],
-            gmp_includes=${with_gmp_includes}
-            gmp_includes_option="-I${gmp_includes}")
-
-AC_ARG_WITH(gmp-dir,
-            [  --with-gmp-dir=DIR      GMP library files are in DIR],
-            gmp_dir=${with_gmp_dir}
-            gmp_library_option="${gmp_dir}/libgmp.a",
-            gmp_library_option="-lgmp")
-
-
-ac_save_LIBS="$LIBS"
-LIBS="${gmp_library_option} $LIBS"
-
-ac_save_CPPFLAGS="$CPPFLAGS"
-CPPFLAGS="${gmp_includes_option} $CPPFLAGS"
-
-AC_CHECK_HAVE_GMP
+AC_CHECK_GMP
 
 if test x"$have_gmp" = xno
 then
-  AC_MSG_ERROR([Cannot find GMP, the GNU Multi-Precision library])
+  AC_MSG_ERROR([Cannot find GMP version 4 or higher.
+GMP is the GNU Multi-Precision library:
+see http://www.swox.com/gmp/ for more information.
+Do not forget to enable the C++ interface: add --enable-cxx
+to the configuration options.])
 fi
 
 AC_CHECK_SIZEOF(mp_limb_t, 4, [#include <gmp.h>])
 
-AC_CHECK_GMP_EXCEPTIONS
-
-CPPFLAGS="$ac_save_CPPFLAGS"
-LIBS="$ac_save_LIBS"
+extra_includes="${extra_includes} ${gmp_includes_option}"
+extra_libraries="${extra_libraries} ${gmp_library_option}"
 
 extra_includes="${extra_includes} ${gmp_includes_option}"
 
+dnl CLN library
+
+AC_PATH_CLN(1.1.4, [
+  extra_libraries="${extra_libraries} ${CLN_LIBS}"
+  extra_includes="${extra_includes} $CLN_CPPFLAGS"  
+], AC_MSG_ERROR([need to have the CLN library installed]))
 
 dnl GiNaC library
 
 AC_PATH_GINAC(1.0.5, [
-  LIBS="$LIBS $GINACLIB_LIBS"
+  extra_libraries="${extra_libraries} ${GINACLIB_LIBS}"
   extra_includes="${extra_includes} $GINACLIB_CPPFLAGS"  
-], AC_MSG_ERROR([need to have GiNaC installed]))
+], AC_MSG_ERROR([need to have the GiNaC library installed]))
 
 
 dnl Compilation flags
@@ -328,7 +318,7 @@ AC_CHECK_FUNCS(nice getrusage getrlimit setrlimit)
 
 AC_SUBST(extra_includes)
 AC_SUBST(extra_cpp_flags)
-AC_SUBST(gmp_library_option)
+AC_SUBST(extra_libraries)
 AC_SUBST(debug_flag)
 AC_SUBST(extra_if_Prolog_subdirs)
 

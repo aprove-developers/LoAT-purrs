@@ -13,6 +13,6 @@ VPATH = @srcdir@
 
 @SET_MAKE@
 
-m4macros = ac_check_have_gmp.m4 ac_check_gmp_exceptions.m4
+m4macros = ac_check_gmp.m4 ac_check_use_readline.m4 cln.m4 ginac.m4
 
 EXTRA_DIST = $(m4macros) 

@@ -17,7 +17,7 @@ SUBDIRS =
 
 INCLUDES = -I$(top_builddir)/src @extra_includes@ #-I/usr/local/filib/include 
 
-LDADD = $(top_builddir)/src/libpurrs.a -lntl -lstdc++ @gmp_library_option@ -lcgicc #-L/usr/local/filib/lib -lfi -lieee -lprim 
+LDADD = $(top_builddir)/src/libpurrs.a -lstdc++ -lntl @extra_libraries@ -lcgicc #-L/usr/local/filib/lib -lfi -lieee -lprim 
 
 CPPFLAGS = @extra_cpp_flags@
 
