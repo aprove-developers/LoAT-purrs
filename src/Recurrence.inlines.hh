@@ -25,22 +25,28 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_Recurrence_inlines_hh
 #define PURRS_Recurrence_inlines_hh
 
+#include "rr_solver.hh"
+
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
 Recurrence::Recurrence()
-  : recurrence_rhs(0) {
+  : recurrence_rhs(0),
+    solved(false) {
 }
 
 inline
 Recurrence::Recurrence(const Expr& e)
-  : recurrence_rhs(e) {
+  : recurrence_rhs(e),
+    solved(false) {
 }
 
 inline
 Recurrence::Recurrence(const Recurrence& y)
   : recurrence_rhs(y.recurrence_rhs),
-    system_rhs(y.system_rhs) {
+    system_rhs(y.system_rhs),
+    solved(y.solved),
+    solution(y.solution) {
 }
 
 inline
@@ -51,6 +57,8 @@ inline Recurrence&
 Recurrence::operator=(const Recurrence& y) {
   recurrence_rhs = y.recurrence_rhs;
   system_rhs = y.system_rhs;
+  solved = y.solved;
+  solution = y.solution;
   return *this;
 }
 
@@ -59,13 +67,40 @@ Recurrence::replace_recurrence(const Expr& e) {
   recurrence_rhs = e;
 }
 
-void
+inline void
 Recurrence::replace_recurrence(unsigned k, const Expr& e) {
   std::pair<std::map<unsigned, Expr>::iterator, bool> stat
     = system_rhs.insert(std::map<unsigned, Expr>::value_type(k, e));
   if (!stat.second)
     // There was already something associated to `k': overwrite it.
     stat.first->second = e;
+}
+
+inline bool
+Recurrence::solve() const {
+  Symbol n("n");
+  if (!solved && solve_try_hard(recurrence_rhs, n, solution) == OK)
+    solved = true;
+  return solved;
+}
+
+inline Expr
+Recurrence::exact_solution() const {
+  if (solved || solve())
+    return solution;
+  else
+    // Well, if the client insists...
+    return recurrence_rhs;
+}
+
+inline bool
+Recurrence::verify_solution() const {
+  if (solved || solve()) {
+    // Verify the solution.
+    return false;
+  }
+  // Well, if the client insists...
+  return true;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

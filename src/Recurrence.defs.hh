@@ -63,7 +63,9 @@ public:
   //! 
   Symbol insert_auxiliary_equation(const Expr& e);
 
-  bool solve();
+  bool solve() const;
+  Expr exact_solution() const;
+  bool verify_solution() const;
 
 private:
   //! Holds the right-hand side of the global recurrence to be solved.
@@ -79,6 +81,9 @@ private:
   //! is one of the equations of the system.
   std::map<unsigned, Expr> system_rhs;
 
+  mutable bool solved;
+
+  mutable Expr solution;
 
 #if 0
     Expr poly_char;
