@@ -1036,10 +1036,10 @@ PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classify() const {
   D_VAR(recurrence_rhs);
   // Simplifies expanded expressions, in particular rewrites nested powers.
-  recurrence_rhs = simplify_ex_for_input(recurrence_rhs, true);
+  Expr rhs = simplify_ex_for_input(recurrence_rhs, true);
   // Splits the sum in many sums how many are the addends of the summand
   // and computes, when possible, symbolic sums.
-  recurrence_rhs = simplify_sum(recurrence_rhs, false, true);
+  rhs = simplify_sum(rhs, false, true);
 
   // Date for linear finite order recurrences.
 
@@ -1066,12 +1066,11 @@ PURRS::Recurrence::classify() const {
 
   Solver_Status status;
 
-  unsigned num_summands
-    = recurrence_rhs.is_a_add() ? recurrence_rhs.nops() : 1;
+  unsigned num_summands = rhs.is_a_add() ? rhs.nops() : 1;
   if (num_summands > 1)
     // It is necessary that the following loop starts from `0'.
     for (unsigned i = 0; i < num_summands; ++i) {
-      if ((status = classification_summand(recurrence_rhs.op(i), inhomogeneous,
+      if ((status = classification_summand(rhs.op(i), inhomogeneous,
 					   order, coefficients,
 					   gcd_among_decrements, i,
 					   homogeneous_terms))
@@ -1084,7 +1083,7 @@ PURRS::Recurrence::classify() const {
 	break;
     }
   else
-    if ((status = classification_summand(recurrence_rhs, inhomogeneous,
+    if ((status = classification_summand(rhs, inhomogeneous,
 					 order, coefficients,
 					 gcd_among_decrements, 0,
 					 homogeneous_terms))
@@ -1171,7 +1170,8 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	eliminate_negative_decrements(recurrence_rhs, new_rhs);
 	bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	rec_rewritten = true;
-	recurrence_rhs = new_rhs;
+	Expr& rhs = const_cast<Expr&>(recurrence_rhs);
+	rhs = new_rhs;
 	status = classify_and_catch_special_cases();
       }
       break;
@@ -1182,7 +1182,8 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	if (result == 0) {
 	  bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	  rec_rewritten = true;
-	  recurrence_rhs = new_rhs;
+	  Expr& rhs = const_cast<Expr&>(recurrence_rhs);
+	  rhs = new_rhs;
 	  status = classify_and_catch_special_cases();
 	}
 	else if (result == 1)

@@ -366,7 +366,7 @@ private:
   //! result of transforming a system into a single recurrence.
   //! The global recurrence is thus of the form
   //! <CODE>x(n) = recurrence_rhs</CODE>.
-  mutable Expr recurrence_rhs;
+  Expr recurrence_rhs;
 
   //! \brief
   //! It is <CODE>true</CODE> if the recurrence has been rewritten, i. e.,
