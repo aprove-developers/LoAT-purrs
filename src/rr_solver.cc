@@ -206,26 +206,26 @@ transform_exponentials(GExpr& e, const GSymbol& n, const bool input) {
   }
 
   if (input == true) {
-    // Transforms a^(b*n+c) into (a^b)^n*a^c
+    // Transform a^(b*n+c) into a^c*a^(b*n)
     // (to do only on input expression).
-    static GExpr a_bn = pow(wild(0), n*wild(1));
-    static GExpr a_n_c = pow(wild(0), n+wild(1));
-    static GExpr a_bn_c = pow(wild(0), n*wild(1)+wild(2));
-    if (e.find(a_bn_c, lst_of_exp) || e.find(a_n_c, lst_of_exp)) 
-      e = e.expand();
-    if (e.find(a_bn, lst_of_exp))
-      e = split_exp(e, n, lst_of_exp);
+    e = e.expand();
   }
-  else {
+  // Transforms a^(b*n) into (a^b)^n
+  static GExpr a_bn = pow(wild(0), n*wild(1));
+  if (e.find(a_bn, lst_of_exp))
+    e = split_exp(e, n, lst_of_exp);
+
+  if (input == false) {
     //FIXME: this part must be finished!!
- //    // Transforms a^b*a^c into a^(b+c)
-//     // (to do only on output expression).
-//     static GExpr a_b_times_a_c = pow(wild(1)*wild(0), wild(2)) *
-//                                  pow(wild(3)*wild(0), wild(4));
-//     if (e.find(a_b_times_a_c, lst_of_exp)) {
-//       std::cout << "lst_of_exp " << lst_of_exp << std::endl;   
-//       e = union_exp(e, n, lst_of_exp);
-//     }
+    // Transforms a^b*a^c into a^(b+c)
+    // (to do only on output expression).
+    static GExpr a_b_times_a_c = pow(wild(0), wild(1)) * pow(wild(0), wild(2));
+ //      pow(wild(1)*wild(0), wild(2)) *
+//       pow(wild(3)*wild(0), wild(4));
+    if (e.find(a_b_times_a_c, lst_of_exp)) {
+      std::cout << "lst_of_exp " << lst_of_exp << std::endl;   
+      //e = union_exp(e, n, lst_of_exp);
+    }
   }
 
   // Transforms a^n*b^n into (a*b)^n.
@@ -244,19 +244,19 @@ static GMatrix
 decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n);
 
 static bool
-solution_1_poly_times_exponentials(const std::vector<GExpr> 
-				   initials_conditions, const GSymbol& n,
-				   const GMatrix& decomposition,
-				   const std::vector<GExpr>& coefficients,
-				   GExpr& solution);
+order_1_sol_poly_times_exponentials(const std::vector<GExpr> 
+				    initials_conditions, const GSymbol& n,
+				    const GMatrix& decomposition,
+				    const std::vector<GExpr>& coefficients,
+				    GExpr& solution);
 
 static bool
-solution_2_poly_times_exponentials(const std::vector<GExpr> 
-				   initials_conditions,
-				   const GSymbol& n,
-				   const GMatrix& decomposition,
-				   const std::vector<GNumber>& coefficients,
-				   GExpr& solution);
+order_2_sol_poly_times_exponentials(const std::vector<GExpr> 
+				    initials_conditions,
+				    const GSymbol& n,
+				    const GMatrix& decomposition,
+				    const std::vector<GNumber>& coefficients,
+				    GExpr& solution);
 
 bool
 solve(const GExpr& rhs, const GSymbol& n) {
@@ -267,9 +267,34 @@ solve(const GExpr& rhs, const GSymbol& n) {
 
   static GList substitution;
 
- int order = -1;
+  int order = -1;
   std::vector<GExpr> coefficients;
   GExpr e = rhs;
+
+  GExpr solution;
+
+  // Special case: 'e' is only a function in n or a constant.
+  GList occurrences;
+  bool finished = true;
+  if (e.find(x_i, occurrences)) {
+    int occurrences_nops = occurrences.nops();
+    if (occurrences_nops != 0)
+      for (int i = 0; i < occurrences_nops; ++i) {
+	GExpr argument = occurrences.op(i).subs(x(wild(0)) == wild(0));
+	if (argument.has(n)) {
+	  finished = false;
+	  break;
+	}
+      }
+  }
+  if (finished) {
+    solution = e; 
+#if NOISY 
+    std::cout << "Solution  " << solution << std::endl << std::endl;
+#endif
+    return true;
+  }
+  
   bool failed = false;
   do {
     GExpr i;
@@ -318,17 +343,17 @@ solve(const GExpr& rhs, const GSymbol& n) {
     }
     // For the moment the coefficients of recurrence relation
     // must be constants, i. e., it does not contains the variable n.
-    if (a.has(n)) {
-      throw ("PURRS error: at the moment we only solve recurrence "
+    if (a.has(n))
+      throw ("PURRS error: for the moment we only solve recurrence "
 	     "relations with constant coefficients. ");
-    }
     GExpr coefficient = a;
+
     // FIXME: turn this assertion into something more appropriate.
     assert(decrement >= LONG_MIN && decrement <= LONG_MAX);
     unsigned long index = decrement.to_long();
     if (order < 0 || index > unsigned(order))
       order = index;
-    
+
     // The vector 'coefficients' contains in the i-th position
     // the i-th coefficient, i. e., the coefficient of x(n-i).
     if (index > coefficients.size())
@@ -342,22 +367,9 @@ solve(const GExpr& rhs, const GSymbol& n) {
   
   } while (e != 0);
 
-  // See if what is left is the inhomogeneous term,
-  // i.e., if all the occurrences of `x(e)' are such that
-  // `e' is numeric.
-  GList occurrences;
-  if (e.find(x_i, occurrences))
-    for (unsigned i = 0, n = occurrences.nops(); i < n; ++i) {
-      GExpr argument = occurrences.op(i);
-      argument = argument.subs(x(wild(0)) == wild(0));
-      if (!is_a<numeric>(argument)) {
-	failed = true;
-	break;
-      }
-    }
-
   if (failed)
     return false;
+
 #if NOISY
   std::cout << "Order = " << order << std::endl;
   std::cout << "Coefficients = ";
@@ -387,6 +399,14 @@ solve(const GExpr& rhs, const GSymbol& n) {
   std::cout << "Inhomogeneous term's decomposition"
 	    << decomposition << std::endl;
 #endif
+  // TEMPORARY until that is not fixed the problem
+  // 'what is a polynomial in x?'
+  clear(occurrences);
+  if (e.find(x_i, occurrences))
+    if (occurrences.nops() != 0)
+      throw ("PURRS error: this case (initials conditions in "
+	     "homogeneous term) is temporary suspended. ");
+
   // Calculates the number of columns of the matrix 'decomposition'.
   unsigned num_columns = decomposition.cols();
 
@@ -394,12 +414,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
   std::vector<GExpr> initials_conditions(order);
   for (int i = 0; i < order; ++i)
     initials_conditions[i] = x(i);
-  //   std::cout << "Initials conditions = ";
-  //   for (int i = 0; i < order; ++i)
-  //     std::cout << initials_conditions[i] << " ";
-  //   std::cout << std::endl;
 
-  GExpr solution;
   switch (order) {
   case 1:
     {
@@ -425,12 +440,12 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	// Calculates the solution of the first order recurrences when
 	// the inhomogeneous term is a polynomial or the product of a
 	// polynomial and an exponential.      
-	solution_1_poly_times_exponentials(initials_conditions, n,
-					   decomposition, coefficients,
-					   solution);
+	order_1_sol_poly_times_exponentials(initials_conditions, n,
+					    decomposition, coefficients,
+					    solution);
       }
       else 
-	throw ("PURRS error: at the moment the recurrence "
+	throw ("PURRS error: for the moment the recurrence "
 	       "relation is solved only when the inhomogeneous term "
 	       "is polynomials or product of exponentials times "
 	       "polynomials.");
@@ -444,7 +459,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
       // recurrence relation with parameters.
       std::vector<GNumber>  num_coefficients(order+1);
       for (int i = 1; i <= order; ++i) {
-	if (coefficients[i].info(info_flags::numeric))
+	if (is_a<numeric>(coefficients[i]))
 	  num_coefficients[i] = GiNaC::ex_to<GiNaC::numeric>(coefficients[i]);
 	else
 	  throw("PURRS error: the second order recurrence relations does not "
@@ -470,12 +485,12 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	// Calculates the solution of the second order recurrences when
 	// the inhomogeneous term is a polynomial or the product of a
 	// polynomial and an exponential.      
-	solution_2_poly_times_exponentials(initials_conditions, n, 
-					   decomposition, num_coefficients,
-					   solution);
+	order_2_sol_poly_times_exponentials(initials_conditions, n, 
+					    decomposition, num_coefficients,
+					    solution);
       }	
       else 
-	throw ("PURRS error: at the moment the recurrence "
+	throw ("PURRS error: for the moment the recurrence "
 	       "relation is only solved when the inhomogeneous term "
 	       "is polynomials or product of exponentials times "
 	       "polynomials."); 
@@ -577,11 +592,11 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
   contains the coefficients of the recurrence.
  */
 static bool
-solution_1_poly_times_exponentials(const std::vector<GExpr> 
-				   initials_conditions, const GSymbol& n,
-				   const GMatrix& decomposition,
-				   const std::vector<GExpr>& coefficients,
-				   GExpr& solution_tot) {
+order_1_sol_poly_times_exponentials(const std::vector<GExpr> 
+				    initials_conditions, const GSymbol& n,
+				    const GMatrix& decomposition,
+				    const std::vector<GExpr>& coefficients,
+				    GExpr& solution_tot) {
   // The closed formula of the solution can be rewritten as
   // x(n) = \alpha^n * ( x(0) - p(0) + sum_{k=0}^n \alpha^(-k)*p(k) ).
   solution_tot = initials_conditions[0];
@@ -653,12 +668,12 @@ build_characteristic_equation(GExpr& p, const GSymbol x,
   contains the coefficients of the recurrence.
  */
 static bool
-solution_2_poly_times_exponentials(const std::vector<GExpr> 
-				   initials_conditions,
-				   const GSymbol& n, 
-				   const GMatrix& decomposition,
-				   const std::vector<GNumber>& coefficients,
-				   GExpr& solution_tot) {
+order_2_sol_poly_times_exponentials(const std::vector<GExpr> 
+				    initials_conditions,
+				    const GSymbol& n, 
+				    const GMatrix& decomposition,
+				    const std::vector<GNumber>& coefficients,
+				    GExpr& solution_tot) {
     solution_tot = 0;
     // Calculates the number of columns of the matrix.
     unsigned num_columns = decomposition.cols();
