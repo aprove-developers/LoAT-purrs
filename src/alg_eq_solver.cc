@@ -332,6 +332,17 @@ solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
     x3 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+4*Pi)/3);
   }
   else {
+    /*! 
+      When d > 0 there is one real and two complex conjugate roots. 
+      In order to avoid taking cube roots of negative numbers we check 
+      the signs of the expressions A and B below (which need not be 
+      rational) without actually computing them:
+      - if Q >= 0 then d >= R^2 and sqrt_d >= abs(R) so that 
+        A >= 0 and B < 0;
+      - if Q < 0 and R < 0 then a similar argument shows that 
+        A < 0 and B < 0; 
+      - if Q < 0 and R >= 0 then A > 0 and B > 0.
+    */
     GExpr sqrt_d = sqrt(d);
     GExpr A = R + sqrt_d;
     GExpr B = R - sqrt_d;
