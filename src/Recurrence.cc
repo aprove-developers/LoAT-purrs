@@ -78,8 +78,19 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
     break;
   case LINEAR_FINITE_ORDER_CONST_COEFF:
   case LINEAR_FINITE_ORDER_VAR_COEFF:
+  case NON_LINEAR_FINITE_ORDER:
     {
-      index_type k = order();
+      index_type k;
+      if (is_non_linear_finite_order()) {
+	if (associated_linear_rec().recurrence_rhs == 0)
+	  k = 1;
+	else {
+	  associated_linear_rec().classify_and_catch_special_cases();
+	  k = associated_linear_rec().order();
+	}
+      }
+      else
+	k = order();
       index_type first = first_valid_index;
       // Check the number of initial conditions.
       if (initial_conditions.size() < k) {
@@ -113,6 +124,22 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 	  throw_invalid_argument(method, s.str().c_str());
 	}
       }
+      // In the case of non-linear recurrences we at the moment accept
+      // only non-negative values for the initial conditions.
+      if (is_non_linear_finite_order()) {
+	for (std::map<index_type, Expr>::const_iterator i
+	       = initial_conditions.begin(),
+	       initial_conditions_end = initial_conditions.end();
+	     i != initial_conditions_end; ++i) {
+	  Number index;
+	  if (i->second.is_a_number(index) && index.is_negative())
+	    throw_invalid_argument(method,
+				   "*this is a non-linear recurrence "
+				   "and at the moment we accept only\n"
+				   "non-negative values for the initial "
+				   "conditions");
+	}
+      }
     }
     break;
   case WEIGHTED_AVERAGE:
@@ -132,9 +159,6 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 	throw_invalid_argument(method, s.str().c_str());
       }
     }
-    break;
-  case NON_LINEAR_FINITE_ORDER:
-    // NON DEVONO ESSERE NEGATIVE!!!
     break;
   case FUNCTIONAL_EQUATION:
     throw
@@ -392,11 +416,11 @@ compute_non_linear_recurrence(Expr& solution_or_bound,
     assert(base_exp_log().is_a_number());
     // Even if in this case we already know the solution,
     // in order to apply the validation's process of the solution,
-    // is necessary to classify the linear recurrence relation
-    // associated to that one non-linear.
-    // FIXME: rivedere la verifica per capire se questo passaggio e'
-    // davvero necessario.
-    associated_linear_rec().classify_and_catch_special_cases();
+    // is necessary to know the order of the recurrence.
+    associated_linear_rec().set_linear_finite_order_const_coeff();
+    std::vector<Expr> coefficients;
+    associated_linear_rec().finite_order_p
+      = new Finite_Order_Info(1, coefficients, 1);
     solution_or_bound = pwr(coeff_simple_non_linear_rec(),
 			    (pwr(base_exp_log(), n)-1)/(base_exp_log()-1))
       * pwr(x(0), pwr(base_exp_log(), n));
@@ -816,7 +840,8 @@ compute_solution_finite_order_on_i_c(const Expr& solution) const {
     // with arbitrary symbols, which will be also the unknowns of the linear
     // system.
     Expr_List unknowns;
-    for (unsigned int i = 0; i < order_rec; ++i) {
+    for (unsigned int i = first_valid_index;
+	 i < first_valid_index + order_rec; ++i) {
       Symbol y = Symbol();
       unknowns.append(y);
       solution_on_i_c = solution_on_i_c.substitute(x(i), y);
@@ -832,6 +857,7 @@ compute_solution_finite_order_on_i_c(const Expr& solution) const {
     for (std::map<index_type, Expr>::const_reverse_iterator i 
 	   = initial_conditions_.rbegin(); j < order_rec; j++) {
       Expr lhs = solution_on_i_c.substitute(n, i->first);
+      D_VAR(Expr(lhs, i->second));
       equations.prepend(Expr(lhs, i->second));
       i++;
     }
@@ -839,7 +865,9 @@ compute_solution_finite_order_on_i_c(const Expr& solution) const {
     // Solve the linear system and put the results in the
     // expression `sol_system' (which is a list of equations).
     Expr sol_system = lsolve(equations, unknowns);
+    D_VAR(sol_system);
 
+    D_VAR(solution_on_i_c);
     for (unsigned i = sol_system.nops(); i-- > 0; )
       solution_on_i_c = solution_on_i_c.substitute(unknowns.op(i),
 						   sol_system.op(i).op(1));
