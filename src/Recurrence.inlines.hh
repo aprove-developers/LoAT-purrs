@@ -146,7 +146,7 @@ undefined_initial_conditions(std::set<unsigned int>& undefined) const {
 
 inline Expr
 Recurrence::get_initial_condition(unsigned int k) const {
-  std::map<unsigned int, Expr>::const_iterator i = initial_conditions.find(k);
+  std::map<index_type, Expr>::const_iterator i = initial_conditions.find(k);
   if (i != initial_conditions.end())
     return (*i).second;
   else
@@ -156,7 +156,7 @@ Recurrence::get_initial_condition(unsigned int k) const {
 inline unsigned int
 Recurrence::get_max_index_initial_condition() const {
   unsigned int max_index = 0;
-  for (std::map<unsigned int, Expr>::const_iterator i
+  for (std::map<index_type, Expr>::const_iterator i
 	 = initial_conditions.begin(),
 	 iend = initial_conditions.end(); i != iend; ++i)
     if (i->first > max_index)

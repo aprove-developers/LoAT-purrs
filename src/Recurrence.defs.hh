@@ -1231,7 +1231,7 @@ private:
 
   mutable Blackboard blackboard;
 
-  std::map<unsigned int, Expr> initial_conditions;
+  std::map<index_type, Expr> initial_conditions;
 
 private:
   static Classifier_Status

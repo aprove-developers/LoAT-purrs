@@ -833,8 +833,8 @@ PURRS::Recurrence::verify_upper_bound() const {
 */
 void
 PURRS::Recurrence::replace_initial_condition(unsigned int k, const Expr& e) {
-  std::pair<std::map<unsigned int, Expr>::iterator, bool> stat
-    = initial_conditions.insert(std::map<unsigned int, Expr>::value_type(k, e));
+  std::pair<std::map<index_type, Expr>::iterator, bool> stat
+    = initial_conditions.insert(std::map<index_type, Expr>::value_type(k, e));
   if (!stat.second)
     // There was already something associated to `i': overwrite it.
     stat.first->second = e;
@@ -1191,7 +1191,7 @@ compute_weighted_average_recurrence(Expr& solution) const {
       // If there is the initial condition `x(1)' specified then
       // the system substitute it with the respective value; otherwise
       // the system performs the substitution `x(1) = 2*x(0)+1'.
-      std::map<unsigned int, Expr>::const_iterator i
+      std::map<index_type, Expr>::const_iterator i
 	= initial_conditions.find(1);
       if (i != initial_conditions.end())
 	solution = solution.substitute(x(1), get_initial_condition(1));
@@ -1350,7 +1350,7 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
   }
   // Substitute symbolic initial conditions with the values in the map
   // `initial_conditions'.
-  for (std::map<unsigned int, Expr>::const_iterator i
+  for (std::map<index_type, Expr>::const_iterator i
 	 = initial_conditions.begin(),
 	 iend = initial_conditions.end(); i != iend; ++i)
     sol_or_bound = sol_or_bound.substitute(x(i->first),
@@ -1454,7 +1454,7 @@ PURRS::Recurrence::compute_exact_solution_weighted_average() const {
 #else
   // FIXME: At the moment we substitute here only the initial
   // condition `x(0)'.
-  std::map<unsigned int, Expr>::const_iterator i
+  std::map<index_type, Expr>::const_iterator i
     = initial_conditions.find(0);
   if (i != initial_conditions.end())
     solution = solution.substitute(x(0), get_initial_condition(0));
@@ -1678,7 +1678,7 @@ PURRS::Recurrence::dump(std::ostream& s) const {
   
   if (!initial_conditions.empty()) {
     s << "Initial conditions:" << std::endl;
-    for (std::map<unsigned int, Expr>::const_iterator i
+    for (std::map<index_type, Expr>::const_iterator i
 	   = initial_conditions.begin(),
 	   initial_conditions_end = initial_conditions.end();
 	 i != initial_conditions_end; ++i)
