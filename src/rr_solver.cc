@@ -188,8 +188,10 @@ characteristic_equation_and_its_roots(unsigned int order,
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
       return false;
   }
-  for (unsigned i = roots.size(); i-- > 0; )
+  for (unsigned i = roots.size(); i-- > 0; ) {
     D_VAR(roots[i].value());
+    D_VAR(roots[i].multiplicity());
+  }
   return true;
 }
 
@@ -527,14 +529,10 @@ find_g_n(bool all_distinct, const Matrix& sol,
     for (unsigned i = 0; i < order; ++i)
       g_n += sol(i, 0) * pwr(roots[i].value(), Recurrence::n);
   else
-    for (unsigned i = roots.size(); i-- > 0; ) {
-      unsigned h = 0;
-      for (Number j = roots[i].multiplicity(); j-- > 0 && h < order; ) {
+    for (unsigned i = roots.size(), h = 0; i-- > 0; )
+      for (Number j = roots[i].multiplicity(); j-- > 0; h++)
 	g_n += sol(h, 0) * pwr(Recurrence::n, j)
 	  * pwr(roots[i].value(), Recurrence::n);
-	++h;
-      }
-    }
   return g_n;
 }
 
@@ -745,7 +743,7 @@ solve_constant_coeff_order_2(Expr& g_n, unsigned int order, bool all_distinct,
     // Solve system in order to finds `alpha_i' (i = 1,...,order).
     Matrix sol = solve_system(all_distinct, coefficients, roots);
     
-    // Finds `g_n', always taking into account the root's multiplicity
+    // Finds `g_n', always taking into account the root's multiplicity.
     g_n = find_g_n(all_distinct, sol, roots);
     if (!vector_not_all_zero(exp_no_poly_coeff))
       solution = compute_non_homogeneous_part(g_n, order, base_of_exps,
@@ -834,7 +832,7 @@ solve_constant_coeff_order_k(Expr& g_n, unsigned int order, bool all_distinct,
 
   // Solve system in order to finds `alpha_i' (i = 1,...,order).
   Matrix sol = solve_system(all_distinct, coefficients, roots);
-  
+
   // Finds `g_n', always taking into account the root's multiplicity
   g_n = find_g_n(all_distinct, sol, roots);
   D_VAR(g_n);
