@@ -983,16 +983,12 @@ compute_solution_non_linear_finite_order_on_i_c(const Expr& solution) const {
 
     // Transform the solution of the linear recurrence in the solution
     // of the non linear recurrence.
-    if (solution_of_linear_rec == 0)
-      solution_on_i_c = 0;
-    else {
-      solution_on_i_c = pwr(base_exp_log(), solution_of_linear_rec);
-      solution_on_i_c = substitute_x_function(solution_on_i_c,
-					      base_exp_log(),
-					      ARGUMENT_LOG);
-      solution_on_i_c = simplify_ex_for_input(solution_on_i_c, true);
-      solution_on_i_c = simplify_logarithm(solution_on_i_c);
-    }
+    solution_on_i_c = pwr(base_exp_log(), solution_of_linear_rec);
+    solution_on_i_c = substitute_x_function(solution_on_i_c,
+					    base_exp_log(),
+					    ARGUMENT_LOG);
+    solution_on_i_c = simplify_ex_for_input(solution_on_i_c, true);
+    solution_on_i_c = simplify_logarithm(solution_on_i_c);
   }
   else {
     // Substitute symbolic initial conditions with the values in the map
