@@ -191,11 +191,7 @@ main(int argc, char *argv[]) try {
 	}
 	if (!value.is_a_number())
 	  if (interactive) {
-#if 0
-	    cout << "****  x_" << i+1 << " ~= " << value.evalf() << endl;
-#else
 	    cout << "****  x_" << i+1 << " ~= " << approximate(value) << endl;
-#endif
 	  }
       }
     }
