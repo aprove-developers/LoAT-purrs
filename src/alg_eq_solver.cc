@@ -176,7 +176,7 @@ find_roots(const GExpr& p, const GSymbol& x,
   assert(!p.info(info_flags::numeric));
   // Compute a square-free decomposition for p.
   GExpr q = sqrfree(p.expand(), lst(x));
-  // There are now 4 cases depending on q's principal functor:
+  // There are now 4 cases depending on the principal functor of `q':
   //
   // 1) q is a product of two or more factors: e.g., (1+x)^2*(2+x);
   // 2) q is a factor to the power of its multiplicity (at least 2)
@@ -334,8 +334,8 @@ find_roots(const GExpr& p, const GSymbol& x,
       }
     case 4:
       {
-	// FIXME: call 'is_nested_polynomial(q, x, r)' here?
-	// (ex. 1+x^4+x^2 = 0)
+	// FIXME: call `is_nested_polynomial(q, x, r)' here?
+	// Consider, for example, 1+x^4+x^2 = 0.
 	assert(is_a<numeric>(q.coeff(x, 1)));
 	assert(is_a<numeric>(q.coeff(x, 2)));
 	assert(is_a<numeric>(q.coeff(x, 3)));
@@ -411,6 +411,9 @@ solve_equation_2(const GExpr& b, const GExpr& c,
 
   x1 = (-b + sqrt_d)/2;
   x2 = (-b - sqrt_d)/2;
+
+  x1 = simplify_on_output_ex(x1, n, false);
+  x2 = simplify_on_output_ex(x2, n, false);
 }
 
 /*!
@@ -422,10 +425,10 @@ bool
 solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
 		 GExpr& x1, GExpr& x2, GExpr& x3) {
   GSymbol n("n");
-  GExpr Q = (3*a2 - pow(a1, 2)) / 9;
-  GExpr R = (9*a1*a2 - 27*a3 -2*pow(a1, 3)) / 54;
-  GExpr d = pow(Q, 3) + pow(R, 2);
-  GExpr a1_div_3 = a1/3;
+  GNumber Q = (3*a2 - a1*a1) / 9;
+  GNumber R = (9*a1*a2 - 27*a3 -2*a1*a1*a1) / 54;
+  GNumber d = Q*Q*Q + R*R;
+  GNumber a1_div_3 = a1/3;
   if (d < 0) {
     GExpr sqrt_minus_Q = sqrt(-Q);
     GExpr theta = acos(-R/(Q*sqrt_minus_Q));
@@ -475,13 +478,21 @@ solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
     D_VAR(T);
 
     GExpr S_plus_T = S + T;
-    // FIXME: (a+b)^(1/3) + (a-b)^(1/3) = ?
+
+    // FIXME: S+T are of the form (a+b)^(1/3) + (a-b)^(1/3).
+    // Is there a way to simplify this?
+
     GExpr t1 = -S_plus_T/2 - a1_div_3;
     GExpr t2 = (S - T)*I*sqrt(GExpr(3))/2;
     x1 = S_plus_T - a1_div_3;
     x2 = t1 + t2;
     x3 = t1 - t2;
   }
+
+  x1 = simplify_on_output_ex(x1, n, false);
+  x2 = simplify_on_output_ex(x2, n, false);
+  x3 = simplify_on_output_ex(x3, n, false);
+
   // The roots are all real if and only if d <= 0.
   return d <= 0;
 }
@@ -491,44 +502,40 @@ void
 solve_equation_4(const GNumber& a1, const GNumber& a2,
 		 const GNumber& a3, const GNumber& a4,
 		 GExpr& x1, GExpr& x2, GExpr& x3, GExpr& x4) {
-  GSymbol n("n");
-  GExpr y1;
-  GExpr y2;
-  GExpr y3;
-
-  GNumber f = a2-3*a1*a1*numeric(1)/8;
-  GNumber g = a3+a1*a1*a1/8-a1*a2*numeric(1)/2;
-  GNumber h = a4-3*a1*a1*a1*a1*numeric(1)/256
-    +a1*a1*a2*numeric(1)/16-a1*a3*numeric(1)/4;
+  GNumber f = a2 - 3*a1*a1*numeric(1)/8;
+  GNumber g = a3 + a1*a1*a1/8 - a1*a2/2;
+  GNumber h = a4 - 3*a1*a1*a1*a1/256 + a1*a1*a2/16 - a1*a3/4;
 
   D_VAR(f); 
   D_VAR(g); 
   D_VAR(h);
 
+  GExpr y1;
+  GExpr y2;
+  GExpr y3;
   // If 'g' is zero then the auxiliary equation
   // y^3 +  f/2*y^2 + (f*f - 4*h)/16*y - g*g/64 = 0
-  // has the root 0, in this case we solve the simpler
-  // auxiliary equation
+  // has the root 0, in this case we solve the simpler auxiliary equation
   // y^2 +  f/2*y + (f*f - 4*h)/16 = 0.
-  GExpr p, q;
   if (g == 0) {
-    solve_equation_2(f*numeric(1)/2,
-		     (f*f - 4*h)*numeric(1)/16,
-		     y1, y2);
-    // FIXME: Is it true that both roots are non zero?
+    solve_equation_2(f/2, (f*f - 4*h)/16, y1, y2);
+    // Both roots are nonzero.
+    assert(y1 != 0 && y2 != 0);
   }
-  else {
-    solve_equation_3(f*numeric(1)/2,
-		     (f*f - 4*h)*numeric(1)/16,
-		     -g*g*numeric(1)/64,
-		     y1, y2, y3);
-  } 
+  else
+    // We are deliberately ignoring the return value.
+    (void) solve_equation_3(f/2, (f*f - 4*h)/16, -g*g/64, y1, y2, y3);
+
+  GExpr p, q;
   p = sqrt(y1);
   q = sqrt(y2);
 
   D_MSGVAR("Before: ", p); 
   D_MSGVAR("Before: ", q);
 
+  // FIXME: the one and only `n' symbol should be global,
+  // i.e., created once and for all.
+  GSymbol n("n");
   p = simplify_on_output_ex(p, n, false);
   q = simplify_on_output_ex(q, n, false);
 
