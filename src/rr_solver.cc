@@ -1134,10 +1134,10 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
 }
 
 Expr
-rewrite_factor(const Expr& e, const Expr& m, int gcd_among_decrements) {
+rewrite_factor(const Expr& e, const Symbol& r, int gcd_among_decrements) {
   if (e.is_a_power())
-    return pwr(rewrite_factor(e.arg(0), m, gcd_among_decrements),
-	       rewrite_factor(e.arg(1), m, gcd_among_decrements));
+    return pwr(rewrite_factor(e.arg(0), r, gcd_among_decrements),
+	       rewrite_factor(e.arg(1), r, gcd_among_decrements));
   else if (e.is_a_function())
     if (e.is_the_x_function()) {
       Expr argument = e.arg(0);
@@ -1150,21 +1150,21 @@ rewrite_factor(const Expr& e, const Expr& m, int gcd_among_decrements) {
     }
     else
       for (unsigned i = e.nops(); i-- > 0; )
-	return rewrite_factor(e.arg(i), m, gcd_among_decrements);
+	return rewrite_factor(e.arg(i), r, gcd_among_decrements);
   else if (e == Recurrence::n)
-    return gcd_among_decrements * Recurrence::n + m;
+    return gcd_among_decrements * Recurrence::n + r;
   return e;
 }
 
 Expr
-rewrite_term(const Expr& e, const Expr& m, int gcd_among_decrements) {
+rewrite_term(const Expr& e, const Symbol& r, int gcd_among_decrements) {
   unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
   Expr e_rewritten = 1;
   if (num_factors > 1)
     for (unsigned i = num_factors; i-- > 0; )
-      e_rewritten *= rewrite_factor(e.op(i), m, gcd_among_decrements);
+      e_rewritten *= rewrite_factor(e.op(i), r, gcd_among_decrements);
   else
-    e_rewritten = rewrite_factor(e, m, gcd_among_decrements);
+    e_rewritten = rewrite_factor(e, r, gcd_among_decrements);
   return e_rewritten;
 }
 
@@ -1173,55 +1173,59 @@ rewrite_term(const Expr& e, const Expr& m, int gcd_among_decrements) {
   a recurrence such that \f$ g = gcd(k_1, \dotsc, k_h) > 1 \f$.
   In this case it is possible to reduce the order of the recurrence
   so that we have to solve \f$ g \f$ recurrences of order smaller
-  than those of the original recurrence. 
+  than the original recurrence. 
 */
 Expr
-rewrite_reduced_order_recurrence(const Expr& e, const Expr& m,
+rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
 				 int gcd_among_decrements) {
   D_VAR(gcd_among_decrements);
   unsigned num_summands = e.is_a_add() ? e.nops() : 1;
   Expr e_rewritten = 0;
   if (num_summands > 1)
     for (unsigned i = num_summands; i-- > 0; )
-      e_rewritten += rewrite_term(e.op(i), m, gcd_among_decrements);
+      e_rewritten += rewrite_term(e.op(i), r, gcd_among_decrements);
   else
-    e_rewritten = rewrite_term(e, m, gcd_among_decrements);
+    e_rewritten = rewrite_term(e, r, gcd_among_decrements);
   return e_rewritten;
 }
 
 Expr 
-come_back_to_original_variable(const Expr& e, const Expr& m,
+come_back_to_original_variable(const Expr& e, const Symbol& r, const Expr& m,
 			       int gcd_among_decrements) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten += come_back_to_original_variable(e.op(i),
+      e_rewritten += come_back_to_original_variable(e.op(i), r,
 						    m, gcd_among_decrements);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten *= come_back_to_original_variable(e.op(i),
+      e_rewritten *= come_back_to_original_variable(e.op(i), r,
 						    m, gcd_among_decrements);
   }
   else if (e.is_a_power())
-    return
-      pwr(come_back_to_original_variable(e.arg(0), m, gcd_among_decrements),
-	  come_back_to_original_variable(e.arg(1), m, gcd_among_decrements));
+    return pwr(come_back_to_original_variable(e.arg(0), r, m,
+					      gcd_among_decrements),
+	       come_back_to_original_variable(e.arg(1), r, m,
+					      gcd_among_decrements));
   else if (e.is_a_function())
     if (e.is_the_x_function())
       return x(m);
-  else {
-    unsigned num_argument = e.nops();
-    std::vector<Expr> argument(num_argument);
-    for (unsigned i = 0; i < num_argument; ++i)
-      argument[i] = come_back_to_original_variable(e.arg(i),
-						   m, gcd_among_decrements);
-    return apply(e.functor(), argument);
-  }
+    else {
+      unsigned num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned i = 0; i < num_argument; ++i)
+	argument[i] = come_back_to_original_variable(e.arg(i), r,
+						     m, gcd_among_decrements);
+      return apply(e.functor(), argument);
+    }
   else if (e == Recurrence::n)
     return Number(1, gcd_among_decrements) * (Recurrence::n - m);
+  else if (e == r) {
+    return m;
+  }
   else
     return e;
   return e_rewritten;
@@ -1528,17 +1532,21 @@ PURRS::Recurrence::solve_easy_cases() const {
     D_MSG("Order reduction");
     old_recurrence_rhs = recurrence_rhs;
     gcd_decrements_old_rhs = gcd_among_decrements;
-    Expr m = mod(n, gcd_among_decrements);
-    Expr new_rhs = rewrite_reduced_order_recurrence(expanded_rhs, m,
-						    gcd_among_decrements);
-    recurrence_rhs = new_rhs;
+    Symbol r;
+    // Build the new recurrence substituting `n' by
+    // `gcd_among_decrements * n + r'.
+    recurrence_rhs = rewrite_reduced_order_recurrence(expanded_rhs, r,
+						      gcd_among_decrements);
     Solver_Status status = solve_easy_cases();
     if (status == RECURRENCE_OK) {
-      // Perform two substitutions:
-      // -  n                            -> 1/gcd_among_decrements * (n - m);
-      // -  x(k), k non-negative integer -> x(m).
-      solution = come_back_to_original_variable(solution,
-						m, gcd_among_decrements);
+      // Perform three substitutions:
+      // -  r                      -> mod(n, gcd_among_decrements);
+      // -  n                      -> 1 / gcd_among_decrements
+      //                              * (n - mod(n, gcd_among_decrements));
+      // -  x(k), k non-negative integer -> x(mod(n, gcd_among_decrements)).
+      solution = come_back_to_original_variable(solution, r,
+						mod(n, gcd_among_decrements),
+						gcd_among_decrements);
       solution = simplify_on_output_ex(solution.expand(), false);
     }
     return status;
