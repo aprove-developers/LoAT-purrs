@@ -708,6 +708,19 @@ public:
   */
   bool is_rational_function(const Symbol& x) const;
 
+  //! Returns the size-norm of \p *this.
+  /*
+    Let \f$ e \f$ an expression, <EM>size-norm(e)</EM> is defined
+    in the following way:
+    - if \f$ e \f$ is a symbol or a number or a constant,
+      then \f$ size-norm(e) = 1 \f$;
+    - if \f$ e = e_1 + e_2 \f$ or \f$ e = e_1 e_2 \f$,
+      then \f$ size-norm(e) = size-norm(e_1) + size-norm(e_2) + 1 \f$;
+    - if \f$ e = {e_1}^{e_2} \f$,
+      then \f$ size-norm(e) = size-norm(e_1) + size-norm(e_2) + 1 \f$;
+    - if \f$ e = f(e_1, \dots, e_k) \f$,
+      then \f$ size-norm(e) = \sum_{i = 1}^k size-norm(e_i) + 1;
+  */
   int size_norm() const;
 
 private:
