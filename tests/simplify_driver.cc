@@ -94,7 +94,7 @@ init_symbols() {
   char a[2];
   a[1] = '\0';
   for (char c = 'a'; c <= 'z'; ++c)
-    if (c != 'e' && c != 'n' && c != 'x') {
+    if (c != 'n') {
       a[0] = c;
       symbols.append(Symbol(a));
     }
@@ -360,7 +360,7 @@ main(int argc, char *argv[]) try {
     
     Expr sol_input = simplify_ex_for_input(ex_expanded, true);
     Expr sol_output = simplify_ex_for_output(ex_expanded, false);
-    Expr sol_factorials = simplify_factorials_and_exponentials(ex);
+    Expr sol_factorials = simplify_binomials_factorials_exponentials(ex);
     Expr sol_logarithms = simplify_logarithm(ex);
     if (expect_right_simplification) {
       check_and_notify("input", ex, e_simpl_input, sol_input);
