@@ -39,7 +39,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <memory>
 #endif
 
-#define PROFILE_VERIFICATION 1
+#define PROFILE_VERIFICATION 0
 
 using namespace std;
 using namespace Parma_Recurrence_Relation_Solver;
@@ -55,20 +55,25 @@ static struct option long_options[] = {
   {"timeout",           required_argument, 0, 'T'},
   {"help",              no_argument,       0, 'h'},
   {"interactive",       no_argument,       0, 'i'},
+  // FIXME: Option -l is deprecated.
   {"latex",             no_argument,       0, 'l'},
+  // FIXME: Option -m is deprecated.
   {"mathml",            no_argument,       0, 'm'},
+  {"output",            required_argument, 0, 'o'},
   {"regress-test",      no_argument,       0, 'r'},
   {"verbose",           no_argument,       0, 'v'},
   {"version",           no_argument,       0, 'V'},
   {0, 0, 0, 0}
 };
 
+enum Formats {TEXT, LATEX, MATHML};
+
 const char* program_name = 0;
 
 void
 print_usage() {
   cerr << "Usage: " << program_name << " [OPTION]...\n\n"
-    "  -R, --rhs \"<expr>\"     set the right-hand side of the recurrence\n"
+    "  -R, --rhs \"<expr>\"       set the right-hand side of the recurrence\n"
     "                           that has to be solved/approximated\n" 
     "  -I, --initial-condition \"<expr>\"\n"
     "                           set an initial condition for the recurrence\n"
@@ -77,22 +82,23 @@ print_usage() {
     "                           recurrence from below\n"
     "  -U, --upper-bound        try to approximate the solution of the\n"
     "                           recurrence from above\n"
-    "  -C, --check-solution     try to verify the solution or the\n"
-    "                           approximation\n"
-    "  -P, --prolog-term        print the solution or the approximation\n"
-    "                           in the form of prolog term\n"
+    "  -C, --check-solution     try to verify the solution/approximation\n"
+    "  -P, --prolog-term        print the solution/approximation as a prolog term\n"
     "  -T, --timeout N          interrupt computation after N seconds\n"
     "  -h, --help               print this help text\n"
     "  -i, --interactive        set interactive mode on\n"
-    "  -l, --latex              output LaTeX code\n"
-    "  -m, --mathml             output MathML code\n"
+    "  -o, --output=FORMAT      give output in the specified FORMAT:\n"
+    "                           text (default), latex, mathml\n"
+    // Deprecated: accept them but hide them from help screen.
+    //    "  -l, --latex              output LaTeX code\n"
+    //    "  -m, --mathml             output MathML code\n"
     "  -r, --regress-test       set regression-testing mode on\n"
     "  -v, --verbose            be verbose\n"
     "  -V, --version            show version number and exit"
        << endl;
 }
 
-#define OPTION_LETTERS "CEI:LPR:T:UhilmrvV"
+#define OPTION_LETTERS "CEI:LPR:T:Uhilmo:rvV"
 
 // To avoid mixing incompatible options.
 static bool production_mode = false;
@@ -122,11 +128,8 @@ static long timeout_threshold = 0;
 // Interactive mode is on when true.
 static bool interactive = false;
 
-// LaTeX mode is on when true.
-static bool latex = false;
-
-// MathML mode is on when true.
-static bool mathml = false;
+// Output format, defaults to text.
+static int output = TEXT;
 
 // Regression-testing mode is on when true.
 static bool regress_test = false;
@@ -177,7 +180,7 @@ do_not_mix_modes() {
   if (production_mode && test_mode) {
     cerr << program_name
          << ": production mode options (-R, -I, -E, -L, -U, -C, -P, -T) and\n"
-         << "test mode options (-i, -l, -m, -r, -v) are mutually exclusive"
+         << "test mode options (-i, -r, -v) are mutually exclusive"
          << endl;
     my_exit(1);
   }
@@ -360,10 +363,35 @@ process_options(int argc, char* argv[]) {
       do_not_mix_modes();
       break;
 
+    // Deprecated: use --output=latex instead.
+    case 'l':
+      cerr << program_name 
+	   << ": WARNING: Option -l is deprecated. Use --output=latex instead." << endl;
+      output = LATEX;
+      break;
+
+    // Deprecated: use --output=mathml instead.
     case 'm':
-      mathml = true;
-      test_mode = true;
-      do_not_mix_modes();
+      cerr << program_name 
+	   << ": WARNING: Option -m is deprecated. Use --output=mathml instead." << endl;
+      output = MATHML;
+      break;
+
+    case 'o':
+      {
+	string output_format = optarg;
+	if (output_format=="text")
+	  output = TEXT;
+	else if (output_format=="latex")
+	  output = LATEX;
+	else if (output_format=="mathml")
+	  output= MATHML;
+	else {
+          cerr << program_name << ": Invalid output format '" << output_format << "'."
+               << endl;
+          my_exit(1);
+        }
+      }
       break;
 
     case 'r':
@@ -1067,8 +1095,14 @@ main(int argc, char *argv[]) try {
 #endif
   istream& input_stream = *pinput_stream;
 
-  if (latex)
+  if (output==LATEX)
     cout << "\\documentclass{article}\n\\begin{document}" << endl;
+  else if (output==MATHML)
+    cout << "<?xml version=\"1.0\"?>\n"
+      "<?xml-stylesheet type=\"text/xsl\" href=\"mathml.xsl\"?>\n"
+      "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
+      "<head><title>MathML Output</title></head>\n"
+      "<body>\n";
 
   while (input_stream) {
     ++line_number;
@@ -1121,21 +1155,21 @@ main(int argc, char *argv[]) try {
     }
 
     if (verbose) {
-      if (latex)
+      if (output==LATEX)
         cout << "\\bigskip\n\n\\noindent\n\\textbf{Line";
       if (!interactive)
         cout << line_number << ": ";
-      if (latex)
+      if (output==LATEX)
         cout << "} $";
       cout << "x(n) = ";
-      if (latex) {
+      if (output==LATEX) {
         rhs.latex_print(cout);
         cout << "$";
       }
       else
         cout << rhs;
       cout << endl;
-      if (latex)
+      if (output==LATEX)
         cout << endl;
     }
 
@@ -1169,17 +1203,29 @@ main(int argc, char *argv[]) try {
                                        unexpected_conclusive_verifications);
           }
           if (interactive) {
-            cout << "*** EXACT SOLUTION ***"
-                 << endl;
-	    // FIXME: support LaTeX output here 
-	    // FIXME: this is for interactive non-verbose output
-	      if (mathml)
-		exact_solution.mathml_output(cout);
-	      else
-		cout << exact_solution;
-	      cout << endl
-		   << "**********************"
-		   << endl << endl;
+	    if (output==MATHML)
+	      cout << "<p>\n";
+            cout << "*** EXACT SOLUTION ***" << endl;
+	    if (output==MATHML)
+	      cout << "</p>\n";
+	    switch (output) {
+	    case TEXT:
+	      cout << exact_solution;
+	      break;
+	    case MATHML:
+	      exact_solution.mathml_output(cout);
+	      break;
+	    case LATEX:
+	      cout << "\\medskip\\indent\n\n $$ x(n) = ";
+	      exact_solution.latex_print(cout);
+	      cout << " $$\n\n";
+	      break;
+	    }
+	    cout << endl
+		 << (output==MATHML?"<p>\n":"")
+		 << "**********************"
+		 << (output==MATHML?"</p>\n":"")
+		 << endl << endl;
 #if 0
             cout << "*** APPROXIMATED SOLUTION ***"
                  << endl
@@ -1188,8 +1234,9 @@ main(int argc, char *argv[]) try {
                  << "*****************************"
                  << endl << endl;
 #endif
-          }
-          if (latex) {
+	  }
+	  // FIXME: Double LaTeX output in non-interactive mode.
+          if (output==LATEX) {
             cout << "\\medskip\\indent\n\\(\n x(n) = ";
             exact_solution.latex_print(cout);
           }
@@ -1223,7 +1270,7 @@ main(int argc, char *argv[]) try {
                  << endl
                  << "*******************"
                  << endl << endl;
-          if (latex) {
+          if (output==LATEX) {
             cout << "\\medskip\\indent\n\\(\n x(n) = ";
             lower.latex_print(cout);
           }
@@ -1257,7 +1304,7 @@ main(int argc, char *argv[]) try {
                  << endl
                  << "*******************"
                  << endl << endl;
-          if (latex) {
+          if (output==LATEX) {
             cout << "\\medskip\\indent\n\\(\n x(n) = ";
             upper.latex_print(cout);
           }
@@ -1345,16 +1392,29 @@ main(int argc, char *argv[]) try {
         // OK: get the exact solution and print it.
         rec.exact_solution(exact_solution);
         if (interactive) {
-          cout << "*** EXACT SOLUTION ***"
-               << endl;
-	    // FIXME: support LaTeX output here 
-	      if (mathml)
-		exact_solution.mathml_output(cout);
-	      else
-		cout << exact_solution;
-	      cout << endl
-		   << "**********************"
-		   << endl << endl;
+	    if (output==MATHML)
+	      cout << "<p>\n";
+            cout << "*** EXACT SOLUTION ***" << endl;
+	    if (output==MATHML)
+	      cout << "</p>\n";
+	    switch (output) {
+	    case TEXT:
+	      cout << exact_solution;
+	      break;
+	    case MATHML:
+	      exact_solution.mathml_output(cout);
+	      break;
+	    case LATEX:
+	      cout << "\\medskip\\indent\n\n $$ x(n) = ";
+	      exact_solution.latex_print(cout);
+	      cout << " $$\n\n";
+	      break;
+	    }
+	    cout << endl
+		 << (output==MATHML?"<p>\n":"")
+		 << "**********************"
+		 << (output==MATHML?"</p>\n":"")
+		 << endl << endl;
 #if 0
           cout << "*** APPROXIMATED SOLUTION ***"
                << endl
@@ -1473,13 +1533,32 @@ main(int argc, char *argv[]) try {
       }
     }
   finish:
-    if (interactive)
+    if (interactive) {
+      switch (output) {
+      case MATHML:
+	cout << "<p>\n";
+	break;
+      case LATEX:
+	cout << "\\begin{verbatim}\n";
+	break;
+      }
       rec.dump(cout);
+      switch (output) {
+      case MATHML:
+	cout << "</p>\n";
+	break;
+      case LATEX:
+	cout << "\\end{verbatim}\n";
+	break;
+      }
+    }
   } // while (input_stream)
   
-  if (latex)
+  if (output==LATEX)
     cout << "\\end{document}" << endl;
-  
+  else if (output==MATHML)
+    cout << "</body></html>\n";
+
   if (regress_test) {
     bool failed = false;
     if (unexpected_failures_to_verify > 0) {
