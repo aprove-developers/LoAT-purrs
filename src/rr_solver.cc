@@ -24,7 +24,9 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
+#ifndef NOISY
 #define NOISY 0
+#endif
 
 #include "rr_solver.hh"
 #include "gosper.hh"
@@ -238,10 +240,6 @@ compute_symbolic_sum(const Symbol& n,
       }
       ++r;
     }
-#if NOISY
-  D_VEC(symbolic_sum_distinct, 0, symbolic_sum_distinct.size()-1);
-  D_VEC(symbolic_sum_no_distinct, 0, symbolic_sum_no_distinct.size()-1);
-#endif
 }
 
 /*!
@@ -328,6 +326,10 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n, const int order,
 			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots);
 
+static Expr
+solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
+			     const Expr& coefficient,
+			     const std::vector<Expr>& initial_conditions);
 static bool
 verify_solution(const Expr& solution, const int& order, const Expr& rhs,
 		const Symbol& n);
@@ -468,11 +470,11 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
       solution = e;
       return OK;
     }
-
+#if NOISY
   D_VAR(order);
   D_VEC(coefficients, 1, order);
   D_MSGVAR("Inhomogeneous term: ", e);
-
+#endif
   // Simplifies expanded expressions, in particular rewrites nested powers.
   e = simplify_on_input_ex(e, n, true);
 
@@ -490,11 +492,11 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   std::vector<Expr> exp_no_poly_coeff;
   exp_poly_decomposition(e, n,
 			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
-
+#if NOISY
   D_VEC(base_of_exps, 0, base_of_exps.size()-1);
   D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
   D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
-
+#endif
   // Create the vector of initial conditions.
   std::vector<Expr> initial_conditions(order);
   for (int i = 0; i < order; ++i)
@@ -530,11 +532,11 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
       return TOO_COMPLEX;
   }
-
+#if NOISY
   D_VAR(characteristic_eq);
   D_VEC(roots, 0, roots.size()-1);
   D_MSG("");
-
+#endif
   Expr g_n;
   switch (order) {
   case 1:
@@ -543,11 +545,17 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
 					      exp_poly_coeff,
 					      exp_no_poly_coeff, roots,
 					      initial_conditions);
-    else
+    else {
+#if 1
       throw
 	"PURRS error: today we only solve recurrence"
 	"relations with constant coefficients.\n"
 	"Please come back tomorrow.";
+#else
+      solution = solve_variable_coeff_order_1(n, e, coefficients[1],
+					      initial_conditions);
+#endif
+    }
     break;
   case 2:
     if (!has_non_constant_coefficients)
@@ -578,8 +586,9 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   if (order > 1)
     add_initial_conditions(g_n, n, num_coefficients, initial_conditions,
 			   solution);
-
+#if NOISY
   D_MSGVAR("Before calling simplify: ", solution);
+#endif
   solution = simplify_on_output_ex(solution.expand(), n, false);
   
   // Only for the output.
@@ -588,9 +597,11 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
     conditions.append(initial_conditions[i]);
   solution = solution.collect(conditions);
   
-  if (!verify_solution(solution, order, rhs, n))
-    D_MSG("ATTENTION: the following solution can be wrong\n"
-	  "or not enough simplified.");
+  if (!verify_solution(solution, order, rhs, n)) {
+    std::cout << "x(n) = " << rhs << std::endl;
+    std::cout << " -> solution wrong or not enough simplified." << std::endl;
+    std::cout << std::endl;
+  }
 
   return OK;
 }
@@ -652,13 +663,13 @@ find_max_decrement_and_coeff(const Expr& e, const Symbol& n,
 }
 
 /*!
-  Assuming that \p rhs contains occurrences of <CODE>x(n-k)</CODE>
-  where <CODE>k</CODE> is a negative integer, this function
+  Assuming that \p rhs contains occurrences of \f$ x(n-k) \f$
+  where \f$ k \f$ is a negative integer, this function
   performs suitable changes of variables that preserve the meaning of
   the recurrence relation, but transforms it into its <EM>standard
-  form</EM> <CODE>x(n) = new_rhs</CODE>, where <CODE>new_rhs</CODE>
-  does not contain any instance of <CODE>x(n-k)</CODE>, with a
-  negative integer <CODE>k</CODE>.
+  form</EM> \f$ x(n) = new_rhs \f$, where \f$ new_rhs \f$
+  does not contain any instance of \f$ x(n-k) \f$, with a
+  negative integer \f$ k \f$.
 */
 static void
 eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs,
@@ -672,9 +683,6 @@ eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs,
   Expr coefficient;
   find_max_decrement_and_coeff(rhs, n, x_i, a_times_x_i,
 			       max_decrement, coefficient);
-#if NOISY
-  D_MSGVAR("max_decrement: ", max_decrement);
-#endif
   // The changes of variables includes replacing `n' by `n-max_decrement',
   // changing sign, and division by `coefficient'.
   new_rhs = rhs.subs(n, n-max_decrement);
@@ -685,11 +693,11 @@ eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs,
 }
 
 /*!
-  Here we assume that \p rhs contains occurrences of <CODE>x(n)</CODE> itself.
+  Here we assume that \p rhs contains occurrences of \f$ x(n) \f$ itself.
   Therefore the recurrence may be impossible.  This function decides
   if this is the case and, if so, it returns <CODE>false</CODE>.  If the
   recurrence is solvable, it is rewritten into its normal form, which
-  is then written in <CODE>new_rhs</CODE>, and the function returns
+  is then written in \f$ new_rhs \f$, and the function returns
   <CODE>true</CODE>.
 */
 static bool
@@ -735,9 +743,6 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs,
 	Expr coefficient;
 	find_max_decrement_and_coeff(b, n, x_i, a_times_x_i,
 				     max_decrement, coefficient);
-#if NOISY
-	D_MSGVAR("max_decrement: ", max_decrement);
-#endif
 	// Rewrites the recurrence into its standard form:
 	// removes from `b' the term that will be the right hand side of the
 	// recurrence, i.e. `x(n+max_decrement)'; changes variable replacing
@@ -998,7 +1003,7 @@ gosper(const int order, const Symbol& n,
   \f[
     x_n = \lambda x_{n-1} + p(n),
   \f]
-  where <CODE>p(n)</CODE> is a function defined over the natural numbers.
+  where \f$ p(n) \f$ is a function defined over the natural numbers.
   In this case we know the final formula that give the solution (we observe
   that the coefficient coincides with the root of the characteristic
   equation):
@@ -1070,7 +1075,7 @@ solve_constant_coeff_order_1(const Symbol& n, const int order,
         & \text{for $1 \le n < k$,} \\
     \end{cases}
   \f]
-  and the general solution of the homogeneous recurrence <CODE>g_n</CODE>:
+  and the general solution of the homogeneous recurrence \f$ g_n \f$:
   - if the roots are simple, i. e., they are all distinct, then
     \f$ g_n = \alpha_1 \lambda_1^n + \cdots + \alpha_k \lambda_k^n \f$,
   - if there are multiple roots then
@@ -1078,10 +1083,10 @@ solve_constant_coeff_order_1(const Symbol& n, const int order,
       g_n = \sum_{j=1}^r (\alpha_{j,0} + \alpha_{j,1}n
             + \cdots + \alpha_{j,\mu_j-1}n^{\mu_j-1}) \lambda_j^n,
     \f]
-  where the roots <CODE>lambda</CODE> of the recurrence are knowed.
-  This function defines and solves the system in <CODE>k</CODE>
-  equations and <CODE>k</CODE> unknowns to found the <CODE>alpha</CODE>
-  to insert in order to determine <CODE>g_n</CODE>.
+  where the roots \f$ lambda \f$ of the recurrence are knowed.
+  This function defines and solves the system in \f$ k \f$
+  equations and \f$ k \f$ unknowns to found the \f$ alpha \f$
+  to insert in order to determine \f$ g_n \f$.
   Returns in the matrix \p solution the solution of the system. 
 */
 static Matrix
@@ -1204,12 +1209,6 @@ prepare_for_symbolic_sum(const Symbol& n, const Expr& g_n,
   for (unsigned i = exp_poly_coeff.size(); i-- > 0; )
     for (unsigned j = g_n_poly_coeff.size(); j-- > 0; )
       poly_coeff_tot.push_back(exp_poly_coeff[i] * g_n_poly_coeff[j]);
-#if NOISY
-  D_VEC(bases_exp_g_n, 0, bases_exp_g_n.size()-1);
-  D_VEC(g_n_poly_coeff, 0, g_n_poly_coeff.size()-1);
-  D_VEC(g_n_no_poly_coeff, 0, g_n_no_poly_coeff.size()-1);
-  D_VEC(poly_coeff_tot, 0, poly_coeff_tot.size()-1);
-#endif
 }
 
 static Expr
@@ -1223,11 +1222,6 @@ compute_non_homogeneous_part(const Symbol& n, const Expr& g_n,
   std::vector<Expr> g_n_no_poly_coeff;
   exp_poly_decomposition(g_n, n, bases_exp_g_n,
 			 g_n_poly_coeff, g_n_no_poly_coeff);
-#if NOISY
-  D_VEC(bases_exp_g_n, 0, bases_exp_g_n.size()-1);
-  D_VEC(g_n_poly_coeff, 0, g_n_poly_coeff.size()-1);
-  D_VEC(g_n_no_poly_coeff, 0, g_n_no_poly_coeff.size()-1);
-#endif  
   for (unsigned i = bases_exp_g_n.size(); i-- > 0; )
     for (unsigned j = base_of_exps.size(); j-- > 0; ) {
       Expr solution = 0;
@@ -1255,7 +1249,7 @@ compute_non_homogeneous_part(const Symbol& n, const Expr& g_n,
   \f[
     x_n = a_1 x_{n-1} + a_2 + p(n),
   \f]
-  where <CODE>p(n)</CODE> is a function defined over the natural numbers.
+  where \f$ p(n) \f$ is a function defined over the natural numbers.
   If the roots of the characteristic equation \f$ \lambda_1 \f$ and
   \f$ \lambda_2 \f$ are distinct then we know the final formula that
   give the solution:
@@ -1332,7 +1326,9 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, const int order,
 					     symbolic_sum_no_distinct);
       g_n = (Parma_Recurrence_Relation_Solver::power(root_1, n+1) - Parma_Recurrence_Relation_Solver::power(root_2, n+1)) / diff_roots;
       // FIXME: forse conviene semplificare g_n
+#if NOISY
       D_VAR(g_n);
+#endif
     }
     else {
       // The characteristic equation
@@ -1344,8 +1340,9 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, const int order,
       
       // Finds `g_n', always taking into account the root's multiplicity
       g_n = find_g_n(n, all_distinct, sol, roots);
+#if NOISY
       D_VAR(g_n);
-      
+#endif
       solution = compute_non_homogeneous_part(n, g_n, order, base_of_exps,
 					      exp_poly_coeff);
     }
@@ -1356,18 +1353,18 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, const int order,
       "and polynomials.\n"
       "Please come back tomorrow.";
   return solution;
- }
+}
 
 /*!
-  Consider the linear recurrence relation of order <CODE>k</CODE> with
+  Consider the linear recurrence relation of order \f$ k \f$ with
   constant coefficients
   \f[
     x_n = a_1 x_{n-1} + a_2 x_{n-2} + \cdots + a_k x_{n-k} + p(n),
   \f]
-  where <CODE>p(n)</CODE> is a function defined over the natural numbers.
+  where \f$ p(n) \f$ is a function defined over the natural numbers.
   Knowing the roots \f$ \lambda_1, \cdots, \lambda_k \f$ of the
   characteristic equation, builds the general solution of the homogeneous
-  recurrence <CODE>g_n</CODE>:
+  recurrence \f$ g_n \f$:
   - if the roots are simple, i. e., they are all distinct, then
     \f$ g_n = \alpha_1 \lambda_1^n + \cdots + \alpha_k \lambda_k^n \f$,
   - if there are multiple roots then
@@ -1376,7 +1373,7 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, const int order,
             + \cdots + \alpha_{j,\mu_j-1}n^{\mu_j-1}) \lambda_j^n,
     \f]
   where \f$ \alpha_1, \cdots, \alpha_k \f$ are complex numbers
-  (<CODE>g_n</CODE> in the fisrt case is contained in those of the second
+  (\f$ g_n \f$ in the fisrt case is contained in those of the second
   case as special case).
   Introduced the <EM>fundamental</EM> solution of the associated
   homogeneous equation, which is
@@ -1417,8 +1414,9 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
     
     // Finds `g_n', always taking into account the root's multiplicity
     g_n = find_g_n(n, all_distinct, sol, roots);
+#if NOISY
     D_VAR(g_n);
-    
+#endif
     if (all_distinct) {      
       // Prepare for to compute the symbolic sum.
       std::vector<Expr> poly_coeff_tot;
@@ -1453,6 +1451,109 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
       "Please come back tomorrow.";
   return solution;
 }
+
+// FIXME: is correct this method in order to compute `\alpha!(n)'?
+static Expr
+compute_alpha_factorial(const Expr& e, const Symbol& n, 
+			const Expr& sum_first_n) {
+  Expr alpha_factorial = 1;
+  if (!e.has(n))
+    // `e' is_a_number or is_a_constant or is_a_symbol different to `n'...
+    alpha_factorial *= Parma_Recurrence_Relation_Solver::power(e, n);
+  else if (e.is_equal(n))
+    alpha_factorial *= factorial(e);
+  if (e.is_a_power())
+    if (e.op(0).has(n) && e.op(1).has(n))
+      alpha_factorial *= factorial(e);
+    else
+      if (e.op(0).has(n)) {
+	// FIXME!!
+	// Base of the power contain `n'.
+	alpha_factorial *= Parma_Recurrence_Relation_Solver::power
+	  (compute_alpha_factorial(e.op(0), n, sum_first_n), e.op(1));
+      }
+      else {
+	// Exponent of the power contain `n'.
+      }
+  if (e.is_a_add()) {
+    // FIXME!! es. (3+n)/2
+    Expr term_with_n;
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (e.op(i).has(n))
+	term_with_n = e.op(i);
+    Expr rem = e - term_with_n;
+    alpha_factorial *= factorial(e) * 1/factorial(rem);
+  }
+  if (e.is_a_mul())
+    for (unsigned i = e.nops(); i-- > 0; )
+      alpha_factorial *= compute_alpha_factorial(e.op(i), n, sum_first_n);
+#if NOISY
+  D_VAR(alpha_factorial);
+#endif
+  return alpha_factorial;
+}
+
+/*!
+  Consider the linear recurrence relation of first order with
+  constant coefficients
+  \f[
+    x_n = \alpha(n) x_{n-1} + p(n),
+  \f]
+  where \f$ p(n) \f$ is a function defined over the natural numbers and
+  \f$ \alpha \f$ is not constant.
+  We set \f$ y_n \defeq x_n/\alpha!(n) \f$, where
+  \f[
+    \alpha!(0) \defeq 1,
+    \qquad
+    \alpha!(n) \defeq \prod_{k=1}^n \alpha(k).
+  \f]
+  We find that \f$ y_n \f$ satisfies the recurrence
+  \f[
+    y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}
+  \f]
+  whose solution is
+  \f[
+    y_n = x_0 + \sum_{k=1}^n \frac{p(k)}{k!},
+  \f]
+  so that our problem has been brought to the computation of a finite sum.
+  At the end we find the formula for \f$ x_n \f$:
+  \f[
+    x_n = y_n \cdot \alpha!(n).
+  \f]
+*/
+static Expr
+solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
+			     const Expr& coefficient,
+			     const std::vector<Expr>& initial_conditions) {
+  // Compute `\alpha!(n)'.
+  Expr sum_first_n = n*(n+1)/2;
+  Expr alpha_factorial = compute_alpha_factorial(coefficient, n, sum_first_n);
+  // Compute the non-homogeneous term for the recurrence
+  // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
+  Expr new_p_n
+    = simplify_factorials_and_exponentials(p_n / alpha_factorial, n);
+  Expr new_rhs = x(n-1) + new_p_n;
+
+  std::vector<Expr> base_of_exps;
+  std::vector<Expr> exp_poly_coeff;
+  std::vector<Expr> exp_no_poly_coeff;
+  exp_poly_decomposition(new_p_n, n,
+			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
+  std::vector<Polynomial_Root> new_roots;
+  new_roots.push_back(Expr(1));
+  Expr solution = solve_constant_coeff_order_1(n, 1, base_of_exps,
+					       exp_poly_coeff,
+					       exp_no_poly_coeff, new_roots,
+					       initial_conditions);
+  solution *= alpha_factorial;  
+#if NOISY
+  D_VAR(new_p_n);
+  D_VAR(new_rhs);
+  D_MSGVAR("Solution new_rhs = ", solution);
+#endif
+  return solution;
+}
+
 
 static void
 print_bad_exp(const Expr& e, const Expr rhs, bool conditions) {
@@ -1524,17 +1625,14 @@ verify_solution(const Expr& solution, const int& order, const Expr& rhs,
     substituted_rhs = substituted_rhs.subs(x(n - i - 1), terms_to_sub[i]);
   Expr diff = (partial_solution - substituted_rhs).expand();
   diff = simplify_numer_denom(diff);
-  if (diff.is_zero())
-    return true;
-  else {
+  if (!diff.is_zero()) {
     diff = simplify_factorials_and_exponentials(diff, n).expand();
-    if (diff.is_zero())
-      return true;
-    else {
+    if (!diff.is_zero()) {
       print_bad_exp(diff, rhs, false);
       return false;
     }
   }
+  return true;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver
