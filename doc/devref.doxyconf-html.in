@@ -340,6 +340,8 @@ INPUT                  = @srcdir@/../src/alg_eq_solver.hh \
                          @srcdir@/../src/alg_eq_solver.cc \
                          @srcdir@/../src/rr_solver.hh \
                          @srcdir@/../src/rr_solver.cc \
+                         @srcdir@/../src/approx_expr.hh \
+                         @srcdir@/../src/approx_expr.cc \
                          @srcdir@/../src/Expr.defs.hh \
                          @srcdir@/../src/Expr.types.hh \
                          @srcdir@/../src/Expr.inlines.hh \
@@ -360,14 +362,15 @@ INPUT                  = @srcdir@/../src/alg_eq_solver.hh \
                          @srcdir@/../src/Symbol.types.hh \
                          @srcdir@/../src/Symbol.inlines.hh \
                          @srcdir@/../src/Symbol.cc \
+			 @srcdir@/../src/Constant.defs.hh \		
+                         @srcdir@/../src/Constant.types.hh \
+                         @srcdir@/../src/Constant.inlines.hh \
+                         @srcdir@/../src/Constant.cc \
 			 @srcdir@/../src/Recurrence.defs.hh \
                          @srcdir@/../src/Recurrence.types.hh \
                          @srcdir@/../src/Recurrence.inlines.hh \
                          @srcdir@/../src/Recurrence.cc \
-                         @srcdir@/../src/globals.hh \
-                         @srcdir@/../src/globals.cc \
                          @srcdir@/../src/gosper.hh \
-                         @srcdir@/../src/gosper.cc \
                          @srcdir@/../src/gosper.cc \
                          @srcdir@/../src/poly_factor.hh \
                          @srcdir@/../src/poly_factor.cc \
@@ -377,7 +380,7 @@ INPUT                  = @srcdir@/../src/alg_eq_solver.hh \
                          @srcdir@/../src/sum_poly.cc \
                          @srcdir@/../src/util.hh \
                          @srcdir@/../src/util.cc
-
+ 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
 # and *.h) to filter out the source-files in the directories. If left 
