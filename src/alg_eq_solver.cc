@@ -24,17 +24,18 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
+#define NOISY 0
+ 
 #include "globals.hh"
 #include "alg_eq_solver.hh"
 #include "poly_factor.hh"
 #include "simplify.hh"
+#include "util.hh"
 #include <cassert>
 #include <iostream>
 
 using namespace GiNaC;
 
-#define NOISY 0
- 
 /*!
   ...
 */
@@ -418,13 +419,13 @@ solve_equation_2(const GExpr& b, const GExpr& c,
 		 GExpr& x1, GExpr& x2) {
   GSymbol n("n");
   GExpr sqrt_d = sqrt(b*b - 4*c);
-#if NOISY
-  std::cout << "sqrt_d before = " << sqrt_d << std::endl;
-#endif
+
+  D_MSGVAR("Before: ", sqrt_d);
+
   sqrt_d = simplify_on_output_ex(sqrt_d, n, false);
-#if NOISY
-  std::cout << "sqrt_d = " << sqrt_d << std::endl;
-#endif
+
+  D_VAR(sqrt_d);
+
   x1 = (-b + sqrt_d)/2;
   x2 = (-b - sqrt_d)/2;
 }
@@ -486,16 +487,16 @@ solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
 	T = cubic_root(B);
       }
     }
-#if NOISY
-    std::cout << "S before= " << S << std::endl; 
-    std::cout << "T before= " << T << std::endl;
-#endif
+
+    D_MSGVAR("Before: ", S); 
+    D_MSGVAR("Before: ", T);
+
     S = simplify_on_output_ex(S, n, false);
     T = simplify_on_output_ex(T, n, false);
-#if NOISY
-    std::cout << "S = " << S << std::endl; 
-    std::cout << "T = " << T << std::endl;
-#endif
+
+    D_VAR(S); 
+    D_VAR(T);
+
     GExpr S_plus_T = S + T;
     // FIXME: (a+b)^(1/3) + (a-b)^(1/3) = ?
     GExpr t1 = -S_plus_T/2 - a1_div_3;
@@ -517,18 +518,16 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   GExpr y1;
   GExpr y2;
   GExpr y3;
-#if 0
-  bool all_real =;
-#endif
+
   GNumber f = a2-3*a1*a1*numeric(1)/8;
   GNumber g = a3+a1*a1*a1/8-a1*a2*numeric(1)/2;
   GNumber h = a4-3*a1*a1*a1*a1*numeric(1)/256
     +a1*a1*a2*numeric(1)/16-a1*a3*numeric(1)/4;
-#if NOISY
-  std::cout << "f = " << f << std::endl; 
-  std::cout << "g = " << g << std::endl; 
-  std::cout << "h = " << h << std::endl;
-#endif
+
+  D_VAR(f); 
+  D_VAR(g); 
+  D_VAR(h);
+
   // If 'g' is zero then the auxiliary equation
   // y^3 +  f/2*y^2 + (f*f - 4*h)/16*y - g*g/64 = 0
   // has the root 0, in this case we solve the simpler
@@ -549,42 +548,42 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   } 
   p = sqrt(y1);
   q = sqrt(y2);
-#if NOISY
-  std::cout << "p before = " << p << std::endl; 
-  std::cout << "q before = " << q << std::endl;
-#endif
+
+  D_MSGVAR("Before: ", p); 
+  D_MSGVAR("Before: ", q);
+
   p = simplify_on_output_ex(p, n, false);
   q = simplify_on_output_ex(q, n, false);
-#if NOISY
-  std::cout << "p = " << p << std::endl; 
-  std::cout << "q = " << q << std::endl;
-#endif
+
+  D_VAR(p); 
+  D_VAR(q);
+
   GExpr r = numeric(-g)/(8*p*q);
-#if NOISY
-  std::cout << "r before = " << r << std::endl; 
-#endif
+
+  D_MSGVAR("Before: ", r); 
+
   r = simplify_on_output_ex(r, n, false);
   GExpr s = numeric(a1)/4;
-#if NOISY
-  std::cout << "r = " << r << std::endl; 
-  std::cout << "s = " << s << std::endl; 
-#endif
+
+  D_VAR(r); 
+  D_VAR(s); 
+
   x1 = p + q + r - s;
   x2 = p - q - r - s;
   x3 = -p + q - r - s;
   x4 = -p - q + r - s;
-#if NOISY
-   std::cout << "Solutions before calling simplify: " << std::endl; 
-   std::cout << "x1 = " << x1 << std::endl; 
-   std::cout << "x2 = " << x2 << std::endl; 
-   std::cout << "x3 = " << x3 << std::endl; 
-   std::cout << "x4 = " << x4 << std::endl;
-   std::cout << std::endl;
-#endif
-   x1 = simplify_on_output_ex(x1, n, false);
-   x2 = simplify_on_output_ex(x2, n, false);
-   x3 = simplify_on_output_ex(x3, n, false);
-   x4 = simplify_on_output_ex(x4, n, false);
+
+  D_MSG("Solutions before calling simplify: ");
+  D_VAR(x1); 
+  D_VAR(x2); 
+  D_VAR(x3); 
+  D_VAR(x4);
+  D_MSG("");
+
+  x1 = simplify_on_output_ex(x1, n, false);
+  x2 = simplify_on_output_ex(x2, n, false);
+  x3 = simplify_on_output_ex(x3, n, false);
+  x4 = simplify_on_output_ex(x4, n, false);
 }
 
 // The old method used to solve equation of degree 4 was wrong, as you

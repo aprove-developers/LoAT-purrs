@@ -26,6 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define _util_hh 1
 
 #include "globals.hh"
+#include <iostream>
 
 //! Removes all the elements from \p l.
 void
@@ -39,5 +40,15 @@ get_binding(const GList& substitution, unsigned wild_index);
 void
 assign_poly_part_and_no_poly_part(const GExpr& p, const GSymbol& var,
 				  GExpr& p_poly, GExpr& p_no_poly);
+
+#ifdef NOISY
+#define D_MSG(s) std::cout << s << std::endl
+#define D_VAR(x) std::cout << #x " = " << x << std::endl
+#define D_MSGVAR(s, x) std::cout << s << #x " = " << x << std::endl
+#else
+#define D_MSG(s)
+#define D_VAR(x)
+#define D_MSGVAR(s, x)
+#endif
 
 #endif // _util_hh
