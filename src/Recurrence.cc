@@ -447,8 +447,11 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 	D_VAR(rec.exact_solution_.expression());
 	return verify_exact_solution(rec_rewritten);
       }
-      else
-	return INCONCLUSIVE_VERIFICATION;
+      else {
+	diff = simplify_all(diff);
+	if (!diff.is_zero())
+	  return INCONCLUSIVE_VERIFICATION;
+      }
     return PROVABLY_CORRECT;
   }
 }
