@@ -172,6 +172,7 @@ ul	3*x(n/2)+n*log(n)+n
 ul	3*x(n/2)+n*log(n*n)
 ul	3*x(n/2)+n*n*log(n)
 ul	3*x(n/4)+n*log(n)
+ul	4*x(n/2)+n^2
 ul	5*x(n/4)+n*log(log(n))
 ul	x(n/2)*x(n/2)
 ul	x(n/2)+log(log(n))
@@ -197,7 +198,6 @@ ulv	3*x(n/3)
 ulv	3*x(n/3)+(2*n-1)
 ulv	3*x(n/3)+2*n
 ulv	3*x(n/3)+n*n*n
-ulv	4*x(n/2)+n^2
 ulv	5*x(n/5)+5*n
 ulv	6*x(n/7)+n
 ulv	7*x(n/5)
