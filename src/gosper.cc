@@ -243,8 +243,7 @@ find_polynomial_solution(const GSymbol& n, const GNumber& deg_x,
   /f$ gcd(a(n), b(n+h)) = 1 \f$, for all non-negative integers
   /f$ h /f$. The solution /f$ x(n) /f$ is stored in /p x_n. 
   Returns <CODE>false</CODE> otherwise, i. e., it not finds a non-zero
-  polynomial solution /f$ x(n) /f$. In this case
-  /f$ x(n) = \sum_{k=0}^{n-1} t_k /f$.
+  polynomial solution /f$ x(n) /f$.
 */
 static bool
 gosper_step_three(const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
@@ -324,6 +323,24 @@ gosper_step_four(const GExpr& t, const GExpr& b_n, const GExpr& c_n,
 /*!
   Gosper's algorithm, from Chapter 5 of \f$ A = B \f$, by 
   M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
+  Let
+  \f[
+    S_n = \sum_{k=0}^{n-1} t_k
+  \f]
+  with \f$ t_k \f$ an <EM>hypergeometric term</EM> that does not depend on
+  \f$ n \f$, i. e., consecutive term ratio
+  \f[
+    r(k) = \frac{t_{k+1}}{t_k}
+  \f]
+  is a rational function of \f$ k \f$.
+  This function returns <CODE>false</CODE> if \f$ t_k \f$ is not an
+  hypergeometric term. 
+  Returns <CODE>true</CODE> if \f$ t_k \f$ is an hypergeometric term.
+  There are two case:
+  -  it is possible to express \f$ S_n \f$ in closed form and the solution
+     is stored in \p solution;
+  -  it is not possible to express \f$ S_n \f$ in closed form and returns
+     in \p solution the initially sum \f$ \sum_{k=0}^{n-1} t_k \f$.
 */
 // FIXME: `r_n' is temporary until the implementation of step one that
 // will build `r_n' starting from `t'.
@@ -338,9 +355,11 @@ gosper(const GExpr& t, GExpr& r_n, const GSymbol& n,
   GExpr c_n;
   gosper_step_two(r_n, n, a_n, b_n, c_n);
   GExpr x_n;
+  // FIXME: once we have decided the notation for the sum the print
+  // will be substitute with the appropriate notation 
   if (!gosper_step_three(a_n, b_n, c_n, n, x_n)) {
     std::cout << "No non-zero polynomial solution" << std::endl;
-    return false;
+    return true;
   }
   solution = gosper_step_four(t, b_n, c_n, x_n, n, lower_bound, upper_bound,
 			      solution);
