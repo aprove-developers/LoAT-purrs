@@ -797,7 +797,8 @@ main(int argc, char *argv[]) try {
 	goto finish;
 	break;
       case Recurrence::UNSOLVABLE_RECURRENCE:
-	cout << endl << "Unsolvable" << endl << endl;
+	if (interactive)
+	  cout << endl << "Unsolvable" << endl << endl;
 	goto finish;
 	break;
       case Recurrence::TOO_COMPLEX:
@@ -818,11 +819,12 @@ main(int argc, char *argv[]) try {
 	       << endl << endl;
 	break;
       case Recurrence::UNSOLVABLE_RECURRENCE:
-	cout << endl << "Unsolvable" << endl << endl;
+	if (interactive)
+	  cout << endl << "Unsolvable" << endl << endl;
 	goto finish;
 	break;
       case Recurrence::TOO_COMPLEX:
-	if (!too_complex_printed) {
+	if (!too_complex_printed && interactive) {
 	  cout << endl << "Too complex" << endl << endl;
 	  too_complex_printed = true;
 	}
@@ -843,11 +845,12 @@ main(int argc, char *argv[]) try {
 	       << endl << endl;
 	break;
       case Recurrence::UNSOLVABLE_RECURRENCE:
-	cout << endl << "Unsolvable" << endl << endl;
+	if (interactive)
+	  cout << endl << "Unsolvable" << endl << endl;
 	goto finish;
 	break;
       case Recurrence::TOO_COMPLEX:
-	if (!too_complex_printed)
+	if (!too_complex_printed && interactive)
 	  cout << endl << "Too complex" << endl << endl;
 	break;
       default:
