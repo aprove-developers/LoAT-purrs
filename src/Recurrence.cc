@@ -1207,6 +1207,33 @@ compute_weighted_average_recurrence(Expr& solution) const {
   }
 }
 
+namespace {
+using namespace PURRS;
+
+void
+get_max_index_symbolic_i_c(const Expr& e, unsigned int& max_index) {
+  if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned int i = e.nops(); i-- > 0; )
+      get_max_index_symbolic_i_c(e.op(i), max_index);
+  }
+  else if (e.is_a_power()) {
+    get_max_index_symbolic_i_c(e.arg(0), max_index);
+    get_max_index_symbolic_i_c(e.arg(1), max_index);
+  }
+  else if (e.is_a_function())
+    if (e.is_the_x_function()) {
+      const Expr& argument = e.arg(0);
+      Number num;
+      if (argument.is_a_number(num) && num.is_integer() && num > max_index)
+	max_index = num.to_unsigned_int();
+    }
+    else
+      for (unsigned int i = e.nops(); i-- > 0; )
+	get_max_index_symbolic_i_c(e.arg(i), max_index);
+}
+
+} // anonymous namespace
+
 //! \brief
 //! Let \p solution_or_bound be the expression that represent the
 //! solution or the bound computed for the recurrence \p *this.
@@ -1264,22 +1291,28 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
     unsigned int max_index_user_i_c = get_max_index_initial_condition();
 
     // `max_index_symb_i_c' represents the largest
-    // index of the symbolic initial conditions.
-    unsigned int max_index_symb_i_c
-      = first_valid_index_rhs + order_or_rank - 1;
+    // index among the symbolic initial conditions
+    // in the solution or in the bound.
+    unsigned int max_index_symb_i_c = 0;
+      //      = first_valid_index_rhs + order_or_rank - 1;
+    get_max_index_symbolic_i_c(solution_or_bound, max_index_symb_i_c);
 
     // If `max_index_user_i_c' is bigger than `max_index_symb_i_c',
     // then we must shift the solution or the bound.
     // There are two different steps:
-    // - 1. shift the index of the symbolic initial conditions;
-    // - 2. shift the index of the recurrence `n'.
+    // - 1. shift the index of the symbolic initial conditions:
+    //      add `max_index_user_i_c' to the index of the symbolic initial
+    //      conditions;
+    // - 2. shift the index of the recurrence `n':
+    //      `n = n - max_index_user_i_c'.
     if (max_index_user_i_c > max_index_symb_i_c) {
       // Step 1.
-      for (index_type i = 0; i < order_or_rank; ++i)
+      for (index_type i = 0; i < order_or_rank; ++i) {
 	sol_or_bound = sol_or_bound.substitute(x(i + first_valid_index_rhs),
 					       x(i + max_index_user_i_c
 						 - order_or_rank + 1));
-      // Step 2..
+      }
+      // Step 2.
       if (is_linear_finite_order_var_coeff()) {
 	// The solution of `x(n) = a(n) x(n-1) + p(n)' is of the form
 	// `x(n) = prod(k, i+1, n, a(k)) x(i)

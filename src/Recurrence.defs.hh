@@ -275,6 +275,11 @@ public:
     symbolic initial condition \f$ x_0 \f$, while the user had inserted
     the symbolic initial condition \f$ x_1 \f$, is been necessary to
     shift the solution.
+
+    FIXME: how we can do when the initial conditions inserted are not
+    consequent?
+
+    FIXME: to add the weighted-average recurrences case!
   */
   void replace_initial_condition(unsigned int k, const Expr& e);
 
