@@ -280,7 +280,8 @@ private:
   Solver_Status apply_order_reduction() const;
   Solver_Status compute_non_linear_recurrence(Expr& solution_or_bound,
 					      unsigned type) const;
-  void shift_exact_solution_with_i_c() const;
+  Expr substitute_i_c_shifting(bool exact,
+			       const Expr& solution_or_bound) const;
   Solver_Status classify() const;
   Solver_Status classify_and_catch_special_cases() const;
   Solver_Status classification_summand(const Expr& r, Expr& e,
@@ -505,6 +506,12 @@ private:
   //! \p c is the positive integer starting from which the inhomogeneous term
   //! of a functional equation is a non negative, non decreasing function.
   void set_applicability_condition(unsigned c) const;
+
+  //! \brief
+  //! Returns the rank of the functional equation, i. e., the number of terms
+  //! of the form \f$ a x(n/b) \f$ where \f$ b \f$ is a rational number
+  //! larger than one.
+  size_t rank() const;
 
 
   // Method to access to private data of `Non_Linear_Info'.

@@ -310,6 +310,13 @@ Recurrence::set_applicability_condition(unsigned c) const {
   return functional_eq_p -> set_applicability_condition(c);
 }
 
+inline size_t
+Recurrence::rank() const {
+  assert(is_functional_equation());
+  assert(functional_eq_p);
+  return functional_eq_p -> rank();
+}
+
 inline Expr
 Recurrence::original_recurrence_rhs() const {
   assert(non_linear_p);
