@@ -126,6 +126,12 @@ public:
   Solver_Status solve() const;
   Expr exact_solution() const;
   Expr approximated_solution() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if the <CODE>solution</CODE> is right.
+  //! Returns <CODE>false</CODE> if the solution is wrong or the
+  //! simplifications are failed, i.e., the solution is right but
+  //! this function does not realize.
   bool verify_solution() const;
 
   //! \brief
@@ -147,6 +153,7 @@ private:
 				       int& order, int& gcd_among_decrements,
 				       int num_term) const;
 
+  //! \brief
   //! Holds the right-hand side of the global recurrence to be solved.
   //! This may have been set directly by the constructor or it may be the
   //! result of transforming a system into a single recurrence.
@@ -154,6 +161,7 @@ private:
   //! <CODE>x(n) = recurrence_rhs</CODE>.
   mutable Expr recurrence_rhs;
 
+  //! \brief
   //! Holds the right-hand sides of a system of  recurrence equations.
   //! If <CODE>i == system_rhs.find(k)</CODE> then
   //! <CODE>x(k,n) = (*i).second()</CODE>
@@ -191,6 +199,7 @@ private:
 
   Finite_Order_Info* tdip;
 
+  //! \brief
   //! Returns <CODE>true</CODE> if the recurrence is linear
   //! of finite order with constant coefficient;
   //! returns <CODE>false</CODE> otherwise.
@@ -199,6 +208,7 @@ private:
   //! Sets <CODE>type_recurrence = LINEAR_FINITE_ORDER_CONST_COEFF</CODE>.
   void set_linear_finite_order_const_coeff() const;
 
+  //! \brief
   //! Returns <CODE>true</CODE> if the recurrence is linear
   //! of finite order with variable coefficient;
   //! returns <CODE>false</CODE> otherwise.
@@ -207,6 +217,7 @@ private:
   //! Sets <CODE>type_recurrence = LINEAR_FINITE_ORDER_VAR_COEFF</CODE>.
   void set_linear_finite_order_var_coeff() const;
 
+  //! \brief
   //! Returns <CODE>true</CODE> if the recurrence is non linear
   //! of finite order; returns <CODE>false</CODE> otherwise.
   bool is_non_linear_finite_order() const;
@@ -217,10 +228,12 @@ private:
   //! Returns the order of the finite order recurrence.
   int get_order() const;
 
+  //! \brief
   //! Returns the positive integers \f$ d \f$ of the \f$ x(n - d) \f$
   //! contained in the right hand side of the finite order recurrence.  
   std::vector<unsigned> get_decrements() const;
 
+  //! \brief
   //! Returns the initial conditions associated to the finite order
   //! recurrence.
   std::vector<unsigned> get_initial_conditions() const;
