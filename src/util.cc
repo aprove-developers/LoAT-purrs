@@ -292,8 +292,6 @@ PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x,
 */
 PURRS::Expr
 PURRS::resultant(const Expr& p, const Expr& q, const Symbol& x) {
-  D_VAR(p);
-  D_VAR(q);
   assert(p.is_rational_polynomial());
   assert(q.is_rational_polynomial());
   Expr f = p.expand();
@@ -314,14 +312,13 @@ PURRS::resultant(const Expr& p, const Expr& q, const Symbol& x) {
       // quozient of `g' and `f' and
       // `factor = f.lcoeff(x)^(g.degree(x) - f.degree(x) + 1)'.
       Expr r = prem(g, f, x);
-      Expr factor = pwr(f.lcoeff(x), g.degree(x) - f.degree(x) + 1);
+      Expr factor = pwr(f.lcoeff(x), deg_g - deg_f + 1);
       // The rest of euclidean's division is given by the ratio
       // `pseudo-remainder / factor'.
       r *= pwr(factor, -1);
       unsigned deg_r = r.degree(x);
-      Expr a = f.lcoeff(x);
       // Using rule two.
-      res *= pwr(a, deg_g - deg_r);
+      res *= pwr(f.lcoeff(x), deg_g - deg_r);
       // Using rule one.
       if ((deg_f * deg_r) & 1 != 0)
 	// `deg_f * deg_r' is odd.
@@ -334,7 +331,6 @@ PURRS::resultant(const Expr& p, const Expr& q, const Symbol& x) {
     // Here `f' is a constant: use rule three.
     res *= pwr(f, deg_g);
   }
-  D_MSGVAR("Resultant(f(x), g(x)): ", res);
   return res;
 }
 
