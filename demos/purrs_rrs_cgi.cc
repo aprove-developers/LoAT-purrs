@@ -237,11 +237,11 @@ main() try {
   if(expr == (*cgi).end() || expr->isEmpty())
     error("you did not type anything!!!");
 
-  Symbol n;
-  Symbol a;
-  Symbol b;
-  Symbol c;
-  Symbol d;
+  Symbol n("n");
+  Symbol a("a");
+  Symbol b("b");
+  Symbol c("c");
+  Symbol d("d");
   Expr_List symbols(n, a, b, c, d);
   Expr rhs = Expr(**expr, symbols);
   Recurrence recurrence(rhs);

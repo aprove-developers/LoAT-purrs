@@ -234,7 +234,7 @@ main() try {
   if(expr == (*cgi).end() || expr->isEmpty())
     error("you did not type anything!!!");
 
-  Symbol x;
+  Symbol x("x");
   Expr p = Expr(**expr, Expr_List(x));
   if (p.is_zero()
       || !p.is_integer_polynomial()
