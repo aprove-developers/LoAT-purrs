@@ -35,6 +35,24 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+//! \brief
+//! Assuming that \p x and \p y represent sequences of reals,
+//! returns <CODE>true</CODE> if it can be proved that all
+//! the recurrences represented by \p x are less than all
+//! the recurrences represented by \p y.
+/*!
+  Let \f$ S_x, S_y \in \wp(\Nset \to \Rset) \f$ be the sets of sequences
+  represented by \p x and \p y, respectively.  If the system can prove that
+  \f[
+    \forall s_x \in S_x \itc \forall s_y \in S_y \itc \forall n \in \Nset
+      \itc s_x(n) < s_y(n),
+  \f]
+  then <CODE>true</CODE> is returned;
+  <CODE>false</CODE> is returned otherwise.
+*/
+bool less_than(const Recurrence& x, const Recurrence& y);
+
+
 /*!
   An object of this class abstracts a (possibly infinite) set of
   sequences of complex numbers.  Formally, an object of class
@@ -71,6 +89,17 @@ public:
   //! of the intersection of \p *this and \p y.
   void approximate_intersection_assign(const Recurrence& y);
 
+  //! \brief
+  //! Return <CODE>true</CODE> if it can be proved that all the represented
+  //! sequences are real.
+  /*!
+    Let \f$ S \in \wp(\Nset \to \Cset) \f$ be the set of sequences
+    represented by \p *this.  The value <CODE>true</CODE> is returned
+    if the system can prove that \f$ S \in \wp(\Nset \to \Rset) \f$;
+    <CODE>false</CODE> is returned otherwise.
+  */
+  bool is_real() const;
+  
   //! WRITEME
   void replace_recurrence(const Expr& e);
 
