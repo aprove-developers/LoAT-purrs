@@ -474,6 +474,12 @@ public:
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is the function
   //! <CODE>gamma()</CODE>.
+  /*!
+    Note that the method <CODE>tgamma</CODE> of <CODE>GiNaC</CODE> does
+    not work on number, it aborts! When we call this method with a
+    <CODE>Number</CODE> then automatically the number is converted
+    in <CODE>Expr</CODE> by a constructor of the class <CODE>Expr</CODE>.
+  */
   bool is_the_gamma_function() const;
 
   //! \brief
@@ -508,7 +514,6 @@ public:
   Complex_Interval ex_to_complex_interval() const;
 
   // FIXME: info, temporary
-  bool is_integer_polynomial() const;
   bool is_rational_polynomial() const;
   bool is_relation_equal() const;
 
@@ -736,6 +741,26 @@ public:
   bool is_scalar_representation(const Symbol& x) const;
 
   //! \brief
+  //! Returns <CODE>true</CODE> if \p *this is an integer scalar
+  //! rapresentation for \p x; returns <CODE>false</CODE> otherwise.
+  /*!
+    This function realizes the definition of <EM>integer scalar
+    representation for \f$ x \f$</EM>, where \f$ x \f$ is any symbol.
+    This is more briefly written <EM>scalar</EM> and defined inductively
+    as follows:
+    - every integer number is a scalar;
+    - every parameter different from \f$ x \f$ is a scalar;
+    - if \f$ f \f$ is any function and \f$ x_1, \dots, x_k \f$ are scalars,
+      then \f$ f(x_1, \dots, x_k) \f$ is a scalar;
+    - if \f$ a \f$ and \f$ b \f$ are scalars then
+      \f$ a+b \f$, \f$ a*b \f$ are scalars;
+    - if \f$ a \f$ is an integer scalar representation in \f$ x \f$ and
+      \f$ b \f$ is a positive integer or a parameter different from
+      \f$ x \f$, then \f$ a^b \f$ is an integer scalar representation.
+  */
+  bool is_integer_scalar_representation(const Symbol& x) const;
+
+  //! \brief
   //! Returns <CODE>true</CODE> if \p *this is a scalar rapresentation;
   //! returns <CODE>false</CODE> otherwise.
   /*!
@@ -747,7 +772,7 @@ public:
       representations, then \f$ f(x_1, \dots, x_k) \f$ is a scalar
       representation;
     - if \f$ a \f$ and \f$ b \f$ are scalar representations, then
-      \f$ a+b \f$, \f$ a*b \f$, and \f$ a^b \f$ are scalar representations.
+      \f$ a+b \f$, \f$ a*b \f$ and \f$ a^b \f$ are scalars.
   */
   bool is_scalar_representation() const;
 
@@ -767,6 +792,23 @@ public:
       \f$ a + b \f$ and \f$ a * b \f$ are polynomials.
   */
   bool is_polynomial(const Symbol& x) const;
+
+    //! \brief
+  //! Returns <CODE>true</CODE> if \p *this is an integer polynomial in \p x;
+  //! returns <CODE>false</CODE> otherwise.
+  /*!
+    This function realizes the definition of
+    <EM>integer polynomial in \f$ x \f$</EM>, where \f$ x \f$ is any symbol.
+    This is more briefly written <EM>integer polynomial</EM> and defined
+    inductively as follows:
+    - every integer scalar representation for \f$ x \f$ is a polynomial;
+    - \f$ x \f$ is a polynomial;
+    - if \f$ a \f$ is a polynomial in \f$ x \f$ and \f$ b \f$ is a positive
+      integer, then \f$ a^b \f$ is a polynomial;
+    - if \f$ a \f$ and \f$ b \f$ are polynomials then
+      \f$ a + b \f$ and \f$ a * b \f$ are polynomials.
+  */
+  bool is_integer_polynomial(const Symbol& x) const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this is a multivariate polynomial;
@@ -876,6 +918,7 @@ private:
 
   //! Builds the function corresponding to \p gf.
   Expr(const GiNaC::function& gf);
+
 };
 
 /*!

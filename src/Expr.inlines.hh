@@ -219,11 +219,6 @@ Expr::ex_to_complex_interval() const {
 
 // FIXME: info, temporary
 inline bool
-Expr::is_integer_polynomial() const {
-  return info(GiNaC::info_flags::integer_polynomial);
-}
-// FIXME: info, temporary
-inline bool
 Expr::is_rational_polynomial() const {
   return info(GiNaC::info_flags::rational_polynomial);
 }

@@ -476,7 +476,8 @@ PURRS::Expr::distribute_mul_over_add() const {
 bool
 PURRS::Expr::is_scalar_representation(const Symbol& x) const {
   const Expr& e = *this;
-  if (e.is_a_number())
+  Number num;
+  if (e.is_a_number(num))
     return true;
   else if (e.is_a_constant())
     return true;
@@ -494,6 +495,83 @@ PURRS::Expr::is_scalar_representation(const Symbol& x) const {
   else if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned i = e.nops(); i-- > 0; )
       if (!e.op(i).is_scalar_representation(x))
+	return false;
+    return true;
+  }
+  return false;
+}
+
+bool
+PURRS::Expr::is_polynomial(const Symbol& x) const {
+  const Expr& e = *this;
+  if (e.is_scalar_representation(x))
+    return true;
+  else if (e == x)
+    return true;
+  else if (e.is_a_power()) {
+    if (e.arg(0).is_polynomial(x)) {
+      Number exponent;
+      if (e.arg(1).is_a_number(exponent) && exponent.is_positive_integer()) 
+	return true;
+    }
+  }
+  else if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!e.op(i).is_polynomial(x))
+	return false;
+    return true;
+  }
+  return false;
+}
+
+bool
+PURRS::Expr::is_integer_scalar_representation(const Symbol& x) const {
+  const Expr& e = *this;
+  Number num;
+  if (e.is_a_number(num) && num.is_integer())
+    return true;
+  else if (e.is_a_symbol() && e != x)
+    return true;
+  else if (e.is_a_power()) {
+    if (e.arg(0).is_integer_scalar_representation(x)) {
+      Number exponent;
+      if ((e.arg(1).is_a_number(exponent) && exponent.is_positive_integer())
+	  || (e.is_a_symbol() && e != x)) 
+	return true;
+    }
+  }
+  else if (e.is_a_function()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!e.arg(i).is_integer_scalar_representation(x))
+	return false;
+    return true;
+  }
+  else if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!e.op(i).is_integer_scalar_representation(x))
+	return false;
+    return true;
+  }
+  return false;
+}
+
+bool
+PURRS::Expr::is_integer_polynomial(const Symbol& x) const {
+  const Expr& e = *this;
+  if (e.is_integer_scalar_representation(x))
+    return true;
+  else if (e == x)
+    return true;
+  else if (e.is_a_power()) {
+    if (e.arg(0).is_integer_polynomial(x)) {
+      Number exponent;
+      if (e.arg(1).is_a_number(exponent) && exponent.is_positive_integer()) 
+	return true;
+    }
+  }
+  else if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!e.op(i).is_integer_polynomial(x))
 	return false;
     return true;
   }
@@ -519,29 +597,6 @@ PURRS::Expr::is_scalar_representation() const {
   else if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned i = e.nops(); i-- > 0; )
       if (!e.op(i).is_scalar_representation())
-	return false;
-    return true;
-  }
-  return false;
-}
-
-bool
-PURRS::Expr::is_polynomial(const Symbol& x) const {
-  const Expr& e = *this;
-  if (e.is_scalar_representation(x))
-    return true;
-  else if (e == x)
-    return true;
-  else if (e.is_a_power()) {
-    if (e.arg(0).is_polynomial(x)) {
-      Number exponent;
-      if (e.arg(1).is_a_number(exponent) && exponent.is_positive_integer()) 
-	return true;
-    }
-  }
-  else if (e.is_a_add() || e.is_a_mul()) {
-    for (unsigned i = e.nops(); i-- > 0; )
-      if (!e.op(i).is_polynomial(x))
 	return false;
     return true;
   }
