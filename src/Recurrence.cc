@@ -454,7 +454,8 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 
   Solver_Status status;
   // Classify the linear recurrence `rec_rewritten'.
-  if ((status = rec_rewritten.classify_and_catch_special_cases())
+  if (rec_rewritten.is_classified
+      || (status = rec_rewritten.classify_and_catch_special_cases())
       == SUCCESS) {
     assert(rec_rewritten.is_linear_finite_order()
 	   || rec_rewritten.is_functional_equation());
@@ -625,7 +626,8 @@ PURRS::Recurrence::compute_exact_solution() const {
   }
 
   Solver_Status status;
-  if ((status = classify_and_catch_special_cases()) == SUCCESS) {
+  if (is_classified
+      || (status = classify_and_catch_special_cases()) == SUCCESS) {
     assert(is_linear_finite_order() || is_functional_equation()
 	   || is_non_linear_finite_order() || is_linear_infinite_order());
 
@@ -723,7 +725,8 @@ PURRS::Recurrence::compute_lower_bound() const {
   }
 
   Solver_Status status;
-  if ((status = classify_and_catch_special_cases()) == SUCCESS) {
+  if (is_classified
+      || (status = classify_and_catch_special_cases()) == SUCCESS) {
     assert(is_linear_finite_order() || is_functional_equation()
 	   || is_non_linear_finite_order() || is_linear_infinite_order());
 
@@ -782,10 +785,11 @@ PURRS::Recurrence::compute_upper_bound() const {
   }
 
   Solver_Status status;
-  if ((status = classify_and_catch_special_cases()) == SUCCESS) {
+  if (is_classified
+      || (status = classify_and_catch_special_cases()) == SUCCESS) {
     assert(is_linear_finite_order() || is_functional_equation()
 	   || is_non_linear_finite_order() || is_linear_infinite_order());
-
+    
     if (is_linear_finite_order() || is_linear_infinite_order())
       if (!tested_exact_solution)
 	// There is an exact solution.
