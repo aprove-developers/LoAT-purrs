@@ -31,8 +31,11 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 void
-factorize(const Expr& e, const Symbol& n,
-	  Expr& common_factor, Expr& remainder);
+factorize_no_ratio_ex(const Expr& e,
+		      Expr& common_factor, Expr& remainder);
+
+void
+factorize(const Expr& e, Expr& common_factor, Expr& remainder);
 
 }
 

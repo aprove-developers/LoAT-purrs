@@ -269,7 +269,7 @@ PURRS::compute_product(const Expr& e,
   }
   Expr common_factor;
   Expr rem;
-  factorize(e, Recurrence::n, common_factor, rem);
+  factorize(e, common_factor, rem);
   D_VAR(common_factor);
   D_VAR(rem);
   // `e' has been factorized: `e = common_factor * rem'.

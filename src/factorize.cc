@@ -39,30 +39,37 @@ using namespace PURRS;
 
 void
 assign_common_factor_and_rem(const Expr& base_factor,
-			     const Number& exponent_factor,
-			     unsigned& exp_common_factor,
+			     const Expr& exponent_factor,
+			     const Expr& exp_common_factor,
 			     Expr& common_factor, Expr& rem_summand) {
-  D_VAR(exp_common_factor);
   std::vector<Expr> bases;
   std::vector<Expr> exponents;
   // Find bases and exponents of each factor of `common_factor'.
   split_bases_exponents(common_factor, bases, exponents);
-  bool ok = true;
+  bool new_common_factor = true;
   for (unsigned i = bases.size(); i-- > 0; ) {
     if (base_factor == bases[i]) {
-      ok = false;
-      if (exponent_factor > exponents[i].ex_to_number())
-	rem_summand *= pwr(base_factor,
-			   exponent_factor - exponents[i].ex_to_number());
-      else
-	rem_summand *= pwr(base_factor,
-			   exponents[i].ex_to_number() - exponent_factor);
+      new_common_factor = false;
+      const Expr& exponents_i = exponents[i];
+      Number num_exp_f;
+      Number num_i;
+      if (exponent_factor.is_a_number(num_exp_f)
+	  && exponents_i.is_a_number(num_i)
+	  && num_exp_f.is_positive_integer()
+	  && num_i.is_positive_integer())
+	if (num_exp_f > num_i)
+	  rem_summand *= pwr(base_factor, num_exp_f - num_i);
+	else
+	  rem_summand *= pwr(base_factor, num_i - num_exp_f);
+      else if (exponent_factor != exponents_i)
+	rem_summand *= pwr(base_factor, exponent_factor - exponents_i);
       break;
     }
   }
-  if (ok) {
+  if (new_common_factor) {
     common_factor *= pwr(base_factor, exp_common_factor);
-    rem_summand *= pwr(base_factor, exponent_factor - exp_common_factor);
+    if (exp_common_factor != exponent_factor)
+      rem_summand *= pwr(base_factor, exponent_factor - exp_common_factor);
   }
 }
 
@@ -80,11 +87,11 @@ void
 in_all_factors(const Expr& e,
 	       const Expr& base_factor, const Expr& exponent_factor,
 	       Expr& common_factor, Expr& rem_summand) {
-  D_MSG("***");
+  D_MSG("***I");
   D_VAR(base_factor);
   D_VAR(exponent_factor);
-  unsigned exp_common_factor;
-  bool is_in_every_factor = true;
+  Expr exp_common_factor = exponent_factor;
+  bool is_in_every_term = true;
   // Run over all terms of `e' in order to look if `factor' is in
   // every term.
   for (unsigned i = e.nops(); i-- > 0; ) {
@@ -96,29 +103,41 @@ in_all_factors(const Expr& e,
     split_bases_exponents(e_i, bases, exponents);
     D_VEC(bases, 0, bases.size()-1);
     D_VEC(exponents, 0, exponents.size()-1);
+    bool found = false;
     for (unsigned j = bases.size(); j-- > 0; ) {
-      exp_common_factor = 0;
       if (bases[j] == base_factor) {
-	exp_common_factor
-	  = exponents[j].ex_to_number() > exponent_factor.ex_to_number()
-	  ? exponent_factor.ex_to_number().to_unsigned()
-	  : exponents[j].ex_to_number().to_unsigned();
-	break;
+	Number num_exp_common_f;
+	Number num_exp_j;
+	if (exp_common_factor.is_a_number(num_exp_common_f)
+	    && exponents[j].is_a_number(num_exp_j)
+	    && num_exp_common_f.is_positive_integer()
+	    && num_exp_j.is_positive_integer()) {
+	  exp_common_factor = num_exp_j > num_exp_common_f
+	    ? num_exp_common_f : num_exp_j;
+	  found = true;
+	  break;
+	}
+	else if (exp_common_factor == exponents[j]) {
+	  found = true;
+	  break;
+	}
       }
     }
     D_VAR(exp_common_factor);
-    if (exp_common_factor == 0)
-      is_in_every_factor = false;
+    if (!found) {
+      is_in_every_term = false;
+      break;
+    }
   }
-  if (is_in_every_factor)
-    assign_common_factor_and_rem(base_factor, exponent_factor.ex_to_number(),
+  if (is_in_every_term)
+    assign_common_factor_and_rem(base_factor, exponent_factor,
 				 exp_common_factor,
 				 common_factor, rem_summand);
   else
     rem_summand *= pwr(base_factor, exponent_factor);
   D_VAR(common_factor);
   D_VAR(rem_summand);
-  D_MSG("***");
+  D_MSG("***F");
 }
 
 /*!
@@ -136,13 +155,16 @@ collect_common_factor(const Expr& e, const Expr& term,
   std::vector<Expr> exponents;
   // Find bases and exponents of each factor of `term'.
   split_bases_exponents(term, bases, exponents);
-  D_MSG("");
-  D_VAR(term);
-  D_VEC(bases, 0, bases.size()-1);
-  D_VEC(exponents, 0, exponents.size()-1);
+  D_MSGVAR("COLLECT I ", term);
+//    D_VEC(bases, 0, bases.size()-1);
+//    D_VEC(exponents, 0, exponents.size()-1);
   for (unsigned i = bases.size(); i-- > 0; )
     in_all_factors(e, bases[i], exponents[i], common_factor, rem_summand);
+  D_MSGVAR("COLLECT F ", common_factor);
+  D_VAR(rem_summand);
 } 
+
+} // anonymous namespace
 
 /*!
   This function factorizes as much possible the expression \p e,
@@ -151,18 +173,16 @@ collect_common_factor(const Expr& e, const Expr& term,
   such that the product of them is equal to \p e.
 */
 void
-factorize_no_ratio_ex(const Expr& e, const Symbol& n,
-		      Expr& common_factor, Expr& remainder) {
+PURRS::factorize_no_ratio_ex(const Expr& e,
+			     Expr& common_factor, Expr& remainder) {
   assert(denominator(e) == 1);
   D_MSG("");
   D_MSGVAR("INPUT ", e);
-  Expr e_factorized;
+  Expr e_factorized = e.expand();
   if (e.is_rational_polynomial()) {
-    e_factorized = sqrfree(e.expand());
+    e_factorized = sqrfree(e_factorized);
     D_MSG("sqrfree");
   }
-  else
-    e_factorized = e;
   D_VAR(e_factorized);
 
   common_factor = 1;
@@ -187,7 +207,7 @@ factorize_no_ratio_ex(const Expr& e, const Symbol& n,
     }
     Expr rem_summand = 1;
     if (base.is_a_add()) {
-      factorize_no_ratio_ex(base, n, common_factor, remainder);
+      factorize_no_ratio_ex(base, common_factor, remainder);
       if (exponent != 1) {
 	common_factor = pwr(common_factor, exponent);
 	remainder = pwr(remainder, exponent);
@@ -202,7 +222,7 @@ factorize_no_ratio_ex(const Expr& e, const Symbol& n,
       const Expr& factor = e_factorized.op(i);
       Expr common = 1;
       Expr rem = 0;
-      factorize_no_ratio_ex(factor, n, common, rem);
+      factorize_no_ratio_ex(factor, common, rem);
       common_factor *= common;
       rem_all_factors *= rem; 
     }
@@ -216,25 +236,24 @@ factorize_no_ratio_ex(const Expr& e, const Symbol& n,
   D_MSG("");
 }
 
-} // anonymous namespace
-
 /*!
   This function factorizes as much possible the expression \p e
   and returns the two values \p common_factor and \p remainder
   such that the product of them is equal to \p e.
 */
 void
-PURRS::factorize(const Expr& e, const Symbol& n,
+PURRS::factorize(const Expr& e,
 		 Expr& common_factor, Expr& remainder) {
+  D_MSGVAR("factorize ", e);
   Expr numerator;
   Expr denominator;
   numerator_denominator_purrs(e, numerator, denominator);
   Expr common_num;
   Expr rem_num;
-  factorize_no_ratio_ex(numerator, n, common_num, rem_num);
+  factorize_no_ratio_ex(numerator, common_num, rem_num);
   Expr common_den;
   Expr rem_den;
-  factorize_no_ratio_ex(denominator, n, common_den, rem_den);
+  factorize_no_ratio_ex(denominator, common_den, rem_den);
   if (common_den.is_a_number() && rem_den.is_a_number()) {
     common_factor = common_num / (common_den * rem_den);
     remainder = rem_num;
