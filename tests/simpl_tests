@@ -459,6 +459,30 @@ factorial(-k+n)^(-1)*factorial(k)^(-1)*factorial(n)
 binom(n,k)
  
 %%%%%%%%
+
+y	3*(n-k-1)!+5
+5+3*factorial(-1-k+n)
+5+3*factorial(-1-k+n)
+5+3*(-k+n)^(-1)*factorial(-k+n)
+5+3*factorial(-1-k+n)
+
+%%%%%%%%
+
+y	binom(n+1,k)
+binom(1+n,k)
+binom(1+n,k)
+factorial(k)^(-1)*(1-k+n)^(-1)*factorial(n)*factorial(-k+n)^(-1)*(1+n)
+binom(1+n,k)
+
+%%%%%%%%
+ 
+y	binom(n,1+k)
+binom(n,1+k)
+binom(n,1+k)
+factorial(k)^(-1)*(-k+n)*(1+k)^(-1)*factorial(n)*factorial(-k+n)^(-1)
+binom(n,1+k)	
+
+%%%%%%%%
  
 y	binom(n+1,k)/binom(n,k)
 binom(n,k)^(-1)*binom(1+n,k)
