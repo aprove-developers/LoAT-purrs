@@ -49,9 +49,10 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 /*!
-  Returns <CODE>true</CODE> if and only if \p e is of the form
-  \f$ n - d \f$ with \f$ d \f$ an integer; in this case assign the
-  opposite of \f$ d \f$ to \p decrement.
+  Returns <CODE>true</CODE> in two cases:
+  - if \p e is of the form \f$ n - d \f$ with \f$ d \f$ an integer:
+    in this case assign the opposite of \f$ d \f$ to \p decrement.
+  - if \p e is equal to \p n: in this case decrement is zero.
 */
 static bool
 get_constant_decrement(const Expr& e, const Symbol& n, Number& decrement) {
@@ -64,7 +65,11 @@ get_constant_decrement(const Expr& e, const Symbol& n, Number& decrement) {
       if (i.is_integer())
 	decrement = -i;
       return true;
-    }
+    }    
+  }
+  else if (e.is_equal(n)) {
+    decrement = 0;
+    return true;
   }
   return false;
 }
@@ -607,18 +612,14 @@ assign_max_decrement_and_coeff(const Expr& possibly_dec,
 
 /*!
   Assuming that \p rhs contains occurrences of <CODE>x(n-k)</CODE>
-  where <CODE>k</CODE> is a negative integer, this function tries to
-  perform suitable changes of variables that preserve the meaning of
+  where <CODE>k</CODE> is a negative integer, this function
+  performs suitable changes of variables that preserve the meaning of
   the recurrence relation, but transforms it into its <EM>standard
   form</EM> <CODE>x(n) = new_rhs</CODE>, where <CODE>new_rhs</CODE>
   does not contain any instance of <CODE>x(n-k)</CODE>, with a
   negative integer <CODE>k</CODE>.
-  Returns <CODE>true</CODE> if the transformation is successful;
-  returns <CODE>false</CODE> otherwise.
 */
-// FIXME: when the transformation fails?
-// Now we not consider non-linear recurrences in the transformation.
-static bool
+static void
 eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs,
 			      const Symbol& n) {
   // Seeks `max_decrement', i.e., the largest positive integer such that
@@ -656,8 +657,6 @@ eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs,
   new_rhs = new_rhs.subs(x(n), - x(n-max_decrement)
 			 * Parma_Recurrence_Relation_Solver::power(coefficient, -1));
   new_rhs /= coefficient;
-  
-  return true;
 }
 
 /*!
@@ -669,19 +668,19 @@ eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs,
   <CODE>true</CODE>.
 */
 static bool
-eliminate_null_decrements(const Expr& /* rhs */, Expr& /* new_rhs */) {
-
-  //   Assume that `rhs = a*x(n) + b' and that `b' does not contain
-  //   `x(n)'.  The following cases are possible:
-  //   - If `a = 1' and `b' does not contain any occurrence of `x(n-k)'
-  //      where `k' is a positive integer, the recurrence is impossible.
-  //   - If `a = 1' and `b' contains `x(n-k)' for some positive integer `k'
-  //     and with a coefficient that is not syntactically 0, we remove
-  //     `x(n)' from both sides of `x(n) = rhs', and then rewrite the
-  //     recurrence into its standard form.
-  //   - If `a != 1' we move `a*x(n)' to the left-hand side, and divide
-  //     through by `1 - a', obtaining the standard form, which is 
-  //     `(rhs - a*x(n)) / (1-a)'.
+eliminate_null_decrements(const Expr& /*rhs*/, Expr& /*new_rhs*/,
+			  const Symbol& /*n*/) {
+  // Assume that `rhs = a*x(n) + b' and that `b' does different to zero
+  // and does not contain `x(n)'.  The following cases are possible:
+  // 1. If `a = 1' and `b' does not contain any occurrence of `x(n-k)'
+  //    where `k' is a positive integer, the recurrence is impossible.
+  // 2. If `a = 1' and `b' contains `x(n-k)' for some positive integer `k'
+  //    and with a coefficient that is not syntactically 0, we remove
+  //    `x(n)' from both sides of `x(n) = rhs', and then rewrite the
+  //    recurrence into its standard form.
+  // 3. If `a != 1' we move `a*x(n)' to the left-hand side, and divide
+  //    through by `1 - a', obtaining the standard form, which is 
+  //    `(rhs - a*x(n)) / (1-a)'.
 
   return false;
 }
@@ -708,21 +707,22 @@ solve_try_hard(const Expr& rhs, const Symbol& n, Expr& solution) {
     case HAS_NEGATIVE_DECREMENT:
       {
 	Expr new_rhs;
-	if (eliminate_negative_decrements(rhs, new_rhs, n)) {
-	  std::cout << "Recurrence tranformed x(n) = " << new_rhs << std::endl;
-	  status = solve(new_rhs, n, solution);
-	}
-	else
-	  exit_anyway = true;
+	eliminate_negative_decrements(rhs, new_rhs, n);
+	std::cout << "Recurrence tranformed x(n) = " << new_rhs << std::endl;
+	status = solve(new_rhs, n, solution);
       }
       break;
     case HAS_NULL_DECREMENT:
       {
 	Expr new_rhs;
-	if (eliminate_null_decrements(rhs, new_rhs))
-	    status = solve(new_rhs, n, solution);
+	if (eliminate_null_decrements(rhs, new_rhs, n)) {
+	  std::cout << "Recurrence tranformed x(n) = " << new_rhs << std::endl;
+	  status = solve(new_rhs, n, solution);
+	}
 	else
-	  exit_anyway = true;
+	  throw
+	    "PURRS error: "
+	    "impossible recurrence";
       }
       exit_anyway = true;
       break;
