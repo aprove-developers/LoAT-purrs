@@ -517,18 +517,6 @@ private:
   // Method to access to private data of `Non_Linear_Info'.
 
   //! \brief
-  //! If the rewriting of the non-linear recurrence in a linear
-  //! recurrence has success then this data contains 
-  //! <CODE>recurrence_rhs</CODE> of the non-linear recurrence.
-  Expr original_recurrence_rhs() const;
-
-  //! \brief
-  //! If the rewriting of the non-linear recurrence in a linear
-  //! recurrence has success then this data contains 
-  //! <CODE>recurrence_rhs</CODE> of the non-linear recurrence.
-  Expr& original_recurrence_rhs();
-
-  //! \brief
   //! If the non-linear recurrence is rewritable in a linear recurrence
   //! then this data contains the right hand side of the linear recurrence
   //! associated to the original non-linear recurrence. 

@@ -35,12 +35,10 @@ namespace Parma_Recurrence_Relation_Solver {
 class Non_Linear_Info {
 public:
   //! \brief
-  //! Constructor: sets \f$ original_recurrence_rhs_ = rhs \f$,
-  //! \f$ recurrence_rhs_reritten_ = new_rhs \f$,
+  //! Constructor: sets \f$ recurrence_rhs_reritten_ = new_rhs \f$,
   //! \f$ base_exp_log_ = base_exp_log \f$,
   //! \f$ auxiliary_symbols_ = auxiliary_symbols \f$.
-  Non_Linear_Info(const Expr& rhs, const Expr& new_rhs,
-		  const Expr& base_exp_log,
+  Non_Linear_Info(const Expr& new_rhs, const Expr& base_exp_log,
 		  const std::vector<Symbol> auxiliary_symbols);
 
   //! Copy-constructor.
@@ -51,12 +49,6 @@ public:
 
   //! Assignment operator.
   Non_Linear_Info& operator=(const Non_Linear_Info& y);
-
-  //! Returns <CODE>original_recurrence_rhs_</CODE>.
-  Expr original_recurrence_rhs() const;
-
-  //! Returns <CODE>original_recurrence_rhs_</CODE>.
-  Expr& original_recurrence_rhs();
 
   //! Returns <CODE>rhs_transformed_in_linear_</CODE>.
   Expr rhs_transformed_in_linear() const;
@@ -95,12 +87,6 @@ public:
   void set_non_linear_to_linear_fwdr(unsigned i_c);
 
 private:
-  //! \brief
-  //! If the rewriting of the non-linear recurrence in a linear
-  //! recurrence has success then this data contains 
-  //! <CODE>recurrence_rhs</CODE> of the non-linear recurrence.
-  Expr original_recurrence_rhs_;
-
   Expr rhs_transformed_in_linear_;
 
   //! \brief

@@ -682,8 +682,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
     if (rewrite_non_linear_recurrence(*this, recurrence_rhs, new_rhs, base,
 				      auxiliary_symbols)) {
       set_non_linear_finite_order();
-      non_linear_p = new Non_Linear_Info(recurrence_rhs, new_rhs, base,
-					 auxiliary_symbols);
+      non_linear_p = new Non_Linear_Info(new_rhs, base, auxiliary_symbols);
       return SUCCESS;
     }
     else

@@ -318,18 +318,6 @@ Recurrence::rank() const {
 }
 
 inline Expr
-Recurrence::original_recurrence_rhs() const {
-  assert(non_linear_p);
-  return non_linear_p -> original_recurrence_rhs();
-}
-
-inline Expr&
-Recurrence::original_recurrence_rhs() {
-  assert(non_linear_p);
-  return non_linear_p -> original_recurrence_rhs();
-}
-
-inline Expr
 Recurrence::rhs_transformed_in_linear() const {
   assert(non_linear_p);
   return non_linear_p -> rhs_transformed_in_linear();
