@@ -55,12 +55,13 @@ PURRS::Recurrence::substitute_auxiliary_definitions(const Expr& e) const {
 		       substitute_auxiliary_definitions(e.arg(1)));
   else if (e.is_a_function()) {
     if (e.nops() == 1)
-      e_after_subs = apply(e.functor(), substitute_auxiliary_definitions(e.arg(0)));
+      e_after_subs = apply(e.functor(),
+			   substitute_auxiliary_definitions(e.arg(0)));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = substitute_auxiliary_definitions(e.op(i));
+	argument[i] = substitute_auxiliary_definitions(e.arg(i));
       e_after_subs = apply(e.functor(), argument);
     }
   }
