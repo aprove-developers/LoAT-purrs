@@ -58,6 +58,39 @@ get_linear_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
 }
 
 /*!
+  Transforms expressions of the form \f$(a^x)^b)\f$ in the expression \p p
+  into \f$a^(b*x)\f$.
+*/
+static GExpr
+mul_exponents_exp(GExpr& p, const GList lst_of_exp) {
+  GExpr q = 0;
+
+  for (size_t i = lst_of_exp.nops(); i-- > 0; ) {
+    GExpr tmp = lst_of_exp.op(i);
+    tmp = tmp.subs(pow(pow(wild(0), wild(1)), wild(2)) == 
+		   pow(wild(0), wild(1)*wild(2)));
+    // Finds coefficient of exponential 'lst_of_exp.op(i)'.
+    GList substitution;
+    clear(substitution);
+    if (match(p, lst_of_exp.op(i)*wild(0), substitution) ||
+	match(p, lst_of_exp.op(i)*wild(0) + wild(1), substitution)) {
+      GExpr coeff = get_binding(substitution, 0);
+      q += tmp*coeff;
+      p -= coeff*lst_of_exp.op(i);
+    }
+    // The exponential's coefficient is 1.
+    else {
+      q += tmp;
+      p -= lst_of_exp.op(i);
+    }
+  }
+  // Now p does not contain other exponential of the form (a^x)^b. 
+  q += p;
+
+  return q;
+}
+
+/*!
   Transforms expressions of the form \f$a^(b*x)\f$ in the expression \p p
   into \f$(a^b)^x\f$.
 */
@@ -66,17 +99,22 @@ split_exp(GExpr& p, const GSymbol& x, const GList lst_of_exp) {
   GExpr q = 0;
 
   for (size_t i = lst_of_exp.nops(); i-- > 0; ) {
-    // Finds coefficient of exponential 'lst_of_exp.op(i)'.
-    GList l;
-    GExpr coeff;
-    if (p.find(lst_of_exp.op(i) * wild(), l)) {
-      coeff = l.op(0);
-      coeff = coeff.subs(wild(0)*pow(wild(1), wild(2)*x) == wild(0));
-    }
     GExpr tmp = lst_of_exp.op(i);
     tmp = tmp.subs(pow(wild(0),x*wild(1)) == pow(pow(wild(0),wild(1)),x));
-    q += tmp*coeff;
-    p -= coeff*lst_of_exp.op(i);
+    // Finds coefficient of exponential 'lst_of_exp.op(i)'.
+    GList substitution;
+    clear(substitution);
+    if (match(p, lst_of_exp.op(i)*wild(0), substitution) ||
+	match(p, lst_of_exp.op(i)*wild(0) + wild(1), substitution)) {
+      GExpr coeff = get_binding(substitution, 0);
+      q += tmp*coeff;
+      p -= coeff*lst_of_exp.op(i);
+    }
+    // The exponential's coefficient is 1.
+    else {
+      q += tmp;
+      p -= lst_of_exp.op(i);
+    }
   }
   // Now p does not contain other exponential of the form a^(b*x). 
   q += p;
@@ -123,12 +161,19 @@ static void
 transform_exponentials(GExpr& e, const GSymbol& n) {
   GList lst_of_exp;
 
+  // Transforms (a^n)^b into a^(b*n).
+  static GExpr a_x_b = pow(pow(wild(0), wild(1)), wild(2));
+  while (e.find(a_x_b, lst_of_exp)) {
+    e = mul_exponents_exp(e, lst_of_exp);
+    clear(lst_of_exp);
+  }
+
   // Transforms a^(bn+c) into (a^b)^n*a^c.
   static GExpr a_bn = pow(wild(0), n*wild(1));
   static GExpr a_n_c = pow(wild(0), n+wild(1));
   static GExpr a_bn_c = pow(wild(0), n*wild(1)+wild(2));
   if (e.find(a_bn_c, lst_of_exp) || e.find(a_n_c, lst_of_exp)) 
-    e = e.expand();
+    e.expand();
   if (e.find(a_bn, lst_of_exp))
     e = split_exp(e, n, lst_of_exp);
 
@@ -311,13 +356,15 @@ solve(const GExpr& rhs, const GSymbol& n) {
   std::cout << std::endl;
   std::cout << "Inhomogeneous term = " << e << std::endl;
 
-  // The factors of the form a^(bx+c) (a,b,c numeric) must be transformed
-  // into (a^b)^x*a^c. GiNaC tranforms only a^(bx+c) in a^c*a^(bx) but not
-  // a^(bx) into (a^b)^x.
+  // The factors of the form a^(bn+c) (a,b,c numeric) must be transformed
+  // into (a^b)^n*a^c. GiNaC tranforms only a^(bn+c) in a^c*a^(bn) but not
+  // a^(bn) into (a^b)^n.
+  // Besides transform factor of the form (a^n)^b into a a^(b*n)
+  // (GiNaC do not make this).
   transform_exponentials(e, n);
 
   // Now certainly the inhomogeneous term contains only exponential
-  // with exponent x.
+  // with exponent n.
   // 'decomposition' is a matrix with two rows and a number of columns
   // which is at most the number of exponentials in the inhomogeneous term
   // plus one.
@@ -393,7 +440,9 @@ solve(const GExpr& rhs, const GSymbol& n) {
     } 
   } 
 
-  std::cout << "Solution  " << solution_tot.expand() << std::endl << std::endl;
+  solution_tot = solution_tot.expand();
+  transform_exponentials(solution_tot, n);
+  std::cout << "Solution  " << solution_tot << std::endl << std::endl;
 
   /*
   // Build the expression here.
