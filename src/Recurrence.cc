@@ -410,7 +410,12 @@ compute_non_linear_recurrence(Expr& solution_or_bound,
     Solver_Status status;
     // Linear finite order.
     if (associated_linear_rec().is_linear_finite_order())
-      if ((status = associated_linear_rec().solve_linear_finite_order())
+      // To call `solve_linear_finite_order()' is not enough because
+      // it could be possible to apply the order reduction method
+      // on `associated_linear_rec()'. So it is necessary to use
+      // `compute_exact_solution()'.
+      if ((status
+	   = associated_linear_rec().compute_exact_solution_finite_order())
 	  == SUCCESS) {
 	// Transform the solution of the linear recurrence in the solution
 	// of the non linear recurrence.
