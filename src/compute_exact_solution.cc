@@ -379,15 +379,11 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
   if (all_distinct) {
     const Expr& root_1 = roots[0].value();
     const Expr& root_2 = roots[1].value();
-#if 1
-    // FIXME: maybe it is possible to simplify `diff_roots' using
-    // the actual values of the roots of the characteristic equation.
+    // We use the actual values of the roots of the characteristic equation
+    // in order to compute `diff_roots' so that it is possible to simplify it.
     Expr diff_roots = root_1 - root_2;
     diff_roots = blackboard.rewrite(diff_roots).expand();
     D_VAR(diff_roots);
-#else
-    const Expr& diff_roots = root_1 - root_2;
-#endif
     g_n = (pwr(root_1, Recurrence::n+1) - pwr(root_2, Recurrence::n+1))
       / diff_roots;
     if (!vector_not_all_zero(exp_no_poly_coeff)) {
@@ -403,7 +399,6 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
 	symbolic_sum_no_distinct[j] *= lambda / diff_roots;
 	symbolic_sum_distinct[j] *= lambda / diff_roots;
       }
-#if 1
       // Substitute all the occurrences of `(lambda-alpha)^(-k)'
       // with `((lambda+alpha-c)/(-alpha^2+alpha*c+d))^k',
       // where `c' is the coefficient of `x(n-1)',
@@ -472,7 +467,6 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
 // 	  }
 #endif
 	}
-#endif
       // Substitutes to the sums in the vector `symbolic_sum_distinct'
       // or `symbolic_sum_no_distinct' the corresponding values of the
       // characteristic equation's roots and of the bases of the
