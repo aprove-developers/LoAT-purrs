@@ -221,10 +221,14 @@ find_roots(const GExpr& p, const GSymbol& x,
 	}
       }
     if (degree == 0)
-      // FIXME: a decent comment here.
+      // The polynomial has been factored completely.
       return true;
 
-    // Here `q' has only simple roots which are either irrational or complex.
+    // Here `q' has only simple roots that are either
+    // - rational with large (>= FIND_DIVISORS_THRESHOLD)
+    //   numerator or denominator,
+    // - irrational, or
+    // - complex.
     if (coefficients_changed) {
       assert(is_a<numeric>(q.lcoeff(x)));
       assert(is_a<numeric>(q.tcoeff(x)));
@@ -233,13 +237,17 @@ find_roots(const GExpr& p, const GSymbol& x,
     }
   }
 
-  assert(degree > 1);
   if (degree <= 4) {
     unsigned position = roots.size();
     // Insert `degree' elements at the end of roots.
     roots.insert(roots.end(), degree, 0);
 
     switch (degree) {
+    case 1:
+      {
+	roots.push_back(Polynomial_Root(-tc/lc, multiplicity));
+	return true;
+      }
     case 2:
       {
 	assert(is_a<numeric>(q.coeff(x, 1)));

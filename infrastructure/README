@@ -1,7 +1,7 @@
 Recommended tools and libraries:
 
 autoconf 2.52g
-automake 
+automake 1.5
 gcc 3.0.3
 gmp 4.0.1      (configure with -fexceptions *)
 cln 1.1.4      (manually copy cln.m4 **)

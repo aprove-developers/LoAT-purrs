@@ -30,7 +30,6 @@ rr_solver.hh
 libpurrs_a_SOURCES = \
 alg_eq_solver.cc \
 rr_solver.cc \
-approx_expr.cc \
 globals.cc \
 util.cc \
 util.hh \
