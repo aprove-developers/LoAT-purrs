@@ -63,7 +63,7 @@ static GExpr zero = 0;
   the strictly positive integer \p n which is also less than
   <CODE>FIND_DIVISORS_THRESHOLD</CODE>.
 */
-static void
+void
 find_divisors(GNumber n, std::vector<GNumber>& divisors) {
   assert(n.is_pos_integer());
   assert(n > 0 && n < FIND_DIVISORS_THRESHOLD);

@@ -76,4 +76,7 @@ bool
 find_roots(const GExpr& p, const GSymbol& x,
 	   std::vector<Polynomial_Root>& roots, bool& all_distinct);
 
+//! Finds divisors of positive integer \p n.
+void
+find_divisors(GNumber n, std::vector<GNumber>& divisors);
 #endif
