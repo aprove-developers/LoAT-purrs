@@ -416,6 +416,13 @@ static void
 solve_equation_2(const GExpr& b, const GExpr& c,
 		 GExpr& x1, GExpr& x2) {
   GExpr sqrt_d = sqrt(b*b - 4*c);
+#if NOISY
+  std::cout << "sqrt_d before = " << sqrt_d << std::endl;
+#endif
+  sqrt_d = simplify_on_output_ex(sqrt_d);
+#if NOISY
+  std::cout << "sqrt_d before = " << sqrt_d << std::endl;
+#endif
   x1 = (-b + sqrt_d)/2;
   x2 = (-b - sqrt_d)/2;
 }
@@ -476,7 +483,18 @@ solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
 	T = cubic_root(B);
       }
     }
+#if NOISY
+    std::cout << "S before= " << S << std::endl; 
+    std::cout << "T before= " << T << std::endl;
+#endif
+    S = simplify_on_output_ex(S);
+    T = simplify_on_output_ex(T);
+#if NOISY
+    std::cout << "S = " << S << std::endl; 
+    std::cout << "T = " << T << std::endl;
+#endif
     GExpr S_plus_T = S + T;
+    // FIXME: (a+b)^(1/3) + (a-b)^(1/3) = ?
     GExpr t1 = -S_plus_T/2 - a1_div_3;
     GExpr t2 = (S - T)*I*sqrt(GExpr(3))/2;
     x1 = S_plus_T - a1_div_3;
@@ -528,8 +546,8 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   p = sqrt(y1);
   q = sqrt(y2);
 #if NOISY
-  std::cout << "p = " << p << std::endl; 
-  std::cout << "q = " << q << std::endl;
+  std::cout << "p before = " << p << std::endl; 
+  std::cout << "q before = " << q << std::endl;
 #endif
   p = simplify_on_output_ex(p);
   q = simplify_on_output_ex(q);
@@ -538,6 +556,9 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   std::cout << "q = " << q << std::endl;
 #endif
   GExpr r = numeric(-g)/(8*p*q);
+#if NOISY
+  std::cout << "r before = " << r << std::endl; 
+#endif
   r = simplify_on_output_ex(r);
   GExpr s = numeric(a1)/4;
 #if NOISY
