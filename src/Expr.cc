@@ -29,6 +29,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <config.h>
 
 #include "util.hh"
+#include "Blackboard.defs.hh"
 #include "Expr.defs.hh"
 #include "numerator_denominator.hh"
 
@@ -394,6 +395,66 @@ REGISTER_FUNCTION(mod,
 
 } // namespace GiNaC
 
+namespace {
+using namespace PURRS;
+
+//! \brief
+//! Substitute every critical expression contained in \p e with
+//! an arbitrary symbol.
+/*!
+  A <EM>critical expression</EM> is a polynomial expression that
+  for GiNaC is not a polynomial. More rigorously: 
+  -  if \f$ f(x) \f$ is any function and the argument \f$ x \f$ does
+     not contain the symbols of the list \p y that indicate the variables
+     with respect to which \p e is a polynomial, then \f$ f(x) \f$ is a
+     critical expression.
+*/
+Expr
+substitute_critical_ex(const Expr& e, const Expr_List& y,
+		       Blackboard& blackboard) {
+  Expr e_rewritten;
+  if (e.is_a_add()) {
+    e_rewritten = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten += substitute_critical_ex(e.op(i), y, blackboard);
+  }
+  else if (e.is_a_mul()) {
+    e_rewritten = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten *= substitute_critical_ex(e.op(i), y, blackboard);
+  }
+  else if (e.is_a_power())
+    return pwr(substitute_critical_ex(e.arg(0), y, blackboard),
+	       substitute_critical_ex(e.arg(1), y, blackboard));
+  else if (e.is_a_function() && e.nops() == 1) {
+    // The argument of the function does not contain the symbols of `y',
+    // so we can consider the function a constant with respect to
+    // these symbols.
+    for (unsigned i = y.nops(); i-- > 0; )
+      if (e.arg(0).has(y.op(i)))
+	break;
+    return blackboard.insert_definition(e);
+  }
+  return e;
+}
+
+} // anonymous namespace
+
+PURRS::Expr
+PURRS::sqrfree(const Expr& x, const Expr_List& y) {
+  for (unsigned i = y.nops(); i-- > 0; )
+    assert(x.is_polynomial(y.op(i).ex_to_symbol()));
+  // FIXME: temporary!
+  // Substitute every critical expression with an arbitrary symbol
+  // and at the end resubstitute the symbol with the original value.
+  // A critical expression is a polynomial expression that for GiNaC
+  // is not a polynomial (i.e. log(2)).
+  Blackboard blackboard;
+  Expr x_subs = substitute_critical_ex(x, y, blackboard);
+  x_subs = GiNaC::sqrfree(x_subs, y.l);
+  return blackboard.rewrite(x_subs);
+}
+
 PURRS::Expr
 PURRS::Expr::substitute(const Expr& s, const Expr& r) const {
   const Expr& e = *this;
@@ -572,6 +633,60 @@ PURRS::Expr::is_integer_polynomial(const Symbol& x) const {
   else if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned i = e.nops(); i-- > 0; )
       if (!e.op(i).is_integer_polynomial(x))
+	return false;
+    return true;
+  }
+  return false;
+}
+
+bool
+PURRS::Expr::is_rational_scalar_representation(const Symbol& x) const {
+  const Expr& e = *this;
+  Number num;
+  if (e.is_a_number(num) && num.is_rational())
+    return true;
+  else if (e.is_a_symbol() && e != x)
+    return true;
+  else if (e.is_a_power()) {
+    if (e.arg(0).is_rational_scalar_representation(x)) {
+      Number exponent;
+      if ((e.arg(1).is_a_number(exponent) && exponent.is_positive_integer())
+	  || (e.is_a_symbol() && e != x)) 
+	return true;
+    }
+  }
+  else if (e.is_a_function()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!(e.arg(i).is_a_symbol() && e != x))
+	return false;
+    return true;
+  }
+  else if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!e.op(i).is_rational_scalar_representation(x))
+	return false;
+    return true;
+  }
+  return false;
+}
+
+bool
+PURRS::Expr::is_rational_polynomial(const Symbol& x) const {
+  const Expr& e = *this;
+  if (e.is_rational_scalar_representation(x))
+    return true;
+  else if (e == x)
+    return true;
+  else if (e.is_a_power()) {
+    if (e.arg(0).is_rational_polynomial(x)) {
+      Number exponent;
+      if (e.arg(1).is_a_number(exponent) && exponent.is_positive_integer()) 
+	return true;
+    }
+  }
+  else if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (!e.op(i).is_rational_polynomial(x))
 	return false;
     return true;
   }

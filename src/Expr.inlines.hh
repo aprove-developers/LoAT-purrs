@@ -219,11 +219,6 @@ Expr::ex_to_complex_interval() const {
 
 // FIXME: info, temporary
 inline bool
-Expr::is_rational_polynomial() const {
-  return info(GiNaC::info_flags::rational_polynomial);
-}
-// FIXME: info, temporary
-inline bool
 Expr::is_relation_equal() const {
   return info(GiNaC::info_flags::relation_equal);
 }
@@ -638,13 +633,6 @@ lcm(const Expr& a, const Expr& b) {
   assert(a.is_multivariate_polynomial());
   assert(b.is_multivariate_polynomial());
   return GiNaC::lcm(a, b);
-}
-
-inline Expr
-sqrfree(const Expr& x, const Expr_List& y = Expr_List()) {
-  for (unsigned i = y.nops(); i-- > 0; )
-    assert(x.is_polynomial(y.op(i).ex_to_symbol()));
-  return GiNaC::sqrfree(x, y.l);
 }
 
 inline Expr
