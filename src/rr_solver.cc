@@ -244,13 +244,15 @@ static GMatrix
 decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n);
 
 static bool
-solution_1_poly_times_exponentials(const GSymbol& x_0, const GSymbol& n,
+solution_1_poly_times_exponentials(const std::vector<GExpr> 
+				   initials_conditions, const GSymbol& n,
 				   const GMatrix& decomposition,
 				   const std::vector<GExpr>& coefficients,
 				   GExpr& solution);
 
 static bool
-solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
+solution_2_poly_times_exponentials(const std::vector<GExpr> 
+				   initials_conditions,
 				   const GSymbol& n,
 				   const GMatrix& decomposition,
 				   const std::vector<GNumber>& coefficients,
@@ -365,14 +367,6 @@ solve(const GExpr& rhs, const GSymbol& n) {
   std::cout << "Inhomogeneous term = " << e << std::endl;
 #endif
 
-  // We expect the right hand side of the recurrence relation (k-th order)
-  // in the form
-  // x(n-1)*a+x(n-2)*b+...+x(n-k)*h+p(n).
-  // Therefore only the inhomogeneous term need to be expanded.
-  // FIXME: expand() is necessary because GiNaC does not calculate
-  // the right polynomial's degree if it is not expanded. 
-  e = e.expand(); 
-
   // The factors of the form a^(bn+c) (a,b,c numeric) must be transformed
   // into (a^b)^n*a^c. GiNaC tranforms only a^(bn+c) in a^c*a^(bn) but not
   // a^(bn) into (a^b)^n.
@@ -395,6 +389,16 @@ solve(const GExpr& rhs, const GSymbol& n) {
 #endif
   // Calculates the number of columns of the matrix 'decomposition'.
   unsigned num_columns = decomposition.cols();
+
+  // Creates the vector of initials conditions.
+  std::vector<GExpr> initials_conditions(order);
+  for (int i = 0; i < order; ++i)
+    initials_conditions[i] = x(i);
+  //   std::cout << "Initials conditions = ";
+  //   for (int i = 0; i < order; ++i)
+  //     std::cout << initials_conditions[i] << " ";
+  //   std::cout << std::endl;
+
   GExpr solution;
   switch (order) {
   case 1:
@@ -414,16 +418,16 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	if (!is_a<power>(exponential) && exponential != 1) {
 	  poly_times_exp = false;
 	}
-	if (!coeff_of_exp.info(info_flags::polynomial))
-	  poly_times_exp = false;
+	if (!coeff_of_exp.info(info_flags::polynomial)) 
+	    poly_times_exp = false;
       }
       if (poly_times_exp) {
 	// Calculates the solution of the first order recurrences when
 	// the inhomogeneous term is a polynomial or the product of a
 	// polynomial and an exponential.      
-	GSymbol x_0("x_0");
-	solution_1_poly_times_exponentials(x_0, n,decomposition,
-					   coefficients, solution);
+	solution_1_poly_times_exponentials(initials_conditions, n,
+					   decomposition, coefficients,
+					   solution);
       }
       else 
 	throw ("PURRS error: at the moment the recurrence "
@@ -466,9 +470,9 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	// Calculates the solution of the second order recurrences when
 	// the inhomogeneous term is a polynomial or the product of a
 	// polynomial and an exponential.      
-	GSymbol x_0("x_0"), x_1("x_1");
-	solution_2_poly_times_exponentials(x_0, x_1, n, decomposition,
-					   num_coefficients, solution);
+	solution_2_poly_times_exponentials(initials_conditions, n, 
+					   decomposition, num_coefficients,
+					   solution);
       }	
       else 
 	throw ("PURRS error: at the moment the recurrence "
@@ -564,22 +568,23 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
 
 /*!
   Calculates the solution of the first order recurrence
-  \f$x(n) = \alpha * x(n-1) + p(n)\f$ with \p x_0 as
+  \f$x(n) = \alpha * x(n-1) + p(n)\f$ with \p x(0) as
   initial condition.
   The solution is given by the closed formula
-  \f$x(n) = \alpha^n * x_0 + sum_{k=1}^n \alpha^(n-k)*p(k)\f$.
+  \f$x(n) = \alpha^n * x(0) + sum_{k=1}^n \alpha^(n-k)*p(k)\f$.
   \p decomposition is a matrix that contains a decomposition of
   the inhomogeneous term \p p(n) and \p coefficients a vector that
   contains the coefficients of the recurrence.
  */
 static bool
-solution_1_poly_times_exponentials(const GSymbol& x_0, const GSymbol& n,
+solution_1_poly_times_exponentials(const std::vector<GExpr> 
+				   initials_conditions, const GSymbol& n,
 				   const GMatrix& decomposition,
 				   const std::vector<GExpr>& coefficients,
 				   GExpr& solution_tot) {
   // The closed formula of the solution can be rewritten as
-  // x(n) = \alpha^n * ( x_0 - p(0) + sum_{k=0}^n \alpha^(-k)*p(k) ).
-  solution_tot = x_0;
+  // x(n) = \alpha^n * ( x(0) - p(0) + sum_{k=0}^n \alpha^(-k)*p(k) ).
+  solution_tot = initials_conditions[0];
   GSymbol k("k");
   // Calculates the number of columns of the matrix 'decomposition'.
   unsigned num_columns = decomposition.cols();
@@ -635,20 +640,21 @@ build_characteristic_equation(GExpr& p, const GSymbol x,
 /*!
   Calculates the solution of the second order recurrence
   \f$x(n) = \alpha * x(n-1) + \beta * x(n-2) + p(n)\f$, (\f$ beta \neq 0\f$),
-  with \p x_0 and \p x_1 as initials conditions.
+  with \p x(0) and \p x(1) as initials conditions.
   We consider the homogeneous recurrence
   \f$g(n) = \alpha * g(n-1) + \beta * g(n-2)\f$
   with \f$g_0 = 1\f$ and \f$g_1 = \alpha\f$ as initials conditions for the
   fundamental solution.
   The complete solution is given by the formula
-  \f$x(n) = g(n-1) * x_1 + \beta g(n-2) * x_0 +
+  \f$x(n) = g(n-1) * x(1) + \beta g(n-2) * x(0) +
          \sum_{k=2}^n g(n-k) * p(k)\f$,   for \f$n \ge 2\f$. 
   \p decomposition is a matrix that contains a decomposition of
   the inhomogeneous term \p p(n) and \p coefficients a vector that
   contains the coefficients of the recurrence.
  */
 static bool
-solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
+solution_2_poly_times_exponentials(const std::vector<GExpr> 
+				   initials_conditions,
 				   const GSymbol& n, 
 				   const GMatrix& decomposition,
 				   const std::vector<GNumber>& coefficients,
@@ -679,7 +685,7 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
       // g(n) = \frac{\lambda_1^{n+1} - \lambda_2^{n+1}}
       // {\lambda_1 - \lambda_2}.   
       // Hence for n \ge 2 we have
-      // x_n = g(n-1) * x_1 + \beta g(n-2) * x_0 +
+      // x_n = g(n-1) * x(1) + \beta g(n-2) * x(0) +
       // \frac{\lambda_1^{n+1}}{\lambda_1 - \lambda_2}
       //   \sum_{k=2}^n \lambda_1^{-k} \, p(k) -
       //\frac{\lambda_2^{n+1}}{\lambda_1 - \lambda_2}
@@ -706,7 +712,8 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
       g_n_1 = g_n_1.subs(k == n);
       g_n_2 = g_n_2.subs(k == n);
 
-      solution_tot = x_1 * g_n_1 + x_0 * g_n_2 * coefficients[2];
+      solution_tot = initials_conditions[1]*g_n_1 + 
+	             initials_conditions[0]*g_n_2*coefficients[2];
       for (size_t i = 0; i < num_columns; ++i) {
 	GExpr solution_1 = 0;
 	GExpr solution_2 = 0;
@@ -739,7 +746,8 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	solution_tot += solution_1 - solution_2;
       }
       solution_tot = solution_tot.expand();
-      solution_tot = solution_tot.collect(lst(x_0, x_1));
+      solution_tot = solution_tot.collect(lst(initials_conditions[0],
+					      initials_conditions[1]));
       transform_exponentials(solution_tot, n, false);
     }
     else {
@@ -759,12 +767,12 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	// x_n = (a + b * n) \lambda^n where
 	// \lambda is the root with multiplicity 2.
 	// In this case we must to solve a linear system:
-	//             a = x_0
-	//             (a + b) * \lambda = x_1.
+	//             a = x(0)
+	//             (a + b) * \lambda = x(1).
 	solution_tot = (a + b * n) * pow(root, n);
 	// Solved the system with the inverse matrix'method.
 	GMatrix vars(2, 2, lst(1, 0, root, root));
-	GMatrix rhs(2, 1, lst(x_0, x_1));
+	GMatrix rhs(2, 1, lst(initials_conditions[0], initials_conditions[1]));
 	GMatrix sol(2, 1);
 	sol = vars.inverse();
 	sol = sol.mul(rhs);
@@ -803,7 +811,8 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	g_n_1 = g_n_1.subs(k == n);
 	g_n_2 = g_n_2.subs(k == n);
 	
-	solution_tot = x_1 * g_n_1 + x_0 * g_n_2 * coefficients[2];
+	solution_tot = initials_conditions[1]*g_n_1 + 
+	                        initials_conditions[0]*g_n_2*coefficients[2];
 	for (size_t i = 0; i < num_columns; ++i) {
 	  GExpr solution = 0;
 	  GExpr exponential = decomposition(0, i);
@@ -837,7 +846,8 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	  solution_tot += solution;
 	}
 	solution_tot = solution_tot.expand();
-	solution_tot = solution_tot.collect(lst(x_0, x_1));
+	solution_tot = solution_tot.collect(lst(initials_conditions[0],
+						initials_conditions[1]));
 	transform_exponentials(solution_tot, n, false);
       }
     }

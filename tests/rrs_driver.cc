@@ -72,6 +72,10 @@ main() try {
 
     rhs = GExpr(s, symbols);
 
+    // The recurrence relations are passed  to the function solve
+    // only expanded, i.e., in the form
+    // x(n-1)*a+x(n-2)*b+...+x(n-k)*h+p(n) with p(n) also expanded.
+    rhs = rhs.expand();
 #if NOISY
     cout << "Trying to solve x(n) = " << rhs << endl;
 #endif
