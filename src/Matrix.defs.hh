@@ -79,6 +79,12 @@ public:
   */
   Expr& operator()(unsigned r, unsigned c);
 
+  //! Computes the determinant of the matrix \p *this.
+  /*!
+    \exception std::logic_error      thrown if the matrix is not square.
+  */
+  Expr determinant() const;
+
   //! \brief
   //! Solves a linear system consisting of a m x n matrix \p *this and a
   //! m x p right hand side \p rhs.

@@ -85,6 +85,11 @@ Matrix::operator()(unsigned r, unsigned c) {
   return static_cast<Expr&>(m(r, c));
 };
 
+inline Expr
+Matrix::determinant() const {
+  return m.determinant();
+}
+
 inline Matrix
 Matrix::solve(const Matrix& vars, const Matrix& rhs) const {
   return m.solve(vars.m, rhs.m, GiNaC::solve_algo::gauss);
