@@ -1,5 +1,5 @@
-/* A class for holding all informations necessary in the
-   order reducton's method.
+/* A class for containing all informations necessary in the
+   order reduction's method.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation

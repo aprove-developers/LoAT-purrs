@@ -1,4 +1,5 @@
-/* To be written.
+/* A class for holding the necessary informations about functional
+   equations (and that we do not want to compute them again).
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation

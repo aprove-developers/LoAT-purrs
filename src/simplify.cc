@@ -26,6 +26,8 @@ http://www.cs.unipr.it/purrs/ . */
 #define NOISY 0
 #endif
 
+#include <config.h>
+
 #include "simplify.hh"
 
 #include "numerator_denominator.hh"
