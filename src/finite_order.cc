@@ -535,19 +535,17 @@ PURRS::compute_non_homogeneous_part(const Expr& g_n, unsigned int order,
   possible, sum with the summand an hypergeometric term not polynomials
   or polynomials times exponentials (these last sums are computed by the
   functions <CODE>compute_symbolic_sum()</CODE> and
-  <CODE>subs_to_sum_roots_and_bases()</CODE>).  This function returns
-  <CODE>true</CODE> if the summand is an hypergeometric term,
-  independently if it is possible or not to express the sum in closed form.
-  Returns <CODE>false</CODE> otherwise.
+  <CODE>subs_to_sum_roots_and_bases()</CODE>).
 */
-bool
+PURRS::Expr
 PURRS::
-compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
-				  const std::vector<Expr>& base_of_exps,
-				  const std::vector<Expr>& exp_no_poly_coeff,
-				  const std::vector<Polynomial_Root>& roots,
-				  Expr& solution) {
-  solution = 0;
+compute_sum_with_transcendental_method(const Number& lower, const Expr& upper,
+				       const std::vector<Expr>& base_of_exps,
+				       const std::vector<Expr>&
+				       exp_no_poly_coeff,
+				       const std::vector<Polynomial_Root>&
+				       roots) {
+  Expr solution = 0;
   for (unsigned i = exp_no_poly_coeff.size(); i-- > 0; ) {
     Expr gosper_solution;
     if (!exp_no_poly_coeff[i].is_zero()) {
@@ -556,12 +554,23 @@ compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
       Expr t_n = pwr(base_of_exps[i], Recurrence::n) * exp_no_poly_coeff[i]
 	* pwr(roots[0].value(), -Recurrence::n);
       D_VAR(t_n);
-      if (!full_gosper(Recurrence::n, t_n, lower, upper, gosper_solution))
-	return false;
+      if (!full_gosper(Recurrence::n, t_n, lower, upper, gosper_solution)) {
+	// The summand is not hypergeometric:
+	// no chance of using Gosper's algorithm.
+	Symbol h;
+	Number lower_sum = lower - 1 > 0 ? lower : 1;
+	gosper_solution += PURRS::sum(h, lower_sum,
+				      Recurrence::n,
+				      pwr(roots[0].value(), Recurrence::n - h)
+				      * exp_no_poly_coeff[i]
+				      .substitute(Recurrence::n, h)
+				      * pwr(base_of_exps[i], Recurrence::n)
+				      .substitute(Recurrence::n, h));
+      }
     }
     solution += gosper_solution;
   }
-  return true;
+  return solution;
 }
 
 /*!

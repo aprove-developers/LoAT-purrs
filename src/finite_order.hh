@@ -78,12 +78,13 @@ compute_non_homogeneous_part(const Expr& g_n, unsigned int order,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff);
 
-bool
-compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
-				  const std::vector<Expr>& base_of_exps,
-				  const std::vector<Expr>& exp_no_poly_coeff,
-				  const std::vector<Polynomial_Root>& roots,
-				  Expr& solution);
+Expr
+compute_sum_with_transcendental_method(const Number& lower, const Expr& upper,
+				       const std::vector<Expr>& base_of_exps,
+				       const std::vector<Expr>&
+				       exp_no_poly_coeff,
+				       const std::vector<Polynomial_Root>&
+				       roots);
 
 bool
 compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,

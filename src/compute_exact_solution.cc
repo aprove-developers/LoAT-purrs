@@ -137,25 +137,15 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
 					   symbolic_sum_no_distinct);
   }
   // Computes the sum when `\lambda^{n-k} p(k)' is not a polynomial or
-  // a product of a polynomial times an exponential.
-  // The summand must be an hypergeometric term.
-  if (vector_not_all_zero(exp_no_poly_coeff)) {
-    Expr gosper_solution;
-    if (compute_sum_with_gosper_algorithm(first_well_defined_rhs_linear() + 1,
-					  n, base_of_exps, exp_no_poly_coeff,
-					  roots, gosper_solution))
-      solution += gosper_solution;
-    else {
-      // FIXME: the summand is not hypergeometric:
-      // no chance of using Gosper's algorithm.
-      Symbol h;
-      unsigned lower = first_well_defined_rhs_linear() > 0
-	? first_well_defined_rhs_linear() + 1 : 1;
-      solution += PURRS::sum(h, lower, n,
-			     pwr(roots[0].value(), n - h)
-			     * inhomogeneous_term.substitute(n, h));
-    }
-  }
+  // a product of a polynomial times an exponential with transcendental
+  // methods.
+  if (vector_not_all_zero(exp_no_poly_coeff))
+    // If the summand is an hypergeometric term then is applied the
+    // Gosper's algorithm; otherwise is returned the symbolic sum.
+    solution
+      += compute_sum_with_transcendental_method(first_well_defined_rhs_linear()
+						+ 1, n, base_of_exps,
+						exp_no_poly_coeff, roots);
   return solution;
 }
 
