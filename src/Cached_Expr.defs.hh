@@ -81,7 +81,7 @@ public:
   bool has_size() const;
 
 private:
-  //! Indicates if there is a value in the data <CODE>expression_</CODE>.
+  //! Indicates if the expression <CODE>expression_</CODE> has been setted.
   bool has_expression_;
 
   //! The value of the expression.
