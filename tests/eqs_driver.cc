@@ -1,4 +1,3 @@
-
 #include <iostream>
 #include <string>
 #include <stdexcept>
@@ -8,6 +7,8 @@
 #include "purrs_install.hh"
 
 using namespace GiNaC;
+
+#define NOISY 1
 
 int
 main() try {
@@ -43,11 +44,18 @@ main() try {
     if (p == GExpr(0))
       continue;
 
+#if NOISY
     cout << "Trying to solve " << p << " = 0" << endl;
+#endif
+
     std::vector<GExpr> roots;
     bool all_distinct;
-    if (!find_roots(p, x, roots, all_distinct))
+    if (!find_roots(p, x, roots, all_distinct)) {
+#if NOISY
       cout << "Sorry, this is too difficult." << endl;
+#endif
+    }
+#if NOISY
     else {
       size_t n = roots.size();
       for (size_t i = 0; i < n; ++i) {
@@ -56,8 +64,12 @@ main() try {
 	  cout << "****  x_" << i+1 << " ~= " << roots[i].evalf() << endl;
       }
     }
+#endif
   }
   return 0;
 } catch (exception &p) {
+#if NOISY
   cerr << "Exception caught: " << p.what() << endl;
+#endif
+  return 1;
 }
