@@ -170,7 +170,7 @@ invalid_initial_condition(const Expr& e) {
     return invalid_initial_condition(e.arg(0))
       || invalid_initial_condition(e.arg(1));
   else if (e.is_a_function()) {
-    if (e.is_the_x_function())
+    if (e.is_the_x1_function() || e.is_the_x2_function())
       return true;
     for (unsigned i = e.nops(); i-- > 0; )
       if (invalid_initial_condition(e.arg(i)))
@@ -273,7 +273,7 @@ process_options(int argc, char* argv[]) {
         if (!parse_expression(optarg, c) || !c.is_a_relational())
           invalid_initial_condition(optarg);
 	Expr lhs = c.op(0);
-	if (!lhs.is_the_x_function())
+	if (!lhs.is_the_x2_function())
           invalid_initial_condition(optarg);
 	Expr rhs = c.op(1);
 	// FIXME: Make sure lhs and rhs are well-formed.
