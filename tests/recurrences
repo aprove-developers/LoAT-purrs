@@ -286,7 +286,7 @@ x(n-1)+2^n*factorial(1+n)^(-1)*factorial(2+n)^(-1)*(3+n)*n
 % Gosper-summable.
 % x(n) =
 x(n-1)+factorial(n)
-% Solution: x(n) = x(0) + sum(h,1,n,factorial(h)) + x(0)
+% Solution: x(n) = x(0) + sum(h,1,n,factorial(h))
 
 % Inhomogeneous term contains rational function and the sum to compute is not
 % Gosper-summable.
