@@ -200,6 +200,9 @@ substitute_function_x(const Expr& e, const std::vector<Expr>& repls,
 Recurrence::VERIFY_STATUS
 PURRS::Recurrence::verify_solution() const {
   if (solved || solve()) {
+    D_VAR(old_recurrence_rhs);
+    D_VAR(recurrence_rhs);
+    D_VAR(gcd_decrements_old_rhs);
     D_VAR(order());
     D_VAR(first_initial_condition());
     if (order() == 0)
@@ -249,17 +252,30 @@ PURRS::Recurrence::verify_solution() const {
       substituted_rhs = substitute_function_x(recurrence_rhs, terms_to_sub,
 					      decrements);
 #else
+      Expr substituted_rhs;
       std::vector<Expr> terms_to_sub(order());
-      for (unsigned i = order(); i-- > 0; )
-	terms_to_sub[i] = simplify_all(partial_solution.subs(n, n-i-1));
+      // We have not applied the order reduction in order to solve the
+      // recurrence. 
+      if (gcd_decrements_old_rhs == 0) {
+	substituted_rhs = recurrence_rhs;
+	gcd_decrements_old_rhs = 1;
+      }
+      // We have applied the order reduction in order to solve the recurrence.
+      else
+	substituted_rhs = old_recurrence_rhs;
+      for (unsigned i = order(); i-- > 0; ) {
+	terms_to_sub[i]
+	  = simplify_all(partial_solution 
+			 .subs(n, n - (i + 1) * gcd_decrements_old_rhs));
+	substituted_rhs
+	  = substituted_rhs.subs(x(n - (i + 1) * gcd_decrements_old_rhs),
+				 terms_to_sub[i]);
+      }
       D_VEC(terms_to_sub, 0, terms_to_sub.size()-1);
-      Expr substituted_rhs = simplify_on_output_ex(recurrence_rhs.expand(),
-						   false);
-      for (unsigned i = terms_to_sub.size(); i-- > 0; )
-	substituted_rhs = substituted_rhs.subs(x(n-i-1), terms_to_sub[i]);
 #endif
       D_VAR(substituted_rhs);
       Expr diff = simplify_all(partial_solution - substituted_rhs);
+      D_VAR(diff);
       if (!diff.is_zero())
 	return DONT_KNOW;
       return CORRECT;
