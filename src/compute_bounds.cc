@@ -415,10 +415,9 @@ sharper_bounds_for_exponential(bool lower,
   in \p divisor and \f$ p(n) \f$ is stored in \p summand.
 */
 bool
-compute_sum(const Expr& summand,
+compute_sum(bool for_lower, const Expr& summand,
 	    const Number& coefficient, const Number& divisor,
-	    bool for_lower, Expr& sum) {
-  D_MSG("***compute sum");
+	    Expr& sum) {
   std::vector<Expr> bases_of_exp;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
@@ -477,8 +476,6 @@ compute_sum(const Expr& summand,
   \f$ H(n) = sum_{k = 2}^n a^{n-k} p(b^k-1) \f$,
   where \f$ a \f$ is stored in \p coefficient, \f$ b \f$ is stored
   in \p divisor and \f$ p(n) \f$ is stored in \p summand.
-  If we have already computed the upper bound computes only
-  \f$ G(n) \f$.
 */
 void
 try_to_compute_sum(bool lower, const Expr& summand,
@@ -487,9 +484,9 @@ try_to_compute_sum(bool lower, const Expr& summand,
   D_VAR(summand);
   if (lower) {
     // Compute `G(n)' used for the lower bound.
-    if (!compute_sum(summand, coefficient, divisor, true, sum))
+    if (!compute_sum(true, summand, coefficient, divisor, sum))
       // We try to compute `H(n)' because `H(q) <= G(q)'.
-      if (!compute_sum(summand, coefficient, divisor, false, sum)) {
+      if (!compute_sum(false, summand, coefficient, divisor, sum)) {
 	Symbol h;
 	sum = PURRS::sum(h, 1, Recurrence::n, pwr(coefficient, Recurrence::n-h)
 			 * summand.substitute(Recurrence::n, pwr(divisor, h)));
@@ -497,9 +494,9 @@ try_to_compute_sum(bool lower, const Expr& summand,
   }
   else
     // Compute `H(n)' used for the upper bound.
-    if (!compute_sum(summand, coefficient, divisor, false, sum))
+    if (!compute_sum(false, summand, coefficient, divisor, sum))
       // We try to compute `G(n)' because `H(q+1) <= G(q+1)'.
-      if (!compute_sum(summand, coefficient, divisor, true, sum)) {
+      if (!compute_sum(true, summand, coefficient, divisor, sum)) {
 	Symbol h;
 	sum = PURRS::sum(h, 2, Recurrence::n, pwr(coefficient, Recurrence::n-h)
 			 * summand.substitute(Recurrence::n,
