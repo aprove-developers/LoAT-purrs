@@ -110,7 +110,11 @@ validate_initial_conditions(index_type order,
     // opportunities for simplifications.
     e = blackboard.rewrite(e);
     e = simplify_all(e);
-    if (e != x(first_valid_index + i))
+    // If in the map `initial_conditions' there is an expression
+    // `e' correspondent to the integer `first_valid_index + i'
+    // (the index of the initial condition), then returns `e';
+    // returns `x(first_valid_index + i)' otherwise.
+    if (e != get_initial_condition(first_valid_index + i))
       // FIXME: pravably_incorrect nei casi semplici.
       return INCONCLUSIVE_VERIFICATION;
   }
