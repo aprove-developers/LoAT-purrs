@@ -606,7 +606,7 @@ reduce_to_standard_form(const GNumber root_index, const GNumber r) {
       den_exponents[i] /= gc;
   }
   
-  GExpr irr_part = 1;
+  GNumber irr_part = 1;
   for (unsigned i=0; i < num_size; ++i)
     irr_part *= power(num_bases[i], num_exponents[i]);
   for (unsigned i=0; i < den_size; ++i)
