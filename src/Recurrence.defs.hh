@@ -71,10 +71,72 @@ bool less_than(const Recurrence& x, const Recurrence& y);
   recurrence relation (whence the class' name) that the sequences must
   satisy, by imposing some initial conditions for such recurrences,
   and by computing approximations of set union and intersection.
+
+  In this class we will introduce constructors and methods in order to
+  create object Recurrence, to compute the exact solution or the
+  approximations, to verify the results and to specify eventual
+  initial conditions.
+
+  The system works with recurrences in \ref normal_form "normal form"
+  \f[
+    x(n) = r.
+  \f]
+  The symbol \f$ n \f$ and the function \f$ x \f$ have a special meaning
+  in the context of recurrence relations: \f$ n \f$ is the index of the
+  recurrence and \f$ x \f$ indicates the function defined from the same
+  recurrence. Consequently \f$ n \f$ and \f$ x \f$ can not be used as
+  any other parameter.
+  Writing <CODE>Symbol n("n")</CODE>, the symbol created is different
+  from the built-in <CODE>Recurrence::n</CODE>, even if the name is the
+  same. You can define <CODE>const Symbol& n = Recurrence::n</CODE>
+  once for all or you must specify which is the symbol <CODE>n</CODE>
+  you want consider using every time <CODE>Recurrence::n</CODE>.
+  
+  The following examples show some different ways in order to build
+  object Recurrence:
+
+  \par Example 1
+  \code
+    const Symbol& n = Recurrence::n;
+    Recurrence rec1;
+    rec1 = Recurrence(3/n*x(n-1));
+    Recurrence rec2(x(n-1)+4);
+    Recurrence rec3(rec1);
+  \endcode
+
+  \par Example 2
+  The following code builds the parametric recurrence
+  \f$ x(n) = a x(n-1)+n \f$:
+  \code
+    const Symbol& n = Recurrence::n;
+    Symbol a("a");
+    Recurrence rec(a*x(n-1)+n);
+  \endcode
+
+  We wish to remark the possible problem arising from
+  an incorrect use of the special symbol \f$ n \f$:
+
+  \par Example 3
+  This definition produces a time compilation error because the symbol
+  \f$ n \f$ is unknown:
+  \code
+    Recurrence rec(3*x(n-1)+1);
+  \endcode
+  To add the symbol's definition
+  \code
+    Symbol n("n");
+  \endcode
+  introduces an error more complicated than the previous: the system
+  does not consider \f$ n \f$ like the index of the recurrence producing
+  an unexpected result.
+
+  To define and to use the symbol \f$ x \f$, as for the symbol \f$ n \f$,
+  creates problems because the hides to the compiler the meaning that
+  this special symbol has in the recurrence.
 */
 class Recurrence {
 public:
-  //! Builds the singleton satisfying \f$ x(n) = 0 \f$.
+  //! Default constructor: builds the singleton satisfying \f$ x(n) = 0 \f$.
   Recurrence();
 
   //! Builds the set of sequences satisfying \f$ x(n) = e \f$.
@@ -330,6 +392,11 @@ public:
   bool undefined_initial_conditions(std::set<unsigned int>& undefined) const;
 
   //! The index of the recurrence.
+  /*!
+    The symbol \p n is special in the context of recurrence relations:
+    in order to avoid ambiguities is better do not use this symbol as
+    any other parameter.
+  */
   static const Symbol& n;
 
   //! Dumps all the data members of \p *this onto \p s.
