@@ -113,21 +113,22 @@ is_nested_polynomial(const GExpr& p, const GSymbol& x, GExpr& q) {
   int i = 2;
   while(p.coeff(x, i) == 0)
     ++i;
-   // Here i >= 2 and the polynomial has the form a_0 + a_i x^i + ... 
 
-   // Check whether all exponents are multiple of some integer n.
-   // We first set n = i, and update its value every time that we 
-   // find a non-zero coefficient.
-   // The routine ends as soon as n reaches the value of 1
-   // (this means that the gcd of all exponents of non-zero 
-   // monomials is 1) or when the polynomial has been entirely processed.
+  // Here i >= 2 and the polynomial has the form a_0 + a_i x^i + ... 
+
+  // Check whether all exponents are multiple of some integer n.
+  // We first set n = i, and update its value every time that we 
+  // find a non-zero coefficient.
+  // The routine ends as soon as n reaches the value of 1
+  // (this means that the gcd of all exponents of non-zero 
+  // monomials is 1) or when the polynomial has been entirely processed.
   int n = i;
   for (int j = i+1; j <= degree && n > 1; ++j)
     // If n ==1 there is no need to read the rest of the polynomial.
     if (p.coeff(x, j) !=0)
       n = gcd(n, j);
 
-  // Here, n is the largest integer such that there is 
+  // Here n is the largest integer such that there is 
   // a polynomial q such that p(x) == q(x^n). 
   // Now we compute q.
   if (n > 1) {
