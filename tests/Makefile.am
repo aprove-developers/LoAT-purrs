@@ -25,20 +25,21 @@ TESTS =
 
 noinst_HEADERS = ehandlers.hh readlinebuf.hh
 
-EXTRA_DIST = ehandlers.cc polynomials recurrences heap
+EXTRA_DIST = ehandlers.cc simpl_tests polynomials recurrences heap
 
 BUGS =
 
-noinst_PROGRAMS = eqs_driver rrs_driver simplify_driver gosper_driver
+noinst_PROGRAMS = simplify_driver eqs_driver rrs_driver gosper_driver
 
+simplify_driver_SOURCES = simplify_driver.cc
 eqs_driver_SOURCES = eqs_driver.cc
 rrs_driver_SOURCES = rrs_driver.cc
-simplify_driver_SOURCES = simplify_driver.cc
 gosper_driver_SOURCES = gosper_driver.cc
 
 check_PROGRAMS = $(TESTS) $(BUGS)
 
-check-local: eqs_driver polynomials rrs_driver recurrences heap
+check-local: simplify_driver simpl_tests eqs_driver polynomials rrs_driver recurrences heap
+	./simplify_driver -r <$(srcdir)/simpl_tests
 	./eqs_driver <$(srcdir)/polynomials
 	./rrs_driver <$(srcdir)/recurrences
 	./rrs_driver -r <$(srcdir)/heap

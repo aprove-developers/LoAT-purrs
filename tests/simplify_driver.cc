@@ -23,12 +23,12 @@ For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
 #include <iostream>
-#include <stdexcept>
 #include <string>
-#include <vector>
+#include <stdexcept>
+#include <sstream>
 #include <cassert>
-#include <getopt.h>
 #include <cctype>
+#include <getopt.h>
 
 #include "purrs_install.hh"
 #include "ehandlers.hh"
@@ -47,21 +47,38 @@ using namespace Parma_Recurrence_Relation_Solver;
 #define INPUT_STREAM cin
 #endif
 
+static istream* pinput_stream;
+
 static struct option long_options[] = {
-  {"help",           no_argument,       0, 'h'},
-  {"interactive",    no_argument,       0, 'i'},
+  {"help",           no_argument,          0, 'h'},
+  {"interactive",    no_argument,          0, 'i'},
+  {"regress-test",   no_argument,          0, 'r'},
+  {"verbose",        no_argument,          0, 'v'},
   {0, 0, 0, 0}
 };
 
-static const char* usage_string
-= "Usage: %s [OPTION]...\n\n"
-"  -h, --help              prints this help text\n"
-"  -i, --interactive       sets interactive mode on\n";
+const char* program_name = 0;
 
-#define OPTION_LETTERS "hi"
+void
+print_usage() {
+  cerr << "Usage: " << program_name << " [OPTION]...\n\n"
+    "  -h, --help              prints this help text\n"
+    "  -i, --interactive       sets interactive mode on\n"
+    "  -r, --regress-test      sets regression-testing mode on\n"
+    "  -v, --verbose           be verbose"
+       << endl;
+}
+
+#define OPTION_LETTERS "hirv"
 
 // Interactive mode is on when true.
 static bool interactive = false;
+
+// Regression-testing mode is on when true.
+static bool regress_test = false;
+
+// Verbose mode is on when true.
+static bool verbose = false;
 
 static void
 my_exit(int status) {
@@ -74,7 +91,7 @@ process_options(int argc, char* argv[]) {
   int option_index;
   int c;
 
-  while (1) {
+  while (true) {
     option_index = 0;
     c = getopt_long(argc, argv, OPTION_LETTERS, long_options, &option_index);
     if (c == EOF)
@@ -86,7 +103,7 @@ process_options(int argc, char* argv[]) {
 
     case '?':
     case 'h':
-      fprintf(stderr, usage_string, argv[0]);
+      print_usage();
       my_exit(0);
       break;
 
@@ -94,14 +111,66 @@ process_options(int argc, char* argv[]) {
       interactive = true;
       break;
 
+    case 'r':
+      regress_test = true;
+      break;
+
+    case 'v':
+      verbose = true;
+      break;
+      
     default:
       abort();
     }
   }
 
   if (optind < argc) {
-    fprintf(stderr, usage_string, argv[0]);
+    print_usage();
     my_exit(1);
+  }
+}
+
+static unsigned line_number = 0;
+static unsigned num_errors = 0;
+
+static void
+message(const string& s) {
+  cerr << program_name << ": on line " << line_number << ": " << s << endl;
+}
+
+static void
+error(const string& s) {
+  message(s);
+  my_exit(1);
+}
+
+static bool expect_right_simplification;
+static bool simplification_wrong;
+
+void
+set_expectations(const string& s) {
+  expect_right_simplification
+    = simplification_wrong
+    = false;
+
+  const char* p = s.c_str();
+  while (char c = *p++) {
+    if (isspace(c))
+      return;
+    switch (c) {
+    case 'n':
+      simplification_wrong = true;
+      break;
+    case 'y':
+      expect_right_simplification = true;
+      break;
+    default:
+      {
+	ostringstream m;
+	m << "unsupported expectation `" << c << "' in `" << s << "'";
+	error(m.str());
+      }
+    }
   }
 }
 
@@ -113,14 +182,82 @@ all_space(const string& s) {
   return true;
 }
 
+Expr
+trick_ginac(const Expr_List& symbols, const string& s) {
+  // Dirty trick here: GiNaC's parser sucks!
+  Expr dummy_expr("0", symbols);
+  // We sandwich the string to be parsed within
+  // "x(" and ")" to force its complete parsing.
+  Expr tmp("x(" + s + ")", symbols);
+  if (tmp == dummy_expr)
+    throw std::runtime_error("not detected by GiNaC's parser");
+  // Get the mortadella.
+  return tmp.arg(0);
+}
+
+void
+get_expression(Expr& e, const Expr_List& symbols) {
+  istream& input_stream = *pinput_stream;
+  for ( ; ; ) {
+    ++line_number;
+
+    string the_line;
+    getline(input_stream, the_line);
+ 
+    // We may be at end of file.
+    if (!input_stream)
+      error("premature end of file: simplified expression is missing");
+
+    istringstream line(the_line);
+
+    // Skip comments.
+    if (the_line.find("%") == 0)
+      continue;
+    
+    // The line may be constituted by white space only.
+    if (all_space(the_line))
+      continue;
+
+    try {
+      e = trick_ginac(symbols, the_line);
+    }
+    catch (exception& except) {
+      ostringstream m;
+      m << "parse error: " << except.what();
+      error(m.str());
+    }
+
+    // Everything was OK.
+    break;
+  }
+}
+
+void
+check_and_notify(const char* what,
+		 const Expr& source, const Expr& expected, const Expr& computed) {
+  if (expected != computed) {
+    ++num_errors;
+    if (verbose)
+      cerr << "simplification for " << what << " of " << source
+	   << endl
+	   << "was expected to be " << expected
+	   << endl
+	   << "but resulted in " << computed
+	   << endl
+	   << "(before line " << line_number << ")"
+	   <<endl;
+  }
+}
+
 int
 main(int argc, char *argv[]) try {
+  program_name = argv[0];
+
   set_handlers();
 
   process_options(argc, argv);
 
   readlinebuf* prdlb = 0;
-  istream* pinput_stream;
 
 #ifdef USE_READLINE
   if (interactive) {
@@ -140,45 +277,107 @@ main(int argc, char *argv[]) try {
   Symbol c("c");
   Symbol d("d");
   Expr_List symbols(Recurrence::n, a, b, c, d, x);
-
   while (input_stream) {
-    string s;
-    getline(input_stream, s);
+    ++line_number;
+
+    string the_line;
+    getline(input_stream, the_line);
 
     // We may be at end of file.
     if (!input_stream)
-      return 0;
+      break;
+ 
+    // Skip comments.
+    if (the_line.find("%") == 0)
+      continue;
+
+    istringstream line(the_line);
+    string s;
+
+    Expr e_simpl_input;
+    Expr e_simpl_output;
+    Expr e_simpl_factorials;      
+
+    if (regress_test) {
+      // Read the expectations' string and use it.
+      string expectations;
+      line >> expectations;
+
+      // Skip empty lines.
+      if (!line)
+	continue;
+
+      set_expectations(expectations);
+      
+      getline(line, s);
+      // Premature end of file?
+      if (!line)
+	error("premature end of file after expectations' string");
+
+      get_expression(e_simpl_input, symbols);
+      get_expression(e_simpl_output, symbols);
+      get_expression(e_simpl_factorials, symbols);
+    }
+    else
+      getline(line, s);
 
     // The string may be constituted by white space only.
     if (all_space(s))
       continue;
 
-    // Skip comments.
-    if (s.find("%") == 0)
+    Expr ex;
+    try {
+      ex = trick_ginac(symbols, s);
+    }
+    catch (exception& e) {
+      ostringstream m;
+      m << "parse error: " << e.what();
+      message(m.str());
       continue;
+    }
 
-    Expr e = Expr(s, symbols);
+    if (verbose) {
+      if (!interactive)
+	cout << line_number - 3 << ": ";
+      cout << "e = " << ex << endl;
+    }
 
-    // `expand' does the simplification of the rule E6.
-    Expr e_expanded = e.expand();
-    if (interactive)
-      cout << "Expanded expression = " << e_expanded << endl << endl;
-    Expr solution_1 = simplify_on_input_ex(e_expanded, Recurrence::n, true);
-    Expr solution_2 = simplify_on_output_ex(e_expanded, Recurrence::n, false);
-    Expr solution_3 = simplify_factorials_and_exponentials(e, Recurrence::n);
+    if (expect_right_simplification) {
 
-    if (interactive) {
-      cout << "Simplifications for the input (to collect the symbol `n')" << endl;
-      cout << solution_1 << endl << endl;
-      cout << "Simplifications for the output" << endl;
-      cout << solution_2 << endl << endl;
-      cout << "Factorials and exponentials' simplifications " << endl;
-      cout << solution_3 << endl;
-      cout << endl << "---------------------------------------------"
-	   << endl << endl;
+      Expr ex_expanded = ex.expand();
+      if (interactive)
+	cout << "Expanded expression = " << ex_expanded << endl;
+      
+      Expr sol_input = simplify_on_input_ex(ex_expanded, Recurrence::n, true);
+      check_and_notify("input", ex, e_simpl_input, sol_input);
+      
+      Expr sol_output = simplify_on_output_ex(ex_expanded, Recurrence::n, false);
+      check_and_notify("output", ex, e_simpl_output, sol_output);
+      
+      Expr sol_factorials = simplify_factorials_and_exponentials(ex, Recurrence::n);
+      check_and_notify("factorials", ex, e_simpl_factorials, sol_factorials);
+      
+      if (interactive) {
+	cout << endl;
+	cout << "Simplifications for the input (to collect the symbol `n')" << endl;
+	cout << sol_input << endl << endl;
+	cout << "Simplifications for the output" << endl;
+	cout << sol_output << endl << endl;
+	cout << "Factorials and exponentials' simplifications " << endl;
+	cout << sol_factorials << endl;
+	cout << endl << "---------------------------------------------"
+	     << endl << endl;
+      }
     }
   }
-  return 0;
+  if (regress_test)
+    if (num_errors > 0) {
+      cerr << num_errors
+	   << " differences from expected simplifications"
+	   << endl;
+      my_exit(1); 
+    }
+  my_exit(0);
 }
 catch (exception &p) {
   cerr << "std::exception caught: " << p.what() << endl;
