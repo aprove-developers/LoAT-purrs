@@ -92,7 +92,7 @@ main() try {
       continue;
 
 #if NOISY
-    cout << "Trying to solve " << p << " = 0" << endl;
+    cout << std::endl << "Trying to solve " << p << " = 0" << endl;
 #endif
 
     std::vector<Polynomial_Root> roots;

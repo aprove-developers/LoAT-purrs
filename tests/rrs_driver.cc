@@ -77,7 +77,7 @@ main() try {
     // x(n-1)*a+x(n-2)*b+...+x(n-k)*h+p(n) with p(n) also expanded.
     rhs = rhs.expand();
 #if NOISY
-    cout << "Trying to solve x(n) = " << rhs << endl;
+    cout << std::endl << "Trying to solve x(n) = " << rhs << endl;
 #endif
 
     GExpr solution;

@@ -35,5 +35,6 @@ eqs_driver_SOURCES = eqs_driver.cc
 rrs_driver_SOURCES = rrs_driver.cc
 
 
-check-local: eqs_driver polynomials
+check-local: eqs_driver polynomials rrs_driver recurrences
 	./eqs_driver <$(srcdir)/polynomials
+	./rrs_driver <$(srcdir)/recurrences
