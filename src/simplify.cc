@@ -598,18 +598,26 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
 }
 
 /*!
-  Let \f$ a_1 = b_1^{n_1 / d_1} \f$ and \f$ a_2 = b_2^{n_2 / d_2} \f$ be
-  irrational numbers. This function computes \f$ a b = r^{n / d} \f$,
-  where \f$ a b \f$ is in the standard form.
-  To do this \f$ a \f$ and \f$ b \f$ are before transformed in two equivalent
+  The purpose of this function is the computation of the standard form
+  of the product of two irrational numbers \f$ a_1 = b_1^{n_1 / d_1} \f$
+  and \f$ a_2 = b_2^{n_2 / d_2} \f$, where \f$ b_1 \f$ and \f$ b_2 \f$
+  are numerics (not necessarily rational numbers), and \f$ n_1 \f$,
+  \f$ d_1 \f$, \f$ n_2 \f$ and \f$ d_2 \f$ are (possibly negative)
+  integers.
+  The arguments contain \f$ b_1 \f$, \f$ n_1 / d_1 \f$, \f$ b_2 \f$,
+  \f$ n_2 / d_2 \f$, respectively.
+  \f$ a_1 \f$ and \f$ a_2 \f$ are transformed in two equivalent
   irrational numbers with the same denominator in the exponents
-  (reduction to same index of two roots).
+  (reduction to same index of two roots), and then passed to 
+  <CODE>reduce_to_standard_form()</CODE>.
 */
 Expr
 red_prod(const Number& base1, const Number& exp1, 
 	 const Number& base2, const Number& exp2) {
   assert(exp1 != 0);
   assert(exp2 != 0);
+  assert(exp1.is_rational());
+  assert(exp2.is_rational());
   Number base_1 = base1;  
   Number base_2 = base2;
   Number k1_num = exp1.numerator();
@@ -617,8 +625,9 @@ red_prod(const Number& base1, const Number& exp1,
   Number k2_num = exp2.numerator();
   Number k2_den = exp2.denominator();
   // We want that the sign of the exponent is stored in the denominator
-  // (while the method `numerator()' and `denominator' stores the sign
+  // (while the methods `numerator()' and `denominator()' store the sign
   // in the numerator).
+  // This is needed in the function `reduce_to_standard_form()'.
   if (!k1_num.is_positive()) {
     k1_num *= -1;
     k1_den *= -1;
@@ -640,6 +649,13 @@ red_prod(const Number& base1, const Number& exp1,
 /*!
   Applies the rules of the set <EM>Irrationals</EM> to each \p e's factor
   which is a <CODE>power</CODE>.
+  This function is called to simplify products: if any factor within
+  the product is a power with numeric base and exponent, it calls 
+  <CODE>red_prod()</CODE>, and keeps accumulating partial results
+  in the pair of expressions <CODE>base_1</CODE> and <CODE>exp_1</CODE>.
+  It is guaranteed that <CODE>base_1^exp_1</CODE> is always in its
+  standard form, as defined in the comment to the function
+  <CODE>reduce_to_standard_form()</CODE>.
 */
 Expr
 reduce_product(const Expr& e) {
