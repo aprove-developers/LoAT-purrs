@@ -392,6 +392,7 @@ static bool expect_exactly_solved;
 static bool expect_upper_bound;
 static bool expect_lower_bound;
 static bool expect_provably_correct_result;
+static bool expect_partial_provably_correct_result;
 static bool expect_provably_wrong_result;
 static bool expect_inconclusive_verification;
 static bool expect_not_to_be_solved;
@@ -409,6 +410,7 @@ set_expectations(const string& s) {
     = expect_upper_bound
     = expect_lower_bound
     = expect_provably_correct_result
+    = expect_partial_provably_correct_result
     = expect_provably_wrong_result
     = expect_inconclusive_verification
     = expect_not_to_be_solved
@@ -432,6 +434,9 @@ set_expectations(const string& s) {
       break;
     case 'v':
       expect_provably_correct_result = true;
+      break;
+    case 'p':
+      expect_partial_provably_correct_result = true;
       break;
     case 'w':
       expect_provably_wrong_result = true;
@@ -509,6 +514,9 @@ operator<<(ostream& s, Recurrence::Verify_Status v) {
   switch (v) {
   case Recurrence::PROVABLY_CORRECT:
     s << "PROVABLY_CORRECT";
+    break;
+  case Recurrence::PARTIAL_PROVABLY_CORRECT:
+    s << "PARTIAL_PROVABLY_CORRECT";
     break;
   case Recurrence::PROVABLY_INCORRECT:
     s << "PROVABLY_INCORRECT";
@@ -639,6 +647,7 @@ void
 result_of_the_verification(unsigned type,
                            const Recurrence::Verify_Status& status,
                            unsigned& unexpected_failures_to_verify,
+                           unsigned& unexpected_failures_to_partially_verify,
                            unsigned& unexpected_failures_to_disprove,
                            unsigned& unexpected_conclusive_verifications) {
   if (expect_provably_correct_result
@@ -654,6 +663,20 @@ result_of_the_verification(unsigned type,
         cerr << "*** unexpected failure to verify upper bound: gave "
              << status << endl;
     ++unexpected_failures_to_verify;
+  }
+  if (expect_partial_provably_correct_result
+      && status != Recurrence::PARTIAL_PROVABLY_CORRECT) {
+    if (verbose)
+      if (type == 0)
+        cerr << "*** unexpected failure to partially verify solution: gave "
+             << status << endl;
+      else if (type == 1)
+        cerr << "*** unexpected failure to partially verify lower bound: gave "
+             << status << endl;
+      else
+        cerr << "*** unexpected failure to partially verify upper bound: gave "
+             << status << endl;
+    ++unexpected_failures_to_partially_verify;
   }
   if (expect_provably_wrong_result
       && status != Recurrence::PROVABLY_INCORRECT) {
@@ -733,6 +756,7 @@ main(int argc, char *argv[]) try {
   unsigned unexpected_failures_to_diagnose_malformation = 0;
   unsigned unexpected_failures_to_diagnose_domain_error = 0;
   unsigned unexpected_failures_to_verify = 0;
+  unsigned unexpected_failures_to_partially_verify = 0;
   unsigned unexpected_failures_to_disprove = 0;
   unsigned unexpected_conclusive_verifications = 0;
 
@@ -835,6 +859,7 @@ main(int argc, char *argv[]) try {
           // Get the exact solution.
           rec.exact_solution(exact_solution);
           if (expect_provably_correct_result
+	      || expect_partial_provably_correct_result
               || expect_provably_wrong_result
               || expect_inconclusive_verification) {
 #if PROFILE_VERIFICATION
@@ -847,6 +872,7 @@ main(int argc, char *argv[]) try {
 #endif
             result_of_the_verification(0, status,
                                        unexpected_failures_to_verify,
+                                       unexpected_failures_to_partially_verify,
                                        unexpected_failures_to_disprove,
                                        unexpected_conclusive_verifications);
           }
@@ -883,11 +909,13 @@ main(int argc, char *argv[]) try {
           // Get the lower bound.
           rec.lower_bound(lower);
           if (expect_provably_correct_result
+	      || expect_partial_provably_correct_result
               || expect_provably_wrong_result
               || expect_inconclusive_verification) {
             Recurrence::Verify_Status status = rec.verify_lower_bound();
             result_of_the_verification(1, status,
                                        unexpected_failures_to_verify,
+                                       unexpected_failures_to_partially_verify,
                                        unexpected_failures_to_disprove,
                                        unexpected_conclusive_verifications);
           }
@@ -915,11 +943,13 @@ main(int argc, char *argv[]) try {
           // Get the upper bound.
           rec.upper_bound(upper);
           if (expect_provably_correct_result
+	      || expect_partial_provably_correct_result
               || expect_provably_wrong_result
               || expect_inconclusive_verification) {
             Recurrence::Verify_Status status = rec.verify_upper_bound();
             result_of_the_verification(2, status,
                                        unexpected_failures_to_verify,
+                                       unexpected_failures_to_partially_verify,
                                        unexpected_failures_to_disprove,
                                        unexpected_conclusive_verifications);
           }
@@ -1155,6 +1185,12 @@ main(int argc, char *argv[]) try {
       failed = true;
       cerr << unexpected_failures_to_verify
            << " unexpected failures to verify solutions"
+           << endl;
+    }
+    if (unexpected_failures_to_partially_verify > 0) {
+      failed = true;
+      cerr << unexpected_failures_to_partially_verify
+           << " unexpected failures to partially_verify solutions"
            << endl;
     }
     if (unexpected_failures_to_disprove > 0) {
