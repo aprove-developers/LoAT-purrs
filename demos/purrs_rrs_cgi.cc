@@ -670,13 +670,12 @@ main() try {
   else
     cout << "Bounds";
   cout << " for x(n) = " << rhs
-      << h2() << endl;
+       << br() << endl;
 
   // Print the possibly initial conditions.
-  cout << h2();
   if ((have_exact_solution || have_lower_bound || have_upper_bound)
       && !initial_conditions.empty()) {
-    cout << "Initial conditions:" << br() << endl;
+    cout << "for the initial conditions" << br() << endl;
     for (std::map<index_type, Expr>::const_iterator i
 	   = initial_conditions.begin(),
 	   initial_conditions_end = initial_conditions.end();
@@ -712,10 +711,24 @@ main() try {
   }
 
   if (have_exact_solution || have_lower_bound || have_upper_bound)
-    cout << br() << "for each n >= " << first_valid_index_for_solution << endl;
+    cout << br() << "for each n >= " << first_valid_index_for_solution
+	 << br() << endl;
 
-  if ((have_lower_bound || have_upper_bound) && !Sc_function.empty())
-    cout << br() << "where " << Sc_function << endl;
+  if ((have_lower_bound || have_upper_bound) && !Sc_function.empty()) {
+    cout << "where " << Sc_function << br() << endl;
+    cout << "and" << endl;
+    for (std::map<index_type, Expr>::const_iterator i
+	   = initial_conditions.begin(),
+	   initial_conditions_end = initial_conditions.end(), j = i;
+	 i != initial_conditions_end; ++i) {
+      cout << "  x(" << i->first << ")"
+	   << " = " << i->second;
+      if (++j != initial_conditions_end)
+	cout << ", " << endl;
+      else
+	cout << ". " << endl;
+    }
+  }
   
   // Get a pointer to the environment.
   const CgiEnvironment& env = cgi.getEnvironment();
