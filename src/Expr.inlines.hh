@@ -356,6 +356,12 @@ Expr::functor() const {
   return GiNaC::ex_to<GiNaC::function>(*this).get_serial();
 }
 
+inline std::string
+Expr::get_function_name() const {
+  assert(is_a_function());
+  return GiNaC::ex_to<GiNaC::function>(*this).get_name();
+}
+
 inline unsigned
 Expr::nops() const {
   return Base::nops();

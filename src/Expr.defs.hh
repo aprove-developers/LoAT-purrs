@@ -620,6 +620,9 @@ public:
   */
   Functor functor() const;
 
+  //! Return the function's name.
+  std::string get_function_name() const;
+
   //! Returns the operand's number of \p *this.
   /*!
     If \p *this is an addiction or a multiplication of expressions
