@@ -245,6 +245,7 @@ ul	2*x(n/2)+3^n+7
 ul	2*x(n/2)+log(n)
 ul	2*x(n/2)+n
 ul	2*x(n/2)+n*log(log(n))
+ul      2*x(n/2)+n*log(2)
 ul	2*x(n/2)+n*log(n)
 ul	2*x(n/2)+n^2
 ul	2*x(n/2)+n^n
