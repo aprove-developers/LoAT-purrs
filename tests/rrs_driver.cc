@@ -342,6 +342,7 @@ static bool expect_inconclusive_verification;
 static bool expect_not_to_be_solved;
 static bool expect_diagnose_unsolvable;
 static bool expect_not_diagnose_unsolvable;
+static bool expect_diagnose_indeterminate;
 
 void
 set_expectations(const string& s) {
@@ -356,6 +357,7 @@ set_expectations(const string& s) {
     = expect_not_to_be_solved
     = expect_diagnose_unsolvable
     = expect_not_diagnose_unsolvable
+    = expect_diagnose_indeterminate
     = false;
 
   const char* p = s.c_str();
@@ -392,6 +394,9 @@ set_expectations(const string& s) {
       break;
     case 'k':
       expect_not_diagnose_unsolvable = true;
+      break;
+    case 'I':
+      expect_diagnose_indeterminate = true;
       break;
     case '*':
       break;
@@ -484,6 +489,10 @@ main(int argc, char *argv[]) try {
 	  cout << "unsolvable." << endl;
 	  goto exit;
 	  break;
+	case Recurrence::INDETERMINATE_RECURRENCE:
+	  cout << "indeterminate." << endl;
+	  goto exit;
+	  break;
 	case Recurrence::TOO_COMPLEX:
 	  if (!lower_bound_required && !upper_bound_required) {
 	    cout << "exact(too_complex)." << endl;
@@ -504,6 +513,10 @@ main(int argc, char *argv[]) try {
 	  cout << "unsolvable." << endl;
 	  goto exit;
 	  break;
+	case Recurrence::INDETERMINATE_RECURRENCE:
+	  cout << "indeterminate." << endl;
+	  goto exit;
+	  break;
 	case Recurrence::TOO_COMPLEX:
 	  cout << "lower_bound(too_complex)." << endl;
 	  break;
@@ -519,6 +532,10 @@ main(int argc, char *argv[]) try {
 	  break;
 	case Recurrence::UNSOLVABLE_RECURRENCE:
 	  cout << "unsolvable." << endl;
+	  goto exit;
+	  break;
+	case Recurrence::INDETERMINATE_RECURRENCE:
+	  cout << "indeterminate." << endl;
 	  goto exit;
 	  break;
 	case Recurrence::TOO_COMPLEX:
@@ -543,6 +560,7 @@ main(int argc, char *argv[]) try {
   unsigned unexpected_upper_failures = 0;
   unsigned unexpected_unsolvability_diagnoses = 0;
   unsigned unexpected_failures_to_diagnose_unsolvability = 0;
+  unsigned unexpected_failures_to_diagnose_indeterminably = 0;
   unsigned unexpected_failures_to_verify = 0;
   unsigned unexpected_failures_to_disprove = 0;
   unsigned unexpected_conclusive_verifications = 0;
@@ -763,14 +781,27 @@ main(int argc, char *argv[]) try {
 	    cout << "Unsolvable." << endl;
 	}
       if (expect_diagnose_unsolvable)
-	if (compute_exact_solution_wrapper(rec) == Recurrence::TOO_COMPLEX
-	    || rec.compute_lower_bound() == Recurrence::TOO_COMPLEX
-	    || rec.compute_upper_bound() == Recurrence::TOO_COMPLEX) {
+	if (compute_exact_solution_wrapper(rec)
+	    != Recurrence::UNSOLVABLE_RECURRENCE
+	    || rec.compute_lower_bound()
+	    != Recurrence::UNSOLVABLE_RECURRENCE
+	    || rec.compute_upper_bound()
+	    != Recurrence::UNSOLVABLE_RECURRENCE) {
 	  if (verbose)
 	    cerr << "*** unexpected failure to diagnose unsolvability" << endl;
 	  ++unexpected_failures_to_diagnose_unsolvability;
-	  if (interactive)
-	    cout << "Sorry, this is too difficult." << endl;
+	}
+      if (expect_diagnose_indeterminate)
+	if (compute_exact_solution_wrapper(rec)
+	    != Recurrence::INDETERMINATE_RECURRENCE
+	    || rec.compute_lower_bound()
+	    != Recurrence::INDETERMINATE_RECURRENCE
+	    || rec.compute_upper_bound()
+	    != Recurrence::INDETERMINATE_RECURRENCE) {
+	  if (verbose)
+	    cerr << "*** unexpected failure to diagnose indeterminably"
+		 << endl;
+	  ++unexpected_failures_to_diagnose_indeterminably;
 	}
     } // *** regress test
     else {
@@ -801,6 +832,10 @@ main(int argc, char *argv[]) try {
 	  cout << endl << "Unsolvable" << endl << endl;
 	goto finish;
 	break;
+      case Recurrence::INDETERMINATE_RECURRENCE:
+	cout << "Indeterminate" << endl;
+	goto finish;
+	break;
       case Recurrence::TOO_COMPLEX:
       default:
 	break;
@@ -821,6 +856,10 @@ main(int argc, char *argv[]) try {
       case Recurrence::UNSOLVABLE_RECURRENCE:
 	if (interactive)
 	  cout << endl << "Unsolvable" << endl << endl;
+	goto finish;
+	break;
+      case Recurrence::INDETERMINATE_RECURRENCE:
+	cout << "Indeterminate" << endl;
 	goto finish;
 	break;
       case Recurrence::TOO_COMPLEX:
@@ -847,6 +886,10 @@ main(int argc, char *argv[]) try {
       case Recurrence::UNSOLVABLE_RECURRENCE:
 	if (interactive)
 	  cout << endl << "Unsolvable" << endl << endl;
+	goto finish;
+	break;
+      case Recurrence::INDETERMINATE_RECURRENCE:
+	cout << "Indeterminate" << endl;
 	goto finish;
 	break;
       case Recurrence::TOO_COMPLEX:
@@ -921,6 +964,13 @@ main(int argc, char *argv[]) try {
 	   << " unexpected failures to diagnose unsolvability"
 	   << endl;
     }
+    if (unexpected_failures_to_diagnose_indeterminably > 0) {
+      failed = true;
+      cerr << unexpected_failures_to_diagnose_indeterminably
+	   << " unexpected failures to diagnose indeterminably"
+	   << endl;
+    }
+
 
     if (failed)
       my_exit(1);

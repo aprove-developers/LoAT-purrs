@@ -282,23 +282,25 @@ find_coeff_x_n_and_remainder(const Expr& e,
 
 /*!
   Here we assume that \p rhs contains occurrences of \f$ x(n) \f$ itself.
-  Therefore the recurrence may be impossible.  This function decides
-  if this is the case and, if so, it returns <CODE>false</CODE>.  If the
-  recurrence is solvable, it is rewritten into its normal form, which
-  is then written in \f$ new_rhs \f$, and the function returns
-  <CODE>true</CODE>.
+  Therefore the recurrence may be impossible or indeterminated.
+  This function decides if this is the case and, if so, it returns
+  \f$ 1 \f$ or \f$ 2 \f$, respectively.
+  If the recurrence is solvable, it is rewritten into its normal form,
+  which is then written in \f$ new_rhs \f$, and the function returns
+  \f$ 0 \f$.
 */
-bool
+unsigned
 eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
   // Let `rhs = a*x(n) + b' and that `b' does different to zero
   // and does not contain `x(n)'.  The following cases are possible:
-  // 1. If `a = 1' and `b' does not contain any occurrence of `x(n-k)'
+  // 1. If `a = 1' and `b = 0' then the recurrence is indeterminate. 
+  // 2. If `a = 1' and `b != 0' does not contain any occurrence of `x(n-k)'
   //    where `k' is a positive integer, the recurrence is impossible.
-  // 2. If `a = 1' and `b' contains `x(n-k)' for some positive integer `k'
+  // 3. If `a = 1' and `b' contains `x(n-k)' for some positive integer `k'
   //    and with a coefficient that is not syntactically 0, we remove
   //    `x(n)' from both sides of `x(n) = rhs', and then rewrite the
   //    recurrence into its standard form.
-  // 3. If `a != 1' we move `a*x(n)' to the left-hand side, and divide
+  // 4. If `a != 1' we move `a*x(n)' to the left-hand side, and divide
   //    through by `1 - a', obtaining the standard form, which is 
   //    `(rhs - a*x(n)) / (1-a)'.
   if (rhs.is_a_add()) {
@@ -307,7 +309,7 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
     Expr b = rhs;
     find_coeff_x_n_and_remainder(rhs, a, b);
     if (a == 1) {
-      // Case 1. and Case 2.
+      // Case 2. and Case 3.
       bool found_x = false;
       if (b.is_a_add())
 	for (unsigned i = b.nops(); i-- > 0; ) {
@@ -334,10 +336,10 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
 	}
       else if (b.is_the_x_function())
 	found_x = true;
-      // Case 1.
-      if (!found_x)
-	return false;
       // Case 2.
+      if (!found_x)
+	return 1;
+      // Case 3.
       else {
 	// Seeks `max_decrement', i.e., the largest integer `j' (it may be
 	// non positive) such that `x(n+j)' occurs in `b' with a coefficient
@@ -357,7 +359,7 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
 	new_rhs /= coefficient;
       }
     }
-    // Case 3.
+    // Case 4.
     else
       new_rhs = b * pwr(1 - a, -1);
   }
@@ -370,8 +372,8 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
     }
   // Let `rhs = x(n)'.
   else if (rhs == x(Recurrence::n))
-    return false;
-  return true;
+    return 2;
+  return 0;
 }
 
 /*!
@@ -825,13 +827,16 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
     case HAS_NULL_DECREMENT:
       {
 	Expr new_rhs;
-	if (eliminate_null_decrements(recurrence_rhs, new_rhs)) {
+	unsigned result = eliminate_null_decrements(recurrence_rhs, new_rhs);
+	if (result == 0) {
 	  recurrence_rhs_rewritten = true;
 	  recurrence_rhs = new_rhs;
 	  status = classify_and_catch_special_cases();
 	}
-	else
+	else if (result == 1)
 	  status = UNSOLVABLE_RECURRENCE;
+	else
+	  status = INDETERMINATE_RECURRENCE;
 	exit_anyway = true;
       }
       break;

@@ -146,6 +146,11 @@ public:
     SUCCESS,
 
     /*!
+      The recurrence is indeterminate, hence it has infinite solutions.
+    */
+    INDETERMINATE_RECURRENCE,
+
+    /*!
       The right-hand side of the recurrence contains at least an occurrence
       of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is not an integer.
     */
