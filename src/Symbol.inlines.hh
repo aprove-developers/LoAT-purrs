@@ -37,6 +37,11 @@ Symbol::Symbol(const char* n)
 }
 
 inline
+Symbol::Symbol(const std::string& str)
+  : s(str) {
+}
+
+inline
 Symbol::Symbol(const Symbol& y)
   : s(y.s) {
 };

@@ -41,6 +41,9 @@ public:
   //! Builds a symbol named \p n.
   Symbol(const char* n);
 
+  //! Builds a symbol named \p str.
+  explicit Symbol(const std::string& str);
+
   //! Copy-constructor.
   Symbol(const Symbol& y);
 
