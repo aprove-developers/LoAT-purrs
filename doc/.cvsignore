@@ -1,0 +1,7 @@
+*.doxyconf-latex
+*.doxyconf-html
+*.latex-dir
+*.pdf
+*.ps.gz
+Makefile
+Makefile.in
