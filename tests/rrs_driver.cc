@@ -61,7 +61,7 @@ const char* program_name = 0;
 void
 print_usage() {
   cerr << "Usage: " << program_name << " [OPTION]...\n\n"
-    "  -R, --rhs \"<expr>\"     set the right-hand side of the recurrence\n"
+    "  -R, --rhs \"<expr>\"       set the right-hand side of the recurrence\n"
     "                           that has to be solved/approximated\n" 
     "  -I, --initial-condition \"<expr>\"\n"
     "                           set an initial condition for the recurrence\n"
@@ -79,7 +79,7 @@ print_usage() {
        << endl;
 }
 
-#define OPTION_LETTERS "EILRTUhilrv"
+#define OPTION_LETTERS "EI:LR:T:Uhilrv"
 
 // To avoid mixing incompatible options.
 static bool production_mode = false;
@@ -115,6 +115,33 @@ my_exit(int status) {
   exit(status);
 }
 
+Expr_List symbols;
+
+static void
+init_symbols() {
+  Symbol a("a");
+  Symbol b("b");
+  Symbol c("c");
+  Symbol d("d");
+  symbols = Expr_List(Recurrence::n, a, b, c, d);
+}
+
+static string parse_error_message;
+
+static bool
+parse_expression(const string& s, Expr& expr) {
+  try {
+    expr = Expr(s, symbols);
+    return true;
+  }
+  catch (exception& e) {
+    ostringstream m;
+    m << "parse error: " << e.what();
+    parse_error_message = m.str();
+    return false;
+  }
+}
+
 static void
 do_not_mix_modes() {
   if (production_mode && test_mode) {
@@ -123,6 +150,22 @@ do_not_mix_modes() {
 	 << endl;
     my_exit(1);
   }
+}
+
+static void
+invalid_initial_condition(const char* culprit) {
+  cerr << program_name << ": invalid initial condition `" << culprit << "';\n"
+       << "must be of the form `x(i)=k'"
+       << "for `i' a positive integer and `k' any number" << endl;
+  my_exit(1);
+}
+
+static Recurrence* production_recurrence = 0;
+
+static void
+init_production_recurrence() {
+  if (production_recurrence == 0)
+    production_recurrence = new Recurrence();
 }
 
 static void
@@ -152,14 +195,37 @@ process_options(int argc, char* argv[]) {
       break;
 
     case 'I':
-      production_mode = true;
-      do_not_mix_modes();
-      if (!optarg) {
-	cerr << program_name << ": an initial condition expression "
-	     << "must follow `-I'" << endl;
-	my_exit(1);
+      {
+	production_mode = true;
+	do_not_mix_modes();
+	// Here `optarg' points to the beginning of the initial condition.
+	assert(optarg);
+	string cond = optarg;
+	string::size_type eq_pos = cond.find('=');
+	if (eq_pos == string::npos)
+	  invalid_initial_condition(optarg);
+	string lhs(cond, 0, eq_pos);
+	string rhs(cond, eq_pos+1);
+	cout << "lhs = " << lhs << ", rhs = " << rhs << endl;
+	Expr l;
+	if (!parse_expression(lhs, l))
+	  invalid_initial_condition(optarg);
+	if (!l.is_the_x_function())
+	  invalid_initial_condition(optarg);
+	Number index;
+	if (!l.arg(0).is_a_number(index)
+	    || !index.is_nonnegative_integer()
+	    || index > LONG_MAX)
+	  invalid_initial_condition(optarg);
+	Expr r;
+	if (!parse_expression(rhs, r))
+	  invalid_initial_condition(optarg);
+	if (!r.is_a_number())
+	  invalid_initial_condition(optarg);
+	init_production_recurrence();
+	production_recurrence
+	  ->replace_initial_condition(unsigned(index.to_int()), r);
       }
-      // Here `optarg' points to the beginning of the initial conddition.
       break;
 
     case 'E':
@@ -374,6 +440,10 @@ main(int argc, char *argv[]) try {
 
   process_options(argc, argv);
 
+  if (production_mode) {
+    my_exit(0);
+  }
+
   unsigned unexpected_solution_or_bounds_for_it = 0;
   unsigned unexpected_exact_failures = 0;
   unsigned unexpected_lower_failures = 0;
@@ -402,11 +472,7 @@ main(int argc, char *argv[]) try {
   if (latex)
     cout << "\\documentclass{article}\n\\begin{document}" << endl;
 
-  Symbol a("a");
-  Symbol b("b");
-  Symbol c("c");
-  Symbol d("d");
-  Expr_List symbols(Recurrence::n, a, b, c, d);
+  init_symbols();
 
   while (input_stream) {
     ++line_number;
@@ -453,13 +519,8 @@ main(int argc, char *argv[]) try {
       continue;
 
     Expr rhs;
-    try {
-      rhs = Expr(rhs_string, symbols);
-    }
-    catch (exception& e) {
-      ostringstream m;
-      m << "parse error: " << e.what();
-      message(m.str());
+    if (!parse_expression(rhs_string, rhs)) {
+      message(parse_error_message);
       continue;
     }
 
