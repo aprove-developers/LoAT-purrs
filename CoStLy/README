@@ -1,0 +1,58 @@
+
+File: README, 2001/12/03
+
+CoStLy (COmplex interval STandard functions LibrarY), Version 0.2
+
+Copyright (C) Markus Neher, markus.neher@math.uni-karlsruhe.de
+              Ingo Eble,    IngoEble@web.de
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+
+
+Description
+===========
+
+CoStLy is a free library of complex interval standard functions. 
+
+
+Installation
+============
+
+1) Make sure you have
+	a) the GNU C++ compiler gcc 2.95.2 and
+	b) the filib++ library (version 2.0)
+   installed.
+
+2) Unpack the sources with the command "tar -xvzf CoStLy-0.1.tgz".
+   This unpacks the CoStLy files in the current directory.
+
+
+Notice on point 1)
+==================
+
+You can download the filib++ package from
+
+http://www.math.uni-wuppertal.de/org/WRST/software/filib++/filib++.distribution.tar.gz
+
+To install the library see the README file.
+
+
+Technical support
+=================
+
+None. CoStLy is free software, remember?
+
+In case of trouble, you may try sending an email to one of the above adresses,
+with fingers crossed for reply.
