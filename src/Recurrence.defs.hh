@@ -1061,17 +1061,19 @@ private:
   Solver_Status compute_weighted_average_recurrence(Expr& solution) const;
 
   Expr
-  subs_i_c_finite_order_and_functioanl_eq(const Expr& solution_or_bound) const;
+  subs_i_c_finite_order_and_functional_eq(const Expr& solution_or_bound) const;
 
   Expr
   subs_i_c_weighted_average(const Expr& solution_or_bound) const;
+
+  Expr compute_solution_finite_order_on_i_c(const Expr& solution) const;
 
   //! \brief
   //! Let \p solution_or_bound be the expression that represent the
   //! solution or the bound computed for the recurrence \p *this.
   //! This function substitutes possible initial conditions specified
   //! by the user shifting the solution or the bound if necessary.
-  Expr substitute_i_c_shifting(const Expr& solution_or_bound) const;
+  Expr compute_solution_on_i_c(const Expr& solution_or_bound) const;
 
   //! Classifies the recurrence \p *this sliding it recursively.
   Classifier_Status classify() const;
