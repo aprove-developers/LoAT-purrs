@@ -44,7 +44,6 @@ GExpr
 simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input);
 
 
-
 /*!
   Separates numeric factors and not numeric factors of an expression \p e. 
 */
@@ -126,14 +125,14 @@ return_power(const bool& is_numeric_base, const bool& input,
   GExpr not_num_exp_minus_n;
   if (input)	
     not_num_exp_minus_n = found_and_erase_n(not_num_exp, n);
-  // We do not want put in evidence the special symbol 'n' or it is
-  // not in 'vect_not_num_exp[i]'.
+  // We do not want put in evidence the special symbol `n' or it is
+  // not in `vect_not_num_exp[i]'.
   if (!input || not_num_exp_minus_n.is_equal(not_num_exp))
     if (is_numeric_base)
       return pow(pow(base, num_exp), not_num_exp);
     else
       return pow(base, num_exp * not_num_exp);
-  // We put in evidence the special symbol 'n'. 
+  // We put in evidence the special symbol `n'. 
   else
     if (is_numeric_base)
       return pow(pow(pow(base, num_exp), not_num_exp_minus_n), n);
@@ -172,12 +171,12 @@ simpl_powers_base(const GExpr& base, const GExpr& num_exponent,
     if (is_a<power>(base.op(i))) {
       GExpr tmp = base.op(i);
       while (is_a<power>(tmp)) {
-        // The exponent of the factor 'base.op(i)' is a multiplication.
+        // The exponent of the factor `base.op(i)' is a multiplication.
         if (is_a<mul>(tmp.op(1)))
           for (unsigned j = tmp.op(1).nops(); j-- > 0; )
             split_exponent(vect_num_exp[i], vect_not_num_exp[i],
                            tmp.op(1).op(j));
-        // The exponent of the factor 'base.op(i)' is not a multiplication.
+        // The exponent of the factor `base.op(i)' is not a multiplication.
         else
           split_exponent(vect_num_exp[i], vect_not_num_exp[i], tmp.op(1));
         tmp = tmp.op(0);
@@ -221,7 +220,7 @@ pow_simpl(const GExpr& e, const GSymbol& n, const bool& input) {
   GExpr num_exponent = 1;
   GExpr not_num_exponent = 1;
   GExpr base = e;
-  // At the end of the following cycle 'base' will contains the 'real' base
+  // At the end of the following cycle `base' will contains the `real' base
   // of the power.
   while (is_a<power>(base)) {
     // Checks and divides the exponents in two part: those numeric and  
@@ -243,11 +242,11 @@ pow_simpl(const GExpr& e, const GSymbol& n, const bool& input) {
   if (is_a<mul>(base))
     return simpl_powers_base(base, num_exponent, not_num_exponent, n, input);
   // The base is not a multiplication: is not necessary to use the vectors,
-  // i.e., call the function 'simpl_powers_base'.
+  // i.e., call the function `simpl_powers_base'.
   else {
     if (is_a<numeric>(base)) {
       GNumber num_exp = GiNaC::ex_to<GiNaC::numeric>(num_exponent);
-      // The function 'perfect_root' allows to apply the rule 'E1'.
+      // The function `perfect_root' allows to apply the rule `E1'.
       if (num_exp.is_integer() || perfect_root(base, num_exp))
 	return return_power(true, input, num_exp, not_num_exponent,
 			    base, n);
@@ -262,61 +261,102 @@ pow_simpl(const GExpr& e, const GSymbol& n, const bool& input) {
 }
 
 /*!
-  Applies the rules \f$ \textbf{C1} \f$ and \f$ \textbf{C2} \f$ of the set
-  of rules <EM>Collect</EM> to the <CODE>GExpr</CODE> \p e that is
-  certainly a <CODE>GiNaC::mul</CODE>.
-  The vectors \p bases and \p exponents contain rispectively all bases and
-  exponents of the powers that are in \p e and, at the end, will contain
-  the new bases and exponents of the powers in \p e after the simplification.
+  Applies the rule \f$ \textbf{C3} \f$ of the set of rules
+  <EM>Collect</EM> to the <CODE>GExpr</CODE> \p e  under condition
+  that the common exponent to the powers is not integer
+  because, in this case, <CODE>GiNaC</CODE> automatically decomposes the
+  power, i. e., \f$ (a*b)^4 \f$ is automatically transformed in
+  \f$ a^4*b^4 \f$.
   Returns a new <CODE>GExpr</CODE> \p ris containing the modified
   expression \p e and the modified vectors \p bases and \p exponents will
   be use by the function <CODE>collect_same_exponent()</CODE> called soon
   afterwards this.
 */
 static GExpr
+collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
+		       std::vector<GExpr>& exponents) {
+  assert(is_a<mul>(e));
+  GExpr ris = 1;
+  // At the end of the cycle `ris' will contain the powers of `e', with
+  // the same exponents, simplified in only one power with the base equal
+  // to the previous bases multiplicated among themselves (rule `C3').
+  unsigned i = exponents.size();
+  while (i > 0) {
+    --i;
+    if (!exponents[i].is_zero()) {
+      for (unsigned j = i; j-- > 0; )	
+	// In the vector `bases' in position `i' we put the new base.
+	// In the vactor `exponents' in position `j' we put `0'.
+	if (exponents[j].is_equal(exponents[i])) {
+	  bases[i] *= bases[j];
+	  exponents[j] = 0;
+	}
+      ris *= pow(bases[i], exponents[i]);
+    }
+  }
+  // FIXME: si potrebbe migliorare togliendo da `exponents'
+  // gli elementi nulli e quelli nelle stesse posizioni da `bases'?
+  // Ne vale la pena?
+
+  // Now adds to `ris' the factor of `e' not considered in the
+  // previous simplifications, i.e., the factor which are not powers.
+  for (i = e.nops(); i-- > 0; )
+    if (!is_a<power>(e.op(i)))
+      ris *= e.op(i);
+  return ris;
+}
+
+/*!
+  Applies the rules \f$ \textbf{C1} \f$ and \f$ \textbf{C2} \f$ of the set
+  of rules <EM>Collect</EM> to the <CODE>GExpr</CODE> \p e that is
+  certainly a <CODE>GiNaC::mul</CODE>.
+  The vectors \p bases and \p exponents contain rispectively all bases and
+  exponents of the powers that are in \p e and, at the end, will contain
+  the new bases and exponents of the powers in \p e after the simplification.
+  This function is called after <CODE>collect_same_exponents()</CODE>.
+  Returns a new <CODE>GExpr</CODE> \p ris containing the modified
+  expression \p e.
+*/
+static GExpr
 collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 		  std::vector<GExpr>& exponents) {
   assert(is_a<mul>(e));
-  // At the end of the cycle 'while', 'ris' will contain all the powers of 'e'.
+  // At the end of the cycle `while', `ris' will contain all the powers of `e'.
   // The powers with the same bases will simplified in only one power with
-  // the summed exponents (rule 'C2').
+  // the summed exponents (rule `C2').
   GExpr ris = 1;
   unsigned i = bases.size();
   while (i > 0) {
     --i;
     if (!exponents[i].is_zero()) {
-      GExpr exp = exponents[i];
-      GExpr base = bases[i];
       for (unsigned j = i; j-- > 0; )
-	// In the vectors 'bases' and 'exponents' the two bases and the two
-	// exponents considerated in the simplification, are substituded with
-	// the value '0' if it was in position 'j' and with the base and the
-	// exponent of the new power if it was in position 'i'.
-	if (bases[j].is_equal(base)) {
-	  exp += exponents[j];
-	  // FIXME: si puo' migliorare eliminando il j-esimo elemento sia
-	  // da 'bases' che da 'exponents' invece che metterli a 0. 
-	  bases[j] = 0;
+	// In the vector `exponents' in position `i' we put the new
+	// exponent while in opsition `j' we put `0'.	
+	if (bases[j].is_equal(bases[i])) {
+	  exponents[i] += exponents[j];
 	  exponents[j] = 0;
-	  exponents[i] = exp;
 	}
-      ris *= pow(base, exp);
+      ris *= pow(bases[i], exponents[i]);
     }
   }
-  // Now adds to 'ris' the factor of 'e' not considered in the
+  // FIXME: si potrebbe migliorare togliendo da `exponents'
+  // gli elementi nulli e quelli nelle stesse posizioni da `bases'?
+  // Ne vale la pena?
+
+  // Now adds to `ris' the factor of `e' not considered in the
   // previous simplification, i.e., the factor which are not powers .
   for (i = e.nops(); i-- > 0; ) {
     if (!is_a<power>(e.op(i))) {
       // We must consider those factors that are not powers but are equal
-      // to some base of the vector 'bases', in order to apply the rule 'C1',
-      // i.e., 'a * a^e = a^(e + 1)'. In this case, we add '1' to the
+      // to some base of the vector `bases', in order to apply the rule `C1',
+      // i.e., `a * a^e = a^(e + 1)'. In this case, we add `1' to the
       // correspondenting exponent.
       bool to_sum = false;
       for (unsigned j = bases.size(); j-- > 0; )
-	if (bases[j].is_equal(e.op(i))) {
+	if (bases[j].is_equal(e.op(i)) && !exponents[j].is_zero()) {
 	  to_sum = true;
-	  // If the base is 'integer' GiNaC automatically transforms for
-	  // instance '2^(3/2)' in '2*sqrt(2)': in this case we do not add
+	  // If the base is `integer' GiNaC automatically transforms for
+	  // instance `2^(3/2)' in `2*sqrt(2)': in this case we do not add
 	  // 1 to the exponent. 
 	  if (!is_a<numeric>(bases[j]) || !is_a<numeric>(exponents[j]))
 	    exponents[j] = exponents[j] + 1;
@@ -326,59 +366,13 @@ collect_same_base(const GExpr& e, std::vector<GExpr>& bases,
 	      exponents[j] = exponents[j] + 1;
 	  }
 	}
-      // Applies rule 'C1'.
+      // Applies rule `C1'.
       if (to_sum)
 	ris = ris.subs(pow(e.op(i), wild()) == pow(e.op(i), wild() + 1));
       else
 	ris *= e.op(i);
     }
   }
-  return ris;
-}
-
-/*!
-  Applies the rule \f$ \textbf{C3} \f$ of the set of rules
-  <EM>Collect</EM> to the <CODE>GExpr</CODE> \p e  under condition
-  that the common exponent to the powers is not integer
-  because, in this case, <CODE>GiNaC</CODE> automatically decomposes the
-  power, i. e., \f$ (a*b)^4 \f$ is automatically transformed in
-  \f$ a^4*b^4 \f$.
-  This function is called after <CODE>collect_same_base()</CODE>
-  Returns a new <CODE>GExpr</CODE> \p ris containing the modified
-  expression \p e.
- */
-static GExpr
-collect_same_exponents(const GExpr& e, std::vector<GExpr>& bases,
-		       std::vector<GExpr>& exponents) {
-  assert(is_a<mul>(e));
-  GExpr ris = 1;
-  // At the end of the cycle 'ris' will contain the powers of 'e', with
-  // the same exponents, simplified in only one power with the base equal
-  // to the previous bases multiplicated among themselves.
-  unsigned i = exponents.size();
-  while (i > 0) {
-    --i;
-    if (exponents[i] != 0) {
-      GExpr exp = exponents[i];
-      GExpr base = bases[i];
-      bool found = false;
-      for (unsigned j = i; j-- > 0; )
-	if (exponents[j].is_equal(exp)) {
-	  found = true;
-	  base *= bases[j];
-	  exponents[j] = 0;
-	}
-      if (found)
-	ris *= pow(base, exp);
-      else
-	ris *= pow(base, exponents[i]);
-    }
-  }
-  // Now adds to 'ris' the factor of 'e' not considered in the
-  // previous simplifications, i.e., the factor which are not powers.
-  for (i = e.nops(); i-- > 0; )
-    if (!is_a<power>(e.op(i)))
-      ris *= e.op(i);
   return ris;
 }
 
@@ -400,18 +394,20 @@ collect_base_exponent(const GExpr& e) {
       bases.push_back(tmp.op(i).op(0));
       exponents.push_back(tmp.op(i).op(1));
     }
-  // Applies rules 'C1' and 'C2'.    
-  tmp = collect_same_base(tmp, bases, exponents);
-#if NOISY
-  std::cout << "tmp dopo same base... " << tmp << std::endl;
-#endif
-  // After the simplifications by the function 'collect_same_base' 'tmp'
-  // could not be a 'mul'. 
-  if (is_a<mul>(tmp))
-    // Applies rule 'C3'.
-    tmp = collect_same_exponents(tmp, bases, exponents);
+  // We have a better simplification if we apply `collect_same_exponents()'
+  // before than `collect_same_base()' (ex. `2*2^n*(1/2)^n').
+  // Applies rule `C3'.
+  tmp = collect_same_exponents(tmp, bases, exponents);
 #if NOISY
   std::cout << "tmp dopo same exponents... " << tmp << std::endl;
+#endif
+  // After the simplifications by the function `collect_same_exponents()'
+  // `tmp' could not be a `mul'. 
+  if (is_a<mul>(tmp))
+    // Applies rules `C1' and `C2'.    
+    tmp = collect_same_base(tmp, bases, exponents);
+#if NOISY
+  std::cout << "tmp dopo same base... " << tmp << std::endl;
 #endif
   return tmp;
 }
@@ -669,14 +665,14 @@ reduce_product(const GExpr& e) {
     GNumber exp_1 = 1;
     for (unsigned i = tmp.nops(); i-- > 0; )
       if (is_a<power>(tmp.op(i))) {
-	// Base and exponent of 'tmp.op(i)' are both numerics.
+	// Base and exponent of `tmp.op(i)' are both numerics.
 	if (GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(0)) &&
 	    GiNaC::is_a<GiNaC::numeric>(tmp.op(i).op(1))) {
 	  GNumber base_2 = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(0));
 	  GNumber exp_2  = GiNaC::ex_to<GiNaC::numeric>(tmp.op(i).op(1));
 	  GExpr to_reduce = red_prod(base_1, exp_1, base_2, exp_2);
-	  // red_prod returns 'numeric' or 'numeric^numeric' or
-	  // 'numeric * numeric^numeric'.
+	  // red_prod returns `numeric' or `numeric^numeric' or
+	  // `numeric * numeric^numeric'.
 	  if (is_a<mul>(to_reduce)) {
 	    assert(to_reduce.nops() == 2);
 	    for (unsigned j = 2; j-- > 0; )
@@ -705,11 +701,11 @@ reduce_product(const GExpr& e) {
 	    factor_to_reduce = pow(to_reduce, 1);
 	  }
 	}
-	// Base and exponent of 'tmp.op(i)' are not both numerics.
+	// Base and exponent of `tmp.op(i)' are not both numerics.
 	else
 	  factor_no_to_reduce *= tmp.op(i);
       }
-    // 'tmp.op(i)' is not a 'GiNaC::power'.
+    // `tmp.op(i)' is not a `GiNaC::power'.
       else
 	factor_no_to_reduce *= tmp.op(i);
     return factor_to_reduce * factor_no_to_reduce;
@@ -734,7 +730,7 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
   assert(is_a<mul>(e));
   GExpr tmp = 1;
 
-  // Simplifies each factor that is a 'GiNaC::power'.
+  // Simplifies each factor that is a `GiNaC::power'.
   for (unsigned i = e.nops(); i-- > 0; )
     if (is_a<power>(e.op(i))) {
       GExpr base = simplify_on_output_ex(e.op(i).op(0), n, input);
@@ -749,7 +745,7 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
 #if NOISY
   std::cout << "tmp dopo nested... " << tmp << std::endl;
 #endif
-  // From this time forward we do not know if 'tmp' is a again 'mul'.
+  // From this time forward we do not know if `tmp' is a again `mul'.
   
   // Simplifies recursively the factors which are functions simplifying
   // their arguments.
@@ -772,7 +768,7 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
 #if NOISY
   std::cout << "tmp dopo function... " << tmp << std::endl << std::endl;
 #endif
-  // Special case: the exponential 'exp' is a 'GiNaC::function' but it has
+  // Special case: the exponential `exp' is a `GiNaC::function' but it has
   // the same properties of the powers.
   if (is_a<mul>(tmp)) {
     GExpr argument = 0;
@@ -786,7 +782,7 @@ manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
     }
     tmp = exp(argument) * rem;
 #if NOISY
-    std::cout << "tmp dopo 'exp'... " << tmp << std::endl << std::endl;
+    std::cout << "tmp dopo `exp'... " << tmp << std::endl << std::endl;
 #endif
   }
   
@@ -870,7 +866,7 @@ simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input) {
       ris += simplify_on_output_ex(e.op(i), n, input);
   }
   else if (is_a<mul>(e))
-    // We can not call 'simplify_on_output_ex' on every factor because
+    // We can not call `simplify_on_output_ex' on every factor because
     // otherwise it is not possible to transform products.
     ris = manip_factor(e, n, input);
   else if (is_a<power>(e)) {
@@ -880,8 +876,8 @@ simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input) {
       ris = reduce_product(pow(base, exp));
     else
       ris = pow_simpl(pow(base, exp), n, input);
-    // Necessary for l'output: for example if 'e = sqrt(18)^a' then
-    // 'ris = sqrt(2)^a*3^a'.
+    // Necessary for l'output: for example if `e = sqrt(18)^a' then
+    // `ris = sqrt(2)^a*3^a'.
     if (is_a<mul>(ris))
       ris = collect_base_exponent(ris);
   }
@@ -895,6 +891,7 @@ simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input) {
 
   return ris;
 }
+
 
 /*!
   Using the function <CODE>GiNaC::numer_denom()</CODE> we are able to
