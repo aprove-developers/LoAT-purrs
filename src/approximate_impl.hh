@@ -28,8 +28,9 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr.defs.hh"
 #include "Number.defs.hh"
 #include "complint.hh"
-#include "cimath.h"
+#include <cimath.h>
 #include <cln/rational.h>
+#include <cmath>
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -64,6 +65,35 @@ approximate(const Number& n) {
   else
     return CInterval(approximate_rational(n.real()),
 		     approximate_rational(n.imaginary()));
+}
+
+// Kludge to get around what is likely to be a CoStLy bug: see
+// http://www.cs.unipr.it/pipermail/purrs-devel/2002-November/000724.html
+inline CInterval
+mypow(const CInterval& base, const CInterval& exponent) {
+  if (exponent.im() == Interval::ZERO()) {
+    const Interval& exponent_re = exponent.re();
+    if (exponent_re.sup() < 0.0)
+      if (exponent_re == -Interval::ONE())
+	return CInterval(Interval::ONE(), Interval::ZERO()) / base;
+      else
+	return CInterval(Interval::ONE(), Interval::ZERO())
+	  / mypow(base, -exponent);
+    else if (exponent_re.isPoint()) {
+      double ep = exponent_re.sup();
+      if (ep == 2.0)
+	return sqr(base);
+      else if (ep == 0.5)
+	return sqrt(base);
+      else if (ep == floor(ep) && base.re().sup() < 0.0) {
+	CInterval r = pow(-base, exponent);
+	if ((long(ep) % 2) != 0)
+	  r = -r;
+	return r;
+      }
+    }
+  }
+  return pow(base, exponent);
 }
 
 template <typename SymbolHandler>
@@ -136,21 +166,8 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
     bool exponent_interval_result
       = generic_approximate(e.arg(1), sh, exponent_ae, exponent_aci);
     if (base_interval_result)
-      if (exponent_interval_result) {
-	// Kludge to get around what is likely to be a CoStLy bug: see
-	// http://www.cs.unipr.it/pipermail/purrs-devel/2002-November/000724.html
-	if (exponent_aci.im() == Interval::ZERO()) {
-	  if (exponent_aci.re() == -Interval::ONE())
-	    aci = CInterval(Interval::ONE(), Interval::ZERO()) / base_aci;
-	  else if (exponent_aci.re().sup() < 0.0)
-	    aci = CInterval(Interval::ONE(), Interval::ZERO())
-	      / pow(base_aci, -exponent_aci);
-	  else
-	    aci = pow(base_aci, exponent_aci);
-	}
-	else
-	  aci = pow(base_aci, exponent_aci);
-      }
+      if (exponent_interval_result)
+	aci = mypow(base_aci, exponent_aci);
       else
 	ae = pwr(Complex_Interval(base_aci), exponent_ae);
     else
