@@ -379,7 +379,7 @@ main(int argc, char *argv[]) try {
       goto failed;
       break;
 
- 
+    case Recurrence::TOO_COMPLEX:
     default:
       if (expect_diagnose_unsolvable) {
 	if (verbose)
