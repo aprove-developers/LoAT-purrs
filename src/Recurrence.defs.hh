@@ -244,7 +244,7 @@ public:
   //! can be wrong or we failed to simplify it.
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system can neither
   //! be proved nor be disproved the correctness of the solution.
-  Verify_Status verify_exact_solution();
+  Verify_Status verify_exact_solution() const;
  
   //! \brief
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the lower bound is certainly
@@ -253,7 +253,7 @@ public:
   //! can be wrong or we failed to simplify it.
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system can neither
   //! be proved nor be disproved the correctness of the lower bound.
-  Verify_Status verify_lower_bound();
+  Verify_Status verify_lower_bound() const;
 
   //! \brief
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the upper bound is certainly
@@ -262,7 +262,7 @@ public:
   //! can be wrong or we failed to simplify it.
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system can neither
   //! be proved nor be disproved the correctness of the upper bound.
-  Verify_Status verify_upper_bound();
+  Verify_Status verify_upper_bound() const;
 
   //! \brief
   //! Returns <CODE>false</CODE> if there are not undefined initial conditions;

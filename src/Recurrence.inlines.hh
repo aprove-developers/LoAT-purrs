@@ -422,7 +422,7 @@ Recurrence::upper_bound(Expr& e) const {
 }
 
 inline Recurrence::Verify_Status
-Recurrence::verify_exact_solution() {
+Recurrence::verify_exact_solution() const {
   if (exact_solution_.has_expression()) {
     if (is_linear_finite_order() || is_non_linear_finite_order())
       return verify_exact_solution(*this);
@@ -438,7 +438,7 @@ Recurrence::verify_exact_solution() {
 }
 
 inline Recurrence::Verify_Status
-Recurrence::verify_lower_bound() {
+Recurrence::verify_lower_bound() const {
   if (exact_solution_.has_expression())
     return verify_exact_solution();
   else if (lower_bound_.has_expression())
@@ -453,7 +453,7 @@ Recurrence::verify_lower_bound() {
 }
 
 inline Recurrence::Verify_Status
-Recurrence::verify_upper_bound() {
+Recurrence::verify_upper_bound() const {
   if (exact_solution_.has_expression())
     return verify_exact_solution();
   else if (upper_bound_.has_expression())
