@@ -129,7 +129,7 @@ x(n) = 2 * x(n-1) - x(n-2) + 3 * n - 1
 
 % 6. Parametric with parameter m
 x(n) = 7 * x(n-1) + 10 * (2^(n-1) * m)^2
-% Solution: x(n) = 7^n * x(0) + m^2 * numeric (13, 3) * (7^n - 4^n)
+% Solution: x(n) = 7^n * x(0) + m^2 * numeric (10, 3) * (7^n - 4^n)
 
 % 7. Parametric with parameters a, b 
 x(n) = (1-a) * x(n-1) + b * (1 - x(n-1))
