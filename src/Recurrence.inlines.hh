@@ -43,6 +43,7 @@ Recurrence::Recurrence()
     finite_order_p(0),
     functional_eq_p(0),
     non_linear_p(0),
+    infinite_order_p(0),
     tested_exact_solution(false) {
 }
 
@@ -57,6 +58,7 @@ Recurrence::Recurrence(const Expr& e)
     finite_order_p(0),
     functional_eq_p(0),
     non_linear_p(0),
+    infinite_order_p(0),
     tested_exact_solution(false) {
 }
 
@@ -72,6 +74,7 @@ Recurrence::Recurrence(const Recurrence& y)
     finite_order_p(y.finite_order_p),
     functional_eq_p(y.functional_eq_p),    
     non_linear_p(y.non_linear_p),
+    infinite_order_p(y.infinite_order_p),
     exact_solution_(y.exact_solution_),
     lower_bound_(y.lower_bound_),
     upper_bound_(y.upper_bound_),
@@ -83,6 +86,7 @@ Recurrence::~Recurrence() {
   delete finite_order_p;
   delete functional_eq_p;
   delete non_linear_p;
+  delete infinite_order_p;
 }
 
 inline Recurrence&
@@ -97,6 +101,7 @@ Recurrence::operator=(const Recurrence& y) {
   finite_order_p = y.finite_order_p;
   functional_eq_p = y.functional_eq_p;
   non_linear_p = y.non_linear_p;
+  infinite_order_p = y.infinite_order_p;
   exact_solution_ = y.exact_solution_;
   lower_bound_ = y.lower_bound_;
   upper_bound_ = y.upper_bound_;
