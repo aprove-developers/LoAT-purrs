@@ -372,16 +372,19 @@ find_roots(const GExpr& p, const GSymbol& x,
   GExpr r;
   int nested_degree = is_nested_polynomial(q, x, r);
   if (nested_degree > 1) {
-    size_t num_roots_before = roots.size();
+    // We need a vector to hold the roots of `r'.
     std::vector<Polynomial_Root> roots_r;
+    // Avoid any useless reallocation.
+    roots_r.reserve(r.degree(x));
     if (find_roots(r, x, roots_r, 1)) {
-      size_t num_roots_after = roots_r.size();
+      size_t num_r_roots = roots_r.size();
       GExpr theta = 2*Pi/nested_degree;
-      for (int j = 1; j < nested_degree; ++j) {
+      for (int j = 0; j < nested_degree; ++j) {
 	GExpr root_of_unity = cos(j*theta) + I*sin(j*theta);
-	for (size_t i = num_roots_before; i < num_roots_after; ++i)
-	  roots.push_back(Polynomial_Root(pow(roots_r[i], 
-	    numeric(1)/nested_degree).value() * root_of_unity, multiplicity));
+	for (size_t i = 0; i < num_r_roots; ++i)
+	  roots.push_back(Polynomial_Root(pow(roots_r[i].value(),
+					      numeric(1)/nested_degree)
+					  * root_of_unity, multiplicity));
       }
       return true;
     }
