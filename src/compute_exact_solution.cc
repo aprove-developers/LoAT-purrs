@@ -210,26 +210,29 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
       return TOO_COMPLEX;
   // The initial conditions will start from `z'.
   set_first_well_defined_rhs_linear(z.to_unsigned());
+  // `product_factor' is `alpha!(n)'.
   Symbol index;
-  Expr alpha_factorial
+  Expr product_factor
     = compute_product(index, z + 1,
 		      transform_in_single_fraction(coefficients[1]
 						   .substitute(n, index)));
-  alpha_factorial = simplify_factorials_and_exponentials(alpha_factorial);
+  product_factor
+    = simplify_factorials_and_exponentials(product_factor);
+  set_product_factor(product_factor);
 
   // Build the recurrence with constant coefficient of the first order
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
-  Recurrence rec_const_coeff(x(n-1)+inhomogeneous_term/alpha_factorial);
+  Recurrence rec_const_coeff(x(n-1)+inhomogeneous_term/product_factor);
   std::vector<Polynomial_Root> new_roots;
   new_roots.push_back(Polynomial_Root(Expr(1), RATIONAL));
   rec_const_coeff.finite_order_p
     = new Finite_Order_Info(1, coefficients, 1);
   rec_const_coeff.set_first_well_defined_rhs_linear(z.to_unsigned());
   rec_const_coeff.set_type(LINEAR_FINITE_ORDER_CONST_COEFF);
-  rec_const_coeff.set_inhomogeneous_term(inhomogeneous_term/alpha_factorial);
+  rec_const_coeff.set_inhomogeneous_term(inhomogeneous_term/product_factor);
 
   exact_solution_
-    .set_expression(alpha_factorial
+    .set_expression(product_factor
 		    * (rec_const_coeff.solve_constant_coeff_order_1(new_roots)
 		       + x(z)));
   return SUCCESS;
