@@ -652,8 +652,7 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
   \f[
     T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n)
   \f]
-  transforming it in the linear recurrence of first order with variable
-  coefficient
+  transforming it in the linear recurrence of first order
   \f[
     T(n) = \frac{f(n)}{f(n-1)} (1+f(n-1)) T(n-1)
       + f(n) \left( \frac{g(n)}{f(n)} - \frac{g(n-1)}{f(n-1)} \right).
@@ -718,6 +717,13 @@ PURRS::Recurrence::compute_order(const Number& decrement, unsigned int& order,
   return SUCCESS;
 }
 
+/*!
+  Analyzes the \f$ i \f$-th addend of the right hand side of the
+  recurrence \p *this collecting and updating all necessary informations
+  of which the system it will have need during the computations of the
+  solution or of the bounds, or during the verification of the obtained
+  results.
+*/
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classification_summand(const Expr& addend,
 					  Expr& inhomogeneous,
@@ -941,22 +947,84 @@ PURRS::Recurrence::classification_summand(const Expr& addend,
 }
 
 /*!
-  Returns <CODE>SUCCESS</CODE> if the recurrence is linear and of finite
-  order or if is the case of functional equation.
-  In the first case are stored in the structure <CODE>Finite_Order_Info</CODE>
-  the order of the recurrence, the first initial condition
-  (i. e., the smallest positive integer for which the recurrence is
-  well-defined) and the coefficients.
-  In the second case are stored
-  in the structure <CODE>Functional_Equation_Info</CODE> the values
-  \f$ a \f$ and \f$ b \f$ of the functional equation
-  \f$ x_n = a x_{n/b} + d n^e \f$.
-  In both the case is besides computed the non-homogeneous part
+  Classifies the recurrence \p *this.
+  Returns:
+  - <CODE>SUCCESS</CODE>                   if the recurrence is linear of
+                                           finite or infinite order;
+					   non-linear of finite order;
+					   in the case of functional equation;
+  - <CODE>HAS_NON_INTEGER_DECREMENT</CODE> if the right-hand side of the
+                                           recurrence contains at least an
+					   occurrence of <CODE>x(n-k)</CODE>,
+					   where <CODE>k</CODE> is not an
+					   integer;
+  - <CODE>HAS_NEGATIVE_DECREMENT</CODE>    if the right-hand side of the
+                                           recurrence contains at least an
+					   occurrence of <CODE>x(n-k)</CODE>,
+					   where <CODE>k</CODE> is a negative
+					   integer;
+  - <CODE>HAS_NULL_DECREMENT</CODE>        if the right-hand side of the
+                                           recurrence contains at least an
+					   occurrence of <CODE>x(n)</CODE>;
+  - <CODE>HAS_HUGE_DECREMENT</CODE>        if the right-hand side of the
+                                           recurrence contains at least an
+					   occurrence of <CODE>x(n-k)</CODE>,
+					   where <CODE>k</CODE> is too big to
+					   be handled by the standard
+					   solution techniques;
+  - <CODE>MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
+                                           any sense;
+  - <CODE>UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not solvable;
+  - <CODE>INDETERMINATE_RECURRENCE</CODE>  if the recurrence is indeterminate,
+                                           hence it has infinite solutions.
+  - <CODE>TOO_COMPLEX</CODE>               in all the other cases.
+
+  For each class of recurrences for which the system returns
+  <CODE>SUCCESS</CODE>, it is initialized a pointer to an opportune
+  class containing all necessary informations about the recurrence
+  of which the system it will have need during the computations of the
+  solution or of the bounds, or during the verification of the obtained
+  results.
+  
+  If the recurrence is <EM>linear of finite order<EM> in the structure
+  <CODE>Finite_Order_Info</CODE> are stored the order, the coefficients,
+  the greates common divisor among the positive integer \f$ k \f$
+  of the terms of the form \f$ x(n-k) \f$ contained in the right hand side
+  and the first initial condition (i. e., the smallest positive integer for
+  which the recurrence is well-defined) setted to \f$ 0 \k$ by default.
+
+  If the recurrence is <EM>linear of infinite order<EM> there is not
+  a general method to solve it. At the moment we solve only recurrences
+  of infinite order of the shape
+  \f[
+    T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n)
+  \f]
+  transforming it in the linear recurrence of first order
+  \f[
+    T(n) = \frac{f(n)}{f(n-1)} (1+f(n-1)) T(n-1)
+      + f(n) \left( \frac{g(n)}{f(n)} - \frac{g(n-1)}{f(n-1)} \right).
+  \f].
+  In the structure <CODE>Infinite_Order_Info</CODE> are stored the right
+  hand side, the coefficient and the inhomogeneous term of the finite order
+  recurrence in which \p *this is transformed, the weight \f$ f(n) \f$.
+
+  If the recurrence is <EM>non-linear of finite order<EM> there is not
+  a general method to solve it. At the moment we solve only a small class
+  of them transforming them in linear recurrences.
+  In the structure <CODE>Non_Linear_Info</CODE> are stored the right hand
+  side of the linear recurrence, the logarithm's base or the exponential's
+  base used in the transformation, a vector of symbols associated to the
+  eventual negative numbers that will be the arguments of the logarithms.
+
+  In the case of <EM>functional equation<EM> in the structure
+  <CODE>Functional_Equation_Info</CODE> are stored the values
+  \f$ a \f$ and \f$ b \f$ of the terms \f$ a x_{n/b} \f$ contained
+  in the right hand side, the positive integer starting from which the
+  inhomogeneous term is a non negative, non decreasing function (setted to
+  \f$ 1 \f$ by default).
+
+  In all the previous cases is besides computed the non-homogeneous part
   of the recurrence.
-  If the function not returns <CODE>SUCCESS</CODE> then is one of the
-  following cases: <CODE>HAS_NEGATIVE_DECREMENT</CODE>,
-  <CODE>HAS_HUGE_DECREMENT</CODE>, <CODE>HAS_NULL_DECREMENT</CODE>,
-  <CODE>HAS_NON_INTEGER_DECREMENT</CODE>, <CODE>TOO_COMPLEX</CODE>.
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classify() const {
@@ -1036,10 +1104,44 @@ PURRS::Recurrence::classify() const {
 }
 
 /*!
-  This function solves recurrences of SOME TYPE provided they
-  are supplied in SOME FORM. (Explain.)
-  It does that by repeatedly calling solve() and handling
-  the errors that may arise.
+  Classifies the recurrence \p *this calling the method
+  <CODE>classify()</CODE>.
+  If the function <CODE>classify()</CODE> returns the value
+  <CODE>HAS_NEGATIVE_DECREMENT</CODE> or the value
+  <CODE>HAS_NULL_DECREMENT</CODE>, this function tries to rewrite the
+  recurrence in the normal form \f$ x(n) = r \f$, where \f$ r \f$
+  does not contain terms <CODE>x(n-k)</CODE>, where <CODE>k</CODE>
+  is not a positive integer.
+
+  Returns:
+  - <CODE>SUCCESS</CODE>                   if the recurrence is linear of
+                                           finite or infinite order;
+					   non-linear of finite order;
+					   in the case of functional equation;
+  - <CODE>HAS_NON_INTEGER_DECREMENT</CODE> if the right-hand side of the
+                                           recurrence contains at least an
+					   occurrence of <CODE>x(n-k)</CODE>,
+					   where <CODE>k</CODE> is not an
+					   integer;
+  - <CODE>HAS_HUGE_DECREMENT</CODE>        if the right-hand side of the
+                                           recurrence contains at least an
+					   occurrence of <CODE>x(n-k)</CODE>,
+					   where <CODE>k</CODE> is too big to
+					   be handled by the standard
+					   solution techniques;
+  - <CODE>MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
+                                           any sense;
+  - <CODE>UNSOLVABLE_RECURRENCE</CODE>     if the recurrence is not solvable;
+  - <CODE>INDETERMINATE_RECURRENCE</CODE>  if the recurrence is indeterminate,
+                                           hence it has infinite solutions.
+  - <CODE>TOO_COMPLEX</CODE>               in all the other cases. 
+  
+  For each class of recurrences for which the system returns
+  <CODE>SUCCESS</CODE>, it is initialized a pointer to an opportune
+  class containing all necessary informations about the recurrence
+  of which the system it will have need during the computations of the
+  solution or of the bounds, or during the verification of the obtained
+  results.
 */
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classify_and_catch_special_cases() const {
