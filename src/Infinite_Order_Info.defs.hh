@@ -39,10 +39,12 @@ public:
   //! \f$ coeff_first_order_ = coeff_first_order \f$;
   //! \f$ inhomog_first_order_ = inhomog_first_order \f$;
   //! \f$ weight_inf_order_ = weight_inf_order \f$,
-  //! \f$ lower_bound_sum_ = lower_bound_sum.
+  //! \f$ lower_bound_sum_ = lower_bound_sum,
+  //! \f$ upper_bound_sum_ = upper_bound_sum.
   Infinite_Order_Info(const Expr& new_rhs, const Expr& coeff_first_order,
 		      const Expr& inhomog_first_order,
-		      const Expr& weight_inf_order, unsigned lower_bound_sum);
+		      const Expr& weight_inf_order,
+		      unsigned lower_bound_sum, const Expr& upper_bound_sum);
 
   //! Copy-constructor.
   Infinite_Order_Info(const Infinite_Order_Info& y);
@@ -80,6 +82,12 @@ public:
   //! Returns <CODE>lower_bound_sum_</CODE>.
   unsigned lower_bound_sum() const;
 
+  //! Returns <CODE>upper_bound_sum_</CODE>.
+  Expr upper_bound_sum() const;
+
+  //! Returns <CODE>upper_bound_sum_</CODE>.
+  Expr& upper_bound_sum();
+
   //! Returns <CODE>infinite_order_fwdr_</CODE>.
   unsigned infinite_order_fwdr() const;
 
@@ -91,14 +99,14 @@ private:
   //! Contains the right hand side of the recurrence obtained
   //! transforming a infinite order recurrence of the form
   //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{n-1} T(k) + g(n).
+  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
   //! \f]
   Expr rhs_transformed_in_first_order_;
 
   //! \brief
   //! If the infinite order recurrence is of the shape
   //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{n-1} T(k) + g(n).
+  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
   //! \f]
   //! then it is transformable in a first order linear recurrence.
   //! This data contains the coefficient of the new recurrence.
@@ -107,7 +115,7 @@ private:
   //! \brief
   //! If the infinite order recurrence is of the shape
   //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{n-1} T(k) + g(n).
+  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
   //! \f]
   //! then it is transformable in a first order linear recurrence.
   //! This data contains the non homogeneous part of the new recurrence.
@@ -116,7 +124,7 @@ private:
   //! \brief
   //! Contains the factor \f$ f(n) \f$ of the infinite order recurrence
   //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{n-1} T(k) + g(n).
+  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
   //! \f]
   Expr weight_inf_order_;
 
@@ -124,9 +132,17 @@ private:
   //! Stores the lower bound \f$ n_o \f$ of the object sum of the
   //! infinite order recurrence
   //! \f[
-  //!   T(n) = f(n) \sum_{k=n_0}^{n-1} T(k) + g(n).
+  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
   //! \f].
   unsigned lower_bound_sum_;
+
+  //! \brief
+  //! Stores the upper bound \f$ u(n) \f$ of the object sum of the
+  //! infinite order recurrence
+  //! \f[
+  //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
+  //! \f].
+  Expr upper_bound_sum_;
 
   //! \brief
   //! Stores the smallest positive integer for which the recurrence is

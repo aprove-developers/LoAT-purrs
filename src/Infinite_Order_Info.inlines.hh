@@ -34,22 +34,25 @@ Infinite_Order_Info::Infinite_Order_Info(const Expr& new_rhs,
 					 const Expr& coeff_first_order,
 					 const Expr& inhomog_first_order,
 					 const Expr& weight_inf_order,
-					 unsigned lower_bound_sum) 
+					 unsigned lower_bound_sum,
+					 const Expr& upper_bound_sum) 
   : rhs_transformed_in_first_order_(new_rhs),
     coeff_first_order_(coeff_first_order),
     inhomog_first_order_(inhomog_first_order),
     weight_inf_order_(weight_inf_order),
-    lower_bound_sum_(lower_bound_sum) {
+    lower_bound_sum_(lower_bound_sum),
+    upper_bound_sum_(upper_bound_sum) {
 }
 
 inline
 Infinite_Order_Info::Infinite_Order_Info(const Infinite_Order_Info& y)
   : rhs_transformed_in_first_order_
 (y.rhs_transformed_in_first_order_),
-  coeff_first_order_(y.coeff_first_order_),
-  inhomog_first_order_(y.inhomog_first_order_),
-  weight_inf_order_(y.weight_inf_order_),
-  lower_bound_sum_(y.lower_bound_sum_) {
+    coeff_first_order_(y.coeff_first_order_),
+    inhomog_first_order_(y.inhomog_first_order_),
+    weight_inf_order_(y.weight_inf_order_),
+    lower_bound_sum_(y.lower_bound_sum_),
+    upper_bound_sum_(y.upper_bound_sum_) {
 }
 
 inline
@@ -64,6 +67,7 @@ Infinite_Order_Info::operator=(const Infinite_Order_Info& y) {
   inhomog_first_order_ = y.inhomog_first_order_;
   weight_inf_order_ = y.weight_inf_order_;
   lower_bound_sum_ = lower_bound_sum_;
+  upper_bound_sum_ = upper_bound_sum_;
   return *this;
 }
 
@@ -110,6 +114,16 @@ Infinite_Order_Info::weight_inf_order() {
 inline unsigned
 Infinite_Order_Info::lower_bound_sum() const {
   return lower_bound_sum_;
+}
+
+inline Expr
+Infinite_Order_Info::upper_bound_sum() const {
+  return upper_bound_sum_;
+}
+
+inline Expr&
+Infinite_Order_Info::upper_bound_sum() {
+  return upper_bound_sum_;
 }
 
 inline unsigned
