@@ -59,6 +59,9 @@ Expr
 simplify_sum(const Expr& e, const Sum_Simplification_Kind simplification);
 
 Expr
+simplify_collect_sums(const Expr& e);
+
+Expr
 simplify_logarithm(const Expr& e);
 
 Expr

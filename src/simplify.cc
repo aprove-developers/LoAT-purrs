@@ -1766,7 +1766,7 @@ compute_sum(const Expr& e) {
 //! rewrite the sum with the upper limit of the form \f$ m + j \f$
 //! (\f$ m \f$ is a symbol and \f$ j \in \Zset \f$), so that the
 //! upper limit is \f$ m \f$; if \p simplification is equal to
-//! <CODE>COMPUTE_SUM</CODE> split the sum in many sums how many are
+//! <CODE>COMPUTE_SUM</CODE> split the sum in as many sums as
 //! the addends of the summand and compute, when possible, symbolic sums.
 /*!
  If \p simplification is equal to <CODE>REWRITE_UPPER_LIMIT</CODE> this
@@ -1813,7 +1813,7 @@ simplify_sum_in_expanded_ex(const Expr& e,
 		   simplify_sum_in_expanded_ex(e.arg(0), simplification));
     else {
       if (e.is_the_sum_function()) {
-	// Splits the sum in many sums how many are the addends of the
+	// Splits the sum in as many sums as the addends of the
 	// summand.
 	if (simplification == COMPUTE_SUM && e.arg(3).is_a_add()) {
 	  e_rewritten = 0;
@@ -1850,6 +1850,62 @@ simplify_sum_in_expanded_ex(const Expr& e,
   return e_rewritten;
 }
 
+//! \brief
+//! Look for symbolic sums in the expression and, when possible, pack
+//! them all into a single symbolic sum. When verifying solutions we
+//! can thus simplify sums we cannot compute one by one.
+Expr
+simplify_collect_sums_in_expanded_ex(const Expr& e) {
+  // FIXME: Bare-bone version tailored to verification needs. Add recursion
+  //        (to simplify sums nested into other expressions) and variable
+  //        indices.
+  if (e.is_a_add()) {
+    // Preliminary check: see whether we have sums.
+    Expr addend;
+    bool work_on_this = false;
+    for (unsigned int i = e.nops(); i-- > 0; ) {
+      addend = e.op(i);
+      // FIXME: is_the_sum_function() does not recognize -sum(i,1,n,i).
+      if (addend.is_the_sum_function()) {
+	if (addend.arg(1) == 1 && addend.arg(2) == Recurrence::n) {
+	  work_on_this = true;
+	  break;
+	}
+      }
+    }
+    if (!work_on_this)
+      return e;
+    // Find and merge symbolic sums going from 1 to n.
+    Expr e_without_sums = 0;
+    Expr e_sum = 0;
+    Symbol sum_variable;
+    unsigned int merged_sums=0;
+    for (unsigned int i = e.nops(); i-- > 0; ) {
+      addend = e.op(i);
+      if (addend.is_the_sum_function()) {
+	if (addend.arg(1) == 1 && addend.arg(2) == Recurrence::n) {
+	  merged_sums++;
+	  // FIXME: add a coefficient when adding support for a*sum(...).
+	  e_sum += addend.arg(3).substitute(addend.arg(0), sum_variable);
+	}
+	else {
+	  e_without_sums += addend;
+	};
+      }
+      else e_without_sums += addend;
+    }
+    // FIXME: Casting to Expr seems necessary.
+    e_sum = sum((Expr) sum_variable, (Expr) 1, (Expr) Recurrence::n, e_sum);
+    // Return the original expression unless we actually managed to merge
+    // some sums.
+    if (merged_sums > 1)
+      return e_without_sums + e_sum;
+    else
+      return e;
+  }
+  else return e;
+}
+
 } // anonymous namespace
 
 
@@ -1870,8 +1926,8 @@ PURRS::simplify_ex_for_output(const Expr& e, bool input) {
 */
 PURRS::Expr
 PURRS::simplify_numer_denom(const Expr& e) {
-  // Since we need both numerator and denominator, to call 'numer_denom'
-  // is faster than to use 'numer()' and 'denom()' separately.
+  // Since we need both numerator and denominator, calling 'numer_denom'
+  // is faster than using 'numer()' and 'denom()' separately.
   Expr numer_e;
   Expr denom_e;
   e.numerator_denominator(numer_e, denom_e);
@@ -1919,11 +1975,17 @@ PURRS::simplify_sum(const Expr& e,
   return simplify_sum_in_expanded_ex(e.expand(), simplification).expand();
 }
 
+PURRS::Expr
+PURRS::simplify_collect_sums(const Expr& e) {
+  return simplify_collect_sums_in_expanded_ex(e.expand()).expand();
+}
+
 /*!
   Executes consecutively all simplifications described in the comment
   of the functions <CODE>simplify_numer_denom()</CODE>,
   <CODE>simplify_binomials_factorials_exponentials()</CODE>,
   <CODE>simplify_ex_for_output()</CODE> and
+  <CODE>simplify_collect_sums()</CODE> and
   <CODE>simplify_logarithm()</CODE>.
 */
 PURRS::Expr
@@ -1931,6 +1993,7 @@ PURRS::simplify_all(const Expr& e) {
   Expr e_rewritten = e;
   e_rewritten = simplify_numer_denom(e_rewritten);
   e_rewritten = simplify_binomials_factorials_exponentials(e_rewritten);
+  e_rewritten = simplify_collect_sums(e_rewritten);
   e_rewritten = simplify_ex_for_output(e_rewritten, false);
   e_rewritten = simplify_logarithm(e_rewritten);
   return e_rewritten;
