@@ -105,7 +105,7 @@ build_characteristic_equation(const Symbol& x,
 }
 
 Expr
-return_sum(bool distinct, const Number& order, const Expr& coeff,
+return_sum(bool distinct, unsigned lower_bound_sum, const Expr& coeff,
 	   const Symbol& alpha, const Symbol& lambda) {
   Symbol k("k");
   Symbol x("x");
@@ -116,8 +116,8 @@ return_sum(bool distinct, const Number& order, const Expr& coeff,
   else
     symbolic_sum = sum_poly_times_exponentials(q_k, k, Recurrence::n, 1);
   // `sum_poly_times_exponentials' computes the sum from 0, whereas
-  // we want that the sum start from `order'.
-  for (Number j = 0; j < order; ++j)
+  // we want that the sum start from `lower_bound_sum'.
+  for (Number j = 0; j < lower_bound_sum; ++j)
     symbolic_sum -= q_k.substitute(k, j) * pwr(alpha, j) * pwr(lambda, -j);
   if (distinct)
     symbolic_sum = symbolic_sum.substitute(x, alpha/lambda);
@@ -230,7 +230,7 @@ characteristic_equation_and_its_roots(unsigned int order,
   \f$ \lambda \f$ denote the generic root of the characteristic 
   equation and \f$ \alpha \f$ the generic base of an exponential.
 
-  This function fills the two vectors of <CODE>Expr</CODE>
+  This function fills the two vectors of <CODE>Expr</CODE>,
   \p symbolic_sum_distinct and \p symbolic_sum_no_distinct,
   with two different sums: first fix the base \f$ \alpha_i \f$.
   For each root \f$ \lambda \f$
@@ -238,29 +238,34 @@ characteristic_equation_and_its_roots(unsigned int order,
     \f[
       symbolic{\_}sum{\_}distinct[i]
         = \lambda^n * f_i(\alpha_i / \lambda)
-        = \lambda^n * \sum_{k=order}^n (\alpha_i / \lambda)^k \cdot p_i(k);
+        = \lambda^n * \sum_{k=h}^n (\alpha_i / \lambda)^k \cdot p_i(k);
     \f]
   - if \f$ \alpha_i = \lambda \f$ then
     \f[
       symbolic{\_}sum{\_}no{\_}distinct[i]
         = \lambda^n * f_i(1)
-        = \lambda^n * \sum_{k=order}^n p_i(k).
+        = \lambda^n * \sum_{k=h}^n p_i(k).
     \f]
-    We put \f$ 0 \f$ in the i-th position of \p symbolic_sum_no_distinct,
-    in the first case, and of \p symbolic_sum_distinct, in the second case,
-    so that the two vectors have always the same dimensions.
+  The lower bound `h' of the sums is the order of the recurrence
+  shifted forward of a positive integer that indicates the smallest
+  positive integer starting from which the recurrence is well-defined.
+  We put \f$ 0 \f$ in the i-th position of \p symbolic_sum_no_distinct,
+  in the first case, and of \p symbolic_sum_distinct, in the second case,
+  so that the two vectors have always the same dimensions.
 */
 void
 PURRS::compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
 			    const std::vector<Polynomial_Root>& roots,
 			    const std::vector<Expr>& base_of_exps,
 			    const std::vector<Expr>& exp_poly_coeff,
+			    unsigned lower_bound_sum,
 			    std::vector<Expr>& symbolic_sum_distinct,
 			    std::vector<Expr>& symbolic_sum_no_distinct) {
   // Compute the order of the recurrence relation.
   Number order = 0;
   for (unsigned i = roots.size(); i-- > 0; )
     order += roots[i].multiplicity();
+
   unsigned r = 0;
   for (unsigned i = base_of_exps.size(); i-- > 0; )
     for (unsigned j = roots.size(); j-- > 0; ) {
@@ -271,11 +276,11 @@ PURRS::compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
       // The root is different from the exponential's base.
       if (distinct) {
 	if (order <= 2)
-	  symbolic_sum_distinct.push_back(return_sum(true, order,
+	  symbolic_sum_distinct.push_back(return_sum(true, lower_bound_sum,
 						     exp_poly_coeff[i],
 						     alpha, lambda));
 	else
-	  symbolic_sum_distinct.push_back(return_sum(true, order,
+	  symbolic_sum_distinct.push_back(return_sum(true, lower_bound_sum,
 						     exp_poly_coeff[r],
 						     alpha, lambda));
 	symbolic_sum_no_distinct.push_back(0);
@@ -283,11 +288,11 @@ PURRS::compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
       // The root is equal to the exponential's base.
       else {
 	if (order <= 2)
-	  symbolic_sum_no_distinct.push_back(return_sum(false, order,
+	  symbolic_sum_no_distinct.push_back(return_sum(false, lower_bound_sum,
 							exp_poly_coeff[i],
 							alpha, lambda));
 	else
-	  symbolic_sum_no_distinct.push_back(return_sum(false, order,
+	  symbolic_sum_no_distinct.push_back(return_sum(false, lower_bound_sum,
 							exp_poly_coeff[r],
 							alpha, lambda));
 	symbolic_sum_distinct.push_back(0);

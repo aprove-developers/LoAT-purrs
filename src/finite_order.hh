@@ -48,6 +48,7 @@ compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
 		     const std::vector<Polynomial_Root>& roots,
 		     const std::vector<Expr>& base_of_exps,
 		     const std::vector<Expr>& exp_poly_coeff,
+		     unsigned lower_bound_sum,
 		     std::vector<Expr>& symbolic_sum_distinct,
 		     std::vector<Expr>& symbolic_sum_no_distinct);
 
