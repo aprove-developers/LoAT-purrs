@@ -255,11 +255,11 @@ main() try {
     start = rsg.ru_utime;
 #endif
 
-  Expr solution;
+  Expr exact_solution;
   try {
-    switch (recurrence.solve()) {
+    switch (recurrence.compute_exact_solution()) {
     case Recurrence::SUCCESS:
-      recurrence.exact_solution(solution);
+      recurrence.exact_solution(exact_solution);
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
       error("this recurrence is unsolvable");
@@ -335,7 +335,7 @@ main() try {
 
   cout << h2() << "Random formula for x(n) = " << rhs << h2() << endl;
 
-  cout << "x(n) = " << solution << endl;
+  cout << "x(n) = " << exact_solution << endl;
 
   // Get a pointer to the environment.
   const CgiEnvironment& env = cgi.getEnvironment();
