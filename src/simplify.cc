@@ -249,8 +249,10 @@ collect_same_base(const GExpr& e, const std::vector<GExpr>& bases,
     if (!is_a<power>(e.op(i))) {
       bool to_sum = false;
       for (unsigned j = bases.size(); j-- > 0; )
-	if (bases[j].is_equal(e.op(i)))
+	if (bases[j].is_equal(e.op(i))) {
 	  to_sum = true;
+	  exponents[j] = exponents[j] + 1;
+	}
       // (rule 5.)
       if (to_sum)
 	ris = ris.subs(pow(e.op(i), wild()) == pow(e.op(i), (wild() + 1)));
@@ -320,14 +322,21 @@ static GExpr
 collect_base_exponent(const GExpr& e) {
   GExpr tmp = e;
   // Simplifies nested powers.
-  for (unsigned i = tmp.nops(); i-- > 0; )
-    if (is_a<power>(tmp.op(i)))
-      if (is_a<power>(tmp.op(i).op(0))
-	  || has(tmp.op(i).op(0), sqrt(wild())))
-	tmp = tmp.subs(tmp.op(i) == pow_simpl(tmp.op(i)));
-      else if (is_a<mul>(tmp.op(i).op(0)))
-	tmp = tmp.subs(tmp.op(i).op(0)
-		       == collect_base_exponent(tmp.op(i).op(0)));
+  for (unsigned i = tmp.nops(); i-- > 0; ) {
+    bool repeat = true;
+    while (repeat) {
+      GExpr input = tmp.op(i);
+      if (is_a<power>(tmp.op(i)))
+	if (is_a<power>(tmp.op(i).op(0))
+	    || has(tmp.op(i).op(0), sqrt(wild())))
+	  tmp = tmp.subs(tmp.op(i) == pow_simpl(tmp.op(i)));
+	else if (is_a<mul>(tmp.op(i).op(0)))
+	  tmp = tmp.subs(tmp.op(i).op(0)
+			 == collect_base_exponent(tmp.op(i).op(0)));
+      if (tmp.op(i).is_equal(input))
+      	repeat = false;
+    }
+  }
 #if NOISY
   std::cout << "tmp dopo nested... " << tmp << std::endl;
 #endif
@@ -629,7 +638,6 @@ red_prod(const GNumber& base1, const GNumber& exp1,
   return reduce_to_standard_form(k, b);
 }
 
-// FIXME: rifare ricorsivamente...
 static GExpr
 reduce_product(const GExpr& a) {
   GExpr tmp = a;
@@ -691,7 +699,7 @@ reduce_product(const GExpr& a) {
 
   // DIFFERENT VERSION OF reduce_product()
   //
- //   GExpr tmp = a;
+//    GExpr tmp = a;
 //    GExpr factor_to_reduce = 1;
 //    GExpr factor_no_to_reduce = 1;
 //    GNumber base_1 = 1;
@@ -769,9 +777,9 @@ simplify_roots(const GExpr& e) {
   }
   else if (is_a<mul>(e)) {
     // Se si usa la nuova reduce_product().
-    //return reduce_product(e);
+    // return reduce_product(e);
 
-//      // Se si usa la vecchia reduce_product().
+    // Se si usa la vecchia reduce_product().
     ris = 1;
     for (unsigned i = e.nops(); i-- > 0; )
       ris *= simplify_roots(reduce_product(e.op(i)));
