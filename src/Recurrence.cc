@@ -1329,12 +1329,15 @@ PURRS::Recurrence::exact_solution(Expr& e) const {
     if (!evaluated_exact_solution_.has_expression()) {
       evaluated_exact_solution_.set_expression
 	(compute_solution_or_bound_on_i_c(exact_solution_.expression()));
+      evaluated_exact_solution_
+      .set_expression(evaluated_exact_solution_
+		      .replace_system_generated_symbols(*this));
       evaluated_lower_bound_.set_expression
 	(evaluated_exact_solution_.expression());
       evaluated_upper_bound_.set_expression
 	(evaluated_exact_solution_.expression());
     }
-    e = evaluated_exact_solution_.replace_system_generated_symbols(*this);
+    e = evaluated_exact_solution_.expression();
   }
   set_first_valid_index_for_solution();
   assert(has_only_symbolic_initial_conditions(e));
@@ -1518,10 +1521,14 @@ PURRS::Recurrence::lower_bound(Expr& e) const {
     // possibly shift the lower bound in according with the initial conditions
     // before replacing the values of the initial conditions to the
     // symbolic initial conditions `x(i)'.
-    if (!evaluated_lower_bound_.has_expression())
+    if (!evaluated_lower_bound_.has_expression()) {
       evaluated_lower_bound_.set_expression
         (compute_solution_or_bound_on_i_c(lower_bound_.expression()));
-    e = evaluated_lower_bound_.replace_system_generated_symbols(*this);
+      evaluated_lower_bound_
+      .set_expression(evaluated_lower_bound_
+		      .replace_system_generated_symbols(*this));
+    }
+    e = evaluated_lower_bound_.expression();
   }
   set_first_valid_index_for_solution();
   if (is_functional_equation()
@@ -1550,10 +1557,14 @@ PURRS::Recurrence::upper_bound(Expr& e) const {
     // possibly shift the upper bound in according with the initial conditions
     // before replacing the values of the initial conditions to the
     // symbolic initial conditions `x(i)'.
-    if (!evaluated_upper_bound_.has_expression())
+    if (!evaluated_upper_bound_.has_expression()) {
       evaluated_upper_bound_.set_expression
 	(compute_solution_or_bound_on_i_c(upper_bound_.expression()));
-    e = evaluated_upper_bound_.replace_system_generated_symbols(*this);
+      evaluated_upper_bound_
+	.set_expression(evaluated_upper_bound_
+			.replace_system_generated_symbols(*this));
+    }
+    e = evaluated_upper_bound_.expression();
   }
   set_first_valid_index_for_solution();
   if (is_functional_equation()
