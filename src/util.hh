@@ -49,9 +49,12 @@ clear(GList& l);
 GExpr
 get_binding(const GList& substitution, unsigned wild_index);
 
+bool
+is_scalar_representation(const GExpr& e, const GSymbol& x);
+
 void
-assign_polynomial_part(const GExpr& p, const GSymbol& var,
-		       GExpr& poly, GExpr& no_poly);
+isolate_polynomial_part(const GExpr& p, const GSymbol& var,
+			GExpr& poly, GExpr& no_poly);
 
 #ifdef NOISY
 #define D_MSG(s) std::cout << s << std::endl

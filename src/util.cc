@@ -77,122 +77,108 @@ get_binding(const GList& substitution, unsigned wild_index) {
   return substitution.op(wild_index).rhs();
 }
 
+//! Returns <CODE>true</CODE> if \p e is a scalar rapresentation for \p x;
+//! returns <CODE>false</CODE> otherwise.
 /*!
-  Return <CODE>true</CODE> if the <CODE>GiNaC::GExpr</CODE> \p p is a
-  scalar for poly in var, <CODE>false</CODE> otherwise.
+  This function realizes the definition of <EM>scalar representation
+  for \f$ x \f$</EM>, where \f$ x \f$ is any symbol.
+  This is more briefly written <EM>scalar</EM> and defined inductively
+  as follows:
+  - every number is a scalar;
+  - every symbolic constant is a scalar;
+  - every parameter different from \f$ x \f$ is a scalar;
+  - if \f$ f \f$ is any unary function and \f$ x \f$ is a
+    scalar representation, then \f$ f(x) \f$ is a scalar;
+  - if \f$ a \f$ and \f$ b \f$ are scalars then
+    \f$ a+b \f$, \f$ a*b \f$, and \f$ a^b \f$ are scalars.
 */
-static bool
-is_scalar_for_poly(const GExpr& e, const GSymbol& var) {
-  bool found;
+bool
+is_scalar_representation(const GExpr& e, const GSymbol& x) {
   if (is_a<numeric>(e))
-    found = true;
+    return true;
   else if (is_a<constant>(e))
-    found = true;
-  else if (is_a<symbol>(e) && !e.is_equal(var))
-    found = true;
+    return true;
+  else if (is_a<symbol>(e) && !e.is_equal(x))
+    return true;
   else if (is_a<power>(e))
-    found = is_scalar_for_poly(e.op(0), var)
-      && is_scalar_for_poly(e.op(1), var);
+    return is_scalar_representation(e.op(0), x)
+      && is_scalar_representation(e.op(1), x);
   else if (is_a<function>(e))
-    found = is_scalar_for_poly(e.op(0), var);
+    return is_scalar_representation(e.op(0), x);
   else if (is_a<add>(e) || is_a<mul>(e)) {
-    found = true;
     for (unsigned i = e.nops(); i-- > 0; )
-      found = found && is_scalar_for_poly(e.op(i), var);
+      if (!is_scalar_representation(e.op(i), x))
+	return false;
+    return true;
   }
-  else
-    found = false;
-  
-  return found;
+  return false;
 }
 
-
+//! Returns <CODE>true</CODE> if \p e is a polynomial in \p x;
+//! returns <CODE>false</CODE> otherwise.
 /*!
-  Return <CODE>true</CODE> if the <CODE>GiNaC::GExpr</CODE> \p p is a
-  polynomial in var, <CODE>false</CODE> otherwise.
+  This function realizes the definition of <EM>polynomial in \f$ x \f$</EM>,
+  where \f$ x \f$ is any symbol.
+  This is more briefly written <EM>polynomial</EM> and defined inductively
+  as follows:
+  - every scalar representation for \f$ x \f$ is a polynomial;
+  - \f$ x \f$ is a polynomial;
+  - if \f$ a \f$ is a polynomial in \f$ x \f$ and \f$ b \f$ is a positive
+    integer, then \f$ a^b \f$ is a polynomial;
+  - if \f$ a \f$ and \f$ b \f$ are polynomials then
+    \f$ a + b \f$ and \f$ a * b \f$ are polynomials.
 */
 static bool
-is_polynomial(const GExpr& e, const GSymbol& var) {
-  bool found;
-  if (is_scalar_for_poly(e, var))
-    found = true;
-  else if (e.is_equal(var))
-    found = true;
+is_polynomial(const GExpr& e, const GSymbol& x) {
+  if (is_scalar_representation(e, x))
+    return true;
+  else if (e.is_equal(x))
+    return true;
   else if (is_a<power>(e)) {
-    bool exp_ok = false;
-    if (is_a<numeric>(e.op(1))) {
-      GNumber exp = GiNaC::ex_to<GiNaC::numeric>(e.op(1));
-      if (exp.is_pos_integer())
-	exp_ok = true;
-    }
-    if (is_polynomial(e.op(0), var) && exp_ok)
-      found = true;
-    else
-      found = false;
+    if (is_polynomial(e.op(0), x))
+      if (is_a<numeric>(e.op(1))) {
+	GNumber exponent = GiNaC::ex_to<GiNaC::numeric>(e.op(1));
+	if (exponent.is_pos_integer())
+	  return true;
+      }
   }
   else if (is_a<add>(e) || is_a<mul>(e)) {
-    found = true;
     for (unsigned i = e.nops(); i-- > 0; )
-      found = found && is_polynomial(e.op(i), var);
+      if (!is_polynomial(e.op(i), x))
+	return false;
+    return true;
   }
-  else
-    found = false;
-
-  return found;
+  return false;
 }
 
+//! Isolates a polynomial part of \p e and assigns it to \p polynomial,
+//! assigning the corresponding possibly non-polynomial part of \p e
+//! to \p rest.
 /*!
-  This function realized the definition of <EM>polynomial_in_var</EM>.
-  Given an expression \p p and a symbol \p var, this function builds two
-  other expression \p poly and \p no_poly that contain the polynomial part
-  and the non-polynomial part of \p p regarding the variable \p var.
-  The polynomial part of an expression is the sum of those terms that are
-  polynomials in a variable in according to the following definition
-  in two steps (when the polynomial part lacks \p poly is zero and so
-  also for non polynomial part).
-  Step 1
-  We consider the variable \p var.
-  Definition of the object <EM>scalar for poly in var</EM> inductively as
-  follows:
-  - every number is a scalar for poly in var;
-  - every symbolic constant is a scalar for poly in var;
-  - every parameter different from \f$ var \f$ is a scalar for poly in var;
-  - if \f$ f \f$ is any unary function and \f$ x \f$ is scalar for poly in var,
-    then \f$ f(x) \f$ is a scalar for poly in var;
-  - if \f$ a \f$ and \f$ b \f$ are scalars for poly in var then
-    \f$ a + b \f$, \f$ a * b \f$ and \f$ a^b \f$ are scalars for poly in var.
-  Step 2
-  Definition of <EM>polynomial_in_var</EM> inductively as follows:
-  - every scalar for poly in var is a polynomial in var;
-  - \f$ var \f$ is a polynomial in var;
-  - if \f$ a \f$ is a polynomial in var and \f$ b \f$ is a positive integer,
-    then \f$ a^b \f$ is a polynomial in var;
-  - if \f$ a \f$ and \f$ b \f$ are polynomials in var then
-    \f$ a + b \f$ and \f$ a * b \f$ are polynomials in var.
+  Given an expression \f$ e \f$, <EM>isolating a polynomial part of
+  \f$ e \f$ in \f$ x \f$</EM> means finding two expressions \f$ p \f$
+  and \f$ r \f$ such that \f$ p \f$ is a polynomial in \f$ x \f$ and
+  \f$ e = p + r \f$.
 */
 void
-assign_polynomial_part(const GExpr& p, const GSymbol& var,
-		       GExpr& poly, GExpr& no_poly) {
-  if (is_a<add>(p)) {
-    poly = 0;
-    no_poly = 0;
-    for (unsigned i = p.nops(); i-- > 0; ) {
-      if (is_polynomial(p.op(i), var))
-	poly += p.op(i);
+isolate_polynomial_part(const GExpr& e, const GSymbol& x,
+			GExpr& polynomial, GExpr& rest) {
+  if (is_a<add>(e)) {
+    polynomial = 0;
+    rest = 0;
+    for (unsigned i = e.nops(); i-- > 0; ) {
+      if (is_polynomial(e.op(i), x))
+	polynomial += e.op(i);
       else
-	no_poly += p.op(i);
+	rest += e.op(i);
     }
   }
+  else if (is_polynomial(e, x)) {
+    polynomial = e;
+    rest = 0;
+  }
   else {
-    poly = 1;
-    no_poly = 1;
-    if (is_polynomial(p, var)) {
-      poly *= p;
-      no_poly = 0;
-    }
-    else {
-      no_poly *= p;
-      poly = 0;
-    }
+    rest = e;
+    polynomial = 0;
   }
 }

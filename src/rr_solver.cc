@@ -615,42 +615,9 @@ exp_poly_decomposition_factor(const GExpr& base,
   // `p[position]' and `q[position]', respectively.
   GExpr polynomial;
   GExpr possibly_not_polynomial;
-  assign_polynomial_part(e, n, polynomial, possibly_not_polynomial);
+  isolate_polynomial_part(e, n, polynomial, possibly_not_polynomial);
   p[position] += polynomial;
   q[position] += possibly_not_polynomial;
-}
-
-/*!
-  This function realized the definition of <EM>valid base</EM>.
-  This is defined inductively as follows:
-  - every number is a valid base;
-  - every symbolic constant is a valid base;
-  - every parameter different from \f$ n \f$ is a
-    valid base;
-  - if \f$ f \f$ is any unary function and \f$ x \f$
-    is a valid base, then \f$ f(x) \f$ is a valid base;
-  - if \f$ a \f$ and \f$ b \f$ are valid bases then
-    \f$ a+b \f$, \f$ a*b \f$, and \f$ a^b \f$ are valid bases.
-*/
-static bool
-valid_base(const GExpr& e, const GSymbol& n) {
-  if (is_a<numeric>(e))
-    return true;
-  else if (is_a<constant>(e))
-    return true;
-  else if (is_a<symbol>(e) && !e.is_equal(n))
-    return true;
-  else if (is_a<power>(e))
-    return valid_base(e.op(0), n) && valid_base(e.op(1), n);
-  else if (is_a<function>(e))
-    return valid_base(e.op(0), n);
-  else if (is_a<add>(e) || is_a<mul>(e)) {
-    for (unsigned i = e.nops(); i-- > 0; )
-      if (!valid_base(e.op(i), n))
-	return false;
-    return true;
-  }
-  return false;
 }
 
 static void
@@ -666,7 +633,7 @@ exp_poly_decomposition_summand(const GExpr& e, const GSymbol& n,
       // We have found something of the form `pow(base, n)'.
       GExpr base = get_binding(substitution, 0);
       assert(base != 0);
-      if (valid_base(base, n)) {
+      if (is_scalar_representation(base, n)) {
 	// We have found something of the form `pow(base, n)'
 	// and `base' is good for the decomposition.
 	exp_poly_decomposition_factor(base, 1, n, alpha, p, q);
@@ -680,7 +647,7 @@ exp_poly_decomposition_summand(const GExpr& e, const GSymbol& n,
 	// We have found something of the form `pow(base, n)'.
 	GExpr base = get_binding(substitution, 0);
 	assert(base != 0);
-	if (valid_base(base, n)) {
+	if (is_scalar_representation(base, n)) {
 	  // We have found something of the form `pow(base, n)'
 	  // and `base' is good for the decomposition: determine
 	  // `r = e/pow(base, n)'.
