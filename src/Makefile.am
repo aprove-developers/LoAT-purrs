@@ -66,6 +66,7 @@ poly_factor.hh \
 gosper.hh \
 simplify.hh \
 numerator_denominator.hh \
+factorize.hh \
 compute_prod.hh \
 ep_decomp.hh \
 sum_poly.hh \
@@ -99,6 +100,7 @@ size_norm.cc \
 complint.cc \
 gosper.cc \
 numerator_denominator.cc \
+factorize.cc \
 poly_factor.cc \
 rr_solver.cc \
 simplify.cc \
