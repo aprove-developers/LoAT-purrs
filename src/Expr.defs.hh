@@ -244,6 +244,10 @@ Expr x(const Expr& y);
 Expr sum(const Expr& index, const Expr& lower, const Expr& upper,
 	 const Expr& summand);
 
+//! Returns the function \f$ prod(index,lower,upper,factor) \f$.
+Expr sum(const Expr& index, const Expr& lower, const Expr& upper,
+	 const Expr& factor);
+
 class Expr : private GiNaC::ex {
 private:
   typedef GiNaC::ex Base;
@@ -651,6 +655,8 @@ private:
   friend Expr x(const Expr& y);
   friend Expr sum(const Expr& index, const Expr& lower, const Expr& upper,
 		  const Expr& summand);
+  friend Expr prod(const Expr& index, const Expr& lower, const Expr& upper,
+		   const Expr& factor);
 
   //! Builds the expression corresponding to \p ge.
   Expr(const GiNaC::ex& ge);

@@ -36,6 +36,7 @@ namespace GiNaC {
 
 DECLARE_FUNCTION_1P(x);
 DECLARE_FUNCTION_4P(sum);
+DECLARE_FUNCTION_4P(prod);
 
 } // namespace GiNaC
 
@@ -498,6 +499,15 @@ sum(const Expr& index, const Expr& lower, const Expr& upper,
 	     static_cast<const Expr::Base>(lower),
 	     static_cast<const Expr::Base>(upper),
 	     static_cast<const Expr::Base>(summand));
+}
+
+inline Expr
+prod(const Expr& index, const Expr& lower, const Expr& upper,
+     const Expr& factor) {
+  return sum(static_cast<const Expr::Base>(index),
+	     static_cast<const Expr::Base>(lower),
+	     static_cast<const Expr::Base>(upper),
+	     static_cast<const Expr::Base>(factor));
 }
 
 inline bool
