@@ -39,8 +39,9 @@ public:
   //! \f$ coeff_first_order_ = coefficient \f$;
   //! \f$ inhomog_first_order_ = inhomogeneous \f$;
   //! \f$ value_of_first_element_ = first_element \f$.
-  Infinite_Order_Info(const Expr& new_rhs, const Expr& coefficient,
-		      const Expr& inhomog, const Expr& first_element);
+  Infinite_Order_Info(const Expr& new_rhs, const Expr& coeff_first_order,
+		      const Expr& inhomog_first_order,
+		      const Expr& weight_inf_order);
 
   //! Copy-constructor.
   Infinite_Order_Info(const Infinite_Order_Info& y);
@@ -69,8 +70,8 @@ public:
   //! Returns <CODE>inhomog_first_order_</CODE>.
   Expr& inhomog_first_order();
 
-  Expr value_of_first_element() const;
-  Expr& value_of_first_element();
+  Expr weight_inf_order() const;
+  Expr& weight_inf_order();
 
 //   //! Returns <CODE>infinite_order_fwdr_</CODE>.
 //   unsigned infinite_order_fwdr() const;
@@ -108,7 +109,7 @@ private:
   //! This data contains the non homogeneous part of the new recurrence.
   Expr inhomog_first_order_;
 
-  Expr value_of_first_element_;
+  Expr weight_inf_order_;
 
 //   //! \brief
 //   //! Stores the smallest positive integer for which the recurrence is

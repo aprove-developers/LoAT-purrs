@@ -641,8 +641,8 @@ private:
   //! returned from this method.
   Expr& inhomog_first_order();
 
-  Expr value_of_first_element() const;
-  Expr& value_of_first_element();
+  Expr weight_inf_order() const;
+  Expr& weight_inf_order();
 
 //   //! \brief
 //   //! Stores the smallest positive integer for which the infinite

@@ -454,17 +454,17 @@ Recurrence::inhomog_first_order() {
 }
 
 inline Expr
-Recurrence::value_of_first_element() const {
+Recurrence::weight_inf_order() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> value_of_first_element();
+  return infinite_order_p -> weight_inf_order();
 }
 
 inline Expr&
-Recurrence::value_of_first_element() {
+Recurrence::weight_inf_order() {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
-  return infinite_order_p -> value_of_first_element();
+  return infinite_order_p -> weight_inf_order();
 }
 
 // inline unsigned

@@ -31,13 +31,13 @@ namespace Parma_Recurrence_Relation_Solver {
 
 inline
 Infinite_Order_Info::Infinite_Order_Info(const Expr& new_rhs,
-					 const Expr& coefficient,
-					 const Expr& inhomogeneous,
-					 const Expr& first_element) 
+					 const Expr& coeff_first_order,
+					 const Expr& inhomog_first_order,
+					 const Expr& weight_inf_order) 
   : rhs_transformed_in_first_order_(new_rhs),
-    coeff_first_order_(coefficient),
-    inhomog_first_order_(inhomogeneous),
-    value_of_first_element_(first_element) {
+    coeff_first_order_(coeff_first_order),
+    inhomog_first_order_(inhomog_first_order),
+    weight_inf_order_(weight_inf_order) {
 }
 
 inline
@@ -46,7 +46,7 @@ Infinite_Order_Info::Infinite_Order_Info(const Infinite_Order_Info& y)
 (y.rhs_transformed_in_first_order_),
     coeff_first_order_(y.coeff_first_order_),
     inhomog_first_order_(y.inhomog_first_order_),
-    value_of_first_element_(y.value_of_first_element_) {
+    weight_inf_order_(y.weight_inf_order_) {
 }
 
 inline
@@ -59,7 +59,7 @@ Infinite_Order_Info::operator=(const Infinite_Order_Info& y) {
     = y.rhs_transformed_in_first_order_;
   coeff_first_order_ = y.coeff_first_order_;
   inhomog_first_order_ = y.inhomog_first_order_;
-  value_of_first_element_ = y.value_of_first_element_;
+  weight_inf_order_ = y.weight_inf_order_;
   return *this;
 }
 
@@ -94,13 +94,13 @@ Infinite_Order_Info::inhomog_first_order() {
 }
 
 inline Expr
-Infinite_Order_Info::value_of_first_element() const {
-  return value_of_first_element_;
+Infinite_Order_Info::weight_inf_order() const {
+  return weight_inf_order_;
 }
 
 inline Expr&
-Infinite_Order_Info::value_of_first_element() {
-  return value_of_first_element_;
+Infinite_Order_Info::weight_inf_order() {
+  return weight_inf_order_;
 }
 
 // inline unsigned
