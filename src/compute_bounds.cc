@@ -130,20 +130,38 @@ PURRS::Recurrence::approximate_functional_equation() const {
 
   Expr ub;
   Expr lb;
+  // The index of the initial condition is not a number.
   if (index == 0) {
     ub = pwr(coefficient(), q_upper) * index_initial_condition
       + sum.substitute(n, q_upper + 1);
     lb = pwr(coefficient(), q_lower) * index_initial_condition
       + sum.substitute(n, q_lower);
   }
+  // The index of the initial condition is a number.
   else {
-    ub = pwr(coefficient(), q_upper) * get_initial_condition(index.to_unsigned())
+    ub = pwr(coefficient(), q_upper)
+      * get_initial_condition(index.to_unsigned())
       + sum.substitute(n, q_upper + 1);
-    lb = pwr(coefficient(), q_lower) * get_initial_condition(index.to_unsigned())
+    lb = pwr(coefficient(), q_lower)
+      * get_initial_condition(index.to_unsigned())
       + sum.substitute(n, q_lower);
   }
-  upper_bound_.set_expression(simplify_logarithm(ub));
-  lower_bound_.set_expression(simplify_logarithm(lb));
+  ub = simplify_logarithm(ub);
+  lb = simplify_logarithm(lb);
 
+  // The functional equation for which the system has found lower and upper
+  // bounds now has been deduced from a non linear recurrence.
+  if (non_linear_p) {
+    ub = pwr(base_exp_log(), ub);
+    ub = substitute_x_function(ub, base_exp_log(), false);
+    ub = simplify_ex_for_input(ub, true);
+
+    lb = pwr(base_exp_log(), lb);
+    lb = substitute_x_function(lb, base_exp_log(), false);
+    lb = simplify_ex_for_input(lb, true);
+  }
+
+  upper_bound_.set_expression(ub);
+  lower_bound_.set_expression(lb);
   return SUCCESS;
 }
