@@ -58,25 +58,25 @@ public:
   Infinite_Order_Info& operator=(const Infinite_Order_Info& y);
 
   //! Returns <CODE>rhs_transformed_in_first_order_</CODE>.
-  Expr rhs_transformed_in_first_order() const;
+  const Expr& rhs_transformed_in_first_order() const;
 
   //! Returns <CODE>rhs_transformed_in_first_order_</CODE>.
   Expr& rhs_transformed_in_first_order();
 
   //! Returns <CODE>coeff_first_order_</CODE>.
-  Expr coeff_first_order() const;
+  const Expr& coeff_first_order() const;
 
   //! Returns <CODE>coeff_first_order_</CODE>.
   Expr& coeff_first_order();
 
   //! Returns <CODE>inhomog_first_order_</CODE>.
-  Expr inhomog_first_order() const;
+  const Expr& inhomog_first_order() const;
 
   //! Returns <CODE>inhomog_first_order_</CODE>.
   Expr& inhomog_first_order();
 
   //! Returns <CODE>weight_inf_order_</CODE>.
-  Expr weight_inf_order() const;
+  const Expr& weight_inf_order() const;
 
   //! Returns <CODE>weight_inf_order_</CODE>.
   Expr& weight_inf_order();
@@ -85,7 +85,7 @@ public:
   unsigned int lower_bound_sum() const;
 
   //! Returns <CODE>upper_bound_sum_</CODE>.
-  Expr upper_bound_sum() const;
+  const Expr& upper_bound_sum() const;
 
   //! Returns <CODE>upper_bound_sum_</CODE>.
   Expr& upper_bound_sum();

@@ -68,7 +68,7 @@ Non_Linear_Info::associated_linear_rec() {
   return associated_linear_rec_;
 }
 
-inline Number
+inline const Number&
 Non_Linear_Info::coeff_simple_non_linear_rec() const {
   return coeff_and_base_.first;
 }
@@ -78,7 +78,7 @@ Non_Linear_Info::coeff_simple_non_linear_rec() {
   return coeff_and_base_.first;
 }
 
-inline Expr
+inline const Expr&
 Non_Linear_Info::base_exp_log() const {
   return coeff_and_base_.second;
 }

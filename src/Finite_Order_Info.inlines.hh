@@ -97,13 +97,13 @@ Finite_Order_Info::gcd_among_decrements() const {
   return gcd_among_decrements_;
 }
 
-inline Expr&
-Finite_Order_Info::product_factor() {
+inline const Expr&
+Finite_Order_Info::product_factor() const {
   return product_factor_;
 }
 
-inline Expr
-Finite_Order_Info::product_factor() const {
+inline Expr&
+Finite_Order_Info::product_factor() {
   return product_factor_;
 }
 

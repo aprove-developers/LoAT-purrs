@@ -62,13 +62,13 @@ public:
   Recurrence& associated_linear_rec();
 
   //! Returns <CODE>coeff_and_base_.first</CODE>.
-  Number coeff_simple_non_linear_rec() const;
+  const Number& coeff_simple_non_linear_rec() const;
 
   //! Returns <CODE>coeff_and_base_.first</CODE>.
   Number& coeff_simple_non_linear_rec();
 
   //! Returns <CODE>coeff_and_base_.second</CODE>.
-  Expr base_exp_log() const;
+  const Expr& base_exp_log() const;
 
   //! Returns <CODE>coeff_and_base_.second</CODE>.
   Expr& base_exp_log();

@@ -71,10 +71,10 @@ public:
   unsigned int gcd_among_decrements() const;
 
   //! Returns <CODE>product_factor_</CODE>.
-  Expr& product_factor();
+  const Expr& product_factor() const;
 
   //! Returns <CODE>product_factor_</CODE>.
-  Expr product_factor() const;
+  Expr& product_factor();
 
   //! Sets <CODE>product_factor_</CODE> with \p x.
   void set_product_factor(const Expr& x);

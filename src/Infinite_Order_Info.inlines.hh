@@ -71,7 +71,7 @@ Infinite_Order_Info::operator=(const Infinite_Order_Info& y) {
   return *this;
 }
 
-inline Expr
+inline const Expr&
 Infinite_Order_Info::rhs_transformed_in_first_order() const {
   return rhs_transformed_in_first_order_;
 }
@@ -81,7 +81,7 @@ Infinite_Order_Info::rhs_transformed_in_first_order() {
   return rhs_transformed_in_first_order_;
 }
 
-inline Expr
+inline const Expr&
 Infinite_Order_Info::coeff_first_order() const {
   return coeff_first_order_;
 }
@@ -91,7 +91,7 @@ Infinite_Order_Info::coeff_first_order() {
   return coeff_first_order_;
 }
 
-inline Expr
+inline const Expr&
 Infinite_Order_Info::inhomog_first_order() const {
   return inhomog_first_order_;
 }
@@ -101,7 +101,7 @@ Infinite_Order_Info::inhomog_first_order() {
   return inhomog_first_order_;
 }
 
-inline Expr
+inline const Expr&
 Infinite_Order_Info::weight_inf_order() const {
   return weight_inf_order_;
 }
@@ -116,7 +116,7 @@ Infinite_Order_Info::lower_bound_sum() const {
   return lower_bound_sum_;
 }
 
-inline Expr
+inline const Expr&
 Infinite_Order_Info::upper_bound_sum() const {
   return upper_bound_sum_;
 }
