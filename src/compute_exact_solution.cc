@@ -136,6 +136,7 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
     std::vector<Expr> symbolic_sum_no_distinct;
     compute_symbolic_sum(alpha, lambda, roots,
 			 base_of_exps, exp_poly_coeff,
+			 order() + first_well_defined_rhs_linear(),
 			 symbolic_sum_distinct, symbolic_sum_no_distinct);
     // Substitutes to the sums in the vectors `symbolic_sum_distinct' or
     // `symbolic_sum_no_distinct' the value of the characteristic equation's
@@ -214,10 +215,7 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
     = compute_product(index, z + 1,
 		      transform_in_single_fraction(coefficients[1]
 						   .substitute(n, index)));
-  // FIXME: this simplification simplifies the value of `alpha_factorial'
-  // but not the solution because we need to the simplification about
-  // factorials and exponentials for the output.
-  //alpha_factorial = simplify_factorials_and_exponentials(alpha_factorial);
+  alpha_factorial = simplify_factorials_and_exponentials(alpha_factorial);
 
   // Build the recurrence with constant coefficient of the first order
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
@@ -324,6 +322,7 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
       std::vector<Expr> symbolic_sum_no_distinct;
       compute_symbolic_sum(alpha, lambda, roots,
 			   base_of_exps, exp_poly_coeff,
+			   order() + first_well_defined_rhs_linear(),
 			   symbolic_sum_distinct, symbolic_sum_no_distinct);
       for (unsigned j = symbolic_sum_distinct.size(); j-- > 0; ) {
 	symbolic_sum_no_distinct[j] *= lambda / diff_roots;
@@ -472,6 +471,7 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
       std::vector<Expr> symbolic_sum_no_distinct;
       compute_symbolic_sum(alpha, lambda, roots,
 			   base_of_exps, poly_coeff_tot,
+			   order() + first_well_defined_rhs_linear(),
 			   symbolic_sum_distinct, symbolic_sum_no_distinct);
       // Substitutes to the sums in the vector `symbolic_sum_distinct'
       // or `symbolic_sum_no_distinct' the corresponding values of the
