@@ -374,6 +374,8 @@ main(int argc, char *argv[]) try {
 	  cerr << "*** unexpected unsolvability diagnosis" << endl;
 	++unexpected_unsolvability_diagnoses;
       }
+      if (interactive)
+	cout << "Unsolvable." << endl;
       goto failed;
       break;
 
@@ -384,6 +386,8 @@ main(int argc, char *argv[]) try {
 	  cerr << "*** unexpected failure to diagnose unsolvability" << endl;
 	++unexpected_failures_do_diagnose_unsolvability;
       }
+      if (interactive)
+	cout << "Sorry, this is too difficult." << endl;
 
     failed:
       if (regress_test) {
@@ -393,8 +397,6 @@ main(int argc, char *argv[]) try {
 	  ++unexpected_exact_failures;
 	}
       }
-      if (interactive)
-	cout << "Sorry, this is too difficult." << endl;
     }
   } // while (input_stream)
 
