@@ -48,19 +48,26 @@ using namespace PURRS;
   of the vectors \p numerators and \p denominators are built the numerator
   and the denominator of \f$ f \f$.
 */
-static Expr
+Expr
 find_denominator_single_factor(const Expr& e, unsigned position,
 			       std::vector<Expr>& numerators,
 			       std::vector<Expr>& denominators) {
-  Number exponent;
+  Number num;
   // `e' is a denominator.
-  if (e.is_a_power() && e.arg(1).is_a_number(exponent)
-      && !exponent.is_nonnegative_integer()) {
-    Expr den = pwr(e.arg(0), -exponent);
+  if (e.is_a_power() && e.arg(1).is_a_number(num)
+      && !num.is_nonnegative_integer()) {
+    Expr den = pwr(e.arg(0), -num);
     denominators[position] *= den;
     return den;
   }
-  // `e' is not a denominator.
+  // `e' is a rational number.
+  else if (e.is_a_number(num) && num.is_rational()) {
+    numerators[position] *= num.numerator();
+    Expr den = num.denominator();
+    denominators[position] *= den;
+    return den;
+  }
+  // `e' is not a denominator and is not a rational number.
   else {
     numerators[position] *= e;
     return 1;
@@ -74,7 +81,7 @@ find_denominator_single_factor(const Expr& e, unsigned position,
   \p denominators.
   Returns the denominator of \f$ e \f$.
 */
-static Expr
+Expr
 find_denominator_single_term(const Expr& e, unsigned position,
 			     std::vector<Expr>& numerators,
 			     std::vector<Expr>& denominators) {
@@ -98,7 +105,7 @@ find_denominator_single_term(const Expr& e, unsigned position,
   integers with \f$ e_f > e_d \f$, then in \p factor_to_add is stored the
   factor \f$ b^{e_f - e_d} \f$.
 */
-static bool
+bool
 check_factor_is_to_add(const Expr& base_f, const Expr& exponent_f,
 		       const Number& numeric_exponent_f,
 		       const Expr& d, Expr& factor_to_add) {
@@ -149,7 +156,7 @@ check_factor_is_to_add(const Expr& base_f, const Expr& exponent_f,
   return add_factor;
 }
 
-static Expr
+Expr
 take_common_single_factor(const Expr& base_f, const Expr& exponent_f,
 			  const Number& numeric_exponent_f,
 			  const Expr& d) {
@@ -199,7 +206,7 @@ take_common_single_factor(const Expr& base_f, const Expr& exponent_f,
   If exponent is numeric \p exponent is setted to \f$ 0 \f$, otherwise
   \p numeric_exponent is setted to \f$ 0 \f$.
 */
-static void
+void
 split_factor(const Expr& factor, Expr& base, Expr& exponent,
 	     Number& numeric_exponent) {
   if (factor.is_a_power()) {
@@ -217,7 +224,7 @@ split_factor(const Expr& factor, Expr& base, Expr& exponent,
   }
 }
 
-static void
+void
 take_common_single_factors(const Expr& d, const Expr& f,
 			   Expr& common_factors) {
   Expr temp_d = d;
@@ -249,7 +256,7 @@ take_common_single_factors(const Expr& d, const Expr& f,
     returns \f$ {d_1}^{e_1} \dots {d_i}^e \dots {d_k}^{e_k}\f$;
   - returns \f$ d f \f$ in all other cases.
 */
-static Expr
+Expr
 take_common_factors(const Expr& d, const Expr& f) {
   Expr common_factors = 1;
   Expr temp_d = d;
@@ -271,7 +278,7 @@ take_common_factors(const Expr& d, const Expr& f) {
     then \f$ r = b^{e_d - e_f} \f$;
   - in all other cases \f$ r = 1 \f$.
 */
-static Expr
+Expr
 find_factor_for_numerator(const Expr& d, const Expr& f) {
   Expr base_d;
   Expr exponent_d;
@@ -281,12 +288,13 @@ find_factor_for_numerator(const Expr& d, const Expr& f) {
   Expr rem = 1;
   if (f.is_a_mul()) {
     bool d_factor_of_f = false;
-    for (unsigned i = f.nops(); i-- > 0; )
-      if (d != f.op(i)) {
+    for (unsigned i = f.nops(); i-- > 0; ) {
+      const Expr& tmp_f = f.op(i);
+      if (d != tmp_f) {
 	Expr base_f;
 	Expr exponent_f;
 	Number numeric_exponent_f;
-	split_factor(f.op(i), base_f,
+	split_factor(tmp_f, base_f,
 		     exponent_f, numeric_exponent_f);
 	if (base_f == base_d && numeric_exponent_f.is_positive_integer()
 	    && numeric_exponent_d.is_positive_integer()) {
@@ -296,6 +304,7 @@ find_factor_for_numerator(const Expr& d, const Expr& f) {
       }
       else
 	d_factor_of_f = true;
+    }
     if (!d_factor_of_f)
       rem *= d;
   }
@@ -325,7 +334,7 @@ find_factor_for_numerator(const Expr& d, const Expr& f) {
   <CODE>take_common_factors()</CODE>.
   This function computes \f$ \sum_{i = 1}^k \frac{d}{d_i} n_i \f$.
 */
-static Expr
+Expr
 find_numerator(const std::vector<Expr>& numerators,
 	       const std::vector<Expr>& denominators,
 	       const Expr& denominator) {
@@ -350,15 +359,18 @@ find_numerator(const std::vector<Expr>& numerators,
   return numerator;
 }
 
-static void
-numerator_denominator_factor(const Expr& e,
-			     Expr& numerator, Expr& denominator) {
+void
+numerator_denominator_term(const Expr& e,
+			   Expr& numerator, Expr& denominator) {
+  D_MSGVAR("num_den_term ", e);
   // The dimension of `numerators' and `denominators' is terms'number of `e'
   // and will contain the numerator and the denominator of each term of `e'.  
   std::vector<Expr> numerators;
   std::vector<Expr> denominators;
   numerator = 1;
   denominator = 1;
+  // Since this function is recursive, even if the first time `e' can not
+  // be an `add', for the recursive calls `e' can be an `add'.
   if (e.is_a_add()) {
     numerators.insert(numerators.begin(), e.nops(), Number(1));
     denominators.insert(denominators.begin(), e.nops(), Number(1));
@@ -376,10 +388,10 @@ numerator_denominator_factor(const Expr& e,
     denominators.push_back(1);
     Expr base_num;
     Expr base_den;
-    numerator_denominator_factor(e.arg(0), base_num, base_den);
+    numerator_denominator_term(e.arg(0), base_num, base_den);
     Expr exp_num;
     Expr exp_den;
-    numerator_denominator_factor(e.arg(1), exp_num, exp_den);
+    numerator_denominator_term(e.arg(1), exp_num, exp_den);
     denominator
       = find_denominator_single_term(pwr(base_num/base_den, exp_num/exp_den),
 				     0, numerators, denominators);
@@ -387,12 +399,14 @@ numerator_denominator_factor(const Expr& e,
   }
   else if (e.is_a_mul())
     for (unsigned i = e.nops(); i-- > 0; ) {
-      if (e.op(i).is_a_power()) {
+      const Expr& factor = e.op(i);
+      D_VAR(factor);
+      if (factor.is_a_power()) {
 	numerators.push_back(1);
 	denominators.push_back(1);
 	Expr num;
 	Expr den;
-	numerator_denominator_factor(e.op(i), num, den);
+	numerator_denominator_term(factor, num, den);
 	denominator *= find_denominator_single_term(num/den, 0,
 						    numerators, denominators);
 	numerator = numerators[0];
@@ -400,8 +414,10 @@ numerator_denominator_factor(const Expr& e,
       else {
 	numerators.push_back(1);
 	denominators.push_back(1);
-	denominator *= find_denominator_single_term(e.op(i), 0,
+	denominator *= find_denominator_single_term(factor, 0,
 						    numerators, denominators);
+	D_VAR(numerators[0]);
+	D_VAR(denominator);
 	numerator = numerators[0];
       }
     }
@@ -411,6 +427,9 @@ numerator_denominator_factor(const Expr& e,
     denominator = find_denominator_single_term(e, 0, numerators, denominators);
     numerator = numerators[0];
   }
+  D_MSG("num_den_term");
+  D_VAR(numerator);
+  D_VAR(denominator);
 }
 
 } // anonymous namespace
@@ -418,6 +437,7 @@ numerator_denominator_factor(const Expr& e,
 void
 PURRS::numerator_denominator_purrs(const Expr& e,
 				   Expr& numerator, Expr& denominator) {
+  D_MSGVAR("num_den ", e);
   // The dimension of `numerators' and `denominators' is terms'number of `e'
   // and will contain the numerator and the denominator of each term of `e'.  
   std::vector<Expr> numerators;
@@ -429,7 +449,7 @@ PURRS::numerator_denominator_purrs(const Expr& e,
     denominators.insert(denominators.begin(), e.nops(), Number(1));
     for (unsigned i = e.nops(); i-- > 0; ) {
       Expr tmp_denominator;
-      numerator_denominator_factor(e.op(i), numerator, tmp_denominator);
+      numerator_denominator_term(e.op(i), numerator, tmp_denominator);
       numerators[i] = numerator;
       denominators[i] = tmp_denominator;
       Expr& old_denominator = denominator;
@@ -438,7 +458,10 @@ PURRS::numerator_denominator_purrs(const Expr& e,
     numerator = find_numerator(numerators, denominators, denominator);
   }
   else
-    numerator_denominator_factor(e, numerator, denominator);
+    numerator_denominator_term(e, numerator, denominator);
+  D_MSG("num_den");
+  D_VAR(numerator);
+  D_VAR(denominator);
 }
 
 /*!
@@ -485,4 +508,3 @@ PURRS::transform_in_single_fraction(const Expr& e) {
 			      numerator, denominator);
   return numerator / denominator;
 }
-
