@@ -1211,7 +1211,8 @@ apply_elementary_prop(const Expr& e, bool all_properties = true) {
 
 Expr
 simpl_power_in_logarithm(const Expr& base, const Expr exponent,
-		      const Number& new_base, const Number& new_exponent = 1) {
+			 const Number& new_base,
+			 const Number& new_exponent = 1) {
   if (exponent.is_a_mul() && exponent.nops() == 2) {
     if (exponent.op(0).is_the_log_function()
 	&& exponent.op(1) == 1 / log(new_base))
@@ -1224,24 +1225,55 @@ simpl_power_in_logarithm(const Expr& base, const Expr exponent,
 	     simplify_logarithm_in_expanded_ex(exponent));
 }
 
-void
-find_log_factors(const Expr& e, Expr& log_factors, Expr& rem_factors) {
-  assert(e.is_a_mul());
-  for (unsigned i = e.nops(); i-- > 0; ) {
-    const Expr& factor = e.op(i);
-    if ((factor.is_a_power() && factor.arg(0).is_the_log_function()
-	 && factor.arg(1) == -1)
-	|| factor.is_the_log_function())
-      log_factors *= factor;
-    else
-      rem_factors *= factor;
-  }
+/*!
+  Returns <CODE>true</CODE> if exists an integer \p b such that
+  \f$ a^b = c \f$; returns <CODE>false</CODE> otherwise.
+*/
+bool
+is_perfect_power(const Number& c, const Number& a, Number& b) {
+  assert(a.is_positive() && c.is_positive());
+  // Special case.
+  if (a == 1 && c != 1)
+    return false;
+  for (int i = 1; ; ++i)
+    if (exact_pwr(a, i) == c) {
+      b = i;
+      return true;
+    }
+    else if (a > 1 && exact_pwr(a, i) > c)
+      break;
+    else if (a < 1 && exact_pwr(a, i) < c)
+      break;
+  for (int i = -1; ; --i)
+    if (exact_pwr(a, i) == c) {
+      b = i;
+      return true;
+    }
+    else if (a > 1 && exact_pwr(a, i) < c)
+      break;
+    else if (a < 1 && exact_pwr(a, i) > c)
+      break;
+  return false;
 }
 
+/*!
+  Applies the following logarithm's property:
+  \f[
+    \begin{cases}
+      a^{c log b} = b^{c log a},
+        \quad \text{if } b { contains the special symbol Recurrence::n or if }
+	a \in \Rset_+ \wedge b \text{ not a number}, \\
+      (a^b)^{log c / log a} = c^b, \quad \text{where } a \in \Rset, a > 0
+        \quad \text{and } b \in \Nset, \\
+      (a^{-1})^{log c / log a} = c^{-1},
+        \quad \text{where } a \in \Rset, a > 0.
+    \end{cases}
+  \f]
+*/
 Expr
 prepare_simpl_power_in_logarithm(const Expr& base, const Expr& exponent) {
-  Number base_num;
-  // Apply the first and the second properties to the exponent.
+  // Apply the properties `log(exp(1)^a) = a' and
+  // `log(a^b) = b log(a)' to the exponent.
   Expr exponent_simpl = 1;
   if (exponent.is_a_mul())
     for (unsigned i = exponent.nops(); i-- > 0; ) {
@@ -1259,64 +1291,99 @@ prepare_simpl_power_in_logarithm(const Expr& base, const Expr& exponent) {
       exponent_simpl = apply_elementary_prop(exponent, false);
     else
       exponent_simpl = exponent;
-  // The base is a positive number.
-  if (base.is_a_number(base_num) && base_num.is_positive()) {
-    std::vector<Number> bases;
-    std::vector<int> exponents;
-    // The base is integer.
-    if (base_num.is_integer() && exponent_simpl.is_a_mul()) {
-      Expr log_factors_exp = 1;
-      Expr rem_factors_exp = 1;
-      find_log_factors(exponent_simpl, log_factors_exp, rem_factors_exp);
-      partial_factor(base_num, bases, exponents);
-      if (bases.size() == 1) {
-	Number new_base = bases[0];
-	return pwr(simpl_power_in_logarithm(base, log_factors_exp, new_base,
-					    exponents[0]), rem_factors_exp);
-      }
-      else
-	return pwr(simpl_power_in_logarithm(base, log_factors_exp, base_num),
-		   rem_factors_exp);
-    }
-    if (base_num.is_rational() && exponent_simpl.is_a_mul()) {
-      // The base is rational with the numerator equal to `1'.
-      if (base_num.numerator() == 1) {
-	Number denom_base = base_num.denominator();
-	Expr log_factors_exp = 1;
-	Expr rem_factors_exp = 1;
-	find_log_factors(exponent_simpl, log_factors_exp, rem_factors_exp);
-	partial_factor(denom_base, bases, exponents);
-	if (bases.size() == 1) {
-	  Number new_base = bases[0];
-	  return pwr(simpl_power_in_logarithm(base, log_factors_exp, new_base,
-					      exponents[0]),
-		     -rem_factors_exp);
-	}
+
+  // Apply the first property.
+  Expr base_simpl = base;
+  if (exponent_simpl.is_a_mul()) {
+    Expr arg_factor_log = 1;
+    Expr rem = 1;
+    for (unsigned i = exponent_simpl.nops(); i-- > 0; ) {
+      const Expr& factor = exponent_simpl.op(i);
+      if (factor.is_the_log_function()
+	  && (factor.arg(0).has(Recurrence::n)
+	      || (base.is_a_number() && !factor.arg(0).is_a_number())))
+	if (arg_factor_log == 1)
+	  arg_factor_log *= factor.arg(0);
 	else
-	  return pwr(simpl_power_in_logarithm(base, log_factors_exp, base_num),
-		     -rem_factors_exp);
-      }
-      else {
-	Expr log_factors_exp = 1;
-	Expr rem_factors_exp = 1;
-	find_log_factors(exponent_simpl, log_factors_exp, rem_factors_exp);
-	return pwr(simpl_power_in_logarithm(base, log_factors_exp, base_num),
-		   rem_factors_exp);
-      }
+	  // In the exponent thare is more than one factor of the shape
+	  // `log(b)', where `b' contains the special symbol `Recurrence::n'.
+	  break;
+      else
+	rem *= factor;
+    }
+    if (arg_factor_log != 1) {
+      base_simpl = arg_factor_log;
+      exponent_simpl = rem * log(base);
     }
   }
-  else if (base == Napier) {
+  
+  // Apply the second and the third properties.
+  Number base_num;
+  if (base_simpl.is_a_number(base_num) && base_num.is_positive()
+      && exponent_simpl.is_a_mul()) {
+    // `arg_log_num' will contain the argument of the eventual
+    // factor `log(.)';
+    // `arg_log_den' will contain the argument of the eventual
+    // factor `1/log(.)';
+    // `rem' will contain all factors different from `log(.)' and `1/log(.)'.
+    // If in the exponent there is more than one factor of the shape
+    // `log(.)' or more than one factor of the shape `1/log(.)', the
+    // simplification's process is stopped.
+    Expr arg_log_num = 1;
+    Number arg_log_den = 1;
+    Expr rem = 1;
+    bool stop_simplification = false;
+    for (unsigned i = exponent_simpl.nops(); i-- > 0; ) {
+      const Expr& factor = exponent_simpl.op(i);
+      if (factor.is_the_log_function())
+	if (arg_log_num == 1)
+	  arg_log_num = factor.arg(0);
+	else {
+	  // In the exponent thare is more than one factor of the shape
+	  // `log(c)'.
+	  stop_simplification = true;
+	  break;
+	}
+      else if (factor.is_a_power()
+	       && factor.arg(0).is_the_log_function()
+	       && factor.arg(0).arg(0).is_a_number()
+	       && factor.arg(1) == -1)
+	if (arg_log_den == 1)
+	  arg_log_den = factor.arg(0).arg(0).ex_to_number();
+	else {
+	  // In the exponent thare is more than one factor of the shape
+	  // `1/log(a)'.
+	  stop_simplification = true;
+	  break;
+	}
+      else
+	rem *= factor;
+    }
+    Number exp;
+    if (!stop_simplification && arg_log_num != 1 && arg_log_den != 1
+	&& is_perfect_power(base_num, arg_log_den, exp))
+      return pwr(arg_log_num, exp * rem);
+  }
+  else if (base_simpl == Napier) {
     if (exponent_simpl.is_the_log_function())
       return exponent_simpl.arg(0);
     if (exponent_simpl.is_a_mul()) {
       Expr log_factors_exp = 1;
       Expr rem_factors_exp = 1;
-      find_log_factors(exponent_simpl, log_factors_exp, rem_factors_exp);
+      for (unsigned i = exponent_simpl.nops(); i-- > 0; ) {
+	const Expr& factor = exponent_simpl.op(i);
+	if ((factor.is_a_power() && factor.arg(0).is_the_log_function()
+	     && factor.arg(1) == -1)
+	    || factor.is_the_log_function())
+	  log_factors_exp *= factor;
+	else
+	  rem_factors_exp *= factor;
+      }
       if (log_factors_exp.nops() == 1)
 	return pwr(log_factors_exp.arg(0), rem_factors_exp);
     }
   }
-  return pwr(simplify_logarithm_in_expanded_ex(base),
+  return pwr(simplify_logarithm_in_expanded_ex(base_simpl),
 	     simplify_logarithm_in_expanded_ex(exponent_simpl));
 }
 
@@ -1328,6 +1395,8 @@ prepare_simpl_power_in_logarithm(const Expr& base, const Expr& exponent) {
       log(a^b) = b log(a), \\
       log(a * b) = log(a) + log(b), \\
       log(a / b) = log(a) - log(b), \\
+      a^{c log b} = b^{c log a},
+        \quad \text{if } b { contains the special symbol Recurrence::n}, \\
       (a^b)^{log c / log a} = c^b, \quad \text{where } a \in \Rset, a > 0
         \quad \text{and } b \in \Nset, \\
       (a^{-1})^{log c / log a} = c^{-1},
@@ -1349,7 +1418,7 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
       e_rewritten *= simplify_logarithm_in_expanded_ex(e.op(i));
   }
   else if (e.is_a_power())
-    // Apply the fifth and sixth properties: note that is important that
+    // Apply the last three properties: note that is important that
     // these properties are applied before than the third and the fourth
     // properties.
     return prepare_simpl_power_in_logarithm(e.arg(0), e.arg(1));
