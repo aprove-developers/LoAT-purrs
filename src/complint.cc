@@ -51,8 +51,19 @@ complint::compare_same_type(const basic& other) const {
   return lexicographic_compare(ci, o.ci);
 }
 
-void complint::print(const print_context& c, unsigned /* level */) const {
+void
+complint::print(const print_context& c, unsigned /* level */) const {
   c.s << "complint(" << ci << ')';
+}
+
+void
+complint::archive(archive_node&) const {
+  abort();
+}
+
+ex
+complint::unarchive(const archive_node&, const lst&) {
+  abort();
 }
 
 } // namespace GiNaC
