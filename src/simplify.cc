@@ -1856,23 +1856,30 @@ simplify_sum_in_expanded_ex(const Expr& e,
 //! can thus simplify sums we cannot compute one by one.
 Expr
 simplify_collect_sums_in_expanded_ex(const Expr& e) {
-  // FIXME: Bare-bone version tailored to verification needs. Add recursion
-  //        (to simplify sums nested into other expressions) and variable
-  //        indices.
+  // FIXME: Only sums from 1 to n are considered.
   if (e.is_a_add()) {
     // Preliminary check: see whether we have sums.
     Expr addend;
     bool work_on_this = false;
     for (unsigned int i = e.nops(); i-- > 0; ) {
       addend = e.op(i);
-      // FIXME: is_the_sum_function() does not recognize -sum(i,1,n,i).
       if (addend.is_the_sum_function()) {
 	if (addend.arg(1) == 1 && addend.arg(2) == Recurrence::n) {
 	  work_on_this = true;
 	  break;
 	}
       }
+      else if (addend.is_a_mul() && addend.nops() == 2) {
+	const Expr& factor_0 = addend.op(0);
+	const Expr& factor_1 = addend.op(1);
+	if ( (factor_0.is_the_sum_function() && factor_1.is_a_number())
+	     || (factor_1.is_the_sum_function() && factor_0.is_a_number()) ) {
+	  work_on_this = true;
+	  break;
+	  }
+      }
     }
+      
     if (!work_on_this)
       return e;
     // Find and merge symbolic sums going from 1 to n.
@@ -1881,19 +1888,42 @@ simplify_collect_sums_in_expanded_ex(const Expr& e) {
     Symbol sum_variable;
     // FIXME: Can this collide with existing symbols?
     sum_variable = Symbol("a");
-    unsigned int merged_sums=0;
+    unsigned int merged_sums = 0;
+    bool add_this = false;
     for (unsigned int i = e.nops(); i-- > 0; ) {
+      add_this = false;
       addend = e.op(i);
+      Expr coefficient;
+      Expr sum_expr;
       if (addend.is_the_sum_function()) {
 	if (addend.arg(1) == 1 && addend.arg(2) == Recurrence::n) {
-	  merged_sums++;
-	  // FIXME: add a coefficient when adding support for k*sum(...).
-	  e_sum += addend.arg(3).substitute(addend.arg(0), sum_variable);
+	  add_this = true;
+	  coefficient = 1;
+	  sum_expr = addend;
 	}
-	else {
-	  e_without_sums += addend;
-	};
       }
+      else if (addend.is_a_mul() && addend.nops() == 2) {
+	const Expr& factor_0 = addend.op(0);
+	const Expr& factor_1 = addend.op(1);
+	if ( factor_0.is_the_sum_function() && factor_1.is_a_number() ) {
+	  if (factor_0.arg(1) == 1 && factor_0.arg(2) == Recurrence::n) {
+	    add_this = true;
+	    coefficient = factor_1;
+	    sum_expr = factor_0;
+	  }
+	}
+        else if ( factor_1.is_the_sum_function() && factor_0.is_a_number() ) {
+          if (factor_1.arg(1) == 1 && factor_1.arg(2) == Recurrence::n) {
+	    add_this = true;
+            coefficient = factor_0;
+            sum_expr = factor_1;
+          }
+	}
+      }
+      if (add_this) {
+	merged_sums++;
+	e_sum += coefficient*sum_expr.arg(3).substitute(sum_expr.arg(0), sum_variable);
+	}
       else e_without_sums += addend;
     }
     // Return the original expression unless we actually managed to merge
