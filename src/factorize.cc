@@ -27,7 +27,6 @@ http://www.cs.unipr.it/purrs/ . */
 #endif
 
 #include "factorize.hh"
-#include "numerator_denominator.hh"
 #include "util.hh"
 #include "Expr.defs.hh"
 #include <vector>
@@ -175,7 +174,7 @@ collect_common_factor(const Expr& e, const Expr& term,
 void
 PURRS::factorize_no_ratio_ex(const Expr& e,
 			     Expr& common_factor, Expr& remainder) {
-  assert(denominator(e) == 1);
+  assert(e.denominator() == 1);
   D_MSG("");
   D_MSGVAR("INPUT ", e);
   Expr e_factorized = e.expand();
@@ -246,7 +245,7 @@ PURRS::factorize(const Expr& e,
   assert(e.is_expanded());
   Expr numerator;
   Expr denominator;
-  numerator_denominator_purrs(e, numerator, denominator);
+  e.numerator_denominator(numerator, denominator);
   Expr common_num;
   Expr rem_num;
   factorize_no_ratio_ex(numerator, common_num, rem_num);

@@ -475,6 +475,16 @@ Expr::content(const Symbol& x) const {
   return Base::content(x.s);
 }
 
+inline Expr
+Expr::numerator() const {
+  return Base::numer();
+}
+
+inline Expr
+Expr::denominator() const {
+  return Base::denom();
+}
+
 inline void
 Expr::numerator_denominator(Expr& x, Expr& y) const {
   const Expr& tmp = Base::numer_denom();

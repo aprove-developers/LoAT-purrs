@@ -32,7 +32,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Blackboard.defs.hh"
 #include "Expr.defs.hh"
 #include "Recurrence.defs.hh"
-#include "numerator_denominator.hh"
 #include "simplify.hh"
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
@@ -834,7 +833,7 @@ PURRS::Expr::is_rational_function(const Symbol& x) const {
   const Expr& e = *this;
   Expr numerator;
   Expr denominator;
-  numerator_denominator_purrs(e, numerator, denominator);
+  e.numerator_denominator(numerator, denominator);
   if (numerator.is_polynomial(x) && denominator.is_polynomial(x))
     return true;
   return false;

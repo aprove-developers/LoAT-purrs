@@ -29,7 +29,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "util.hh"
 #include "factorize.hh"
 #include "alg_eq_solver.hh"
-#include "numerator_denominator.hh"
 #include "Matrix.defs.hh"
 #include "Expr.defs.hh"
 #include "Number.defs.hh"
@@ -281,9 +280,9 @@ PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
-  Expr t_lcm = denominator(p.coeff(x, deg_p));
+  Expr t_lcm = p.coeff(x, deg_p).denominator();
   for (unsigned int i = 0; i <= deg_p; ++i)
-    t_lcm = lcm(t_lcm, denominator(p.coeff(x, i)));
+    t_lcm = lcm(t_lcm, p.coeff(x, i).denominator());
   return (p * t_lcm).expand().primpart(x);
 }
 
@@ -301,9 +300,9 @@ PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x,
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
-  Expr t_lcm = denominator(p.coeff(x, deg_p));
+  Expr t_lcm = p.coeff(x, deg_p).denominator();
   for (unsigned int i = 0; i <= deg_p; ++i)
-    t_lcm = lcm(t_lcm, denominator(p.coeff(x, i)));
+    t_lcm = lcm(t_lcm, p.coeff(x, i).denominator());
 
   const Expr& q = (p * t_lcm).expand().primpart(x);
   factor = p.lcoeff(x) * pwr(q.lcoeff(x), -1);
@@ -569,8 +568,8 @@ find_domain_in_N_on_expanded_ex(const Expr& e, const Symbol& x, Number& z) {
 
 bool
 PURRS::find_domain_in_N(const Expr& e, const Symbol& x, Number& z) {
-  return find_domain_in_N_on_expanded_ex(numerator(e).expand(), x, z)
-    && find_domain_in_N_on_expanded_ex(denominator(e).expand(), x, z);
+  return find_domain_in_N_on_expanded_ex(e.numerator().expand(), x, z)
+    && find_domain_in_N_on_expanded_ex(e.denominator().expand(), x, z);
 }
 
 //! Returns <CODE>true</CODE> if \p e contains parameters;

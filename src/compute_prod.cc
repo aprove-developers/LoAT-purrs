@@ -31,7 +31,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "util.hh"
 #include "sum_poly.hh"
 #include "ep_decomp.hh"
-#include "numerator_denominator.hh"
 #include "factorize.hh"
 #include "Number.defs.hh"
 #include "Expr.defs.hh"
@@ -106,7 +105,7 @@ compute_product_on_add(const Symbol& index, const Number& lower,
     // positive integer' or `a = 2 && c*d = 1) and `b*d'.
     Expr numerator;
     Expr denominator;
-    numerator_denominator_purrs(e, numerator, denominator);
+    e.numerator_denominator(numerator, denominator);
     if (denominator != 1) {
       e_prod = comp_prod(index, lower, numerator)
 	* pwr(comp_prod(index, lower, denominator), -1);

@@ -29,7 +29,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "zeilberger.hh"
 #include "globals.hh"
 #include "simplify.hh"
-#include "numerator_denominator.hh"
 #include "util.hh"
 #include "Expr.defs.hh"
 #include "Symbol.defs.hh"
@@ -191,8 +190,8 @@ PURRS::zeilberger_algorithm(const Expr& F_m_k,
 #else
   const Expr& tmp = simplify_all(r_k / s_k);
   p_1_k = 1;
-  p_2_k = numerator(tmp);
-  p_3_k = denominator(tmp);
+  p_2_k = tmp.numerator();
+  p_3_k = tmp.denominator();
 #endif
   DD_VAR(p_1_k);
   DD_VAR(p_2_k);

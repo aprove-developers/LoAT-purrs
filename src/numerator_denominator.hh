@@ -38,6 +38,7 @@ numerator(const Expr& e);
 Expr
 denominator(const Expr& e);
 
+
 Expr
 transform_in_single_fraction(const Expr& e);
 

@@ -30,7 +30,6 @@ http://www.cs.unipr.it/purrs/ . */
 #endif
 
 #include "util.hh"
-#include "numerator_denominator.hh"
 #include "simplify.hh"
 #include "compute_prod.hh"
 #include "ep_decomp.hh"
@@ -207,18 +206,19 @@ solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const {
   // `inhomogeneous_term' and store it in `z' if it is bigger than the
   // current `z'.
   if (!inhomogeneous_term.is_zero())
-    if (!find_domain_in_N(denominator(inhomogeneous_term), n, z))
+    if (!find_domain_in_N(inhomogeneous_term.denominator(), n, z))
       return TOO_COMPLEX;
   // The initial conditions will start from `z'.
   set_first_valid_index(z.to_unsigned_int());
   // `product_factor' is `alpha!(n)'.
+  Expr numerator;
+  Expr denominator;
   Symbol index;
-  Expr product_factor
-    = compute_product(index, z + 1,
-		      transform_in_single_fraction(coefficients[1]
-						   .substitute(n, index)));
-  product_factor
-    = simplify_binomials_factorials_exponentials(product_factor);
+  coefficients[1].substitute(n, index).numerator_denominator(numerator,
+							     denominator);
+  const Expr& product_factor
+    = simplify_binomials_factorials_exponentials
+    (compute_product(index, z + 1, numerator/denominator));
   set_product_factor(product_factor);
 
   // Build the recurrence with constant coefficient of the first order
@@ -540,7 +540,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   // `inhomogeneous_term' and store it in `z' if it is bigger than `0'.
   Number z = 0;
   if (!inhomogeneous_term.is_zero()) {
-    const Expr& denom_inhomogeneous_term = denominator(inhomogeneous_term);
+    const Expr& denom_inhomogeneous_term = inhomogeneous_term.denominator();
     if (has_parameters(denom_inhomogeneous_term))
       return TOO_COMPLEX;
     if (!find_domain_in_N(denom_inhomogeneous_term, n, z))

@@ -28,7 +28,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "gosper.hh"
 #include "simplify.hh"
-#include "numerator_denominator.hh"
 #include "util.hh"
 #include "Expr.defs.hh"
 #include "Symbol.defs.hh"
@@ -99,7 +98,7 @@ compute_resultant_and_its_roots(const Symbol& m, const Expr& f, const Expr& g,
   // a rational function but not a polynomial, we consider only the zeros
   // of its numerator.
   if (!R.is_polynomial(h))
-    R = numerator(R);
+    R = R.numerator();
   R = R.expand();
   R = R.primpart(h);
   if (!R.is_integer_polynomial(h))
@@ -145,7 +144,7 @@ gosper_step_two(const Symbol& m, const Expr& r_m,
   // Gosper's algorithm, step 2.1.
   Expr f;
   Expr g;
-  numerator_denominator_purrs(r_m, f, g);
+  r_m.numerator_denominator(f, g);
   // It is necessary to `expand()' in order to have the right answer from
   // `lcoeff()'.
   f = f.expand();
@@ -183,14 +182,14 @@ gosper_step_two(const Symbol& m, const Expr& r_m,
   if (!a_m.is_integer_polynomial(m)) {
     Expr a_m_factor;
     a_m = convert_to_integer_polynomial(a_m, m, a_m_factor);
-    a_m *= numerator(a_m_factor);
-    b_m *= denominator(a_m_factor);
+    a_m *= a_m_factor.numerator();
+    b_m *= a_m_factor.denominator();
   }
   if (!b_m.is_integer_polynomial(m)) {
     Expr b_m_factor;
     b_m = convert_to_integer_polynomial(b_m, m, b_m_factor);
-    a_m *= denominator(b_m_factor);
-    b_m *= numerator(b_m_factor);
+    a_m *= b_m_factor.denominator();
+    b_m *= b_m_factor.numerator();
   }
   D_VAR(a_m);
   D_VAR(b_m);

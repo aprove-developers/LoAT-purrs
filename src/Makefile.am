@@ -72,7 +72,6 @@ poly_factor.hh \
 zeilberger.hh \
 gosper.hh \
 simplify.hh \
-numerator_denominator.hh \
 factorize.hh \
 factorize_giac.hh \
 compute_prod.hh \
@@ -118,7 +117,6 @@ complint.cc \
 globals.cc \
 zeilberger.cc \
 gosper.cc \
-numerator_denominator.cc \
 factorize.cc \
 factorize_giac.cc \
 poly_factor.cc \

@@ -31,7 +31,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "simplify.hh"
 
 #include "sum_poly.hh"
-#include "numerator_denominator.hh"
 #include "util.hh"
 #include "ep_decomp.hh"
 #include "gosper.hh"
@@ -1492,8 +1491,8 @@ simpl_quotient_of_logs(const Expr& e) {
       if (inv_log_factors.is_a_mul())
 	for (unsigned int j = inv_log_factors.nops(); j-- > 0; ) {
 	  const Expr& arg_log_2 = inv_log_factors.op(j).arg(0).arg(0);
-	  if (numerator(arg_log_1) == denominator(arg_log_2)
-	      && numerator(arg_log_2) == denominator(arg_log_1)) {
+	  if (arg_log_1.numerator() == arg_log_2.denominator()
+	      && arg_log_2.numerator() == arg_log_1.denominator()) {
 	    e_simplified *= -1;
 	    inv_log_factors /= inv_log_factors.op(j);
 	    break;
@@ -1510,8 +1509,8 @@ simpl_quotient_of_logs(const Expr& e) {
 	  e_simplified *= log_factors.op(i);
 	else {
 	  const Expr& arg_log_2 = inv_log_factors.arg(0).arg(0);
-	  if (numerator(arg_log_1) == denominator(arg_log_2)
-	      && numerator(arg_log_2) == denominator(arg_log_1)) {
+	  if (arg_log_1.numerator() == arg_log_2.denominator()
+	      && arg_log_2.numerator() == arg_log_1.denominator()) {
 	    e_simplified *= -1;
 	    inv_log_factors = 1;
 	  }
@@ -1529,8 +1528,8 @@ simpl_quotient_of_logs(const Expr& e) {
     if (inv_log_factors.is_a_mul())
       for (unsigned int j = inv_log_factors.nops(); j-- > 0; ) {
 	const Expr& arg_log_2 = inv_log_factors.op(j).arg(0).arg(0);
-	if (numerator(arg_log_1) == denominator(arg_log_2)
-	    && numerator(arg_log_2) == denominator(arg_log_1))
+	if (arg_log_1.numerator() == arg_log_2.denominator()
+	    && arg_log_2.numerator() == arg_log_1.denominator())
 	  return e_simplified * -1 * inv_log_factors / inv_log_factors.op(j);
 	else
 	  return e_simplified * log_factors * inv_log_factors
@@ -1539,8 +1538,8 @@ simpl_quotient_of_logs(const Expr& e) {
     // There is only 1 factor of the form `1 / log(a)'.
     else {
       const Expr& arg_log_2 = inv_log_factors.arg(0).arg(0);
-      if (numerator(arg_log_1) == denominator(arg_log_2)
-	  && numerator(arg_log_2) == denominator(arg_log_1))
+      if (arg_log_1.numerator() == arg_log_2.denominator()
+	  && arg_log_2.numerator() == arg_log_1.denominator())
 	return e_simplified * -1;
       else
 	return e_simplified * log_factors * inv_log_factors;
@@ -1852,7 +1851,6 @@ PURRS::simplify_ex_for_output(const Expr& e, bool input) {
 */
 PURRS::Expr
 PURRS::simplify_numer_denom(const Expr& e) {
-#if 1
   // Since we need both numerator and denominator, to call 'numer_denom'
   // is faster than to use 'numer()' and 'denom()' separately.
   Expr numer_e;
@@ -1861,15 +1859,6 @@ PURRS::simplify_numer_denom(const Expr& e) {
   Expr num = numer_e.expand();
   Expr den = denom_e.expand();
   return num * pwr(den, -1);
-#else
-  Expr numer_e;
-  Expr denom_e;
-  numerator_denominator_purrs(e, numer_e, denom_e);
-  Expr num = numer_e.expand();
-  Expr den = denom_e.expand();
-  return num * pwr(den, -1);
-  //  return transform_in_single_fraction(e);
-#endif
 }
 
 /*!
@@ -1890,7 +1879,7 @@ PURRS::simplify_binomials_factorials_exponentials(const Expr& e) {
 #if 0
   Expr e_numerator;
   Expr e_denominator;
-  numerator_denominator_purrs(e, e_numerator, e_denominator);
+  e.numerator_denominator(e_numerator, e_denominator);
   e_numerator = rewrite_factorials_and_exponentials(e_numerator);
   e_denominator = rewrite_factorials_and_exponentials(e_denominator);
   return e_numerator / e_denominator;

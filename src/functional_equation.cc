@@ -31,7 +31,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "functional_equation.hh"
 
 #include "util.hh"
-#include "numerator_denominator.hh"
 #include "simplify.hh"
 #include "ep_decomp.hh"
 #include "Expr.defs.hh"

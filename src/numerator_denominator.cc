@@ -422,8 +422,7 @@ PURRS::Expr
 PURRS::transform_in_single_fraction(const Expr& e) {
   Expr numerator;
   Expr denominator;
-  numerator_denominator_purrs(e.distribute_mul_over_add(),
-			      numerator, denominator);
+  e.distribute_mul_over_add().numerator_denominator(numerator, denominator);
   Expr common_factor;
   Expr rem;
   factorize_no_ratio_ex(numerator, common_factor, rem);

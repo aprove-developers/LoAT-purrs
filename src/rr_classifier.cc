@@ -30,7 +30,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "util.hh"
 #include "simplify.hh"
-#include "numerator_denominator.hh"
 #include "finite_order.hh"
 #include "Expr.defs.hh"
 #include "Symbol.defs.hh"
@@ -802,15 +801,15 @@ rewrite_weighted_average_recurrence(const Expr& rhs, const Expr& term_sum,
   Number z = 0;
   // Find the largest positive or null integer that cancel the numerator of
   // `f(n)' and store it in `z' if it is bigger than the current `z'.
-  if (!find_domain_in_N(numerator(weight), Recurrence::n, z))
+  if (!find_domain_in_N(weight.numerator(), Recurrence::n, z))
     return false;
   // `z' will contain the largest positive or null integer, if it exists,
   // that cancel the denominator of `f(n)'.
   // If this integer does not exist then `z' is left to 0.
-  if (!find_domain_in_N(denominator(weight), Recurrence::n, z))
+  if (!find_domain_in_N(weight.denominator(), Recurrence::n, z))
     return false;
 
-  if (!find_domain_in_N(denominator(inhomogeneous), Recurrence::n, z))
+  if (!find_domain_in_N(inhomogeneous.denominator(), Recurrence::n, z))
     return false;
   first_valid_index = z.to_unsigned_int();
 

@@ -892,6 +892,28 @@ public:
   Expr content(const Symbol& x) const;
 
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+  //! Returns numerator of \p *this.
+  /*!
+    If the expression is not of the normal form `numerator/denominator'
+    (where numerator and denominator are relatively prime) polynomials,
+    it is first converted to this form and then the numerator is returned.
+  */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+  // FIXME: what is a polynomial?
+  Expr numerator() const;
+
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+  //! Returns denominator of \p *this.
+  /*!
+    If the expression is not of the normal form `numerator/denominator'
+    (where numerator and denominator are relatively prime) polynomials,
+    it is first converted to this form and then the denominator is returned.
+  */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+  // FIXME: what is a polynomial?
+  Expr denominator() const;
+
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Returns the numerator \p x and the denominator \p y of \p *this.
   /*!
     If the expression is not of the normal form `numerator/denominator'
