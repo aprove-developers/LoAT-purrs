@@ -622,8 +622,9 @@ compute_sum(bool for_lower, const Expr& summand,
     Number index = for_lower ? 1 : 2;
     for (unsigned i = bases_of_exp.size(); i-- > 0; ) {
       Expr gosper_sum;
-      if (!full_gosper(Recurrence::n, pwr(coefficient, -Recurrence::n) * tmp,
-		       index, Recurrence::n, gosper_sum))
+      if (!gosper_algorithm(Recurrence::n,
+			    pwr(coefficient, -Recurrence::n) * tmp,
+			    index, Recurrence::n, gosper_sum))
 	return false;
       else
 	sum += gosper_sum;

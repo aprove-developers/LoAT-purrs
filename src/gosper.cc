@@ -356,45 +356,11 @@ gosper_step_four(const Symbol& m, const Expr& t,
      in \p solution the symbolic sum \f$ \sum_{k=lower}^{upper} t_k \f$.
 */
 bool
-PURRS::full_gosper(const Symbol& m, const Expr& t_m,
-		   const Number& lower, const Expr& upper, Expr& solution) {
+PURRS::gosper_algorithm(const Symbol& m, const Expr& t_m,
+			const Number& lower, const Expr& upper,
+			Expr& solution) {
   Expr r_m;
   if (!gosper_step_one(m, t_m, r_m, true))
-    // `t_m' is not hypergeometric: no chance of using Gosper's algorithm.
-    return false;
-  Expr a_m;
-  Expr b_m;
-  Expr c_m;
-  if (!gosper_step_two(m, r_m, a_m, b_m, c_m))
-    // Problem in the computation of the resultant and its roots.
-    return false;
-  Expr x_m;
-  if (gosper_step_three(m, a_m.expand(), b_m.expand(), c_m.expand(), x_m))
-    solution = gosper_step_four(m, t_m, b_m, c_m, x_m, lower, upper, solution);
-  else {
-    // `t_m' is not Gosper-summable, i. e., there is not hypergeometric
-    // solution.
-    Symbol h;
-    solution = PURRS::sum(h, lower, upper, t_m.substitute(m, h));
-  }
-  D_MSGVAR("The sum is: ", solution);
-
-  return true;
-}
-
-/*!
-  This function does not represent the full Gosper algorithm because
-  it does not compute \f$ r(n) = t(m+1) / t(m) \f$ in the first step.
-  Instead, \f$ r(m) \f$ is received as an argument.
-  This is useful when solving first-order recurrence relations with
-  variable coefficients, because it is easy to compute the expression
-  \f$ r(m) \f$ from the coefficients of the recurrence itself.
-  In other words, we avoid useless calls to simplification routines.
-*/
-bool
-PURRS::partial_gosper(const Symbol& m, const Expr& t_m, Expr& r_m,
-		      const Number& lower, const Expr& upper, Expr& solution) {
-  if (!gosper_step_one(m, t_m, r_m, false))
     // `t_m' is not hypergeometric: no chance of using Gosper's algorithm.
     return false;
   Expr a_m;

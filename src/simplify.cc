@@ -1566,9 +1566,9 @@ compute_sum(const Expr& e) {
   if (vector_not_all_zero(exp_no_poly_coeff)) {
     for (unsigned i = exp_poly_coeff.size(); i-- > 0; ) {
       Expr gosper_solution;
-      if (!full_gosper(symb_part_of_upper,
-		       e.arg(3).substitute(e.arg(0), symb_part_of_upper),
-		       e.arg(1).ex_to_number(), upper, gosper_solution))
+      if (!gosper_algorithm(symb_part_of_upper,
+			    e.arg(3).substitute(e.arg(0), symb_part_of_upper),
+			    e.arg(1).ex_to_number(), upper, gosper_solution))
 	return e;
       e_rewritten += gosper_solution;
     }

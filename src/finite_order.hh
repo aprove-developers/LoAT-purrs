@@ -86,14 +86,6 @@ compute_sum_with_transcendental_method(const Number& lower, const Expr& upper,
 				       const std::vector<Polynomial_Root>&
 				       roots);
 
-bool
-compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
-				  const std::vector<Expr>& base_of_exps,
-				  const std::vector<Expr>& exp_poly_coeff,
-				  const std::vector<Expr>& exp_no_poly_coeff,
-				  const std::vector<Polynomial_Root>& roots,
-				  const Expr& t_n, Expr& solution);
-
 Expr
 rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
 				 unsigned gcd_among_decrements,

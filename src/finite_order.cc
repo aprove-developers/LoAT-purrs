@@ -554,7 +554,8 @@ compute_sum_with_transcendental_method(const Number& lower, const Expr& upper,
       Expr t_n = pwr(base_of_exps[i], Recurrence::n) * exp_no_poly_coeff[i]
 	* pwr(roots[0].value(), -Recurrence::n);
       D_VAR(t_n);
-      if (!full_gosper(Recurrence::n, t_n, lower, upper, gosper_solution)) {
+      if (!gosper_algorithm(Recurrence::n, t_n, lower, upper,
+			    gosper_solution)) {
 	// The summand is not hypergeometric:
 	// no chance of using Gosper's algorithm.
 	Symbol h;
@@ -571,41 +572,6 @@ compute_sum_with_transcendental_method(const Number& lower, const Expr& upper,
     solution += gosper_solution;
   }
   return solution;
-}
-
-/*!
-  Applies a partial version of the Gosper's algorithm to express in
-  closed form, if it is possible, sum with the summand an hypergeometric
-  term. 
-  This function returns <CODE>true</CODE> if the summand is an
-  hypergeometric term, independently if it is possible or not to express
-  the sum in closed form.
-  Returns <CODE>false</CODE> otherwise.
-*/
-bool
-PURRS::
-compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
-				  const std::vector<Expr>& base_of_exps,
-				  const std::vector<Expr>& exp_poly_coeff,
-				  const std::vector<Expr>& exp_no_poly_coeff,
-				  const std::vector<Polynomial_Root>& roots,
-				  const Expr& t_n, Expr& solution) {
-  solution = 0;
-  for (unsigned i = exp_poly_coeff.size(); i-- > 0; ) {
-    Expr gosper_solution;
-    // FIXME: for the moment use this function only when the `order'
-    // is one, then `roots' has only one elements.
-    Expr r_n = pwr(base_of_exps[i], Recurrence::n)
-      * exp_poly_coeff[i] + exp_no_poly_coeff[i]
-      * pwr(roots[0].value(), -Recurrence::n);
-    D_VAR(t_n);
-    D_VAR(r_n);
-    if (!partial_gosper(Recurrence::n, t_n, r_n, lower, upper,
-			gosper_solution))
-      return false;
-    solution += gosper_solution;
-  }
-  return true;
 }
 
 //! Let \p e be the right hand side of a recurrence to which is possible
