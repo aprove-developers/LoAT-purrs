@@ -156,7 +156,7 @@ x(n-2) + (n - 2)^2
 % 8. Order 1, variable coefficients
 % x(n) =
 3 / n * x(n-1)
-% Solution: x(n) = 3^(n-1) * x(0) / factorial(n)
+% Solution: x(n) = 3^(n-1) * x(1) / factorial(n)
 
 % 9. Order 1, variable coefficients 
 % x(n) =
@@ -314,6 +314,11 @@ x(n-1)+2*factorial(n)+4*n
 % x(n) =
 4^(n-1)*x(n-1)+2^((n-1)^2)
 % Solution: x(n) = -2*2^(n^2)*(1/4)^n+2^(1+n^2)*(1/2)^n+2^(n^2)*(1/2)^n*x(0) 
+
+% Order 1, variable coefficients
+% x(n) =
+(n-1) * x(n-1)
+% Solution: x(n) = x(2)*factorial(-1+n)
 
 
 % Order 2
