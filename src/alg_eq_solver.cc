@@ -401,8 +401,12 @@ find_roots(const Expr& p, const Symbol& x,
       }
     }
   }
-  // NOTE: after the introduction of the order reduction method the function
-  // `is_nested_polynomial()' is useless!
+  // NOTE: after the introduction of the order reduction method the
+  // function `is_nested_polynomial()' is useless in the computation
+  // of the solution but it is used in the "new" method (see the paper
+  // "Checking and Confining the Solutions of Recurrence Realtions")
+  // for the validation of the exact solution of linear finite order
+  // recurrences with constant coefficients.
   // If we want to solve q(x) = 0 and we know that q(x) = r(x^n), then
   // we need to find the roots y_1, ... y_k of r(y) = 0, and then we
   // need to solve x^n = y_1, x^n = y_2, ..., x^n = y_k.
@@ -412,7 +416,6 @@ find_roots(const Expr& p, const Symbol& x,
   // that z^n = 1.
   // We note that the set of roots found in this way does not depend
   // on the particular root x_1 that we have chosen.
-  /*
   Expr r;
   int nested_degree = is_nested_polynomial(q, x, r);
   D_VAR(nested_degree);
@@ -435,7 +438,7 @@ find_roots(const Expr& p, const Symbol& x,
       return true;
     }
   }
-  */
+
   // Try to factorize the polynomial.
   std::vector<Expr> factors;
   int num_factors = poly_factor(q, x, factors);
