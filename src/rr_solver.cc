@@ -28,12 +28,14 @@ http://www.cs.unipr.it/purrs/ . */
 #define NOISY 0
 #endif
 
+#include "util.hh"
 #include "gosper.hh"
 #include "alg_eq_solver.hh"
 #include "simplify.hh"
 #include "numerator_denominator.hh"
 #include "sum_poly.hh"
-#include "util.hh"
+#include "compute_prod.hh"
+#include "ep_decomp.hh"
 #include "Expr.defs.hh"
 #include "Expr_List.defs.hh"
 #include "Symbol.defs.hh"
@@ -54,16 +56,12 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
 namespace {
 using namespace PURRS;
 
-static Expr
-compute_product(const Expr& e, const Number& lower, const Expr& upper,
-		bool is_denominator = false);
-
 /*!
   Returns an expression that is equivalent to \p e and that is
   "maximally expanded" with respect to addition.  This amounts, among
   other things, to distribute multiplication over addition.
 */
-static Expr
+Expr
 additive_form(const Expr& e) {
   return e.expand();
 }
@@ -74,7 +72,7 @@ additive_form(const Expr& e) {
   \p decrement.
   Returns <CODE>false</CODE> otherwise.
 */
-static bool
+bool
 get_constant_decrement(const Expr& e, Number& decrement) {
   if (e.is_a_add() && e.nops() == 2) {
     // `e' is of the form a+b.
@@ -110,7 +108,7 @@ get_constant_decrement(const Expr& e, Number& decrement) {
   \p int_coefficients, with the element of \p coefficients multiplied by
   the least common multiple of their denominators.
 */
-static Expr
+Expr
 build_characteristic_equation(const Symbol& x,
 			      const std::vector<Number>& coefficients) {
   for (unsigned i = coefficients.size(); i-- > 0; )
@@ -156,7 +154,7 @@ build_characteristic_equation(const Symbol& x,
   Returns <CODE>false<CODE> if it does not succeed to find roots of the
   characteristic equations; returns <CODE>true<CODE> otherwise. 
 */
-static bool
+bool
 characteristic_equation_and_its_roots(int order,
 				      const std::vector<Expr>& coefficients,
 				      std::vector<Number>& num_coefficients,
@@ -193,7 +191,7 @@ characteristic_equation_and_its_roots(int order,
   return true;
 }
 
-static Expr
+Expr
 return_sum(bool distinct, const Number& order, const Expr& coeff,
 	   const Symbol& alpha, const Symbol& lambda) {
   Symbol k("k");
@@ -245,7 +243,7 @@ return_sum(bool distinct, const Number& order, const Expr& coeff,
     in the first case, and of \p symbolic_sum_distinct, in the second case,
     so that the two vectors have always the same dimensions.
 */
-static void
+void
 compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
 		     const std::vector<Polynomial_Root>& roots,
 		     const std::vector<Expr>& base_of_exps,
@@ -300,7 +298,7 @@ compute_symbolic_sum(const Symbol& alpha, const Symbol& lambda,
     exponential.  Returns a <CODE>Expr</CODE> \p solution with the
     sum of all sums of the vectors.
 */
-static Expr
+Expr
 subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
 			    const std::vector<Polynomial_Root>& roots,
 			    const std::vector<Expr>& base_of_exps,
@@ -335,112 +333,6 @@ subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
   return solution;
 }
 
-static void
-exp_poly_decomposition_factor(const Expr& base, const Expr& e,
-			      std::vector<Expr>& alpha,
-			      std::vector<Expr>& p,
-			      std::vector<Expr>& q) {
-  unsigned alpha_size = alpha.size();
-  unsigned position = alpha_size;
-  bool found = false;
-  for (unsigned i = alpha_size; i-- > 0; )
-    if (base == alpha[i]) {
-      position = i;
-      found = true;
-      break;
-    }
-  if (!found) {
-    alpha.push_back(base);
-    p.push_back(0);
-    q.push_back(0);
-  }
-  // Here `alpha[position]' contains `base' and the polynomial and
-  // possibly not polynomial parts of `e' can be added to
-  // `p[position]' and `q[position]', respectively.
-  Expr polynomial;
-  Expr possibly_non_polynomial;
-  isolate_polynomial_part(e, Recurrence::n, polynomial, possibly_non_polynomial);
-  p[position] += polynomial;
-  q[position] += possibly_non_polynomial;
-}
-
-static void
-exp_poly_decomposition_summand(const Expr& e,
-			       std::vector<Expr>& alpha,
-			       std::vector<Expr>& p,
-			       std::vector<Expr>& q) {
-  static Expr exponential = pwr(wild(0), Recurrence::n);
-  Expr_List substitution;
-  unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
-  if (num_factors == 1) {
-    if (e.match(exponential, substitution)) {
-      // We have found something of the form `power(base, n)'.
-      Expr base = get_binding(substitution, 0);
-      assert(!base.is_zero());
-      if (base.is_scalar_representation(Recurrence::n)) {
-	// We have found something of the form `power(base, n)'
-	// and `base' is good for the decomposition.
-	exp_poly_decomposition_factor(base, 1, alpha, p, q);
-	return;
-      }
-    }
-  }
-  else
-    for (unsigned i = num_factors; i-- > 0; ) {
-      if (clear(substitution), e.op(i).match(exponential, substitution)) {
-	// We have found something of the form `power(base, n)'.
-	Expr base = get_binding(substitution, 0);
-	assert(!base.is_zero());
-	if (base.is_scalar_representation(Recurrence::n)) {
-	  // We have found something of the form `power(base, n)'
-	  // and `base' is good for the decomposition: determine
-	  // `r = e/power(base, n)'.
-	  Expr r = 1;
-	  for (unsigned j = num_factors; j-- > 0; )
-	    if (i != j)
-	      r *= e.op(j);
-	  exp_poly_decomposition_factor(base, r, alpha, p, q);
-	  return;
-	}
-      }
-    }
-  // No proper exponential found: this is treated like `power(1, n)*e'.
-  exp_poly_decomposition_factor(1, e, alpha, p, q);
-}
-
-/*!
-  Let \f$ e(n) \f$ be the expression in \p n contained in \p e,
-  which is assumed to be already expanded.
-  This function computes a decomposition
-  \f$ e(n) = \sum_{i=0}^k \alpha_i^n \bigl(p_i(n) + q_i(n)\bigr) \f$, where
-  - \f$ \alpha_i \f$ is a expression valid for to be an exponential's base.
-    (syntactically different from \p 0);
-  - \f$ \alpha_i \neq \alpha_j \f$ if \f$ i \neq j \f$;
-  - \f$ p_i(n) \f$ is (syntactically) a polynomial in \f$ n \f$.
-
-  The expressions corresponding to \f$ \alpha_i \f$, \f$ p_i \f$ and
-  \f$ q_i \f$ are stored in the \f$ i \f$-th position of the vectors
-  \p alpha, \p p and \p q, respectively.
-*/
-static void
-exp_poly_decomposition(const Expr& e,
-		       std::vector<Expr>& alpha,
-		       std::vector<Expr>& p,
-		       std::vector<Expr>& q) {
-  unsigned num_summands = e.is_a_add() ? e.nops() : 1;
-  // An upper bound to the number of exponentials is the number of
-  // summands in `e': reserve space in the output vectors so that
-  // no reallocations will be required.
-  alpha.reserve(num_summands);
-  p.reserve(num_summands);
-  q.reserve(num_summands);
-  if (num_summands > 1)
-    for (unsigned i = num_summands; i-- > 0; )
-      exp_poly_decomposition_summand(e.op(i), alpha, p, q);
-  else
-    exp_poly_decomposition_summand(e, alpha, p, q);
-}
-
 /*!
   Adds to the sum already computed those corresponding to the initial
   conditions:
@@ -452,7 +344,7 @@ exp_poly_decomposition(const Expr& e,
 // FIXME: il vettore `coefficients' dovra' diventare di `Expr' quando
 // sapremo risolvere anche le eq. di grado superiore al primo con i
 // parametri.
-static void
+void
 add_initial_conditions(const Expr& g_n,
                        const std::vector<Number>& coefficients,
 		       const std::vector<Expr>& initial_conditions,
@@ -479,7 +371,7 @@ add_initial_conditions(const Expr& g_n,
   independently if it is possible or not to express the sum in closed form.
   Returns <CODE>false</CODE> otherwise.
 */
-static bool
+bool
 compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
 				  const std::vector<Expr>& base_of_exps,
 				  const std::vector<Expr>& exp_no_poly_coeff,
@@ -511,7 +403,7 @@ compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
   the sum in closed form.
   Returns <CODE>false</CODE> otherwise.
 */
-static bool
+bool
 compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
 				  const std::vector<Expr>& base_of_exps,
 				  const std::vector<Expr>& exp_poly_coeff,
@@ -564,7 +456,7 @@ compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
   to insert in order to determine \f$ g_n \f$.
   Returns in the matrix \p solution the solution of the system. 
 */
-static Matrix
+Matrix
 solve_system(bool all_distinct,
 	     const std::vector<Number>& coefficients,
 	     const std::vector<Polynomial_Root>& roots) {
@@ -616,7 +508,7 @@ solve_system(bool all_distinct,
   return solution;
 }
 
-static Expr
+Expr
 find_g_n(bool all_distinct, const Matrix& sol,
 	 const std::vector<Polynomial_Root>& roots) {
   // Compute the order of the recurrence relation.
@@ -655,7 +547,7 @@ find_g_n(bool all_distinct, const Matrix& sol,
   \p symbolic_sum_distinct and \p symbolic sum_distinct from the position
   \f$ 0 \f$ and it will have like parameters the elements of \p poly_coeff_tot.
 */
-static void
+void
 prepare_for_symbolic_sum(const Expr& g_n,
 			 const std::vector<Polynomial_Root>& roots,
 			 const std::vector<Expr>& exp_poly_coeff,
@@ -693,7 +585,7 @@ prepare_for_symbolic_sum(const Expr& g_n,
       poly_coeff_tot.push_back(exp_poly_coeff[i] * g_n_poly_coeff[j]);
 }
 
-static Expr
+Expr
 compute_non_homogeneous_part(const Expr& g_n, int order,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff) {
@@ -768,7 +660,7 @@ compute_non_homogeneous_part(const Expr& g_n, int order,
   part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
   the function <CODE>add_initial_conditions()</CODE>), respectively.
 */
-static Expr
+Expr
 solve_constant_coeff_order_2(Expr& g_n, int order, bool all_distinct,
 			     const Expr& inhomogeneous_term,
 			     const std::vector<Number>& coefficients,
@@ -900,7 +792,7 @@ solve_constant_coeff_order_2(Expr& g_n, int order, bool all_distinct,
   part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
   the function <CODE>add_initial_conditions()</CODE>), respectively.
 */
-static Expr
+Expr
 solve_constant_coeff_order_k(Expr& g_n, int order, bool all_distinct,
 			     const Expr& inhomogeneous_term,
 			     const std::vector<Number>& coefficients,
@@ -993,7 +885,7 @@ solve_constant_coeff_order_k(Expr& g_n, int order, bool all_distinct,
   Note: this function works only if \f$ e(n) \f$ is a rational function
   in \p n.
 */
-static bool
+bool
 domain_recurrence(const Expr& e, Number& i_c) {
   bool shift_initial_conditions = false;
   if (e.is_rational_function(Recurrence::n)) {
@@ -1034,216 +926,6 @@ domain_recurrence(const Expr& e, Number& i_c) {
   return shift_initial_conditions;
 }
 
-//! \brief
-//! When possible, computes \f$ \prod_{k=lower}^upper e(k) \f$
-//! if \f$ e \f$ is a sum of terms, otherwise returns the symbolic product.
-static Expr
-compute_product_on_add(const Expr& e, const Number& lower, const Expr& upper,
-		       bool is_denominator) {
-  Expr e_prod;
-  Expr_List substitution;
-  bool e_prod_computed = false;
-  if (e.match(Recurrence::n + wild(0), substitution)) {
-    Expr tmp = get_binding(substitution, 0);
-    Number num;
-    if (tmp.is_a_number(num))
-      if (num.is_positive_integer()) {
-	e_prod = factorial(e) / factorial(lower + num - 1);
-	e_prod_computed = true;
-      }
-      else
-	if (lower > -num) {
-	  e_prod = factorial(e) / factorial(lower + num - 1);
-	  e_prod_computed = true;
-	}
-	else
-	  if (is_denominator)
-	    throw std::domain_error("Cannot compute a product at the "
-				    "denominator if one of the factor "
-				    "is zero");
-	  else {
-	    e_prod = 0;
-	    e_prod_computed = true;
-	  }
-  }
-  else if (e == 2*Recurrence::n+1) {
-    e_prod = factorial(2*Recurrence::n+1) * pwr(2, -Recurrence::n)
-      / factorial(Recurrence::n);
-    e_prod_computed = true;
-  }
-  else {
-    // Allows to compute `\prod_{k=lower}^upper e(k)' for function as `a*n+a*b'
-    // (`a' not rational).
-    Expr a = e.content(Recurrence::n);
-    if (a != 1) {
-      e_prod = compute_product(e.primpart(Recurrence::n), lower, upper)
-	* compute_product(a, lower, upper);
-      e_prod_computed = true;
-    }
-    // To compute numerator and denominator is useful because allows
-    // to solve cases as `a/b * n + c/d': infact consider separately
-    // `a*n + c*d' (that we are able to solve if `a = 1 && c/d is
-    // positive integer' or `a = 2 && c*d = 1) and `b*d'.
-    Expr numerator;
-    Expr denominator;
-    numerator_denominator_purrs(e, numerator, denominator);
-    if (denominator != 1) {
-      e_prod = compute_product(numerator, lower, upper)
-	* pwr(compute_product(denominator, lower, upper), -1);
-      e_prod_computed = true;
-    }
-  }
-  if (!e_prod_computed) {
-    Symbol h;
-    e_prod = PURRS::prod(h, lower, upper, e.subs(Recurrence::n, h));
-  }
-  return e_prod;
-}
-
-//! \brief
-//! When possible, computes \f$ \prod_{k=lower}^upper e(k) \f$
-//! if \f$ e \f$ is a power, otherwise returns the symbolic product.
-static Expr
-compute_product_on_power(const Expr& e, const Number& lower, const Expr& upper) {
-  assert(e.is_a_power());
-  const Expr& base_e = e.arg(0);
-  const Expr& exponent_e = e.arg(1);
-  Expr e_prod;
-  bool e_prod_computed = false;
-  if (base_e.has(Recurrence::n)) {
-    Number exponent;
-    if (exponent_e.is_a_number(exponent)) {
-      if (exponent.is_positive_integer())
-	e_prod = pwr(compute_product(base_e, lower, upper), exponent_e);
-      else
-	e_prod
-	  = pwr(compute_product(base_e, lower, upper, true), exponent_e);
-      e_prod_computed = true;
-    }
-  }
-  // In this case `\prod_{k=lower}^upper e(k) = k^{\sum_{h=lower}^upper f(h)}'.
-  else {
-    std::vector<Expr> base_of_exps;
-    std::vector<Expr> exp_poly_coeff;
-    std::vector<Expr> exp_no_poly_coeff;
-    exp_poly_decomposition(exponent_e,
-			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
-    Expr new_exponent = 0;
-    // `f(h)' is a polynomial or a product of a polynomial times an
-    // exponential.
-    if (vector_not_all_zero(exp_poly_coeff)) {
-      Symbol k("k");
-      for (unsigned i = base_of_exps.size(); i-- > 0; ) {
-	Expr coeff_k = exp_poly_coeff[i].subs(Recurrence::n, k);
-	new_exponent += sum_poly_times_exponentials(coeff_k, k, Recurrence::n,
-						    base_of_exps[i]);
-	// `sum_poly_times_exponentials' computes the sum from 0, whereas
-	// we want that the sum start from `1'.
-	new_exponent -= coeff_k.subs(k, 0);
-      }
-      e_prod = pwr(base_e, new_exponent);
-      e_prod_computed = true;
-    }
-    // FIXME: aggiungere anche 
-    // if (vector_not_all_zero(exp_no_poly_coeff)) {...}
-    // per risolvere altre sommatorie risolvibili solo con gosper.
-  }
-  if (!e_prod_computed) {
-    Symbol h;
-    e_prod = PURRS::prod(h, lower, upper, e.subs(Recurrence::n, h));
-  }
-  return e_prod;
-}
-
-//! \brief
-//! Let \f$ e(n) \f$ be an expression in the variable \f$ n \f$.
-//! This function computes \f$ e!(n) \f$ defined as follows:
-//! \f[
-//!   e!(0) \defeq 1,
-//!   \qquad
-//!   e!(n) \defeq \prod_{k=lower}^upper e(k).
-//! \f]
-/*!
-  When possible to find the closed form for \f$ \prod_{k=lower}^upper e(k) \f$,
-  we compute it; when it is not possible we returns the symbolic function
-  for the product.
-  We observe that if also \f$ upper \f$ is a number, in particular it must be
-  an integer number, than the product is always computable: so the following
-  definition is applied only when \f$ upper \f$ is not a number.
-  We defined inductively \f$ \prod_{k=lower}^upper e(k) \f$ as follows:
-  - if \f$ e \f$ is a constant, i.e. it not contains \f$ n \f$,
-    then \f$ \prod_{k=lower}^upper e(k) = e^{upper - lower + 1} \f$;
-  - if \f$ e = n \f$ then
-      if \f$ lower > 0 \f$ then
-        \f$ \prod_{k=lower}^upper e(k) = upper! / (lower - 1)! \f$;
-      else \f$ \prod_{k=lower}^upper e(k) = 0 \f$;
-  - if \f$ e = n + k \f$ where \f$ k \in \Zset \f$
-      if \f$ lower > -k \f$
-        \f$ e_prod = e! / (lower + k - 1)! \f$;
-      else \f$ \prod_{k=lower}^upper e(k) = 0 \f$;
-  - if \f$ e = 2*n+1 \f$,
-    then \f$ \prod_{k=lower}^upper e(k) = \frac{(2*n + 1)!}{2^n * n} \f$;
-  - if \f$ e \f$ is a power there are two cases.
-    We consider \f$ a \f$ and \f$ b \f$ so that \f$ e = a^b \f$, 
-    - if \f$ a \f$ contains \f$ n \f$ and \f$ b \f$ is a number,
-      then \f$ \prod_{k=lower}^upper e(k) = (\prod_{k=lower}^upper a(k))^b;
-    - if \f$ a \f$ not contains \f$ n, i.e. \f$ a \f$ is a constant,
-      then \f$ \prod_{k=lower}^upper e(k) = k^{\sum_{h=lower}^upper f(h)} \f$;
-  - if \f$ e = e_1 \cdots e_m \f$, where \f$ e_i \f$,
-    for \f$ i = 1, \dots, m \f$, is one of the previous case,
-    then \f$ \prod_{k=lower}^upper e(k) =  \prod_{k=lower}^upper e_1(k) \cdots
-    \prod_{k=lower}^upper e_m(k) \f$.
-
-  Note that \p e must be normalized.  
-*/
-static Expr
-compute_product(const Expr& e, const Number& lower, const Expr& upper,
-		bool is_denominator) {
-  assert(lower.is_integer());
-  if (upper.is_a_number()) {
-    Number num_upper = upper.ex_to_number();
-    assert(num_upper.is_integer());
-    if (lower > num_upper)
-      return 1;
-    else if (lower == num_upper)
-      return e.subs(Recurrence::n, lower);
-    else {
-      Expr tmp = 1;
-      for (Number i = lower; i <= num_upper; ++i)
-	tmp *= e.subs(Recurrence::n, i);
-      return tmp;
-    }
-  }
-  Expr e_prod;
-  if (!e.has(Recurrence::n))
-    e_prod = pwr(e, upper - lower + 1);
-  else if (e == Recurrence::n) {
-    if (lower > 0)
-      e_prod = factorial(upper) / factorial(lower - 1);
-    else
-      if (is_denominator)
-	throw std::domain_error("Cannot compute a product at the "
-				"denominator if one of the factor "
-				"is zero");
-      else
-	e_prod = 0;
-  }
-  else if (e.is_a_add())
-    e_prod = compute_product_on_add(e, lower, upper, is_denominator);
-  else if (e.is_a_power())
-    e_prod = compute_product_on_power(e, lower, upper);
-  else if (e.is_a_mul()) {
-    e_prod = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
-      e_prod *= compute_product(e.op(i), lower, upper);
-  }
-  else {
-    Symbol h;
-    e_prod = PURRS::prod(h, lower, upper, e.subs(Recurrence::n, h));
-  }
-  return e_prod;
-}
-
 //! Returns <CODE>true</CODE> if \p e contains parameters;
 //! returns <CODE>false</CODE> otherwise.
 /*!
@@ -1252,7 +934,7 @@ compute_product(const Expr& e, const Number& lower, const Expr& upper,
   Note: \p e does not contain \f$ x(f) \f$ with \f$ f \f$ an expression
   containig \p n.
 */
-static bool
+bool
 find_parameters(const Expr& e) {
   if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned i = e.nops(); i-- > 0; )
@@ -1279,7 +961,7 @@ find_parameters(const Expr& e) {
 }
 
 #if 0
-static void
+void
 impose_condition(const std::string&) {
 }
 #endif
@@ -1289,7 +971,7 @@ impose_condition(const std::string&) {
   becomes the new maximum decrement and it is assigned to \p max_decrement,
   in this case \p possibly_coeff becomes the new \p coefficient.
 */
-static void
+void
 assign_max_decrement_and_coeff(const Expr& possibly_dec, const Expr& possibly_coeff,
 			       int& max_decrement, Expr& coefficient) {
   Number decrement;
@@ -1308,7 +990,7 @@ assign_max_decrement_and_coeff(const Expr& possibly_dec, const Expr& possibly_co
   These two values are stored in \p max_decrement and \p coefficient,
   respectively.
 */
-static void
+void
 find_max_decrement_and_coeff(const Expr& e,
 			     const Expr& x_i, const Expr& a_times_x_i,
 			     int& max_decrement, Expr& coefficient) {
@@ -1344,7 +1026,7 @@ find_max_decrement_and_coeff(const Expr& e,
   does not contain any instance of \f$ x(n-k) \f$, with a
   negative integer \f$ k \f$.
 */
-static void
+void
 eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs) {
   // Seeks `max_decrement', i.e., the largest positive integer `j' such that
   // `x(n+j)' occurs in `rhs' with a coefficient `coefficient' which is not
@@ -1372,7 +1054,7 @@ eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs) {
   is then written in \f$ new_rhs \f$, and the function returns
   <CODE>true</CODE>.
 */
-static bool
+bool
 eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
   Expr_List substitution;
   // Let `rhs = a*x(n) + b' and that `b' does different to zero
@@ -1443,7 +1125,7 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
   return true;
 }
 
-static Expr
+Expr
 rewrite_factor(const Expr& e, const Expr& m, int gcd_among_decrements) {
   if (e.is_a_power())
     return pwr(rewrite_factor(e.arg(0), m, gcd_among_decrements),
@@ -1466,7 +1148,7 @@ rewrite_factor(const Expr& e, const Expr& m, int gcd_among_decrements) {
   return e;
 }
 
-static Expr
+Expr
 rewrite_term(const Expr& e, const Expr& m, int gcd_among_decrements) {
   unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
   Expr e_rewritten = 1;
@@ -1485,7 +1167,7 @@ rewrite_term(const Expr& e, const Expr& m, int gcd_among_decrements) {
   so that we have to solve \f$ g \f$ recurrences of order smaller
   than those of the original recurrence. 
 */
-static Expr
+Expr
 rewrite_reduced_order_recurrence(const Expr& e, const Expr& m,
 				 int gcd_among_decrements) {
   D_VAR(gcd_among_decrements);
@@ -1499,7 +1181,7 @@ rewrite_reduced_order_recurrence(const Expr& e, const Expr& m,
   return e_rewritten;
 }
 
-static Expr 
+Expr 
 come_back_to_original_variable(const Expr& e, const Expr& m,
 			       int gcd_among_decrements) {
   Expr e_rewritten;
@@ -1538,7 +1220,7 @@ come_back_to_original_variable(const Expr& e, const Expr& m,
 }
 
 #if 0
-static void
+void
 print_bad_exp(const Expr& e, const Expr rhs, bool conditions) {
   std::ofstream outfile("not_verified.out", std::ios_base::app);
   if (conditions)
@@ -1549,7 +1231,7 @@ print_bad_exp(const Expr& e, const Expr rhs, bool conditions) {
   outfile << e << std::endl;
 }
 
-static Expr
+Expr
 find_term_without_initial_conditions(const Expr& term) {
   if (term.is_a_mul()) {
     bool found_initial_condition = false;
@@ -1597,7 +1279,7 @@ find_term_without_initial_conditions(const Expr& term) {
   FIXME: In the latter case, we will need more powerful tools to
   decide whether the solution is right or it is really wrong.
 */
-static bool
+bool
 verify_solution(const Expr& solution, int order, const Expr& rhs) {
   // FIXME: the initial conditions can not start always from 0:
   // `order' is temporary until we will consider a method in order to
@@ -1752,7 +1434,7 @@ PURRS::Recurrence::compute_order(const Number& decrement,
   return OK;
 }
   
-static void
+void
 insert_coefficients(const Expr& coeff, unsigned long index,
 		    std::vector<Expr>& coefficients) {
   // The vector `coefficients' contains in the `i'-th position the
@@ -1855,7 +1537,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
   return OK;
 }
 
-static void
+void
 substitute_non_rational_roots(const Recurrence& rec,
 			      std::vector<Polynomial_Root>& roots) {
   for (unsigned i = roots.size(); i-- > 0; )

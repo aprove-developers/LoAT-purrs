@@ -61,6 +61,8 @@ poly_factor.hh \
 gosper.hh \
 simplify.hh \
 numerator_denominator.hh \
+compute_prod.hh \
+ep_decomp.hh \
 sum_poly.hh \
 util.hh \
 Blackboard.defs.hh \
@@ -88,6 +90,8 @@ numerator_denominator.cc \
 poly_factor.cc \
 rr_solver.cc \
 simplify.cc \
+compute_prod.cc \
+ep_decomp.cc \
 sum_poly.cc \
 util.cc \
 $(INCLUDE_FILES)
