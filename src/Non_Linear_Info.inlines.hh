@@ -26,27 +26,24 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Non_Linear_Info_inlines_hh
 
 #include "Non_Linear_Info.types.hh"
+#include "util.hh"
 
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
-Non_Linear_Info::Non_Linear_Info(const Expr& new_rhs,
+Non_Linear_Info::Non_Linear_Info(const Recurrence& associated_linear_rec,
 				 const std::pair<Number, Expr>& coeff_and_base,
 				 const std::vector<Symbol> auxiliary_symbols)
-  : rhs_transformed_in_linear_(new_rhs),
+  : associated_linear_rec_(associated_linear_rec),
     coeff_and_base_(coeff_and_base),
-    auxiliary_symbols_(auxiliary_symbols),
-    order_if_linear_(0),
-    first_valid_index_if_linear_(0) {
+    auxiliary_symbols_(auxiliary_symbols) {
 }
 
 inline
 Non_Linear_Info::Non_Linear_Info(const Non_Linear_Info& y)
-  : rhs_transformed_in_linear_(y.rhs_transformed_in_linear_),
+  : associated_linear_rec_(y.associated_linear_rec_),
     coeff_and_base_(y.coeff_and_base_),
-    auxiliary_symbols_(y.auxiliary_symbols_),
-    order_if_linear_(y.order_if_linear_),
-    first_valid_index_if_linear_(y.first_valid_index_if_linear_) {
+    auxiliary_symbols_(y.auxiliary_symbols_) {
 }
 
 inline
@@ -55,22 +52,20 @@ Non_Linear_Info::~Non_Linear_Info() {
 
 inline Non_Linear_Info&
 Non_Linear_Info::operator=(const Non_Linear_Info& y) {
-  rhs_transformed_in_linear_ = y.rhs_transformed_in_linear_;
+  associated_linear_rec_ = y.associated_linear_rec_;
   coeff_and_base_ = y.coeff_and_base_;
   auxiliary_symbols_ = y.auxiliary_symbols_;
-  order_if_linear_ = y.order_if_linear_;
-  first_valid_index_if_linear_ = y.first_valid_index_if_linear_;
   return *this;
 }
 
-inline Expr
-Non_Linear_Info::rhs_transformed_in_linear() const {
-  return rhs_transformed_in_linear_;
+inline const Recurrence&
+Non_Linear_Info::associated_linear_rec() const {
+  return associated_linear_rec_;
 }
 
-inline Expr&
-Non_Linear_Info::rhs_transformed_in_linear() {
-  return rhs_transformed_in_linear_;
+inline Recurrence&
+Non_Linear_Info::associated_linear_rec() {
+  return associated_linear_rec_;
 }
 
 inline Number
@@ -101,26 +96,6 @@ Non_Linear_Info::auxiliary_symbols() const {
 inline std::vector<Symbol>&
 Non_Linear_Info::auxiliary_symbols() {
   return auxiliary_symbols_;
-}
-
-inline index_type
-Non_Linear_Info::order_if_linear() const {
-  return order_if_linear_;
-}
-
-inline void
-Non_Linear_Info::set_order_if_linear(index_type x) {
-  order_if_linear_ = x;
-}
-
-inline index_type
-Non_Linear_Info::first_valid_index_if_linear() const {
-  return first_valid_index_if_linear_;
-}
-
-inline void
-Non_Linear_Info::set_first_valid_index_if_linear(index_type i_c) {
-  first_valid_index_if_linear_ = i_c;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

@@ -37,7 +37,9 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Number.defs.hh"
 #include "Finite_Order_Info.defs.hh"
 #include "Functional_Equation_Info.defs.hh"
+#include "Non_Linear_Info.defs.hh"
 #include "Recurrence.defs.hh"
+#include "Recurrence.inlines.hh"
 
 #include <climits>
 #include <string>
@@ -788,7 +790,7 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
     if (rewrite_non_linear_recurrence(*this, rhs, new_rhs, coeff_and_base,
 				      auxiliary_symbols)) {
       set_non_linear_finite_order();
-      non_linear_p = new Non_Linear_Info(new_rhs, coeff_and_base,
+      non_linear_p = new Non_Linear_Info(Recurrence(new_rhs), coeff_and_base,
 					 auxiliary_symbols);
       return SUCCESS;
     }

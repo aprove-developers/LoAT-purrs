@@ -30,6 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "globals.hh"
 #include "Expr.defs.hh"
 #include "Symbol.defs.hh"
+#include "Recurrence.defs.hh"
 
 #include<utility>
 
@@ -38,10 +39,10 @@ namespace Parma_Recurrence_Relation_Solver {
 class Non_Linear_Info {
 public:
   //! \brief
-  //! Constructor: sets \f$ rhs_transformed_in_linear_ = new_rhs \f$,
+  //! Constructor: sets \f$ associated_linear_rec_ = associated_linear_rec \f$,
   //! \f$ coeff_and_base_ = coeff_and_base \f$,
   //! \f$ auxiliary_symbols_ = auxiliary_symbols \f$.
-  Non_Linear_Info(const Expr& new_rhs,
+  Non_Linear_Info(const Recurrence& associated_linear_rec,
 		  const std::pair<Number, Expr>& coeff_and_base,
 		  const std::vector<Symbol> auxiliary_symbols);
 
@@ -54,11 +55,11 @@ public:
   //! Assignment operator.
   Non_Linear_Info& operator=(const Non_Linear_Info& y);
 
-  //! Returns <CODE>rhs_transformed_in_linear_</CODE>.
-  Expr rhs_transformed_in_linear() const;
+  //! Returns <CODE>associated_linear_rec_</CODE>.
+  const Recurrence& associated_linear_rec() const;
 
-  //! Returns <CODE>rhs_transformed_in_linear_</CODE>.
-  Expr& rhs_transformed_in_linear();
+  //! Returns <CODE>associated_linear_rec_</CODE>.
+  Recurrence& associated_linear_rec();
 
   //! Returns <CODE>coeff_and_base_.first</CODE>.
   Number coeff_simple_non_linear_rec() const;
@@ -78,24 +79,14 @@ public:
   //! Returns <CODE>auxiliary_symbols_</CODE>.
   std::vector<Symbol>& auxiliary_symbols();
 
-  //! Returns <CODE>order_if_linear_</CODE>.
-  index_type order_if_linear() const;
-
-  //! Sets <CODE>order_if_non_linear_</CODE> with \p x.
-  void set_order_if_linear(index_type x);
-
-  //! Returns <CODE>first_valid_index_if_linear_</CODE>.
-  index_type first_valid_index_if_linear() const;
-
-  //! Sets <CODE>first_valid_index_if_linear_</CODE> with \p i_c
-  void set_first_valid_index_if_linear(index_type i_c);
-
 private:
   //! \brief
-  //! If the rewriting of the non-linear recurrence in a linear
-  //! recurrence has success then this data contain the right hand side
-  //! of the linear recurrence.
-  Expr rhs_transformed_in_linear_;
+  //! In the case which the system is able to rewrite the non-linear
+  //! recurrence \p *this in linear, this method stores the linear
+  //! recurrence computed (in order to know the cases of rewritable
+  //! non-linear recurrences see the function
+  //! <CODE>rewrite_non_linear_recurrence()</CODE>).
+  Recurrence associated_linear_rec_;
 
   //! \brief
   //! \p coeff_and_base_ is used in two different ways:
@@ -111,18 +102,6 @@ private:
   //! Stores the symbols associated to the eventual negative numbers
   //! that will be the arguments of the logarithms.
   std::vector<Symbol> auxiliary_symbols_;
-
-  //! \brief
-  //! When the non-linear recurrence is rewritable in a linear recurrence
-  //! of finite order this data stores the order of the linear recurrence.
-  index_type order_if_linear_;
-
-  //! \brief
-  //! When the non-linear recurrence is rewritable in a linear recurrence
-  //! of finite order this data stores the smallest positive integer for
-  //! which the recurrence is well-defined: the initial conditions will
-  //! start from it.
-  index_type first_valid_index_if_linear_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

@@ -25,6 +25,8 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_Recurrence_inlines_hh
 #define PURRS_Recurrence_inlines_hh
 
+#include "Non_Linear_Info.defs.hh"
+
 #include <iostream>
 #include <utility>
 #include <stdexcept>
@@ -36,7 +38,6 @@ inline
 Recurrence::Recurrence()
   : recurrence_rhs(0),
     recurrence_rewritten(false),
-    come_from_non_linear_rec(false),
     inhomogeneous_term(0),
     type_(ORDER_ZERO),
     is_classified(false),
@@ -51,7 +52,6 @@ inline
 Recurrence::Recurrence(const Expr& e)
   : recurrence_rhs(e),
     recurrence_rewritten(false),
-    come_from_non_linear_rec(false),
     inhomogeneous_term(0),
     type_(ORDER_ZERO),
     is_classified(false),
@@ -66,7 +66,6 @@ inline
 Recurrence::Recurrence(const Recurrence& y)
   : recurrence_rhs(y.recurrence_rhs),
     recurrence_rewritten(y.recurrence_rewritten),
-    come_from_non_linear_rec(y.come_from_non_linear_rec),
     inhomogeneous_term(y.inhomogeneous_term),
     system_rhs(y.system_rhs),
     type_(y.type_),
@@ -83,19 +82,10 @@ Recurrence::Recurrence(const Recurrence& y)
     initial_conditions(y.initial_conditions) {
 }
 
-inline
-Recurrence::~Recurrence() {
-  delete finite_order_p;
-  delete functional_eq_p;
-  delete non_linear_p;
-  delete infinite_order_p;
-}
-
 inline Recurrence&
 Recurrence::operator=(const Recurrence& y) {
   recurrence_rhs = y.recurrence_rhs;
   recurrence_rewritten = y.recurrence_rewritten;
-  come_from_non_linear_rec = y.come_from_non_linear_rec;
   inhomogeneous_term = y.inhomogeneous_term;
   system_rhs = y.system_rhs;
   type_ = y.type_;
@@ -111,6 +101,14 @@ Recurrence::operator=(const Recurrence& y) {
   blackboard = y.blackboard;
   initial_conditions = y.initial_conditions;
   return *this;
+}
+
+inline
+Recurrence::~Recurrence() {
+  delete finite_order_p;
+  delete functional_eq_p;
+  delete non_linear_p;
+  delete infinite_order_p;
 }
 
 inline void
@@ -287,15 +285,15 @@ Recurrence::gcd_among_decrements() const {
   return finite_order_p -> gcd_among_decrements();
 }
 
-inline Expr&
-Recurrence::product_factor() {
+inline const Expr&
+Recurrence::product_factor() const {
   assert(is_linear_finite_order_var_coeff());
   assert(finite_order_p);
   return finite_order_p -> product_factor();
 }
 
-inline Expr
-Recurrence::product_factor() const {
+inline Expr&
+Recurrence::product_factor() {
   assert(is_linear_finite_order_var_coeff());
   assert(finite_order_p);
   return finite_order_p -> product_factor();
@@ -350,19 +348,19 @@ Recurrence::rank() const {
   return functional_eq_p -> rank();
 }
 
-inline Expr
-Recurrence::rhs_transformed_in_linear() const {
+inline const Recurrence&
+Recurrence::associated_linear_rec() const {
   assert(non_linear_p);
-  return non_linear_p -> rhs_transformed_in_linear();
+  return non_linear_p -> associated_linear_rec();
 }
 
-inline Expr&
-Recurrence::rhs_transformed_in_linear() {
+inline Recurrence&
+Recurrence::associated_linear_rec() {
   assert(non_linear_p);
-  return non_linear_p -> rhs_transformed_in_linear();
+  return non_linear_p -> associated_linear_rec();
 }
 
-inline Number
+inline const Number&
 Recurrence::coeff_simple_non_linear_rec() const {
   assert(non_linear_p);
   return non_linear_p -> coeff_simple_non_linear_rec();
@@ -374,7 +372,7 @@ Recurrence::coeff_simple_non_linear_rec() {
   return non_linear_p -> coeff_simple_non_linear_rec();
 }
 
-inline Expr
+inline const Expr&
 Recurrence::base_exp_log() const {
   assert(non_linear_p);
   return non_linear_p -> base_exp_log();
@@ -398,33 +396,7 @@ Recurrence::auxiliary_symbols() {
   return non_linear_p -> auxiliary_symbols();
 }
 
-inline index_type
-Recurrence::order_if_linear() const {
-  assert(non_linear_p);
-  return non_linear_p -> order_if_linear();
-}
-
-inline void
-Recurrence::set_order_if_linear(index_type x) const {
-  assert(non_linear_p);
-  return non_linear_p -> set_order_if_linear(x);
-}
-
-inline index_type
-Recurrence::first_valid_index_if_linear() const {
-  assert(is_non_linear_finite_order());
-  assert(non_linear_p);
-  return non_linear_p -> first_valid_index_if_linear();
-}
-
-inline void
-Recurrence::set_first_valid_index_if_linear(index_type i_c) const {
-  assert(is_non_linear_finite_order());
-  assert(non_linear_p);
-  non_linear_p -> set_first_valid_index_if_linear(i_c);
-}
-
-inline Expr
+inline const Expr&
 Recurrence::rhs_transformed_in_first_order() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
@@ -438,7 +410,7 @@ Recurrence::rhs_transformed_in_first_order() {
   return infinite_order_p -> rhs_transformed_in_first_order();
 }
 
-inline Expr
+inline const Expr&
 Recurrence::coeff_first_order() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
@@ -452,7 +424,7 @@ Recurrence::coeff_first_order() {
   return infinite_order_p -> coeff_first_order();
 }
 
-inline Expr
+inline const Expr&
 Recurrence::inhomog_first_order() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
@@ -466,7 +438,7 @@ Recurrence::inhomog_first_order() {
   return infinite_order_p -> inhomog_first_order();
 }
 
-inline Expr
+inline const Expr&
 Recurrence::weight_inf_order() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);
@@ -487,7 +459,7 @@ Recurrence::lower_bound_sum() const {
   return infinite_order_p -> lower_bound_sum();
 }
 
-inline Expr
+inline const Expr&
 Recurrence::upper_bound_sum() const {
   assert(is_linear_infinite_order());
   assert(infinite_order_p);

@@ -29,6 +29,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <config.h>
 
 #include "Recurrence.defs.hh"
+#include "Recurrence.inlines.hh"
 #include "ep_decomp.hh"
 #include "finite_order.hh"
 #include "simplify.hh"
@@ -46,6 +47,13 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 const PURRS::Symbol&
 PURRS::Recurrence::n = Symbol("n");
+
+// PURRS::Recurrence::~Recurrence() {
+//   delete finite_order_p;
+//   delete functional_eq_p;
+//   delete non_linear_p;
+//   delete infinite_order_p;
+// }
 
 namespace {
 using namespace PURRS;
@@ -250,39 +258,73 @@ PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
   return INCONCLUSIVE_VERIFICATION;
 }
 
-// @@@
+PURRS::Recurrence::Verify_Status
+PURRS::Recurrence::
+validation_initial_conditions(index_type order,
+			      index_type first_valid_index) const {
+  for (index_type i = 0; i < order; ++i) {
+    Expr e = exact_solution_.expression().substitute(n, first_valid_index + i);
+    // Expand blackboard's definitions in order to increase the
+    // opportunities for simplifications.
+    e = blackboard.rewrite(e);
+    e = simplify_all(e);
+    if (e != x(first_valid_index + i))
+      // FIXME: pravably_incorrect nei casi semplici.
+      return INCONCLUSIVE_VERIFICATION;
+  }
+  return PROVABLY_CORRECT;
+}
+
+//! \brief
+//! Verify the exact solution of recurrence \p *this, where the recurrence
+//! can be linear of finite order or non-linear of finite order.
 /*!
   Case 1: linear recurrences of finite order.
   Consider the right hand side \p rhs of the order \f$ k \f$ recurrence
   relation
-  \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$.
-  Let \f$ i \f$ the non-negative integer starting from which the recurrence
-  is well-defined.
+  \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$,
+  which is stored in the expression <CODE>recurrence_rhs</CODE>.
+  Let \f$ i \f$ be \p first_valid_index, that is, the least non-negative
+  integer \f$ j \f$ such that the recurrence is well-defined for
+  \f$ n \geq j \f$.
+  Assume that the system has produced the expression
+  <CODE>exact_solution_.expression()</CODE>, which is a function of the
+  variable \f$ n \f$.
+
   The verification's process is divided in 4 steps:
-  -  Validation of initial conditions.
-     If <CODE>recurrence_rhs</CODE> is equal to \f$ x(i), \cdots, x(i+k-1) \f$
-     for \f$ n = i, \cdots, i+k-1 \f$ respectively, then
-     the initial conditions are verified and we can continue the verification;
-     otherwise return <CODE>INCONCLUSIVE_VERIFICATION</CODE> because the
+  -  Validation of <EM>symbolic initial conditions</EM>.
+     Evaluate the expression \p exact_solution_.expression() for
+     \f$ n = i, \cdots, i+k-1 \f$ and simplify as much as possible.
+     If the final result is <EM>synctactically</EM> equal to \f$ x(n) \f$
+     for \f$ n = i, \cdots, i+k-1 \f$, the symbolic initial conditions are
+     verified and we can proceed to step 2; otherwise return
+     <CODE>INCONCLUSIVE_VERIFICATION</CODE> because the
      solution can be wrong or it is not enough simplified.
-  -  Splits the solution in 2 parts: \p homogeneous_part contains the terms
-     of the solution with the initial conditions \f$ x(i), \cdots, x(i+k) \f$,
-     \p non_homogeneous_part all the other terms.
-  -  By substitution, verifies that \p homogeneous_part satisfies the
-     homogeneous part of the recurrence
+     FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
+  -  Split \p exact_solution_.expression() in 2 expressions:
+     \p summands_with_i_c contains the summands with an occurrence of a
+     symbolic initial conditions \f$ x(i), \cdots, x(i+k) \f$;
+     \p summands_without_i_c contains all the other summands.
+  -  Verify that \p summands_with_i_c satisfies the homogeneous part of
+     the recurrence
      \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} \f$.
-     Considers the difference, called \f$ d1 \f$, between
-     \p homogeneous_part and the new right hand side obtained by
-     substitution in the omogeneous part of the recurrence:
-     - if \f$ d1 = 0 \f$     -> the verification can continue;
+     Replace \f$ x(n-i) \f$ by \p exact_solution_.expression()
+     evaluated at \f$ n-i \f$ (for \f$ i = 1, \cdots, k \f$) in the
+     above expression, and store the result in
+     \p substituted_homogeneous_rhs.
+     Consider the difference
+     \f$ d1 = summands_with_i_c - substituted_homogeneous_rhs \f$:
+     - if \f$ d1 = 0 \f$     -> proceed to step 3;
      - if \f$ d1 \neq 0 \f$  -> returns <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
  			        the solution can be wrong or we failed to
 			        simplify it.
-  -  By substitution, verifies that \p non_homogeneous_part satisfies
+     FIXME: in some cases it can return <CODE>PROVABLY_INCORRECT</CODE>.
+  -  FIXME: as above.
+     By substitution, verifies that \p summands_without_i_c satisfies
      the recurrence (in other words, we are considering all initial
      conditions equal to \f$ 0 \f$).
      Considers the difference, called \f$ d2 \f$, between
-     \p non_homogeneous_part and the new right hand side obtained by
+     \p summands_without_i_c and the new right hand side obtained by
      substitution:
      - if \f$ d2 = 0 \f$     -> returns <CODE>PROVABLY_CORRECT</CODE>:
                                 the solution is certainly right.
@@ -297,425 +339,439 @@ PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
    Considers the order of the linear recurrence associated to that one
    non-linear, since the initial conditions are the same.
    Applies the 4 steps of the previous case.
-
-   Case 3: linear recurrence of infinite order.
-   At the moment the system solve infinite order recurrence transforming it
-   in linear recurrence of first order, therefore in the solution will be
-   only one initial condition.
-   The verification's process is divided in 2 steps:
-   -  Validation of the initial condition by substitution of \f$ n \f$
-      with the value in <CODE>rec.lower_bound_sum()</CODE>, i.e., the first
-      value starting from which the solution is valid.
-   -  Validation of the solution using mathematic induction.
 */
+PURRS::Recurrence::Verify_Status
+PURRS::Recurrence::verify_finite_order() const {
+  // ...
+  index_type order_rec;
+  // ...
+  index_type first_i_c;
+  // perche' prendi
+  if (is_non_linear_finite_order()) {
+    order_rec = associated_linear_rec().order();
+    first_i_c = associated_linear_rec().first_valid_index();
+  }
+  else {
+    order_rec = order();
+    first_i_c = first_valid_index();
+  }
+  
+  if (order_rec == 0)
+    // commento...
+    return PROVABLY_CORRECT;
+  
+  // Step 1: validation of initial conditions:
+  // FIXME: specificare c.i. simboliche.
+  Verify_Status status = validation_initial_conditions(order_rec, first_i_c);
+  if (status == INCONCLUSIVE_VERIFICATION || status == PROVABLY_INCORRECT)
+    return status;
+  
+  // Step 2: split the solution in 2 parts: terms with initial conditions
+  // are stored in `summands_with_i_c', all the other terms are stored in
+  // `summands_without_i_c'.
+  Expr summands_with_i_c = 0;
+  Expr summands_without_i_c = 0;
+  // troppe chiamate di funzione!!
+  if (exact_solution_.expression().is_a_add())
+    for (unsigned int i = exact_solution_.expression().nops(); i-- > 0; ) {
+      // ---->  has_symbolic_initial_conditions()
+      if (exact_solution_.expression().op(i).has_x_function_only_ic())
+	summands_with_i_c += exact_solution_.expression().op(i);
+      else
+	summands_without_i_c += exact_solution_.expression().op(i);
+    }
+  else
+    if (exact_solution_.expression().has_x_function_only_ic())
+      summands_with_i_c = exact_solution_.expression();
+    else
+      summands_without_i_c = exact_solution_.expression();
+  
+#if 0
+  // Step 3: by substitution, verifies that `summands_with_i_c'
+  // satisfies the homogeneous part of the recurrence.
+  // `substituted_homogeneous_rhs' is the homogeneous part of the
+  // recurrence where `n' is substituted by `n - d' (where `d' is
+  // the decrement of the i-th term `a_i(n) x(n - d)').
+  Expr substituted_homogeneous_rhs = recurrence_rhs - inhmogeneous_term;
+  // Substitutes in the homogeneous part of the recurrence the terms
+  // of the form `x(n-i)'.
+  for (index_type i = 0; i < order_rec; ++i) {
+    Expr shifted_solution
+      = simplify_all(summands_with_i_c.substitute(n, n - (i + 1)));
+    shifted_solution = simplify_sum(shifted_solution, true);
+    substituted_homogeneous_rhs
+      = substituted_homogeneous_rhs
+      .substitute(x(n - (i + 1)), shifted_solution);
+  }
+  Expr diff
+    = blackboard.rewrite(summands_with_i_c - substituted_homogeneous_rhs);
+  diff = simplify_all(diff);
+  if (!diff.is_zero()) {
+    diff = simplify_all(diff);
+    if (!diff.is_zero())
+      return INCONCLUSIVE_VERIFICATION;
+  }
+#endif
+  
+  // The recurrence is homogeneous.
+  if (summands_without_i_c == 0)
+    return PROVABLY_CORRECT;
+  
+#if 0
+  std::vector<Expr> bases_of_exp;
+  std::vector<Expr> exp_poly_coeff;
+  std::vector<Expr> exp_no_poly_coeff;
+  exp_poly_decomposition(inhomogeneous_term.expand(), Recurrence::n,
+			 bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
+  
+  assert(bases_of_exp.size() == exp_poly_coeff.size()
+	 && exp_poly_coeff.size() == exp_no_poly_coeff.size()
+	 && exp_no_poly_coeff.size() >= 1);
+  
+  unsigned int num_of_exponentials = bases_of_exp.size();
+  D_VEC(bases_of_exp, 0, num_of_exponentials-1);
+  D_VEC(exp_poly_coeff, 0, num_of_exponentials-1);
+  D_VEC(exp_no_poly_coeff, 0, num_of_exponentials-1);
+  
+  unsigned int max_polynomial_degree = 0;
+  for (unsigned int i = 0; i < num_of_exponentials; ++i) {
+    if (!exp_no_poly_coeff[i].is_zero()) {
+      DD_MSGVAR("No poly: ", exp_no_poly_coeff[i]);
+      goto traditional;
+    }
+    max_polynomial_degree = std::max(max_polynomial_degree,
+				     exp_poly_coeff[i].degree(n));
+  }
+  
+  {
+    std::vector<Polynomial_Root> roots;
+    std::vector<Number> num_coefficients(order_rec + 1);
+    bool all_distinct = true;
+    if (is_linear_finite_order_const_coeff()) {
+      Expr characteristic_eq;
+      if (!characteristic_equation_and_its_roots(order_rec,
+						 coefficients(),
+						 num_coefficients,
+						 characteristic_eq, roots,
+						 all_distinct))
+	abort();
+    }
+    // FIXME: if this is the case of linear recurrence with variable
+    // coefficient the vector of the roots is empty! 
+    
+    // Find the maximum degree of a polynomial that may occur in the
+    // solution.
+    for (unsigned int i = 0, nroots = roots.size(); i < nroots; ++i) {
+      max_polynomial_degree += roots[i].multiplicity() - 1;
+      // FIXME: this may be inefficient!
+      for (unsigned int j = 0; j < num_of_exponentials; ++j)
+	if (roots[i].value() == bases_of_exp[j])
+	  ++max_polynomial_degree;
+    }
+    
+    Expr substituted_rhs = recurrence_rhs;
+    for (index_type i = order_rec; i-- > 0; ) {
+      Expr shifted_solution = summands_without_i_c.substitute(n, n - (i + 1));
+      //shifted_solution = simplify_sum(shifted_solution, true);
+      substituted_rhs = substituted_rhs
+	.substitute(x(n - (i + 1)), shifted_solution);
+    }
+    Expr diff = blackboard.rewrite(summands_without_i_c - substituted_rhs);
+    diff = diff.expand();
+    
+    std::vector<Expr> coefficients_of_exponentials(max_polynomial_degree+1);
+    if (diff.is_a_add()) {
+      for (unsigned int i = 0; i < diff.nops(); ++i) {
+	Expr summand = diff.op(i);
+#if 0
+	if (summand.is_a_mul()) {
+	  // Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
+	  // `a' and `b' possibly 1).
+	  bool done = false;
+	  for (unsigned int j = 0; j < summand.nops(); ++j) {
+	    Expr factor = summand.op(j);
+	    unsigned int k;
+	    if (factor == n)
+	      k = 1;
+	    else if (factor.is_a_power() && factor.arg(0) == n) {
+	      assert(factor.arg(1).is_a_number());
+	      k = factor.arg(1).ex_to_number().to_unsigned int();
+	    }
+	    else
+	      continue;
+	    // FIXME: maybe can be implemented in a better way.
+	    // FIXME: k uninitialized here!
+	    coefficients_of_exponentials[k] += summand/factor;
+	    done = true;
+	    break;
+	  }
+	  if (!done)
+	    coefficients_of_exponentials[0] += summand;
+	}
+#else
+	if (summand.is_a_mul()) {
+	  // Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
+	  // `a' and `b' possibly 1).
+	  bool done = false;
+	  for (unsigned int j = 0; (j < summand.nops()) && !done; ++j) {
+	    Expr factor = summand.op(j);
+	    if (factor == n) {
+	      coefficients_of_exponentials[1] += summand/factor;
+	      done = true;
+	    }
+	    else if (factor.is_a_power() && factor.arg(0) == n) {
+	      assert(factor.arg(1).is_a_number());
+	      unsigned int k = factor.arg(1).ex_to_number().to_unsigned int();
+	      assert(k < coefficients_of_exponentials.size());
+	      coefficients_of_exponentials[k] += summand/factor;
+	      done = true;
+	    }
+	  }
+	  // `done' is false if `factor' contains neither `n' nor `n^k'
+	  if (!done)
+	    coefficients_of_exponentials[0] += summand;
+	}
+#endif
+	else if (summand.is_a_power()) {
+	  // Summand has the form `n^k' or `a^n'
+	  if (summand.arg(0) == n) {
+	    unsigned int k = summand.arg(1).ex_to_number().to_unsigned_int();
+	    coefficients_of_exponentials[k] += 1;
+	  }
+	  else
+	    coefficients_of_exponentials[0] += summand;
+	}
+	else {
+	  // Summand is a constant or the symbol `n'.
+	  assert(summand.is_a_number() || summand == n);
+	  Number k;
+	  if (summand.is_a_number(k))
+	    coefficients_of_exponentials[0] += k;
+	  else
+	    coefficients_of_exponentials[1] += 1;
+	}
+      }
+    }
+    else {
+      Expr summand = diff;
+      if (summand.is_a_mul()) {
+	// Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
+	// `a' and `b' possibly 1).
+	bool done = false;
+	for (unsigned int j = 0; j < summand.nops(); ++j) {
+	  Expr factor = summand.op(j);
+	  unsigned int k;
+	  if (factor == n)
+	    k = 1;
+	  else if (factor.is_a_power() && factor.arg(0) == n) {
+	    assert(factor.arg(1).is_a_number());
+	    k = factor.arg(1).ex_to_number().to_unsigned_int();
+	  }
+	  else
+	    continue;
+	  // FIXME: maybe can be implemented in a better way.
+	  coefficients_of_exponentials[k] += summand/factor;
+	  done = true;
+	  break;
+	}
+	if (!done)
+	  coefficients_of_exponentials[0] += summand;
+      }      
+      else if (summand.is_a_power()) {
+	// Summand has the form `n^k' or `a^n'
+	if (summand.arg(0) == n) {
+	  unsigned int k = summand.arg(1).ex_to_number().to_unsigned_int();
+	  coefficients_of_exponentials[k] += 1;
+	}
+	else
+	  coefficients_of_exponentials[0] += summand;
+      }
+      else {
+	// Summand is a constant or the symbol `n'.
+	assert(summand.is_a_number() || summand == n);
+	Number k;
+	if (summand.is_a_number(k))
+	  coefficients_of_exponentials[0] += k;
+	else
+	  coefficients_of_exponentials[1] += 1;
+      }
+    }
+    
+    D_VEC(coefficients_of_exponentials, 0, max_polynomial_degree);
+    
+    Number num_tests = num_of_exponentials + order_rec;
+    for (unsigned int i = 0; i < max_polynomial_degree; ++i) {
+      if (!coefficients_of_exponentials[i].is_zero()) {
+	// Not syntactically 0: try to prove that is it semantically 0.
+	Expr c = coefficients_of_exponentials[i];
+	for (Number r = 0; r < num_tests; ++r) {
+	  Expr c_r = simplify_all(c.substitute(n, r));
+	  if (!c_r.is_zero()) {
+	    DD_MSGVAR("Argh!!! ", i);
+	    DD_MSGVAR("Argh!!! ", r);
+	    DD_MSGVAR("Argh!!! ", c_r);
+	    goto traditional;
+	  }
+	}
+      }
+    }
+    return PROVABLY_CORRECT;
+  }
+  
+ traditional:
+#endif
+
+  // Step 4: by substitution, verifies that `summands_without_i_c'
+  // satisfies the recurrence.
+  // Computes `substituted_rhs' by substituting, in the rhs
+  // of the recurrence, `n' by `n - d' (where `d' is the decrement
+  // of the i-th term `a(n)*x(n - d)').
+  Expr substituted_rhs = recurrence_rhs;
+  for (index_type d = 1; d <= order_rec; ++d) {
+    Expr shifted_solution
+      = simplify_all(summands_without_i_c.substitute(n, n - d));
+    shifted_solution = simplify_sum(shifted_solution, true);
+    substituted_rhs = substituted_rhs.substitute(x(n - d), shifted_solution);
+  }
+  Expr diff = summands_without_i_c - substituted_rhs;
+  // commento: il fatto che ci sia il simbolo n rende l'espressione
+  // molto piu' complicata di quella nel caso delle cond. iniz.
+  // FIXME: altro motivo legato al nuovo metodo di verifica.
+  diff = blackboard.rewrite(diff);
+  diff = simplify_all(diff);
+  if (diff.is_zero())
+    return PROVABLY_CORRECT;
+  
+  // If we have applied the order reduction and we did not succeed
+  // in the verification of the original recurrence, then
+  // we try to verify the solution of the reduced recurrence.
+  // FIXME:
+  // Nota che la soluzione "verificare la ricorrenza originale (non ridotta)"
+  // viene tentata per prima perche' quella e' la vera soluzione
+  // (fornita all'utente). La verifica della ricorrenza ridotta,
+  // che tentiamo in subordine, non garantisce la correttezza della
+  // soluzione fornita all'utente nel caso di bachi nel passaggio da
+  // una all'altra.
+  if (applied_order_reduction()) {
+    unset_order_reduction();
+    Symbol r = insert_auxiliary_definition(mod(n, gcd_among_decrements()));
+    unsigned int dim = coefficients().size() / gcd_among_decrements() + 1;
+    std::vector<Expr> new_coefficients(dim);
+    Expr inhomogeneous = 0;
+    Recurrence rec_rewritten
+      (write_reduced_order_recurrence(recurrence_rhs, r,
+				      gcd_among_decrements(),
+				      coefficients(), new_coefficients,
+				      inhomogeneous));
+    rec_rewritten.finite_order_p
+      = new Finite_Order_Info(dim - 1, new_coefficients, 1);
+    rec_rewritten.set_type(type());
+    rec_rewritten.set_inhomogeneous_term(inhomogeneous);
+    rec_rewritten.solve_linear_finite_order();
+    D_VAR(exact_solution_.expression());
+    return rec_rewritten.verify_exact_solution();
+  }
+  else {
+    diff = simplify_all(diff);
+    if (diff.is_zero())
+      return PROVABLY_CORRECT;
+    else
+      return INCONCLUSIVE_VERIFICATION;
+  }
+}
+
+//! Verify the exact solution of the infinite order recurrence \p *this.
+/*!
+  At the moment the system solve infinite order recurrence transforming it
+  in linear recurrence of first order, therefore in the solution will be
+  only one initial condition.
+  The verification's process is divided in 2 steps:
+  -  Validation of the initial condition by substitution of \f$ n \f$
+  with the value in <CODE>rec.lower_bound_sum()</CODE>, i.e., the first
+  value starting from which the solution is valid.
+  -  Validation of the solution using mathematic induction.
+*/
+PURRS::Recurrence::Verify_Status
+PURRS::Recurrence::verify_infinite_order() const {
+  // The case `f(n) = -1', i.e. the recurrence has the form
+  // `x(n) = - sum(k, 0, n-1, x(k)) + g(n)', is special:
+  // the solution is simply `x(n) = g(n) - g(n-1)'.
+  // FIXME: the traditional validation' process does not work,
+  // is it true?
+  if (weight_inf_order() == -1)
+    return PROVABLY_CORRECT;
+  
+  Expr weight;
+  Expr inhomogeneous;
+  if (upper_bound_sum() == n-1) {
+    weight = weight_inf_order();
+    inhomogeneous = inhomogeneous_term;
+  }
+  else {
+    // In the case of `upper_bound_sum() == n' the recurrence is
+    // transformed in another equivalent recurrence with the upper
+    // bound of the sum equal to `n-1': we verify the solution
+    // considering this last recurrence.
+    assert(upper_bound_sum() == n);
+    weight = weight_inf_order() / (1 - weight_inf_order());
+    inhomogeneous = inhomogeneous_term / (1 - weight_inf_order());
+  }
+  
+  // Note: the solution is valid only for `n > lower_bound_sum()'.
+  
+  // Step 1: validation of the initial condition.
+  Expr e = exact_solution_.expression().substitute(n, lower_bound_sum()+1);
+  e = simplify_all(e);
+  if (e != weight.substitute(n, lower_bound_sum()+1) * x(lower_bound_sum())
+      + inhomogeneous.substitute(n, lower_bound_sum()+1))
+    return INCONCLUSIVE_VERIFICATION;
+  
+  // Step 2: validation of the solution using mathematic induction.
+  // Note: with recurrences of infinite order is not true that if it is
+  // homogeneous then is sufficient to verify the initial condition.
+  // In fact, the recurrences could be in a non-standard form like
+  // `x(n) = f(n) sum(k, 0, n-1, x(k)+h(n))'. For standard form
+  // we consider recurrences with the argument of the sum equal to `x(k)'. 
+  
+  // Let `x(n) = f(n) sum(k, n_0, n-1, x(k)) + g(n)' be the infinite
+  // order recurrence. Now we must consider the expression
+  // `x(n) - f(n) x(n_0) - f(n) sum(k, n_0 + 1, n - 1, x(k)) - g(n)',
+  // where `x(n)' and `x(k)' are substituted with the solution.
+  // If we are able to demonstrate that this expression is syntactically
+  // zero, then the solution is correct.
+  Symbol h("h");
+  Expr diff = PURRS::sum(h, lower_bound_sum() + 1, n - 1,
+			 exact_solution_.expression().substitute(n, h));
+  diff = simplify_sum(diff, false, true);
+  diff = exact_solution_.expression()
+    - diff * weight - x(lower_bound_sum()) * weight - inhomogeneous;
+  diff = simplify_all(diff);
+  if (diff == 0)
+    return PROVABLY_CORRECT;
+  else
+    return INCONCLUSIVE_VERIFICATION;
+}
+
+//! \brief
+//! Verify the exact solution of recurrence \p *this, where the recurrence
+//! can be linear of finite order, non-linear of finite order, linear of
+//! infinite order or a functional equation.
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_exact_solution() const {
   if (!exact_solution_.has_expression())
     throw std::logic_error("PURRS::Recurrence::verify_exact_solution() "
 			   "called, but no exact solution was computed");
-
   // Case 1 and case 2: linear recurrences of finite order
   // and non-linear recurrences of finite order. 
-  if (is_linear_finite_order() || is_non_linear_finite_order()) {
-    // ...
-    index_type order_rec;
-    // ...
-    index_type first_i_c;
-    if (is_non_linear_finite_order()) {
-      // order_rec = associated_linear_rec().order();
-      order_rec = order_if_linear();
-      // first_i_c = associated_linear_rec().first_valid_index();
-      first_i_c = first_valid_index_if_linear();
-    }
-    else {
-      order_rec = order();
-      first_i_c = first_valid_index();
-    }
-    
-    if (order_rec == 0)
-      return PROVABLY_CORRECT;
-    else {
-      // Step 1: validation of initial conditions.
-      for (index_type i = 0; i < order_rec; ++i) {
-	Expr solution_evaluated
-	  = exact_solution_.expression().substitute(n, first_i_c + i);
-	solution_evaluated = blackboard.rewrite(solution_evaluated);
-	solution_evaluated = simplify_all(solution_evaluated);
-	if (solution_evaluated != x(first_i_c + i))
-	  return INCONCLUSIVE_VERIFICATION;
-      }
-      
-      // Step 2: split the solution in 2 parts: terms with initial conditions
-      // are stored in \p homogeneous_part, all the other terms are stored in
-      // \p non_homogeneous_part.
-      Expr homogeneous_part = 0;
-      Expr non_homogeneous_part = 0;
-      if (exact_solution_.expression().is_a_add())
-	for (unsigned int i = exact_solution_.expression().nops(); i-- > 0; ) {
-	  if (exact_solution_.expression().op(i).has_x_function_only_ic())
-	    homogeneous_part += exact_solution_.expression().op(i);
-	  else
-	    non_homogeneous_part += exact_solution_.expression().op(i);
-	}
-      else
-	if (exact_solution_.expression().has_x_function_only_ic())
-	  homogeneous_part = exact_solution_.expression();
-	else
-	  non_homogeneous_part = exact_solution_.expression();
-      
-#if 0
-      // Step 3: by substitution, verifies that `homogeneous_part'
-      // satisfies the homogeneous part of the recurrence.
-      // `substituted_homogeneous_rhs' is the homogeneous part of the
-      // recurrence where `n' is substituted by `n - d' (where `d' is
-      // the decrement of the i-th term `a_i(n) x(n - d)').
-      Expr substituted_homogeneous_rhs
-	= recurrence_rhs - inhmogeneous_term;
-      // Substitutes in the homogeneous part of the recurrence the terms
-      // of the form `x(n-i)'.
-      for (index_type i = 0; i < order_rec; ++i) {
-	Expr shifted_solution
-	  = simplify_all(homogeneous_part.substitute(n, n - (i + 1)));
-	shifted_solution = simplify_sum(shifted_solution, true);
-	substituted_homogeneous_rhs = substituted_homogeneous_rhs
-	  .substitute(x(n - (i + 1)), shifted_solution);
-      }
-      Expr diff = blackboard.rewrite(homogeneous_part
-				     - substituted_homogeneous_rhs);
-      diff = simplify_all(diff);
-      if (!diff.is_zero()) {
-	diff = simplify_all(diff);
-	if (!diff.is_zero())
-	  return INCONCLUSIVE_VERIFICATION;
-      }
-#endif
-      
-      // The recurrence is homogeneous.
-      if (non_homogeneous_part == 0)
-	return PROVABLY_CORRECT;
-      
-#if 0
-      std::vector<Expr> bases_of_exp;
-      std::vector<Expr> exp_poly_coeff;
-      std::vector<Expr> exp_no_poly_coeff;
-      exp_poly_decomposition(inhomogeneous_term.expand(), Recurrence::n,
-			     bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
-      
-      assert(bases_of_exp.size() == exp_poly_coeff.size()
-	     && exp_poly_coeff.size() == exp_no_poly_coeff.size()
-	     && exp_no_poly_coeff.size() >= 1);
-      
-      unsigned int num_of_exponentials = bases_of_exp.size();
-      D_VEC(bases_of_exp, 0, num_of_exponentials-1);
-      D_VEC(exp_poly_coeff, 0, num_of_exponentials-1);
-      D_VEC(exp_no_poly_coeff, 0, num_of_exponentials-1);
-      
-      unsigned int max_polynomial_degree = 0;
-      for (unsigned int i = 0; i < num_of_exponentials; ++i) {
-	if (!exp_no_poly_coeff[i].is_zero()) {
-	  DD_MSGVAR("No poly: ", exp_no_poly_coeff[i]);
-	  goto traditional;
-	}
-	max_polynomial_degree = std::max(max_polynomial_degree,
-					 exp_poly_coeff[i].degree(n));
-      }
-      
-      {
-	std::vector<Polynomial_Root> roots;
-	std::vector<Number> num_coefficients(order_rec + 1);
-	bool all_distinct = true;
-	if (is_linear_finite_order_const_coeff()) {
-	  Expr characteristic_eq;
-	  if (!characteristic_equation_and_its_roots(order_rec,
-						     coefficients(),
-						     num_coefficients,
-						     characteristic_eq, roots,
-						     all_distinct))
-	    abort();
-	}
-	// FIXME: if this is the case of linear recurrence with variable
-	// coefficient the vector of the roots is empty! 
-	
-	// Find the maximum degree of a polynomial that may occur in the
-	// solution.
-	for (unsigned int i = 0, nroots = roots.size(); i < nroots; ++i) {
-	  max_polynomial_degree += roots[i].multiplicity() - 1;
-	  // FIXME: this may be inefficient!
-	  for (unsigned int j = 0; j < num_of_exponentials; ++j)
-	    if (roots[i].value() == bases_of_exp[j])
-	      ++max_polynomial_degree;
-	}
-	
-	Expr substituted_rhs = recurrence_rhs;
-	for (index_type i = order_rec; i-- > 0; ) {
-	  Expr shifted_solution
-	    = non_homogeneous_part.substitute(n, n - (i + 1));
-	  //shifted_solution = simplify_sum(shifted_solution, true);
-	  substituted_rhs = substituted_rhs
-	    .substitute(x(n - (i + 1)), shifted_solution);
-	}
-	Expr diff
-	  = blackboard.rewrite(non_homogeneous_part - substituted_rhs);
-	diff = diff.expand();
-	
-	std::vector<Expr> coefficients_of_exponentials(max_polynomial_degree+1);
-	if (diff.is_a_add()) {
-	  for (unsigned int i = 0; i < diff.nops(); ++i) {
-	    Expr summand = diff.op(i);
-#if 0
-	    if (summand.is_a_mul()) {
-	      // Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
-	      // `a' and `b' possibly 1).
-	      bool done = false;
-	      for (unsigned int j = 0; j < summand.nops(); ++j) {
-		Expr factor = summand.op(j);
-		unsigned int k;
-		if (factor == n)
-		  k = 1;
-		else if (factor.is_a_power() && factor.arg(0) == n) {
-		  assert(factor.arg(1).is_a_number());
-		  k = factor.arg(1).ex_to_number().to_unsigned int();
-		}
-		else
-		  continue;
-		// FIXME: maybe can be implemented in a better way.
-		// FIXME: k uninitialized here!
-		coefficients_of_exponentials[k] += summand/factor;
-		done = true;
-		break;
-	      }
-	      if (!done)
-		coefficients_of_exponentials[0] += summand;
-	    }
-#else
-	    if (summand.is_a_mul()) {
-	      // Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
-	      // `a' and `b' possibly 1).
-	      bool done = false;
-	      for (unsigned int j = 0; (j < summand.nops()) && !done; ++j) {
-		Expr factor = summand.op(j);
-		if (factor == n) {
-		  coefficients_of_exponentials[1] += summand/factor;
-		  done = true;
-		}
-		else if (factor.is_a_power() && factor.arg(0) == n) {
-		  assert(factor.arg(1).is_a_number());
-		  unsigned int k
-		    = factor.arg(1).ex_to_number().to_unsigned int();
-		  assert(k < coefficients_of_exponentials.size());
-		  coefficients_of_exponentials[k] += summand/factor;
-		  done = true;
-		}
-	      }
-	      // `done' is false if `factor' contains neither `n' nor `n^k'
-	      if (!done)
-		coefficients_of_exponentials[0] += summand;
-	    }
-#endif
-	    else if (summand.is_a_power()) {
-	      // Summand has the form `n^k' or `a^n'
-	      if (summand.arg(0) == n) {
-		unsigned int k
-		  = summand.arg(1).ex_to_number().to_unsigned_int();
-		coefficients_of_exponentials[k] += 1;
-	      }
-	      else
-		coefficients_of_exponentials[0] += summand;
-	    }
-	    else {
-	      // Summand is a constant or the symbol `n'.
-	      assert(summand.is_a_number() || summand == n);
-	      Number k;
-	      if (summand.is_a_number(k))
-		coefficients_of_exponentials[0] += k;
-	      else
-		coefficients_of_exponentials[1] += 1;
-	    }
-	  }
-	}
-	else {
-	  Expr summand = diff;
-	  if (summand.is_a_mul()) {
-	    // Summand has the form `n^k * a^n * b' (with `k' possibly 0 and
-	    // `a' and `b' possibly 1).
-	    bool done = false;
-	    for (unsigned int j = 0; j < summand.nops(); ++j) {
-	      Expr factor = summand.op(j);
-	      unsigned int k;
-	      if (factor == n)
-		k = 1;
-	      else if (factor.is_a_power() && factor.arg(0) == n) {
-		assert(factor.arg(1).is_a_number());
-		k = factor.arg(1).ex_to_number().to_unsigned_int();
-	      }
-	      else
-		continue;
-	      // FIXME: maybe can be implemented in a better way.
-	      coefficients_of_exponentials[k] += summand/factor;
-	      done = true;
-	      break;
-	    }
-	    if (!done)
-	      coefficients_of_exponentials[0] += summand;
-	  }      
-	  else if (summand.is_a_power()) {
-	    // Summand has the form `n^k' or `a^n'
-	    if (summand.arg(0) == n) {
-	      unsigned int k = summand.arg(1).ex_to_number().to_unsigned_int();
-	      coefficients_of_exponentials[k] += 1;
-	    }
-	    else
-	      coefficients_of_exponentials[0] += summand;
-	  }
-	  else {
-	    // Summand is a constant or the symbol `n'.
-	    assert(summand.is_a_number() || summand == n);
-	    Number k;
-	    if (summand.is_a_number(k))
-	      coefficients_of_exponentials[0] += k;
-	    else
-	      coefficients_of_exponentials[1] += 1;
-	  }
-	}
-	
-	D_VEC(coefficients_of_exponentials, 0, max_polynomial_degree);
-	
-	Number num_tests = num_of_exponentials + order_rec;
-	for (unsigned int i = 0; i < max_polynomial_degree; ++i) {
-	  if (!coefficients_of_exponentials[i].is_zero()) {
-	    // Not syntactically 0: try to prove that is it semantically 0.
-	    Expr c = coefficients_of_exponentials[i];
-	    for (Number r = 0; r < num_tests; ++r) {
-	      Expr c_r = simplify_all(c.substitute(n, r));
-	      if (!c_r.is_zero()) {
-		DD_MSGVAR("Argh!!! ", i);
-		DD_MSGVAR("Argh!!! ", r);
-		DD_MSGVAR("Argh!!! ", c_r);
-		goto traditional;
-	      }
-	    }
-	  }
-	}
-	return PROVABLY_CORRECT;
-      }
-      
-      
-    traditional:
-#endif
-      // Step 4: by substitution, verifies that `non_homogeneous_part'
-      // satisfies the recurrence.
-      // Computes `substituted_rhs' by substituting, in the rhs
-      // of the recurrence, `n' by `n - d' (where `d' is the decrement
-      // of the i-th term `a(n) x(n - d)').
-      Expr substituted_rhs = recurrence_rhs;
-      for (index_type i = 0; i < order_rec; ++i) {
-	Expr shifted_solution
-	  = simplify_all(non_homogeneous_part.substitute(n, n - (i + 1)));
-	shifted_solution = simplify_sum(shifted_solution, true);
-	substituted_rhs = substituted_rhs
-	  .substitute(x(n - (i + 1)), shifted_solution);
-      }
-      Expr diff = blackboard.rewrite(non_homogeneous_part-substituted_rhs);
-      diff = simplify_all(diff);
-      if (!diff.is_zero())
-	if (applied_order_reduction()) {
-	  unset_order_reduction();
-	  // If we have applied the order reduction and we do not have
-	  // success in the verification of the original recurrence, then
-	  // we please ourselves if is verified the reduced recurrence.
-	  Symbol r
-	    = insert_auxiliary_definition(mod(n, gcd_among_decrements()));
-	  unsigned int dim
-	    = coefficients().size() / gcd_among_decrements() + 1;
-	  std::vector<Expr> new_coefficients(dim);
-	  Expr inhomogeneous = 0;
-	  Recurrence rec_rewritten
-	    (write_reduced_order_recurrence(recurrence_rhs, r,
-					    gcd_among_decrements(),
-					    coefficients(),
-					    new_coefficients,
-					    inhomogeneous));
-	  rec_rewritten.finite_order_p
-	    = new Finite_Order_Info(dim - 1, new_coefficients, 1);
-	  rec_rewritten.set_type(type());
-	  rec_rewritten.set_inhomogeneous_term(inhomogeneous);
-	  rec_rewritten.solve_linear_finite_order();
-	  D_VAR(exact_solution_.expression());
-	  return rec_rewritten.verify_exact_solution();
-	}
-	else {
-	  diff = simplify_all(diff);
-	  if (!diff.is_zero())
-	    return INCONCLUSIVE_VERIFICATION;
-	}
-      return PROVABLY_CORRECT;
-    }
-  }
+  if (is_linear_finite_order() || is_non_linear_finite_order())
+    return verify_finite_order();
   // Case 3: linear recurrence of infinite order.
-  else if (is_linear_infinite_order()) {
-    // The case `f(n) = -1', i.e. the recurrence has the form
-    // `x(n) = - sum(k, 0, n-1, x(k)) + g(n)', is special:
-    // the solution is simply `x(n) = g(n) - g(n-1)'.
-    // FIXME: the traditional validation' process does not work,
-    // is it true?
-    if (weight_inf_order() == -1)
-      return PROVABLY_CORRECT;
-    
-    Expr weight;
-    Expr inhomogeneous;
-    if (upper_bound_sum() == n-1) {
-      weight = weight_inf_order();
-      inhomogeneous = inhomogeneous_term;
-    }
-    else {
-      // In the case of `upper_bound_sum() == n' the recurrence is
-      // transformed in another equivalent recurrence with the upper
-      // bound of the sum equal to `n-1': we verify the solution
-      // considering this last recurrence.
-      assert(upper_bound_sum() == n);
-      weight = weight_inf_order() / (1 - weight_inf_order());
-      inhomogeneous = inhomogeneous_term / (1 - weight_inf_order());
-    }
-    
-    // Note: the solution is valid only for `n > lower_bound_sum()'.
-    
-    // Step 1: validation of the initial condition.
-    Expr solution_evaluated
-      = exact_solution_.expression().substitute(n, lower_bound_sum()+1);
-    solution_evaluated = simplify_all(solution_evaluated);
-    if (solution_evaluated
-	!= weight.substitute(n, lower_bound_sum()+1) * x(lower_bound_sum())
-	+ inhomogeneous.substitute(n, lower_bound_sum()+1))
-      return INCONCLUSIVE_VERIFICATION;
-    
-    // Step 2: validation of the solution using mathematic induction.
-    // Note: with recurrences of infinite order is not true that if it is
-    // homogeneous then is sufficient to verify the initial condition.
-    // In fact, the recurrences could be in a non-standard form like
-    // `x(n) = f(n) sum(k, 0, n-1, x(k)+h(n))'. For standard form
-    // we consider recurrences with the argument of the sum equal to `x(k)'. 
-
-    // Let `x(n) = f(n) sum(k, n_0, n-1, x(k)) + g(n)' be the infinite
-    // order recurrence. Now we must consider the expression
-    // `x(n) - f(n) x(n_0) - f(n) sum(k, n_0 + 1, n - 1, x(k)) - g(n)',
-    // where `x(n)' and `x(k)' are substituted with the solution.
-    // If we are able to demonstrate that this expression is syntactically
-    // zero, then the solution is correct.
-    Symbol h("h");
-    Expr diff = PURRS::sum(h, lower_bound_sum() + 1, n - 1,
-			   exact_solution_.expression().substitute(n, h));
-    diff = simplify_sum(diff, false, true);
-    diff = exact_solution_.expression()
-      - diff * weight - x(lower_bound_sum()) * weight - inhomogeneous;
-    diff = simplify_all(diff);
-    if (diff == 0)
-      return PROVABLY_CORRECT;
-    else
-      return INCONCLUSIVE_VERIFICATION;
-  }
+  else if (is_linear_infinite_order())
+    return verify_infinite_order();
   else {
     assert(is_functional_equation());
-    // Special case: functional equation of the form `x(n) = x(n/b)'. 
+    // Case 4 (special case): functional equation of the form
+    // `x(n) = x(n/b)'. 
     return INCONCLUSIVE_VERIFICATION;
   }
 }
@@ -829,38 +885,38 @@ compute_non_linear_recurrence(Expr& solution_or_bound,
   // a < 0, a not natural number -> x(0) > 0, c > 0.
   if (coeff_simple_non_linear_rec() != 0) {
     assert(base_exp_log().is_a_number());
+    // Even if in this case we already know the solution,
+    // in order to apply the validation's process of the solution,
+    // is necessary to classify the linear recurrence relation
+    // associated to that one non-linear.
+    // FIXME: rivedere la verifica per capire se questo passaggio e'
+    // davvero necessario.
+    associated_linear_rec().classify_and_catch_special_cases();
     solution_or_bound = pwr(coeff_simple_non_linear_rec(),
 			    (pwr(base_exp_log(), n)-1)/(base_exp_log()-1))
       * pwr(x(0), pwr(base_exp_log(), n));
     return SUCCESS;
   }
-
-  // Build a new object recurrence with a linear recurrence.
-  Recurrence rec_rewritten(rhs_transformed_in_linear());
-  rec_rewritten.come_from_non_linear_rec = true;
-  D_VAR(rec_rewritten.recurrence_rhs);
-
   Solver_Status status;
-  // Classify the linear recurrence `rec_rewritten'.
-  if (rec_rewritten.is_classified
-      || (status = rec_rewritten.classify_and_catch_special_cases())
+  // Classify the linear recurrence `associated_linear_rec()'.
+  if (associated_linear_rec().is_classified
+      || (status
+	  = associated_linear_rec().classify_and_catch_special_cases())
       == SUCCESS) {
-    assert(rec_rewritten.is_linear_finite_order()
-	   || rec_rewritten.is_functional_equation());
-
+    assert(associated_linear_rec().is_linear_finite_order()
+	   || associated_linear_rec().is_functional_equation());
     // Linear finite order.
-    if (rec_rewritten.is_linear_finite_order())
-      if ((status = rec_rewritten.solve_linear_finite_order())
+    if (associated_linear_rec().is_linear_finite_order())
+      if ((status = associated_linear_rec().solve_linear_finite_order())
 	  == SUCCESS) {
-	set_order_if_linear(rec_rewritten.order());
-	set_first_valid_index_if_linear(rec_rewritten.first_valid_index());
 	// Transform the solution of the linear recurrence in the solution
 	// of the non linear recurrence.
-	if (rec_rewritten.exact_solution_.expression() == 0)
+	if (associated_linear_rec().exact_solution_.expression() == 0)
 	  solution_or_bound = 0;
 	else {
-	  solution_or_bound = pwr(base_exp_log(),
-				  rec_rewritten.exact_solution_.expression());
+	  solution_or_bound
+	    = pwr(base_exp_log(),
+		  associated_linear_rec().exact_solution_.expression());
 	  solution_or_bound = substitute_x_function(solution_or_bound,
 						    base_exp_log(), false);
 	  solution_or_bound = simplify_ex_for_input(solution_or_bound, true);
@@ -875,8 +931,9 @@ compute_non_linear_recurrence(Expr& solution_or_bound,
 	}
 	// We must copy the values in the blackboard of the linear recurrence
 	// in the blackboard of the original recurrences: they could be
-	// necessary in the validation's process of the non-linear recurrence.
-	blackboard = rec_rewritten.blackboard;
+	// necessary in the validation's process of the non-linear
+	// recurrence.
+	blackboard = associated_linear_rec().blackboard;
 	bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
 	rec_rewritten = true;
 	return SUCCESS;
@@ -887,27 +944,33 @@ compute_non_linear_recurrence(Expr& solution_or_bound,
     // Functional equation.
     else {
       if (type == 1)
-	if ((status = rec_rewritten.approximate_functional_equation_lower())
+	if ((status
+	     = associated_linear_rec().approximate_functional_equation_lower())
 	    == SUCCESS)
-	  solution_or_bound = pwr(base_exp_log(),
-				  rec_rewritten.lower_bound_.expression());
+	  solution_or_bound
+	    = pwr(base_exp_log(),
+		  associated_linear_rec().lower_bound_.expression());
 	else
 	  return status;
       else if (type == 2)
-	if ((status = rec_rewritten.approximate_functional_equation_upper())
+	if ((status
+	     = associated_linear_rec().approximate_functional_equation_upper())
 	    == SUCCESS)
-	  solution_or_bound = pwr(base_exp_log(),
-				  rec_rewritten.upper_bound_.expression());
+	  solution_or_bound
+	    = pwr(base_exp_log(),
+		  associated_linear_rec().upper_bound_.expression());
 	else
 	  return status;
       else {// type == 0
-	if ((status = rec_rewritten.approximate_functional_equation_lower())
+	if ((status
+	     = associated_linear_rec().approximate_functional_equation_lower())
 	    != SUCCESS
-	    || (status = rec_rewritten.approximate_functional_equation_upper())
+	    || (status
+		= associated_linear_rec().approximate_functional_equation_upper())
 	    != SUCCESS)
 	  return status;
-	if (rec_rewritten.lower_bound_.expression()
-	    != rec_rewritten.upper_bound_.expression())
+	if (associated_linear_rec().lower_bound_.expression()
+	    != associated_linear_rec().upper_bound_.expression())
 	  return TOO_COMPLEX;
       }
       solution_or_bound = substitute_x_function(solution_or_bound,

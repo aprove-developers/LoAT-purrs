@@ -27,7 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Recurrence.types.hh"
 #include "Cached_Expr.defs.hh"
-#include "Non_Linear_Info.defs.hh"
+#include "Non_Linear_Info.types.hh"
 #include "Infinite_Order_Info.defs.hh"
 #include "Blackboard.defs.hh"
 #include "Finite_Order_Info.defs.hh"
@@ -265,8 +265,8 @@ public:
   Expr approximated_solution() const;
 
   //! \brief
-  //! Verifies the exact solution of \p *this; note that the system
-  //! supposes the exact solution already has been computed.
+  //! Verifies the exact solution of \p *this
+  //! assuming that the exact solution has already been computed.
   //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
   //! that the recurrence \p *this has been successfully solved.
   //! Returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
@@ -275,10 +275,10 @@ public:
   //! not able to prove if the solution of the recurrence \p *this
   //! is correct or not.
   /*!
-    Since the system supposes the exact solution already has been
-    computed, the user must call this method after to have checked
+    Since the system assumes the exact solution has already been
+    computed, the user must call this method after having checked
     the system has successfully computed the exact solution:
-    this is possibile invoking the method
+    this is possible invoking the method
     <CODE>compute_exact_solution</CODE> and verifying it has returned
     <CODE>SUCCESS</CODE>.
 
@@ -425,6 +425,17 @@ private:
 				    roots) const;
 
   //! @@@
+  Verify_Status
+  validation_initial_conditions(index_type order,
+				index_type first_valid_index) const;
+
+  //! @@@
+  Verify_Status verify_finite_order() const;
+
+  //! @@@
+  Verify_Status verify_infinite_order() const;
+
+  //! @@@
   Verify_Status verify_bound(Bound kind_of_bound) const;
 
   //! Computes the lower bound for the functional equation. 
@@ -448,11 +459,6 @@ private:
   //! order to solve it we have rewritten the recurrence in linear);
   //! it is <CODE>false</CODE> in all the other cases.
   bool recurrence_rewritten;
-
-  //! \brief
-  //! It is <CODE>true</CODE> when the recurrence has been deduced from
-  //! a non-linear recurence; it is <CODE>false</CODE> in all the other cases.
-  bool come_from_non_linear_rec;
 
   //! \brief
   //! Stores the inhomogeneous part of \p *this, i. e., those terms
@@ -613,14 +619,14 @@ private:
   //! where \f$ i \f$ is \p first_valid_index() and \f$ a(n) \f$
   //! is the coefficient of the recurrence of first order with variable
   //! coefficient.
-  Expr& product_factor();
+  const Expr& product_factor() const;
 
   //! \brief
   //! Returns the expression \f$ \prod_{i}^n a(k)\f$,
   //! where \f$ i \f$ is \p first_valid_index() and \f$ a(n) \f$
   //! is the coefficient of the recurrence of first order with variable
   //! coefficient.
-  Expr product_factor() const;
+  Expr& product_factor();
 
   //! \brief
   //! Sets to \p x the expression \f$ \prod_{i}^n a(k)\f$,
@@ -667,22 +673,26 @@ private:
   // Method to access to private data of `Non_Linear_Info'.
 
   //! \brief
-  //! If the non-linear recurrence is rewritable in a linear recurrence
-  //! then this data contains the right hand side of the linear recurrence
-  //! associated to the original non-linear recurrence.
-  Expr rhs_transformed_in_linear() const;
+  //! In the case which the system is able to rewrite the non-linear
+  //! recurrence \p *this in linear, this method returns the linear
+  //! recurrence computed (in order to know the cases of rewritable
+  //! non-linear recurrences see the function
+  //! <CODE>rewrite_non_linear_recurrence()</CODE>).
+  const Recurrence& associated_linear_rec() const;
 
   //! \brief
-  //! If the non-linear recurrence is rewritable in a linear recurrence
-  //! then this data contains the right hand side of the linear recurrence
-  //! associated to the original non-linear recurrence. 
-  Expr& rhs_transformed_in_linear();
+  //! In the case which the system is able to rewrite the non-linear
+  //! recurrence \p *this in linear, this method returns the linear
+  //! recurrence computed (in order to know the cases of rewritable
+  //! non-linear recurrences see the function
+  //! <CODE>rewrite_non_linear_recurrence()</CODE>).
+  Recurrence& associated_linear_rec();
 
   //! \brief
   //! In the case of simple non-linear recurrence of the form
   //! \f$ c x(n-1)^{\alpha} \f$ contains \f$ c \f$; in all the
   //! other cases contains \f$ 0 \f$.
-  Number coeff_simple_non_linear_rec() const;
+  const Number& coeff_simple_non_linear_rec() const;
 
   //! \brief
   //! In the case of simple non-linear recurrence of the form
@@ -694,7 +704,7 @@ private:
   //! Contains the value that will be the logarithm's base or the
   //! exponential's base used in the rewriting of the non-linear recurrence
   //! in the correspondent linear recurrence.
-  Expr base_exp_log() const;
+  const Expr& base_exp_log() const;
 
   //! \brief
   //! Contains the value that will be the logarithm's base or the
@@ -712,37 +722,13 @@ private:
   //! that will be the arguments of the logarithms.
   std::vector<Symbol>& auxiliary_symbols();
 
-  //! \brief
-  //! Returns the order of the finite order recurrence associated to
-  //! the non-linear recurrence .
-  index_type order_if_linear() const;
-
-  //! \brief
-  //! Sets to \p x the order of the linear recurrence associated to
-  //! the non linear. 
-  void set_order_if_linear(index_type x) const;
-
-  //! \brief
-  //! When the non-linear recurrence is rewritable in a linear recurrence
-  //! of finite order then this method returns the smallest positive
-  //! integer for which the finite order recurrence is well-defined:
-  //! the initial conditions will start from it.
-  index_type first_valid_index_if_linear() const;
-
-  //! \brief
-  //! When the non-linear recurrence is rewritable in a linear recurrence
-  //! of finite order then this method sets to \p i_c is the smallest
-  //! positive integer for which the finite order recurrence is well-defined:
-  //! the initial conditions will start from it. 
-  void set_first_valid_index_if_linear(index_type i_c) const;
-
 
   // Method to access to private data of `Infinite_Order_Info'.
 
   //! \brief
   //! If the infinite order recurrence is rewritable in a first order linear
   //! recurrence then this last recurrence is returned from this method.
-  Expr rhs_transformed_in_first_order() const;
+  const Expr& rhs_transformed_in_first_order() const;
 
   //! \brief
   //! If the infinite order recurrence is rewritable in a first order linear
@@ -753,7 +739,7 @@ private:
   //! If the infinite order recurrence is rewritable in a first order linear
   //! recurrence then the coefficient of this last recurrence is returned
   //! from this method.
-  Expr coeff_first_order() const;
+  const Expr& coeff_first_order() const;
 
   //! \brief
   //! If the infinite order recurrence is rewritable in a first order linear
@@ -765,7 +751,7 @@ private:
   //! If the infinite order recurrence is rewritable in a first order linear
   //! recurrence then the non-homogeneous part of this last recurrence is
   //! returned from this method.
-  Expr inhomog_first_order() const;
+  const Expr& inhomog_first_order() const;
 
   //! \brief
   //! If the infinite order recurrence is rewritable in a first order linear
@@ -778,7 +764,7 @@ private:
   //! \f[
   //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
   //! \f]
-  Expr weight_inf_order() const;
+  const Expr& weight_inf_order() const;
 
   //! \brief
   //! Returns the factor \f$ f(n) \f$ of the infinite order recurrence
@@ -799,7 +785,7 @@ private:
   //! \f[
   //!   T(n) = f(n) \sum_{k=n_0}^{u(n)} T(k) + g(n).
   //! \f]
-  Expr upper_bound_sum() const;
+  const Expr& upper_bound_sum() const;
 
   //! \brief
   //! Returns the upper bound \f$ u(n) \f$ of the infinite order recurrence
@@ -852,7 +838,7 @@ private:
 
 } // namespace Parma_Recurrence_Relation_Solver
 
-#include "Recurrence.inlines.hh"
+//#include "Recurrence.inlines.hh"
 
 #endif // !defined(PURRS_Recurrence_defs_hh)
 
