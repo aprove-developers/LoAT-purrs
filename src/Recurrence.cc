@@ -46,33 +46,6 @@ namespace PURRS = Parma_Recurrence_Relation_Solver;
 const PURRS::Symbol&
 PURRS::Recurrence::n = Symbol("n");
 
-namespace {
-using namespace PURRS;
-
-/*!
-  Returns the same expression \p term if it does not contain
-  the function \f$ x \f$; returns \f$ 0 \f$ otherwise.
-*/
-Expr
-find_term_without_function_x(const Expr& term) {
-  if (term.is_a_mul()) {
-    bool found_initial_condition = false;
-    for (unsigned j = term.nops(); j-- > 0; )
-      if (term.op(j).is_the_x_function()) {
-	found_initial_condition = true;
-	break;
-      }
-    if (!found_initial_condition)
-      return term;
-  }
-  else
-    if (!term.is_the_x_function())
-      return term;
-  return 0;
-}
-
-} // anonymous namespace
-
 /*!
   Consider the right hand side \p rhs of the order \f$ k \f$ recurrence
   relation
@@ -104,7 +77,7 @@ find_term_without_function_x(const Expr& term) {
   decide whether the solution is right or it is really wrong and, in this last
   case, to return <CODE>PROVABLY_INCORRECT</CODE>.
 */
-Recurrence::Verify_Status
+PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_solution() const {
   if (is_linear_finite_order() && exact_solution_.has_expression()) {
     D_VAR(recurrence_rhs);
@@ -144,13 +117,13 @@ PURRS::Recurrence::verify_solution() const {
       // containing an initial condition.
       Expr partial_solution = 0;
       if (exact_solution_.expression().is_a_add())
-	for (unsigned i = exact_solution_.expression().nops(); i-- > 0; )
-	  partial_solution 
-	    += find_term_without_function_x(exact_solution_.expression()
-					    .op(i));
+	for (unsigned i = exact_solution_.expression().nops(); i-- > 0; ) {
+	  if (!exact_solution_.expression().op(i).has_x_function(true))
+	    partial_solution += exact_solution_.expression().op(i);
+	}
       else
-	partial_solution
-	  = find_term_without_function_x(exact_solution_.expression());
+	if (!exact_solution_.expression().has_x_function(true))
+	  partial_solution = exact_solution_.expression();
       partial_solution = simplify_ex_for_output(partial_solution, false);
       D_VAR(partial_solution);
       // The recurrence is homogeneous.
@@ -211,8 +184,8 @@ PURRS::Recurrence::verify_solution() const {
   return INCONCLUSIVE_VERIFICATION;
 }
 
-Recurrence::Solver_Status
-Recurrence::compute_exact_solution() const {
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::compute_exact_solution() const {
   tested_exact_solution = true;
   // See if we have the exact solution already.
   if (exact_solution_.has_expression())
@@ -251,7 +224,7 @@ Recurrence::compute_exact_solution() const {
     return status;
 }
 
-Recurrence::Solver_Status
+PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_lower_bound() const {
   // See if we have the lower bound already.
   if (lower_bound_.has_expression())
@@ -281,7 +254,7 @@ PURRS::Recurrence::compute_lower_bound() const {
     return status;
 }
 
-Recurrence::Solver_Status
+PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_upper_bound() const {
   // See if we have the upper bound already.
   if (upper_bound_.has_expression())
