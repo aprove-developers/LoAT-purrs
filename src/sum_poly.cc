@@ -146,7 +146,9 @@ sum_poly(const Expr& p, const Symbol& x, Expr& q) {
 PURRS::Expr 
 PURRS::sum_poly_times_exponentials(const Expr& p, const Symbol& x, 
 				   const Expr& alpha) {
-
+  D_VAR(p);
+  D_VAR(x);
+  D_VAR(alpha);
   Expr q;
   if (alpha == 1)
     sum_poly(p, x, q);
