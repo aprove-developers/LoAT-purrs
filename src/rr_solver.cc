@@ -2059,13 +2059,10 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
 			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
     std::vector<Polynomial_Root> new_roots;
     new_roots.push_back(Expr(1));
-    
-    // FIXME: perche' non posso passare direttamente `p_n/alpha_factorial'
-    // a gosper_algorithm senza dovermi definire un'altra Expr?
-    Expr t_n = p_n/alpha_factorial;
     if (!compute_sum_with_gosper_algorithm(n, 1, n, base_of_exps,
 					   exp_poly_coeff, exp_no_poly_coeff,
-					   new_roots, t_n, solution))
+					   new_roots, p_n/alpha_factorial,
+					   solution))
       // FIXME: the summand is not hypergeometric:
       // no chance of using Gosper's algorithm.
       // vedere direttamente il rapporto p(k)/alpha!(k) se e' sommabile
@@ -2077,7 +2074,7 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
     if (shift_initial_conditions)
       j = i_c + 2;
     for (Number i = 1; i < j; ++i)
-      solution -= t_n.subs(n, i);
+      solution -= (p_n / alpha_factorial).subs(n, i);
   }
   if (shift_initial_conditions)
     solution += x(i_c + 1);
