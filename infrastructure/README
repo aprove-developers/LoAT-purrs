@@ -19,21 +19,26 @@ More Detailed Installation Instructions:
         that the prefix that you want to install to is "/usr/local"
         and that you download and build all of the packages
         in a directory called "your-path-to-download-dir".
+        For CVS access, it is assumed that you have ssh installed
+        into directory "your-path-to-ssh".
 
 ============================================================================
 
-Setting up your LD_LIBRARY_PATH environment variable (once for all):
+Setting up your environment variables (once for all):
 
-If you use the Bash shell, add the following line to file
-.bashrc into your home directory:
+If you use the Bash shell, add the following lines to file .bashrc into
+your home directory:
+
   export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/filib/lib:$LD_LIBRARY_PATH
+  export CVS_RSH=your-path-to-ssh/ssh
 
 After saving it, ensure you re-read the file by calling:
   source .bashrc
 
-To ensure that your environment variable has been updated, try:
+To ensure that your environment variables have been updated,
+try echoing them:
   echo $LD_LIBRARY_PATH
-which should output something like
+should output something like
   /usr/local/lib:/usr/local/filib/lib
 
 ============================================================================
@@ -259,7 +264,22 @@ GiNaC install how-to:
 
 Downloading:
   cd your-path-to-download-dir
-  cvs -d cvs.cs.unipr.it:/cvs/GiNaC checkout GiNaC
+  cvs -d :pserver:anoncvs@cvs.cs.unipr.it:/cvs/GiNaC login
+  <Type Return when requested for a password>
+  cvs -d :pserver:anoncvs@cvs.cs.unipr.it:/cvs/GiNaC checkout GiNaC
+  cvs -d :pserver:anoncvs@cvs.cs.unipr.it:/cvs/GiNaC logout
+
+=====
+NOTE: (this may be needed due to what seems to be a bug in CVS).
+      Make sure that the last #define in the file GiNac/ginac/function.h
+      reads exactly as follows:
+
+#define is_ex_the_function(OBJ, FUNCNAME) \
+	(GiNaC::is_exactly_a<GiNaC::function>(OBJ) && GiNaC::ex_to<GiNaC::function>(OBJ).get_serial() == GiNaC::function_index_##FUNCNAME)
+
+If you see "function_index_##FUNCNAME" without the prefixed namespace
+qualification "GiNaC::", then you should add this qualification manually.
+=====
 
 Configuring and building (and optionally check the build):
   cd your-path-to-download-dir
