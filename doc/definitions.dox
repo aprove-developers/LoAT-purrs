@@ -148,20 +148,8 @@ we say that the recurrence in normal form has <EM>order</EM> (at most)
 \f$ k \f$.
 We take the <EM>smallest</EM> possible value of \f$ k \f$ as the order
 of the recurrence.
-If no such \f$ k \f$ exists, then we say that the recurrence has
-<EM>infinite order</EM>.
-
-\anchor initial_conditions
-<B>Initial conditions</B>
-
-The order of a recurrence, if finite, suggests the number of necessary
-<EM>initial conditions</EM> in order to uniquely identify the
-recurrence.
-In the case of infinite order recurrence the number of initial conditions
-depend by the form of the recurrence (see SECTION INFINITE_ORDER_REC).
-We denote with \f$ x(k) \f$, with \f$ k \in \Nset \f$,
-<EM>symbolic initial conditions</EM>, i.e. initial condition not still
-defined by the user.
+If no such \f$ k \f$ exists, then we say that the recurrence has no
+finite order.
 
 In the following section we will consider the different types of
 recurrences that the system is able to deal.
@@ -188,8 +176,13 @@ If \f$ p \doteq 0 \f$ (that is, \f$ p \f$ vanishes identically from a
 syntactical point of view), we say that the recurrence is
 <EM>homogeneous</EM>.
 Every recurrence is given with a set of \f$ k \f$
+\anchor initial_conditions
 <EM>initial conditions</EM> \f$ x_0 \f$, \f$ x_1 \f$, \f$ \dots \f$,
-\f$ x_{k-1} \f$, which we assume to be known.
+\f$ x_{k-1} \f$, which we assume to be known: the initial conditions
+allow to uniquely identify the recurrence.
+The initial conditions not yet defined by the user, i.e. again in the
+form \f$ x_k \f$, with \f$ k \in \Nset \f$, are called
+<EM>symbolic initial conditions</EM>.
 
 If the coefficients \f$ \alpha_j(n) \f$ are constant with respect to the
 variable \f$ n \f$, for \f$ j = 1, \dots, k \f$, then the recurrence
@@ -206,40 +199,29 @@ bla bla
 
 
 
-\section linear_infinite_order Linear Recurrences of Infinite Order
+\section weighted_average "Weighted-Average" Recurrences
 
-An <EM>infinite order recurrence</EM> is described by the equation
-\f[
-  x_n = \sum_{k=0}^{n-1} \bigl( f_k(n) x_k \bigr) + g(n),
-\f]
-where \f$ f_k(n) \f$ and \f$ g(n) \f$ are generic functions defined
-on \f$ \Nset \cap [k, +\infty) \f$.
-\f$ g(n) \f$ is the <EM>non-homogeneous part</EM> of the recurrence;
-If \f$ g \doteq 0 \f$ (that is, \f$ g \f$ vanishes identically from a
-syntactical point of view), we say that the recurrence is
-<EM>homogeneous</EM>.
+We consider here a rather different set of recurrences from the previous
+ones, where we allow \f$ x_n \f$ to depend on <EM>all</EM> the previous
+values of \f$ x \f$, and not only the last \f$ k \f$ of them, \f$ k \f$
+being a fixed positive integer.
 
-If \f$ f_k(n) \f$ is constant for each \f$ k = 0, \dotsc, n-1 \f$, then
-the recurrence is called with <EM>constant coefficients</EM>; otherwise
-the recurrence is called with <EM>variable coefficients</EM>.
-
-Note that this type of recurrence is a rather different set of recurrences
-from the previous ones, where we allow \f$ x_n \f$ to depend on <EM>all</EM>
-the previous values of \f$ x \f$, and not only the last \f$ k \f$ of them,
-\f$ k \f$ being a fixed positive integer.
-
-For <EM>normal form</EM> of inifinite order recurrence we add the
-additional conditions that the lower limit of the sum is \f$ 0 \f$ and
-the upper limit is \f$ n-1 \f$.
-
-
-<B>Linear Recurrences of Infinite Order with Variable Coefficients</B>
-
-Let \f$ x_n \f$ be a sequence satisfying the infinite order recurrence
+We call <EM>"Weighted-Average"</EM> recurrences the recurrence in the form
+\anchor general_weighted_average
 \f[
   x_n = f(n) \sum_{k=0}^{n-1} x_k + g(n),
 \f]
 where \f$ \fund{f,g}{\Nset}{\Cset} \f$, and \f$ f \f$ never vanishes.
+\f$ g(n) \f$ is the <EM>non-homogeneous part</EM> of the recurrence;
+If \f$ g \doteq 0 \f$ (that is, \f$ g \f$ vanishes identically from a
+syntactical point of view), we say that the recurrence is
+<EM>homogeneous</EM>.
+If \f$ f_k(n) \f$ is constant for each \f$ k = 0, \dotsc, n-1 \f$, then
+the recurrence is called with <EM>constant coefficients</EM>; otherwise
+the recurrence is called with <EM>variable coefficients</EM>.
+
+Sometimes we call this type of recurrence of <EM>infinite order</EM>.
+
 We show how to transform any recurrence of this form into a first order
 recurrence with variable coefficients.
 Then, for \f$ n \geq 2 \f$ the sequence \f$ x \f$ also satisfies
@@ -255,6 +237,25 @@ where
 	                \right),
 \f]
 (for the proof see ...).
+
+For this transformation is essential that the ``weight'' \f$ f(n) \f$ be
+the same for all values of \f$ k \f$.
+
+In the actual practice, PURRS creates a new recurrence \f$ z_n \f$ such
+that \f$ z_n = x_{n+1} \f$:
+\f[
+  \begin{cases}
+    z_0 = x_1 \\
+    z_n = \alpha(n + 1) z_n + \beta(n + 1). \\
+  \end{cases}
+\f]
+Once this has been solved, PURRS computes \f$ x_n = z_{n-1} \f$ and
+\anchor initial_condition
+then lets \f$ x_1 = f(1) x_0 + g(1) \f$, using the
+\ref general_weighted_average "general formula for the weighted average
+ recurrence" with \f$ n = 1 \f$.
+It is quite important to remark that the closed formula for \f$ x_n \f$ is
+guaranteed to hold for \f$ n \ge 1 \f$ only.
 
 
 
@@ -285,5 +286,46 @@ Notice that the relation specified by such a functional equation
 between its values at different arguments is much more complicated
 than in the cases of the proper recurrences considered in the previous
 sections.
+
+Functional equations are extremely important in complexity analysis,
+since they appear naturally in the analysis of <EM>divide-et-impera</EM>
+algorithms.
+For this kind of applications we can assume and exploit the fact that
+\f$ x_n \f$ is monotonically increasing: a frequent functional equations
+that we consider is
+\f[
+  x(n) = \alpha x \Bigl( \frac n\beta \Bigr) + g(n),
+\f]
+where \f$ \alpha > 0 \f$, \f$ \beta \in \Nset \setminus \{0 \f$, \f$ 1 \} \f$,
+and \f$ \fund{g}{\Nset \setminus \{ 0 \}}{\Rset} \f$ is a non-negative,
+non-decreasing function.
+
+The (approximate) solution of divide-et-impera recurrences
+depends upon the so-called ``Master Theorems''.
+It is almost always impossible to find a simple, closed formula
+valid for all positive integers, and the master theorems give
+upper and lower bounds for the solutions that contain one or more
+unspecified constants.
+In contrast, PURRS tries to give numerically explicit upper and lower
+bounds for the solutions (bounds that contain explicit constants that
+can be effectively computed as functions of the parameters involved.
+In the only occasion when one such constant takes the form of an
+infinite series we give a simple sharp bound for its value, in terms
+of standard mathematical functions.)
+Such bounds, which are always of the correct order of magnitude, are
+obtained under as mild assumptions as possible on the non-homogeneous
+part.
+
+We call <EM>rank</EM> of a functional equation the number of terms
+of the form \f$ \alpha x \Bigl( \frac n\beta \Bigr) \f$, where \f$ \beta \f$
+is an integer number larger than one.
+
+<B>Functional equation of rank \f$ 1 \f$</B>
+
+bla bla
+
+<B>Functional equation of rank \f$ k \f$, \f$ k > 1 \f$</B>
+ 
+bla bla
 
 */

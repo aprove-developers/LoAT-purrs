@@ -146,10 +146,12 @@ bool less_than(const Recurrence& x, const Recurrence& y);
   \f$ x(n) = 5/6 x(n-1) - 1/6 x(n-2) \f$.
 
   \par Example 5
-  The infinite order recurrence
-  \f$ x(n) = 2 sum(k,0,n,x(k))-2 n \f$
-  will be transormed in the normal form
-  \f$ x(n) = -2 sum(k,0,n-1,x(k)) + 2 n \f$.
+  The weighted-average recurrence
+  \f$ x(n) = 2 sum(k,3,n,x(k))-2 n \f$
+  will be transformed in the normal form and, moreover,
+  the recurrence is rewritten, if possible, so that the lower limit of
+  the sum is \f$ 0 \f$ and the upper limit is \f$ n-1 \f$:
+  \f$ x(n) = -2 sum(k,0,n-1,x(k)) + 2 n + 6 \f$.
 */
 class Recurrence {
 public:
