@@ -302,7 +302,7 @@ public:
                                      and the classification's process
 				     called by this method fails.
   */
-  unsigned int smallest_index_initial_conditions() const;
+  unsigned int first_valid_initial_condition() const;
 
   //! Stores the initial conditions specified in \p map_initial_conditions.
   /*!
