@@ -269,7 +269,11 @@ simplify_powers(const Expr& e, bool input) {
   D_VAR(not_num_exponent);
 
   // The base is a multiplication.
-  if (base.is_a_mul())
+  // The second condition of the `if' is necessary in order to do not
+  // consider the case `base = -a' with `a' not number because it is
+  // considered like a product: `base = - 1 * a').
+  if (base.is_a_mul()
+      && !(base.nops() == 2 && (base.op(0) == -1 || base.op(1) == -1)))
     return simplify_powers_with_bases_mul(base, num_exponent, not_num_exponent,
 					  input);
   // The base is not a multiplication: is not necessary to call the function
