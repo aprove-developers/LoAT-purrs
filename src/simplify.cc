@@ -41,6 +41,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
+#define Napier exp(Expr(1))
+
 namespace {
 using namespace PURRS;
 
@@ -1181,6 +1183,17 @@ prepare_change_base_logarithm(const Expr& base, const Expr& exponent) {
 	return pwr(change_base_logarithm(base, log_factors_exp, base_num),
 		   rem_factors_exp);
       }
+    }
+  }
+  else if (base == Napier) {
+    if (exponent.is_the_log_function())
+      return exponent.arg(0);
+    if (exponent.is_a_mul()) {
+      Expr log_factors_exp = 1;
+      Expr rem_factors_exp = 1;
+      find_log_factors(exponent, log_factors_exp, rem_factors_exp);
+      if (log_factors_exp.nops() == 1)
+	return pwr(log_factors_exp.arg(0), rem_factors_exp);
     }
   }
   return pwr(simplify_logarithm_in_expanded_ex(base),
