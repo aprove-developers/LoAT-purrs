@@ -45,12 +45,12 @@ using namespace GiNaC;
 */
 static bool
 get_constant_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
-  static GExpr n_plus_d = n + GiNaC::wild(0);
+  static GExpr n_plus_d = n + wild(0);
   GList substitution;
   if (match(e, n_plus_d, substitution)) {
     GExpr d = get_binding(substitution, 0);
-    if (GiNaC::is_a<GiNaC::numeric>(d)) {
-      decrement = -GiNaC::ex_to<GiNaC::numeric>(d);
+    if (is_a<numeric>(d)) {
+      decrement = -ex_to<numeric>(d);
       return true;
     }
   }
@@ -234,10 +234,10 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
 */
 bool
 solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
-  static GExpr x_i = x(GiNaC::wild(0));
-  static GExpr x_i_plus_r = x_i + GiNaC::wild(1);
-  static GExpr a_times_x_i = GiNaC::wild(1)*x_i;
-  static GExpr a_times_x_i_plus_r = a_times_x_i + GiNaC::wild(2);
+  static GExpr x_i = x(wild(0));
+  static GExpr x_i_plus_r = x_i + wild(1);
+  static GExpr a_times_x_i = wild(1)*x_i;
+  static GExpr a_times_x_i_plus_r = a_times_x_i + wild(2);
 
   int order = -1;
   std::vector<GExpr> coefficients;
@@ -418,7 +418,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     // parameters and in this case uses a vector of GNumber.
     for (int i = 1; i <= order; ++i)
       if (is_a<numeric>(coefficients[i]))
-	num_coefficients[i] = GiNaC::ex_to<GiNaC::numeric>(coefficients[i]);
+	num_coefficients[i] = ex_to<numeric>(coefficients[i]);
       else
 	throw("PURRS error: today the second order recurrence relations\n"
 	      "does not support parametric coefficients.\n"
@@ -543,25 +543,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   return true;
 }
 
-/*!
-  Let \f$ e(n) \f$ be the expression in \p n contained in \p e,
-  which is assumed to be already expanded.
-  This function computes a decomposition
-  \f$ e(n) = \sum_{i=0}^k \alpha_i^n \bigl(p_i(n) + q_i(n)\bigr) \f$, where
-  - \f$ \alpha_i \f$ is a ground expression
-    (syntactically different from \p 0);
-  - \f$ \alpha_i \neq \alpha_j \f$ if \f$ i \neq j \f$;
-  - \f$ p_i(n) \f$ is (syntactically) a polynomial in \f$ n \f$.
-
-  The expressions corresponding to \f$ \alpha_i \f$, \f$ p_i \f$ and
-  \f$ q_i \f$ are stored in the \f$ i \f$-th position of the vectors
-  \p alpha, \p p and \p q, respectively.
-*/
-static void
-exp_poly_decomposition(const GExpr& e, const GSymbol& n,
-		       std::vector<GExpr>& alpha,
-		       std::vector<GExpr>& p,
-		       std::vector<GExpr>& q) {
+/*
   GExpr p, q;
   GList(lst_of_exp);
   p = e;
@@ -641,13 +623,129 @@ exp_poly_decomposition(const GExpr& e, const GSymbol& n,
     return terms_divided;
   }
 }
+*/
+
+static void
+exp_poly_decomposition_factor(const GExpr& base,
+			      const GExpr& e, const GSymbol& n,
+			       std::vector<GExpr>& alpha,
+			       std::vector<GExpr>& p,
+			       std::vector<GExpr>& q) {
+  unsigned alpha_size = alpha.size();
+  unsigned position;
+  bool found = false;
+  for (unsigned i = alpha_size; i-- > 0; )
+    if (base == alpha[i]) {
+      position = i;
+      found = true;
+      break;
+    }
+  if (!found) {
+    alpha.push_back(base);
+    p.push_back(0);
+    q.push_back(0);
+    position = alpha_size;
+  }
+
+  // Here `alpha[position]' contains `base' and the polynomial and
+  // possibly not polynomial parts of `e' can be added to
+  // `p[position]' and `q[position]', respectively.
+  GExpr polynomial;
+  GExpr possibly_not_polynomial;
+  assign_poly_part_and_no_poly_part(e, n, polynomial, possibly_not_polynomial);
+  p[position] += polynomial;
+  q[position] += possibly_not_polynomial;
+}
+
+// FIXME: this is just a temporary definition.
+static bool
+ground(const GExpr& /* e */) {
+  return true;
+}
+
+static void
+exp_poly_decomposition_summand(const GExpr& e, const GSymbol& n,
+			       std::vector<GExpr>& alpha,
+			       std::vector<GExpr>& p,
+			       std::vector<GExpr>& q) {
+  static GExpr exponential = pow(wild(0), n);
+  GList substitution;
+  unsigned num_factors = is_a<mul>(e) ? e.nops() : 1;
+  if (num_factors == 1) {
+    if (match(e, exponential, substitution)) {
+      // We have found something of the form `pow(base, n)'.
+      GExpr base = get_binding(substitution, 0);
+      assert(base != 0);
+      if (ground(base)) {
+	// We have found something of the form `pow(base, n)'
+	// and `base' is good for the decomposition: determine
+	exp_poly_decomposition_factor(base, 1, n, alpha, p, q);
+	return;
+      }
+    }
+  }
+  else
+    for (unsigned i = num_factors; i-- > 0; ) {
+      if (match(e.op(i), exponential, substitution)) {
+	// We have found something of the form `pow(base, n)'.
+	GExpr base = get_binding(substitution, 0);
+	assert(base != 0);
+	if (ground(base)) {
+	  // We have found something of the form `pow(base, n)'
+	  // and `base' is good for the decomposition: determine
+	  // `r = e/pow(base, n)'.
+	  GExpr r = 1;
+	  for (unsigned j = num_factors; j-- > 0; )
+	    if (i != j)
+	      r *= e.op(j);
+	  exp_poly_decomposition_factor(base, r, n, alpha, p, q);
+	  return;
+	}
+      }
+    }
+  // No proper exponential found: this is treated like `pow(1, n)*e'.
+  exp_poly_decomposition_factor(1, e, n, alpha, p, q);
+}
 
 /*!
-  Given a vector \p symbolic_sum that contains all the symbolic sums of the
-  inhomogeneous term's terms that are polynomial or the product of a
-  polynomial and an exponential, this function substitutes to the sums the
-  corresponding values of the characteristic equation's roots and of the bases
-  of the eventual exponentials.
+  Let \f$ e(n) \f$ be the expression in \p n contained in \p e,
+  which is assumed to be already expanded.
+  This function computes a decomposition
+  \f$ e(n) = \sum_{i=0}^k \alpha_i^n \bigl(p_i(n) + q_i(n)\bigr) \f$, where
+  - \f$ \alpha_i \f$ is a ground expression
+    (syntactically different from \p 0);
+  - \f$ \alpha_i \neq \alpha_j \f$ if \f$ i \neq j \f$;
+  - \f$ p_i(n) \f$ is (syntactically) a polynomial in \f$ n \f$.
+
+  The expressions corresponding to \f$ \alpha_i \f$, \f$ p_i \f$ and
+  \f$ q_i \f$ are stored in the \f$ i \f$-th position of the vectors
+  \p alpha, \p p and \p q, respectively.
+*/
+static void
+exp_poly_decomposition(const GExpr& e, const GSymbol& n,
+		       std::vector<GExpr>& alpha,
+		       std::vector<GExpr>& p,
+		       std::vector<GExpr>& q) {
+  unsigned num_summands = is_a<add>(e) ? e.nops() : 1;
+  // An upper bound to the number of exponentials is the number of
+  // summands in `e': reserve space in the output vectors so that
+  // no reallocations will be required.
+  alpha.reserve(num_summands);
+  p.reserve(num_summands);
+  q.reserve(num_summands);
+  if (num_summands > 1)
+    for (unsigned i = num_summands; i-- > 0; )
+      exp_poly_decomposition_summand(e.op(i), n, alpha, p, q);
+  else
+    exp_poly_decomposition_summand(e, n, alpha, p, q);
+}
+
+/*!
+  Given a vector \p symbolic_sum that contains all the symbolic sums
+  of the inhomogeneous term's terms that are polynomial or the product
+  of a polynomial and an exponential, this function substitutes to the
+  sums the corresponding values of the characteristic equation's roots
+  and of the bases of the eventual exponentials.
   Returns a <CODE>GExpr</CODE> \p solution with the sum of all sums of the
   vector.
  */
