@@ -281,6 +281,7 @@ private:
   Solver_Status apply_order_reduction() const;
   Solver_Status compute_non_linear_recurrence(Expr& solution_or_bound,
 					      unsigned type) const;
+  Solver_Status compute_infinite_order_recurrence(Expr& solution) const;
   Expr substitute_i_c_shifting(bool exact,
 			       const Expr& solution_or_bound) const;
   Solver_Status classify() const;

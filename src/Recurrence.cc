@@ -535,6 +535,48 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
     return status;
 }
 
+/*!
+  Builds a new object <CODE>Recurrence</CODE> containing a linear
+  recurrence of finite order built starting from the recurrence
+  \p *this of infinite order.
+*/
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::
+compute_infinite_order_recurrence(Expr& solution) const {
+  D_MSG("compute_linear_infinite_order_recurrence");
+  // At the moment we consider only recurrences of infinite order
+  // transformable in first order recurrences.
+  std::vector<Expr> coefficients(2);
+  coefficients[1] = coeff_first_order().substitute(n, n+1);
+  Recurrence rec_rewritten(rhs_transformed_in_first_order());
+  // It is not necessary to repeat the classification's process
+  // because we already know the order, the coefficients and the
+  // inhomogeneous term.
+  rec_rewritten.finite_order_p = new Finite_Order_Info(1, coefficients, 1);
+  if (coeff_first_order().has(n))
+    rec_rewritten.set_type(LINEAR_FINITE_ORDER_VAR_COEFF);
+  else
+    rec_rewritten.set_type(LINEAR_FINITE_ORDER_CONST_COEFF);
+  rec_rewritten.set_inhomogeneous_term(inhomog_first_order()
+				       .substitute(n, n+1));
+  Solver_Status status;
+  if ((status = rec_rewritten.solve_linear_finite_order())
+      == SUCCESS) {
+    solution = rec_rewritten.exact_solution_.expression();
+    // Shift backward: n -> n - 1 and substitution of initial
+    // condition `x(1) = 2*x(0)+1'
+    // (there are 2 steps in 1: x(0) -> x(1) -> value_of_first_element()).
+    solution = solution.substitute(n, n - 1);
+    solution = solution
+      .substitute(x(rec_rewritten.first_well_defined_rhs_linear()),
+		  value_of_first_element());
+    //	solution = simplify_ex_for_output(solution, false);
+    return SUCCESS;
+  }
+  else
+    return status;
+}
+
 //! \brief
 //! Let \p solution_or_bound be the expression that represent the
 //! solution or the bound computed for the recurrence \p *this.
@@ -690,24 +732,9 @@ PURRS::Recurrence::compute_exact_solution() const {
     }
     // Linear infinite order.
     else {
-      D_MSG("compute_linear_infinite_order_recurrence");
-      std::vector<Expr> coefficients(2);
-      coefficients[1] = coeff_first_order();
-      Recurrence rec_rewritten(rhs_transformed_in_first_order());
-      rec_rewritten.finite_order_p = new Finite_Order_Info(1, coefficients, 1);
-      rec_rewritten.set_type(LINEAR_FINITE_ORDER_VAR_COEFF);
-      rec_rewritten.set_inhomogeneous_term(inhomog_first_order());
-      if ((status = rec_rewritten.solve_linear_finite_order())
+      Expr solution;
+      if ((status = compute_infinite_order_recurrence(solution))
 	  == SUCCESS) {
-	Expr solution = rec_rewritten.exact_solution_.expression();
-	// Shift backward: n -> n - 1 and substitution of initial
-	// condition `x(1) = 2*x(0)+1'
-	// (there are 2 steps in 1: x(0) -> x(1) -> value_of_first_element()).
-	solution = solution.substitute(n, n - 1);
-	solution = solution
-	  .substitute(x(rec_rewritten.first_well_defined_rhs_linear()),
-		      value_of_first_element());
-	//	solution = simplify_ex_for_output(solution, false);
 	exact_solution_.set_expression(solution);
 	lower_bound_.set_expression(solution);
 	upper_bound_.set_expression(solution);

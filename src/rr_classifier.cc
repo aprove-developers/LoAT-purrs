@@ -658,10 +658,6 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
     T(n) = \frac{f(n)}{f(n-1)} (1+f(n-1)) T(n-1)
       + f(n) \left( \frac{g(n)}{f(n)} - \frac{g(n-1)}{f(n-1)} \right).
   \f]
-  The recurrence of finite order that we want to solve is the previous
-  shifted forward by \f$ 1 \f$, i.e., \f$ n = n + 1 \f$ because ...
-
-
   If the recurrence stored in \p rhs is of that shape then the function
   returns <CODE>true</CODE> and stores the coefficient of the new recurrence
   in \p coefficient and the non-homogeneous part \f$ g(n) \f$ in
@@ -679,21 +675,23 @@ known_class_of_infinite_order(const Expr& rhs, const Expr& term_sum,
 
   // If `f(n)' or `g(n)' contain other `x' function with `n' in the
   // argument then the recurrence is too complex for the system.
+  // FIXME: the last two conditions are temporary until that we do
+  // not understand like behaving itself when the bounds of the sum
+  // are different from `0' and `n-1'.
   if (weight.has_x_function(false, Recurrence::n)
-      || inhom_infinite_order_rec.has_x_function(false, Recurrence::n))
+      || inhom_infinite_order_rec.has_x_function(false, Recurrence::n)
+      || !term_sum.arg(1).is_zero() || term_sum.arg(2) != Recurrence::n - 1)
     return false;
 
   Expr weight_shifted = weight.substitute(Recurrence::n, Recurrence::n-1);
-  coefficient = (weight / weight_shifted * (1 + weight_shifted))
-    .substitute(Recurrence::n, Recurrence::n+1);
+  coefficient = weight / weight_shifted * (1 + weight_shifted);
   coefficient = simplify_all(coefficient);
   
   Expr inhom_infinite_order_rec_shifted
     = inhom_infinite_order_rec.substitute(Recurrence::n, Recurrence::n-1);
   inhomogeneous
-    = (weight * (inhom_infinite_order_rec / weight
-		 - inhom_infinite_order_rec_shifted / weight_shifted))
-    .substitute(Recurrence::n, Recurrence::n+1);
+    = weight * (inhom_infinite_order_rec / weight
+		- inhom_infinite_order_rec_shifted / weight_shifted);
   inhomogeneous = simplify_all(inhomogeneous);
   
   first_element
