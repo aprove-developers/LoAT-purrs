@@ -1103,24 +1103,27 @@ rewrite_factorials_and_exponentials(const Expr& e) {
 
 Expr
 change_base_logarithm(const Expr& base, const Expr exponent,
-    const Number& new_base, const Number& new_exponent = 1) {
-  if (exponent.is_a_mul() && exponent.nops() == 2
-      && ((exponent.op(0) == log(Recurrence::n)
-	   && exponent.op(1) == 1 / log(new_base))
-	  || (exponent.op(1) == log(Recurrence::n)
-	      && exponent.op(0) == 1 / log(new_base))))
-    return pwr(Recurrence::n, new_exponent);
-  else
-    return pwr(simplify_logarithm_in_expanded_ex(base),
-	       simplify_logarithm_in_expanded_ex(exponent));
+		      const Number& new_base, const Number& new_exponent = 1) {
+  if (exponent.is_a_mul() && exponent.nops() == 2) {
+    if (exponent.op(0).is_the_log_function()
+	&& exponent.op(1) == 1 / log(new_base))
+      return pwr(exponent.op(0).arg(0), new_exponent);
+    if (exponent.op(1).is_the_log_function()
+	&& exponent.op(0) == 1 / log(new_base))
+      return pwr(exponent.op(1).arg(0), new_exponent);
+  }
+  return pwr(simplify_logarithm_in_expanded_ex(base),
+	     simplify_logarithm_in_expanded_ex(exponent));
 }
 
 Expr
 prepare_change_base_logarithm(const Expr& base, const Expr& exponent) {
   Number base_num;
+  // The baes is a positive number.
   if (base.is_a_number(base_num) && base_num.is_positive()) {
     std::vector<Number> bases;
     std::vector<int> exponents;
+    // The base is integer.
     if (base_num.is_integer()) {
       partial_factor(base_num, bases, exponents);
       if (bases.size() == 1) {
@@ -1130,9 +1133,21 @@ prepare_change_base_logarithm(const Expr& base, const Expr& exponent) {
       else
 	return change_base_logarithm(base, exponent, base_num);
     }
-    else
-      return change_base_logarithm(base, exponent, base_num);
+    // The base is rational with the numerator equal to `1'.
+    if (base_num.is_rational() && base_num.numerator() == 1) {
+      Number denom_base = base_num.denominator();
+      partial_factor(denom_base, bases, exponents);
+      if (bases.size() == 1) {
+	Number new_base = bases[0];
+	return pwr(change_base_logarithm(base, exponent, new_base, exponents[0]),
+		   -1);
+      }
+      else
+	return pwr(change_base_logarithm(base, exponent, denom_base), -1);
+    }
+    return change_base_logarithm(base, exponent, base_num);
   }
+  // The baes is not a positive number.
   else
     return pwr(simplify_logarithm_in_expanded_ex(base),
 	       simplify_logarithm_in_expanded_ex(exponent));
@@ -1142,9 +1157,11 @@ prepare_change_base_logarithm(const Expr& base, const Expr& exponent) {
   Applies the following logarithm's property:
   \f[
     \begin{cases}
+      log(exp(1)^a) = a, \\
       log(a^b) = b log(a), \\
-      (a^b)^{log n / log a} = n^b, \quad \text{where } a \in \Rset, a > 0
-        \text{and } b \in \Nset.
+      (a^b)^{log c / log a} = c^b, \quad \text{where } a \in \Rset, a > 0
+        \text{and } b \in \Nset, \\
+      (a^{-1})^{log c / log a} = c^{-1}, \quad \text{where } a \in \Rset, a > 0.
     \end{cases}
   \f]
 */
@@ -1162,12 +1179,12 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
       e_rewritten *= simplify_logarithm_in_expanded_ex(e.op(i));
   }
   else if (e.is_a_power())
-    // Apply the second property.
+    // Apply the third and fourth properties.
     return prepare_change_base_logarithm(e.arg(0), e.arg(1));
   else if (e.is_a_function()) {
     if (e.is_the_log_function()) {
       const Expr& arg_log = e.arg(0);
-      // Apply the first property.
+      // Apply the second property.
       if (arg_log.is_a_power()) {
 	const Expr& base = arg_log.arg(0);
 	const Expr& exponent = arg_log.arg(1);
@@ -1176,11 +1193,44 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
 	  // Factorize the base of the argument of the logarithm.
 	  std::vector<Number> bases;
 	  std::vector<int> exponents;
+	  D_VAR(num_base);
 	  partial_factor(num_base, bases, exponents);
-	  if (exponents.size() == 1 && exponents[0] != 1)
+	  D_VEC(bases, 0, bases.size()-1);
+	  D_VEC(exponents, 0, exponents.size()-1);
+	  if (exponents.size() == 1)
 	    return exponent * exponents[0] * log(bases[0]);
+	  else {
+	    Number new_base = bases[0];
+	    for (unsigned i = exponents.size(); i-- > 1; )
+	      if (exponents[i] != exponents[0])
+		return e;
+	      else
+		new_base *= bases[i];
+	    return exponent * exponents[0] * log(new_base);
+	  }
 	}
-	return arg_log.arg(1) * log(arg_log.arg(0));
+	// Apply the first property.
+	if (base.is_the_exp_function() && base.arg(0) == 1)
+	  return exponent;
+      }
+      Number arg_log_num;
+      if (arg_log.is_a_number(arg_log_num)
+	  && arg_log_num.is_positive_integer()) {
+	// Factorize the base of the argument of the logarithm.
+	std::vector<Number> bases;
+	std::vector<int> exponents;
+	partial_factor(arg_log_num, bases, exponents);
+	if (exponents.size() == 1)
+	  return exponents[0] * log(bases[0]);
+	else {
+	  Number new_base = bases[0];
+	  for (unsigned i = exponents.size(); i-- > 1; )
+	    if (exponents[i] != exponents[0])
+	      return e;
+	    else
+	      new_base *= bases[i];
+	  return exponents[0] * log(new_base);
+	}
       }
       else
 	return e;
@@ -1195,7 +1245,7 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
       return apply(e.functor(), argument);
     }
   }
-  else
+  else 
     e_rewritten = e;
   return e_rewritten;
 }
