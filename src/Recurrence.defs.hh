@@ -61,6 +61,16 @@ public:
   //! Assignment operator.
   Recurrence& operator=(const Recurrence& y);
 
+  //! \brief
+  //! Assigns to \p *this an approximation
+  //! of the union of \p *this and \p y.
+  void approximate_union_assign(const Recurrence& y);
+
+  //! \brief
+  //! Assigns to \p *this an approximation
+  //! of the intersection of \p *this and \p y.
+  void approximate_intersection_assign(const Recurrence& y);
+
   //! WRITEME
   void replace_recurrence(const Expr& e);
 
