@@ -1186,6 +1186,48 @@ is_non_negative_non_decreasing(const Expr& f, const Symbol& x) {
   return true;
 }
 
+/*!
+  Returns <CODE>true</CODE> if \p e contains the \f$ x \f$ function
+  with its argument containing the symbol \p s.
+  Returns <CODE>false</CODE> otherwise. 
+*/
+bool
+has_x_function(const Expr& e, const Symbol& s) {
+  if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (has_x_function(e.op(i), s))
+	return true;
+    return false;
+  }
+  else if (e.is_a_power()) {
+    if (has_x_function(e.arg(0), s) || has_x_function(e.arg(1), s))
+      return true;
+    return false;
+  }
+  else if (e.is_a_function()) {
+    if (e.is_the_x_function() && e.arg(0).has(s))
+      return true;
+    return false;
+  }
+  else
+    return false;
+} 
+  
+void
+insert_coefficients(const Expr& coeff, unsigned long index,
+		    std::vector<Expr>& coefficients) {
+  // The vector `coefficients' contains in the `i'-th position the
+  // coefficient of `x(n-i)'.  The first position always contains 0.
+  if (index > coefficients.size())
+    coefficients.insert(coefficients.end(),
+			index - coefficients.size(),
+			Number(0));
+  if (index == coefficients.size())
+    coefficients.push_back(coeff);
+  else
+    coefficients[index] += coeff;
+}
+
 } // anonymous namespace
 
 PURRS::Recurrence::Solver_Status
@@ -1270,21 +1312,6 @@ PURRS::Recurrence::compute_order(const Number& decrement, unsigned int& order,
     order = index;
   return SUCCESS;
 }
-  
-void
-insert_coefficients(const Expr& coeff, unsigned long index,
-		    std::vector<Expr>& coefficients) {
-  // The vector `coefficients' contains in the `i'-th position the
-  // coefficient of `x(n-i)'.  The first position always contains 0.
-  if (index > coefficients.size())
-    coefficients.insert(coefficients.end(),
-			index - coefficients.size(),
-			Number(0));
-  if (index == coefficients.size())
-    coefficients.push_back(coeff);
-  else
-    coefficients[index] += coeff;
-}
 
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
@@ -1343,6 +1370,14 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
       else
 	e += r;
     }
+    else if (r.is_the_sum_function() && r.arg(2) == n) {
+      // Check if the summand has the `x' function with the argument
+      // dependently from the index of the sum.
+      if (has_x_function(r.arg(3), r.arg(0).ex_to_symbol())) {
+	D_MSG("infinite order");
+	return TOO_COMPLEX;
+      }
+    }
     else
       e += r;
   else {
@@ -1394,6 +1429,14 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	  return TOO_COMPLEX;
 	else
 	  possibly_coeff *= factor;
+      }
+      else if (factor.is_the_sum_function() && factor.arg(2) == n) {
+	// Check if the summand has the `x' function with the argument
+	// dependently from the index of the sum.
+	if (has_x_function(factor.arg(3), factor.arg(0).ex_to_symbol())) {
+	  D_MSG("infinite order");
+	  return TOO_COMPLEX;
+	}
       }
       else {
 	if (factor.has(n))
