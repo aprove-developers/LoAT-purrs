@@ -795,7 +795,9 @@ PURRS::Recurrence::add_term_with_initial_condition(bool lower, const Expr& q,
   else
     index_initial_condition 
       = simplify_logarithm(n / pwr(functional_eq_p->ht_begin()->first, q));
-  
+  index_initial_condition = simplify_ex_for_output(index_initial_condition,
+						   false);
+
   if (index_initial_condition.is_a_number()
       && index_initial_condition.ex_to_number() < applicability_condition())
     index_initial_condition = applicability_condition();
