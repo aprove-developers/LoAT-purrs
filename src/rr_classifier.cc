@@ -481,7 +481,7 @@ x_function_in_powers_or_functions(const Expr& e) {
 //! returns \f$ 0 \f$ if finds all the other type of non linear term;
 //! returns \f$ 2 \f$ otherwise.
 unsigned
-find_non_linear_recurrence(const Expr& e) {
+find_non_linear_term(const Expr& e) {
   unsigned num_summands = e.is_a_add() ? e.nops() : 1;
   if (num_summands > 1)
     for (unsigned i = num_summands; i-- > 0; ) {
@@ -848,14 +848,14 @@ PURRS::Recurrence::classify() const {
 
   // `non_linear_term == 0' or `non_linear_term == 1' indicate
   // two different cases of non-linearity.
-  unsigned non_linear_term = find_non_linear_recurrence(recurrence_rhs);
+  unsigned non_linear_term = find_non_linear_term(recurrence_rhs);
   if (non_linear_term == 0) {
-    set_non_linear_finite_order();
     Expr new_rhs;
     Expr base;
     std::vector<Symbol> auxiliary_symbols;
     if (rewrite_non_linear_recurrence(*this, recurrence_rhs, new_rhs, base,
 				      auxiliary_symbols)) {
+      set_non_linear_finite_order();
       non_linear_p = new Non_Linear_Info(recurrence_rhs, new_rhs, base,
 					 auxiliary_symbols);
       return SUCCESS;

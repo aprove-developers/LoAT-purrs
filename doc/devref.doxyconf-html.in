@@ -336,25 +336,40 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = ../../../purrs/doc/../src/alg_eq_solver.hh \
-                         ../../../purrs/doc/../src/alg_eq_solver.cc \
-                         ../../../purrs/doc/../src/rr_solver.cc \
-                         ../../../purrs/doc/../src/approximate.hh \
+INPUT                  = ../../../purrs/doc/../src/alg_eq_solver.cc \
+                         ../../../purrs/doc/../src/alg_eq_solver.hh \
                          ../../../purrs/doc/../src/approximate.cc \
-			 ../../../purrs/doc/../src/approximate_impl.hh \
+                         ../../../purrs/doc/../src/approximate.hh \
+                         ../../../purrs/doc/../src/approximate_impl.hh \
 			 ../../../purrs/doc/../src/Blackboard.defs.hh \
                          ../../../purrs/doc/../src/Blackboard.types.hh \
                          ../../../purrs/doc/../src/Blackboard.inlines.hh \
                          ../../../purrs/doc/../src/Blackboard.cc \
+			 ../../../purrs/doc/../src/Bool3.defs.hh \
+                         ../../../purrs/doc/../src/Bool3.types.hh \
+                         ../../../purrs/doc/../src/Bool3.inlines.hh \
+                         ../../../purrs/doc/../src/Bool3.cc \
+			 ../../../purrs/doc/../src/Cached_Expr.defs.hh \
+                         ../../../purrs/doc/../src/Cached_Expr.types.hh \
+                         ../../../purrs/doc/../src/Cached_Expr.inlines.hh \
+                         ../../../purrs/doc/../src/Cached_Expr.cc \
 			 ../../../purrs/doc/../src/CInterval.types.hh \
 			 ../../../purrs/doc/../src/Complex_Interval.defs.hh \
                          ../../../purrs/doc/../src/Complex_Interval.types.hh \
                          ../../../purrs/doc/../src/Complex_Interval.inlines.hh \
                          ../../../purrs/doc/../src/Complex_Interval.cc \
+			 ../../../purrs/doc/../src/complint.cc \
+			 ../../../purrs/doc/../src/complint.hh \
+			 ../../../purrs/doc/../src/compute_bounds.cc \
+			 ../../../purrs/doc/../src/compute_exact_solution.cc \
+			 ../../../purrs/doc/../src/compute_prod.cc \
+			 ../../../purrs/doc/../src/compute_prod.hh \
 			 ../../../purrs/doc/../src/Constant.defs.hh \	
                          ../../../purrs/doc/../src/Constant.types.hh \
                          ../../../purrs/doc/../src/Constant.inlines.hh \
                          ../../../purrs/doc/../src/Constant.cc \
+			 ../../../purrs/doc/../src/ep_decomp.cc \
+			 ../../../purrs/doc/../src/ep_decomp.hh \
                          ../../../purrs/doc/../src/Expr.defs.hh \
                          ../../../purrs/doc/../src/Expr.types.hh \
                          ../../../purrs/doc/../src/Expr.inlines.hh \
@@ -363,44 +378,62 @@ INPUT                  = ../../../purrs/doc/../src/alg_eq_solver.hh \
                          ../../../purrs/doc/../src/Expr_List.types.hh \
                          ../../../purrs/doc/../src/Expr_List.inlines.hh \
                          ../../../purrs/doc/../src/Expr_List.cc \
+			 ../../../purrs/doc/../src/factorize.cc \
+			 ../../../purrs/doc/../src/factorize.hh \
+		 	 ../../../purrs/doc/../src/Finite_Order_Info.defs.hh \
+                         ../../../purrs/doc/../src/Finite_Order_Info.types.hh \
+                         ../../../purrs/doc/../src/Finite_Order_Info.inlines.hh \
+                         ../../../purrs/doc/../src/Finite_Order_Info.cc \
+			 ../../../purrs/doc/../src/functional_equation.cc \
+			 ../../../purrs/doc/../src/functional_equation.hh \
+		 	 ../../../purrs/doc/../src/Functional_Equation_Info.defs.hh \
+                         ../../../purrs/doc/../src/Functional_Equation_Info.types.hh \
+                         ../../../purrs/doc/../src/Functional_Equation_Info.inlines.hh \
+                         ../../../purrs/doc/../src/Functional_Equation_Info.cc \
+                         ../../../purrs/doc/../src/gosper.cc \
+                         ../../../purrs/doc/../src/gosper.hh \
+		 	 ../../../purrs/doc/../src/Init.defs.hh \
+                         ../../../purrs/doc/../src/Init.types.hh \
+                         ../../../purrs/doc/../src/Init.inlines.hh \
+                         ../../../purrs/doc/../src/Init.cc \
 			 ../../../purrs/doc/../src/Matrix.defs.hh \	
                          ../../../purrs/doc/../src/Matrix.types.hh \
                          ../../../purrs/doc/../src/Matrix.inlines.hh \
                          ../../../purrs/doc/../src/Matrix.cc \
+		 	 ../../../purrs/doc/../src/Non_Linear_Info.defs.hh \
+                         ../../../purrs/doc/../src/Non_Linear_Info.types.hh \
+                         ../../../purrs/doc/../src/Non_Linear_Info.inlines.hh \
+                         ../../../purrs/doc/../src/Non_Linear_Info.cc \
 			 ../../../purrs/doc/../src/Number.defs.hh \
                          ../../../purrs/doc/../src/Number.types.hh \
                          ../../../purrs/doc/../src/Number.inlines.hh \
                          ../../../purrs/doc/../src/Number.cc \
-			 ../../../purrs/doc/../src/Init.defs.hh \	
-                         ../../../purrs/doc/../src/Init.types.hh \
-                         ../../../purrs/doc/../src/Init.inlines.hh \
-                         ../../../purrs/doc/../src/Init.cc \
+                         ../../../purrs/doc/../src/numerator_denominator.cc \
+                         ../../../purrs/doc/../src/numerator_denominator.hh \
+		 	 ../../../purrs/doc/../src/Order_Reduction_Info.defs.hh \
+                         ../../../purrs/doc/../src/Order_Reduction_Info.types.hh \
+                         ../../../purrs/doc/../src/Order_Reduction_Info.inlines.hh \
+                         ../../../purrs/doc/../src/Order_Reduction_Info.cc \
+                         ../../../purrs/doc/../src/poly_factor.cc \
+                         ../../../purrs/doc/../src/poly_factor.hh \
 			 ../../../purrs/doc/../src/Recurrence.defs.hh \
                          ../../../purrs/doc/../src/Recurrence.types.hh \
                          ../../../purrs/doc/../src/Recurrence.inlines.hh \
                          ../../../purrs/doc/../src/Recurrence.cc \
+			 ../../../purrs/doc/../src/rr_classifier.cc \
+                         ../../../purrs/doc/../src/simplify.cc \
+                         ../../../purrs/doc/../src/simplify.hh \
+                         ../../../purrs/doc/../src/size_norm.cc \
+                         ../../../purrs/doc/../src/size_norm.hh \
+                         ../../../purrs/doc/../src/size_norm_impl.hh \
+                         ../../../purrs/doc/../src/sum_poly.cc \
+                         ../../../purrs/doc/../src/sum_poly.hh \
 			 ../../../purrs/doc/../src/Symbol.defs.hh \
                          ../../../purrs/doc/../src/Symbol.types.hh \
                          ../../../purrs/doc/../src/Symbol.inlines.hh \
                          ../../../purrs/doc/../src/Symbol.cc \
-                         ../../../purrs/doc/../src/complint.hh \
-                         ../../../purrs/doc/../src/complint.cc \
-                         ../../../purrs/doc/../src/gosper.hh \
-                         ../../../purrs/doc/../src/gosper.cc \
-                         ../../../purrs/doc/../src/numerator_denominator.hh \
-                         ../../../purrs/doc/../src/numerator_denominator.cc \
-                         ../../../purrs/doc/../src/poly_factor.hh \
-                         ../../../purrs/doc/../src/poly_factor.cc \
-                         ../../../purrs/doc/../src/simplify.hh \
-                         ../../../purrs/doc/../src/simplify.cc \
-                         ../../../purrs/doc/../src/size_norm.hh \
-                         ../../../purrs/doc/../src/size_norm.cc \
-                         ../../../purrs/doc/../src/size_norm_impl.hh \
-                         ../../../purrs/doc/../src/sum_poly.hh \
-                         ../../../purrs/doc/../src/sum_poly.cc \
                          ../../../purrs/doc/../src/util.hh \
-                         ../../../purrs/doc/../src/util.cc
- 
+
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
 # and *.h) to filter out the source-files in the directories. If left 
