@@ -210,6 +210,11 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
 	}
       }
       break;
+    case 2:
+      assert(e.is_the_mod_function());
+      ae = e;
+      interval_result = false;
+      break;
     case 4:
       assert(e.is_the_sum_function() || e.is_the_prod_function());
       ae = e;
