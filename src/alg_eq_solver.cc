@@ -225,20 +225,37 @@ solve_equation_4(const Number& a1, const Number& a2,
   x4 = simplify_ex_for_output(x4, false);
 }
 
-//! Solve the equation \f$a*x^n + k = 0\f$.
+//! Solve the equation \f$a*x^n + k = 0\f$. We assume that the
+//! rational roots have already been found.
 void
-solve_monomial(const Number& a, int n, const Number& k,
-	       std::vector<Polynomial_Root>& monomial_roots) {
+solve_monomial_irrational(const Number& a, int n, const Number& k,
+			  std::vector<Polynomial_Root>& monomial_roots) {
   assert(a != 0);
   assert(n >= 1);
   assert(k != 0);
+  // We can have at most one positive and one negative real root.
+  // Zero is not allowed.
+  bool positive_is_rational = false;
+  bool negative_is_rational = false;
+  assert(monomial_roots.size() <= 2);
+  for (unsigned int j = 0; j < monomial_roots.size(); ++j) {
+    if (monomial_roots[j].value().ex_to_number() > 0)
+      positive_is_rational = true;
+    else
+      negative_is_rational = true;
+  }
+
   Expr theta = 2*Constant::Pi/n;
   for (int j = 0; j < n; ++j) {
+    // Skip rational roots.
+    if ( (positive_is_rational && j == 0) ||
+	 (negative_is_rational && j*2 - n%2 == n) )
+      continue;
+    
     Expr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
     monomial_roots.push_back(Polynomial_Root(pwr(-k/a,
 						 Number(1, n))
 					     * root_of_unity,
-					     // FIXME: if rational?
 					     NON_RATIONAL, 1));
   }
 }
@@ -326,18 +343,18 @@ find_roots(const Expr& p, const Symbol& x,
   }
 
   // Here `q' has degree at least 2 and the least coefficient is non-zero.
-  // If it is in the form a*x^n = k, just solve it.
-  if (q.ldegree(x) == 0) {
+
+  // If it is in the form a*x^n = k, keep it in mind for future computations.
+  bool is_monomial = false;
+ if (q.ldegree(x) == 0) {
     unsigned int d = degree - 1;
     for (; d >= 1 && q.coeff(x, d).ex_to_number() == 0; --d);
     if (d == 0) {
-      solve_monomial(tc, degree, lc, roots);
-      return true;
-    }
+      is_monomial = true;
+     }
   }
 
-  // Here `q' has degree at least 2, the least coefficient is non-zero and
-  // it is not in the form a*x^n = k.
+  // Find rational roots.
   Number abs_lc = abs(lc);
   Number abs_tc = abs(tc);
   if (abs_lc < FIND_DIVISORS_THRESHOLD && abs_tc < FIND_DIVISORS_THRESHOLD) {
@@ -366,6 +383,12 @@ find_roots(const Expr& p, const Symbol& x,
     if (degree == 0)
       // The polynomial has been factored completely.
       return true;
+
+    // If `q' was in the form a*x^n = k, find its irrational roots.
+    if (is_monomial) {
+      solve_monomial_irrational(tc, degree+roots.size(), lc, roots);
+      return true;
+    }
 
     // Here `q' has only simple roots that are either
     // - rational with large (>= FIND_DIVISORS_THRESHOLD)
