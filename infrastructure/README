@@ -1,64 +1,339 @@
-Recommended tools and libraries:
+Tools needed by PURRS (see detailed instructions):
 
-autoconf 2.52g
-automake 1.5
+autoconf 2.57
+automake 1.7.2
 libtool 1.4.2
-gcc 3.0.3
-gmp 4.0.1      (configure with --enable-cxx and using -fexceptions) (1)
-cln 1.1.4      (ignore the errors given by `make install') (2)
-fi_lib++ 2.0   (follow the instructions) (3)
-ntl 5.2        (4)
-ginac          (use our CVS version and forget about religion) (5)
+gcc 3.2.1        (gcc 3.0.4 is enough)
+gmp 4.1.2
+cln 1.1.5
+ntl 5.3
+fi_lib++ 2.0
+ginac            (use our CVS version!)
+cgicc 3.2.1
 
-Just for the web-based demos:
+============================================================================
 
-cgicc 3.2      (see http://www.gnu.org/software/cgicc/cgicc.html
-                and configure with --enable-namespaces)
- 
+More Detailed Installation Instructions:
 
-(1)
-Your configure command should be something like
+  NOTE: it is assumed that you can install packages as root,
+        that the prefix that you want to install to is "/usr/local"
+        and that you download and build all of the packages
+        in a directory called "your-path-to-download-dir".
 
-CPPFLAGS=-fexceptions my/path/to/gmp-4.0.1/configure --prefix=/usr/local --enable-cxx
+============================================================================
 
-(2)
-Build cln out of the source tree, then ignore the error about
-a missing cln.m4 when you do `make install'.
-Note that if you had already installed cln before (from inside
-the source tree), you should remove by hand the previously
-installed configuration file <prefix>/share/aclocal/cln.m4
+Setting up your LD_LIBRARY_PATH environment variable (once for all):
 
-(3)
-mkdir filib++
-cd filib++
-cvs -d cvs.cs.unipr.it:/cvs/filib++ checkout interval
-cd interval
-ln -s makefiles/Makefile.gcc Makefile
-make libs
-(it will complain because some `lib' directory is missing: create it by hand)
-make libs
-su
-<root password>
-make install
+If you use the Bash shell, add the following line to file
+.bashrc into your home directory:
+  export LD_LIBRARY_PATH=/usr/local/lib:/usr/local/filib/lib:$LD_LIBRARY_PATH
 
-(4)
-tar zxf ntl-5.2.tar.gz
-cd ntl-5.2/src
-./configure NTL_GMP_LIP=on NTL_STD_CXX=on GMP_PREFIX=/usr/local
-make
-make check
-su
-<root password>
-make install
+After saving it, ensure you re-read the file by calling:
+  source .bashrc
 
-(5)
-cvs -d cvs.cs.unipr.it:/cvs/GiNaC checkout GiNaC
-cd GiNaC
-touch Makefile.in aclocal.m4 configure
-mkdir /tmp/objdir
-cd /tmp/objdir
-~/GiNaC/configure --prefix=/usr/local
-make
-su
-<root password>
-make install
+To ensure that your environment variable has been updated, try:
+  echo $LD_LIBRARY_PATH
+which should output something like
+  /usr/local/lib:/usr/local/filib/lib
+
+============================================================================
+
+automake-1.7.2 install how-to:
+
+Downloading and unpacking:
+  ftp://ftp.cs.unipr.it/pub/infrastructure/automake-1.7.2-tar-bz2
+  cd your-path-to-download-dir
+  tar jxvf automake-1.7.2.tar.bz2
+
+Configuring and building (and optionally check the build):
+  cd your-path-to-download-dir
+  mkdir obj-automake
+  cd obj-automake
+  ../automake-1.7.2/configure --prefix=/usr/local
+  make
+  make check
+
+Installing (as root):
+  su
+  <give your root password>
+  make install
+  exit
+
+Checking whether you actually call the right executable:
+  automake --version
+You should obtain the following output:
+  automake (GNU automake) 1.7.2
+  Written by Tom Tromey <tromey@redhat.com>.
+
+  Copyright 2002 Free Software Foundation, Inc.
+  This is free software; see the source for copying conditions.  There is NO
+  warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+============================================================================
+
+autoconf-2.57 install how-to:
+
+Downloading and unpacking:
+  ftp://ftp.cs.unipr.it/pub/infrastructure/autoconf-2.57-tar-bz2
+  cd your-path-to-download-dir
+  tar jxvf autoconf-2.57.tar.bz2
+
+Configuring and building (and optionally check the build):
+  cd your-path-to-download-dir
+  mkdir obj-autoconf
+  cd obj-autoconf
+  ../autoconf-2.57/configure --prefix=/usr/local
+  make
+  make check
+
+Installing (as root):
+  su
+  <give your root password>
+  make install
+  exit
+
+Checking whether you actually call the right executable:
+  autoconf --version
+You should obtain the following output:
+  autoconf (GNU Autoconf) 2.57
+  Written by David J. MacKenzie and Akim Demaille.
+
+  Copyright 2002 Free Software Foundation, Inc.
+  This is free software; see the source for copying conditions.  There is NO
+  warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+============================================================================
+
+libtool-1.4.2 install how-to:
+
+Downloading and unpacking:
+  (FIXME: not available by ftp yet!)
+  ftp://ftp.cs.unipr.it/pub/infrastructure/libtool-1.4.2-tar-bz2
+  cd your-path-to-download-dir
+  tar jxvf libtool-1.4.2.tar.bz2
+
+Configuring and building (and optionally check the build):
+  cd your-path-to-download-dir
+  mkdir obj-libtool
+  cd obj-libtool
+  ../libtool-1.4.2/configure --prefix=/usr/local
+  make
+  make check
+
+Installing (as root):
+  su
+  <give your root password>
+  make install
+  exit
+
+Checking whether you actually call the right executable:
+  libtool --version
+You should obtain the following output:
+  ltmain.sh (GNU libtool) 1.4e (1.1129 2002/08/28 20:40:28)
+
+  Copyright 1996, 1997, 1998, 1999, 2000, 2001
+  Free Software Foundation, Inc.
+  This is free software; see the source for copying conditions.  There is NO
+  warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+============================================================================
+
+gcc 3.2.1 install how-to:
+
+Downloading and unpacking:
+  ftp://ftp.cs.unipr.it/pub/infrastructure/gcc-3.2.1.tar.bz2
+  cd your-path-to-download-dir
+  tar jxvf gcc-3.2.1.tar.bz2
+
+Configuring and building (and optionally check the build):
+  cd your-path-to-download-dir
+  mkdir obj-gcc
+  cd obj-gcc
+  ../gcc-3.2.1/configure --prefix=/usr/local
+  make
+  make check
+
+Installing (as root):
+  su
+  <give your root password>
+  make install
+  exit
+
+Checking whether you actually call the right executable:
+  g++ --version
+You should obtain the following output:
+  g++ (GCC) 3.2.1
+  Copyright (C) 2002 Free Software Foundation, Inc.
+  This is free software; see the source for copying conditions.  There is NO
+  warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+
+============================================================================
+
+gmp 4.1.2 install how-to:
+
+Downloading and unpacking:
+  ftp://ftp.cs.unipr.it/pub/infrastructure/gmp-4.1.2.tar.bz2
+  cd your-path-to-download-dir
+  tar jxvf gmp-4.1.2.tar.bz2
+
+Configuring and building (and optionally check the build):
+  cd your-path-to-download-dir
+  mkdir obj-gmp
+  cd obj-gmp
+  ../gmp-4.1.2/configure --prefix=/usr/local --enable-cxx
+  make
+  make check
+
+NOTE: if you want to build with support for exception handling
+      (not required now) chnage the above configure command with:
+CPPFLAGS=-fexceptions ../gmp-4.1.2/configure --prefix=/usr/local --enable-cxx
+
+Installing (as root):
+  su
+  <give your root password>
+  make install
+  exit
+
+============================================================================
+
+cln-1.1.5 install how-to:
+
+Downloading and unpacking:
+  ftp://ftp.cs.unipr.it/pub/infrastructure/cln-1.1.5-tar-bz2
+  cd your-path-to-download-dir
+  tar jxvf cln-1.1.5.tar.bz2
+
+Configuring and building (and optionally check the build):
+  cd your-path-to-download-dir
+  mkdir obj-cln
+  cd obj-cln
+  ../cln-1.1.5/configure --prefix=/usr/local
+  make
+  make check
+
+Installing (as root):
+  su
+  <give your root password>
+  make install
+  exit
+
+Note that the `make install' command will result in the following error
+message, which you should simply *ignore*:
+
+  /usr/bin/install: cannot stat `cln.m4': No such file or directory
+  make: *** [install] Error 1
+
+However, if you had already installed cln before (from inside
+the source tree), then you should remove the previously installed
+configuration file:
+  su
+  <give your root password>
+  rm /usr/local/share/aclocal/cln.m4
+  exit
+
+============================================================================
+
+ntl-5.3 install how-to:
+
+Downloading and unpacking:
+  ftp://ftp.cs.unipr.it/pub/infrastructure/ntl-5.3-tar-bz2
+  cd your-path-to-download-dir
+  tar jxvf ntl-5.3.tar.bz2
+
+Configuring and building (and optionally check the build):
+  cd your-path-to-download-dir
+  cd ntl-5.2/src
+  ./configure NTL_GMP_LIP=on NTL_STD_CXX=on GMP_PREFIX=/usr/local
+  make
+  make check
+
+Installing (as root):
+  su
+  <give your root password>
+  make install
+  exit
+
+============================================================================
+
+GiNaC install how-to:
+
+Downloading:
+  cd your-path-to-download-dir
+  cvs -d cvs.cs.unipr.it:/cvs/GiNaC checkout GiNaC
+
+Configuring and building (and optionally check the build):
+  cd your-path-to-download-dir
+  cd GiNaC
+  touch Makefile.in aclocal.m4 configure
+  cd ..
+  mkdir obj-GiNaC
+  cd obj-GiNaC
+  ../GiNaC/configure --prefix=/usr/local
+  make
+  make check
+
+Installing (as root):
+  su
+  <give your root password>
+  make install
+  exit
+
+Checking whether you built right executable:
+  ginsh --version
+You should obtain the following output:
+  ginsh - GiNaC Interactive Shell (GiNaC V1.0.12)
+    __,  _______  Copyright (C) 1999-2002 Johannes Gutenberg University Mainz,
+   (__) *       | Germany.  This is free software with ABSOLUTELY NO WARRANTY.
+    ._) i N a C | You are welcome to redistribute it under certain conditions.
+  <-------------' For details type `warranty;'.
+
+  Type ?? for a list of help topics.
+  >
+  <Type CTRL-D to exit the GiNaC shell>
+
+============================================================================
+
+fi_lib++ 2.0 install how-to:
+
+Downloading and unpacking:
+  ftp://ftp.cs.unipr.it/pub/infrastructure/filib++-parma.tar.bz2
+  cd your-path-to-download-dir
+  tar jxvf filib++-parma.tar.bz2
+
+Configuring and building:
+  cd your-path-to-download-dir
+  cd filib++-parma/
+  ln -s makefiles/Makefile.gcc Makefile
+  mkdir macro/lib
+  make libs
+
+Installing (as root):
+  su
+  <give your root password>
+  make install
+  exit
+
+============================================================================
+
+cgicc-3.2.1 install how-to:
+
+Downloading and unpacking:
+  ftp://ftp.cs.unipr.it/pub/infrastructure/cgicc-3.2.1-tar-bz2
+  cd your-path-to-download-dir
+  tar jxvf cgicc-3.2.1.tar.bz2
+
+Configuring and building (and optionally check the build):
+  cd your-path-to-download-dir
+  mkdir obj-cgicc
+  cd obj-cgicc
+  ../cgicc-3.2.1/configure --prefix=/usr/local --enable-namespaces
+  make
+  make check
+
+Installing (as root):
+  su
+  <give your root password>
+  make install
+  exit
+
+============================================================================
