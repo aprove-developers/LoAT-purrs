@@ -36,6 +36,8 @@ http://www.cs.unipr.it/purrs/ . */
 using namespace std;
 using namespace Parma_Recurrence_Relation_Solver;
 
+namespace PURRS = Parma_Recurrence_Relation_Solver;
+
 #ifndef NOISY
 #define NOISY 1
 #endif
@@ -53,7 +55,6 @@ int main() try {
   istream& input_stream = *pinput_stream;
 
   Symbol x("x");
-  Symbol n("n");
   Symbol a("a");
   Symbol b("b");
   Symbol c("c");
@@ -63,30 +64,39 @@ int main() try {
     Expr solution = 0;
     string s;
 #if NOISY
-    cout << endl << "Insert the hypergeometric term t(n): ";
+    cout << endl << "Insert the hypergeometric term t(n): " << endl;
 #endif
     getline(input_stream,s);
     Expr_List l(Recurrence::n, a, b, c, d);
     Expr t_n = Expr(s,l);
 #if NOISY   
-    cout << endl << "Insert the lower bound of the sum: ";
+    cout << endl << "Insert the lower bound of the sum: " << endl;
 #endif
     getline(input_stream,s);
     l = Expr_List(Recurrence::n, a, b, c, d);
     Expr tmp = Expr(s,l);
     Number l_b = tmp.ex_to_number();
 #if NOISY
-    cout << endl << "Insert the upper bound of the sum: ";
+    cout << endl << "Insert the upper bound of the sum: " << endl;
 #endif
     getline(input_stream,s);
     l = Expr_List(Recurrence::n, a, b, c, d);
     Expr u_b = Expr(s,l);
 
-    full_gosper(t_n, l_b, u_b, solution);
+    if (full_gosper(t_n, l_b, u_b, solution))
 #if NOISY
     std::cout << endl << "The sum is: " << solution << std::endl;
-    cout << endl << "---------------------------------------------" << endl;
 #endif
+    else {
+      Symbol h;
+#if NOISY
+      std::cout << endl << "The sum is: "
+		<< PURRS::sum(h, l_b, u_b, t_n.substitute(Recurrence::n, h))
+		<< std::endl;
+#endif
+    }
+    cout << endl << "---------------------------------------------" << endl;
+      
   }
   return 0;
 }

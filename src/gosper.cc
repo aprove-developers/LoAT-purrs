@@ -355,7 +355,7 @@ gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
   -  it is possible to express \f$ S_n \f$ in closed form and the solution
      is stored in \p solution;
   -  it is not possible to express \f$ S_n \f$ in closed form and returns
-     in \p solution the symbolic sum \f$ \sum_{k=lower_limit}^{upper} t_k \f$.
+     in \p solution the symbolic sum \f$ \sum_{k=lower}^{upper} t_k \f$.
 */
 bool
 PURRS::full_gosper(const Expr& t_n, const Number& lower, const Expr& upper,
