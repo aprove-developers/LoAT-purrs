@@ -1666,7 +1666,8 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
 					      exp_poly_coeff);
     else {
       Symbol h;
-      solution = sum(Expr(h), Expr(2), Expr(n), g_n.subs(n, n - h) * e.subs(n, h));
+      solution = Parma_Recurrence_Relation_Solver::sum(h, 2, n,
+						       g_n.subs(n, n - h) * e.subs(n, h));
     }
   }
   return solution;
@@ -1773,8 +1774,8 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
     }
     else {
       Symbol h;
-      solution = sum(Expr(h), Expr(order), Expr(n),
-		     g_n.subs(n, n - h) * e.subs(n, h));
+      solution = Parma_Recurrence_Relation_Solver::sum(h, order, n,
+						       g_n.subs(n, n - h) * e.subs(n, h));
     }
   else
     if (!vector_not_all_zero(exp_no_poly_coeff))
@@ -1783,8 +1784,8 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
 					      exp_poly_coeff);
     else {
       Symbol h;
-      solution = sum(Expr(h), Expr(order), Expr(n),
-		     g_n.subs(n, n - h) * e.subs(n, h));
+      solution = Parma_Recurrence_Relation_Solver::sum(h, order, n,
+						       g_n.subs(n, n - h) * e.subs(n, h));
     }
   return solution;
 }
@@ -2141,8 +2142,8 @@ solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
       // vedere direttamente il rapporto p(k)/alpha!(k) se e' sommabile
       // (forse prima di vedere gosper)
       Symbol h;
-      solution += sum(Expr(h), Expr(1), Expr(n),
-		      pwr(coefficient, -h) * p_n.subs(n, h));
+      solution += Parma_Recurrence_Relation_Solver::sum(h, 1, n,
+							pwr(coefficient, -h) * p_n.subs(n, h));
       return OK;
     }
     // To do this cycle or to consider `c_i + 2' as the lower limit of
