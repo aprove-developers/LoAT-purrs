@@ -232,7 +232,7 @@ mark_verified_solution() {
 	    .set("src", "http://www.cs.unipr.it/purrs/images/verified")
 	    .set("alt", "Verified solution")
 	    .set("border", "0"))
-    .set("href", "http://www.cs.unipr.it/details#verification")
+    .set("href", "http://www.cs.unipr.it/purrs/details#verification")
        << " ";
 }
 
@@ -451,18 +451,18 @@ main() try {
 
   // Start the HTML body.
   cout << body() << endl
-       << h1() << "PURRS Demo " << span("Results", set("class", "green"))
+       << h1() << "PURRS Demo " << span("Results", set("class", "red"))
        << h1() << endl;
 
   cout << h2();
   if (have_exact_solution) {
     if (have_verified_exact_solution)
-      cout << span("Verified", set("class", "green")) << " exact solution";
+      cout << span("Verified", set("class", "red")) << " exact solution";
     else
       cout << "Exact solution";
   }
   else if (have_verified_lower_bound || have_verified_upper_bound)
-    cout << span("Verified", set("class", "green")) << " bounds";
+    cout << span("Verified", set("class", "red")) << " bounds";
   else
     cout << "Bounds";
   cout<< " for x(n) = " << rhs
