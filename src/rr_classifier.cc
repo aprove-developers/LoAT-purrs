@@ -187,16 +187,19 @@ assign_max_decrement_and_coeff(const Expr& possibly_dec,
   Number decrement;
   get_constant_decrement(possibly_dec, decrement);
   int dec = -decrement.to_int();
-  if (dec > max_decrement) {
-    max_decrement = dec;
+  if (dec >= max_decrement) {
     coefficient = possibly_coeff;
+    if (dec > max_decrement) {
+      max_decrement = dec;
+    }
   }
 }
 
 void
 find_max_decrement_and_coeff_factor(const Expr& e,
 				    int& max_decrement, Expr& coefficient) {
-  assert(!e.is_a_add());
+  Expr coeff = coefficient;
+  int max_dec = max_decrement;
   if (e.is_a_mul()) {
     Expr possibly_coeff = 1;
     Expr possibly_argument = 0;
@@ -208,13 +211,20 @@ find_max_decrement_and_coeff_factor(const Expr& e,
 	possibly_coeff *= factor;
       if (!possibly_argument.is_zero())
 	assign_max_decrement_and_coeff(possibly_argument, possibly_coeff,
-				       max_decrement, coefficient);
+				       max_dec, coeff);
     }
+    if (max_dec > max_decrement)
+      coefficient = coeff;
+    else
+      coefficient += coeff;
   }
-  else
+  else {
     if (e.is_the_x_function())
-      assign_max_decrement_and_coeff(e.arg(0), 1,
-				     max_decrement, coefficient);
+      assign_max_decrement_and_coeff(e.arg(0), 1, max_dec, coeff);
+    coefficient = coeff;
+  }
+
+  max_decrement = max_dec;
 }
 
 /*!
@@ -239,8 +249,8 @@ find_max_decrement_and_coeff(const Expr& e,
   Assuming that \p rhs contains occurrences of \f$ x(n-k) \f$
   where \f$ k \f$ is a negative integer, this function
   performs suitable changes of variables that preserve the meaning of
-  the recurrence relation, but transforms it into its <EM>standard
-  form</EM> \f$ x(n) = new_rhs \f$, where \f$ new_rhs \f$
+  the recurrence relation, but transforms it into its
+  <EM>standard form</EM> \f$ x(n) = new_rhs \f$, where \f$ new_rhs \f$
   does not contain any instance of \f$ x(n-k) \f$, with a
   negative integer \f$ k \f$.
 */
@@ -257,6 +267,7 @@ eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs) {
   // changing sign, and division by `coefficient'.
   new_rhs = change_variable_function_x(rhs, Recurrence::n,
 				       Recurrence::n - max_decrement);
+  new_rhs = new_rhs.collect(Expr_List(x(Recurrence::n)));
   new_rhs *= -1;
   new_rhs = new_rhs.substitute(x(Recurrence::n),
 			       - x(Recurrence::n-max_decrement)
