@@ -108,8 +108,8 @@ cpu_clock_init() {
   cpu_clock = detect_cpu_clock();
   tsc_per_msec = cpu_clock / 1e3;
   tsc_per_usec = cpu_clock / 1e6;
-#if 1
-  std::cout << "Detected CPU clock: " << cpu_clock << " Hz\n" << std::endl;
+#if 0
+  std::cerr << "Detected CPU clock: " << cpu_clock << " Hz\n" << std::endl;
 #endif
 }
 
