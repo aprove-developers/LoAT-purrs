@@ -31,10 +31,10 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 Expr
-simplify_on_input_ex(const Expr& e, const Symbol& n, const bool& input);
+simplify_on_input_ex(const Expr& e, const Symbol& n, bool input);
 
 Expr
-simplify_on_output_ex(const Expr& e, const Symbol& n, const bool& input);
+simplify_on_output_ex(const Expr& e, const Symbol& n, bool input);
 
 Expr
 simplify_numer_denom(const Expr& e);
