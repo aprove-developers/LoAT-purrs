@@ -144,14 +144,13 @@ public:
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Kinds of bounds for the solution that is possible to compute.
 #endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
-  enum Kind_of_Bound {
-    /*! The upper bound for the solution. */
-    UPPER_BOUND,
-
-    /*! The lower bound for the solution. */
-    LOWER_BOUND,
+  enum Bound {
+    /*! An upper bound. */
+    UPPER,
+    
+    /*! A lower bound. */
+    LOWER
   };
-
 
   //! The possible states of the recurrence.
   enum Solver_Status {
@@ -212,8 +211,8 @@ public:
   };
 
   //! \brief
-  //! Kinds of responses of validation's process of the solution or
-  //! the bound of the recurrence.
+  //! Kinds of responses of validation's process of the solution, or
+  //! of the approximation, of the recurrence.
   enum Verify_Status {
     /*!
       The system can prove that the recurrence has been successfully
@@ -262,29 +261,54 @@ public:
 
   // @@@
   //! \brief
-  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the solution is certainly right.
-  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> if the solution
-  //! can be wrong or we failed to simplify it.
-  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system can neither
-  //! be proved nor be disproved the correctness of the solution.
+  //! Verifies the exact solution of \p *this.
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
+  //! that the recurrence \p *this has been successfully solved.
+  //! Returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
+  //! that the solution of the recurrence \p *this is wrong.
+  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
+  //! not able to prove if the solution of the recurrence \p *this
+  //! is correct or not.
+  /*!
+    \exception std::logic_error thrown if this method is called
+                                when no exact solution were computed.
+  */
   Verify_Status verify_exact_solution() const;
  
+  // @@@
   //! \brief
-  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the lower bound is certainly
-  //! right.
-  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> if the lower bound
-  //! can be wrong or we failed to simplify it.
-  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system can neither
-  //! be proved nor be disproved the correctness of the lower bound.
+  //! Verifies the lower bound for \p *this.
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
+  //! that the recurrence \p *this has been successfully approximated
+  //! from below.
+  //! Returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
+  //! that the lower bound for the solution of the recurrence \p *this
+  //! is wrong.
+  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
+  //! not able to prove if the lower bound for the solution of the
+  //! recurrence \p *this is correct or not.
+  /*!
+    \exception std::logic_error thrown if this method is called
+                                when no lower bound were computed.
+  */
   Verify_Status verify_lower_bound() const;
 
+  // @@@
   //! \brief
-  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the upper bound is certainly
-  //! right.
-  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> if the upper bound
-  //! can be wrong or we failed to simplify it.
-  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system can neither
-  //! be proved nor be disproved the correctness of the upper bound.
+  //! Verifies the upper bound for \p *this.
+  //! Returns <CODE>PROVABLY_CORRECT</CODE> if the system proved
+  //! that the recurrence \p *this has been successfully approximated
+  //! from above.
+  //! Returns <CODE>PROVABLY_INCORRECT</CODE> if the system proved
+  //! that the upper bound for the solution of the recurrence \p *this
+  //! is wrong.
+  //! Returns <CODE>INCONCLUSIVE_VERIFICATION</CODE> when the system is
+  //! not able to prove if the upper bound for the solution of the
+  //! recurrence \p *this is correct or not.
+  /*!
+    \exception std::logic_error thrown if this method is called
+                                when no upper bound were computed.
+  */
   Verify_Status verify_upper_bound() const;
 
   //! \brief
@@ -385,6 +409,9 @@ private:
 				    const std::vector<Number>& coefficients,
 				    const std::vector<Polynomial_Root>&
 				    roots) const;
+
+  //! @@@
+  Verify_Status verify_bound(Bound kind_of_bound) const;
 
   //! Computes the lower bound for the functional equation. 
   Solver_Status approximate_functional_equation_lower() const;
@@ -801,9 +828,6 @@ private:
   static Expr
   write_expanded_solution(const Recurrence& rec,
 			  unsigned gcd_among_decrements);
-  static
-  Verify_Status verify_bound(const Recurrence& rec, Kind_of_Bound kind);
-  static Verify_Status verify_exact_solution(const Recurrence& rec);
 
   //! \brief
   //! This function must have access to the private data

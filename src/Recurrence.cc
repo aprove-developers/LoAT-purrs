@@ -97,7 +97,7 @@ ok_inequalities(const Expr& e, unsigned condition) {
 }
 
 bool
-validation_initial_conditions_in_bound(Recurrence::Kind_of_Bound kind,
+validation_initial_conditions_in_bound(Recurrence::Bound kind_of_bound,
 				       const Expr& bound, unsigned index) {
   Expr bound_valuated = bound.substitute(Recurrence::n, index);
   D_VAR(bound_valuated);
@@ -111,7 +111,7 @@ validation_initial_conditions_in_bound(Recurrence::Kind_of_Bound kind,
       }
       D_VAR(coeff_ic);
       Number num;
-      if (kind == Recurrence::UPPER_BOUND) {
+      if (kind_of_bound == Recurrence::UPPER) {
 	if (coeff_ic.is_a_number(num) && num < 1)
 	  return false;
       }
@@ -138,7 +138,7 @@ validation_initial_conditions_in_bound(Recurrence::Kind_of_Bound kind,
       Number num_other;
       if (coeff_ic.is_a_number(num_coeff)
 	  && other_terms.is_a_number(num_other)) {
-	if (kind == Recurrence::UPPER_BOUND) {
+	if (kind_of_bound == Recurrence::UPPER) {
 	  if (!(num_coeff >= 1 && num_other.is_positive()))
 	    return false;
 	}
@@ -154,9 +154,103 @@ validation_initial_conditions_in_bound(Recurrence::Kind_of_Bound kind,
 
 } // anonymous namespace
 
-//! \brief
-//! Verifies the exact solution for linear recurrences of finite order
-//! and non-linear recurrences of finite order.
+// @@@
+/*!
+  Consider the right hand side \p rhs of the functional equation
+  \f$ a x_{n/b} + p(n) \f$.
+  If \p upper is <CODE>true</CODE> we try to check that the upper bound
+  is correct;
+  If \p upper is <CODE>false</CODE> we try to check that the lower bound
+  is correct.
+*/
+PURRS::Recurrence::Verify_Status
+PURRS::Recurrence::verify_bound(Bound kind_of_bound) const{
+  assert(is_functional_equation());
+  assert(kind_of_bound == UPPER || kind_of_bound == LOWER);
+  Expr bound;
+  if (kind_of_bound == UPPER)
+    bound = simplify_sum(upper_bound_.expression(), true);
+  else
+    bound = simplify_sum(lower_bound_.expression(), true);
+  
+  // Step 1: validation of initial conditions.
+  if (!validation_initial_conditions_in_bound(kind_of_bound, bound,
+					      applicability_condition()))
+    return INCONCLUSIVE_VERIFICATION;
+  
+  // Step 2: find `partial_bound'.
+  // We not consider the terms containing the initial conditions:
+  // `partial_bound' will contain all the other terms.
+  Expr partial_bound = 0;
+  if (bound.is_a_add())
+    for (unsigned i = bound.nops(); i-- > 0; ) {
+      if (!bound.op(i).has_x_function_only_ic())
+	partial_bound += bound.op(i);
+    }
+  else
+    if (!bound.has_x_function_only_ic())
+      partial_bound = bound;
+  D_VAR(partial_bound);
+  // The recurrence is homogeneous.
+  if (partial_bound == 0)
+    return PROVABLY_CORRECT;
+  
+  // Step 3: verification of the inductive base.
+  Number num;
+  if (kind_of_bound == UPPER
+      && partial_bound
+      .substitute(n, applicability_condition()).is_a_number(num)
+      && num.is_negative())
+    return INCONCLUSIVE_VERIFICATION;
+  if (kind_of_bound == LOWER
+      && partial_bound
+      .substitute(n, applicability_condition()).is_a_number(num)
+      && num.is_positive())
+    return INCONCLUSIVE_VERIFICATION;
+  
+  // Step 4: verification of the inductive step.
+  Expr partial_bound_sub
+    = partial_bound.substitute(n, n / functional_eq_p->ht_begin()->first);
+  Expr approx
+    = recurrence_rhs.substitute(x(n / functional_eq_p->ht_begin()->first),
+				partial_bound_sub);
+  D_VAR(approx);
+  approx = simplify_ex_for_input(approx, true);
+  approx = simplify_logarithm(approx);
+  D_VAR(approx);
+  
+  Expr diff;
+  if (kind_of_bound == UPPER)
+    diff = partial_bound - approx;
+  else
+    diff = approx - partial_bound;
+  D_VAR(diff);
+  
+  if (diff.is_a_number(num)) {
+    if (num == 0 || num.is_positive())
+      return PROVABLY_CORRECT;
+  }
+  else if (diff.is_a_mul()) {
+    Expr coeff_n = 1;
+    for (unsigned i = diff.nops(); i-- > 0; ) {
+      const Expr& factor = diff.op(i);
+      if (!(factor == n || (factor.is_a_power()
+			    && factor.arg(0) == n
+			    && factor.arg(1).is_a_number(num)
+			    && num.is_positive_integer())))
+	coeff_n *= factor;
+    }
+    D_VAR(coeff_n);
+    if (coeff_n.is_a_number(num) && num.is_positive())
+      return PROVABLY_CORRECT;
+  }
+  else if (diff.is_a_add())
+    if (ok_inequalities(diff, applicability_condition()))
+      return PROVABLY_CORRECT;
+  return INCONCLUSIVE_VERIFICATION;
+}
+
+// @@@
 /*!
   Case 1: linear recurrences of finite order.
   Consider the right hand side \p rhs of the order \f$ k \f$ recurrence
@@ -215,23 +309,27 @@ validation_initial_conditions_in_bound(Recurrence::Kind_of_Bound kind,
    -  Validation of the solution using mathematic induction.
 */
 PURRS::Recurrence::Verify_Status
-PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
-  assert(rec.is_linear_finite_order() || rec.is_non_linear_finite_order()
-	 || rec.is_linear_infinite_order());
-  if (rec.is_linear_finite_order() || rec.is_non_linear_finite_order()) {
+PURRS::Recurrence::verify_exact_solution() const {
+  if (!exact_solution_.has_expression())
+    throw std::logic_error("PURRS::Recurrence::verify_exact_solution() "
+			   "called, but no exact solution were computed");
+
+  // Case 1 and case 2: linear recurrences of finite order
+  // and non-linear recurrences of finite order. 
+  if (is_linear_finite_order() || is_non_linear_finite_order()) {
     // ...
     unsigned int order_rec;
     // ...
     unsigned int first_i_c;
-    if (rec.is_non_linear_finite_order()) {
-      // order_rec = rec.associated_linear_rec().order();
-      order_rec = rec.order_if_linear();
-      // first_i_c = rec.associated_linear_rec().first_well_defined_rhs_linear();
-      first_i_c = rec.non_linear_to_linear_fwdr();
+    if (is_non_linear_finite_order()) {
+      // order_rec = associated_linear_rec().order();
+      order_rec = order_if_linear();
+      // first_i_c = associated_linear_rec().first_well_defined_rhs_linear();
+      first_i_c = non_linear_to_linear_fwdr();
     }
     else {
-      order_rec = rec.order();
-      first_i_c = rec.first_well_defined_rhs_linear();
+      order_rec = order();
+      first_i_c = first_well_defined_rhs_linear();
     }
     
     if (order_rec == 0)
@@ -240,8 +338,8 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
       // Step 1: validation of initial conditions.
       for (unsigned i = 0; i < order_rec; ++i) {
 	Expr solution_evaluated
-	  = rec.exact_solution_.expression().substitute(n, first_i_c + i);
-	solution_evaluated = rec.blackboard.rewrite(solution_evaluated);
+	  = exact_solution_.expression().substitute(n, first_i_c + i);
+	solution_evaluated = blackboard.rewrite(solution_evaluated);
 	solution_evaluated = simplify_all(solution_evaluated);
 	if (solution_evaluated != x(first_i_c + i))
 	  return INCONCLUSIVE_VERIFICATION;
@@ -252,18 +350,18 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
       // \p non_homogeneous_part.
       Expr homogeneous_part = 0;
       Expr non_homogeneous_part = 0;
-      if (rec.exact_solution_.expression().is_a_add())
-	for (unsigned i = rec.exact_solution_.expression().nops(); i-- > 0; ) {
-	  if (rec.exact_solution_.expression().op(i).has_x_function_only_ic())
-	    homogeneous_part += rec.exact_solution_.expression().op(i);
+      if (exact_solution_.expression().is_a_add())
+	for (unsigned i = exact_solution_.expression().nops(); i-- > 0; ) {
+	  if (exact_solution_.expression().op(i).has_x_function_only_ic())
+	    homogeneous_part += exact_solution_.expression().op(i);
 	  else
-	    non_homogeneous_part += rec.exact_solution_.expression().op(i);
+	    non_homogeneous_part += exact_solution_.expression().op(i);
 	}
       else
-	if (rec.exact_solution_.expression().has_x_function_only_ic())
-	  homogeneous_part = rec.exact_solution_.expression();
+	if (exact_solution_.expression().has_x_function_only_ic())
+	  homogeneous_part = exact_solution_.expression();
 	else
-	  non_homogeneous_part = rec.exact_solution_.expression();
+	  non_homogeneous_part = exact_solution_.expression();
       
 #if 0
       // Step 3: by substitution, verifies that `homogeneous_part'
@@ -272,7 +370,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
       // recurrence where `n' is substituted by `n - d' (where `d' is
       // the decrement of the i-th term `a_i(n) x(n - d)').
       Expr substituted_homogeneous_rhs
-	= rec.recurrence_rhs - rec.inhmogeneous_term;
+	= recurrence_rhs - inhmogeneous_term;
       // Substitutes in the homogeneous part of the recurrence the terms
       // of the form `x(n-i)'.
       for (unsigned i = 0; i < order_rec; ++i) {
@@ -282,8 +380,8 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 	substituted_homogeneous_rhs = substituted_homogeneous_rhs
 	  .substitute(x(n - (i + 1)), shifted_solution);
       }
-      Expr diff = rec.blackboard.rewrite(homogeneous_part
-					 - substituted_homogeneous_rhs);
+      Expr diff = blackboard.rewrite(homogeneous_part
+				     - substituted_homogeneous_rhs);
       diff = simplify_all(diff);
       if (!diff.is_zero()) {
 	diff = simplify_all(diff);
@@ -300,7 +398,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
       std::vector<Expr> bases_of_exp;
       std::vector<Expr> exp_poly_coeff;
       std::vector<Expr> exp_no_poly_coeff;
-      exp_poly_decomposition(rec.inhomogeneous_term.expand(), Recurrence::n,
+      exp_poly_decomposition(inhomogeneous_term.expand(), Recurrence::n,
 			     bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
       
       assert(bases_of_exp.size() == exp_poly_coeff.size()
@@ -326,10 +424,10 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 	std::vector<Polynomial_Root> roots;
 	std::vector<Number> num_coefficients(order_rec + 1);
 	bool all_distinct = true;
-	if (rec.is_linear_finite_order_const_coeff()) {
+	if (is_linear_finite_order_const_coeff()) {
 	  Expr characteristic_eq;
 	  if (!characteristic_equation_and_its_roots(order_rec,
-						     rec.coefficients(),
+						     coefficients(),
 						     num_coefficients,
 						     characteristic_eq, roots,
 						     all_distinct))
@@ -348,7 +446,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 	      ++max_polynomial_degree;
 	}
 	
-	Expr substituted_rhs = rec.recurrence_rhs;
+	Expr substituted_rhs = recurrence_rhs;
 	for (unsigned i = order_rec; i-- > 0; ) {
 	  Expr shifted_solution
 	    = non_homogeneous_part.substitute(n, n - (i + 1));
@@ -357,7 +455,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 	    .substitute(x(n - (i + 1)), shifted_solution);
 	}
 	Expr diff
-	  = rec.blackboard.rewrite(non_homogeneous_part - substituted_rhs);
+	  = blackboard.rewrite(non_homogeneous_part - substituted_rhs);
 	diff = diff.expand();
 	
 	std::vector<Expr> coefficients_of_exponentials(max_polynomial_degree+1);
@@ -507,7 +605,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
       // Computes `substituted_rhs' by substituting, in the rhs
       // of the recurrence, `n' by `n - d' (where `d' is the decrement
       // of the i-th term `a(n) x(n - d)').
-      Expr substituted_rhs = rec.recurrence_rhs;
+      Expr substituted_rhs = recurrence_rhs;
       for (unsigned i = 0; i < order_rec; ++i) {
 	Expr shifted_solution
 	  = simplify_all(non_homogeneous_part.substitute(n, n - (i + 1)));
@@ -515,34 +613,32 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 	substituted_rhs = substituted_rhs
 	  .substitute(x(n - (i + 1)), shifted_solution);
       }
-      Expr diff = rec.blackboard.rewrite(non_homogeneous_part-substituted_rhs);
+      Expr diff = blackboard.rewrite(non_homogeneous_part-substituted_rhs);
       diff = simplify_all(diff);
       if (!diff.is_zero())
-	if (rec.applied_order_reduction()) {
-	  rec.unset_order_reduction();
+	if (applied_order_reduction()) {
+	  unset_order_reduction();
 	  // If we have applied the order reduction and we do not have
 	  // success in the verification of the original recurrence, then
 	  // we please ourselves if is verified the reduced recurrence.
 	  Symbol r
-	    = rec.insert_auxiliary_definition(mod(n,
-						  rec.gcd_among_decrements()));
-	  unsigned dim = rec.coefficients().size()
-	    / rec.gcd_among_decrements() + 1;
+	    = insert_auxiliary_definition(mod(n, gcd_among_decrements()));
+	  unsigned dim = coefficients().size() / gcd_among_decrements() + 1;
 	  std::vector<Expr> new_coefficients(dim);
 	  Expr inhomogeneous = 0;
 	  Recurrence rec_rewritten
-	    (write_reduced_order_recurrence(rec.recurrence_rhs, r,
-					    rec.gcd_among_decrements(),
-					    rec.coefficients(),
+	    (write_reduced_order_recurrence(recurrence_rhs, r,
+					    gcd_among_decrements(),
+					    coefficients(),
 					    new_coefficients,
 					    inhomogeneous));
 	  rec_rewritten.finite_order_p
 	    = new Finite_Order_Info(dim - 1, new_coefficients, 1);
-	  rec_rewritten.set_type(rec.type());
+	  rec_rewritten.set_type(type());
 	  rec_rewritten.set_inhomogeneous_term(inhomogeneous);
 	  rec_rewritten.solve_linear_finite_order();
-	  D_VAR(rec.exact_solution_.expression());
-	  return verify_exact_solution(rec_rewritten);
+	  D_VAR(exact_solution_.expression());
+	  return rec_rewritten.verify_exact_solution();
 	}
 	else {
 	  diff = simplify_all(diff);
@@ -552,42 +648,41 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
       return PROVABLY_CORRECT;
     }
   }
-  else {
-    assert(rec.is_linear_infinite_order());
+  // Case 3: linear recurrence of infinite order.
+  else if (is_linear_infinite_order()) {
     // The case `f(n) = -1', i.e. the recurrence has the form
     // `x(n) = - sum(k, 0, n-1, x(k)) + g(n)', is special:
     // the solution is simply `x(n) = g(n) - g(n-1)'.
     // FIXME: the traditional validation' process does not work,
     // is it true?
-    if (rec.weight_inf_order() == -1)
+    if (weight_inf_order() == -1)
       return PROVABLY_CORRECT;
-
+    
     Expr weight;
     Expr inhomogeneous;
-    if (rec.upper_bound_sum() == n-1) {
-      weight = rec.weight_inf_order();
-      inhomogeneous = rec.inhomogeneous_term;
+    if (upper_bound_sum() == n-1) {
+      weight = weight_inf_order();
+      inhomogeneous = inhomogeneous_term;
     }
     else {
       // In the case of `upper_bound_sum() == n' the recurrence is
       // transformed in another equivalent recurrence with the upper
       // bound of the sum equal to `n-1': we verify the solution
       // considering this last recurrence.
-      assert(rec.upper_bound_sum() == n);
-      weight =  rec.weight_inf_order() / (1 - rec.weight_inf_order());
-      inhomogeneous = rec.inhomogeneous_term / (1 - rec.weight_inf_order());
+      assert(upper_bound_sum() == n);
+      weight = weight_inf_order() / (1 - weight_inf_order());
+      inhomogeneous = inhomogeneous_term / (1 - weight_inf_order());
     }
-
+    
     // Note: the solution is valid only for `n > lower_bound_sum()'.
-
+    
     // Step 1: validation of the initial condition.
-    Expr solution_evaluated = rec.exact_solution_.expression()
-      .substitute(n, rec.lower_bound_sum()+1);
+    Expr solution_evaluated
+      = exact_solution_.expression().substitute(n, lower_bound_sum()+1);
     solution_evaluated = simplify_all(solution_evaluated);
     if (solution_evaluated
-	!= weight.substitute(n, rec.lower_bound_sum()+1)
-	* x(rec.lower_bound_sum())
-	+ inhomogeneous.substitute(n, rec.lower_bound_sum()+1))
+	!= weight.substitute(n, lower_bound_sum()+1) * x(lower_bound_sum())
+	+ inhomogeneous.substitute(n, lower_bound_sum()+1))
       return INCONCLUSIVE_VERIFICATION;
     
     // Step 2: validation of the solution using mathematic induction.
@@ -604,114 +699,52 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
     // If we are able to demonstrate that this expression is syntactically
     // zero, then the solution is correct.
     Symbol h("h");
-    Expr diff = PURRS::sum(h, rec.lower_bound_sum() + 1, n - 1,
-			   rec.exact_solution_.expression()
-			   .substitute(n, h));
+    Expr diff = PURRS::sum(h, lower_bound_sum() + 1, n - 1,
+			   exact_solution_.expression().substitute(n, h));
     diff = simplify_sum(diff, false, true);
-    diff = rec.exact_solution_.expression()
-      - diff * weight - x(rec.lower_bound_sum()) * weight - inhomogeneous;
+    diff = exact_solution_.expression()
+      - diff * weight - x(lower_bound_sum()) * weight - inhomogeneous;
     diff = simplify_all(diff);
     if (diff == 0)
       return PROVABLY_CORRECT;
     else
       return INCONCLUSIVE_VERIFICATION;
   }
+  else {
+    assert(is_functional_equation());
+    // Special case: functional equation of the form `x(n) = x(n/b)'. 
+    return INCONCLUSIVE_VERIFICATION;
+  }
 }
 
-/*!
-  Consider the right hand side \p rhs of the functional equation
-  \f$ a x_{n/b} + p(n) \f$.
-  If \p upper is <CODE>true</CODE> we try to check that the upper bound
-  is correct;
-  If \p upper is <CODE>false</CODE> we try to check that the lower bound
-  is correct.
-*/
 PURRS::Recurrence::Verify_Status
-PURRS::Recurrence::verify_bound(const Recurrence& rec,
-				Kind_of_Bound kind) {
-  assert(rec.is_functional_equation());
-  assert(kind == UPPER_BOUND || kind == LOWER_BOUND);
-  Expr bound;
-  if (kind == UPPER_BOUND)
-    bound = simplify_sum(rec.upper_bound_.expression(), true);
+PURRS::Recurrence::verify_lower_bound() const {
+  if (exact_solution_.has_expression())
+    return verify_exact_solution();
+  else if (lower_bound_.has_expression())
+    if (is_functional_equation())
+      return verify_bound(LOWER);
+    else
+      // At the moment this case is impossible!
+      return INCONCLUSIVE_VERIFICATION;
   else
-    bound = simplify_sum(rec.lower_bound_.expression(), true);
-  
-  // Step 1: validation of initial conditions.
-  if (!validation_initial_conditions_in_bound(kind, bound,
-					      rec.applicability_condition()))
-    return INCONCLUSIVE_VERIFICATION;
-  
-  // Step 2: find `partial_bound'.
-  // We not consider the terms containing the initial conditions:
-  // `partial_bound' will contain all the other terms.
-  Expr partial_bound = 0;
-  if (bound.is_a_add())
-    for (unsigned i = bound.nops(); i-- > 0; ) {
-      if (!bound.op(i).has_x_function_only_ic())
-	partial_bound += bound.op(i);
-    }
+    throw std::logic_error("PURRS::Recurrence::verify_lower_bound() "
+			   "called, but no lower bound were computed");
+}
+
+PURRS::Recurrence::Verify_Status
+PURRS::Recurrence::verify_upper_bound() const {
+  if (exact_solution_.has_expression())
+    return verify_exact_solution();
+  else if (upper_bound_.has_expression())
+    if (is_functional_equation())
+      return verify_bound(UPPER);
+    else
+      // At the moment this case is impossible!
+      return INCONCLUSIVE_VERIFICATION;
   else
-    if (!bound.has_x_function_only_ic())
-      partial_bound = bound;
-  D_VAR(partial_bound);
-  // The recurrence is homogeneous.
-  if (partial_bound == 0)
-    return PROVABLY_CORRECT;
-  
-  // Step 3: verification of the inductive base.
-  Number num;
-  if (kind == UPPER_BOUND
-      && partial_bound
-      .substitute(n, rec.applicability_condition()).is_a_number(num)
-      && num.is_negative())
-    return INCONCLUSIVE_VERIFICATION;
-  if (kind == LOWER_BOUND
-      && partial_bound
-      .substitute(n, rec.applicability_condition()).is_a_number(num)
-      && num.is_positive())
-    return INCONCLUSIVE_VERIFICATION;
-  
-  // Step 4: verification of the inductive step.
-  Expr partial_bound_sub
-    = partial_bound.substitute(n, n / rec.functional_eq_p->ht_begin()->first);
-  Expr approx = rec
-    .recurrence_rhs.substitute(x(n / rec.functional_eq_p->ht_begin()->first),
-			       partial_bound_sub);
-  D_VAR(approx);
-  approx = simplify_ex_for_input(approx, true);
-  approx = simplify_logarithm(approx);
-  D_VAR(approx);
-  
-  Expr diff;
-  if (kind == UPPER_BOUND)
-    diff = partial_bound - approx;
-  else
-    diff = approx - partial_bound;
-  D_VAR(diff);
-  
-  if (diff.is_a_number(num)) {
-    if (num == 0 || num.is_positive())
-      return PROVABLY_CORRECT;
-  }
-  else if (diff.is_a_mul()) {
-    Expr coeff_n = 1;
-    for (unsigned i = diff.nops(); i-- > 0; ) {
-      const Expr& factor = diff.op(i);
-      if (!(factor == n || (factor.is_a_power()
-			    && factor.arg(0) == n
-			    && factor.arg(1).is_a_number(num)
-			    && num.is_positive_integer())))
-	coeff_n *= factor;
-    }
-    D_VAR(coeff_n);
-    if (coeff_n.is_a_number(num) && num.is_positive())
-      return PROVABLY_CORRECT;
-  }
-  else if (diff.is_a_add())
-    if (ok_inequalities(diff, rec.applicability_condition()))
-      return PROVABLY_CORRECT;
-  return INCONCLUSIVE_VERIFICATION;
+    throw std::logic_error("PURRS::Recurrence::verify_upper_bound() "
+			   "called, but no upper bound were computed");
 }
 
 PURRS::Recurrence::Solver_Status
