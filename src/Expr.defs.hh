@@ -450,7 +450,7 @@ public:
                                  the powers with base equal to \p x not
 				 integer.
   */
-  int degree(const Symbol& x) const;
+  unsigned degree(const Symbol& x) const;
 
   //! \brief
   //! If \p *this is a polynomial or a rational function, returns the degree
@@ -469,7 +469,7 @@ public:
                                  the powers with base equal to \p x not
 				 integer.
   */
-  int ldegree(const Symbol& x) const;
+  unsigned ldegree(const Symbol& x) const;
 
   //! \brief
   //! Returns coefficient of the term of degree equal to \p k, i. e.,

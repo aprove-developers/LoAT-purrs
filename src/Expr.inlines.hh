@@ -298,14 +298,18 @@ Expr::collect(const Expr_List& x) const {
   return Base::collect(x.l);
 }
 
-inline int
+inline unsigned
 Expr::degree(const Symbol& x) const {
-  return Base::degree(x.s);
+  int d = Base::degree(x.s);
+  assert(d >= 0);
+  return unsigned(d);
 }
 
-inline int
+inline unsigned
 Expr::ldegree(const Symbol& x) const {
-  return Base::ldegree(x.s);
+  int d = Base::ldegree(x.s);
+  assert(d >= 0);
+  return unsigned(d);
 }
 
 inline Expr
