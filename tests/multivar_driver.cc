@@ -186,10 +186,11 @@ invalid_initial_condition(const Expr& e) {
 static void
 invalid_initial_condition(const char* culprit) {
   cerr << program_name << ": invalid initial condition `" << culprit << "';\n"
-       << "must be of the form `x(i)=k'"
-       << "for `i' a positive integer\n"
-       << "and `k' a number not floating point "
-       << "or a symbolic expression\n"
+       << "must be in the form `x(i, {par_1, par_2, ..., par_m}) == k'" << endl
+       << "where `i' is an integer index, "
+       << "`{par_1, par_2, ..., par_m}' a parameter list" << endl
+       << "and `k' a rational number "
+       << "or a symbolic expression" << endl
        << "containing the parameters a, b,..., z"
        << " different from `n', `x' and `e'." << endl;
   my_exit(1);
@@ -253,14 +254,8 @@ process_options(int argc, char* argv[]) {
       
     case 'I':
       {
-	cerr << program_name << ": Initial conditions are not supported yet." << endl;
-	my_exit(1);
-	/*
-        production_mode = true;
-        do_not_mix_modes();
-        // Here `optarg' points to the beginning of the initial condition.
-        assert(optarg);
         string cond = optarg;
+	/*
         string::size_type eq_pos = cond.find('=');
         if (eq_pos == string::npos)
           invalid_initial_condition(optarg);
@@ -271,6 +266,24 @@ process_options(int argc, char* argv[]) {
           invalid_initial_condition(optarg);
         if (!l.is_the_x_function())
           invalid_initial_condition(optarg);
+        // FIXME: lhs == rhs returns a boolean. Do not evaluate it.
+	conds.push_back(lhs == rhs);
+	*/
+	Expr c;
+        if (!parse_expression(optarg, c) || !c.is_a_relational())
+          invalid_initial_condition(optarg);
+	Expr lhs = c.op(0);
+	if (!lhs.is_the_x_function())
+          invalid_initial_condition(optarg);
+	Expr rhs = c.op(1);
+	// FIXME: Make sure lhs and rhs are well-formed.
+	conds.push_back(c);
+	//	cerr << conds[conds.size()-1] << " - " << lhs << " - " << rhs << endl;
+        /*
+        production_mode = true;
+        do_not_mix_modes();
+        // Here `optarg' points to the beginning of the initial condition.
+        assert(optarg);
         Number index;
         if (!l.arg(0).is_a_number(index)
             || !index.is_nonnegative_integer()
