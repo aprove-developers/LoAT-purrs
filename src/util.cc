@@ -38,16 +38,13 @@ gcd(int n, int m) {
 }
 
 /*!
-  Computes the lcm among the integers in the vector \p numbers.
+  Computes the lcm among the numbers in the vector \p v.
 */
 GNumber
-lcm(const std::vector<GNumber>& numbers) {
-  for (unsigned i = numbers.size() - 1; i-- > 0; )
-    assert(numbers[i].is_integer());
-
-  GNumber n = numbers[numbers.size() - 1];
-  for (unsigned i = numbers.size() - 1; i-- > 0; )
-    n = lcm(n, numbers[i]);
+lcm(const std::vector<GNumber>& v) {
+  GNumber n = 1;
+  for (unsigned i = v.size(); i-- > 0; )
+    n = lcm(n, v[i]);
   return n;
 }
 
