@@ -198,6 +198,9 @@ public:
   //! Returns <CODE>true</CODE> if and only if \p *this is positive.
   bool is_positive() const;
 
+  //! Returns <CODE>true</CODE> if and only if \p *this is negative.
+  bool is_negative() const;
+
   //! Returns <CODE>true</CODE> if and only if \p *this is an integer.
   bool is_integer() const;
 

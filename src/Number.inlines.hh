@@ -263,6 +263,11 @@ Number::is_positive() const {
 }
 
 inline bool
+Number::is_negative() const {
+  return n.is_negative();
+}
+
+inline bool
 Number::is_integer() const {
   return n.is_integer();
 }
