@@ -708,11 +708,23 @@ compute_special_solution(const Expr& homo_rhs, const index_type order_rec,
 
   // Solve the system.
   Expr sol_system = lsolve(equations, unknowns);
-  
+
   // Compute the actual form of the function `q' by substituting the
-  // correct values of the coefficients found above
-  for (unsigned int i = sol_system.nops(); i-- > 0; )
-    q = q.substitute(unknowns.op(i), sol_system.op(i).op(1));
+  // correct values of the coefficients found above.
+  // It is expected that exactly `mult' unknowns, corresponding to the
+  // coefficients of degree 0, ..., mult-1, will be undetermined. We
+  // can safely substitute 0 for the undetermined unknowns.
+  unsigned int removed_unknowns = 0;
+  for (unsigned int i = sol_system.nops(); i-- > 0; ) {
+    if (sol_system.op(i).rhs() != unknowns.op(i))
+      q = q.substitute(unknowns.op(i), sol_system.op(i).op(1));
+    else {
+      q = q.substitute(unknowns.op(i), 0);
+      removed_unknowns++;
+    }
+  }
+
+  assert(removed_unknowns == mult);
 
   return q;
 }
@@ -842,11 +854,14 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     if (vector_not_all_zero(exp_no_poly_coeff))
       return TOO_COMPLEX;
 
-    // FIXME: mult is temporarily set to k; use the right multiplicity.
-    size_t mult = order();
     for (size_t j = 0; j < base_of_exps.size(); ++j) {
       poly = exp_poly_coeff[j];
       base = base_of_exps[j];
+      size_t mult = 0;
+      for (size_t k = roots.size(); k-- > 0; )
+	if (roots[k].value() == base)
+	  mult = roots[k].multiplicity();
+    
       sol += compute_special_solution(homo_rhs, order_rec, poly, base, mult);
     }
     solution = sol; 
