@@ -27,6 +27,7 @@ globals.hh \
 alg_eq_solver.hh \
 poly_factor.hh \
 rr_solver.hh \
+gosper.hh \
 simplify.hh \
 sum_poly.hh \
 util.hh
@@ -37,6 +38,7 @@ approx_expr.cc \
 poly_factor.cc \
 rr_solver.cc \
 globals.cc \
+gosper.cc \
 simplify.cc \
 sum_poly.cc \
 util.cc \
