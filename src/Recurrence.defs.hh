@@ -135,12 +135,14 @@ public:
   Expr exact_solution() const;
   Expr approximated_solution() const;
 
+  enum VERIFY_STATUS { CORRECT, INCORRECT, DONT_KNOW };
+
   //! \brief
   //! Returns <CODE>true</CODE> if the <CODE>solution</CODE> is right.
   //! Returns <CODE>false</CODE> if the solution is wrong or the
   //! simplifications are failed, i.e., the solution is right but
   //! this function does not realize.
-  bool verify_solution() const;
+  VERIFY_STATUS verify_solution() const;
 
   //! \brief
   //! Substitutes eventually auxiliary definitions contained in
@@ -158,10 +160,16 @@ private:
   Solver_Status solve_try_hard() const;
   Solver_Status classification_summand(const Expr& r, Expr& e,
 				       std::vector<Expr>& coefficients,
-				       int& order,
-				       std::vector<unsigned>& decrements,
+				       unsigned int& order,
 				       int& gcd_among_decrements,
 				       int num_term) const;
+  void add_initial_conditions(const Expr& g_n,
+			      const std::vector<Number>& coefficients,
+			      Expr& solution) const;
+  Solver_Status
+  solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
+			       const std::vector<Polynomial_Root>& roots,
+			       Expr& solution) const;
 
   //! \brief
   //! Holds the right-hand side of the global recurrence to be solved.
@@ -190,7 +198,7 @@ private:
       \f$ x(k_1), \dots, x(k_m) \f$ where \f$ m >= 0 \f$ and
       \f$ k_1, \dots, k_m \f$ are non-negative integers.
     */
-    ZERO_ORDER,
+    ORDER_ZERO,
 
     /*!
       Linear recurrence of finite order with constant coefficient.
@@ -223,6 +231,14 @@ private:
   mutable Finite_Order_Info* tdip;
 
   //! \brief
+  //! Returns <CODE>true</CODE> if the recurrence is a special case,
+  //! i. e., is of order zero; returns <CODE>false</CODE> otherwise.
+  bool is_order_zero() const;
+
+  //! Sets <CODE>type_recurrence = ORDER_ZERO</CODE>.
+  void set_order_zero() const;
+
+  //! \brief
   //! Returns <CODE>true</CODE> if the recurrence is linear
   //! of finite order with constant coefficient;
   //! returns <CODE>false</CODE> otherwise.
@@ -249,20 +265,26 @@ private:
   void set_non_linear_finite_order() const;
 
   //! Returns the order of the finite order recurrence.
-  int get_order() const;
+  unsigned int order() const;
+
+  //! Returns the order of the finite order recurrence.
+  unsigned int& order();
 
   //! \brief
-  //! Returns the positive integers \f$ d \f$ of the \f$ x(n - d) \f$
-  //! contained in the right hand side of the finite order recurrence.  
-  const std::vector<unsigned>& get_decrements() const;
+  //! Returns the smallest positive integer for which the finite order
+  //! recurrence is well-defined: the initial conditions will start from it.
+  unsigned first_initial_condition() const;
 
   //! \brief
-  //! Returns the initial conditions associated to the finite order
-  //! recurrence.
-  const std::vector<unsigned>& get_initial_conditions() const;
+  //! Returns the smallest positive integer for which the finite order
+  //! recurrence is well-defined: the initial conditions will start from it.
+  unsigned& first_initial_condition();
 
   //! Returns the coefficients of the finite order recurrence.
-  const std::vector<Expr>& get_coefficients() const;
+  const std::vector<Expr>& coefficients() const;
+
+  //! Returns the coefficients of the finite order recurrence.
+  std::vector<Expr>& coefficients();
 
   mutable bool solved;
 
@@ -276,15 +298,8 @@ private:
   static Solver_Status
   find_non_linear_recurrence(const Expr& e);
   static Solver_Status
-  compute_order_inserting_decrement(const Number& decrement, int& order,
-				    unsigned long& index,
-				    std::vector<unsigned>& decrements,
-				    unsigned long max_size);
-  static Solver_Status
-  solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
-			       const std::vector<Polynomial_Root>& roots,
-			       const std::vector<Expr>& initial_conditions,
-			       Expr& solution);
+  compute_order(const Number& decrement, unsigned int& order, unsigned long& index,
+		unsigned long max_size);
   static Solver_Status
   solve_variable_coeff_order_1(const Expr& inhomogeneous_term,
 			       const Expr& coefficient, Expr& solution);

@@ -33,7 +33,7 @@ namespace Parma_Recurrence_Relation_Solver {
 inline
 Recurrence::Recurrence()
   : recurrence_rhs(0),
-    type(ZERO_ORDER),
+    type(ORDER_ZERO),
     tdip(0),
     solved(false) {
 }
@@ -87,6 +87,16 @@ Recurrence::replace_recurrence(unsigned k, const Expr& e) {
 }
 
 inline bool
+Recurrence::is_order_zero() const {
+  return type == ORDER_ZERO; 
+}
+
+inline void
+Recurrence::set_order_zero() const {
+  type = ORDER_ZERO; 
+}
+
+inline bool
 Recurrence::is_linear_finite_order_const_coeff() const {
   return type == LINEAR_FINITE_ORDER_CONST_COEFF;
 }
@@ -116,40 +126,64 @@ Recurrence::set_non_linear_finite_order() const {
   type = NON_LINEAR_FINITE_ORDER;
 }
 
-inline int
-Recurrence::get_order() const {
-  assert(is_linear_finite_order_const_coeff()
+inline unsigned int
+Recurrence::order() const {
+  assert(is_order_zero()
+	 || is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
   assert(tdip);
-  return tdip -> get_order();
+  return tdip -> order();
 }
 
-inline const std::vector<unsigned>&
-Recurrence::get_decrements() const {
-  assert(is_linear_finite_order_const_coeff()
+inline unsigned int&
+Recurrence::order() {
+  assert(is_order_zero()
+	 || is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
   assert(tdip);
-  return tdip -> get_decrements();
+  return tdip -> order();
 }
 
-inline const std::vector<unsigned>&
-Recurrence::get_initial_conditions() const {
-  assert(is_linear_finite_order_const_coeff()
+inline unsigned
+Recurrence::first_initial_condition() const {
+  assert(is_order_zero()
+	 || is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
   assert(tdip);
-  return tdip -> get_initial_conditions();
+  return tdip -> first_initial_condition();
+}
+
+inline unsigned&
+Recurrence::first_initial_condition() {
+  assert(is_order_zero()
+	 || is_linear_finite_order_const_coeff()
+	 || is_linear_finite_order_var_coeff()
+	 || is_non_linear_finite_order());
+  assert(tdip);
+  return tdip -> first_initial_condition();
 }
 
 inline const std::vector<Expr>&
-Recurrence::get_coefficients() const {
-  assert(is_linear_finite_order_const_coeff()
+Recurrence::coefficients() const {
+  assert(is_order_zero()
+	 || is_linear_finite_order_const_coeff()
 	 || is_linear_finite_order_var_coeff()
 	 || is_non_linear_finite_order());
   assert(tdip);
-  return tdip -> get_coefficients();
+  return tdip -> coefficients();
+}
+
+inline std::vector<Expr>&
+Recurrence::coefficients() {
+  assert(is_order_zero()
+	 || is_linear_finite_order_const_coeff()
+	 || is_linear_finite_order_var_coeff()
+	 || is_non_linear_finite_order());
+  assert(tdip);
+  return tdip -> coefficients();
 }
 
 inline Recurrence::Solver_Status
