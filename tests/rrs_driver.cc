@@ -29,6 +29,11 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "purrs_install.hh"
 
+#ifdef USE_READLINE
+#include "readlinebuf.hh"
+#include <memory>
+#endif
+
 using namespace std;
 using namespace GiNaC;
 
