@@ -401,6 +401,8 @@ INPUT                  = @srcdir@/../src/alg_eq_solver.cc \
                          @srcdir@/../src/Expr_List.cc \
                          @srcdir@/../src/factorize.cc \
                          @srcdir@/../src/factorize.hh \
+                         @srcdir@/../src/finite_order.cc \
+                         @srcdir@/../src/finite_order.hh \
                          @srcdir@/../src/Finite_Order_Info.defs.hh \
                          @srcdir@/../src/Finite_Order_Info.types.hh \
                          @srcdir@/../src/Finite_Order_Info.inlines.hh \
@@ -417,6 +419,7 @@ INPUT                  = @srcdir@/../src/alg_eq_solver.cc \
                          @srcdir@/../src/Init.types.hh \
                          @srcdir@/../src/Init.inlines.hh \
                          @srcdir@/../src/Init.cc \
+			 @srcdir@/../src/initializer.hh \
                          @srcdir@/../src/Matrix.defs.hh \
                          @srcdir@/../src/Matrix.types.hh \
                          @srcdir@/../src/Matrix.inlines.hh \
@@ -450,7 +453,10 @@ INPUT                  = @srcdir@/../src/alg_eq_solver.cc \
                          @srcdir@/../src/Symbol.inlines.hh \
                          @srcdir@/../src/Symbol.cc \
                          @srcdir@/../src/util.hh \
-                         @srcdir@/../src/util.cc
+                         @srcdir@/../src/util.cc \
+                         @srcdir@/../src/zeilberger.hh \
+                         @srcdir@/../src/zeilberger.cc
+
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
