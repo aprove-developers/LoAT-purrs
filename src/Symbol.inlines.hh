@@ -56,6 +56,11 @@ inline
 Symbol::~Symbol() {
 }
 
+inline std::string
+Symbol::get_name() const {
+  return s.get_name();
+}
+
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_Symbol_inlines_hh)

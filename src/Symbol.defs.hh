@@ -29,6 +29,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr.types.hh"
 
 #include <ginac/ginac.h>
+#include <string>
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -48,6 +49,9 @@ public:
 
   //! Assignment operator.
   Symbol& operator=(const Symbol& y);
+
+  //! Return the symbol's name.
+  std::string get_name() const;
 
 private:
   friend class Expr;
