@@ -227,15 +227,17 @@ private:
   mutable Expr recurrence_rhs;
 
   //! \brief
-  //! When is applied the order reduction stores the value of
-  //! <CODE>recurrence_rhs</CODE>; 0 otherwise.
+  //! When is applied the order reduction stores the value of the
+  //! <CODE>recurrence_rhs</CODE> before to solve the reduced recurrence;
+  //! stores 0 otherwise.
   mutable Expr old_recurrence_rhs;
 
   //! \brief
   //! When is applied the order reduction stores the greatest common
   //! divisor among the decrements <CODE>d</CODE> of the terms
-  //! <CODE>x(n-d)</CODE> present in the right hand side of
-  //! the recurrence; 0 otherwise.
+  //! <CODE>x(n-d)</CODE> present in the right hand side of the recurrence
+  //! before to solve the reduced recurrence;
+  //! stores 0 otherwise.
   mutable unsigned gcd_decrements_old_rhs;
 
   //! \brief
