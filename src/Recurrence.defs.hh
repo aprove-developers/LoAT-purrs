@@ -379,7 +379,7 @@ private:
   //! \brief
   //! It is <CODE>true</CODE> when the recurrence has been deduced from
   //! a non-linear recurence; it is <CODE>false</CODE> in all the other cases.
-  mutable bool come_from_non_linear_rec;
+  bool come_from_non_linear_rec;
 
   //! \brief
   //! Stores the inhomogeneous part of \p *this, i. e., those terms
