@@ -32,6 +32,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "sum_poly.hh"
 #include "ep_decomp.hh"
 #include "numerator_denominator.hh"
+#include "factorize.hh"
 #include "Number.defs.hh"
 #include "Expr.defs.hh"
 #include "Recurrence.defs.hh"
@@ -219,6 +220,7 @@ compute_product_on_power(const Expr& e,
 PURRS::Expr
 PURRS::compute_product(const Expr& e, const Number& lower, const Expr& upper,
 		       bool is_denominator) {
+  D_MSGVAR("*** ", e);
   assert(lower.is_integer());
   if (upper.is_a_number()) {
     Number num_upper = upper.ex_to_number();
@@ -234,32 +236,45 @@ PURRS::compute_product(const Expr& e, const Number& lower, const Expr& upper,
       return tmp;
     }
   }
+  Expr common_factor;
+  Expr rem;
+  factorize(e, Recurrence::n, common_factor, rem);
+  D_VAR(common_factor);
+  D_VAR(rem);
   Expr e_prod;
-  if (!e.has(Recurrence::n))
-    e_prod = pwr(e, upper - lower + 1);
-  else if (e == Recurrence::n) {
-    if (lower > 0)
-      e_prod = factorial(upper) / factorial(lower - 1);
-    else
-      if (is_denominator)
-	throw std::domain_error("Cannot compute a product at the "
-				"denominator if one of the factor "
-				"is zero");
-      else
-	e_prod = 0;
-  }
-  else if (e.is_a_add())
-    e_prod = compute_product_on_add(e, lower, upper, is_denominator);
-  else if (e.is_a_power())
-    e_prod = compute_product_on_power(e, lower, upper);
-  else if (e.is_a_mul()) {
-    e_prod = 1;
-    for (unsigned i = e.nops(); i-- > 0; )
-      e_prod *= compute_product(e.op(i), lower, upper);
+  // `e' has been factorized: `e = common_factor * rem'.
+  if (common_factor != 1) {
+    e_prod = compute_product(common_factor, lower, upper);
+    e_prod *= compute_product(rem, lower, upper);
   }
   else {
-    Symbol h;
-    e_prod = PURRS::prod(h, lower, upper, e.substitute(Recurrence::n, h));
+    if (!rem.has(Recurrence::n))
+      e_prod = pwr(rem, upper - lower + 1);
+    else if (rem == Recurrence::n) {
+      if (lower > 0)
+	e_prod = factorial(upper) / factorial(lower - 1);
+      else
+	if (is_denominator)
+	  throw std::domain_error("Cannot compute a product at the "
+				  "denominator if one of the factor "
+				  "is zero");
+	else
+	  e_prod = 0;
+    }
+    else if (rem.is_a_add())
+      e_prod = compute_product_on_add(rem, lower, upper, is_denominator);
+    else if (rem.is_a_power())
+      e_prod = compute_product_on_power(rem, lower, upper);
+    else if (rem.is_a_mul()) {
+      e_prod = 1;
+      for (unsigned i = rem.nops(); i-- > 0; )
+	e_prod *= compute_product(e.op(i), lower, upper);
+    }
+    else {
+      Symbol h;
+      e_prod = PURRS::prod(h, lower, upper, rem.substitute(Recurrence::n, h));
+    }
   }
+  D_MSGVAR("*** ", e_prod);
   return e_prod;
 }
