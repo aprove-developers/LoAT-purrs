@@ -34,6 +34,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Functional_Equation_Info.defs.hh"
 #include "Expr.defs.hh"
 #include "alg_eq_solver.hh"
+
 #include <map>
 #include <iosfwd>
 
@@ -630,6 +631,11 @@ public:
 
   //! Dumps all the data members of \p *this onto \p s.
   void dump(std::ostream& s) const;
+  
+  //! \brief
+  //! Dumps the label correspondent to the enumerate variable
+  //! <CODE>Solver_Status</CODE> \p status onto \p s. 
+  void print_status(std::ostream& s, const Solver_Status& status) const;
 
 private:
   //! The possible classification of the recurrence.

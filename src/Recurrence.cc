@@ -1689,3 +1689,30 @@ PURRS::Recurrence::dump(std::ostream& s) const {
   //(*functional_eq_p).dump_homogeneous_terms(s);
   s << std::endl;
 }
+
+void
+PURRS::Recurrence::print_status(std::ostream& s,
+				const Solver_Status& status) const {
+  switch(status) {
+  case SUCCESS:
+    s << "SUCCESS" << std::endl;
+    break;
+  case INDETERMINATE_RECURRENCE:
+    s << "INDETERMINATE_RECURRENCE" << std::endl;
+    break;
+  case UNSOLVABLE_RECURRENCE:
+    s << "UNSOLVABLE_RECURRENCE" << std::endl;
+    break;
+  case MALFORMED_RECURRENCE:
+    s << "MALFORMED_RECURRENCE" << std::endl;
+    break;
+  case DOMAIN_ERROR:
+    s << "DOMAIN_ERROR" << std::endl;
+    break;
+  case TOO_COMPLEX:
+    s << "TOO_COMPLEX" << std::endl;
+    break;
+  default:
+    s << "Status of the recurrence undefined." << std::endl;
+  }
+}
