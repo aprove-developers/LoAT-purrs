@@ -49,7 +49,6 @@ n	1/x(n-1)
 n	1/x(n-1)+3
 n	2*x((2^n)/2)
 n	2*x((2^n)/2)+2^n
-n	2*x(7/10*n)+3*n
 n	2*x(n-1)+4*x(n-2)^x(n-1)
 n	2*x(n-1)-a*x(n-2)+a
 n	2*x(n-1)-b+3*a*x(n-2)
@@ -58,7 +57,6 @@ n	2*x(n/2)+a
 n	2*x(n/2)+c*n
 n	2*x(n/2)+n/(n+1)
 n	2*x(n/4)+x(n/2)+n*log(n)
-n	2+x(2*n/3)
 n	2+x(n-10)+x(n-1)
 n	2/x(n-1)
 n	2^a*x(n/2^a)+a*n
@@ -144,11 +142,13 @@ n	x(sqrt(n))+1
 n	x(x(n-1))
 n	x(x(n-1))+x(x(n-2))
 ul	(n/2)^2-1+2*x(n/2)
+ul	2*x(7/10*n)+3*n
 ul	2*x(n/2)+2^n
 ul	2*x(n/2)+2*n*log(n)
 ul	2*x(n/2)+log(n)
 ul	2*x(n/2)+n*log(log(n))
 ul	2*x(n/2)+n*log(n)
+ul	2+x(2*n/3)
 ul	3*x(n/2)+n*log(n)
 ul	3*x(n/2)+n*log(n)+n
 ul	3*x(n/2)+n*log(n*n)
