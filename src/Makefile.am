@@ -17,7 +17,7 @@ SUBDIRS = . Intervals
 
 INCLUDES = -I$(top_builddir) -I$(top_srcdir)/src -I$(top_srcdir)/CoStLy @extra_includes@
 
-CPPFLAGS = -DPURRS_INTERNAL=public @extra_cpp_flags@
+CPPFLAGS = @extra_cpp_flags@
 
 lib_LIBRARIES = libpurrs.a
 
@@ -87,13 +87,13 @@ MORE_INCLUDE_FILES = /dev/null
 
 purrs.hh:	$(DOC_FILES) Makefile
 	(cd $(srcdir) ; cat $(DOC_FILES)) \
-		| sed -e "s/PURRS_INTERNAL/private/g" >purrs.hh
+		>purrs.hh
 
 purrs_install.hh:	purrs_header.top $(top_builddir)/config.h purrs_header.middle $(INCLUDE_FILES) $(MORE_INCLUDE_FILES) purrs_header.bottom Makefile
 	mkdir -p tmp
 	(cd $(srcdir) ; cat $(MORE_INCLUDE_FILES) $(INCLUDE_FILES)) >tmp/concat
 	grep -e "^#include <" <tmp/concat | sort -u >tmp/includes
-	sed -e "/^#include/d" -e "s/PURRS_INTERNAL/public/g" <tmp/concat >tmp/noincludes.cc
+	sed -e "/^#include/d" <tmp/concat >tmp/noincludes.cc
 	cat $(srcdir)/purrs_header.top $(top_builddir)/config.h \
 		$(srcdir)/purrs_header.middle tmp/includes >purrs_install.hh
 	$(CXXCPP) -P @debug_flag@ tmp/noincludes.cc >>purrs_install.hh
