@@ -196,7 +196,7 @@ characteristic_equation_and_its_roots(unsigned int order,
   // per equazioni di grado superiore al primo.
   if (order == 1) {
     characteristic_eq = y - coefficients[1];
-    // FIXME: `NON_RATIONAL' because the coefficient could be a parameter. 
+    // `NON_RATIONAL' because the coefficient could be a parameter. 
     roots.push_back(Polynomial_Root(coefficients[1], NON_RATIONAL));
   }
   else {
@@ -638,8 +638,7 @@ PURRS::rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
   
   // Find the coefficients of the reduced order recurrence.
   for (unsigned i = coefficients.size(); i-- > 0; )
-    // FIXME: !!!
-    if (mod(Number(i), Number(gcd_among_decrements)) == 0)
+    if (i % gcd_among_decrements == 0)
       new_coefficients[i / gcd_among_decrements] = coefficients[i];
   
   return e_rewritten;

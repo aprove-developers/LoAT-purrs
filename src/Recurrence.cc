@@ -217,8 +217,7 @@ PURRS::Recurrence::verify_solution() const {
 	D_VAR(solution_valuated);
 	unsigned i_c = first_i_c + i;
 	if (applied_order_reduction)
-	  // FIXME: !!!
-	  i_c = mod(Number(i_c), Number(gcd_among_decrements())).to_unsigned();
+	  i_c = i_c % gcd_among_decrements();
 	if (solution_valuated != x(i_c))
 	  return INCONCLUSIVE_VERIFICATION;
       }
