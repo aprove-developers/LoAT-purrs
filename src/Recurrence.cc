@@ -158,10 +158,12 @@ PURRS::Recurrence::n = Symbol("n");
   Consider the right hand side \p rhs of the order \f$ k \f$ recurrence
   relation
   \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$.
+  Let \f$ i \f$ the index for the first initial condition starting from
+  which the recurrence is well-defined.
   We try to check that the solution is correct.
   - Validation of initial conditions.
-    If <CODE>recurrence_rhs</CODE> is equal to \f$ x(0), \cdots, x(k) \f$ for
-    \f$ n = 0, \cdots, k-1 \f$ respectively then
+    If <CODE>recurrence_rhs</CODE> is equal to \f$ x(i), \cdots, x(i+k) \f$ for
+    \f$ n = i, \cdots, i+k-1 \f$ respectively then
     the initial conditions are verified and we continue to check; otherwise
     return <CODE>false</CODE> because the solution can be wrong or it is not
     simplified enough.
@@ -200,6 +202,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
   }
   
   D_VAR(rec.recurrence_rhs);
+  D_VAR(rec.exact_solution_.expression());
   D_VAR(order_rec);
   D_VAR(first_i_c);
   
@@ -280,7 +283,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 	rec_rewritten.set_type(rec.type());
 	rec_rewritten.set_inhomogeneous_term(inhomogeneous);
 	rec_rewritten.solve_linear_finite_order();
-	D_VAR(exact_solution_.expression());
+	D_VAR(rec.exact_solution_.expression());
 	return verify_exact_solution(rec_rewritten);
       }
       else
@@ -292,13 +295,15 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 /*!
   Consider the right hand side \p rhs of the functional equation
   \f$ a x_{n/b} + p(n) \f$.
-  If \p upper is true we try to check that the upper bound is correct;
-  If \p lower is true we try to check that the lower bound is correct.
+  If \p upper is <CODE>true</CODE> we try to check that the upper bound
+  is correct;
+  If \p upper is <CODE>false</CODE> we try to check that the lower bound
+  is correct.
 */
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_bound(const Recurrence& rec, bool upper) {
   assert(rec.is_functional_equation());
-  D_VAR(applicability_condition()); 
+  D_VAR(rec.applicability_condition()); 
   Expr bound;
   if (upper)
     bound = rec.upper_bound_.expression();
