@@ -16,7 +16,6 @@ get_binding(const GList& l, unsigned wild_index) {
 
 static bool
 get_linear_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
-  cout << "get_l_d(" << e << ", " << n << ", " << decrement << ")" << endl;
   static GExpr n_plus_d = n + GiNaC::wild(0);
   GList substitution;
   if (match(e, n_plus_d, substitution)) {
