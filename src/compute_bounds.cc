@@ -572,7 +572,7 @@ compute_non_homogeneous_part(bool lower,
     const Expr& poly_coeff = exp_poly_coeff[i];
     const Expr& no_poly_coeff = exp_no_poly_coeff[i];
     Number num_base;
-    if (base.is_a_number(num_base) && num_base.is_positive_integer()) {
+    if (base.is_a_number(num_base) && num_base.is_positive()) {
       // Base of exponential is equal to `1'.
       if (num_base == 1) {
 	// Consider the eventual polynomial part.
