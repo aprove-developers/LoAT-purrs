@@ -35,7 +35,7 @@ namespace Parma_Recurrence_Relation_Solver {
 inline
 Recurrence::Recurrence()
   : recurrence_rhs(0),
-    recurrence_rhs_rewritten(false),
+    recurrence_rewritten(false),
     applied_order_reduction(false),
     come_from_non_linear_rec(false),
     inhomogeneous_term(0),
@@ -51,7 +51,7 @@ Recurrence::Recurrence()
 inline
 Recurrence::Recurrence(const Expr& e)
   : recurrence_rhs(e),
-    recurrence_rhs_rewritten(false),
+    recurrence_rewritten(false),
     applied_order_reduction(false),
     come_from_non_linear_rec(false),
     inhomogeneous_term(0),
@@ -67,7 +67,7 @@ Recurrence::Recurrence(const Expr& e)
 inline
 Recurrence::Recurrence(const Recurrence& y)
   : recurrence_rhs(y.recurrence_rhs),
-    recurrence_rhs_rewritten(y.recurrence_rhs_rewritten),
+    recurrence_rewritten(y.recurrence_rewritten),
     applied_order_reduction(y.applied_order_reduction),
     come_from_non_linear_rec(y.come_from_non_linear_rec),
     inhomogeneous_term(y.inhomogeneous_term),
@@ -95,7 +95,7 @@ Recurrence::~Recurrence() {
 inline Recurrence&
 Recurrence::operator=(const Recurrence& y) {
   recurrence_rhs = y.recurrence_rhs;
-  recurrence_rhs_rewritten = y.recurrence_rhs_rewritten;
+  recurrence_rewritten = y.recurrence_rewritten;
   applied_order_reduction = y.applied_order_reduction;
   come_from_non_linear_rec = y.come_from_non_linear_rec;
   inhomogeneous_term = y.inhomogeneous_term;

@@ -1162,7 +1162,7 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
       {
 	Expr new_rhs;
 	eliminate_negative_decrements(recurrence_rhs, new_rhs);
-	recurrence_rhs_rewritten = true;
+	recurrence_rewritten = true;
 	recurrence_rhs = new_rhs;
 	status = classify_and_catch_special_cases();
       }
@@ -1172,7 +1172,7 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	Expr new_rhs;
 	unsigned result = eliminate_null_decrements(recurrence_rhs, new_rhs);
 	if (result == 0) {
-	  recurrence_rhs_rewritten = true;
+	  recurrence_rewritten = true;
 	  recurrence_rhs = new_rhs;
 	  status = classify_and_catch_special_cases();
 	}

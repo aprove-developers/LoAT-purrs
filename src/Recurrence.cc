@@ -45,6 +45,9 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
+const PURRS::Symbol&
+PURRS::Recurrence::n = Symbol("n");
+
 namespace {
 using namespace PURRS;
 
@@ -152,41 +155,55 @@ validation_initial_conditions_in_bound(bool upper, const Expr& bound,
 
 } // anonymous namespace
 
-const PURRS::Symbol&
-PURRS::Recurrence::n = Symbol("n");
-
+//! \brief
+//! Verifies the exact solution for linear recurrences of finite order
+//! and non-linear recurrences of finite order.
 /*!
+  Case 1: linear recurrences of finite order.
   Consider the right hand side \p rhs of the order \f$ k \f$ recurrence
   relation
   \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} + p(n) \f$.
-  Let \f$ i \f$ the index for the first initial condition starting from
-  which the recurrence is well-defined.
-  We try to check that the solution is correct.
-  - Validation of initial conditions.
-    If <CODE>recurrence_rhs</CODE> is equal to \f$ x(i), \cdots, x(i+k) \f$ for
-    \f$ n = i, \cdots, i+k-1 \f$ respectively then
-    the initial conditions are verified and we continue to check; otherwise
-    return <CODE>false</CODE> because the solution can be wrong or it is not
-    simplified enough.
-  - Since the initial conditions are verified, we erase from
-    <CODE>solution</CODE> all terms containing an initial condition.
-    In other words, we check that ther remainder of the solution
-    satisfies the same recurrence relation, but with the initial conditions
-    all equal to \f$ 0 \f$.
-    Starting from the partial solution just computed, we substitute
-    \f$ x(n-1) \f$, \f$ x(n-2) \f$, \f$ \dots \f$, \f$ x_{n-k} \f$ into
-    <CODE>recurrence_rhs</CODE>.
-    We next consider the difference between the partial solution
-    and the new right hand side:
-    - if it is equal to zero -> returns <CODE>PROVABLY_CORRECT</CODE>:
+  Let \f$ i \f$ the non-negative integer starting from which the recurrence
+  is well-defined.
+  The verification's process is divided in 4 steps:
+  -  Validation of initial conditions.
+     If <CODE>recurrence_rhs</CODE> is equal to \f$ x(i), \cdots, x(i+k) \f$
+     for \f$ n = i, \cdots, i+k-1 \f$ respectively, then
+     the initial conditions are verified and we can continue the verification;
+     otherwise return <CODE>false</CODE> because the solution can be wrong or
+     it is not enough simplified.
+  -  Splits the solution in 2 parts: \p homogeneous_part contains the terms
+     of the solution with the initial conditions \f$ x(i), \cdots, x(i+k) \f$,
+     \p non_homogeneous_part all the other terms.
+  -  By substitution, verifies that \p homogeneous_part satisfies the
+     homogeneous part of the recurrence
+     \f$ a_1 * x_{n-1} + a_2 * x_{n-2} + \dotsb + a_k * x_{n-k} \f$.
+     Considers the difference, called \f$ d1 \f$, between
+     \p homogeneous_part and the new right hand side obtained by
+     substitution in the omogeneous part of the recurrence:
+     - if \f$ d1 = 0 \f$     -> the verification can continue;
+     - if \f$ d1 \neq 0 \f$  -> returns <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
+ 			        the solution can be wrong or we failed to
+			        simplify it.
+  -  By substitution, verifies that \p non_homogeneous_part satisfies
+     the recurrence (in other words, we are considering all initial
+     conditions equal to \f$ 0 \f$).
+     Considers the difference, called \f$ d2 \f$, between
+     \p non_homogeneous_part and the new right hand side obtained by
+     substitution:
+     - if \f$ d2 = 0 \f$     -> returns <CODE>PROVABLY_CORRECT</CODE>:
                                 the solution is certainly right.
-    - if it is not equal to zero (in a syntactical sense)
-                             -> returns <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
-			        the solution can be wrong or
-				we failed to simplify it.
-  FIXME: In the latter case, we will need more powerful tools to
-  decide whether the solution is right or it is really wrong and, in this last
-  case, to return <CODE>PROVABLY_INCORRECT</CODE>.
+     - if \f$ d2 \neq 0 \f$  -> returns <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
+ 			        the solution can be wrong or we failed to
+			        simplify it.
+   FIXME: In the latter case, we will need more powerful tools to
+   decide whether the solution is right or it is really wrong and, in this
+   last case, to return <CODE>PROVABLY_INCORRECT</CODE>.
+
+   Case 2: non-linear recurrences of finite order.
+   Considers the order of the linear recurrence associated to that one
+   non-linear, since the initial conditions are the same.
+   Applies the 4 steps of the previous case.
 */
 PURRS::Recurrence::Verify_Status
 PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
@@ -206,7 +223,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
     return PROVABLY_CORRECT;
   else {
     // Step 1: validation of initial conditions.
-    for (unsigned i = order_rec; i-- > 0; ) {
+    for (unsigned i = 0; i < order_rec; ++i) {
       Expr solution_evaluated
 	= rec.exact_solution_.expression().substitute(n, first_i_c + i);
       solution_evaluated = rec.blackboard.rewrite(solution_evaluated);
@@ -214,21 +231,29 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
       if (solution_evaluated != x(first_i_c + i))
 	return INCONCLUSIVE_VERIFICATION;
     }
-    // Step 2: find `partial_solution'.
-    // The initial conditions are verified. Build the expression
-    // `partial_solution' that has all terms of `solution' minus those
-    // containing an initial condition.
-    Expr partial_solution = 0;
+
+    // Step 2: split the solution in 2 parts: terms with initial conditions
+    // are stored in \p homogeneous_part, all the other terms are stored in
+    // \p non_homogeneous_part.
+    Expr homogeneous_part = 0;
+    Expr non_homogeneous_part = 0;
     if (rec.exact_solution_.expression().is_a_add())
       for (unsigned i = rec.exact_solution_.expression().nops(); i-- > 0; ) {
-	if (!rec.exact_solution_.expression().op(i).has_x_function(true))
-	  partial_solution += rec.exact_solution_.expression().op(i);
+	if (rec.exact_solution_.expression().op(i).has_x_function(true))
+	  homogeneous_part += rec.exact_solution_.expression().op(i);
+	else
+	  non_homogeneous_part += rec.exact_solution_.expression().op(i);
       }
-    else if (!rec.exact_solution_.expression().has_x_function(true))
-	partial_solution = rec.exact_solution_.expression();
+    else
+      if (rec.exact_solution_.expression().has_x_function(true))
+	homogeneous_part = rec.exact_solution_.expression();
+      else
+	non_homogeneous_part = rec.exact_solution_.expression();
+
+    // FIXME: to add step 3!!!
 
     // The recurrence is homogeneous.
-    if (partial_solution == 0)
+    if (non_homogeneous_part == 0)
       return PROVABLY_CORRECT;
 
 #if 0
@@ -282,12 +307,12 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
 
   Expr substituted_rhs = rec.recurrence_rhs;
   for (unsigned i = order_rec; i-- > 0; ) {
-    Expr shifted_solution = partial_solution.substitute(n, n - (i + 1));
+    Expr shifted_solution = non_homogeneous_part.substitute(n, n - (i + 1));
     //shifted_solution = simplify_sum(shifted_solution, true);
     substituted_rhs = substituted_rhs
       .substitute(x(n - (i + 1)), shifted_solution);
   }
-  Expr diff = rec.blackboard.rewrite(partial_solution - substituted_rhs);
+  Expr diff = rec.blackboard.rewrite(non_homogeneous_part - substituted_rhs);
   diff = diff.expand();
 
   std::vector<Expr> coefficients_of_exponentials(max_polynomial_degree + 1);
@@ -407,18 +432,20 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
   
   traditional:
 #endif
-    // Step 3: compute `substituted_rhs' by substituting, in the rhs
-    // of the recurrence, `n' by `n - d' (where the `d's are the decrements
-    //  of the terms `x(n - d)').
+    // Step 4: by substitution, verifies that `non_homogeneous_part'
+    // satisfies the recurrence.
+    // Computes `substituted_rhs' by substituting, in the rhs
+    // of the recurrence, `n' by `n - d' (where `d' is the decrement
+    // of the i-th term `a(n) x(n - d)').
     Expr substituted_rhs = rec.recurrence_rhs;
-    for (unsigned i = order_rec; i-- > 0; ) {
-      Expr shifted_solution = simplify_all(partial_solution.substitute
-					   (n, n - (i + 1)));
+    for (unsigned i = 0; i < order_rec; ++i) {
+      Expr shifted_solution
+	= simplify_all(non_homogeneous_part.substitute(n, n - (i + 1)));
       shifted_solution = simplify_sum(shifted_solution, true);
       substituted_rhs = substituted_rhs
 	.substitute(x(n - (i + 1)), shifted_solution);
     }
-    Expr diff = rec.blackboard.rewrite(partial_solution - substituted_rhs);
+    Expr diff = rec.blackboard.rewrite(non_homogeneous_part - substituted_rhs);
     diff = simplify_all(diff);
     if (!diff.is_zero())
       if (rec.applied_order_reduction) {
@@ -597,7 +624,7 @@ PURRS::Recurrence::apply_order_reduction() const {
     }
     exact_solution_.set_expression
       (simplify_ex_for_output(exact_solution_.expression(), false));
-    recurrence_rhs_rewritten = true;
+    recurrence_rewritten = true;
     return SUCCESS;
   }
   else
@@ -655,7 +682,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 	// in the blackboard of the original recurrences: they could be
 	// necessary in the validation's process of the non-linear recurrence.
 	blackboard = rec_rewritten.blackboard;
-	recurrence_rhs_rewritten = true;
+	recurrence_rewritten = true;
 	return SUCCESS;
       }
       else
@@ -699,7 +726,7 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 					 get_auxiliary_definition
 					 (auxiliary_symbols()[i]));
       D_VAR(solution_or_bound);
-      recurrence_rhs_rewritten = true;
+      recurrence_rewritten = true;
       return SUCCESS;
     }
   }
@@ -1127,8 +1154,8 @@ PURRS::Recurrence::dump(std::ostream& s) const {
   s << "approximated = "
     << ((lower_bound_.has_expression() || upper_bound_.has_expression()) 
 	? "true" : "false") << std::endl;
-  s << "recurrence_rhs_rewritten = "
-    << (recurrence_rhs_rewritten ? "true" : "false") << std::endl;
+  s << "recurrence_rewritten = "
+    << (recurrence_rewritten ? "true" : "false") << std::endl;
   s << "recurrence_rhs = " << recurrence_rhs << std::endl;
 
   s << "auxiliary_definitions:" << std::endl;

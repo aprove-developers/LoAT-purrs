@@ -374,7 +374,7 @@ private:
   //! the order reduction or the recurrence is non-linear (and then, in
   //! order to solve it we have rewritten the recurrence in linear);
   //! it is <CODE>false</CODE> in all the other cases.
-  mutable bool recurrence_rhs_rewritten;
+  mutable bool recurrence_rewritten;
 
   //! \brief
   //! It is <CODE>true</CODE> when is applied the order reduction method
@@ -575,6 +575,7 @@ private:
   //! coefficient.
   void set_product_factor(const Expr& x) const;
 
+
   // Methods to access to private data of `Functional_Equation_Info'.
 
   //! \brief
@@ -709,7 +710,18 @@ private:
   //! returned from this method.
   Expr& inhomog_first_order();
 
+  //! \brief
+  //! Returns the factor \f$ f(n) \f$ of the infinite order recurrence
+  //! \f[
+  //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
+  //! \f]
   Expr weight_inf_order() const;
+
+  //! \brief
+  //! Returns the factor \f$ f(n) \f$ of the infinite order recurrence
+  //! \f[
+  //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
+  //! \f]
   Expr& weight_inf_order();
 
 //   //! \brief
