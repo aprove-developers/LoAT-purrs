@@ -22,13 +22,13 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#ifndef _sum_poly_defs_hh
-#define _sum_poly_defs_hh 1
+#ifndef _sum_poly_hh
+#define _sum_poly_hh 1
 
 #include "globals.hh"
 
 void
 sum_poly_times_exponentials(const GExpr&, const GSymbol&, 
-			    const GSymbol&, const GExpr&, GExpr&)
+			    const GSymbol&, const GExpr&, GExpr&);
 
 #endif

@@ -27,6 +27,7 @@ globals.hh \
 alg_eq_solver.hh \
 poly_factor.hh \
 rr_solver.hh \
+sum_poly.hh \
 util.hh
 
 libpurrs_a_SOURCES = \
@@ -34,6 +35,7 @@ alg_eq_solver.cc \
 poly_factor.cc \
 rr_solver.cc \
 globals.cc \
+sum_poly.cc \
 util.cc \
 $(INCLUDE_FILES)
 

@@ -34,6 +34,7 @@ http://www.cs.unipr.it/purrs/ . */
 */
 
 #include "sum_poly.hh"
+#include <vector>
 
 /*!
   This routine computes the falling product 
@@ -64,7 +65,7 @@ sum_falling_prod_times_exp(const GSymbol& n, GNumber k,
   GExpr r;
   for (unsigned i = 0; i < k + 1; ++i) {
     falling_product(n + 1, i, r);
-    q -= r / factorial(i) * pow(x, n+1-i) * pow(1-x, i-k-1);
+    q -= r / GiNaC::factorial(i) * pow(x, n+1-i) * pow(1-x, i-k-1);
   }
   q *= factorial(k) * pow(x, k);
   q.expand();
@@ -79,7 +80,7 @@ sum_falling_prod_times_exp(const GSymbol& n, GNumber k,
 */
 
 static void 
-poly_dec(const GExpr& p, const GSymbol& x, vector<GExpr>& summands) {
+poly_dec(const GExpr& p, const GSymbol& x, std::vector<GExpr>& summands) {
 
   unsigned d = p.degree(x);
   GExpr q = p;
@@ -105,13 +106,13 @@ static void
 sum_poly(const GExpr& p, const GSymbol& x, const GSymbol& n, GExpr& q) {
   
   unsigned d = p.degree(x);
-  vector<GExpr> summands(d+1);
+  std::vector<GExpr> summands(d+1);
   poly_dec(p, x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
     GExpr r;
     falling_product(n+1, i+1, r);
-    q += numeric(1, i+1) * summands[i] * r;
+    q += GNumber(1, i+1) * summands[i] * r;
   }
   q.expand();
 }
@@ -139,7 +140,7 @@ sum_poly_times_exponentials(const GExpr& p, const GSymbol& x,
   else {
     GExpr r;
     unsigned d = p.degree(x);
-    vector<GExpr> summands(d+1);
+    std::vector<GExpr> summands(d+1);
     poly_dec(p, x, summands);
     q = 0;
     for (unsigned i = 0; i <= d; ++i) {
