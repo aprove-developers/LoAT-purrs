@@ -56,6 +56,11 @@ inline
 Complex_Interval::~Complex_Interval() {
 }
 
+inline const CInterval&
+Complex_Interval::get_interval() const {
+  return i.get_interval();
+}
+
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_Complex_Interval_inlines_hh)

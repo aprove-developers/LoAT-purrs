@@ -38,7 +38,11 @@ class complint : public basic {
 public:
   complint(const CInterval& i);
 
-  void complint::print(const print_context& c, unsigned level) const;
+  void print(const print_context& c, unsigned level) const;
+
+  const CInterval& get_interval() const {
+    return ci;
+  }
 
 private:
   CInterval ci;

@@ -42,10 +42,5 @@ struct Identity {
 
 PURRS::Expr
 PURRS::approximate(const PURRS::Expr& e) {
-  PURRS::Expr ae;
-  CInterval aci;
-  if (generic_approximate(e, Identity(), ae, aci))
-    return PURRS::Complex_Interval(aci);
-  else
-    return ae;
+  return generic_approximate(e, Identity());
 }

@@ -52,6 +52,8 @@ public:
   //! Assignment operator.
   Complex_Interval& operator=(const Complex_Interval& y);
 
+  const CInterval& get_interval() const;
+
 private:
   friend class Expr;
 

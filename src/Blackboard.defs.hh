@@ -77,6 +77,7 @@ public:
   unsigned size_norm(const Symbol& s) const;
 
   //! Approximate \f$ e \f$ according to the definitions in \p *this.
+  bool approximate(const Symbol& s, Expr& ae, CInterval& aci) const;
   Expr approximate(const Expr& e) const;
 
   void Blackboard::dump(std::ostream& s) const;

@@ -63,7 +63,7 @@ approximate(const Number& n) {
 
 
 template <typename SymbolHandler>
-inline bool
+bool
 generic_approximate(const Expr& e, const SymbolHandler& sh,
 		    Expr& ae, CInterval& aci) {
   static Expr operand_ae;
@@ -71,10 +71,8 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
   bool interval_result = true;
   if (e.is_a_number())
     aci = approximate(e.ex_to_number());
-#if 0
   else if (e.is_a_complex_interval())
-    aci = e.ex_to_complex_interval();
-#endif
+    aci = e.ex_to_complex_interval().get_interval();
   else if (e.is_a_add()) {
     Expr accumulated_ae = 0;
     CInterval accumulated_aci(Interval::ZERO(), Interval::ZERO());
@@ -191,6 +189,17 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
     abort();
 
   return interval_result;
+}
+
+template <typename SymbolHandler>
+Expr
+generic_approximate(const Expr& e, const SymbolHandler& sh) {
+  Expr ae;
+  CInterval aci;
+  if (generic_approximate(e, sh, ae, aci))
+    return Complex_Interval(aci);
+  else
+    return ae;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

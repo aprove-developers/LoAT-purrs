@@ -124,6 +124,7 @@ public:
 
   Solver_Status solve() const;
   Expr exact_solution() const;
+  Expr approximated_solution() const;
   bool verify_solution() const;
 
   //! \brief

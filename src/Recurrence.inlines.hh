@@ -94,6 +94,15 @@ Recurrence::exact_solution() const {
     return recurrence_rhs;
 }
 
+inline Expr
+Recurrence::approximated_solution() const {
+  if (solved || solve())
+    return blackboard.approximate(solution);
+  else
+    // Well, if the client insists...
+    return blackboard.approximate(recurrence_rhs);
+}
+
 inline bool
 Recurrence::verify_solution() const {
   if (solved || solve()) {

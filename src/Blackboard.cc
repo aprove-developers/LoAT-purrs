@@ -99,6 +99,41 @@ PURRS::Blackboard::size_norm(const Expr& e) const {
   return generic_size_norm(e, *this);
 }
 
+bool
+PURRS::Blackboard::approximate(const Symbol& s,
+			       Expr& ae, CInterval& aci) const {
+  std::map<Symbol, unsigned>::const_iterator i = index.find(s);
+  if (i != index.end()) {
+    Expr e = approximate(definitions[i->second].approximation);
+    if (e.is_a_complex_interval()) {
+      aci = e.ex_to_complex_interval().get_interval();
+      return true;
+    }
+    else {
+      ae = e;
+      return false;
+    }
+  }
+  else {
+    ae = s;
+    return false;
+  }
+}
+
+PURRS::Expr
+PURRS::Blackboard::approximate(Cached<Expr>& ce) const {
+  if (timestamp > ce.timestamp) {
+    ce.value = generic_approximate(ce.value, *this);
+    ce.timestamp = timestamp;
+  }
+  return ce.value;
+}
+
+PURRS::Expr
+PURRS::Blackboard::approximate(const Expr& e) const {
+  return generic_size_norm(e, *this);
+}
+
 void
 PURRS::Blackboard::dump(std::ostream& s) const {
   if (definitions.empty())
