@@ -30,6 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 //! Gosper's algorithm, from Chapter 5 of \f$ A = B \f$, by 
 //! M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
 bool
-gosper(const GExpr& t, const GSymbol& n, GExpr& solution);
+gosper(const GExpr& t, GExpr& r_n, const GSymbol& n,
+       const int lower_bound, const GExpr& upper_bound, GExpr& solution);
 
 #endif

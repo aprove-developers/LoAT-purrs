@@ -24,8 +24,9 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "gosper.hh"
 
-#include "util.hh"
 #include "alg_eq_solver.hh"
+#include "simplify.hh"
+#include "util.hh"
 #include <vector>
 #include <algorithm>
 
@@ -65,11 +66,10 @@ FACTOR_THRESHOLD = 100;
 
 //! Gosper's algorithm, step 1: see Chapter 5 of \f$ A = B \f$, by 
 //! M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
-
 static bool
-gosper_step_one(const GExpr& t, const GSymbol& /* n */, GExpr& num_den_t) {
+gosper_step_one(const GExpr&/*t*/, const GSymbol& /*n*/, GExpr& num_den_r_n) {
   // FIXME: general simplifications to be inserted here.
-  num_den_t = numer_denom(t);
+  num_den_r_n = numer_denom(num_den_r_n);
   return true;
 }
 
@@ -119,57 +119,57 @@ compute_resultant_and_its_roots(const GExpr& f, const GExpr& g,
   in the list \p n_d.
 */
 static void
-gosper_step_two(const GExpr& n_d, const GSymbol& n,
-		GExpr& p, GExpr& q, GExpr& r) {
+gosper_step_two(const GExpr& r_n, const GSymbol& n,
+		GExpr& a_n, GExpr& b_n, GExpr& c_n) {
   // Gosper's algorithm, step 2.1.
-  GExpr f = expand(n_d.op(0)); // the numerator
-  GExpr g = expand(n_d.op(1)); // the denominator
+  GExpr f = expand(r_n.op(0)); // the numerator
+  GExpr g = expand(r_n.op(1)); // the denominator
 
   std::vector<GNumber> integer_roots;
   compute_resultant_and_its_roots(f, g, n, integer_roots);
 
   // Gosper's algorithm, step 2.2.
-  // `p' and `q' are used below as starting values for a sequence
+  // `a_n' and `b_n' are used below as starting values for a sequence
   // of polynomials.
 
   // normalize f and g, and store conversion factor in Z
   GExpr lead_f = f.lcoeff(n);
   GExpr lead_g = g.lcoeff(n);
   GExpr Z = lead_f * pow(lead_g, -1);
-  p = f * pow(lead_f, -1);
-  q = g * pow(lead_g, -1);
+  a_n = f * pow(lead_f, -1);
+  b_n = g * pow(lead_g, -1);
 
   // Computation of the output polynomials.
-  r = 1;
+  c_n = 1;
   unsigned integer_roots_size = integer_roots.size();
   for (unsigned i = 0; i < integer_roots_size; ++i) {
-    GExpr temp_q = (q.subs(n == n + integer_roots[i])).expand();
-    GExpr s = general_gcd(p, temp_q, n);
-    p = quo(p, s, n);
+    GExpr temp_b_n = (b_n.subs(n == n + integer_roots[i])).expand();
+    GExpr s = general_gcd(a_n, temp_b_n, n);
+    a_n = quo(a_n, s, n);
     GExpr temp_s = s.subs(n == n - integer_roots[i]);
-    q = quo(q, temp_s, n);
+    b_n = quo(b_n, temp_s, n);
     for (GNumber j = 1; j <= integer_roots[i]; ++j)
-      r *= s.subs(n == n - j);
+      c_n *= s.subs(n == n - j);
   }
-  p *= Z;
-  // The polynomials `p' and `q' may have rational coefficients.
-  // Multiply numerator and denominator of the fraction `p/q'
-  // by suitable integers, so that the output values of `p' and `q'
+  a_n *= Z;
+  // The polynomials `a_n' and `b_n' may have rational coefficients.
+  // Multiply numerator and denominator of the fraction `a_n/b_n'
+  // by suitable integers, so that the output values of `a_n' and `b_n'
   // have integer coefficients. 
-  GNumber p_factor;
-  p = convert_to_integer_polynomial(p, n, p_factor);
-  GExpr p_n_d = numer_denom(p_factor);
-  p *= p_n_d.op(0);
-  q *= p_n_d.op(1);
-  GNumber q_factor;
-  q = convert_to_integer_polynomial(q, n, q_factor);
-  GExpr q_n_d = numer_denom(q_factor);
-  p *= q_n_d.op(1);
-  q *= q_n_d.op(0);
+  GNumber a_n_factor;
+  a_n = convert_to_integer_polynomial(a_n, n, a_n_factor);
+  GExpr a_n_d = numer_denom(a_n_factor);
+  a_n *= a_n_d.op(0);
+  b_n *= a_n_d.op(1);
+  GNumber b_n_factor;
+  b_n = convert_to_integer_polynomial(b_n, n, b_n_factor);
+  GExpr b_n_d = numer_denom(b_n_factor);
+  a_n *= b_n_d.op(1);
+  b_n *= b_n_d.op(0);
 #if NOISY
-  std::cout << "a(n) = " << p << std::endl;
-  std::cout << "b(n) = " << q << std::endl;
-  std::cout << "c(n) = " << r << std::endl;
+  std::cout << "a(n) = " << a_n << std::endl;
+  std::cout << "b(n) = " << b_n << std::endl;
+  std::cout << "c(n) = " << c_n << std::endl;
 #endif
 }
 
@@ -296,31 +296,57 @@ gosper_step_three(const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
   M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
 */
 static GExpr
-gosper_step_four(const GExpr& /* b_n */, const GExpr& /* c_n*/,
-		 const GExpr& x_n, const GSymbol& /* n */) {
-  // FIXME: to do
-  return x_n;
+gosper_step_four(const GExpr& t, const GExpr& b_n, const GExpr& c_n,
+		 const GExpr& x_n, const GSymbol& n,
+		 const int lower_bound, const GExpr& upper_bound,
+		 GExpr solution) {
+  GExpr shift_b = b_n.subs(n == n-1);
+  GExpr z_n = shift_b * x_n * t * pow(c_n, -1);
+  z_n = simplify_numer_denom(z_n);
+  // The Gosper's algorithm computes summation with the lower bound `0'
+  // and the upper bound `n - 1': in this case, once we have `z_n',
+  // the sum that we are looking for is `z_n - z_0'.
+  // In general the solution will be `z_n - z_{lower_bound}'.
+  solution = z_n - z_n.subs(n == lower_bound);
+  // We must modify the sum if its upper bound is not `n - 1'.
+  if (!upper_bound.is_equal(n-1))
+    if (upper_bound.is_equal(n))
+      solution = solution.subs(n == n + 1);
+    else {
+      GExpr n_plus_i = n + wild(0);
+      assert(upper_bound.is_equal(n_plus_i));
+      GList substitution;
+      match(upper_bound, n_plus_i, substitution);
+      GExpr i = get_binding(substitution, 0);
+      solution = solution.subs(n == n + i + 1);
+    }
+  solution = simplify_numer_denom(solution);
+  return solution;
 }
 
 /*!
   Gosper's algorithm, from Chapter 5 of \f$ A = B \f$, by 
   M.~Petkov\v sek, H.~Wilf and D.~Zeilberger.
 */
+// FIXME: `r_n' is temporary until the implementation of step one that
+// will build `r_n' starting from `t'.
 bool
-gosper(const GExpr& t, const GSymbol& n, GExpr& solution) {
-  GExpr n_d;
-  if (!gosper_step_one(t, n, n_d))
+gosper(const GExpr& t, GExpr& r_n, const GSymbol& n,
+       const int lower_bound, const GExpr& upper_bound, GExpr& solution) {
+  if (!gosper_step_one(t, n, r_n))
     // `t' is not hypergeometric: no chance of using Gosper's algorithm.
     return false;
   GExpr a_n;
   GExpr b_n;
   GExpr c_n;
-  gosper_step_two(n_d, n, a_n, b_n, c_n);
+  gosper_step_two(r_n, n, a_n, b_n, c_n);
   GExpr x_n;
-  if (!gosper_step_three(a_n, b_n, c_n, n, x_n)) {
-    std::cout << "No non-zero polynomial solution" << std::endl;
+  if (!gosper_step_three(a_n, b_n, c_n, n, x_n))
     return false;
-  }
-  solution = gosper_step_four(b_n, c_n, x_n, n); 
+  solution = gosper_step_four(t, b_n, c_n, x_n, n, lower_bound, upper_bound,
+			      solution);
+#if NOISY
+  std::cout << "The sum is: " << solution << std::endl;
+#endif
   return true;
 }
