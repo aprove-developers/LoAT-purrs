@@ -878,38 +878,6 @@ PURRS::Recurrence::verify_upper_bound() const {
 			   "called, but no upper bound was computed");
 }
 
-/*!
-  Replaces the values in the \f$ k \f$-th position of the map
-  <CODE>initial_conditions</CODE> with the expression \p e.
-*/
-void
-PURRS::Recurrence::replace_initial_condition(unsigned int k, const Expr& e) {
-  std::pair<std::map<index_type, Expr>::iterator, bool> stat
-    = initial_conditions_.insert(std::map<index_type, Expr>::value_type(k, e));
-  if (!stat.second)
-    // There was already something associated to `i': overwrite it.
-    stat.first->second = e;
-
-  // If the system has already computed the solution or the bound
-  // then we must substitute the value `e' in the place of `x(k)'
-  // shifting, if necessary, the solution or the bound.
-  if (exact_solution_.has_expression()
-      && has_at_least_a_symbolic_initial_condition(exact_solution_
-						   .expression()))
-    exact_solution_.set_expression
-      (substitute_i_c_shifting(exact_solution_.expression()));
-  if (lower_bound_.has_expression()
-      && has_at_least_a_symbolic_initial_condition(exact_solution_
-						   .expression()))
-    lower_bound_.set_expression
-      (substitute_i_c_shifting(lower_bound_.expression()));
-  if (upper_bound_.has_expression()
-      && has_at_least_a_symbolic_initial_condition(exact_solution_
-						   .expression()))
-    upper_bound_.set_expression
-      (substitute_i_c_shifting(upper_bound_.expression()));
-}
-
 void
 PURRS::Recurrence::
 set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {

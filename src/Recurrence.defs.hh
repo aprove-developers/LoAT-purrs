@@ -236,67 +236,7 @@ public:
   //! that are also on the blackboard with their definition.
   Expr substitute_auxiliary_definitions(const Expr& e) const;
 
-  //! \brief
-  //! Allows to specify the value \p e of the symbolic initial condition
-  //! with index \p k: \f$ x(k) = e \f$.
-  /*!
-    If the system has not still computed the solution or the bound,
-    then it will be compute already without the symbolic initial
-    condition \f$ x(k) \f$, but with the value \f$ e \f$ in place
-    of it.
-    If the system has already computed the solution or the bound,
-    then the method replaces \f$ x(k) \f$ with the value \f$ e \f$
-    in the solution or in the bound.
-
-    \par Example 1
-    We consider here the recurrence \f$ x_n = 2 x_{n-1} + 1 \f$ with the
-    initial condition \f$ x_0 = 2 \f$ specified before to solve the
-    recurrence:
-    \code
-      Recurrence rec(2*x(n-1)+1);
-      rec.replace_initial_condition(0,2);
-      if (rec.compute_exact_solution() == Recurrence::SUCCESS) {
-        Expr exact_solution;
-	rec.exact_solution(exact_solution);
-      }
-    \endcode
-    At the end of these instructions the variable
-    <CODE>exact_solution</CODE> will contain the right-hand side of the
-    solution \f$ x(n) = 3*2^n - 1 \f$.
-
-    \par Example 2
-    Now we consider a case with the recurrence \f$ x_n = 2 x_{n-1} + 1 \f$
-    solved before to specify the initial condition \f$ x_1 = 4 \f$:
-    \code
-      Recurrence rec(2*x(n-1)+1);
-      if (rec.compute_exact_solution() == Recurrence::SUCCESS) {
-        Expr exact_solution;
-	rec.exact_solution(exact_solution);
-      }
-      rec.replace_initial_condition(1,4);
-      rec.exact_solution(exact_solution);
-    \endcode
-    Once we have solved the recurrence the variable
-    <CODE>exact_solution</CODE> will contain the right-hand side of the
-    solution \f$ x(n) = x_0 2^n + 2^n -1 \f$.
-    After the call to the method <CODE>replace_initial_condition()</CODE>
-    is necessary also to recall the method <CODE>exact_solution()</CODE>
-    in order to get the solution of the recurrence modified consequently
-    to the insertion of the initial condition.
-    Hence, the solution will become \f$ x(n) = 5/2*2^n - 1 \f$.
-    Note that since the symbolic solution of the recurrence contains the
-    symbolic initial condition \f$ x_0 \f$, while the user had inserted
-    the symbolic initial condition \f$ x_1 \f$, is been necessary to
-    shift the solution.
-
-    FIXME: how we can do when the initial conditions inserted are not
-    consequent?
-
-    FIXME: to add the weighted-average recurrences case!
-  */
-  void replace_initial_condition(unsigned int k, const Expr& e);
-
-  //! \brief
+   //! \brief
   //! Returns the smallest number of initial conditions so that
   //! \p *this is uniquely identify.
   /*!
@@ -608,11 +548,14 @@ public:
 
   //! Returns the right-hand side of \p *this evaluated for \f$ n = x \f$.
   /*!
+    
+
     \exception std::logic_error       thrown if \p *this is not classified yet
                                       and the classification's process
 				      called by this method fails.
 
-    \exception std::invalid_argument  
+    \exception std::invalid_argument  thrown if \p x is not in agreement
+                                      with the recurrence.
   */
   Expr evaluate_rhs(const Number& x) const;
 
@@ -625,12 +568,10 @@ public:
                                       and the classification's process
 				      called by this method fails.
 
-    \exception std::invalid_argument  thrown if \f$ l > r \f$ 
-                                      or \p l is not a non-negative
-                                      integer bigger or equal to the least
-				      non-negative integer \f$ j \f$ such
-				      that the recurrence is well-defined
-				      for \f$ n \geq j \f$.
+    \exception std::invalid_argument  thrown if \f$ begin > end \f$  or
+                                      \p begin is not in agreement
+                                      with the recurrence.
+
   */
   template <class OutputIterator>
   void
