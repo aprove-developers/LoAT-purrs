@@ -88,7 +88,12 @@ main() try {
     }
 #if NOISY
     else {
-      cout << "Print solutions here." << endl;
+      cout << "*** SOLUTION ***"
+	   << endl
+	   << solution
+	   << endl
+	   << "****************"
+	   << endl;
     }
 #endif
   }
