@@ -39,7 +39,9 @@ Infinite_Order_Info(const Recurrence& associated_first_order_rec,
 inline
 Infinite_Order_Info::Infinite_Order_Info(const Infinite_Order_Info& y)
   : associated_first_order_rec_(y.associated_first_order_rec_),
-    infinite_order_weight_(y.infinite_order_weight_) {
+    original_rhs_(y.original_rhs_),
+    infinite_order_weight_(y.infinite_order_weight_),
+    first_valid_index_inf_order_(y.first_valid_index_inf_order_) {
 }
 
 inline
@@ -49,7 +51,9 @@ Infinite_Order_Info::~Infinite_Order_Info() {
 inline Infinite_Order_Info&
 Infinite_Order_Info::operator=(const Infinite_Order_Info& y) {
   associated_first_order_rec_ = y.associated_first_order_rec_;
+  original_rhs_ = y.original_rhs_;
   infinite_order_weight_ = y.infinite_order_weight_;
+  first_valid_index_inf_order_ = y.first_valid_index_inf_order_;
   return *this;
 }
 
@@ -61,6 +65,11 @@ Infinite_Order_Info::associated_first_order_rec() const {
 inline Recurrence&
 Infinite_Order_Info::associated_first_order_rec() {
   return associated_first_order_rec_;
+}
+
+inline void
+Infinite_Order_Info::set_original_rhs(const Expr& original_rhs) {
+  original_rhs_ = original_rhs;
 }
 
 inline const Expr&

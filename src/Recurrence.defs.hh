@@ -865,6 +865,12 @@ private:
   Recurrence& associated_first_order_rec();
 
   //! \brief
+  //! When the infinite order recurrence is not in normal form,
+  //! this data contains its right hand side before the transformation
+  //! in normal form.
+  void set_original_rhs(const Expr& original_rhs) const;
+
+  //! \brief
   //! Returns the factor \f$ f(n) \f$ of the infinite order recurrence
   //! \f[
   //!   T(n) = f(n) \sum_{k=0}^n T(k) + g(n).

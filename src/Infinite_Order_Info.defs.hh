@@ -57,6 +57,9 @@ public:
   //! Returns <CODE>associated_first_order_rec_</CODE>.
   Recurrence& associated_first_order_rec();
 
+  //! Sets <CODE>original_rhs__</CODE> with \p original_rhs
+  void set_original_rhs(const Expr& original_rhs);
+
   //! Returns <CODE>infinite_order_weight_</CODE>.
   const Expr& infinite_order_weight() const;
 
@@ -77,6 +80,12 @@ private:
   //! rewritable infinite order recurrences see the function
   //! <CODE>rewrite_infinite_order_recurrence()</CODE>).
   Recurrence associated_first_order_rec_;
+
+  //! \brief
+  //! When the recurrence is not in normal form, this data contains
+  //! its right hand side before the transformation in normal form.
+  //! If the recurrence is already in normal form it is undefined.
+  Expr original_rhs_;
 
   //! \brief
   //! Contains the factor \f$ f(n) \f$ of the infinite order recurrence

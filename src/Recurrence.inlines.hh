@@ -439,6 +439,12 @@ Recurrence::associated_first_order_rec() {
   return infinite_order_p -> associated_first_order_rec();
 }
 
+inline void
+Recurrence::set_original_rhs(const Expr& original_rhs) const {
+  assert(is_linear_infinite_order());
+  infinite_order_p -> set_original_rhs(original_rhs);
+}
+
 inline const Expr&
 Recurrence::infinite_order_weight() const {
   assert(is_linear_infinite_order());

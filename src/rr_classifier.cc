@@ -982,17 +982,18 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 	if (rewrite_infinite_order_recurrence(rhs_rewritten, addend, weight,
 					      inhomogeneous, rhs_first_order,
 					      first_valid_index, rewritten)) { 
-	  if (rewritten) {
-	    bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
-	    rec_rewritten = true;
-	    Symbol h;
-	    rhs = weight * PURRS::sum(h, 0, n-1, x(h)) + inhomogeneous;
-	  }
 	  if (first_valid_index > 0)
 	    return DOMAIN_ERROR;
 	  infinite_order_p
 	    = new Infinite_Order_Info(Recurrence(rhs_first_order), weight);
 	  set_linear_infinite_order();
+	  if (rewritten) {
+	    bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
+	    rec_rewritten = true;
+	    set_original_rhs(rhs);
+	    Symbol h;
+	    rhs = weight * PURRS::sum(h, 0, n-1, x(h)) + inhomogeneous;
+	  }
 	  return CLASSIFICATION_OK;
 	}
 	else
@@ -1085,17 +1086,18 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 						inhomogeneous, rhs_first_order,
 						first_valid_index,
 						rewritten)) { 
-	    if (rewritten) {
-	      bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
-	      rec_rewritten = true;
-	      Symbol h;
-	      rhs = weight * PURRS::sum(h, 0, n-1, x(h)) + inhomogeneous;
-	    }
-	  if (first_valid_index > 0)
-	    return DOMAIN_ERROR;
+	    if (first_valid_index > 0)
+	      return DOMAIN_ERROR;
 	    infinite_order_p
 	      = new Infinite_Order_Info(Recurrence(rhs_first_order), weight);
 	    set_linear_infinite_order();
+	    if (rewritten) {
+	      bool& rec_rewritten = const_cast<bool&>(recurrence_rewritten);
+	      rec_rewritten = true;
+	      set_original_rhs(rhs);
+	      Symbol h;
+	      rhs = weight * PURRS::sum(h, 0, n-1, x(h)) + inhomogeneous;
+	    }
 	    return CLASSIFICATION_OK;
 	  }
 	  else
