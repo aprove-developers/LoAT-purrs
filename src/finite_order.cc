@@ -470,7 +470,7 @@ PURRS::prepare_for_symbolic_sum(const Expr& g_n,
   std::vector<Expr> bases_exp_g_n;
   std::vector<Expr> g_n_poly_coeff;
   std::vector<Expr> g_n_no_poly_coeff;
-  exp_poly_decomposition(g_n, Recurrence::n, bases_exp_g_n,
+  exp_poly_decomposition(g_n.expand(), Recurrence::n, bases_exp_g_n,
 			 g_n_poly_coeff, g_n_no_poly_coeff);
   // `bases_of_exp_g_n' must have same elements of `roots' in the same order.
   bool equal = true;
@@ -511,7 +511,7 @@ PURRS::compute_non_homogeneous_part(const Expr& g_n, unsigned int order,
   std::vector<Expr> bases_exp_g_n;
   std::vector<Expr> g_n_poly_coeff;
   std::vector<Expr> g_n_no_poly_coeff;
-  exp_poly_decomposition(g_n, Recurrence::n, bases_exp_g_n,
+  exp_poly_decomposition(g_n.expand(), Recurrence::n, bases_exp_g_n,
 			 g_n_poly_coeff, g_n_no_poly_coeff);
   for (unsigned i = bases_exp_g_n.size(); i-- > 0; )
     for (unsigned j = base_of_exps.size(); j-- > 0; ) {

@@ -297,7 +297,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
       std::vector<Expr> bases_of_exp;
       std::vector<Expr> exp_poly_coeff;
       std::vector<Expr> exp_no_poly_coeff;
-      exp_poly_decomposition(rec.inhomogeneous_term, Recurrence::n,
+      exp_poly_decomposition(rec.inhomogeneous_term.expand(), Recurrence::n,
 			     bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
       
       assert(bases_of_exp.size() == exp_poly_coeff.size()

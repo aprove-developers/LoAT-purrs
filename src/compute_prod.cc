@@ -148,7 +148,7 @@ compute_product_on_power(const Symbol& index, const Number& lower,
     std::vector<Expr> base_of_exps;
     std::vector<Expr> exp_poly_coeff;
     std::vector<Expr> exp_no_poly_coeff;
-    exp_poly_decomposition(exponent_e, index,
+    exp_poly_decomposition(exponent_e.expand(), index,
 			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
     Expr new_exponent = 0;
     // `b(h)' is a polynomial or a product of a polynomial times an

@@ -593,7 +593,7 @@ compute_sum(bool for_lower, const Expr& summand,
   else
     tmp = summand.substitute(Recurrence::n,
 			     pwr(divisor, Recurrence::n) - 1);
-  exp_poly_decomposition(tmp, Recurrence::n,
+  exp_poly_decomposition(tmp.expand(), Recurrence::n,
 			 bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
   D_VAR(tmp);
   D_VEC(bases_of_exp, 0, bases_of_exp.size()-1);
@@ -813,7 +813,7 @@ compute_non_homogeneous_part(bool lower,
   std::vector<Expr> bases_of_exp;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(inhomogeneous, Recurrence::n,
+  exp_poly_decomposition(inhomogeneous.expand(), Recurrence::n,
 			 bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
   for (unsigned i = bases_of_exp.size(); i-- > 0; ) {
     const Expr& base = bases_of_exp[i];

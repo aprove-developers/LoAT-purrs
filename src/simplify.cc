@@ -1551,7 +1551,7 @@ compute_sum(const Expr& e) {
   std::vector<Expr> base_of_exps;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(e.arg(3), e.arg(0).ex_to_symbol(),
+  exp_poly_decomposition(e.arg(3).expand(), e.arg(0).ex_to_symbol(),
 			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
 
   Expr e_rewritten = 0;

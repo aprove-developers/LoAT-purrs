@@ -120,7 +120,7 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
   std::vector<Expr> base_of_exps;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(inhomogeneous_term, Recurrence::n,
+  exp_poly_decomposition(inhomogeneous_term.expand(), Recurrence::n,
 			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
   D_VEC(base_of_exps, 0, base_of_exps.size()-1);
   D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
@@ -302,7 +302,7 @@ solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
   std::vector<Expr> base_of_exps;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(inhomogeneous_term, Recurrence::n,
+  exp_poly_decomposition(inhomogeneous_term.expand(), Recurrence::n,
 			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
   D_VEC(base_of_exps, 0, base_of_exps.size()-1);
   D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
@@ -444,7 +444,7 @@ solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
   std::vector<Expr> base_of_exps;
   std::vector<Expr> exp_poly_coeff;
   std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(inhomogeneous_term, Recurrence::n,
+  exp_poly_decomposition(inhomogeneous_term.expand(), Recurrence::n,
 			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
   D_VEC(base_of_exps, 0, base_of_exps.size()-1);
   D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
