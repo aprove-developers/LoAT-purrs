@@ -1168,8 +1168,20 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
     if (e.is_the_log_function()) {
       const Expr& arg_log = e.arg(0);
       // Apply the first property.
-      if (arg_log.is_a_power())
+      if (arg_log.is_a_power()) {
+	const Expr& base = arg_log.arg(0);
+	const Expr& exponent = arg_log.arg(1);
+	Number num_base;
+	if (base.is_a_number(num_base)) {
+	  // Factorize the base of the argument of the logarithm.
+	  std::vector<Number> bases;
+	  std::vector<int> exponents;
+	  partial_factor(num_base, bases, exponents);
+	  if (exponents.size() == 1 && exponents[0] != 1)
+	    return exponent * exponents[0] * log(bases[0]);
+	}
 	return arg_log.arg(1) * log(arg_log.arg(0));
+      }
       else
 	return e;
     }

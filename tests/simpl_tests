@@ -473,3 +473,11 @@ y	5*a*log(2^n)
 5*log(2^n)*a
 5*log(2^n)*a
 5*log(2)*a*n
+
+%%%%%%%%
+
+y	7*log(4^n)
+7*log(4^n)
+7*log(4^n)
+7*log(4^n)
+14*log(2)*n
