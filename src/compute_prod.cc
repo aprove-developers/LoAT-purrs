@@ -89,6 +89,11 @@ compute_product_on_add(const Symbol& index, const Number& lower,
 	/ factorial(Recurrence::n);
       e_prod_computed = true;
     }
+    else if (e == 2*index-1) {
+      e_prod = factorial(2*Recurrence::n) * pwr(2, -Recurrence::n)
+	/ factorial(Recurrence::n);
+      e_prod_computed = true;
+    }
   }
   else {
     // Allows to compute `\prod_{k=lower}^n e(k)' for function as `a*n+a*b'
@@ -221,11 +226,11 @@ comp_prod(const Symbol& index, const Number& lower, const Expr& e,
 //! \f]
 //! where \f$ l \in \Zset \f$.
 /*!
-  When possible to find the closed form for \f$ \prod_{k=l}^n e(k) \f$,
-  we compute it; when it is not possible we returns the symbolic function
+  When it is possible to find the closed form for \f$ \prod_{k=l}^n e(k) \f$,
+  we compute it; when it is not possible, we return the symbolic function
   for the product.
-  We defined inductively \f$ \prod_{k=l}^n e(k) \f$ as follows:
-  - if \f$ e(k) \f$ is a constant, i.e. it not contains \f$ k \f$,
+  We define inductively \f$ \prod_{k=l}^n e(k) \f$ as follows:
+  - if \f$ e(k) \f$ is a constant, i.e. it does not contain \f$ k \f$,
     then \f$ \prod_{k=l}^n e(k) = e^{n - l + 1} \f$;
   - if \f$ e(k) = k \f$ then
       if \f$ l > 0 \f$ then
@@ -235,8 +240,10 @@ comp_prod(const Symbol& index, const Number& lower, const Expr& e,
       if \f$ l > -h \f$
         \f$ e_prod = (n + h)! / (l + h - 1)! \f$;
       else \f$ \prod_{k=l}^n e(k) = 0 \f$;
-  - if \f$ e = 2*k+1 \f$,
+  - if \f$ e = 2*k+1 \f$ and \f$ l = 1 \f$,
     then \f$ \prod_{k=l}^n e(k) = \frac{(2*n + 1)!}{2^n * n!} \f$;
+  - if \f$ e = 2*k-1 \f$ and \f$ l = 1 \f$,
+    then \f$ \prod_{k=l}^n e(k) = \frac{(2*n)!}{2^n * n!} \f$;
   - if \f$ e \f$ is a power there are two cases.
     We consider \f$ a \f$ and \f$ b \f$ so that \f$ e = a^b \f$, 
     - if \f$ a \f$ contains \f$ k \f$ and \f$ b \f$ is a number,
