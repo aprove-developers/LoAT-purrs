@@ -251,9 +251,9 @@ simplify_powers(const Expr& e, bool input) {
   // build the exponent for the new power, which is not nested.
   Expr base = e;
   find_real_base_and_build_exponent(base, num_exponent, not_num_exponent);
-//   D_VAR(base);
-//   D_VAR(num_exponent);
-//   D_VAR(not_num_exponent);
+  D_VAR(base);
+  D_VAR(num_exponent);
+  D_VAR(not_num_exponent);
 
   // The base is a multiplication.
   if (base.is_a_mul())
@@ -280,8 +280,8 @@ simplify_powers(const Expr& e, bool input) {
   contained in \p e.
 */
 void
-find_bases_and_exponents(const Expr& e, std::vector<Expr> bases,
-			 std::vector<Expr> exponents) {
+find_bases_and_exponents(const Expr& e, std::vector<Expr>& bases,
+			 std::vector<Expr>& exponents) {
   for (unsigned i = e.nops(); i-- > 0; ) {
     const Expr& factor = e.op(i);
     if (factor.is_a_power()) {
@@ -305,8 +305,6 @@ find_bases_and_exponents(const Expr& e, std::vector<Expr> bases,
 Expr
 collect_same_exponents(const Expr& e) {
   assert(e.is_a_mul());
-  // Builds two vectors containing the bases and the exponents of
-  // the eventual multiplication's factors which are powers.
   std::vector<Expr> bases;
   std::vector<Expr> exponents;
   find_bases_and_exponents(e, bases, exponents);
@@ -342,8 +340,10 @@ collect_same_exponents(const Expr& e) {
 	}
 	exponents[j] = 0;
       }
-      // We have marked with `0' the j-th position of the vector `exponents'
-      // because the j-th element of the vectors has been already considered.
+      // We have marked with `0' the j-th position of the vector `exponents' in
+      // order to remember to us that it contains garbage and in the 
+      // function `collect_same_base()' we will skip these positions of
+      // the vectors.
     }
     bases[i] = simplify_numer_denom(bases[i]);
     e_rewritten *= pwr(bases[i], exponents[i]);
@@ -404,11 +404,11 @@ collect_same_base(const Expr& e) {
   std::vector<Expr> bases;
   std::vector<Expr> exponents;
   find_bases_and_exponents(e, bases, exponents);
+  Expr e_rewritten = 1;
   // At the end of the following cycle, `e_rewritten' will contain all 
   // the powers of `e' with the same bases simplified in only one power
   // with exponent equal to the sum of the previous powers' exponents
   // (rule `C2').
-  Expr e_rewritten = 1;
   for (unsigned i = exponents.size(); i-- > 0; ) {
     for (unsigned j = i; j-- > 0; )
       if (bases[j] == bases[i]) {
@@ -802,7 +802,7 @@ manip_factor(const Expr& e, bool input) {
     else
       e_rewritten *= factor_e;
   }
-  //  D_MSGVAR("e_rewritten dopo nested: ", e_rewritten);
+  D_MSGVAR("e_rewritten dopo nested: ", e_rewritten);
   // From this time forward we do not know if `e_rewritten' is a again `mul'.
   // Simplifies recursively the factors which are functions simplifying
   // their arguments.
@@ -840,7 +840,7 @@ manip_factor(const Expr& e, bool input) {
       e_rewritten = apply(e_rewritten.functor(), argument);
     }
   }
-  //  D_MSGVAR("e_rewritten dopo function: ", e_rewritten);
+  D_MSGVAR("e_rewritten dopo function: ", e_rewritten);
   // Special case: the exponential `exp' is a `function' but it has
   // the same properties of the powers.
   if (e_rewritten.is_a_mul()) {
@@ -854,7 +854,7 @@ manip_factor(const Expr& e, bool input) {
 	rem *= factor_e_rewritten;
     }
     e_rewritten = exp(argument) * rem;
-    //  D_MSGVAR("e_rewritten dopo `exp': ", e_rewritten);
+    D_MSGVAR("e_rewritten dopo `exp': ", e_rewritten);
   }
   // Simplifies eventual product of irrational numbers.
   if (e_rewritten.is_a_add()) {
