@@ -372,48 +372,56 @@ Recurrence::rank() const {
 
 inline const Recurrence&
 Recurrence::associated_linear_rec() const {
+  assert(is_non_linear_finite_order());
   assert(non_linear_p);
   return non_linear_p -> associated_linear_rec();
 }
 
 inline Recurrence&
 Recurrence::associated_linear_rec() {
+  assert(is_non_linear_finite_order());
   assert(non_linear_p);
   return non_linear_p -> associated_linear_rec();
 }
 
 inline const Number&
 Recurrence::coeff_simple_non_linear_rec() const {
+  assert(is_non_linear_finite_order());
   assert(non_linear_p);
   return non_linear_p -> coeff_simple_non_linear_rec();
 }
 
 inline Number&
 Recurrence::coeff_simple_non_linear_rec() {
+  assert(is_non_linear_finite_order());
   assert(non_linear_p);
   return non_linear_p -> coeff_simple_non_linear_rec();
 }
 
 inline const Expr&
 Recurrence::base_exp_log() const {
+  assert(is_non_linear_finite_order());
   assert(non_linear_p);
   return non_linear_p -> base_exp_log();
 }
 
 inline Expr&
 Recurrence::base_exp_log() {
+  assert(is_non_linear_finite_order());
   assert(non_linear_p);
   return non_linear_p -> base_exp_log();
 }
 
 inline const std::vector<Symbol>&
 Recurrence::auxiliary_symbols() const {
+  assert(is_non_linear_finite_order());
   assert(non_linear_p);
   return non_linear_p -> auxiliary_symbols();
 }
 
 inline std::vector<Symbol>&
 Recurrence::auxiliary_symbols() {
+  assert(is_non_linear_finite_order());
   assert(non_linear_p);
   return non_linear_p -> auxiliary_symbols();
 }
