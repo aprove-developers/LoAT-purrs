@@ -65,8 +65,10 @@ public:
   Symbol insert_auxiliary_definition(const Expr& e);
 
 private:
-  //! Returns the right-hand side of the auxiliary equation \f$ z = e \f$.
-  // FIXME: what if there is no auxilliary equation defining z?
+  //! \brief
+  //! Returns the right-hand side of the auxiliary equation \f$ z = e \f$,
+  //! if such an auxiliary equation exists;
+  //! returns the expression \f$ z \f$ otherwise.
   Expr get_auxiliary_definition(const Symbol& z);
 
 public:

@@ -115,6 +115,7 @@ Recurrence::insert_auxiliary_definition(const Expr& e) {
   Symbol new_symbol;
   std::pair<Map::iterator, bool> r
     = auxiliary_definitions.insert(Map::value_type(new_symbol, e));
+  // This is an internal error.
   assert(r.second);
   return new_symbol;
 }
@@ -123,8 +124,10 @@ inline Expr
 Recurrence::get_auxiliary_definition(const Symbol& z) {
   typedef std::map<Symbol, Expr> Map;
   Map::const_iterator i = auxiliary_definitions.find(z);
-  assert(i != auxiliary_definitions.end());
-  return i->second;
+  if (i != auxiliary_definitions.end())
+    return i->second;
+  else
+    return z;
 }
  
 } // namespace Parma_Recurrence_Relation_Solver
