@@ -188,7 +188,8 @@ characteristic_equation_and_its_roots(unsigned int order,
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
       return false;
   }
-  //D_VEC(roots, 0, roots.size()-1);
+  for (unsigned i = roots.size(); i-- > 0; )
+    D_VAR(roots[i].value());
   return true;
 }
 
@@ -1436,7 +1437,8 @@ substitute_non_rational_roots(const Recurrence& rec,
   for (unsigned i = roots.size(); i-- > 0; )
     if (roots[i].is_non_rational())
       roots[i].value() = rec.insert_auxiliary_definition(roots[i].value());
-  //D_VEC(roots, 0, roots.size()-1);
+  for (unsigned i = roots.size(); i-- > 0; )
+    D_VAR(roots[i].value());
 }
 
 /*!
@@ -1665,7 +1667,7 @@ PURRS::Recurrence::solve_easy_cases() const {
   solution = simplify_on_output_ex(solution.expand(), false);
   // Resubstitutes eventually auxiliary definitions contained in
   // the solution with their original values.
-  //solution = substitute_auxiliary_definitions(solution);
+  //solution = blackboard.rewrite(solution);
   // Only for the output.
   // FIXME: the initial conditions can not start always from 0 then
   // the following `for' is temporary.
