@@ -181,14 +181,18 @@ gosper_step_two(const Symbol& m, const Expr& r_m,
   // Multiply numerator and denominator of the fraction `a_m/b_m'
   // by suitable integers, so that the output values of `a_m' and `b_m'
   // have integer coefficients. 
-  Number a_m_factor;
-  a_m = convert_to_integer_polynomial(a_m, m, a_m_factor);
-  a_m *= numerator(a_m_factor);
-  b_m *= denominator(a_m_factor);
-  Number b_m_factor;
-  b_m = convert_to_integer_polynomial(b_m, m, b_m_factor);
-  a_m *= denominator(b_m_factor);
-  b_m *= numerator(b_m_factor);
+  if (!a_m.is_integer_polynomial(m)) {
+    Expr a_m_factor;
+    a_m = convert_to_integer_polynomial(a_m, m, a_m_factor);
+    a_m *= numerator(a_m_factor);
+    b_m *= denominator(a_m_factor);
+  }
+  if (!b_m.is_integer_polynomial(m)) {
+    Expr b_m_factor;
+    b_m = convert_to_integer_polynomial(b_m, m, b_m_factor);
+    a_m *= denominator(b_m_factor);
+    b_m *= numerator(b_m_factor);
+  }
   D_VAR(a_m);
   D_VAR(b_m);
   D_VAR(c_m);
