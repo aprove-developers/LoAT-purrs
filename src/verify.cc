@@ -165,6 +165,10 @@ traditional_step_3(index_type order_rec, const Expr& e) const {
   Expr substituted_homogeneous_rhs = recurrence_rhs - inhomogeneous_term;
   // Substitutes in the homogeneous part of the recurrence the terms
   // of the form `x(n-i)'.
+  // FIXME: the code in the "else" is, from a theoretical point of view,
+  // better for efficiency because it performs only 1 symbolic substitution
+  // and d numeric substitutions, but in practice is not so.
+#if 1
   for (index_type d = 1; d <= order_rec; ++d)
     if (substituted_homogeneous_rhs.has(x(n-d))) {
       Expr shifted_solution
@@ -173,6 +177,20 @@ traditional_step_3(index_type order_rec, const Expr& e) const {
       substituted_homogeneous_rhs
 	= substituted_homogeneous_rhs.substitute(x(n - d), shifted_solution);
     }
+#else
+  Symbol h;
+  Expr shifted_solution = simplify_all(e.substitute(n, n - h));
+  for (index_type d = 1; d <= order_rec; ++d)
+    if (substituted_homogeneous_rhs.has(x(n-d))) {
+      Expr shifted_solution_num
+	= shifted_solution.substitute(h, d);
+      shifted_solution_num = simplify_sum(shifted_solution_num,
+					  REWRITE_UPPER_LIMIT);
+      substituted_homogeneous_rhs
+	= substituted_homogeneous_rhs.substitute(x(n - d),
+						 shifted_solution_num);
+    }
+#endif
   Expr diff = e - substituted_homogeneous_rhs;
   // The expression `diff' can be more difficult to simplify.
   // For this motive we performed simplification also
@@ -274,7 +292,10 @@ verify_new_method_const_coeff(index_type order_rec, const Expr& e,
   if (!inhomogeneous_part)
     substituted_rhs -= inhomogeneous_term;
   
-  // FIXME: fare i = i-gcd se e' stata applicata la riduzione dell'ordine.
+  // FIXME: the code in the "else" is, from a theoretical point of view,
+  // better for efficiency because it performs only 1 symbolic substitution
+  // and d numeric substitutions, but in practice is not so.
+#if 1
   for (index_type i = order_rec; i-- > 0; )
     if (substituted_rhs.has(x(n - (i + 1)))) {
       const Expr& shifted_solution = e.substitute(n, n - (i + 1));
@@ -282,6 +303,19 @@ verify_new_method_const_coeff(index_type order_rec, const Expr& e,
       substituted_rhs = substituted_rhs
 	.substitute(x(n - (i + 1)), shifted_solution);
     }
+#else
+  Symbol h;
+  Expr shifted_solution = simplify_all(e.substitute(n, n - h));
+  for (index_type i = order_rec; i-- > 0; )
+    if (substituted_rhs.has(x(n - (i + 1)))) {
+      const Expr& shifted_solution_num
+	= shifted_solution.substitute(h, i + 1);
+      //shifted_solution_num = simplify_num(shifted_solution_num,
+      //                                    REWRITE_UPPER_LIMIT);
+      substituted_rhs = substituted_rhs
+	.substitute(x(n - (i + 1)), shifted_solution_num);
+    }
+#endif
   // FIXME: ritardare la riscrittura.
   Expr diff = blackboard.rewrite(e - substituted_rhs);
   diff = diff.expand();
@@ -354,13 +388,12 @@ verify_new_method_const_coeff(index_type order_rec, const Expr& e,
       else {
 	// Summand is a constant or the symbol `n'.
 	assert(summand.is_a_number() || summand == n
-	       // FIXME: added this condition requested by the
-	       // recurrence number 904 (12-12-03) of the file heap:
+	       // FIXME: added this condition requested, for example,
+	       // by the recurrence number 904 (12-12-03) of the file heap:
 	       // x(n) = a*x(n-1)+b+c*(n-1). Is it right?
 	       || summand.is_a_symbol());
-	Number k;
-	if (summand.is_a_number(k))
-	  coefficients_of_exponentials[0] += k;
+	if (summand.is_a_number() || summand.is_a_symbol())
+	  coefficients_of_exponentials[0] += summand;
 	else
 	  coefficients_of_exponentials[1] += 1;
       }
@@ -683,7 +716,10 @@ PURRS::Recurrence::verify_finite_order() const {
   // Expand the solution in the case `*this' has been solved with the
   // order reduction method.
   if (is_linear_finite_order_const_coeff() && applied_order_reduction())
-    if (gcd_among_decrements() < 9)
+    // FIXME: with `2' means that the solution is never expanded!
+    // At the moment we always verify the solution of the "reduced"
+    // recurrence.
+    if (order_rec < 2)
       exact_solution = write_expanded_solution(*this, gcd_among_decrements());
     else {
       // In this case the expanded solution is too much complicated, then
@@ -749,6 +785,8 @@ PURRS::Recurrence::verify_finite_order() const {
   if (status != PROVABLY_CORRECT)
     return status;
   
+  
+
   // Step 3.
 #if NEW_VERIFICATION
   // In order to apply the method explained in the paper
@@ -847,6 +885,10 @@ PURRS::Recurrence::verify_finite_order() const {
   // of the recurrence, `n' by `n - d' (where `d' is the decrement
   // of the i-th term `a_i(n)*x(n - d)').
   Expr substituted_rhs = recurrence_rhs;
+  // FIXME: the code in the "else" is, from a theoretical point of view,
+  // better for efficiency because it performs only 1 symbolic substitution
+  // and d numeric substitutions, but in practice is not so.
+#if 1
   for (index_type d = 1; d <= order_rec; ++d)
     if (substituted_rhs.has(x(n - d))) {
       Expr shifted_solution
@@ -854,7 +896,21 @@ PURRS::Recurrence::verify_finite_order() const {
       shifted_solution = simplify_sum(shifted_solution, REWRITE_UPPER_LIMIT);
       substituted_rhs = substituted_rhs.substitute(x(n - d), shifted_solution);
     }
-  
+#else
+  Symbol h;
+  Expr shifted_solution
+    = simplify_all(summands_without_i_c.substitute(n, n - h));
+  for (index_type d = 1; d <= order_rec; ++d)
+    if (substituted_rhs.has(x(n - d))) {
+      Expr shifted_solution_num
+	= shifted_solution.substitute(h, d);
+      shifted_solution_num = simplify_sum(shifted_solution_num,
+					  REWRITE_UPPER_LIMIT);
+      substituted_rhs = substituted_rhs.substitute(x(n - d),
+						   shifted_solution_num);
+    }
+#endif  
+
   Expr diff = summands_without_i_c - substituted_rhs;
   // The expression `diff' can be more difficult to simplify.
   // For this motive we performed simplification also
