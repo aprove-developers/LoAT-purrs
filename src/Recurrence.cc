@@ -1316,6 +1316,95 @@ substitute_i_c_shifting(const Expr& solution_or_bound) const {
 }
 
 PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::compute_exact_solution_finite_order() const {
+  Solver_Status status;
+  // If the greatest common divisor among the decrements is greater
+  // than one, the order reduction is applicable.
+  if (gcd_among_decrements() > 1)
+    // FIXME: the order reduction is for the moment applied only to
+    // recurrences with constant coefficients because the recurrences
+    // with variable coefficients are not allowed with parameters.
+    if (is_linear_finite_order_const_coeff()) {
+      if ((status = apply_order_reduction()) != SUCCESS)
+	return status;
+    }
+    else {
+      if ((status = solve_linear_finite_order()) != SUCCESS)
+	return status;
+    }
+  // We do not have applied the order reduction.
+  else
+    if ((status = solve_linear_finite_order()) != SUCCESS)
+      return status;
+  
+  // Check if there are specified initial conditions and in this case
+  // eventually shift the solution in according with them before to
+  // substitute the values of the initial conditions to the
+  // symbolic initial condition `x(i)'.
+  if (!initial_conditions.empty())
+    exact_solution_.set_expression
+      (substitute_i_c_shifting(exact_solution_.expression()));
+  lower_bound_.set_expression(exact_solution_.expression());
+  upper_bound_.set_expression(exact_solution_.expression());
+  return SUCCESS;
+}
+
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::compute_exact_solution_functional_equation() const {
+  Solver_Status status;
+  if ((status = approximate_functional_equation_lower()) == SUCCESS
+      && (status = approximate_functional_equation_upper()) == SUCCESS
+      && lower_bound_.expression() == upper_bound_.expression()) {
+    // Check if there are specified initial conditions and in this case
+    // eventually shift the solution in according with them before to
+    // substitute the values of the initial conditions to the
+    // symbolic initial condition `x(i)'.
+    if (!initial_conditions.empty())
+      lower_bound_.set_expression
+	(substitute_i_c_shifting(lower_bound_.expression()));
+    upper_bound_.set_expression(lower_bound_.expression());
+    exact_solution_.set_expression(lower_bound_.expression());
+    return SUCCESS;
+  }
+  else
+    return TOO_COMPLEX;
+}
+
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::compute_exact_solution_non_linear() const {
+  Solver_Status status;
+  Expr solution;
+  if ((status = compute_non_linear_recurrence(solution, 0)) == SUCCESS) {
+    exact_solution_.set_expression(solution);
+    lower_bound_.set_expression(solution);
+    upper_bound_.set_expression(solution);
+    return SUCCESS;
+  }
+  else
+    return status;
+}
+
+PURRS::Recurrence::Solver_Status
+PURRS::Recurrence::compute_exact_solution_infinite_order() const {
+  Solver_Status status;
+  Expr solution;
+  if ((status = compute_infinite_order_recurrence(solution)) == SUCCESS) {
+    // FIXME: At the moment we substitute here only the initial
+    // condition `x(0)'.
+    std::map<unsigned int, Expr>::const_iterator i
+      = initial_conditions.find(0);
+    if (i != initial_conditions.end())
+      solution = solution.substitute(x(0), get_initial_condition(0));
+    exact_solution_.set_expression(solution);
+    lower_bound_.set_expression(solution);
+    upper_bound_.set_expression(solution);
+    return SUCCESS;
+  }
+  else
+    return status;
+}
+
+PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::compute_exact_solution() const {
   tried_to_compute_exact_solution = true;
   // See if we have the exact solution already.
@@ -1332,88 +1421,22 @@ PURRS::Recurrence::compute_exact_solution() const {
   }
 
   Classifier_Status classifier_status = classify_and_catch_special_cases();
-  if (classifier_status == CLASSIFICATION_OK) {
-    Solver_Status status;
-
-    // Linear finite order.
-    if (is_linear_finite_order()) {
-      // If the greatest common divisor among the decrements is greater
-      // than one, the order reduction is applicable.
-      if (gcd_among_decrements() > 1)
-	// FIXME: the order reduction is for the moment applied only to
-	// recurrences with constant coefficients because the recurrences
-	// with variable coefficients are not allowed with parameters.
-	if (is_linear_finite_order_const_coeff()) {
-	  if ((status = apply_order_reduction()) != SUCCESS)
-	    return status;
-	}
-	else {
-	  if ((status = solve_linear_finite_order()) != SUCCESS)
-	    return status;
-	}
-      // We do not have applied the order reduction.
-      else
-	if ((status = solve_linear_finite_order()) != SUCCESS)
-	  return status;
-      
-      // Check if there are specified initial conditions and in this case
-      // eventually shift the solution in according with them before to
-      // substitute the values of the initial conditions to the
-      // generic `x(i)'.
-      if (!initial_conditions.empty())
-	exact_solution_.set_expression
-	  (substitute_i_c_shifting(exact_solution_.expression()));
-      lower_bound_.set_expression(exact_solution_.expression());
-      upper_bound_.set_expression(exact_solution_.expression());
-      return SUCCESS;
+  if (classifier_status == CLASSIFICATION_OK)
+    switch (type_) {
+    case ORDER_ZERO:
+    case LINEAR_FINITE_ORDER_CONST_COEFF:
+    case LINEAR_FINITE_ORDER_VAR_COEFF:
+      return compute_exact_solution_finite_order();
+    case FUNCTIONAL_EQUATION:
+      return compute_exact_solution_functional_equation();
+    case NON_LINEAR_FINITE_ORDER:
+      return compute_exact_solution_non_linear();
+    case LINEAR_INFINITE_ORDER:
+      return compute_exact_solution_infinite_order();
+    default:
+      throw std::runtime_error("PURRS internal error: "
+			       "compute_exact_solution().");
     }
-    // Functional equation.
-    else if (is_functional_equation())
-      if ((status = approximate_functional_equation_lower()) == SUCCESS
-	  && (status = approximate_functional_equation_upper()) == SUCCESS
-	  && lower_bound_.expression() == upper_bound_.expression()) {
-	if (!initial_conditions.empty())
-	  lower_bound_.set_expression
-	    (substitute_i_c_shifting(lower_bound_.expression()));
-	upper_bound_.set_expression(lower_bound_.expression());
-	exact_solution_.set_expression(lower_bound_.expression());
-	return SUCCESS;
-      }
-      else
-	return TOO_COMPLEX;
-    // Non linear finite order.
-    else if (is_non_linear_finite_order()){
-      Expr solution;
-      if ((status = compute_non_linear_recurrence(solution, 0))
-	  == SUCCESS) {
-	exact_solution_.set_expression(solution);
-	lower_bound_.set_expression(solution);
-	upper_bound_.set_expression(solution);
-	return SUCCESS;
-      }
-      else
-	return status;
-    }
-    // Linear infinite order.
-    else {  //if (is_linear_infinite_order()) {
-      Expr solution;
-      if ((status = compute_infinite_order_recurrence(solution))
-	  == SUCCESS) {
-	// FIXME: At the moment we substitute here only the initial
-	// condition `x(0)'.
-	std::map<unsigned int, Expr>::const_iterator i
-	  = initial_conditions.find(0);
-	if (i != initial_conditions.end())
-	  solution = solution.substitute(x(0), get_initial_condition(0));
-	exact_solution_.set_expression(solution);
-	lower_bound_.set_expression(solution);
-	upper_bound_.set_expression(solution);
-	return SUCCESS;
-      }
-      else
-	return status;
-    }
-  }
   else
     return CLASSIFICATION_FAIL;
 }
@@ -1434,11 +1457,7 @@ PURRS::Recurrence::compute_lower_bound() const {
 
   Classifier_Status classifier_status = classify_and_catch_special_cases();
   if (classifier_status == CLASSIFICATION_OK) {
-    assert(is_linear_finite_order() || is_functional_equation()
-	   || is_non_linear_finite_order() || is_linear_infinite_order());
-    
     Solver_Status status;
-
     if (is_linear_finite_order() || is_linear_infinite_order())
       if (!tried_to_compute_exact_solution)
 	// There is an exact solution.
@@ -1486,11 +1505,7 @@ PURRS::Recurrence::compute_upper_bound() const {
 
   Classifier_Status classifier_status = classify_and_catch_special_cases();
   if (classifier_status == CLASSIFICATION_OK) {
-    assert(is_linear_finite_order() || is_functional_equation()
-	   || is_non_linear_finite_order() || is_linear_infinite_order());
-    
     Solver_Status status;
-    
     if (is_linear_finite_order() || is_linear_infinite_order())
       if (!tried_to_compute_exact_solution)
 	// There is an exact solution.

@@ -443,6 +443,42 @@ public:
 
 private:
   //! \brief
+  //! Classifies the recurrence \p *this calling the method
+  //! <CODE>classify()</CODE>. 
+  Classifier_Status classify_and_catch_special_cases() const;
+
+  //! \brief
+  //! Analyzes the \f$ i \f$-th addend of the right hand side \p rhs
+  //! of the recurrence \p *this.
+  Classifier_Status classification_summand(const Expr& rhs, const Expr& r,
+				       Expr& e, index_type& order,
+				       std::vector<Expr>& coefficients,
+				       int& gcd_among_decrements,
+				       int num_term,
+				       std::map<Number, Expr>&
+				       homogeneous_terms) const;
+
+  //! \brief
+  //! Computes the exact solution of \p *this, where \p *this is a
+  //! linear recurrence of finite order.
+  Solver_Status compute_exact_solution_finite_order() const;
+
+  //! \brief
+  //! Computes the exact solution of \p *this, where \p *this is a
+  //! functional equation.
+  Solver_Status compute_exact_solution_functional_equation() const;
+
+  //! \brief
+  //! Computes the exact solution of \p *this, where \p *this is a
+  //! non linear recurrence of finite order.
+  Solver_Status compute_exact_solution_non_linear() const;
+
+  //! \brief
+  //! Computes the exact solution of \p *this, where \p *this is a
+  //! linear recurrence of infinite order.
+  Solver_Status compute_exact_solution_infinite_order() const;
+
+  //! \brief
   //! Computes the solution of \p *this applying the order reduction method:
   //! builds a new object <CODE>Recurrence</CODE> with the reduced recurrence;
   //! solves the reduced recurrence; from the solution of the reduced
@@ -484,22 +520,6 @@ private:
 
   //! Classifies the recurrence \p *this sliding it recursively.
   Classifier_Status classify() const;
-
-  //! \brief
-  //! Classifies the recurrence \p *this calling the method
-  //! <CODE>classify()</CODE>. 
-  Classifier_Status classify_and_catch_special_cases() const;
-
-  //! \brief
-  //! Analyzes the \f$ i \f$-th addend of the right hand side \p rhs
-  //! of the recurrence \p *this.
-  Classifier_Status classification_summand(const Expr& rhs, const Expr& r,
-				       Expr& e, index_type& order,
-				       std::vector<Expr>& coefficients,
-				       int& gcd_among_decrements,
-				       int num_term,
-				       std::map<Number, Expr>&
-				       homogeneous_terms) const;
 
   //! \brief
   //! Solves the linear recurrence of finite order.
