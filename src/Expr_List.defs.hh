@@ -41,12 +41,12 @@ public:
   //! Builds a list containing \p x.
   explicit Expr_List(const Symbol& x);
 
-  //! Builds a list containing \p e1 and \p e2.
-  explicit Expr_List(const Expr& e1, const Expr& e2);
+  //! Builds a list containing \p x1 and \p x2.
+  explicit Expr_List(const Expr& x1, const Expr& x2);
 
-  //! Builds a list containing \p e1, \p e2, \p e3, \p e4 and \p e5.
-  explicit Expr_List(const Expr& e1, const Expr& e2, const Expr& e3,
-		     const Expr& e4, const Expr& e5);
+  //! Builds a list containing \p x1, \p x2, \p x3, \p x4 and \p x5.
+  explicit Expr_List(const Expr& x1, const Expr& x2, const Expr& x3,
+		     const Expr& x4, const Expr& x5);
 
   //! Copy-constructor.
   Expr_List(const Expr_List& x);
@@ -60,7 +60,12 @@ public:
   //! Returns the number of expressions of \p *this.
   unsigned nops() const;
 
-  //! Returns th \f$ i \f$-th element of \p *this.
+  //! Returns the \f$ i \f$-th element of \p *this.
+  /*!
+    \exception std::out_of_range thrown if
+                                 \f$ i \notin \{0, \dotsc, nops() - 1 \}.
+  */
+  // FIXME: ginac -> wrong answer!
   Expr op(unsigned i) const;
 
   //! Appends \p x to \p *this.
@@ -70,16 +75,20 @@ public:
   Expr_List& prepend(const Expr& x);
 
   //! Removes the first element from \p *this.
+  /*!
+    \exception std::logic_error thrown if \p *this is empty.
+  */
+  // FIXME: ginac -> segmentation fault!
   Expr_List& remove_first();
 
 private:
-  GiNaC::lst l;
-
-  friend Expr sqrfree(const Expr& e, const Expr_List& lst);
-  friend Expr lsolve(const Expr_List& lst1, const Expr_List& lst2);
-
   friend class Expr;
   friend class Matrix;
+
+  friend Expr sqrfree(const Expr& x, const Expr_List& y);
+  friend Expr lsolve(const Expr_List& x, const Expr_List& y);
+
+  GiNaC::lst l;
 
   //! Builds the expression corresponding to \p gl.
   Expr_List(const GiNaC::lst& gl);
