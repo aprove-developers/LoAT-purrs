@@ -174,10 +174,14 @@ invalid_initial_condition(const Expr& e) {
   Number value;
   if (e.is_a_number(value) && !value.is_rational())
     return true;
+  if (e == Recurrence::n)
+    return true;
   else if (e.is_a_power())
     return invalid_initial_condition(e.arg(0))
       || invalid_initial_condition(e.arg(1));
   else if (e.is_a_function()) {
+    if (e.is_the_x_function())
+      return true;
     for (unsigned i = e.nops(); i-- > 0; )
       if (invalid_initial_condition(e.arg(i)))
 	return true;
