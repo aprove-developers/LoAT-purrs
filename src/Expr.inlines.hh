@@ -177,6 +177,21 @@ operator/=(Expr& x, const Expr& y) {
   return x;
 }
 
+inline bool
+operator==(const Expr& e, const Symbol& s) {
+  return e.is_a_symbol() && GiNaC::ex_to<GiNaC::symbol>(e).is_equal(s.s);
+}
+
+inline bool
+operator==(const Symbol& s, const Expr& e) {
+  return e == s;
+}
+
+inline bool
+operator==(const Expr& x, const Expr& y) {
+  return x.Base::is_equal(y);
+}
+
 inline Expr
 Expr::operator[](int i) const {
   return Base::operator[](i);
@@ -281,7 +296,7 @@ Expr::is_zero() const {
 
 inline Expr
 Expr::subs(const Expr& x, const Expr& y) const {
-  return Base::subs(x == y);
+  return Base::subs(GiNaC::operator==(x, y));
 }
 
 inline Expr

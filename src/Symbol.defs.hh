@@ -57,6 +57,8 @@ private:
   friend Expr rem(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr prem(const Expr& a, const Expr& b, const Symbol& x);
 
+  friend bool operator==(const Expr& e, const Symbol& s);
+
   GiNaC::symbol s;
 
   //! Builds the symbol corresponding to \p gs.

@@ -63,7 +63,7 @@ erase_factor(Expr& e, const Symbol& n) {
    unsigned num_factors = e.nops();
    unsigned i;
    for (i = 0; i < num_factors; ++i)
-     if (e[i].is_equal(n))
+     if (e[i] == n)
        break;
    if (i < num_factors) {
      // Found an occurrence of th symbol `n'.
@@ -75,7 +75,7 @@ erase_factor(Expr& e, const Symbol& n) {
      return true;
    }
  }
- else if (e.is_equal(n)) {
+ else if (e == n) {
    e = 1;
    return true;
  }

@@ -77,6 +77,17 @@ Expr& operator*=(Expr& x, const Expr& y);
 */
 Expr& operator/=(Expr& x, const Expr& y);
 
+//! Returns <CODE>true</CODE> if and only if \p e is \p s.
+bool operator==(const Expr& e, const Symbol& s);
+
+//! Returns <CODE>true</CODE> if and only if \p e is \p s.
+bool operator==(const Symbol& s, const Expr& e);
+
+//! \brief
+//! Returns <CODE>true</CODE> if and only if \p x and \p y are
+//! syntactically equal.
+bool operator==(const Expr& x, const Expr& y);
+
 //! \brief
 //! Builds an arbitrary expression, called <EM>wildcard</EM>, with the
 //! specified label \p label.
@@ -603,6 +614,9 @@ private:
   friend Expr& operator-=(Expr& x, const Expr& y);
   friend Expr& operator*=(Expr& x, const Expr& y);
   friend Expr& operator/=(Expr& x, const Expr& y);
+
+  friend bool operator==(const Expr& e, const Symbol& s);
+  friend bool operator==(const Expr& x, const Expr& y);
 
   friend Expr wild(unsigned label);
   friend Expr pwr(const Expr& x, const Expr& y);
