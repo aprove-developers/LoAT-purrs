@@ -60,7 +60,6 @@ n	log(x(n-1))
 n	log(x(n-1))+x(n-2)
 n	log(x(n-2))+x(n-1)
 n	n*x(n-1)-x(n-2)
-n	n*x(n-1)-x(n-2))
 n	n*x(n-1)^2
 n	n+x(n*2)
 n	n+x(n/2)
@@ -297,3 +296,4 @@ nU	x(n)
 nU	x(n)-2
 y	x(n)+x(n)
 n	x(n)*x(n)
+y	-3*x(n-1)
