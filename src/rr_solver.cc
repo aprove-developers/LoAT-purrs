@@ -250,9 +250,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 
   if (finished) {
     solution = e; 
-#if NOISY 
+
     D_VAR(solution);
-#endif
+
     return true;
   }
 
@@ -307,9 +307,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     // che se c'e' 'x(i)' con 'i' numerico allora 'i' sia un numero
     // minore dell'ordine.
 
-#if NOISY
+
     D_VAR(decrement);
-#endif
+
     if (!decrement.is_integer()
 	|| decrement < 0
 	|| decrement >= coefficients.max_size()) {
@@ -346,11 +346,11 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   if (failed)
     return false;
 
-#if NOISY
+
   D_VAR(order);
   D_VEC(coefficients, 1, order);
   D_MSGVAR("Inhomogeneous term: ", e);
-#endif
+
 
   // Simplifies expanded expressions, in particular rewrites nested powers.
   e = simplify_on_input_ex(e, n, true);
@@ -371,10 +371,10 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   // In the last column there is the constant exponential with its
   // coefficients.
   GMatrix decomposition = decomposition_inhomogeneous_term(e, n);
-#if NOISY
+
   std::cout << "Inhomogeneous term's decomposition"
 	    << decomposition << std::endl;
-#endif
+
 
   // Creates the vector of initials conditions.
   std::vector<GExpr> initial_conditions(order);
@@ -413,11 +413,11 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       return false;
   }
 
-#if NOISY
+
   D_VAR(characteristic_eq);
   D_VEC(roots, 0, roots.size()-1);
   D_MSG("");
-#endif
+
 
   GSymbol alpha("alpha");
   GSymbol lambda("lambda");
@@ -453,9 +453,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 //  	add_initial_conditions(g_n, n, coefficients,
 //  			       initial_conditions, solution);
 	solution += initial_conditions[0] * pow(roots[0].value() ,n);
-#if NOISY
+
 	D_MSGVAR("Before calling simplify: ", solution);
-#endif        
+
 	solution = simplify_on_output_ex(solution.expand(), n, false);
 
 	//int r = verify_solution(solution, order, e,coefficients);
@@ -492,14 +492,14 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 				      symbolic_sum_no_distinct, solution);
 	  GExpr g_n = (pow(root_1, n+1) - pow(root_2, n+1)) / diff_roots;
 	  // FIXME: forse conviene semplificare g_n
-#if NOISY
+
 	  D_VAR(g_n);
-#endif
+
 	  add_initial_conditions(g_n, n, num_coefficients,
 				 initial_conditions, solution);
-#if NOISY
+
 	  D_MSGVAR("Before calling simplify: ", solution);
-#endif        
+
 	  solution = simplify_on_output_ex(solution.expand(), n, false);
 	  solution = solution.collect(lst(initial_conditions[0],
 					  initial_conditions[1]));
@@ -695,9 +695,9 @@ order_2_sol_roots_no_distinct(const GSymbol& n,
 
   GSymbol a("a"), b("b");
   GExpr root = roots[0].value();
-#if NOISY
+
   D_VAR(root);
-#endif      
+
   if (decomposition(1, 0).is_zero()) {
     // The binary recurrence is homogeneous.
     // The solution of the homogeneous recurrence is of the form
