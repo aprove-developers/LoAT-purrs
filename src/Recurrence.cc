@@ -30,7 +30,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Recurrence.defs.hh"
 #include "ep_decomp.hh"
-#include "factorize.hh"
 #include "finite_order.hh"
 #include "simplify.hh"
 #include "util.hh"
