@@ -142,15 +142,16 @@ compute_product_on_power(const Symbol& index, const Number& lower,
       e_prod_computed = true;
     }
   }
-  // In this case `\prod_{k=lower}^n e(k) = k^{\sum_{h=lower}^n f(h)}'.
+  // In this case, if e(k) = a^(b(k)), then
+  // `\prod_{k=lower}^n e(k) = a^{\sum_{h=lower}^n b(h)}'.
   else {
     std::vector<Expr> base_of_exps;
     std::vector<Expr> exp_poly_coeff;
     std::vector<Expr> exp_no_poly_coeff;
-    exp_poly_decomposition(exponent_e, Recurrence::n,
+    exp_poly_decomposition(exponent_e, index,
 			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
     Expr new_exponent = 0;
-    // `f(h)' is a polynomial or a product of a polynomial times an
+    // `b(h)' is a polynomial or a product of a polynomial times an
     // exponential.
     if (vector_not_all_zero(exp_poly_coeff)) {
       for (unsigned i = base_of_exps.size(); i-- > 0; ) {
