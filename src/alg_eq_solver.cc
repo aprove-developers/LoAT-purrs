@@ -438,7 +438,8 @@ find_roots(const Expr& p, const Symbol& x,
   // NOTE: after the introduction of the order reduction method the
   // function `is_nested_polynomial()' is useless in the computation
   // of the solution but it is used in the "new" method (see the paper
-  // "Checking and Confining the Solutions of Recurrence Relations")
+  // "Checking and Bounding the Solutions of Some Recurrence Relations",
+  // http://www.cs.unipr.it/purrs/Documentation/bibliography#BagnaraZ04TR)
   // for the validation of the exact solution of linear finite order
   // recurrences with constant coefficients.
   // If we want to solve q(x) = 0 and we know that q(x) = r(x^n), then
