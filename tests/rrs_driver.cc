@@ -34,16 +34,27 @@ using namespace GiNaC;
 
 #define NOISY 1
 
+#ifdef USE_READLINE
+#define INPUT_STREAM rdl
+#else
+#define INPUT_STREAM cin
+#endif
+
 int
 main() try {
+#ifdef USE_READLINE
+  auto_ptr<readlinebuf> rdlb(new readlinebuf());
+  istream rdl(rdlb.get());
+#endif
+
   GSymbol n("n");
   GList symbols(n);
   GExpr rhs;
-  while (cin) {
+  while (INPUT_STREAM) {
     string s;
-    getline(cin, s);
+    getline(INPUT_STREAM, s);
 
-    if (!cin)
+    if (!INPUT_STREAM)
       return 0;
 
     // Skip comments.
