@@ -154,7 +154,7 @@ PURRS::Recurrence::verify_solution() const {
       Expr substituted_rhs;
       std::vector<Expr> terms_to_sub(order());
       // We have not applied the order reduction in order to solve the
-      // recurrence. 
+      // recurrence.
       if (gcd_decrements_old_rhs == 0) {
 	substituted_rhs = recurrence_rhs;
 	gcd_decrements_old_rhs = 1;
@@ -176,7 +176,7 @@ PURRS::Recurrence::verify_solution() const {
       diff = simplify_all(diff);
       D_VAR(diff);
       if (!diff.is_zero())
-	if (gcd_decrements_old_rhs != 0) {
+	if (!old_recurrence_rhs.is_zero()) {
 	  // If we have applied the order reduction and we do not have success
 	  // in the verification of the original recurrence, then we please
 	  // ourselves if is verified the reduced redurrence.
