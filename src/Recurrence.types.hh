@@ -12,6 +12,7 @@ PURPOSE. */
 #ifndef PURRS_Recurrence_types_hh
 #define PURRS_Recurrence_types_hh 1
 
+//! The entire library is confined into this namespace.
 namespace Parma_Recurrence_Relation_Solver {
 
 class Recurrence;
