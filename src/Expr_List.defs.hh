@@ -42,11 +42,15 @@ public:
   explicit Expr_List(const Symbol& x);
 
   //! Builds a list containing \p x1 and \p x2.
-  explicit Expr_List(const Expr& x1, const Expr& x2);
+  Expr_List(const Expr& x1, const Expr& x2);
 
   //! Builds a list containing \p x1, \p x2, \p x3, \p x4 and \p x5.
-  explicit Expr_List(const Expr& x1, const Expr& x2, const Expr& x3,
-		     const Expr& x4, const Expr& x5);
+  Expr_List(const Expr& x1, const Expr& x2, const Expr& x3,
+	    const Expr& x4, const Expr& x5);
+
+  //! Builds a list containing \p x1, \p x2, \p x3, \p x4 and \p x5.
+  Expr_List(const Expr& x1, const Expr& x2, const Expr& x3,
+	    const Expr& x4, const Expr& x5, const Expr& x6);
 
   //! Copy-constructor.
   Expr_List(const Expr_List& x);
