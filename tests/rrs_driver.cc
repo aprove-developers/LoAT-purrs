@@ -231,6 +231,8 @@ main(int argc, char *argv[]) try {
 
   unsigned unexpected_exact_solutions = 0;
   unsigned unexpected_exact_failures = 0;
+  unsigned unexpected_unsolvability_diagnoses = 0;
+  unsigned unexpected_failures_do_diagnose_unsolvability = 0;
 
   readlinebuf* prdlb = 0;
   istream* pinput_stream;
@@ -342,7 +344,8 @@ main(int argc, char *argv[]) try {
     Recurrence rec(rhs);
 
     Expr solution;
-    if (solve_wrapper(rec, n) == Recurrence::OK) {
+    switch (solve_wrapper(rec, n)) {
+    case Recurrence::OK:
       if (regress_test) {
 	if (expect_not_exactly_solved) {
 	  if (verbose)
@@ -363,8 +366,26 @@ main(int argc, char *argv[]) try {
 	rec.exact_solution(n).latex_print(cout);
 	cout << "\n\\)\n" << endl;
       }
-    }
-    else {
+      break;
+
+    case Recurrence::UNSOLVABLE_RECURRENCE:
+      if (expect_not_diagnose_unsolvable) {
+	if (verbose)
+	  cerr << "*** unexpected unsolvability diagnosis" << endl;
+	++unexpected_unsolvability_diagnoses;
+      }
+      goto failed;
+      break;
+
+ 
+    default:
+      if (expect_diagnose_unsolvable) {
+	if (verbose)
+	  cerr << "*** unexpected failure to diagnose unsolvability" << endl;
+	++unexpected_failures_do_diagnose_unsolvability;
+      }
+
+    failed:
       if (regress_test) {
 	if (expect_exactly_solved) {
 	  if (verbose)
@@ -375,7 +396,7 @@ main(int argc, char *argv[]) try {
       if (interactive)
 	cout << "Sorry, this is too difficult." << endl;
     }
-  }
+  } // while (input_stream)
 
   if (latex)
     cout << "\\end{document}" << endl;
@@ -394,6 +415,19 @@ main(int argc, char *argv[]) try {
 	   << " unexpected failures to find exact solutions"
 	   << endl;
     }
+    if (unexpected_unsolvability_diagnoses > 0) {
+      failed = true;
+      cerr << unexpected_unsolvability_diagnoses
+	   << " unexpected unsolvability diagnoses"
+	   << endl;
+    }
+    if (unexpected_failures_do_diagnose_unsolvability > 0) {
+      failed = true;
+      cerr << unexpected_failures_do_diagnose_unsolvability
+	   << " unexpected failures to diagnose unsolvability"
+	   << endl;
+    }
+
     if (failed)
       my_exit(1);
   }
