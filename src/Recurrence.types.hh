@@ -18,4 +18,4 @@ class Recurrence;
 
 }
 
-#endif // !defined(PPL_Row_types_hh)
+#endif // !defined(PPL_Recurrence_types_hh)

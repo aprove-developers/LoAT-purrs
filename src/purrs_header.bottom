@@ -1,11 +1,11 @@
 
-#ifdef PPL_SAVE_NDEBUG
+#ifdef PURRS_SAVE_NDEBUG
 #define NDEBUG 1
-#undef PPL_SAVE_NDEBUG
+#undef PURRS_SAVE_NDEBUG
 #endif
 
-#undef PPL_FLEXIBLE_ARRAY
+#undef PURRS_FLEXIBLE_ARRAY
 #undef PACKAGE
 #undef VERSION
 
-#endif
+#endif // !defined(PURRS_purrs_hh)
