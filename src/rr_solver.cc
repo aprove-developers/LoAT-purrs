@@ -506,7 +506,6 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   } while (!e.is_zero());
 #else
   e = 0;
-  Expr_List substitution;
   if (rhs.is_a_add()) {
     for (unsigned j = rhs.nops(); j-- > 0; ) {
       Expr term = e.op(j);
@@ -518,8 +517,6 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
 	  Expr factor = term.op(h);
 	  Expr possibly_coeff = 1;
 	  if (factor.is_the_x_function()) {
-	  //	  if (factor.match(x_i)) {
-	  //  Expr argument = get_binding(substitution, 0);
 	    Expr argument = factor.op(0);
 	    if (argument.has(n))
 	      if (found_function_x)
@@ -548,8 +545,8 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
       }
       else
 	// `term' has a unique factor.
-	if (term.match(x(wild(0)))) {
-	  argument = get_binding(substitution, 0);
+	if (term.is_the_x_function()) {
+	  Expr argument = term.op(0);
 	  if (i.has(n)) {
 	    // Puo' tornare HAS_NON_INTEGER_DECREMENT, ...
 	    computation_of_order(argument, order);
@@ -563,20 +560,25 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
     }
   }
   else
-    // `rhs' has a unique term.
-    if (rhs.match(x(wild(0)))) {
-      argument = get_binding(substitution, 0);
-      if (argument.has(n)) {
-	computation_of_order(argument, order);
-	insert_in_coefficients(order, coefficients);
+    // `rhs' is a unique term composed by more factors.
+    if (rhs.is_a_mul()) {
+      /////////...
+    }
+    // `rhs' is a unique term composed by only one factor.
+    else
+      if (rhs.is_the_x_function()) {
+	Expr argument = rhs.op(0);
+	if (argument.has(n)) {
+	  computation_of_order(argument, order);
+	  insert_in_coefficients(1, order, coefficients);
+	}
+	else
+	  e += rhs;
       }
       else
 	e += rhs;
-    }
-    else
-      e += rhs;
 #endif
-
+  
   // `order' is negative in two cases. 
   if (order < 0)
     if (e.has(x(wild(0)))) {
