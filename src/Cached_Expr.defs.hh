@@ -31,6 +31,12 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+//! \brief
+//! A class for holding expressions and attributes we may have or may have
+//! not computed.
+/*!
+  ...
+*/
 class Cached_Expr {
 public:
   //! Default constructor.

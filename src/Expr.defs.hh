@@ -303,7 +303,7 @@ Expr gamma(const Expr& x);
     \binom{m}{k} =
     \begin{cases}
       1, \quad \text{if } k = 0;\\
-      \frac{\prod_{i = m-k+1}^m i}{k!}, \quad \text{if } k > 0.
+      \frac{1}{k!} \prod_{i = m-k+1}^m i, \quad \text{if } k > 0.
     \end{cases}
   \f]
 

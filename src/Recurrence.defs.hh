@@ -149,7 +149,7 @@ bool less_than(const Recurrence& x, const Recurrence& y);
   The weighted-average recurrence
   \f$ x(n) = 2 \sum_{k=3}^n x(k) - 2 n \f$
   will be transformed in the normal form and, moreover,
-  the recurrence is rewritten, if possible, so that the lower limit of
+  the recurrence will be rewritten, if possible, so that the lower limit of
   the sum is \f$ 0 \f$ and the upper limit is \f$ n-1 \f$.
   In general,
   \f[
@@ -224,8 +224,14 @@ public:
   Expr substitute_auxiliary_definitions(const Expr& e) const;
 
   //! \brief
-  //! Replaces the values in the \f$ k \f$-th position of the map
-  //! <CODE>initial_conditions</CODE> with the expression \p e. 
+  //! Allows to specify the value \p e of the symbolic initial condition
+  //! with index \p k: \f$ x(k) = e \f$.
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+  /*!
+    Replaces the values in the \f$ k \f$-th position of the map
+    <CODE>initial_conditions</CODE> with the expression \p e.
+  */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   void replace_initial_condition(unsigned int k, const Expr& e);
 
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
@@ -351,7 +357,7 @@ public:
     in this case the method <CODE>compute_exact_solution()</CODE>
     returns <CODE>SUCCESS</CODE>.
 
-    \par Example1
+    \par Example 1
     A correct use of this method can be the following:
     \code
         Recurrence rec(2*x(n-1)+1);
@@ -360,8 +366,17 @@ public:
 	  rec.exact_solution(exact_solution);
 	}
     \endcode
-    The solution of the recurrence \f$ x(n) = 2 x(n-1)+1 \f$ is now
-    contained in the variable \p exact_solution.
+    The solution of the recurrence \f$ x(n) = 2 x(n-1)+1 \f$ is
+    \f[
+      x(n) = x_0 2^n + 2^n - 1
+    \f]
+    and its right-hand side is contained in the variable
+    \p exact_solution.
+
+    We remark that in the exact solution will appear symbolically
+    the initial conditions until the user will not define it: this
+    can be performed with the method
+    <CODE>replace_initial_condition()</CODE>.
 
     \exception std::logic_error thrown if this method is called
                                 but no exact solution was computed.
@@ -392,7 +407,7 @@ public:
     in this case the method <CODE>compute_lower_bound()</CODE>
     returns <CODE>SUCCESS</CODE>.
 
-    \par Example1
+    \par Example 1
     A correct use of this method can be the following:
     \code
         Recurrence rec(7*x(n/5)+10);
@@ -402,8 +417,17 @@ public:
 	}
     \endcode
     The lower bound of the solution of the functional equation
-    \f$ x(n) = 7 x(n/5)+10 \f$ is now contained in the variable
-    \p lower_bound.
+    \f$ x(n) = 7 x(n/5)+10 \f$ is
+    \f[
+      x(n) \geq \frac{1}{7} x(1) n^{\log 7 / \log 5} - \frac{5}{3}
+                + \frac{5}{21} n^{\log 7 / \log 5}
+    \f]
+    and its right-hand side is contained in the variable \p lower_bound.
+
+    We remark that in the lower bound will appear symbolically
+    the initial conditions until the user will not define it: this
+    can be performed with the method
+    <CODE>replace_initial_condition()</CODE>.
 
     \exception std::logic_error thrown if this method is called
                                 but no lower bounds was computed.
@@ -434,7 +458,7 @@ public:
     in this case the method <CODE>compute_upper_bound()</CODE>
     returns <CODE>SUCCESS</CODE>.
 
-    \par Example1
+    \par Example 1
     A correct use of this method can be the following:
     \code
         Recurrence rec(7*x(n/5)+10);
@@ -444,8 +468,17 @@ public:
 	}
     \endcode
     The upper bound of the solution of the functional equation
-    \f$ x(n) = 7 x(n/5)+10 \f$ is now contained in the variable
-    \p upper_bound.
+    \f$ x(n) = 7 x(n/5)+10 \f$ is
+    \f[
+      x(n) \leq x(1) n^{\log 7 / \log 5} - \frac{5}{3}
+                + \frac{5}{3} n^{\log 7 / \log 5}
+    \f]
+    and its right-hand side is contained in the variable \p lower_bound.
+
+    We remark that in the upper bound will appear symbolically
+    the initial conditions until the user will not define it: this
+    can be performed with the method
+    <CODE>replace_initial_condition()</CODE>.
 
     \exception std::logic_error thrown if this method is called
                                 but no upper bounds was computed.
@@ -1103,8 +1136,6 @@ private:
   //! Sets to \p i_c the least non-negative integer \f$ j \f$ such that
   //! the recurrence is well-defined for \f$ n \geq j \f$.
   void set_first_valid_index_inf_order(index_type i_c) const;
-
-
 
   mutable Cached_Expr exact_solution_;
   mutable Cached_Expr lower_bound_;

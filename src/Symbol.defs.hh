@@ -33,7 +33,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-//! The symbol of parameters.
+//! The set of symbols for parameters.
 /*!
   ...
 */
