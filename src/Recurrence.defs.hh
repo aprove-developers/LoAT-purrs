@@ -316,11 +316,79 @@ public:
 
     - a \ref generalized_recurrence "functional equation":         
                                      to be written.
+ 
+    To call this method when the set of initial conditions is already
+    set provokes the overwriting of the previous set of initial
+    conditions.
+
+    It is always possible to come back to the symbolic solution
+    calling the method <CODE>reset_initial_conditions()</CODE>.
+
+    \par Example 1
+    We consider the second order recurrence relation with constant
+    coefficients \f$ x_n = 2*x_{n-1} - x_{n-2} \f$ and we compute
+    the exact solution starting by the initial conditions \f$ x_5 = 0 \f$
+    and \f$ x_6 = 1 \f$. Note that are necessary at least \f$ 2 \f$  initial
+    conditions and, since the recurrence is well-defined for \f$ n \geq 0 \f$,
+    are allowed two initial conditions with consequent indexes greater
+    or equal to \f$ 0 \f$:
+    \code
+      std::map<index_type, Expr> initial_conditions;
+      Recurrence rec1(2*x(n-1)-x(n-2));
+      Symbol a("a");
+      initial_conditions[3] = a;
+      initial_conditions[4] = a+3;
+      initial_conditions[6] = 1;
+      initial_conditions[5] = 0;
+      rec1.set_initial_conditions(initial_conditions);
+      Recurrence::Solver_Status status = rec1.compute_exact_solution();
+      Expr exact_solution;
+      if (status == Recurrence::SUCCESS) {
+        rec1.exact_solution(exact_solution);
+        if (rec1.verify_exact_solution() != Recurrence::PROVABLY_CORRECT)
+          std::cout << "The computed solution has not been verified"
+	            << std::endl;
+      }
+    \endcode
+    At the end of these instructions the variable \p exact_solution
+    will contain the right-hand side of the solution
+    \f$ x_n = n - 5 \f$. Note that the initial conditions with
+    index \f$ 3 \f$ and \f$ 4 \f$ are ignored.
+    Now, if we want to compute the solution with different initial
+    conditions, we can do in the following way:
+    \code
+      initial_conditions.clear();
+      initial_conditions[0] = a;
+      initial_conditio1ns[1] = b;
+      rec1.set_initial_conditions(initial_conditions);
+      status = rec1.compute_exact_solution();
+      if (status == Recurrence::SUCCESS) {
+        rec1.exact_solution(exact_solution);
+        if (rec1.verify_exact_solution() != Recurrence::PROVABLY_CORRECT)
+          std::cout << "The computed solution has not been verified"
+                    << std::endl;
+      }
+    \endcode
+    Note that in order to have the "new" solution, we must recall
+    the method <CODE>compute_exact_solution()</CODE>: now the solution
+    will be \f$ x_n = b*n + a*(1 - n) \f$.
+    The only call to the method <CODE>reset_initial_conditions()</CODE>
+    allows to have the solution with the symbolic initial conditions,
+    is not necessary to recall the method that compute the exact solution:
+    \code
+      rec1.reset_initial_conditions();
+      rec1.exact_solution(exact_solution);
+      if (rec1.verify_exact_solution() != Recurrence::PROVABLY_CORRECT)
+        std::cout << "The computed solution has not been verified"
+                  << std::endl;
+    \endcode
+    The solution with the symbolic initial conditions is
+    \f$ x_n = x_1*n + x_0*(1-n) \f$.
     
     \exception std::logic_error      thrown if \p *this is not classified yet
                                      and the classification's process
 				     called by this method fails.
-
+    
     \exception std::invalid_argument thrown if the initial conditions
                                      in the map \p map_initial_conditions
 				     are not a sufficient set to uniquely
@@ -330,6 +398,11 @@ public:
   */
   void set_initial_conditions(const std::map<index_type, Expr>&
 			      map_initial_conditions);
+
+  //! \brief
+  //! Removed eventual initial conditions and restored the
+  //! solution or bound with the symbolic initial conditions.
+  void reset_initial_conditions();
 
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Checks if all the invariants are satisfied.
@@ -665,14 +738,6 @@ public:
                                 when no upper bound was computed.
   */
   Verify_Status verify_upper_bound() const;
-
-#if 0
-  //! \brief
-  //! Returns <CODE>false</CODE> if there are no undefined initial conditions;
-  //! otherwise returns <CODE>true</CODE> and adds the corresponding
-  //! indexes to \p undefined.
-  bool undefined_initial_conditions(std::set<unsigned int>& undefined) const;
-#endif
 
   //! The index of the recurrence.
   /*!
@@ -1226,9 +1291,38 @@ private:
   //! \f]
   Expr& weight();
 
+  //! \brief
+  //! Stores the value, if it exists, of the exact solution
+  //! (with symbolic initial conditions) and other informations about it.
   mutable Cached_Expr exact_solution_;
+
+  //! \brief
+  //! Stores the value, if it exists, of the lower bound
+  //! (with symbolic initial conditions) and other informations about it.
   mutable Cached_Expr lower_bound_;
+
+  //! \brief
+  //! Stores the value, if it exists, of the upper bound
+  //! (with symbolic initial conditions) and other informations about it.
   mutable Cached_Expr upper_bound_;
+
+  //! \brief
+  //! Stores the value, if it exists, of the exact solution
+  //! evaluated on the initial conditions stores in the map
+  //! <CODE>initial _conditions</CODE> and other informations about it.
+  mutable Cached_Expr evaluated_exact_solution_;
+
+  //! \brief
+  //! Stores the value, if it exists, of the lower bound
+  //! evaluated on the initial conditions stores in the map
+  //! <CODE>initial _conditions</CODE> and other informations about it.
+  mutable Cached_Expr evaluated_lower_bound_;
+
+  //! \brief
+  //! Stores the value, if it exists, of the upper bound
+  //! evaluated on the initial conditions stores in the map
+  //! <CODE>initial _conditions</CODE> and other informations about it.
+  mutable Cached_Expr evaluated_upper_bound_;
 
   //! \brief
   //! If \p tried_to_compute_exact_solution is true then the system has
