@@ -129,6 +129,10 @@ PURRS::partial_factor(const Number& n,
     bases.push_back(m);
     exponents.push_back(1);
   }
+  if (m == 1 && bases.size() == 0) {
+    bases.push_back(1);
+    exponents.push_back(1);
+  }
 }
 
 namespace {
