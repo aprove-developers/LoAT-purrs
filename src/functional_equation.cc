@@ -49,33 +49,14 @@ using namespace PURRS;
 //! non-negative number; returns <CODE>false</CODE> otherwise.
 bool
 is_non_negative(const Expr& e, const Symbol& x, Number& i) {
-  if (!largest_positive_int_zero(e, i))
+  // Find the integer `i' starting from which the function `e' is
+  // well defined and non-negative.
+  if (!largest_positive_int_zero(e, x, i))
     return false;
   D_VAR(i);
   if (i == -1)
     ++i;
-  Expr tmp = numerator(e).substitute(x, i);
-  D_VAR(tmp);
-  Number num;
-  if (tmp.is_a_number(num))
-    if (!num.is_negative())
-      return true;
-    else
-      return false;
-  else
-    // In the case of `log' function we already know the positive integer
-    // necessary because the `log' function is well-defined.
-    if (tmp.is_a_mul()) {
-      for (unsigned j = tmp.nops(); j-- > 0; ) {
-	if (tmp.op(j).is_a_number(num) && num.is_negative())
-	  return false;
-      }
-      return true;
-    }
-    else if (tmp.is_the_log_function())
-      return true;
-    else
-      return false;
+  return true;
 }
 
 //! \brief

@@ -198,13 +198,13 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
   // that cancel the denominator of the coefficient.
   // If this integer does not exist then `z' is left to 0.
   Number z = 0;
-  if (!largest_positive_int_zero(coefficient, z))
+  if (!largest_positive_int_zero(coefficient, n, z))
     return TOO_COMPLEX;
   // Find the largest positive or null integer that cancel the denominator of
   // `inhomogeneous_term' and store it in `z' if it is bigger than the
   // current `z'.
   if (!inhomogeneous_term.is_zero())
-    if (!largest_positive_int_zero(denominator(inhomogeneous_term), z))
+    if (!largest_positive_int_zero(denominator(inhomogeneous_term), n, z))
       return TOO_COMPLEX;
   // The initial conditions will start from `z'.
   set_first_well_defined_rhs_linear(z.to_unsigned());
@@ -556,7 +556,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     // The system not finds an integer that cancel `inhomogeneous_term' or
     // starting from which `inhomogeneous_term' is well-defined
     // (polynomials are always well-defined).
-    if (!largest_positive_int_zero(denominator(inhomogeneous_term), z))
+    if (!largest_positive_int_zero(denominator(inhomogeneous_term), n, z))
       return TOO_COMPLEX;
   }
   // The initial conditions will start from `z'.
