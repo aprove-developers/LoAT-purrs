@@ -34,6 +34,7 @@ Init.types.hh \
 Matrix.types.hh \
 Number.types.hh \
 Finite_Order_Info.types.hh \
+Functional_Equation_Info.types.hh \
 Blackboard.types.hh \
 Recurrence.types.hh \
 Symbol.types.hh \
@@ -71,6 +72,8 @@ sum_poly.hh \
 util.hh \
 Finite_Order_Info.defs.hh \
 Finite_Order_Info.inlines.hh \
+Functional_Equation_Info.defs.hh \
+Functional_Equation_Info.inlines.hh \
 Blackboard.defs.hh \
 Blackboard.inlines.hh \
 Recurrence.defs.hh \
@@ -78,6 +81,7 @@ Recurrence.inlines.hh
 
 libpurrs_a_SOURCES = \
 Finite_Order_Info.cc \
+Functional_Equation_Info.cc \
 Blackboard.cc \
 Complex_Interval.cc \
 Bool3.cc \
