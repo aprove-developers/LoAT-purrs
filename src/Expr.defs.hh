@@ -1138,6 +1138,13 @@ public:
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this contains the function
+  //! \f$ x() \f$; returns <CODE>false</CODE> otherwise.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+  bool has_x_function() const;
+
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+  //! \brief
+  //! Returns <CODE>true</CODE> if \p *this contains the function
   //! \f$ x() \f$ with its argument containing the expression \p e;
   //! returns <CODE>false</CODE> otherwise.
 #endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
