@@ -30,8 +30,11 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "simplify.hh"
 
+#include "sum_poly.hh"
 #include "numerator_denominator.hh"
 #include "util.hh"
+#include "ep_decomp.hh"
+#include "gosper.hh"
 #include "Expr.defs.hh"
 #include "Recurrence.defs.hh"
 #include <vector>
@@ -888,14 +891,15 @@ manip_factor(const Expr& e, bool input) {
 /*!
   Crosses the tree of the expanded expression \p e recursively to find
   subexpressions to which we apply the rules of the terms rewriting
-  system \f$ \mathfrak{R}_i \f$. More exactly here the rules of the set
-  <EM>Expand</EM> are implemented because the rules of the set
-  <EM>Automatic</EM> are automatically executed.  We remark that the
-  rule \f$ \textbf{E4} \f$ is automatically executed when the exponent is
-  integer, while the rules \f$ \textbf{E3} \f$ and \f$ \textbf{E6} \f$
-  are executed by the method <CODE>expand()</CODE> (\f$ \textbf{E3} \f$
-  only partially because for instance \f$ expand(3^(4*x+2*a)) =
-  3^(2*a)*3^(4*x) \f$): hence we here consider only powers.
+  system \f$ \mathfrak{R}_i \f$ or to which we can compute symbolic sums.
+  More exactly here the rules of the set <EM>Expand</EM> are implemented
+  because the rules of the set <EM>Automatic</EM> are automatically executed.
+  We remark that the rule \f$ \textbf{E4} \f$ is automatically executed when
+  the exponent is integer, while the rules \f$ \textbf{E3} \f$ and
+  \f$ \textbf{E6} \f$ are executed by the method <CODE>expand()</CODE>
+  (\f$ \textbf{E3} \f$ only partially because for instance
+  \f$ expand(3^(4*x+2*a)) = 3^(2*a)*3^(4*x) \f$): hence we here consider
+  only powers.
   \p input is always <CODE>true</CODE> and this means that \p n is a
   special symbol, i. e., in the simplifications it is always collected
   with respect to the others parameters.  The function returns a
@@ -1361,86 +1365,190 @@ get_out_factors_from_argument(const Expr& e, const Expr& x,
       out *= e;
 }
 
+Expr
+split_sum(const Expr& e) {
+  Expr e_rewritten;
+  const Expr& first_term = e.arg(2).op(0);
+  const Expr& second_term = e.arg(2).op(1);
+  Number numeric_term;
+  Symbol symbolic_term;
+  if (first_term.is_a_number() && second_term.is_a_symbol()) {
+    numeric_term = first_term.ex_to_number();
+    symbolic_term = second_term.ex_to_symbol();
+  }
+  else if (first_term.is_a_symbol() && second_term.is_a_number()) {
+    numeric_term = second_term.ex_to_number();
+    symbolic_term = first_term.ex_to_symbol();
+  }
+  else {
+    Expr factors_in = 1;
+    Expr factors_out = 1;
+    get_out_factors_from_argument(e.arg(3), e.arg(0),
+				  factors_in, factors_out);
+    if (factors_in == 1)
+      return factors_out * (e.arg(2) - e.arg(1) + 1);
+    else
+      return factors_out * sum(e.arg(0), e.arg(1), e.arg(2), factors_in);
+  }
+  if (numeric_term.is_integer()) {
+    Expr factors_in = 1;
+    Expr factors_out = 1;
+    get_out_factors_from_argument(e.arg(3), e.arg(0),
+				  factors_in, factors_out);
+    if (factors_in == 1)
+      e_rewritten += factors_out * (symbolic_term - e.arg(1) + 1);
+    else
+      e_rewritten += factors_out
+	* sum(e.arg(0), e.arg(1), Expr(symbolic_term), factors_in);
+    if (numeric_term.is_positive_integer())
+      for (Number j = 1; j <= numeric_term; ++j)
+	e_rewritten += e.arg(3).substitute(e.arg(0), symbolic_term + j);
+    else
+      for (Number j = numeric_term + 1; j <= 0 ; ++j)
+	e_rewritten -= e.arg(3).substitute(e.arg(0), symbolic_term + j);
+  }
+  return e_rewritten;
+}
+
+Expr
+compute_sum(const Expr& e) {
+  // If `upper' is of the form `m + h' or `m - h' with `m' a symbol
+  // and `h' an integer, isolate `m' and `h' respectively in the expressions
+  // `symb_part_of_upper' and `numeric_part_of_upper'.
+  // If the form of `upper' is different from that aforesaid one, then
+  // the system can not to compute the sum.
+  Expr upper = e.arg(2);
+  Symbol symb_part_of_upper;
+  Number numeric_part_of_upper = 0;
+  if (upper.is_a_symbol())
+    symb_part_of_upper = upper.ex_to_symbol();
+  else if (upper.is_a_add() && upper.nops() == 2
+	   && upper.op(0).is_a_symbol()
+	   && upper.op(1).is_a_number(numeric_part_of_upper)
+	   && numeric_part_of_upper.is_integer())
+    symb_part_of_upper = upper.op(0).ex_to_symbol();
+  else if (upper.is_a_add() && upper.nops() == 2
+	   && upper.op(1).is_a_symbol()
+	   && upper.op(0).is_a_number(numeric_part_of_upper)
+	   && numeric_part_of_upper.is_integer())
+    symb_part_of_upper = upper.op(1).ex_to_symbol();
+  else
+    return e;
+
+  std::vector<Expr> base_of_exps;
+  std::vector<Expr> exp_poly_coeff;
+  std::vector<Expr> exp_no_poly_coeff;
+  exp_poly_decomposition(e.arg(3), e.arg(0).ex_to_symbol(),
+			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
+
+  Expr e_rewritten = 0;
+  if (vector_not_all_zero(exp_poly_coeff)) {
+    for (unsigned i = exp_poly_coeff.size(); i-- > 0; ) {
+      Symbol k("k");
+      Expr coeff_k = exp_poly_coeff[i].substitute(e.arg(0), k);
+      Expr solution = sum_poly_times_exponentials(coeff_k, k,
+						  symb_part_of_upper,
+						  base_of_exps[i]);
+      // `sum_poly_times_exponentials' computes the sum until
+      // `symb_part_of_upper', whereas we want that the sum start from
+      // `symb_part_of_upper + numeric_part_of_upper'. 
+      solution
+	= solution.substitute(symb_part_of_upper,
+			      symb_part_of_upper + numeric_part_of_upper);
+      // `sum_poly_times_exponentials' computes the sum from 0, whereas
+      // we want that the sum start from the lower bound.
+      for (Number h = 0; h < e.arg(1).ex_to_number(); ++h)
+	solution -= coeff_k.substitute(k, h) * pwr(base_of_exps[i], h);
+      e_rewritten += solution;
+    }
+  }
+  if (vector_not_all_zero(exp_no_poly_coeff)) {
+    for (unsigned i = exp_poly_coeff.size(); i-- > 0; ) {
+      Expr gosper_solution;
+      if (!full_gosper(symb_part_of_upper,
+		       e.arg(3).substitute(e.arg(0), symb_part_of_upper),
+		       e.arg(1).ex_to_number(), upper, gosper_solution))
+	return e;
+      e_rewritten += gosper_solution;
+    }
+  }
+  return e_rewritten;
+}
+
+//! \brief
+//! If \p only_verification is <CODE>true</CODE> this function rewrites
+//! the sum with the upper limit of the form `m + j' or `m - j', with
+//! `m' a symbol and `j' an integer, so that the upper limit is `m'.
+//! If \p only_to_the_beginning is <CODE>true</CODE> this function
+//! computes eventual symbolic sums.
 /*!
-  Applies the following property for the function representing finite sums:
+  If \p only_verification is <CODE>true</CODE> applies the following
+  property for the function representing finite sums:
   \f[
     \begin{cases}
       \sum_{k = a}^b f(k) =
-      \sum_{k = a}^n f(k) - f(n) - f(n-1) - \cdots - f(n-j+1),
-        \quad \text{if } b = n + j \text{and j is a positive integer}; \\
-      \sum_{k = a}^b f(k) = \sum_{k = a}^n f(k) + f(n+1) + \cdots + f(n+j),
-        \quad \text{if } b = n + j \text{and j is a negative integer}.
+      \sum_{k = a}^m f(k) - f(m) - f(m-1) - \cdots - f(m-j+1),
+        \quad \text{if } b = m + j
+	\text{with m a symbol and j is a positive integer}; \\
+      \sum_{k = a}^b f(k) = \sum_{k = a}^m f(k) + f(m+1) + \cdots + f(m+j),
+        \quad \text{if } b = m + j
+	\text{with m a symbol and j is a negative integer}.
     \end{cases}
   \f]
- */
+
+  If \p only_to_the_beginning is <CODE>true</CODE> computes eventual
+  symbolic sums using two different techniques: if the summand is
+  polynomial, exponential or product of them uses the method exposed
+  in <CODE>sum_poly.{hh, cc}</CODE>; otherwise the Gosper's algorithm
+  exposed in <CODE>gosper.{hh, cc}</CODE>.
+*/
 Expr
-simplify_sum_in_expanded_ex(const Expr& e) {
+simplify_sum_in_expanded_ex(const Expr& e, bool only_verification,
+			    bool only_to_the_beginning) {
   Expr e_rewritten;
   D_MSGVAR("*** ", e);
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten += simplify_sum_in_expanded_ex(e.op(i));
+      e_rewritten += simplify_sum_in_expanded_ex(e.op(i), only_verification,
+						 only_to_the_beginning);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten *= simplify_sum_in_expanded_ex(e.op(i));
+      e_rewritten *= simplify_sum_in_expanded_ex(e.op(i), only_verification,
+						 only_to_the_beginning);
   }
   else if (e.is_a_power())
-    return pwr(simplify_sum_in_expanded_ex(e.arg(0)),
-	       simplify_sum_in_expanded_ex(e.arg(1)));
+    return pwr(simplify_sum_in_expanded_ex(e.arg(0), only_verification,
+					   only_to_the_beginning),
+	       simplify_sum_in_expanded_ex(e.arg(1), only_verification,
+					   only_to_the_beginning));
   else if (e.is_a_function()) {
-    if (e.is_the_sum_function()
-	&& e.arg(2).is_a_add() && e.arg(2).nops() == 2) {
-      // `upper' is a sum of two addends.
-      const Expr& first_term = e.arg(2).op(0);
-      const Expr& second_term = e.arg(2).op(1);
-      Number numeric_term;
-      Symbol symbolic_term;
-      if (first_term.is_a_number() && second_term.is_a_symbol()) {
-	numeric_term = first_term.ex_to_number();
-	symbolic_term = second_term.ex_to_symbol();
-      }
-      else if (first_term.is_a_symbol() && second_term.is_a_number()) {
-	numeric_term = second_term.ex_to_number();
-	symbolic_term = first_term.ex_to_symbol();
-      }
-      else {
-	Expr factors_in = 1;
-	Expr factors_out = 1;
-	get_out_factors_from_argument(e.arg(3), e.arg(0),
-				      factors_in, factors_out);
-	if (factors_in == 1)
-	  return factors_out * (e.arg(2) - e.arg(1) + 1);
-	else
-	  return factors_out * sum(e.arg(0), e.arg(1), e.arg(2), factors_in);
-      }
-      if (numeric_term.is_integer()) {
-	Expr factors_in = 1;
-	Expr factors_out = 1;
-	get_out_factors_from_argument(e.arg(3), e.arg(0),
-				      factors_in, factors_out);
-	if (factors_in == 1)
-	  e_rewritten += factors_out * (symbolic_term - e.arg(1) + 1);
-	else
-	  e_rewritten += factors_out
-	    * sum(e.arg(0), e.arg(1), Expr(symbolic_term), factors_in);
-	if (numeric_term.is_positive_integer())
-	  for (Number j = 1; j <= numeric_term; ++j)
-	    e_rewritten += e.arg(3).substitute(e.arg(0), symbolic_term + j);
-	else
-	  for (Number j = numeric_term + 1; j <= 0 ; ++j)
-	    e_rewritten -= e.arg(3).substitute(e.arg(0), symbolic_term + j);
-      }
-    }
-    else if (e.nops() == 1)
-      return apply(e.functor(), simplify_sum_in_expanded_ex(e.arg(0)));
+    if (e.nops() == 1)
+      return apply(e.functor(),
+		   simplify_sum_in_expanded_ex(e.arg(0), only_verification,
+					       only_to_the_beginning));
     else {
+      if (e.is_the_sum_function()) {
+	// If the summand does not contain `x' functions with `n' in the
+	// argument (infinite order recurrence) and we are at the first
+	// visit to the expression, then the sum has been inserted by the
+	// user and we try to compute it.
+	if (!e.arg(3).has_x_function(false, e.arg(0))
+	    && only_to_the_beginning)
+	  return compute_sum(e);
+	// `upper' is a sum of two addends: if we are at the point of
+	// recurrence's verification rewrite this sum so that the upper bound
+	// is only a symbol.
+	if (e.arg(2).is_a_add() && e.arg(2).nops() == 2 && only_verification)
+	  return split_sum(e);
+      }
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = simplify_sum_in_expanded_ex(e.arg(i));
+	argument[i] = simplify_sum_in_expanded_ex(e.arg(i), only_verification,
+						  only_to_the_beginning);
       return apply(e.functor(), argument);
     }
   }
@@ -1522,8 +1630,10 @@ PURRS::simplify_logarithm(const Expr& e) {
 }
 
 PURRS::Expr
-PURRS::simplify_sum(const Expr& e) {
-  return simplify_sum_in_expanded_ex(e.expand()).expand();
+PURRS::simplify_sum(const Expr& e,
+		    bool only_verification, bool only_to_the_beginning) {
+  return simplify_sum_in_expanded_ex(e.expand(), only_verification,
+				     only_to_the_beginning).expand();
 }
 
 
@@ -1538,7 +1648,7 @@ PURRS::simplify_all(const Expr& e) {
   Expr e_rewritten = e;
   e_rewritten = simplify_numer_denom(e_rewritten);
   e_rewritten = simplify_factorials_and_exponentials(e_rewritten);
-  e_rewritten = simplify_ex_for_output(e_rewritten, false);
+  e_rewritten = simplify_ex_for_output(e_rewritten, false).expand();
   e_rewritten = simplify_numer_denom(e_rewritten).expand();
   return e_rewritten;
 }
