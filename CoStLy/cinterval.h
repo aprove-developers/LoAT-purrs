@@ -144,6 +144,7 @@ cinterval operator / (const cinterval&, const double&);
 // output
 
 std::ostream& operator << (std::ostream&, const cinterval&);
+std::string&  operator << (std::string&, const cinterval&);
 
 //
 

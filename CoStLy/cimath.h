@@ -1,6 +1,6 @@
 /*
 
- File: cimath.h, 2002/03/04
+ File: cimath.h, 2002/05/16
 
  CoStLy (COmplex interval STandard functions LibrarY), Version 0.2
 
@@ -26,7 +26,17 @@
 #ifndef _CIMATH_H_INCLUDED
 #define _CIMATH_H_INCLUDED
 
+#ifdef FILIB_VERSION
+
 #include "cinterval.h"
+typedef Interval interval;
+
+#else //C-XSC Version
+
+#include "cinterval.hpp"
+using namespace cxsc;
+
+#endif
 
 cinterval exp(const cinterval&);
 cinterval cos(const cinterval&);
@@ -39,7 +49,7 @@ cinterval cot(const cinterval&);
 cinterval tanh(const cinterval&);
 cinterval coth(const cinterval&);
 
-Interval arg(const cinterval&);
+interval arg(const cinterval&);
 
 cinterval ln(const cinterval&);
 
@@ -56,7 +66,7 @@ cinterval atanh(const cinterval&);
 cinterval acoth(const cinterval&);
 
 cinterval power(const cinterval&,int);
-cinterval pow(const cinterval&,const Interval&);
+cinterval pow(const cinterval&,const interval&);
 cinterval pow(const cinterval&,const cinterval&);
 
 #endif

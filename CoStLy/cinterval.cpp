@@ -1,6 +1,6 @@
 /*
 
- File: cinterval.cpp, 2002/03/21
+ File: cinterval.cpp, 2002/04/18
 
  CoStLy (COmplex interval STandard functions LibrarY), Version 0.2
 
@@ -26,289 +26,184 @@
 #include "cinterval.h"
 #include "error.h"
 
-using std::ostream;
+#include "Interval.h" //fi_lib++ Header: Macro Version
+using filib::Double;
 
 cinterval operator - (const cinterval& z)
 {
   return cinterval( -z.re(), -z.im() );
 }
 
-void transform(double& x1, double& x2, double& y1, double& y2, int& q, const cinterval& z)
+int sign(const double& a)
 {
-  x1 = inf( z.re() );
-  x2 = sup( z.re() );
-  y1 = inf( z.im() );
-  y2 = sup( z.im() );
+  if( a==0.0 ) return 0;
+  else         return ( a>0.0 )?1:-1;
+}
 
-  if( (x1>=0 && y1>0) || (x1>0 && y2>0) ) //first quadrant with intersection of positive real axis
+double f(const double& a, const double& b, const double& c, const double& d, int round)
+{
+  double value;
+
+  //calculates    (a*c+b*d) / (c*c+d*d)
+  switch( round )
     {
-      q = 1;
-      return;
-    }
-  else if( (y1>=0 && x2<0) || (y1>0 && x1<0) ) //second quadrant with intersection of positive imaginary axis
-    {
-      q = 2;
+    case -1: //downwards rounded
+      {
+	double z, n, tmp;
+	MUL_DOWN( z, a, c ); // z = a*c, downwards rounded
+	MUL_DOWN( tmp, b, d ); // tmp = b*d, downwards rounded
+	ADD_DOWN_UPD( z, tmp ); // z = z + tmp, downwards rounded
 
-      double tmp = x1;
-      x1 = y1;
-      y1 = -x2;
-      x2 = y2;
-      y2 = -tmp;
+	MUL_UP( n, c, c ); // n = c*c, upwards rounded
+	MUL_UP( tmp, d, d ); // tmp = d*d, upwards rounded
+	ADD_UP_UPD( n, tmp ); // n = n + tmp, upwards rounded
 
-      return;
-    }
-  else if( (y2<0 && x2<=0) || (x2<0 && y1<0) ) //third quadrant with intersection of negative real axis
-    {
-      q = 3;
+	DIV_DOWN( value, z, n );
 
-      double tmp = x1;
-      x1 = -x2;
-      x2 = -tmp;
-      tmp = y1;
-      y1 = -y2;
-      y2 = -tmp;
+	return value;
+      }
+    case  0: //nearest rounded
+      {
+      }
+    case  1: //upwards rounded
+      {
+	double z, n, tmp;
+	MUL_UP( z, a, c ); // z = a*c, upwards rounded
+	MUL_UP( tmp, b, d ); // tmp = b*d, upwards rounded
+	ADD_UP_UPD( z, tmp ); // z = z + tmp, upwards rounded
 
-      return;
-    }
-  else if( (y2<=0 && x1>0) || (y2<0 && x2>0) ) //fourth quadrant with intersection of negative imaginary axis
-    {
-      q = 4;
+	MUL_DOWN( n, c, c ); // n = c*c, downwards rounded
+	MUL_DOWN( tmp, d, d ); // tmp = d*d, downwards rounded
+	ADD_DOWN_UPD( n, tmp ); // n = n + tmp, downwards rounded
 
-      double tmp = y1;
-      y1 = x1;
-      x1 = -y2;
-      y2 = x2;
-      x2 = -tmp;
-
-      return;
+	DIV_UP( value, z, n );
+	
+	return value;
+      }
     }
 }
 
-cinterval transform_back(const double& x1, const double& x2, const double& y1, const double& y2, int q)
-{
-  switch( q )
-    {
-    case 1: //first quadrant
-      {
-	return cinterval( Interval(x1,x2), Interval(y1,y2) );
-      }
-    case 2: //second quadrant
-      {
-	return cinterval( Interval(y1,y2), Interval(-x2,-x1) );
-      }
-    case 3: //third quadrant
-      {
-	return cinterval( Interval(-x2,-x1), Interval(-y2,-y1) );
-      }
-    case 4: //fourth quadrant
-      {
-	return cinterval( Interval(-y2,-y1), Interval(x1,x2) );
-      }
-    };
-}
+bool p[5];
 
-void real_part_function(const double& x1, const double& x2, const double& y1, const double& y2, double& inf, double& sup)
+double MinMax(bool minimum, const double& a, const double& b, const double& y0, const Interval& X, int i, int j)
 {
-  /*
+  /* 
 
-    Calculate the minimum and maximum of u(x,y)=x/(x^2+y^2), x in [x1,x2], y in [y1,y2].
+     berechnet inneres Minimum bzw. Maximum von f = (ac+bd)/(cc+dd) 
+     auf dem Interval X = [c.inf,c.sup] ( a,b,d=y0 fest ).         
+     Falls minimum = TRUE wird das Minimum berechnet,              
+     sonst das Maximum.                                             
 
   */
 
-  double n,tmp;
+  double minmax;
 
-  if( y1>0 )
+  if( minimum ) minmax =  Double::MAX();
+  else          minmax = -Double::MAX();
+
+  if( inf(X)==sup(X) )
     {
-      if( y1>=x2 )
-	{
-	  MUL_UP( tmp, x1, x1 );
-	  MUL_UP( n, y2, y2 );
-	  ADD_UP_UPD( n, tmp ); // n = x1^2 + y2^2 upwards rounded
-	  DIV_DOWN( inf, x1, n ); // inf = x1 / n downwards rounded
-
-	  MUL_DOWN( tmp, x2, x2 );
-	  MUL_DOWN( n, y1, y1 );
-	  ADD_DOWN_UPD( n, tmp ); // n = x2^2 + y1^2 downwards rounded
-	  DIV_UP( sup, x2, n ); // sup = z / n upwards rounded
-	}
-      else if( y2>=x1 )
-	{
-	  if( y1>=x1 )
-	    {
-	      MUL_DOWN( n, 2.0, y1 ); // n = 2.0 * y1 downwards rounded
-	      DIV_UP( sup, 1.0, n ); // sup = z / n upwards rounded
-	    }
-	  else
-	    {
-	      MUL_DOWN( tmp, x1, x1 );
-	      MUL_DOWN( n, y1, y1 );
-	      ADD_DOWN_UPD( n, tmp ); // n = x1^2 + y1^2 downwards rounded
-	      DIV_UP( sup, x1, n ); // sup = z / n upwards rounded
-	    }
-
-	  MUL_UP( tmp, x1, x1 );
-	  MUL_UP( n, y2, y2 );
-	  ADD_UP_UPD( n, tmp ); // n = x1^2 + y2^2 upwards rounded
-	  DIV_DOWN( inf, x1, n ); // inf = z / n downwards rounded
-
-	  if( y2<x2 )
-	    {
-	      MUL_UP( tmp, x2, x2 );
-	      MUL_UP( n, y2, y2 );
-	      ADD_UP_UPD( n, tmp ); // n = x2^2 + y2^2 upwards rounded
-	      DIV_DOWN( tmp, x2, n ); // tmp = z / n downwards rounded
-
-	      inf = (inf<tmp)?inf:tmp; // inf = min{ inf, tmp }
-	    }
-	}
-      else
-	{
-	  MUL_UP( tmp, x2, x2 );
-	  MUL_UP( n, y2, y2 );
-	  ADD_UP_UPD( n, tmp ); // n = x2^2 + y2^2 upwards rounded
-	  DIV_DOWN( inf, x2, n ); // inf = z / n downwards rounded
-
-	  MUL_DOWN( tmp, x1, x1 );
-	  MUL_DOWN( n, y1, y1 );
-	  ADD_DOWN_UPD( n, tmp ); // n = x1^2 + y1^2 downwards rounded
-	  DIV_UP( sup, x1, n ); // sup = z / n upwards rounded
-	}
+      if( p[i] && p[j] ) minmax = f( a, b, inf(X), y0, 1-2*minimum );
+      p[i] = false;
+      p[j] = false;
     }
   else
     {
-      DIV_UP( sup, 1.0, x1 ); // sup = 1/x1 upwards rounded
-
-      double ym = (-y1>y2)?y1:y2;
-      double aym = (ym>0)?ym:-ym;
-      double sqrym;
-      MUL_UP( sqrym, ym, ym );
-
-      if( aym<=x1 )
+      if( a==0.0 )
 	{
-	  MUL_UP( tmp, x2, x2 );
-	  n = sqrym;
-	  ADD_UP_UPD( n, tmp ); // n = x2^2 + ym^2 upwards rounded
-	  DIV_DOWN( inf, x2, n ); // inf = z / n downwards rounded
-	}
-      else if( aym<x2 )
-	{
-	  MUL_UP( tmp, x2, x2 );
-	  n = sqrym;
-	  ADD_UP_UPD( n, tmp ); // n = x2^2 + ym^2 upwards rounded
-	  DIV_DOWN( inf, x2, n ); // inf = z / n downwards rounded
-
-	  MUL_UP( tmp, x1, x1 );
-	  n = sqrym;
-	  ADD_UP_UPD( n, tmp ); // n = x1^2 + ym^2 upwards rounded
-	  DIV_DOWN( tmp, x1, n ); // tmp = z / n downwards rounded
-	  
-	  inf = (inf<tmp)?inf:tmp; // inf = min{ inf, tmp }
-	}
-      else
-	{
-	  MUL_UP( tmp, x1, x1 );
-	  n = sqrym;
-	  ADD_UP_UPD( n, tmp ); // n = x1^2 + ym^2 upwards rounded
-	  DIV_DOWN( inf, x1, n ); // inf = z / n downwards rounded
-	}
-    }
-}
-
-void imag_part_function(const double& x1, const double& x2, const double& y1, const double& y2, double& inf, double& sup)
-{
-  /*
-
-    Calculate the minimum and maximum of v(x,y)=-y/(x^2+y^2), x in [x1,x2], y in [y1,y2].
-
-  */
-
-  double n,tmp;
-
-  if( y1>0 )
-    {
-      if( y2<=x1 )
-	{
-	  MUL_UP( tmp, x1, x1 );
-	  MUL_UP( n, y2, y2 );
-	  ADD_UP_UPD( n, tmp ); // n = x1^2 + y2^2 upwards rounded
-	  DIV_DOWN( inf, -y2, n ); // inf = z / n downwards rounded
-
-	  MUL_DOWN( tmp, x2, x2 );
-	  MUL_DOWN( n, y1, y1 );
-	  ADD_DOWN_UPD( n, tmp ); // n = x2^2 + y1^2 downwards rounded
-	  DIV_UP( sup, -y1, n ); // sup = z / n upwards rounded
-	}
-      else if( y1<x2 )
-	{
-	  if( y1<=x1 )
+	  if( b==0.0 || y0==0.0 )
 	    {
-	      MUL_UP( n, 2.0, x1 ); // n = 2.0 * x1 upwards rounded
-	      DIV_DOWN( inf, -1.0, n ); // sup = z / n upwards rounded
+	      minmax = 0.0;
+	      p[i]  = false;
+	      p[j]  = false;
 	    }
 	  else
 	    {
-	      MUL_UP( tmp, x1, x1 );
-	      MUL_UP( n, y1, y1 );
-	      ADD_UP_UPD( n, tmp ); // n = x1^2 + y1^2 upwards rounded
-	      DIV_DOWN( inf, -y1, n ); // inf = z / n downwards rounded
+	      if( in( 0.0, X ) )
+		{
+		  if( minimum && ( sign(b)!=sign(y0) ) ) 
+		    {
+		      DIV_DOWN( minmax, b, y0 );
+		      p[i]  = false;
+		      p[j]  = false;
+		    }
+		  else
+		    {
+		      if( !minimum && ( sign(b)==sign(y0) ) )
+			{
+			  DIV_UP( minmax, b, y0 );
+			  p[i]  = false;
+			  p[j]  = false;
+			}
+		    }
+		}
 	    }
-
-	  MUL_DOWN( tmp, x2, x2 );
-	  MUL_DOWN( n, y1, y1 );
-	  ADD_DOWN_UPD( n, tmp ); // n = x2^2 + y1^2 upwards rounded
-	  DIV_UP( sup, -y1, n ); // inf = z / n downwards rounded
-
-	  if( y2>x2 )
+	}
+      else  // a != 0.0 
+	{
+	  if( y0==0.0 )
 	    {
-	      MUL_DOWN( tmp, x2, x2 );
-	      MUL_DOWN( n, y2, y2 );
-	      ADD_DOWN_UPD( n, tmp ); // n = x2^2 + y2^2 upwards rounded
-	      DIV_UP( tmp, -y2, n ); // tmp = z / n downwards rounded
+	      if( minimum )
+		{
+		  if( a>0.0 ) { DIV_DOWN( minmax, a, sup(X) ); }
+		  else        { DIV_DOWN( minmax, a, inf(X) ); }
+		}
+	      else 
+		{
+		  if( a>0.0 ) { DIV_UP( minmax, a, inf(X) ); }
+		  else        { DIV_UP( minmax, a, sup(X) ); }
+		}
 
-	      sup = (sup>tmp)?sup:tmp; // sup = max{ sup, tmp }
+	      p[i] = false;
+	      p[j] = false;
+	    }
+	  else  // y0 != 0.0,  Ber. von Extremstelle und Minimum,Maximum
+	    {
+	      // IF NOTBEKANNT THEN
+	      // Berechnung von t = sign(a) * ( |b/a| + sqrt( 1+|b/a|^2 ) ) 
+	      
+	      Interval T,Q( abs( Interval(b)/Interval(a) ) ); 
+	      
+	      if( a<0.0 ) T = -( Q + sqrt( 1+Q*Q ) );
+	      else        T =  ( Q + sqrt( 1+Q*Q ) );
+	      
+	      // Fallunterscheidung zur Min-,Max- Best:
+	      double x, ay0 = fabs(y0);
+	      if( ( sign(b)==sign(y0) )== minimum ) 
+		{
+		  // Berechne Unterschranke für x = |y0| * t, t aus T.
+		  MUL_DOWN( x, ay0, inf(T) );
+		}
+	      else
+		{
+		  // Berechne Unterschranke für x = |y0| / t, t aus T.
+		  DIV_DOWN( x, ay0, sup(T) );
+		}
+	      if( minimum ) x = -x; // Unterschranke x wird im Falle minimum=TRUE zu einer Oberschranke
+	      
+	      if( in( x, X ) )
+		{
+		  // Berechne für minimum=TRUE eine Unterschranke für a / ( 2*x )
+		  // andernfalls eine Oberschranke
+		  if( minimum )
+		    {
+		      double tmp;
+		      MUL_UP( tmp, 2.0, x );
+		      DIV_DOWN( minmax, a, tmp );
+		    }
+		  else
+		    {
+		      double tmp;
+		      MUL_DOWN( tmp, 2.0, x );
+		      DIV_UP( minmax, a, tmp );
+		    }
+		  p[i] = false;
+		  p[j] = false;
+		}
 	    }
 	}
-      else
-	{
-	  MUL_UP( tmp, x1, x1 );
-	  MUL_UP( n, y1, y1 );
-	  ADD_UP_UPD( n, tmp ); // n = x1^2 + y1^2 upwards rounded
-	  DIV_DOWN( inf, -y1, n ); // inf = z / n downwards rounded
-
-	  MUL_DOWN( tmp, x2, x2 );
-	  MUL_DOWN( n, y2, y2 );
-	  ADD_DOWN_UPD( n, tmp ); // n = x2^2 + y2^2 downwards rounded
-	  DIV_UP( sup, -y2, n ); // sup = z / n upwards rounded
-	}
     }
-  else
-    {
-      if( -y1<=x1 )
-	{
-	  MUL_DOWN( tmp, x1, x1 );
-	  MUL_DOWN( n, y1, y1 );
-	  ADD_DOWN_UPD( n, tmp ); // n = x1^2 + y1^2 downwards rounded
-	  DIV_UP( sup, -y1, n ); // sup = z / n upwards rounded
-	}
-      else
-	{
-	  MUL_DOWN( n, 2.0, x1 );
-	  DIV_UP( sup, 1.0, n );
-	}
-      
-      if( y2<=x1 )
-	{
-	  MUL_UP( tmp, x1, x1 );
-	  MUL_UP( n, y2, y2 );
-	  ADD_UP_UPD( n, tmp ); // n = x1^2 + y2^2 upwards rounded
-	  DIV_DOWN( inf, -y2, n ); // inf = z / n downwards rounded
-	}
-      else
-	{
-	  MUL_UP( n, 2.0, x1 );
-	  DIV_DOWN( inf, -1.0, n );
-	}
-    }
+  return minmax;
 }
 
 /*--------------------------------------------------------------+
@@ -316,14 +211,9 @@ void imag_part_function(const double& x1, const double& x2, const double& y1, co
  |                                                              |
  |    Z1 /= Z2    <=>   Z1 = Z1 / Z2                            |
  |                                                              |
- | is implemented as                                            |
+ | see: Lohner, R., Gudenberg, W.v., Complex Interval Division  |
+ | with Maximum Accuracy, Proc.Comp.Arith., Ed. Hwang, 1985.    |
  |                                                              |
- |    Z1 *= 1/Z2                                                |
- |                                                              |
- | An enclosure for 1/Z2 is found by using the monotony         |
- | of the real- and imaginary part of 1/z.                      |
- |                                                              |
- |  1/z = x/(x^2+y^2) - i * y/(x^2+y^2)                         |
  +--------------------------------------------------------------*/
 
 cinterval& cinterval::operator /= (const cinterval& z)
@@ -331,17 +221,240 @@ cinterval& cinterval::operator /= (const cinterval& z)
   if( in( 0.0, z.re() ) && in( 0.0, z.im() ) )
     throw division_by_zero();
 
-  double x1,x2,y1,y2;
-  int q;
+  Interval
+    rhsRe( z.re() ),
+    rhsIm( z.im() );
+
+  double 
+    lhsReInf = inf( real_part ),
+    lhsReSup = sup( real_part ),
+    lhsImInf = inf( imag_part ),
+    lhsImSup = sup( imag_part ),
+    rhsReInf = inf( rhsRe     ),
+    rhsReSup = sup( rhsRe     ),
+    rhsImInf = inf( rhsIm     ),
+    rhsImSup = sup( rhsIm     );
+
+  // *** Berechnung des Realteils ***
+
+  bool 
+    a_repeat = ( rhsReInf < 0.0 ) && ( 0.0 < rhsReSup ),
+    b_repeat = ( rhsImInf < 0.0 ) && ( 0.0 < rhsImSup );
+
+  int rep;
+  if( a_repeat || b_repeat ) rep = 2;
+  else                       rep = 1;
+
+  double a0,b0;
+  if( rhsReInf >= 0.0 ) a0 = lhsReSup;
+  else                  a0 = lhsReInf;
+  if( rhsImInf >= 0.0 ) b0 = lhsImSup;
+  else                  b0 = lhsImInf;
+
+  double realteilSUP, realteilINF;
+  realteilSUP = -Double::MAX();
+
+  for(int j = 1; j <= rep; j++)
+    {
+      p[1] = p[2] = p[3] = p[4] = true;
+
+      double 
+	mm1 = MinMax( false, a0, b0, rhsImInf, rhsRe, 1, 2 ),
+	mm2 = MinMax( false, a0, b0, rhsImSup, rhsRe, 3, 4 ),
+	mm3 = MinMax( false, b0, a0, rhsReInf, rhsIm, 1, 3 ),
+	mm4 = MinMax( false, b0, a0, rhsReSup, rhsIm, 2, 4 );
+
+      double 
+	max1 = ( mm3>mm4 )?mm3:mm4,
+	max2 = ( mm1>mm2 )?mm1:mm2,
+	max3 = ( max1>max2 )?max1:max2;
+
+      realteilSUP = ( realteilSUP>max3 )?realteilSUP:max3;
+
+      if( p[1] )
+	{
+	  double y = f( a0, b0, rhsReInf, rhsImInf, +1 );
+	  realteilSUP = ( realteilSUP>y )?realteilSUP:y;
+	}
+      if( p[2] )
+	{
+	  double y = f( a0, b0, rhsReSup, rhsImInf, +1 );
+	  realteilSUP = ( realteilSUP>y )?realteilSUP:y;
+	}
+      if( p[3] )
+	{
+	  double y = f( a0, b0, rhsReInf, rhsImSup, +1 );
+	  realteilSUP = ( realteilSUP>y )?realteilSUP:y;
+	}
+      if( p[4] )
+	{
+	  double y = f( a0, b0, rhsReSup, rhsImSup, +1 );
+	  realteilSUP = ( realteilSUP>y )?realteilSUP:y;
+	}
+      
+      if( a_repeat ) a0 = lhsReSup;
+      else if( b_repeat ) b0 = lhsImSup;
+    }
+
+  if( rhsReInf>=0.0 ) a0 = lhsReInf;
+  else                a0 = lhsReSup;
+  if( rhsImInf>=0.0 ) b0 = lhsImInf;
+  else                b0 = lhsImSup;
+
+  realteilINF = Double::MAX();
+
+  for(int j = 1; j <= rep; j++ )
+    {
+      p[1] = p[2] = p[3] = p[4] = true;
+      
+      double 
+	mm1 = MinMax( true, a0, b0, rhsImInf, rhsRe, 1, 2 ),
+	mm2 = MinMax( true, a0, b0, rhsImSup, rhsRe, 3, 4 ),
+	mm3 = MinMax( true, b0, a0, rhsReInf, rhsIm, 1, 3 ),
+	mm4 = MinMax( true, b0, a0, rhsReSup, rhsIm, 2, 4 );
+
+      double
+	min1 = ( mm3<mm4 )?mm3:mm4,
+	min2 = ( mm1<mm2 )?mm1:mm2,
+	min3 = ( min1<min2 )?min1:min2;
+
+      realteilINF = ( realteilINF<min3 )?realteilINF:min3;
+
+      if( p[1] )
+	{
+	  double y = f( a0, b0, rhsReInf, rhsImInf, -1 );
+	  realteilINF = ( realteilINF<y )?realteilINF:y;
+	}
+      if( p[2] )
+	{
+	  double y = f( a0, b0, rhsReSup, rhsImInf, -1 );
+	  realteilINF = ( realteilINF<y )?realteilINF:y;
+	}
+      if( p[3] )
+	{
+	  double y = f( a0, b0, rhsReInf, rhsImSup, -1 );
+	  realteilINF = ( realteilINF<y )?realteilINF:y;
+	}
+      if( p[4] )
+	{
+	  double y = f( a0, b0, rhsReSup, rhsImSup, -1 );
+	  realteilINF = ( realteilINF<y )?realteilINF:y;
+	}
+
+      if( a_repeat ) a0 = lhsReInf;
+      else if( b_repeat ) b0 = lhsImInf;
+    }
+
+  // *** Berechnung des Imaginaerteils: g(a, b, c, d) = f(b, -a, c, d) ***
+
+  a_repeat = ( rhsImInf < 0.0 ) && ( 0.0 < rhsImSup );
+  b_repeat = ( rhsReInf < 0.0 ) && ( 0.0 < rhsReSup );
+
+  // IF a_repeat OR b_repeat THEN rep:= 2 ELSE rep:= 1;  STIMMT NOCH 
+
+  if( rhsReInf >= 0.0 ) b0 = lhsImSup;
+  else                  b0 = lhsImInf;
+  if( rhsImInf >= 0.0 ) a0 = lhsReInf;
+  else                  a0 = lhsReSup;
+
+  double imagteilSUP, imagteilINF;
+  imagteilSUP = -Double::MAX();
+
+  for(int j = 1; j <= rep; j++)
+    {
+      p[1] = p[2] = p[3] = p[4] = true;
+
+      double
+	mm1 = MinMax( false,  b0, -a0, rhsImInf, rhsRe, 1, 2 ),
+	mm2 = MinMax( false,  b0, -a0, rhsImSup, rhsRe, 3, 4 ),
+	mm3 = MinMax( false, -a0,  b0, rhsReInf, rhsIm, 1, 3 ),
+	mm4 = MinMax( false, -a0,  b0, rhsReSup, rhsIm, 2, 4 );
+
+      double
+	max1 = ( mm1>mm2 )?mm1:mm2,
+	max2 = ( mm3>mm4 )?mm3:mm4,
+	max3 = ( max1>max2 )?max1:max2;
+      
+      imagteilSUP = ( imagteilSUP>max3 )?imagteilSUP:max3;
+
+      if( p[1] )
+	{
+	  double y = f( b0, -a0, rhsReInf, rhsImInf, +1 );
+	  imagteilSUP = ( imagteilSUP>y )?imagteilSUP:y;
+	}
+      if( p[2] )
+	{
+	  double y = f( b0, -a0, rhsReSup, rhsImInf, +1 );
+	  imagteilSUP = ( imagteilSUP>y )?imagteilSUP:y;
+	}
+      if( p[3] )
+	{
+	  double y = f( b0, -a0, rhsReInf, rhsImSup, +1 );
+	  imagteilSUP = ( imagteilSUP>y )?imagteilSUP:y;
+	}
+      if( p[4] )
+	{
+	  double y = f( b0, -a0, rhsReSup, rhsImSup, +1 );
+	  imagteilSUP = ( imagteilSUP>y )?imagteilSUP:y;
+	}
+
+      if( b_repeat ) b0 = lhsImSup;
+      else if( a_repeat ) a0 = lhsReInf;
+    }
+ 
+  if( rhsReInf>=0.0 ) b0 = lhsImInf;
+  else                b0 = lhsImSup;
+  if( rhsImInf>=0.0 ) a0 = lhsReSup;
+  else                a0 = lhsReInf; 
   
-  transform(x1,x2,y1,y2,q,z);
+  imagteilINF = Double::MAX();
+  
+  for(int j = 1; j <= rep; j++)
+    {
+      p[1] = p[2] = p[3] = p[4] = true;
+      
+      double
+	mm1 = MinMax( true,  b0, -a0, rhsImInf, rhsRe, 1, 2 ),
+	mm2 = MinMax( true,  b0, -a0, rhsImSup, rhsRe, 3, 4 ),
+	mm3 = MinMax( true, -a0,  b0, rhsReInf, rhsIm, 1, 3 ),
+	mm4 = MinMax( true, -a0,  b0, rhsReSup, rhsIm, 2, 4 );
+      
+      double
+	min1 = ( mm1<mm2 )?mm1:mm2,
+	min2 = ( mm3<mm4 )?mm3:mm4,
+	min3 = ( min1<min2 )?min1:min2;
+      
+      imagteilINF = ( imagteilINF<min3 )?imagteilINF:min3;
+      
+      if( p[1] )
+	{
+	  double y = f( b0, -a0, rhsReInf, rhsImInf, -1 );
+	  imagteilINF = ( imagteilINF<y )?imagteilINF:y;
+	}
+      if( p[2] )
+	{
+	  double y = f( b0, -a0, rhsReSup, rhsImInf, -1 );
+	  imagteilINF = ( imagteilINF<y )?imagteilINF:y;
+	}
+      if( p[3] )
+	{
+	  double y = f( b0, -a0, rhsReInf, rhsImSup, -1 );
+	  imagteilINF = ( imagteilINF<y )?imagteilINF:y;
+	}
+      if( p[4] )
+	{
+	  double y = f( b0, -a0, rhsReSup, rhsImSup, -1 );
+	  imagteilINF = ( imagteilINF<y )?imagteilINF:y;
+	}
+      
+      if( b_repeat ) b0 = lhsImInf;
+      else if( a_repeat ) a0 = lhsReSup;
+    }
 
-  double a1,a2,b1,b2;
+  real_part = Interval( realteilINF, realteilSUP );
+  imag_part = Interval( imagteilINF, imagteilSUP );
 
-  real_part_function(x1,x2,y1,y2,a1,a2);
-  imag_part_function(x1,x2,y1,y2,b1,b2);
-
-  return (*this) *= transform_back(a1,a2,b1,b2,q);
+  return *this;
 }
 
 //
@@ -350,6 +463,7 @@ Interval abs(const cinterval& z)
 {
   return sqrt(sqr(z.re())+sqr(z.im())); 
 } 
+
 
 #ifdef HAS_Complex
 Complex  mid (const cinterval& z)
@@ -481,11 +595,10 @@ cinterval operator / (const cinterval& z, const double& d)
 
 // output
 
-ostream& operator << (ostream& os, const cinterval& z)
+std::ostream& operator << (std::ostream& os, const cinterval& z)
 {
   os << "(" << z.re() << "," << z.im() << ")";
   return os;
-
 }
 
 //

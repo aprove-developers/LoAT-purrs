@@ -1,6 +1,6 @@
 /*
 
- File: cimath.cpp, 2002/03/19
+ File: cimath.cpp, 2002/05/16
 
  CoStLy (COmplex interval STandard functions LibrarY), Version 0.2
 
@@ -17,10 +17,10 @@
                                                 Ingo Eble
 
 	    C-XSC:	     Copyright (C) 2000 Markus Neher 
-                                                Ingo Eble
+	                                        Ingo Eble
 
- ... in Pascal-XSC:          Copyright (C) 1999 Andreas Westphal
-                                                Walter Kraemer
+ ... in Pascal-XSC:  Copyright (C) 1999 Andreas Westphal
+                                        Walter Kraemer
 
  This program is free software; you can redistribute it and/or
  modify it under the terms of the GNU General Public License
@@ -71,24 +71,55 @@
 
 //Include header files
 #include "cimath.h" //Declaration of the complex functions
-#include "error.h"
+
+#ifdef FILIB_VERSION
 
 #include "Interval.h" //fi_lib++ Header: Macro Version
-
 typedef Interval interval;
+
+#else //C-XSC Version
+
+#include "rmath.hpp" //"real" standard functions 
+#include "imath.hpp" //"interval" standard functions 
+#include "dot.hpp" //"dotprecision" standard functions 
+
+#endif
 
 using std::abs;
 using std::max;
 
+#include "error.h"
+
+#ifdef FILIB_VERSION
+#else //C-XSC Version
+
+inline const interval& PI()
+{ 
+  static const interval pi( acos(interval(-1.0)) );
+  return pi;
+}
+
+#endif
+
 inline const interval& HALFPI()
 { 
-  static const interval hp( interval::PI() / 2.0 );
+  static const interval hp( 
+#ifdef FILIB_VERSION
+			   interval::PI() / 2.0 );
+#else //C-XSC Version
+                           acos(interval(0.0))  );
+#endif
   return hp;
 }
 
 inline const interval& QUARTERPI()
 {
-  static const interval qp( interval::PI() / 4.0 );
+  static const interval qp( 
+#ifdef FILIB_VERSION
+			   interval::PI() / 4.0 );
+#else //C-XSC Version
+                           acos(interval(0.0))/2.0);
+#endif
   return qp;
 }
 
@@ -130,41 +161,96 @@ inline const interval& QUARTERPI()
  
 cinterval exp(const cinterval& z) 
 {
+#ifdef FILIB_VERSION
+
   interval 
     A( exp( z.re() ) ), 
     B(      z.im()   );
+
+#else //C-XSC Version
+
+  interval 
+    A( exp( Re(z) ) ), 
+    B(      Im(z)   );
+
+#endif
+
   return cinterval( A*cos( B ) , A*sin( B ) );
 }
 
 cinterval cos(const cinterval& z) 
 {
+#ifdef FILIB_VERSION
+
   interval 
     A( z.re() ), 
     B( z.im() );
+
+#else //C-XSC Version
+
+  interval 
+    A( Re(z) ), 
+    B( Im(z) );
+
+#endif
+
   return cinterval( cos( A )*cosh( B ) , -sin( A )*sinh( B ) );
 }
 
 cinterval sin(const cinterval& z) 
 {
+#ifdef FILIB_VERSION
+
   interval 
     A( z.re() ), 
     B( z.im() );
+
+#else //C-XSC Version
+
+  interval 
+    A( Re(z) ), 
+    B( Im(z) );
+
+#endif
+
   return cinterval( sin( A )*cosh( B ) , cos( A )*sinh( B ) );
 } 
     
 cinterval cosh(const cinterval& z) 
 {
+#ifdef FILIB_VERSION
+
   interval 
     A( z.re() ), 
     B( z.im() );
+
+#else //C-XSC Version
+
+  interval 
+    A( Re(z) ), 
+    B( Im(z) );
+
+#endif
+
   return cinterval( cos( B )*cosh( A ) , sin( B )*sinh( A ) );
 }
 
 cinterval sinh(const cinterval& z) 
 {
+#ifdef FILIB_VERSION
+
   interval 
     A( z.re() ), 
     B( z.im() );
+
+#else //C-XSC Version
+
+  interval 
+    A( Re(z) ), 
+    B( Im(z) );
+
+#endif
+
   return cinterval( cos( B )*sinh( A ) , sin( B )*cosh( A ) );
 }
 
@@ -179,7 +265,13 @@ cinterval sinh(const cinterval& z)
 /* ***                                                      ****/
 /* *************************************************************/
 
-void ReAdd(const double& hx,const double& hy,interval& re_tan,bool& re_first,bool both) 
+void ReAdd(
+#ifdef FILIB_VERSION
+	   const double& hx,const double& hy,
+#else //C-XSC Version
+           const real& hx,const real& hy,
+#endif
+	   interval& re_tan,bool& re_first,bool both) 
 {
   if( both ) 
     {
@@ -191,12 +283,21 @@ void ReAdd(const double& hx,const double& hy,interval& re_tan,bool& re_first,boo
 	}
       else 
 	{ //Interval hull of former calculations
+#ifdef FILIB_VERSION
 	  re_tan = hull( re_tan, sin( HX ) * cosHX /( sqr( cosHX ) + sqr( sinh( HY )) ) );
+#else //C-XSC Version
+	  re_tan |= sin( HX ) * cosHX /( sqr( cosHX ) + sqr( sinh( HY )) );
+#endif
 	}
     }
 }
 
-void ReAdd(const interval& hx,const double& hy,interval& re_tan,bool& re_first,bool both) 
+void ReAdd(const interval& hx,
+#ifdef FILIB_VERSION
+	   const double& hy,interval& re_tan,bool& re_first,bool both) 
+#else //C-XSC Version
+           const real& hy,interval& re_tan,bool& re_first,bool both) 
+#endif
 {
   if( both ) 
     {
@@ -208,12 +309,22 @@ void ReAdd(const interval& hx,const double& hy,interval& re_tan,bool& re_first,b
 	}
       else 
 	{ //Interval hull of former calculations
+#ifdef FILIB_VERSION
 	  re_tan = hull( re_tan, sin( hx ) * cosHX /( sqr( cosHX ) + sqr( sinh( interval(hy) )) ) );
+#else //C-XSC Version
+	  re_tan |= sin( hx ) * cosHX /( sqr( cosHX ) + sqr( sinh( interval(hy) )) );
+#endif
 	}
     }
 }
 
-void ImAdd(const double& hx,const double& hy,interval& im_tan,bool& im_first) 
+void ImAdd(
+#ifdef FILIB_VERSION
+           const double& hx,const double& hy,
+#else //C-XSC Version
+	   const real& hx,const real& hy,
+#endif
+	   interval& im_tan,bool& im_first) 
 {
   interval HX( hx ),HY( hy ),sinhHY( sinh( HY ) );
   if( im_first ) 
@@ -223,11 +334,21 @@ void ImAdd(const double& hx,const double& hy,interval& im_tan,bool& im_first)
     }
   else 
     { //Interval hull of former calculations
+#ifdef FILIB_VERSION
       im_tan = hull( im_tan, sinhHY * cosh( HY ) /( sqr( cos( HX )) + sqr( sinhHY ) ) );
+#else //C-XSC Version
+      im_tan |= sinhHY * cosh( HY ) /( sqr( cos( HX )) + sqr( sinhHY ) );
+#endif
     }
 }
 
-void ImAdd(const interval& hy,const double& hx,interval& im_tan,bool& im_first) 
+void ImAdd(const interval& hy,
+#ifdef FILIB_VERSION
+	   const double& hx,
+#else //C-XSC Version
+	   const real& hx,
+#endif
+	   interval& im_tan,bool& im_first) 
 {
   interval sinhHY( sinh( hy ) );
   if( im_first ) 
@@ -237,9 +358,27 @@ void ImAdd(const interval& hy,const double& hx,interval& im_tan,bool& im_first)
     }
   else 
     { //Interval hull of former calculations
+#ifdef FILIB_VERSION
       im_tan = hull( im_tan, sinhHY * cosh( hy ) /( sqr( cos( interval( hx ) )) + sqr( sinhHY ) ) );
+#else //C-XSC Version
+      im_tan |= sinhHY * cosh( hy ) /( sqr( cos( interval( hx ) )) + sqr( sinhHY ) );
+#endif
     }
 }
+
+#ifdef FILIB_VERSION
+#else //C-XSC Version
+
+bool disjoint(const interval& x,const interval& y) 
+{
+  real ix( Inf(x) ),iy( Inf(y) ),sx( Sup(x) ), sy( Sup(y) );
+  real inf( ( ix > iy )? ix : iy );
+  real sup( ( sx < sy )? sx : sy );
+
+  return ( inf > sup );
+}
+
+#endif
 
 void htan(const interval& x,const interval& y,interval& re_tan,interval& im_tan,bool both) 
 {
@@ -253,18 +392,19 @@ void htan(const interval& x,const interval& y,interval& re_tan,interval& im_tan,
   /* Real part of arguments from left to right */
   
   interval hint(0.0),argx(0.0),argy(0.0);
-  
+
+#ifdef FILIB_VERSION
   if( inf(x) < (-inf(QUARTERPI())) ) 
     { //Real part of argument intersects [-pi/2,-pi/4] 
 
       if( (-inf(QUARTERPI())) < sup(x) ) hint = interval( inf(x), -inf(QUARTERPI()) );
-      else                            hint = x; //hint = Intersection of x and [-pi/2,-pi/4] 
+      else                               hint = x; //hint = Intersection of x and [-pi/2,-pi/4] 
     
       ReAdd(inf(x),sup(y),re_tan,Re_first,both);     //possible maximum 
       ReAdd(sup(hint),sup(y),re_tan,Re_first,both);  //possible maximum 
       ImAdd(sup(hint),sup(y),im_tan,Im_first);       //possible minimum 
       ImAdd(sup(hint),inf(y),im_tan,Im_first);       //possible minimum 
-    
+
       if( both ) 
 	{ //minimum of real part in hint 
 	  if( inf(y) > 0 ) 
@@ -280,6 +420,7 @@ void htan(const interval& x,const interval& y,interval& re_tan,interval& im_tan,
 	  else ReAdd(inf(x),inf(y),re_tan,Re_first,both); //minimum 
 	}
       //maximum of imaginary part in hint 
+
       if( inf(x) < -sup(QUARTERPI()) ) 
 	{
 	  argy = acoth(-tan(interval(inf(x)))); //maximum for fixed x and arbitrary y
@@ -292,7 +433,7 @@ void htan(const interval& x,const interval& y,interval& re_tan,interval& im_tan,
 	}
       else ImAdd(y,inf(x),im_tan,Im_first);
     }
-  
+
   hint = interval(-inf(QUARTERPI()) , 0);
   if( !disjoint( hint , x ) ) 
     { //Real part of arguments intersects [-pi/4,0] 
@@ -312,7 +453,7 @@ void htan(const interval& x,const interval& y,interval& re_tan,interval& im_tan,
       ImAdd(sup(hint),sup(y),im_tan,Im_first); //maximum 
       ImAdd(inf(hint),inf(y),im_tan,Im_first); //minimum 
     }
-  
+
   if( sup(x) > inf(QUARTERPI()) ) 
     { //Real part of argument intersects [pi/4,pi/2] 
       if( inf(x) < inf(QUARTERPI()) ) hint = interval(inf(QUARTERPI()),sup(x));
@@ -348,7 +489,104 @@ void htan(const interval& x,const interval& y,interval& re_tan,interval& im_tan,
       //Possible minima: top corners 
       ReAdd(inf(hint),sup(y),re_tan,Re_first,both);
       ReAdd(sup(x),sup(y),re_tan,Re_first,both);  
+    }  
+#else //C-XSC Version
+  if( Inf(x) < (-Inf(QUARTERPI())) ) 
+    { //Real part of argument intersects [-pi/2,-pi/4] 
+      if( (-Inf(QUARTERPI())) < Sup(x) ) hint = interval( Inf(x), -Inf(QUARTERPI()) );
+      else                               hint = x; //hint = Intersection of x and [-pi/2,-pi/4] 
+    
+      ReAdd(Inf(x),Sup(y),re_tan,Re_first,both);     //possible maximum 
+      ReAdd(Sup(hint),Sup(y),re_tan,Re_first,both);  //possible maximum 
+      ImAdd(Sup(hint),Sup(y),im_tan,Im_first);       //possible minimum 
+      ImAdd(Sup(hint),Inf(y),im_tan,Im_first);       //possible minimum 
+
+      if( both ) 
+	{ //minimum of real part in hint 
+	  if( Inf(y) > 0 ) 
+	    {
+	      argx = atan(coth(interval(Inf(y)))); 
+	      if( disjoint(argx , hint) ) 
+		{ 
+		  if( Inf(x) < Inf(argx) ) ReAdd(Inf(x),Inf(y),re_tan,Re_first,both);    //minimum 
+		  else                     ReAdd(Sup(hint),Inf(y),re_tan,Re_first,both); //minimum 
+		}
+	      else ReAdd(argx,Inf(y),re_tan,Re_first,both);
+	    }
+	  else ReAdd(Inf(x),Inf(y),re_tan,Re_first,both); //minimum 
+	}
+      //maximum of imaginary part in hint 
+
+      if( Inf(x) < -Sup(QUARTERPI()) ) 
+	{
+	  argy = acoth(-tan(interval(Inf(x)))); //maximum for fixed x and arbitrary y
+	  if( disjoint(argy , y) ) 
+	    { //maximum in one of the left corners 
+	      if( Inf(y)< Sup(argy) ) ImAdd(Inf(x),Inf(y),im_tan,Im_first);
+	      else                    ImAdd(Inf(x),Sup(y),im_tan,Im_first);
+	    }
+	  else ImAdd(argy,Inf(x),im_tan,Im_first);
+	}
+      else ImAdd(y,Inf(x),im_tan,Im_first);
     }
+
+  hint = interval(-Inf(QUARTERPI()) , 0);
+  if( !disjoint( hint , x ) ) 
+    { //Real part of arguments intersects [-pi/4,0] 
+      hint &= x;
+      ReAdd(Sup(hint),Sup(y),re_tan,Re_first,both); //maximum 
+      ReAdd(Inf(hint),Inf(y),re_tan,Re_first,both); //minimum 
+      ImAdd(Inf(hint),Sup(y),im_tan,Im_first); //maximum 
+      ImAdd(Sup(hint),Inf(y),im_tan,Im_first); //minimum 
+    }
+  
+  hint = interval( 0 ,Inf(QUARTERPI()) );
+  if( !disjoint( hint , x ) ) 
+    { //Real part of argument intersects [0,pi/4] 
+      hint &= x;
+      ReAdd(Sup(hint),Inf(y),re_tan,Re_first,both); //maximum 
+      ReAdd(Inf(hint),Sup(y),re_tan,Re_first,both); //minimum 
+      ImAdd(Sup(hint),Sup(y),im_tan,Im_first); //maximum 
+      ImAdd(Inf(hint),Inf(y),im_tan,Im_first); //minimum 
+    }
+  
+  if( Sup(x) > (Inf(QUARTERPI())) ) 
+    { //Real part of argument intersects [pi/4,pi/2] 
+      if( Inf(x) < (Inf(HALFPI())) ) hint = interval(Inf(QUARTERPI()),Sup(x));
+      else                           hint = x;
+      if( both ) 
+	{ //Maximum of real part in hint 
+	  if( Inf(y) == 0 ) ReAdd(Sup(x),Inf(y),re_tan,Re_first,both);
+	  else 
+	    {
+	      argx = atan(coth(interval(Inf(y)))); //Maximum for fixed argy, arbitrary argx 
+	      if( disjoint(argx , x ) ) 
+		{ //Maximum in one of the bottom corners
+		  if(Sup(argx)< Inf(hint)) ReAdd(Inf(hint),Inf(y),re_tan,Re_first,both);
+		  else                     ReAdd(Sup(x),Inf(y),re_tan,Re_first,both);
+		}
+	    }
+	}
+  
+      //Maximum of imaginary part in hint 
+      if( Sup(x) < (Inf(QUARTERPI())) )  
+	{
+	  argy = acoth(tan(interval(Sup(x)))); //Maximum for fixed x and arbitrary y 
+	  if( disjoint(argy , y) ) 
+	    { //Maximum in one of the right corners 
+	      if(Sup(y)< Inf(argy)) ImAdd(Sup(x),Sup(y),im_tan,Im_first);
+	      else                  ImAdd(Sup(x),Inf(y),im_tan,Im_first);
+	    }
+	}
+      else ImAdd(y,Sup(x),im_tan,Im_first);
+      //Possible minima : left corners  
+      ImAdd(Inf(hint),Sup(y),im_tan,Im_first);
+      ImAdd(Inf(hint),Inf(y),im_tan,Im_first);
+      //Possible minima: top corners 
+      ReAdd(Inf(hint),Sup(y),re_tan,Re_first,both);
+      ReAdd(Sup(x),Sup(y),re_tan,Re_first,both);  
+    }
+#endif
 }
 
 
@@ -360,7 +598,9 @@ void h_tan(const interval& x,const interval& y,interval& re_tan,interval& im_tan
   bool bisection( false ); // Pi/2 mod Pi  in x ? 
   
   Error = 0;
-  if ( x == interval::ZERO() )  
+
+#ifdef FILIB_VERSION
+  if ( x == interval::ZERO() ) 
     {
       re_tan = x;               //Re(tan) = 0
       im_tan = tanh(y);
@@ -378,21 +618,19 @@ void h_tan(const interval& x,const interval& y,interval& re_tan,interval& im_tan
 	  else
 	    { 
 	      //Since  z equivalent (z mod pi), use  
-	      //equivalent argument in [ -pi/2 , pi/2 ] .
-
+	      //equivalent argument in [ -pi/2 , pi/2 ] .  
 	      double r_int;
 
 	      if( inf(x) > 0 ) modf( inf(x/interval::PI()) + 0.5, &r_int );
 	      else             modf( inf(x/interval::PI()) - 0.5, &r_int );
 	      
 	      hx = x - r_int * interval::PI();
-	      
 
 	      if( inf(interval::PI()) < (2*sup(hx)) )  
 		{
 		  bisection = true;
 		  hx2 = interval( -sup(HALFPI()), sup(hx)-inf(HALFPI()) );
-		  hx  = interval(  inf(hx)    , sup(HALFPI())         );
+		  hx  = interval(  inf(hx)      , sup(HALFPI())         );
 		} 
 
 	      BOTH = true;
@@ -473,6 +711,116 @@ void h_tan(const interval& x,const interval& y,interval& re_tan,interval& im_tan
 	    }
 	}
     }
+#else //C-XSC Version
+  if ( x == interval(0.0) )  
+    {
+      re_tan = x;               //Re(tan) = 0
+      im_tan = tanh(y);
+    }
+  else
+    {
+      if( (!disjoint(interval(0.0),y)) && (!disjoint(interval(0.0),cos(x))) ) Error = 1;
+      else
+	{
+	  if ( y == interval(0.0) )  
+	    {
+	      re_tan = tan(x);
+	      im_tan = y;         //Im(tan) = 0
+	    }
+	  else
+	    { 
+	      //Since  z equivalent (z mod pi), use  
+	      //equivalent argument in [ -pi/2 , pi/2 ] .  
+
+	      if( sign(Inf(x)) == 1 ) hx = x - int( _double( Inf(x/PI()) + 0.5 ) ) * PI();
+	      else    		      hx = x - int( _double( Inf(x/PI()) - 0.5 ) ) * PI();
+
+	      if( Inf(PI()) < (2*Sup(hx)) )  
+		{
+		  bisection = true;
+		  hx2 = interval( -Sup(HALFPI()),Sup(hx)-Inf(HALFPI()) );
+		  hx  = interval(  Inf(hx)      ,Sup(HALFPI()) );
+		} 
+
+	      BOTH = true;
+	      //Use  tan(transp(z))=transp(tan(z))  for cinterval z. 
+	      //Only arguments in upper half plane are required! 
+	      if( Sup(y) <= 0 )  
+		{
+		  if( bisection )
+		    {
+		      htan(hx,-y,re_tan,im_tan,BOTH);
+		      htan(hx2,-y,Retan,Imtan,BOTH);
+		      im_tan = -( im_tan | Imtan);
+		      re_tan |= Retan;
+		    }
+		  else
+		    {
+		      htan(hx,-y,re_tan,im_tan,BOTH);
+		      im_tan = -im_tan;
+		    }
+		}
+	      else
+		{
+		  if( Inf(y) >= 0 )  
+		    {
+		      if( bisection )
+			{
+			  htan(hx,y,re_tan,im_tan,BOTH);
+			  htan(hx2,y,Retan,Imtan,BOTH);
+			  im_tan |= Imtan;
+			  re_tan |= Retan;
+			}
+		      else htan(hx,y,re_tan,im_tan,BOTH);
+		    }
+		  else
+		    {
+		      if( -Inf(y) < Sup(y) )
+			{
+			  if( bisection )
+			    {
+			      htan(hx,interval(0,Sup(y)),re_tan,im_tan,BOTH);
+			      htan(hx2,interval(0,Sup(y)),Retan,im_tan,BOTH);
+			      im_tan |= im_tan;
+			      re_tan |= Retan;
+			      htan(hx,interval(0,-Inf(y)),re_tan,Imtan,!BOTH);
+			      im_tan |=  -Imtan; 
+			      htan(hx2,interval(0,-Inf(y)),re_tan,Imtan,!BOTH);
+			      im_tan |= -Imtan;
+			    }
+			  else
+			    {
+			      htan(hx,interval(0,Sup(y)),re_tan,im_tan,BOTH);
+			      htan(hx,interval(0,-Inf(y)),re_tan,Imtan,!BOTH);
+			      im_tan |= -Imtan;
+			    }
+			}
+		      else
+			{
+			  if( bisection )
+			    {
+			      htan(hx,interval(0,-Inf(y)),re_tan,Imtan,BOTH);
+			      htan(hx,interval(0,Sup(y)),re_tan,im_tan,!BOTH);
+			      im_tan |= -Imtan;
+			      htan(hx2,interval(0,-Inf(y)),Retan,Imtan,BOTH);
+			      im_tan |=  Imtan;
+			      re_tan |=  Retan;
+			      htan(hx2,interval(0,Sup(y)),re_tan,im_tan,!BOTH);
+			      im_tan |= -Imtan;
+			    }
+			  else
+			    {
+			      htan(hx,interval(0,-Inf(y)),re_tan,Imtan,BOTH);
+			      htan(hx,interval(0,Sup(y)),re_tan,im_tan,!BOTH);
+			      im_tan |= -Imtan;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+#endif
 }
 	
 /* ****************************************************************/
@@ -494,6 +842,8 @@ void h_cot(const interval& x,const interval& y,interval& re_cot,interval& im_cot
   //If yes: bisect input interval
   
   Error =  0;
+
+#ifdef FILIB_VERSION
   if( (!disjoint(interval::ZERO(),y))&&(!disjoint(interval::ZERO(),sin(x))) ) 
     {
       Error = 1;
@@ -613,6 +963,116 @@ void h_cot(const interval& x,const interval& y,interval& re_cot,interval& im_cot
 	    }
 	}
     }
+#else //C-XSC Version
+  if( (!disjoint(interval(0.0),y))&&(!disjoint(interval(0.0),sin(x))) ) 
+    {
+      Error = 1;
+    }
+  else
+    {
+      if( y == interval(0.0) ) 
+	{
+	  re_cot = cot(x);
+	  im_cot = y;               //Im(cot) = 0 
+	}
+      else
+	{
+	  if( x == interval(0.0) ) 
+	    {
+	      re_cot =  x;              //Re(cot) = 0 
+	      im_cot =  coth(y);
+	    }
+	  else 
+	    {
+	      /* z equivalent (z mod pi), use equivalent          */
+	      /* argument in [ 0 , Pi ] . Since                   */
+	      /*          cot(z)=tan(Pi/2 - z)                    */
+	      /* compute                                          */
+	      /*    hz = Pi/2 - z  mod Pi  in  [ -Pi/2 , Pi/2 ]   */
+	      /* and use procedure htan.                          */
+	      if( (Sup(x)-Inf(x)) > Inf(PI()) ) 
+		{
+		  hx = interval(-Sup(HALFPI()),Sup(HALFPI()));
+		}
+	      else
+		{
+		  /* z equivalent (z mod pi), use               */
+		  /* equivalent argument in [ -pi/2 , pi/2 ] .  */
+		  if( Inf(x) < 0 ) hx = -x + ( -1 - 2 * int( _double( -Inf(x/PI()) ) ) ) * HALFPI(); 
+		  else	           hx = -x + (  1 + 2 * int( _double(  Inf(x/PI()) ) ) ) * HALFPI();
+		  
+		  if( Sup(hx) > Inf(HALFPI()) )  
+		    {
+		      bisection = true;
+		      hx2 = interval(-Sup(HALFPI()),Sup(hx)-Inf(HALFPI()) );
+		      hx  = interval( Inf(hx)      ,Sup(HALFPI())         );
+		    }
+		  else bisection = false; 
+		}
+	   
+	      BOTH =  true;
+	      /* Use tan(transp(z))=transp(tan(z))  for cinterval z. */
+	      /* Requires only arguments in upper half plane!        */
+	      if( Sup(y) <= 0) 
+		{
+		  htan(hx,-y,re_cot,im_cot,BOTH);
+		  if( bisection ) 
+		    {
+		      htan(hx2,-y,Recot,Imcot,BOTH);
+		      re_cot |= Recot;
+		      im_cot = -(im_cot | Imcot);
+		    }
+		  else im_cot =  -im_cot;
+		}
+	      else
+		{
+		  if ( Inf(y) >= 0 ) 
+		    {
+		      if( bisection )
+			{
+			  htan(hx,y,re_cot,im_cot,BOTH);
+			  htan(hx2,y,Recot,Imcot,BOTH);
+			  re_cot |= Recot;
+			  im_cot |= Imcot; 
+			}
+		      else htan(hx,y,re_cot,im_cot,BOTH);
+		    }
+		  else
+		    {
+		      if( -Inf(y) < Sup(y) )
+			{
+			  htan(hx,interval(0,Sup(y)),re_cot,im_cot,BOTH);
+			  htan(hx,interval(0,-Inf(y)),Recot,Imcot,!BOTH);
+			  im_cot |= (-Imcot);
+			  if( bisection )
+			    {
+			      htan(hx2,interval(0,Sup(y)),Recot,Imcot,BOTH);
+			      re_cot |= Recot;
+			      im_cot |= Imcot;
+			      htan(hx,interval(0,-Inf(y)),Recot,Imcot,!BOTH);
+			      im_cot |= (-Imcot);
+			    }
+			}
+		      else
+			{
+			  htan(hx,interval(0,-Inf(y)),re_cot,Imcot,BOTH);
+			  htan(hx,interval(0,Sup(y)),Recot,im_cot,!BOTH);
+			  im_cot |= (-Imcot);
+			  if( bisection )
+			    {
+			      htan(hx2,interval(0,-Inf(y)),Recot,Imcot,BOTH);
+			      re_cot |= Recot;
+			      im_cot |= (-Imcot); 
+			      htan(hx2,interval(0,Sup(y)),Recot,Imcot,!BOTH);
+			      im_cot |= Imcot;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+#endif
 }
 
 cinterval tan(const cinterval& z) 
@@ -698,10 +1158,11 @@ cinterval coth(const cinterval& z)
 
 interval arg(const cinterval& z) 
 {
-  interval wert(0.0); 
+  //interval wert(0.0); 
   interval hxl(0.0),hyl(0.0);
   interval hxu(0.0),hyu(0.0);
-  
+
+#ifdef FILIB_VERSION  
   if( interval::ZERO() == Re(z) ) 
     {
       if( interval::ZERO() == Im(z) ) throw function_not_defined();//arg not defined at (0,0).
@@ -787,16 +1248,103 @@ interval arg(const cinterval& z)
 	    }
 	}
     }
+#else //C-XSC Version
+  if( interval(0.0) == Re(z) ) 
+    {
+      if( interval(0.0) == Im(z) ) throw function_not_defined();//arg not defined at (0,0).
+      else                         //z purely imaginary  
+	{
+	  if( 0 < Inf(Im(z)) )  return HALFPI();       //Im(z) positive
+	  else 
+	    if( 0 > Sup(Im(z)) )  return -HALFPI(); //Im(z) negative
+	    else return interval(-Sup(HALFPI()),Sup(HALFPI()));
+	}
+    }
+  else 
+    {    
+      hxl = interval(Inf(Re(z))); hxu = interval(Sup(Re(z)));
+      hyl = interval(Inf(Im(z))); hyu = interval(Sup(Im(z))); 
+      if( interval(0.0) <= Re(z) ) 
+	{
+	  if( interval(0.0) <= Im(z) )            //all quadrants 
+	    return 2 * interval(-Sup(HALFPI()),Sup(HALFPI()));
+	  else 
+	    {
+	      if( Inf(Im(z)) >= 0 )                //1. and 2. quadrant 
+		return interval(Inf(atan(hyl/hxu)),Sup(atan(hyl/hxl)+PI()));//Minimum, maximum 
+	      else                                   //3. and 4. quadrant 
+		return interval(Inf(atan(hyu/hxl)-PI()),Sup(atan(hyu/hxu)));//Minimum, maximum 
+	    }
+	}
+      else
+	{ 
+	  if( interval(0.0) <= Im(z) ) 
+	    {
+	      if( Inf(Re(z)) >= 0 )                //1. and 4. quadrant 
+		{
+		  if ( Inf(Re(z)) == 0 ) 
+		    return interval(-Sup(HALFPI()),Sup(HALFPI())); //Minimum, maximum 
+		  else
+		    return interval(Inf(atan(hyl/hxl)),Sup(atan(hyu/hxl))); //Minimum, maximum 
+		}
+	      else                              //2. and 3. quadrant (intersection) 
+		{
+		  if( Sup(Re(z)) == 0 ) 
+		    return interval(Inf(HALFPI()),Sup(3*HALFPI())); //Minimum, maximum 
+		  else
+		    return interval(Inf(atan(hyu/hxu)),Sup(atan(hyl/hxu))) + PI(); //Minimum, maximum 
+		}
+	    }
+	  else                 //argument lies in single quadrant  
+	    {
+	      if( Inf(Im(z)) >= 0 )                   //upper half plane
+		{
+		  if( Inf(Re(z)) >= 0 )                     //1. quadrant 
+		    {
+		      if( Inf(Re(z)) == 0 ) 
+			return interval(Inf(atan(hyl/hxu)),Sup(HALFPI())); //Minimum, maximum 
+		      else 
+			return interval(Inf(atan(hyl/hxu)),Sup(atan(hyu/hxl))); //Minimum, maximum 
+		    }
+		  else                                            //2. quadrant 
+		    {
+		      if( Sup(Re(z)) == 0 )  
+			return interval(Inf(HALFPI()),Sup(atan(hyl/hxl)+PI())); //Maximum 
+		      else
+			return interval(Inf(atan(hyu/hxu)),Sup(atan(hyl/hxl))) + PI(); //Minimum, maximum 
+		    }
+		}
+	      else                                          //lower half plane 
+		{
+		  if( Inf(Re(z)) >= 0 )                     //4. quadrant 
+		    {
+		      if( Inf(Re(z)) == 0 ) 
+			return interval(-Sup(HALFPI()),Sup(atan(hyu/hxu))); //Minimum, maximum 
+		      else
+			return interval(Inf(atan(hyl/hxl)),Sup(atan(hyu/hxu))); //Minimum, maximum 
+		    }
+		  else                                            //3. quadrant 
+		    {
+		      if( Sup(Re(z)) == 0 ) 
+			return interval(-Sup(HALFPI()),Sup(atan(hxu/hyl)-PI())); //Minimum, maximum 
+		      else
+			return interval(Inf(atan(hyu/hxl)),Sup(atan(hyl/hxu))) - PI(); //Minimum, maximum 
+		    }
+		}
+	    }
+	}
+    }
+#endif
 }  
 
 inline interval abs(const interval& x,const interval& y) 
 {
-  return sqrt(sqr(x)+sqr(y)); 
+  return sqrt(sqr(x)+sqr(y));
 } 
-
 
 cinterval ln(const cinterval& z) 
 {
+#ifdef FILIB_VERSION
   double re_min(0.0),im_min(0.0);
   double re_max(0.0),im_max(0.0);
   interval re_ln(0.0);
@@ -826,10 +1374,42 @@ cinterval ln(const cinterval& z)
 			  sup( log( abs(interval(re_max),interval(im_max)) ) )  );
 	return cinterval(re_ln,arg(z));
       }
+#else //C-XSC Version
+  real re_min(0.0),im_min(0.0);
+  real re_max(0.0),im_max(0.0);
+  interval re_ln(0.0);
+  
+  real srez( Sup( Re(z) ) ),irez( Inf( Re(z) ) ), simz( Sup( Im(z) ) ),iimz( Inf( Im(z) ) );
+
+  if( srez < 0 )  re_min = -srez;
+  else 
+    if( irez < 0 ) re_min = 0;
+    else re_min = irez;
+
+  if( simz < 0 ) im_min = -simz;
+  else 
+    if( iimz < 0 ) im_min = 0;
+    else im_min = iimz;
+  
+  if( re_min == 0 && im_min == 0 )//Singularity of logarithm in argument.
+    throw function_not_defined();
+  else 
+    if( (srez <= 0)&&(im_min==0) )//Argument intersects negative real axis.
+      throw function_not_defined();
+    else
+      { 
+	re_max = max( srez, -irez );
+	im_max = max( simz, -iimz );
+	re_ln = interval( Inf( ln( abs(interval(re_min),interval(im_min)) ) ),
+			  Sup( ln( abs(interval(re_max),interval(im_max)) ) )  );
+	return cinterval(re_ln,arg(z));
+      }
+#endif
 }
 
 inline interval sign(const interval& x) 
 {
+#ifdef FILIB_VERSION
   double ix = inf(x), sx = sup(x);
   double inf, sup;
 
@@ -844,12 +1424,16 @@ inline interval sign(const interval& x)
     else     sup =  0;
 
   return interval( inf, sup ); 
+#else //C-XSC Version
+  return interval(sign(Inf(x)),sign(Sup(x))); 
+#endif
 }
 
 interval re_sqrt(const interval& x,const interval& y) 
 {
   //Formulas for special quadrants 
 
+#ifdef FILIB_VERSION
   if( sup(x) < 0 )
     {
       if( y == interval::ZERO() ) return interval::ZERO();
@@ -860,12 +1444,25 @@ interval re_sqrt(const interval& x,const interval& y)
       if( y == interval::ZERO() ) return sqrt(x);
       else return 1.0/sqrt(interval(2.0))*sqrt(abs(x,y)+x);
     }
+#else //C-XSC Version
+  if( Sup(x) < 0 )
+    {
+      if( y == interval(0.0) ) return interval(0.0);
+      else return 1/sqrt(interval(2.0))*abs(y)/sqrt(abs(x,y)-x);
+    }
+  else 
+    {
+      if( y == interval(0.0) ) return sqrt(x);
+      else return 1/sqrt(interval(2.0))*sqrt(abs(x,y)+x);
+    }
+#endif
 }
 
 interval im_sqrt(const interval& x,const interval& y) 
 {
   //Formulas for special quadrants 
 
+#ifdef FILIB_VERSION 
   if( sup(x) < 0 )
     {
       if( y == interval::ZERO() ) return 1.0/sqrt(-x);
@@ -876,10 +1473,23 @@ interval im_sqrt(const interval& x,const interval& y)
       if( y == interval::ZERO() ) return interval::ZERO(); 
       else return 1.0/sqrt(interval(2.0))*y/sqrt(abs(x,y)+x);
     }
+#else //C-XSC Version
+  if( Sup(x) < 0 )
+    {
+      if( y == interval(0.0) ) return 1/sqrt(-x);
+      else return 1/sqrt(interval(2.0))*sign(y)*sqrt(abs(x,y)-x);
+    }
+  else
+    {
+      if( y == interval(0.0) ) return interval(0.0); 
+      else return 1/sqrt(interval(2.0))*y/sqrt(abs(x,y)+x);
+    }
+#endif
 }
 
 cinterval sqrt(const cinterval& z) 
 {
+#ifdef FILIB_VERSION
   interval rwert(0.0),iwert(0.0);
   interval hxl( inf(Re(z)) ),hyl( inf(Im(z)) );
   interval hxu( sup(Re(z)) ),hyu( sup(Im(z)) );
@@ -913,11 +1523,50 @@ cinterval sqrt(const cinterval& z)
 	}
     }
   return cinterval(rwert,iwert);
+#else //C-XSC Version
+  interval rwert(0.0),iwert(0.0);
+  interval hxl( InfRe(z) ),hyl( InfIm(z) );
+  interval hxu( SupRe(z) ),hyu( SupIm(z) );
+
+  if( (Sup(hxl) < 0.0) && (Sup(hyl) <= 0.0) && (Inf(hyu) >= 0.0) ) 
+    throw function_not_defined();//Argument intersects negative real axis
+  
+  if( Sup(hyu) < 0 )  //lower half plane (without intersection)
+    {
+      rwert = re_sqrt(hxl,hyu); //Minimum 
+      rwert = interval(Inf(rwert),Sup(re_sqrt(hxu,hyl))); //with maximum 
+      iwert = im_sqrt(hxl,hyl); //Minimum 
+      iwert = interval(Inf(iwert),Sup(im_sqrt(hxu,hyu))); //with maximum 
+    } 
+  else
+    {
+      if( Inf(hyl) >= 0 )  //upper half plane 
+	{
+	  rwert = re_sqrt(hxl,hyl); //Minimum 
+	  rwert = interval(Inf(rwert),Sup(re_sqrt(hxu,hyu)));//with maximum 
+	  iwert = im_sqrt(hxu,hyl); //Minimum 
+	  iwert = interval(Inf(iwert),Sup(im_sqrt(hxl,hyu)));//with maximum 
+	} 
+       else  //Zero contained im imaginary part of argument! 
+	{
+	  //right half plane (no intersection) 
+	  rwert = sqrt(hxl); //Minimum 
+	  rwert = interval(Inf(rwert),max(Sup(re_sqrt(hxu,hyu)),Sup(re_sqrt(hxu,hyl))));
+	  iwert = im_sqrt(hxl,hyl); //Minimum 
+	  iwert = interval(Inf(iwert),Sup(im_sqrt(hxl,hyu))); //with maximum 
+	} 
+    }
+  return cinterval(rwert,iwert);
+#endif
 }
 
 cinterval sqrt(const cinterval& z,int n) 
 {
+#ifdef FILIB_VERSION
   if( n==0 ) return cinterval( interval::ONE(), interval::ZERO() );
+#else //C-XSC Version
+  if( n==0 ) return cinterval( 1.0 );
+#endif
   if( n==1 ) return z;
   if( n==2 ) return sqrt( z );
   if( n>=3 ) return pow( z, interval( 1.0/n ) );
@@ -930,7 +1579,6 @@ cinterval sqr(const cinterval& z)
     B( Im(z) );
   return cinterval( sqr( A ) - sqr( B ) , 2.0 * A * B );
 }
-
 
 /* ********************************************************/
 /* *** arcsin from diploma thesis of Gabriele Buehler. ****/
@@ -946,7 +1594,12 @@ inline interval s_re(const interval& ix,const interval& iy)
   return 2.0 * iy / ( ix*ix + iy*iy - 1.0 );
 }
 
-interval re_arcsin(const double& x,const double& y) 
+interval re_arcsin(
+#ifdef FILIB_VERSION
+		   const double& x,const double& y) 
+#else //C-XSC Version
+                   const real& x,const real& y) 
+#endif
 {
   //Real part 
   if( x == 0.0 ) 
@@ -987,7 +1640,11 @@ interval re_arcsin(const double& x,const double& y)
 	      hilf2 = hilf1 - 1.0;
 	      nenner = hilf1 + 1.0 + sqrt( sqr( hilf2 ) + 4.0 * iy*iy );
 	      sqrs_re =sqr( s_re(ix,iy) );
+#ifdef FILIB_VERSION
 	      if( sup(hilf1) < 1.0 )
+#else //C-XSC Version
+	      if( Sup(hilf1) < 1.0 )
+#endif
 		{
 		  zaehler = 2.0 - 2.0 * ix*ix - hilf2 * g(sqrs_re);
 		  hilf3 = sqrt(zaehler / nenner);
@@ -1004,7 +1661,12 @@ interval re_arcsin(const double& x,const double& y)
     }
 }
 
-interval im_arcsin(const double& x,const double& y) 
+interval im_arcsin(
+#ifdef FILIB_VERSION
+                   const double& x,const double& y) 
+#else //C-XSC Version
+                   const real& x,const real& y) 
+#endif
 {
   /* Interval computation of imaginary part of arcsin(z) */
   interval 
@@ -1014,12 +1676,16 @@ interval im_arcsin(const double& x,const double& y)
     hilf4(0.0),
     hilf5(0.0),
     hilf6(0.0),
-    nenner(0.0),
-    zaehler(0.0),
+    //nenner(0.0),
+    //zaehler(0.0),
     ix( abs(interval(x)) ),
     iy( y );
   interval t(0.0),r(0.0);
+#ifdef FILIB_VERSION
   double xc( abs(x) );
+#else //C-XSC Version
+  real xc( abs(x) );
+#endif
   
   //Imaginary part 
   if( y == 0.0 )           //y = 0.0 
@@ -1031,13 +1697,21 @@ interval im_arcsin(const double& x,const double& y)
 	  if( xc > 1.1 )       //x> 1.1 
 	    {
 	      t = 0.5 * ( (ix + 1.0) + (ix - 1.0) );
+#ifdef FILIB_VERSION
 	      return log(t + sqrt(sqr(t) - 1.0));
+#else //C-XSC Version
+	      return ln(t + sqrt(sqr(t) - 1.0));
+#endif
 	    }
 	  else                          //1< x < 1.1 
 	    {
 	      t = ix;
 	      r = t - 1.0;
+#ifdef FILIB_VERSION
 	      return log(1.0 + (r + sqrt(sqr(r) + 2.0 * r)));
+#else //C-XSC Version
+	      return ln(1.0 + (r + sqrt(sqr(r) + 2.0 * r)));
+#endif
 	    }
 	}
     }
@@ -1046,11 +1720,19 @@ interval im_arcsin(const double& x,const double& y)
       hilf1 = ix*ix + iy*iy;
       hilf2 = hilf1 + 1.0;
       if( xc == 0.0 )         //x= 0.0 
+#ifdef FILIB_VERSION
         return log(sqrt(1.0 + iy * iy) + iy);
+#else //C-XSC Version
+        return ln(sqrt(1.0 + iy * iy) + iy);
+#endif
       else                   //x <> 0.0 
         {
           t  = 0.5 * ( sqrt( hilf2 + 2.0 * ix) + sqrt( hilf2 - 2.0 * ix ));
+#ifdef FILIB_VERSION
           if( sup(t) <= 1.1 )   //t <= 1.1 
+#else //C-XSC Version
+          if( Sup(t) <= 1.1 )   //t <= 1.1 
+#endif
             {
               if( xc == 1.0 )   //x = 1.0 
                 r =  g(iy * iy /4.0) + 0.5 * iy;
@@ -1067,45 +1749,94 @@ interval im_arcsin(const double& x,const double& y)
                   else              //x > 1.0 
                     r  = 0.5 * (hilf4 + (ix - 1.0) + sqrt(hilf2 -2.0 * ix));
                 }
+#ifdef FILIB_VERSION
               return log(1.0 + (r + sqrt(sqr(r) + 2.0 * r)));
+#else //C-XSC Version
+              return ln(1.0 + (r + sqrt(sqr(r) + 2.0 * r)));
+#endif
             }
           else                    //t > 1.1 
+#ifdef FILIB_VERSION
             return log(t + sqrt(sqr(t) - 1.0));
+#else //C-XSC Version
+            return ln(t + sqrt(sqr(t) - 1.0));
+#endif
         }
     }
 }
 
-inline interval fortsetz_asin(const double& x,const double& y) 
+inline interval fortsetz_asin(
+#ifdef FILIB_VERSION
+                              const double& x,const double& y) 
+#else //C-XSC Version
+                              const real& x,const real& y) 
+#endif
 {
   interval hilf( re_arcsin(x,y) );
 
+#ifdef FILIB_VERSION
   if( hilf == interval::ZERO() ) 
     return interval::PI();
   else
     return interval::PI() - hilf;
+#else //C-XSC Version
+  if( hilf == 0.0 ) 
+    return PI();
+  else
+    return PI() - hilf;
+#endif
 }
 
-inline void z(const cinterval& z,double& re_l,double& re_u,double& im_l,double& im_u) 
+inline void z(const cinterval& z,
+#ifdef FILIB_VERSION
+              double& re_l,double& re_u,double& im_l,double& im_u) 
+#else //C-XSC Version
+              real& re_l,real& re_u,real& im_l,real& im_u) 
+#endif
 {
+#ifdef FILIB_VERSION
   re_l = inf(Re(z));
   re_u = sup(Re(z));
   im_l = inf(Im(z));
   im_u = sup(Im(z));
+#else //C-XSC Version
+  re_l = Inf(Re(z));
+  re_u = Sup(Re(z));
+  im_l = Inf(Im(z));
+  im_u = Sup(Im(z));
+#endif
 }
 
-inline void z(const interval& x,const interval& y,double& x_l,double& x_u,double& y_l,double& y_u) 
+inline void z(const interval& x,const interval& y,
+#ifdef FILIB_VERSION
+              double& x_l,double& x_u,double& y_l,double& y_u)
+#else //C-XSC Version
+              real& x_l,real& x_u,real& y_l,real& y_u) 
+#endif
 {
+#ifdef FILIB_VERSION
   x_l = inf(x);
   x_u = sup(x);
   y_l = inf(y);
   y_u = sup(y);
+#else //C-XSC Version
+  x_l = Inf(x);
+  x_u = Sup(x);
+  y_l = Inf(y);
+  y_u = Sup(y);
+#endif
 }
 
 interval real_asin(const cinterval& c) 
 {
+#ifdef FILIB_VERSION
   double xl(0.0),xu(0.0),yl(0.0),yu(0.0),maxy(0.0),max(0.0);
-  bool re_spiegel( false );
   double null( 0.0 ),eins( 1.0 );
+#else //C-XSC Version
+  real xl(0.0),xu(0.0),yl(0.0),yu(0.0),maxy(0.0),max(0.0);
+  real null( 0.0 ),eins( 1.0 );
+#endif
+  bool re_spiegel( false );
   interval ergxl(0.0),ergxu(0.0),ergx(0.0);
   cinterval c1( c );
   
@@ -1196,8 +1927,11 @@ interval real_asin(const cinterval& c)
 	    }
 	}
     }
-  
+#ifdef FILIB_VERSION
   ergx = interval(inf(ergxl),sup(ergxu));
+#else //C-XSC Version
+  ergx = interval(Inf(ergxl),Sup(ergxu));
+#endif
   if( re_spiegel ) 
     return -ergx;
   else
@@ -1206,9 +1940,14 @@ interval real_asin(const cinterval& c)
 
 interval imag_asin(const cinterval& c) 
 {
-  double xl(0.0),xu(0.0),yl(0.0),yu(0.0),maxx(0.0),maxy(0.0),max(0.0);
-  bool im_spiegel( false );
+#ifdef FILIB_VERSION
+  double xl(0.0),xu(0.0),yl(0.0),yu(0.0),maxx(0.0),maxy(0.0)/*,max(0.0)*/;
   double null( 0.0 ),eins( 1.0 );
+#else //C-XSC Version
+  real xl(0.0),xu(0.0),yl(0.0),yu(0.0),maxx(0.0),maxy(0.0),max(0.0);
+  real null( 0.0 ),eins( 1.0 );
+#endif
+  bool im_spiegel( false );
   interval ergyl(0.0),ergyu(0.0),ergy(0.0);
   cinterval c1( c );
 
@@ -1261,8 +2000,12 @@ interval imag_asin(const cinterval& c)
 	  ergyu = im_arcsin(maxx,yu);
 	}
     }
-  
+
+#ifdef FILIB_VERSION  
   ergy = interval(inf(ergyl),sup(ergyu));
+#else //C-XSC Version
+  ergy = interval(Inf(ergyl),Sup(ergyu));
+#endif
   
   if( im_spiegel )
     return -ergy;
@@ -1284,27 +2027,44 @@ interval imag_asin(const cinterval& c)
 
 cinterval asin(const cinterval& c) 
 {
+#ifdef FILIB_VERSION
   if(  (inf(Im(c)) <= 0.0) && (0.0 <= sup(Im(c))) &&   //Zero in imaginary part and
        ((inf(Re(c)) < -1.0) || (sup(Re(c)) > 1.0 ))  ) //real part intersects (-INFINITY,-1) and/or (1,+INFINITY)
     throw function_not_defined();
-
+#else //C-XSC Version
+  if(  (Inf(Im(c)) <= 0.0) && (0.0 <= Sup(Im(c))) &&   //Zero in imaginary part and
+       ((Inf(Re(c)) < -1.0) || (Sup(Re(c)) > 1.0 ))  ) //real part intersects (-INFINITY,-1) and/or (1,+INFINITY)
+    throw function_not_defined();
+#endif
   return cinterval(real_asin(c),imag_asin(c));
 }
 
 cinterval acos(const cinterval& c) 
 {
+#ifdef FILIB_VERSION
   if(  (inf(Im(c)) <= 0.0) && (0.0 <= sup(Im(c))) &&   //Zero in imaginary part and
        ((inf(Re(c)) < -1.0) || (sup(Re(c)) > 1.0 ))  ) //real part intersects (-INFINITY,-1) and/or (1,+INFINITY)
     throw function_not_defined();
+#else //C-XSC Version
+  if(  (Inf(Im(c)) <= 0.0) && (0.0 <= Sup(Im(c))) &&   //Zero in imaginary part and
+       ((Inf(Re(c)) < -1.0) || (Sup(Re(c)) > 1.0 ))  ) //real part intersects (-INFINITY,-1) and/or (1,+INFINITY)
+    throw function_not_defined();
+#endif
   
   return cinterval(real_asin(c)-HALFPI(),imag_asin(c));
 }
 
 cinterval asinh(const cinterval& c) 
 {
+#ifdef FILIB_VERSION
   if(  (inf(Re(c)) <= 0.0) && (0.0 <= sup(Re(c))) &&   //Zero in real part and
        ((inf(Im(c)) < -1.0) || (sup(Im(c)) > 1.0 ))  ) //imaginary part intersects i*(-INFINITY,-1) and/or i*(1,+INFINITY)
     throw function_not_defined();
+#else //C-XSC Version
+  if(  (Inf(Re(c)) <= 0.0) && (0.0 <= Sup(Re(c))) &&   //Zero in real part and
+       ((Inf(Im(c)) < -1.0) || (Sup(Im(c)) > 1.0 ))  ) //imaginary part intersects i*(-INFINITY,-1) and/or i*(1,+INFINITY)
+    throw function_not_defined();
+#endif
 
   cinterval hc( -Im(c), Re(c) ); //hc = i*c 
   
@@ -1313,11 +2073,17 @@ cinterval asinh(const cinterval& c)
 
 cinterval acosh(const cinterval& c) 
 {
+#ifdef FILIB_VERSION
   if(  (inf(Im(c)) <= 0.0) && (0.0 <= sup(Im(c))) &&   //Zero in imaginary part and
        (inf(Re(c)) < 1.0)                           ) //real part intersects (-INFINITY,1)
     throw function_not_defined();
+#else //C-XSC Version
+  if(  (Inf(Im(c)) <= 0.0) && (0.0 <= Sup(Im(c))) &&   //Zero in imaginary part and
+       (Inf(Re(c)) < 1.0)                           ) //real part intersects (-INFINITY,1)
+    throw function_not_defined();
+#endif
 
-  cinterval hc(real_asin(c)-HALFPI(),imag_asin(c));
+  cinterval hc( real_asin(c)-HALFPI(),imag_asin(c) );
   
   return cinterval(-Im(hc),Re(hc));               //arcosh = i * arccos(c) 
 }
@@ -1329,8 +2095,14 @@ cinterval acosh(const cinterval& c)
 /* ***  Auxiliary functions for inverse tangent ****/
 /* *************************************************/
 
-interval qbetrag(const double& lx,const double& ux,const double& ly,const double& uy) 
+interval qbetrag(
+#ifdef FILIB_VERSION
+                 const double& lx,const double& ux,const double& ly,const double& uy) 
+#else //C-XSC Version
+                 const real& lx,const real& ux,const real& ly,const real& uy) 
+#endif
 {
+#ifdef FILIB_VERSION
   double infqbetr(0.0),supqbetr(0.0);
   double tmp1,tmp2;
   
@@ -1384,12 +2156,70 @@ interval qbetrag(const double& lx,const double& ux,const double& ly,const double
 	else
 	  return qbetrag( 0.0,-lx,ly,uy );
       }
+#else //C-XSC Version
+  real Infqbetr(0.0),Supqbetr(0.0);
+  dotprecision akku(0.0);
+  
+  if( lx >= 0 ) 
+    {
+      if( ly > 0 ) 
+	{
+	  akku = 0.0;
+	  accumulate( akku , lx , lx ); accumulate( akku , ly , ly );
+	  Infqbetr = rnd( akku , RND_DOWN );
+	  akku = 0.0;
+	  accumulate( akku , ux , ux ); accumulate( akku , uy , uy );
+	  Supqbetr = rnd( akku , RND_UP );
+	}
+      else
+	if( uy < 0 )
+	  {
+	    akku = 0.0;
+	    accumulate( akku , lx , lx ); accumulate( akku , uy , uy );
+	    Infqbetr = rnd( akku , RND_DOWN );
+	    akku = 0.0;
+	    accumulate( akku , ux , ux ); accumulate( akku , ly , ly );
+	    Supqbetr = rnd( akku , RND_UP );
+	  }
+	else
+	  {
+	    
+	    Infqbetr = multdown( lx,lx );
+	    if ( -ly < uy ) {
+	      akku = 0.0;
+	      accumulate( akku , ux , ux ); accumulate( akku , uy , uy );
+	      Supqbetr = rnd( akku , RND_UP ); 
+	    }
+	    else 
+	      {
+		akku = 0.0;
+		accumulate( akku , ux , ux ); accumulate( akku , ly , ly );
+		Supqbetr = rnd( akku , RND_UP );
+	      }
+	  }
+      return interval(Infqbetr,Supqbetr);
+    }
+  else
+    if( ux <= 0 ) return qbetrag( -ux,-lx,ly,uy );
+    else
+      {
+	if( -lx < ux ) 
+	  return qbetrag( 0.0,ux,ly,uy );
+	else
+	  return qbetrag( 0.0,-lx,ly,uy );
+      }
+#endif
 }
 
-interval re_fun(const double& hx,const double& hy) 
+interval re_fun(
+#ifdef FILIB_VERSION
+                const double& hx,const double& hy) 
+#else //C-XSC Version
+                const real& hx,const real& hy) 
+#endif
 {
   interval qbetr( qbetrag(hx,hx,hy,hy) );
-  
+#ifdef FILIB_VERSION
   if( 1 > sup(qbetr) )
     return atan( interval(2*hx)/(1.0-qbetr) ) / 2.0;
   else
@@ -1399,10 +2229,27 @@ interval re_fun(const double& hx,const double& hy)
       else
 	return -QUARTERPI();
     }
+#else //C-XSC Version
+  if( 1 > Sup(qbetr) )
+    return atan( interval(2*hx)/(1-qbetr) ) / 2;
+  else
+    {
+      if( 1 < Inf(qbetr) )
+	return (atan( interval(2*hx)/(1-qbetr) ) - PI() )/2 ;
+      else
+	return -QUARTERPI();
+    }
+#endif
 }
 
-interval re_fun(const interval& hx,const double& hy) 
+interval re_fun(const interval& hx,
+#ifdef FILIB_VERSION
+                const double& hy) 
+#else //C-XSC Version
+                const real& hy) 
+#endif
 {
+#ifdef FILIB_VERSION
   interval qbetr( qbetrag(inf(hx),sup(hx),hy,hy) );
   
   if( 1 > sup(qbetr) )
@@ -1414,10 +2261,29 @@ interval re_fun(const interval& hx,const double& hy)
       else 
 	return -QUARTERPI();
     }
+#else //C-XSC Version
+  interval qbetr( qbetrag(Inf(hx),Sup(hx),hy,hy) );
+  
+  if( 1 > Sup(qbetr) )
+    return atan( 2*hx/(1-qbetr) ) / 2;
+  else
+    {
+      if( 1 < Inf(qbetr) ) 
+	return (atan( 2*hx/(1-qbetr) ) - PI() )/2;
+      else 
+	return -QUARTERPI();
+    }
+#endif
 }
 
-interval im_fun(const double& hx,const double& hy) 
+interval im_fun(
+#ifdef FILIB_VERSION
+                const double& hx,const double& hy) 
+#else //C-XSC Version
+                const real& hx,const real& hy) 
+#endif
 {
+#ifdef FILIB_VERSION
   double ly,uy;
 
   SUB_DOWN( ly, 1.0, hy );
@@ -1429,10 +2295,26 @@ interval im_fun(const double& hx,const double& hy)
     return log( abs(1.0+4.0*interval(hy)/nenner) ) / 4.0;
   else//Argument too near to singularity.
     throw function_not_defined();
+#else //C-XSC Version
+  real ly( subdown( 1 , hy ) ),uy( subup( 1 , hy ) );
+  interval nenner( qbetrag(hx,hx,ly,uy) );
+
+  if( 0 < Inf(nenner) ) 
+    return ln( abs(1+4*interval(hy)/nenner) ) / 4;
+  else//Argument too near to singularity.
+    throw function_not_defined();
+#endif
 }
 
-interval im_fun(const double& hx,const interval& hy) 
+interval im_fun(
+#ifdef FILIB_VERSION
+                const double& hx,
+#else //C-XSC Version
+                const real& hx,
+#endif
+                const interval& hy) 
 {
+#ifdef FILIB_VERSION
   double ly,uy;
 
   SUB_DOWN( ly, 1.0, sup(hy) );
@@ -1444,10 +2326,20 @@ interval im_fun(const double& hx,const interval& hy)
     return log(abs(1.0+4.0*hy/(sqr(interval(hx))+sqr(1.0-hy)))) / 4.0;
   else//Argument too near to singularity.
     throw function_not_defined();
+#else //C-XSC Version
+  real ly( subdown( 1 , Sup(hy) ) ),uy( subup( 1 , Inf(hy) ) );
+  interval nenner( qbetrag(hx,hx,ly,uy) );
+
+  if( 0 < Inf(nenner) )   
+    return ln(abs(1+4*hy/(sqr(interval(hx))+sqr(1-hy)))) / 4;
+  else//Argument too near to singularity.
+    throw function_not_defined();
+#endif
 }
 
 void left_side(const interval& hx,const interval& hy,interval& re_a,interval& im_a) 
 {
+#ifdef FILIB_VERSION
   if( sup(sqr(interval(sup(hy))))<= inf( 1.0 + sqr(interval(sup(hx)))) )
     { //argument unter Extremalkurve y=sqrt(1+sqr(x)) 
       re_a = interval( inf(re_fun(inf(hx),sup(hy))),sup(re_fun(sup(hx),inf(hy))) ); //Minimum, maximum 
@@ -1470,6 +2362,30 @@ void left_side(const interval& hx,const interval& hy,interval& re_a,interval& im
 	  im_a = hull( im_a, im_fun(sup(hx),hy)      );  //maximum 
 	}
     }
+#else //C-XSC Version
+  if( Sup(sqr(interval(Sup(hy))))<= Inf( 1.0 + sqr(interval(Sup(hx)))) )
+    { //argument unter Extremalkurve y=sqrt(1+sqr(x)) 
+      re_a = interval( Inf(re_fun(Inf(hx),Sup(hy))),Sup(re_fun(Sup(hx),Inf(hy))) ); //Minimum, maximum 
+      im_a = interval( Inf(im_fun(Inf(hx),Inf(hy))),Sup(im_fun(Sup(hx),Sup(hy))) ); //Minimum, maximum 
+    }
+  else
+    {
+      if( Inf(sqr(interval(Inf(hy))))>= Sup( 1.0 + sqr(interval(Inf(hx)))) )
+	{ //argument ueber Extremalkurve y=sqrt(1+sqr(x)) 
+	  re_a = interval( Inf(re_fun(Sup(hx),Sup(hy))),Sup(re_fun(Inf(hx),Inf(hy))) ); //Minimum, maximum 
+	  im_a = interval( Inf(im_fun(Inf(hx),Sup(hy))),Sup(im_fun(Sup(hx),Inf(hy))) ); //Minimum, maximum 
+	}
+      else //argument intersects extremal curve y=sqrt(1+sqr(x)) 
+	{
+	  re_a = re_fun(Sup(hx),Sup(hy));   //possible minimum 
+	  re_a |= re_fun(Inf(hx),Sup(hy));  //possible minimum 
+	  re_a |= re_fun(hx,Inf(hy));       //maximum 
+	  im_a = im_fun(Inf(hx),Inf(hy));   //possible minimum 
+	  im_a |= im_fun(Inf(hx),Sup(hy));  //possible minimum 
+	  im_a |= im_fun(Sup(hx),hy);       //maximum 
+	}
+    }
+#endif
 }
 
 void right_side(const interval& hx,const interval& hy,interval& re_a,interval& im_a) 
@@ -1483,7 +2399,8 @@ void right_side(const interval& hx,const interval& hy,interval& re_a,interval& i
 void harctan(const interval& x,const interval& y,interval& re_arct,interval& im_arct) 
 {
   interval h_re(0.0),h_im(0.0);
-  
+
+#ifdef FILIB_VERSION  
   if( inf(x) >= 0 ) //1. quadrant 
     right_side(x,y,re_arct,im_arct);
   else
@@ -1506,12 +2423,37 @@ void harctan(const interval& x,const interval& y,interval& re_arct,interval& im_
 	    }
 	}
     }
+#else //C-XSC Version
+  if( Inf(x) >= 0 ) //1. quadrant 
+    right_side(x,y,re_arct,im_arct);
+  else
+    {
+      if( Sup(x) <= 0 ) //2. quadrant 
+	left_side(x,y,re_arct,im_arct);
+      else
+	{
+	  if( Sup(y) < 1.0 )
+	    {
+	      re_arct = interval( Inf(re_fun(Inf(x),Sup(y))),Sup(re_fun(Sup(x),Sup(y))) );
+	      im_arct = interval( Inf(im_fun(max(Sup(x),-Inf(x)),Inf(y))),Sup(im_fun(0.0,Sup(y))) );
+	    }
+	  else //Intersection in argument 
+	    {
+	      right_side(interval(0,Sup(x)),y,re_arct,im_arct);
+	      left_side(interval(Inf(x),0),y,h_re,h_im);
+	      re_arct |= ( h_re + PI() );
+	      im_arct |= h_im; 
+	    }
+	}
+    }
+#endif
 }
 
 
 void h_arctan(const interval& x,const interval& y,interval& re_arct,interval& im_arct,bool& singular) 
 {
-  cinterval z( interval::ZERO(), interval::ZERO() );
+#ifdef FILIB_VERSION
+  //cinterval z( interval::ZERO(), interval::ZERO() );
   interval imarct(0.0),rearct(0.0);
   
   if( (inf(x) <= 0)&&(sup(x) >= 0)&&( ((inf(y) <= -1)&&(sup(y) >= -1))||((inf(y) <= 1)&&(sup(y) >= 1)) ) )
@@ -1555,6 +2497,52 @@ void h_arctan(const interval& x,const interval& y,interval& re_arct,interval& im
 	    }
 	}
     }
+#else //C-XSC Version
+  cinterval z( interval(0.0), interval(0.0) );
+  interval imarct(0.0),rearct(0.0);
+  
+  if( (Inf(x) <= 0)&&(Sup(x) >= 0)&&( ((Inf(y) <= -1)&&(Sup(y) >= -1))||((Inf(y) <= 1)&&(Sup(y) >= 1)) ) )
+    singular = true;
+  else
+    {
+      singular = false;
+      if( y==interval(0.0) ) 
+	{
+	  re_arct = atan(x);
+	  im_arct = y;  //Im(arctan) = 0 
+	}
+      else
+	{
+	  if( (x == interval(0.0))&&( Inf(y) >- 1 )&&( Sup(y) < 1 ) ) 
+	    {
+	      re_arct = x; //Re(arctan) = 0 
+	      im_arct = atanh(y); //Only defined for  -1 < y < 1   
+	    }
+	  else
+	    {
+	      //Verwende Arctan(-z) = - Arctan(z) 
+	      if( Inf(y) >= 0 )
+		harctan(x,y,re_arct,im_arct);
+	      else  
+		{
+		  if( Sup(y) <= 0 )
+		    {
+		      harctan(-x,-y,re_arct,im_arct); 
+		      re_arct = - re_arct;
+		      im_arct = - im_arct;
+		    }
+		  else
+		    {
+		      harctan(-x,interval(0,-Inf(y)),rearct,imarct); 
+		      harctan(x,interval(0,Sup(y)),re_arct,im_arct);
+		      re_arct |= -rearct;
+		      im_arct |= -imarct;
+		    } 
+		}
+	    }
+	}
+    }
+#endif
 }
 
 /* ****************************************************************** */
@@ -1569,9 +2557,15 @@ void h_arctan(const interval& x,const interval& y,interval& re_arct,interval& im
 
 cinterval atan(const cinterval& z) 
 {
+#ifdef FILIB_VERSION
   if(  (inf(Re(z)) <= 0.0) && (0.0 <= sup(Re(z))) &&   //Zero in real part and
        ((inf(Im(z)) < -1.0) || (sup(Im(z)) > 1.0 ))  ) //imaginary part intersects i*(-INFINITY,-1) and/or i*(1,+INFINITY)
     throw function_not_defined();
+#else //C-XSC Version
+  if(  (Inf(Re(z)) <= 0.0) && (0.0 <= Sup(Re(z))) &&   //Zero in real part and
+       ((Inf(Im(z)) < -1.0) || (Sup(Im(z)) > 1.0 ))  ) //imaginary part intersects i*(-INFINITY,-1) and/or i*(1,+INFINITY)
+    throw function_not_defined();
+#endif
 
   interval im_arct(0.0),re_arct(0.0);
   bool singular( false );
@@ -1586,17 +2580,27 @@ void h_arccot(const interval& x,const interval& y,interval& re_arcc,interval& im
   h_arctan(x,y,re_arcc,im_arcc,singular);
 
   if( !singular )
+#ifdef FILIB_VERSION
     if( inf(re_arcc) >= 0.0 )
+#else //C-XSC Version
+    if( Inf(re_arcc) >= 0.0 )
+#endif
       re_arcc = -re_arcc - HALFPI();
     else
-      re_arcc = HALFPI() - re_arcc;
+      re_arcc =  HALFPI() - re_arcc;
 }
 
 cinterval acot(const cinterval& z) 
 {
+#ifdef FILIB_VERSION
   if(  (inf(Re(z)) <= 0.0) && (0.0 <= sup(Re(z))) &&   //Zero in real part and
        ((inf(Im(z)) < -1.0) || (sup(Im(z)) > 1.0 ))  ) //imaginary part intersects i*(-INFINITY,-1) and/or i*(1,+INFINITY)
     throw function_not_defined();
+#else //C-XSC Version
+  if(  (Inf(Re(z)) <= 0.0) && (0.0 <= Sup(Re(z))) &&   //Zero in real part and
+       ((Inf(Im(z)) < -1.0) || (Sup(Im(z)) > 1.0 ))  ) //imaginary part intersects i*(-INFINITY,-1) and/or i*(1,+INFINITY)
+    throw function_not_defined();
+#endif
 
   interval im_arcc(0.0),re_arcc(0.0);
   bool singular( false );
@@ -1608,23 +2612,35 @@ cinterval acot(const cinterval& z)
 
 cinterval atanh(const cinterval& z) 
 {
+#ifdef FILIB_VERSION
   if(  (inf(Im(z)) <= 0.0) && (0.0 <= sup(Im(z))) &&   //Zero in imaginary part and
        ((inf(Re(z)) < -1.0) || (sup(Re(z)) > 1.0 ))  ) //real part intersects (-INFINITY,-1) and/or (1,+INFINITY)
     throw function_not_defined();
+#else //C-XSC Version
+  if(  (Inf(Im(z)) <= 0.0) && (0.0 <= Sup(Im(z))) &&   //Zero in imaginary part and
+       ((Inf(Re(z)) < -1.0) || (Sup(Re(z)) > 1.0 ))  ) //real part intersects (-INFINITY,-1) and/or (1,+INFINITY)
+    throw function_not_defined();
+#endif
 
   interval im_art(0.0),m_re_art(0.0);
   bool singular( false );
   
   h_arctan(Im(z),-Re(z),im_art,m_re_art,singular);
-
+  
   return cinterval(-m_re_art,im_art); //atanh(z) = -i * atan(i*z)
 }
 
 cinterval acoth(const cinterval& z) 
 {
+#ifdef FILIB_VERSION
   if(  (inf(Im(z)) <= 0.0) && (0.0 <= sup(Im(z))) &&   //Zero in imaginary part and
        (sup(Re(z)) > -1.0) && (inf(Re(z)) < 1.0 )   )  //real part intersects (-1,1)
     throw function_not_defined();
+#else //C-XSC Version
+  if(  (Inf(Im(z)) <= 0.0) && (0.0 <= Sup(Im(z))) &&   //Zero in imaginary part and
+       (Sup(Re(z)) > -1.0) && (Inf(Re(z)) < 1.0 )   )  //real part intersects (-1,1)
+    throw function_not_defined();
+#endif
 
   interval im_arco(0.0),m_re_arco(0.0);
   bool singular( false );
@@ -1642,16 +2658,28 @@ cinterval acoth(const cinterval& z)
 cinterval power(const cinterval& bas,int n) 
 {
   if( n < 0 ) return 1.0/power( bas , -n );
+#ifdef FILIB_VERSION
   else if( n == 0 ) return cinterval( interval::ONE(), interval::ZERO() );
+#else //C-XSC Version
+  else if( n == 0 ) return cinterval( 1.0 );
+#endif
   else if( n == 1 ) return bas;
   else if( n == 2 ) return sqr( bas );
   else
     {
+#ifdef FILIB_VERSION
       if( (inf(Re(bas)) > 0)||(inf(Im(bas)) > 0)||(sup(Im(bas)) < 0) ) 
+#else //C-XSC Version
+      if( (Inf(Re(bas)) > 0)||(Inf(Im(bas)) > 0)||(Sup(Im(bas)) < 0) ) 
+#endif
 	return exp( n * ln(bas) );
       else
 	{//Zero in argument
+#ifdef FILIB_VERSION
 	  cinterval z( bas ),u( interval::ONE(), interval::ZERO() );
+#else //C-XSC Version
+	  cinterval z( bas ),u( 1.0 );
+#endif
 	  while( n > 0 )
 	    {
 	      if( (n%2) == 0 )//even exponent
@@ -1672,14 +2700,22 @@ cinterval power(const cinterval& bas,int n)
 
 cinterval pow(const cinterval& bas,const interval& n) 
 {
+#ifdef FILIB_VERSION
   if( ( inf(Re(bas)) > 0 )||( inf(Im(bas)) > 0 )||( sup(Re(bas)) < 0 )||( sup(Im(bas)) < 0 ) ) 
+#else //C-XSC Version
+  if( ( Inf(Re(bas)) > 0 )||( Inf(Im(bas)) > 0 )||( Sup(Re(bas)) < 0 )||( Sup(Im(bas)) < 0 ) ) 
+#endif
     return exp(n*ln(bas));
   else throw function_not_defined();//Base contains zero.
 }
 
 cinterval pow(const cinterval& bas,const cinterval& n) 
 {
+#ifdef FILIB_VERSION
   if( ( inf(Re(bas)) > 0 )||( inf(Im(bas)) > 0 )||( sup(Re(bas)) < 0 )||( sup(Im(bas)) < 0 ) ) 
+#else //C-XSC Version
+  if( ( Inf(Re(bas)) > 0 )||( Inf(Im(bas)) > 0 )||( Sup(Re(bas)) < 0 )||( Sup(Im(bas)) < 0 ) ) 
+#endif
     return exp(n*ln(bas));
   else throw function_not_defined();//Base contains zero.
 }

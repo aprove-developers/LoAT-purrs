@@ -73,6 +73,8 @@ AH_BOTTOM([
 
 #define INLINE inline
 
+#define FILIB_VERSION 1
+
 #endif
 ])
 
