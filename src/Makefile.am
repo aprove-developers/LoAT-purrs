@@ -66,6 +66,7 @@ size_norm.hh \
 size_norm_impl.hh \
 alg_eq_solver.hh \
 poly_factor.hh \
+zeilberger.hh \
 gosper.hh \
 simplify.hh \
 numerator_denominator.hh \
@@ -112,6 +113,7 @@ alg_eq_solver.cc \
 approximate.cc \
 size_norm.cc \
 complint.cc \
+zeilberger.cc \
 gosper.cc \
 numerator_denominator.cc \
 factorize.cc \
