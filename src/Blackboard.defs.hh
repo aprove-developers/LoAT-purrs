@@ -36,8 +36,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+//! A class to keep track of symbol definitions.
 /*!
-  This class keeps track of a set of symbol definitions.
   A symbol can be associated to an expression that, in turn,
   may contain other symbols.
 */
@@ -71,9 +71,10 @@ public:
   Symbol find_symbol(const Expr& e);
 
   //! \brief
-  //! Substitutes the left-hand side of the auxiliary equation
-  //! \f$ system_generated_symbol = e \f$ with \p new_symbol, so that to
-  //! have the auxiliary equation \f$ new_symbol = e \f$.
+  //! Substitutes the left-hand side \p system_generated_symbol
+  //! of the auxiliary equation \f$ system\_generated\_symbol = e \f$
+  //! with \p new_symbol, so that to have the auxiliary equation
+  //! \f$ new\_symbol = e \f$.
   void substitute(const Symbol& system_generated_symbol,
 		  const Symbol& new_symbol);
 
