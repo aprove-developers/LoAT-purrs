@@ -446,7 +446,7 @@ main() try {
   }
 
   if(expr == (*cgi).end() || expr->isEmpty())
-    error("you did not type anything!!!");
+    error("you did not type an expression for the recurrence!!!");
 
   init_symbols();
 
