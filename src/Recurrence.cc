@@ -210,12 +210,22 @@ PURRS::Recurrence::verify_solution() const {
     else {
       // Step 1: validation of initial conditions.
       for (unsigned i = order(); i-- > 0; ) {
+	D_VAR(i);
 	Expr solution_valuated
 	  = substitute_symbol_with_expression(solution, n,
 					      first_initial_condition() + i);
 	solution_valuated = simplify_numer_denom(solution_valuated);
 	D_VAR(solution_valuated);
-	if (solution_valuated != x(first_initial_condition() + i))
+	// We have to substitute `first_initial_condition() + i'
+	// in `x(mod(first_initial_condition() + i, gcd))' and, when
+	// `gcd_decrements_old_rhs <= i'
+	// `x(mod(first_initial_condition() + i, gcd))' is equal to
+	// `x(mod(first_initial_condition() + i - gcd, gcd))'.
+	unsigned i_c = first_initial_condition() + i;
+	if (gcd_decrements_old_rhs <= i)
+	  i_c -= gcd_decrements_old_rhs;
+	D_VAR(i_c);
+	if (solution_valuated != x(i_c))
 	  return DONT_KNOW;
       }
       // Step 2: find `partial_solution'.
