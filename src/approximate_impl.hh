@@ -232,8 +232,6 @@ generic_approximate(const Expr& e, const SymbolHandler& sh,
   else if (e.is_a_constant()) {
     if (e == Constant::Pi)
       aci = CInterval(Interval::PI(), Interval::ZERO());
-    else if (e == Constant::Euler)
-      abort();
     else
       abort();
   }

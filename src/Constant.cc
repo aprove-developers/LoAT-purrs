@@ -29,4 +29,3 @@ http://www.cs.unipr.it/purrs/ . */
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 const PURRS::Constant PURRS::Constant::Pi = GiNaC::Pi;
-const PURRS::Constant PURRS::Constant::Euler = GiNaC::Euler;

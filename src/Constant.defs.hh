@@ -47,7 +47,6 @@ public:
   Constant& operator=(const Constant& k);
 
   static const Constant Pi;
-  static const Constant Euler;
 
 private:
   friend class Expr;
