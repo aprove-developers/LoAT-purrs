@@ -404,6 +404,9 @@ public:
   //! solution or bound with the symbolic initial conditions.
   void reset_initial_conditions();
 
+  //! Returns the map containing the set of initial conditions.
+  const std::map<index_type, Expr>& get_initial_conditions() const;
+
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Checks if all the invariants are satisfied.
   /*!

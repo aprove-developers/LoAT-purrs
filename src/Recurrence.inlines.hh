@@ -146,6 +146,11 @@ Recurrence::reset_initial_conditions() {
   evaluated_upper_bound_.unset_expression();
 }
 
+inline const std::map<index_type, Expr>&
+Recurrence::get_initial_conditions() const {
+  return initial_conditions;
+}
+
 inline Expr
 Recurrence::get_initial_condition(unsigned int k) const {
   std::map<index_type, Expr>::const_iterator i = initial_conditions.find(k);
