@@ -253,8 +253,8 @@ get_time() {
 }
 
 inline long
-time_unit_to_msecs(time_unit_t t) {
-  return tsc_to_msecs(t);
+time_unit_to_usecs(time_unit_t t) {
+  return tsc_to_usecs(t);
 }
 
 #elif HAVE_GETRUSAGE
@@ -284,8 +284,8 @@ operator-(const time_unit_t& t1, const time_unit_t& t2) {
 }
 
 inline long
-time_unit_to_msecs(time_unit_t t) {
-  return (t.tv_sec*1000000 + t.tv_usec)/1000;
+time_unit_to_usecs(time_unit_t t) {
+  return t.tv_sec*1000000 + t.tv_usec;
 }
 
 #else
@@ -298,7 +298,7 @@ get_time() {
 }
 
 inline long
-time_unit_to_msecs(time_unit_t t) {
+time_unit_to_usecs(time_unit_t t) {
   return t;
 }
 
@@ -361,8 +361,8 @@ main() try {
 
   time_unit_t start_time;
 
-  long solution_time_msecs = 0;
-  long verification_time_msecs = 0;
+  long solution_time_usecs = 0;
+  long verification_time_usecs = 0;
 
   try {
     start_time = get_time();
@@ -372,14 +372,14 @@ main() try {
       recurrence.exact_solution(exact_solution);
       exact_solution
         = recurrence.substitute_auxiliary_definitions(exact_solution);
-      solution_time_msecs += time_unit_to_msecs(get_time() - start_time);
+      solution_time_usecs += time_unit_to_usecs(get_time() - start_time);
 
       start_time = get_time();
       if (verify
 	  &&
 	  recurrence.verify_exact_solution() == Recurrence::PROVABLY_CORRECT) {
 	have_verified_exact_solution = true;
-	verification_time_msecs += time_unit_to_msecs(get_time() - start_time);
+	verification_time_usecs += time_unit_to_usecs(get_time() - start_time);
       }
       goto done;
       break;
@@ -407,14 +407,14 @@ main() try {
     case Recurrence::SUCCESS:
       have_lower_bound = true;
       recurrence.lower_bound(lower_bound);
-      solution_time_msecs += time_unit_to_msecs(get_time() - start_time);
+      solution_time_usecs += time_unit_to_usecs(get_time() - start_time);
 
       start_time = get_time();
       if (verify
 	  &&
 	  recurrence.verify_lower_bound() == Recurrence::PROVABLY_CORRECT) {
 	have_verified_lower_bound = true;
-	verification_time_msecs += time_unit_to_msecs(get_time() - start_time);
+	verification_time_usecs += time_unit_to_usecs(get_time() - start_time);
       }
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
@@ -441,14 +441,14 @@ main() try {
     case Recurrence::SUCCESS:
       have_upper_bound = true;
       recurrence.upper_bound(upper_bound);
-      solution_time_msecs += time_unit_to_msecs(get_time() - start_time);
+      solution_time_usecs += time_unit_to_usecs(get_time() - start_time);
 
       start_time = get_time();
       if (verify
 	  &&
 	  recurrence.verify_upper_bound() == Recurrence::PROVABLY_CORRECT) {
 	have_verified_upper_bound = true;
-	verification_time_msecs += time_unit_to_msecs(get_time() - start_time);
+	verification_time_usecs += time_unit_to_usecs(get_time() - start_time);
       }
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
@@ -567,14 +567,15 @@ main() try {
        << (have_exact_solution ? "exact solution"
 	   : ((have_lower_bound && have_upper_bound)
 	      ? "approximations" : "approximation"))
-       << " took about " << solution_time_msecs << " ms of CPU time";
+       << " took about " << solution_time_usecs << " us of CPU time";
   if (have_verified_exact_solution
       || have_verified_lower_bound || have_verified_upper_bound) {
-  cout << endl
+  cout << ";"
+       << endl
        << br()
        << "verifying "
        << ((have_lower_bound && have_upper_bound) ? "them" : "it")
-       << " took about " << verification_time_msecs << " ms of CPU time.";
+       << " took about " << verification_time_usecs << " us of CPU time.";
   }
   else {
     cout << "." << endl;
