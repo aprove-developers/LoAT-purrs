@@ -75,8 +75,7 @@ fdl.dox
 USER_STUFF = \
 $(DOX_FILES) \
 user.tex \
-$(top_builddir)/src/purrs.hh \
-$(top_srcdir)/interfaces/C/purrs_c.h
+$(top_builddir)/src/purrs.hh
 
 DEVREF_STUFF = \
 $(DOX_FILES) \
