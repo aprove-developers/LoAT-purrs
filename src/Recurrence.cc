@@ -31,7 +31,11 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Recurrence.defs.hh"
 #include "util.hh"
 #include "simplify.hh"
+#include "finite_order.hh"
+#include "compute_bounds.hh"
 #include "Expr.defs.hh"
+#include "Cached_Expr.defs.hh"
+#include "Order_Reduction_Info.defs.hh"
 #include "Blackboard.defs.hh"
 #include <algorithm>
 #include <iostream>
@@ -102,19 +106,21 @@ find_term_without_function_x(const Expr& term) {
 */
 Recurrence::Verify_Status
 PURRS::Recurrence::verify_solution() const {
-  if (solved || solve()) {
-    D_VAR(old_recurrence_rhs);
+  if (exact_solution_.has_expression()) {
     D_VAR(recurrence_rhs);
-    D_VAR(gcd_decrements_old_rhs);
     D_VAR(order());
     D_VAR(first_initial_condition());
+    if (order_reduction_p) {
+      D_VAR(old_recurrence_rhs());
+      D_VAR(gcd_decrements_old_rhs());
+    }
     if (order() == 0)
       return PROVABLY_CORRECT;
     else {
       // Step 1: validation of initial conditions.
       for (unsigned i = order(); i-- > 0; ) {
-	Expr solution_valuated
-	  = solution.substitute(n, first_initial_condition() + i);
+	Expr solution_valuated = exact_solution_.expression()
+	  .substitute(n, first_initial_condition() + i);
 	solution_valuated = blackboard.rewrite(solution_valuated);
 	solution_valuated = simplify_numer_denom(solution_valuated);
 	D_VAR(solution_valuated);
@@ -124,8 +130,8 @@ PURRS::Recurrence::verify_solution() const {
 	// `x(mod(first_initial_condition() + i, gcd))' is equal to
 	// `x(mod(first_initial_condition() + i - gcd, gcd))'.
 	unsigned i_c = first_initial_condition() + i;
-	if (gcd_decrements_old_rhs <= i)
-	  i_c -= gcd_decrements_old_rhs;
+	if (order_reduction_p && gcd_decrements_old_rhs() <= i)
+	  i_c -= gcd_decrements_old_rhs();
 	if (solution_valuated != x(i_c))
 	  return INCONCLUSIVE_VERIFICATION;
       }
@@ -134,12 +140,14 @@ PURRS::Recurrence::verify_solution() const {
       // `partial_solution' that has all terms of `solution' minus those
       // containing an initial condition.
       Expr partial_solution = 0;
-      if (solution.is_a_add())
-	for (unsigned i = solution.nops(); i-- > 0; )
-	  partial_solution
-	    += find_term_without_function_x(solution.op(i));
+      if (exact_solution_.expression().is_a_add())
+	for (unsigned i = exact_solution_.expression().nops(); i-- > 0; )
+	  partial_solution 
+	    += find_term_without_function_x(exact_solution_.expression()
+					    .op(i));
       else
-	partial_solution = find_term_without_function_x(solution);
+	partial_solution
+	  = find_term_without_function_x(exact_solution_.expression());
       partial_solution = simplify_on_output_ex(partial_solution.expand(),
 					       false);
       D_VAR(partial_solution);
@@ -153,22 +161,28 @@ PURRS::Recurrence::verify_solution() const {
       // substituted to the correspondenting values in `recurrence_rhs'.
       Expr substituted_rhs;
       std::vector<Expr> terms_to_sub(order());
-      // We have not applied the order reduction in order to solve the
-      // recurrence.
-      if (gcd_decrements_old_rhs == 0) {
-	substituted_rhs = recurrence_rhs;
-	gcd_decrements_old_rhs = 1;
+
+      unsigned gcd_decrements_old;
+      if (order_reduction_p && verified_one_time()) {
+	// We have applied the order reduction in order to solve the
+	// recurrence.
+	substituted_rhs = old_recurrence_rhs();
+	gcd_decrements_old = gcd_decrements_old_rhs();
       }
-      // We have applied the order reduction in order to solve the recurrence.
-      else
-	substituted_rhs = old_recurrence_rhs;
+      else {
+	// We have not applied the order reduction in order to solve the
+	// recurrence.
+	substituted_rhs = recurrence_rhs;
+	gcd_decrements_old = 1;
+      }
+	
       for (unsigned i = order(); i-- > 0; ) {
-	terms_to_sub[i]
-	  = simplify_all(partial_solution 
-			 .substitute(n, n - (i + 1) * gcd_decrements_old_rhs));
-	substituted_rhs
-	  = substituted_rhs.substitute(x(n - (i + 1) * gcd_decrements_old_rhs),
-				       terms_to_sub[i]);
+	terms_to_sub[i] = simplify_all(partial_solution.substitute
+				       (n, n - (i + 1)
+					* gcd_decrements_old));
+	substituted_rhs = substituted_rhs
+	  .substitute(x(n - (i + 1) * gcd_decrements_old),
+		      terms_to_sub[i]);
       }
       D_VEC(terms_to_sub, 0, terms_to_sub.size()-1);
       D_VAR(substituted_rhs);
@@ -176,12 +190,13 @@ PURRS::Recurrence::verify_solution() const {
       diff = simplify_all(diff);
       D_VAR(diff);
       if (!diff.is_zero())
-	if (!old_recurrence_rhs.is_zero()) {
+	if (order_reduction_p && verified_one_time()) {
+	  not_verified_one_time();
 	  // If we have applied the order reduction and we do not have success
 	  // in the verification of the original recurrence, then we please
 	  // ourselves if is verified the reduced redurrence.
-	  solution = solution_order_reduced;
-	  gcd_decrements_old_rhs = 0;
+	  exact_solution_.set_expression(solution_order_reduced());
+	  set_gcd_decrements_old_rhs(0);
 	  return verify_solution();
 	}
 	else
@@ -192,6 +207,115 @@ PURRS::Recurrence::verify_solution() const {
   // We failed to solve the recurrence.
   // If the client still insists in asking for the verification...
   return INCONCLUSIVE_VERIFICATION;
+}
+
+Recurrence::Solver_Status
+Recurrence::compute_exact_solution() const {
+  // See if we have the exact solution already.
+  if (exact_solution_.has_expression())
+    return SUCCESS;
+
+  // We may not have the exact solution explicitely, yet we may have
+  // the lower and the upper bounds equal among themselves.
+  if (lower_bound_.has_expression() && upper_bound_.has_expression()
+      && lower_bound_.expression() == upper_bound_.expression()) {
+    exact_solution_.set_expression(lower_bound_.expression());
+    return SUCCESS;
+  }
+
+  Solver_Status status;
+  if ((status = catch_special_cases()) == SUCCESS) {
+    assert(is_linear_finite_order() || is_functional_equation());
+//      Expr lower;
+//      Expr upper;
+    if (is_linear_finite_order()) {
+      if ((status = solve_linear_finite_order()) == SUCCESS) {
+	if (order_reduction_p) {
+	  // Perform three substitutions:
+	  // - r                      -> mod(n, gcd_among_decrements);
+	  // - n                      -> 1 / gcd_among_decrements
+	  //                             * (n - mod(n, gcd_among_decrements));
+	  // - x(k), k non-negative integer -> x(mod(n, gcd_among_decrements)).
+	  set_solution_order_reduced(exact_solution_.expression());
+	  exact_solution_.set_expression(come_back_to_original_variable
+					 (exact_solution_.expression(),
+					  symbol_for_mod(),
+					  get_auxiliary_definition
+					  (symbol_for_mod()),
+					  gcd_decrements_old_rhs()));
+	  exact_solution_.set_expression
+	    (simplify_on_output_ex(exact_solution_.expression().expand(),
+				   false));
+	}
+	lower_bound_.set_expression(exact_solution_.expression());
+	upper_bound_.set_expression(exact_solution_.expression());
+	return SUCCESS;
+      }
+      else
+	return status;
+    }
+    else // case functional equation
+      if ((status = approximate_functional_equation()) == SUCCESS
+	  && lower_bound_.expression() == upper_bound_.expression()) {
+	exact_solution_.set_expression(lower_bound_.expression());
+	return SUCCESS;
+      }
+      else
+	return TOO_COMPLEX;
+  }
+  else
+    return status;
+}
+
+Recurrence::Solver_Status
+PURRS::Recurrence::compute_lower_bound() const {
+  // See if we have the lower bound already.
+  if (lower_bound_.has_expression())
+    return SUCCESS;
+
+  // We may not have the lower bound explicitely, yet we may have
+  // the exact solution.
+  if (exact_solution_.has_expression()) {
+    lower_bound_.set_expression(exact_solution_.expression());
+    return SUCCESS;
+  }
+
+  Solver_Status status;
+  if ((status = catch_special_cases()) == SUCCESS) {
+    assert(is_linear_finite_order() || is_functional_equation());
+    if (is_functional_equation()
+	&& (status = approximate_functional_equation()) == SUCCESS)
+      return SUCCESS;
+    else
+      return TOO_COMPLEX;
+  }
+  else
+    return status;
+}
+
+Recurrence::Solver_Status
+PURRS::Recurrence::compute_upper_bound() const {
+  // See if we have the upper bound already.
+  if (upper_bound_.has_expression())
+    return SUCCESS;
+
+  // We may not have the upper bound explicitely, yet we may have
+  // the exact solution.
+  if (exact_solution_.has_expression()) {
+    upper_bound_.set_expression(exact_solution_.expression());
+    return SUCCESS;
+  }
+
+  Solver_Status status;
+  if ((status = catch_special_cases()) == SUCCESS) {
+    if (is_functional_equation()
+	&& (status = approximate_functional_equation()) == SUCCESS)
+      return SUCCESS;
+    else
+      return TOO_COMPLEX;
+  }
+  else
+    return status;
 }
 
 bool
@@ -225,12 +349,16 @@ PURRS::Recurrence::OK() const {
     return true;
   }
 
-  return true;
+return true;
 }
 
 void
 PURRS::Recurrence::dump(std::ostream& s) const {
-  s << "solved = " << (solved ? "true" : "false") << std::endl;
+  s << "solved = "
+    << (exact_solution_.has_expression() ? "true" : "false") << std::endl;
+  s << "approximated = "
+    << ((lower_bound_.has_expression() || upper_bound_.has_expression()) 
+	? "true" : "false") << std::endl;
   s << "recurrence_rhs_rewritten = "
     << (recurrence_rhs_rewritten ? "true" : "false") << std::endl;
   s << "recurrence_rhs = " << recurrence_rhs << std::endl;

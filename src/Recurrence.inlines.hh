@@ -27,77 +27,67 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <iostream>
 #include <utility>
+#include <stdexcept>
 
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
 Recurrence::Recurrence()
   : recurrence_rhs(0),
-    old_recurrence_rhs(0),
-    gcd_decrements_old_rhs(0),
-    solution_order_reduced(0),
     recurrence_rhs_rewritten(false),
     inhomogeneous_term(0),
     type(ORDER_ZERO),
     finite_order_p(0),
     functional_eq_p(0),
-    solved(false) {
+    order_reduction_p(0) {
 }
 
 inline
 Recurrence::Recurrence(const Expr& e)
   : recurrence_rhs(e),
-    old_recurrence_rhs(0),
-    gcd_decrements_old_rhs(0),
-    solution_order_reduced(0),
     recurrence_rhs_rewritten(false),
     inhomogeneous_term(0),
     type(UNKNOWN),
     finite_order_p(0),
     functional_eq_p(0),
-    solved(false) {
+    order_reduction_p(0) {
 }
 
 inline
 Recurrence::Recurrence(const Recurrence& y)
   : recurrence_rhs(y.recurrence_rhs),
-    old_recurrence_rhs(y.old_recurrence_rhs),
-    gcd_decrements_old_rhs(y.gcd_decrements_old_rhs),
-    solution_order_reduced(y.solution_order_reduced),
     recurrence_rhs_rewritten(y.recurrence_rhs_rewritten),
     inhomogeneous_term(y.inhomogeneous_term),
     system_rhs(y.system_rhs),
     type(y.type),
     finite_order_p(y.finite_order_p),
     functional_eq_p(y.functional_eq_p),    
-    solved(y.solved),
-    solution(y.solution),
-    lower_bound(y.lower_bound),
-    upper_bound(y.upper_bound) {
+    order_reduction_p(y.order_reduction_p),
+    exact_solution_(y.exact_solution_),
+    lower_bound_(y.lower_bound_),
+    upper_bound_(y.upper_bound_) {
 }
 
 inline
 Recurrence::~Recurrence() {
   delete finite_order_p;
   delete functional_eq_p;
+  delete order_reduction_p;
 }
 
 inline Recurrence&
 Recurrence::operator=(const Recurrence& y) {
   recurrence_rhs = y.recurrence_rhs;
-  old_recurrence_rhs = y.old_recurrence_rhs;
-  gcd_decrements_old_rhs = y.gcd_decrements_old_rhs;
-  solution_order_reduced = y.solution_order_reduced;
   recurrence_rhs_rewritten = y.recurrence_rhs_rewritten;
   inhomogeneous_term = y.inhomogeneous_term;
   system_rhs = y.system_rhs;
   type = y.type;
   finite_order_p = y.finite_order_p;
   functional_eq_p = y.functional_eq_p;
-  solved = y.solved;
-  solution = y.solution;
-  lower_bound = y.lower_bound;
-  upper_bound = y.upper_bound;
+  order_reduction_p = y.order_reduction_p;
+  exact_solution_ = y.exact_solution_;
+  lower_bound_ = y.lower_bound_;
+  upper_bound_ = y.upper_bound_;
   return *this;
 }
 
@@ -280,64 +270,105 @@ Recurrence::divisor_arg() {
   return functional_eq_p -> divisor_arg();
 }
 
-inline Recurrence::Solver_Status
-Recurrence::solve() const {
-  Solver_Status status = SUCCESS;
-  if (!solved && (status = solve_try_hard()) == SUCCESS)
-    solved = true;
-  return status;
+inline Expr
+Recurrence::old_recurrence_rhs() const {
+  assert(order_reduction_p);
+  return order_reduction_p -> old_recurrence_rhs();
+}
+
+inline Expr&
+Recurrence::old_recurrence_rhs() {
+  assert(order_reduction_p);
+  return order_reduction_p -> old_recurrence_rhs();
+}
+inline unsigned
+Recurrence::gcd_decrements_old_rhs() const {
+  assert(order_reduction_p);
+  return order_reduction_p -> gcd_decrements_old_rhs();
+}
+
+inline unsigned&
+Recurrence::gcd_decrements_old_rhs() {
+  assert(order_reduction_p);
+  return order_reduction_p -> gcd_decrements_old_rhs();
+}
+
+inline void
+Recurrence::set_gcd_decrements_old_rhs(unsigned g) const {
+  assert(order_reduction_p);
+  return order_reduction_p -> set_gcd_decrements_old_rhs(g);
+}
+
+inline Symbol
+Recurrence::symbol_for_mod() const {
+  assert(order_reduction_p);
+  return order_reduction_p -> symbol_for_mod();
+}
+
+inline Symbol&
+Recurrence::symbol_for_mod() {
+  assert(order_reduction_p);
+  return order_reduction_p -> symbol_for_mod();
 }
 
 inline Expr
-Recurrence::lower_bound_solution() const {
-  if (solved || solve()) {
-    assert(is_linear_finite_order() || is_functional_equation());
-    if (is_linear_finite_order())
-      return solution;
-    else
-      return lower_bound;
-  }
-  else
-    // Well, if the client insists...
-    return recurrence_rhs;
+Recurrence::solution_order_reduced() const {
+  assert(order_reduction_p);
+  return order_reduction_p -> solution_order_reduced();
 }
 
-inline Expr
-Recurrence::upper_bound_solution() const {
-  if (solved || solve()) {
-    assert(is_linear_finite_order() || is_functional_equation());
-    if (is_linear_finite_order())
-      return solution;
-    else
-      return upper_bound;
-  }
-  else
-    // Well, if the client insists...
-    return recurrence_rhs;
+inline Expr&
+Recurrence::solution_order_reduced() {
+  assert(order_reduction_p);
+  return order_reduction_p -> solution_order_reduced();
+}
+
+inline void
+Recurrence::set_solution_order_reduced(const Expr& e) const {
+  assert(order_reduction_p);
+  return order_reduction_p -> set_solution_order_reduced(e);
 }
 
 inline bool
-Recurrence::exact_solution(Expr& exact_sol) const {
-  if (solved || solve()) {
-    assert(is_linear_finite_order() || is_functional_equation());
-    if (is_linear_finite_order())
-      exact_sol = solution;
-    else
-      if (lower_bound == upper_bound)
-	exact_sol = lower_bound;
-      else
-	return false;
-  }
-  else
-    // Well, if the client insists...
-    exact_sol = recurrence_rhs;
-  return true;
+Recurrence::verified_one_time() const {
+  assert(order_reduction_p);
+  return order_reduction_p -> verified_one_time();
+}
+
+inline void
+Recurrence::not_verified_one_time() const {
+  assert(order_reduction_p);
+  return order_reduction_p -> not_verified_one_time();
+}
+
+inline void
+Recurrence::exact_solution(Expr& e) const {
+  if (!exact_solution_.has_expression())
+    throw std::logic_error("PURRS::Recurrence::exact_solution() called, "
+			   "but no exact solution were computed");
+  e = exact_solution_.expression();
+}
+
+inline void
+Recurrence::lower_bound(Expr& e) const {
+  if (!lower_bound_.has_expression())
+    throw std::logic_error("PURRS::Recurrence::lower_bound() called, "
+			   "but no lower bounds were computed");
+  e = lower_bound_.expression();
+}
+
+inline void
+Recurrence::upper_bound(Expr& e) const {
+  if (!upper_bound_.has_expression())
+    throw std::logic_error("PURRS::Recurrence::upper_bound() called, "
+			   "but no upper bounds were computed");
+  e = upper_bound_.expression();
 }
 
 inline Expr
 Recurrence::approximated_solution() const {
-  if (solved || solve())
-    return blackboard.approximate(solution);
+  if (exact_solution_.has_expression())
+    return blackboard.approximate(exact_solution_.expression());
   else
     // Well, if the client insists...
     return blackboard.approximate(recurrence_rhs);

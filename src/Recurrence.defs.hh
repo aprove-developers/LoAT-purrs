@@ -26,6 +26,8 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Recurrence_defs_hh 1
 
 #include "Recurrence.types.hh"
+#include "Cached_Expr.defs.hh"
+#include "Order_Reduction_Info.defs.hh"
 #include "Blackboard.defs.hh"
 #include "Finite_Order_Info.defs.hh"
 #include "Functional_Equation_Info.defs.hh"
@@ -187,10 +189,16 @@ public:
     INCONCLUSIVE_VERIFICATION
   };
 
-  Solver_Status solve() const;
-  Expr lower_bound_solution() const;
-  Expr upper_bound_solution() const;
-  bool exact_solution(Expr& exact_sol) const;
+
+  Solver_Status compute_exact_solution() const;
+  void exact_solution(Expr& e) const;
+
+  Solver_Status compute_lower_bound() const;
+  void lower_bound(Expr& e) const;
+
+  Solver_Status compute_upper_bound() const;
+  void upper_bound(Expr& e) const;
+
   Expr approximated_solution() const;
 
   //! \brief
@@ -207,8 +215,8 @@ public:
   void dump(std::ostream& s) const;
 
 private:
-  Solver_Status solve_easy_cases() const;
-  Solver_Status solve_try_hard() const;
+  Solver_Status classify() const;
+  Solver_Status catch_special_cases() const;
   Solver_Status classification_recurrence(const Expr& rhs,
 					  int& gcd_among_decrements) const;
   Solver_Status classification_summand(const Expr& r, Expr& e,
@@ -220,7 +228,7 @@ private:
 				       unsigned& divisor_arg) const;
   void add_initial_conditions(const Expr& g_n,
 			      const std::vector<Number>& coefficients) const;
-  Solver_Status solve_linear_finite_order(int gcd_among_decrements) const;
+  Solver_Status solve_linear_finite_order() const;
   Solver_Status
   solve_constant_coeff_order_1(const std::vector<Polynomial_Root>&
 			       roots) const;
@@ -242,25 +250,6 @@ private:
   //! The global recurrence is thus of the form
   //! <CODE>x(n) = recurrence_rhs</CODE>.
   mutable Expr recurrence_rhs;
-
-  //! \brief
-  //! When is applied the order reduction stores the value of the
-  //! <CODE>recurrence_rhs</CODE> before to solve the reduced recurrence;
-  //! stores 0 otherwise.
-  mutable Expr old_recurrence_rhs;
-
-  //! \brief
-  //! When is applied the order reduction stores the greatest common
-  //! divisor among the decrements <CODE>d</CODE> of the terms
-  //! <CODE>x(n-d)</CODE> present in the right hand side of the recurrence
-  //! before to solve the reduced recurrence;
-  //! stores 0 otherwise.
-  mutable unsigned gcd_decrements_old_rhs;
-
-  //! \brief
-  //! When is applied the order reduction stores the solution of the
-  //! reduced order recurrence; stores 0 otherwise.
-  mutable Expr solution_order_reduced;
 
   //! \brief
   //! It is <CODE>true</CODE> if the recurrence has been rewritten, i. e.,
@@ -324,6 +313,7 @@ private:
   mutable Type type;
   mutable Finite_Order_Info* finite_order_p;
   mutable Functional_Equation_Info* functional_eq_p;
+  mutable Order_Reduction_Info* order_reduction_p;
 
   //! \brief
   //! Returns <CODE>true</CODE> if the recurrence's type is unknown;
@@ -424,12 +414,26 @@ private:
   //! \f$ x_n = a x_{n/b} + p(n)..
   unsigned& divisor_arg();
 
-  mutable bool solved;
+  Expr old_recurrence_rhs() const;
+  Expr& old_recurrence_rhs();
 
-  mutable Expr solution;
+  unsigned gcd_decrements_old_rhs() const;
+  unsigned& gcd_decrements_old_rhs();
+  void set_gcd_decrements_old_rhs(unsigned g) const;
 
-  mutable Expr lower_bound;
-  mutable Expr upper_bound;
+  Symbol symbol_for_mod() const;
+  Symbol& symbol_for_mod();
+  
+  Expr solution_order_reduced() const;
+  Expr& solution_order_reduced();
+  void set_solution_order_reduced(const Expr& e) const;
+
+  bool verified_one_time() const;
+  void not_verified_one_time() const; 
+  
+  mutable Cached_Expr exact_solution_;
+  mutable Cached_Expr lower_bound_;
+  mutable Cached_Expr upper_bound_;
 
   mutable Blackboard blackboard;
 
