@@ -26,6 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Matrix_inlines_hh
 
 #include "Expr_List.defs.hh"
+#include "Expr.defs.hh"
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -63,10 +64,11 @@ inline
 Matrix::~Matrix() {
 }
 
-// inline Expr&
-// Matrix::operator()(unsigned r, unsigned c) const {
-//   return;
-// };
+// FIXME: dovrebbe tornare Expr&?
+inline Expr
+Matrix::operator()(unsigned r, unsigned c) const {
+  return m(r, c);
+};
 
 inline Matrix
 Matrix::solve(const Matrix& vars, const Matrix& rhs) const {

@@ -24,6 +24,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
+#include "globals.hh"
+
 #include <csignal>
 #include <cstdlib>
 #include <iostream>
@@ -61,7 +63,7 @@ using std::cout;
 using std::endl;
 using std::string;
 
-using namespace GiNaC;
+using namespace Parma_Recurrence_Relation_Solver;
 using namespace cgicc;
 
 const int MAX_SECONDS_OF_CPU_TIME = 2;
@@ -237,11 +239,11 @@ main() try {
   if(expr == (*cgi).end() || expr->isEmpty())
     error("you did not type anything!!!");
 
-  GSymbol n("n");
-  GSymbol a("a");
-  GSymbol b("b");
-  GSymbol c("c");
-  GSymbol d("d");
+  Symbol n;
+  Symbol a;
+  Symbol b;
+  Symbol c;
+  Symbol d;
   GList symbols(n, a, b, c, d);
   GExpr rhs = GExpr(**expr, symbols);
 

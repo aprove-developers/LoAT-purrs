@@ -32,15 +32,11 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-// std::ostream&
-// operator<<(std::ostream & os, const Expr& e) {
-//   return ;  
-// };
-
-// std::istream&
-// operator>>(std::istream & is, Expr& e) {
-//   return ;
-// };
+std::ostream&
+operator<<(std::ostream& os, const Expr& exp) {
+  os << exp;
+  return os;  
+};
 
 Expr
 operator+(const Expr& lh, const Expr& rh) {
@@ -151,6 +147,11 @@ inline
 Expr::~Expr() {
 }
 
+inline Expr
+Expr::operator[](int i) const {
+  return e[i];
+}
+
 inline bool
 Expr::is_a_symbol() const {
   return GiNaC::is_a<GiNaC::symbol>(e);
@@ -247,6 +248,11 @@ inline bool
 Expr::is_rational_polynomial() const {
   return e.info(GiNaC::info_flags::rational_polynomial);
 }
+//info
+inline bool
+Expr::is_relation_equal() const {
+  return e.info(GiNaC::info_flags::relation_equal);
+}
 
 inline unsigned
 Expr::nops() const {
@@ -267,10 +273,16 @@ inline bool
 Expr::is_zero() const {
   return e.is_zero();
 }
-
+  /*
 inline Expr
 Expr::subs(const Symbol& s, const Expr& exp) const {
   return e.subs(s.s == exp.e);
+}
+  */
+
+inline Expr
+Expr::subs(const Expr& exp1, const Expr& exp2) const {
+  return e.subs(exp1.e == exp2.e);
 }
 
 inline Expr
@@ -350,8 +362,23 @@ Expr::numer_denom() const {
 }
 
 inline Expr
+Expr::lhs() const {
+  return e.lhs();
+}
+
+inline Expr
+Expr::rhs() const {
+  return e.rhs();
+}
+
+inline Expr
 Expr::to_rational(Expr_List& lst) {
   return e.to_rational(lst.l);
+}
+
+inline Expr
+Expr::diff(const Symbol& symb) {
+  e.diff(symb.s);
 }
 
 inline Expr
@@ -402,6 +429,12 @@ exp(const Expr& e) {
 inline Expr
 ln(const Expr& e) {
   return ln(e);
+};
+
+
+inline Expr
+factorial(const Expr& e) {
+  return factorial(e);
 };
 
 inline Expr

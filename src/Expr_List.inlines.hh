@@ -45,6 +45,12 @@ Expr_List::Expr_List(const Expr& exp1, const Expr& exp2)
 };
 
 inline
+Expr_List::Expr_List(const Expr& exp1, const Expr& exp2, const Expr& exp3,
+		     const Expr& exp4, const Expr& exp5)
+  : l(exp1.e, exp2.e, exp3.e, exp4.e, exp5.e) {
+};
+
+inline
 Expr_List::Expr_List(const Expr_List& lst)
   : l(lst.l) {
 };
@@ -64,9 +70,15 @@ inline
 Expr_List::~Expr_List() {
 }
 
+inline unsigned
+Expr_List::nops() const {
+  return l.nops();
+}
+
 inline Expr
 Expr_List::op(unsigned i) const {
   return l.op(i);
+}
 
 inline Expr_List
 Expr_List::append(const Expr& exp) {
@@ -76,6 +88,12 @@ Expr_List::append(const Expr& exp) {
 inline Expr_List
 Expr_List::prepend(const Expr& exp) {
   return l.prepend(exp.e);
+}
+
+// FIXME: dovrebbe tornare Expr_List&?
+inline Expr_List
+Expr_List::remove_first() {
+  return l.remove_first();
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

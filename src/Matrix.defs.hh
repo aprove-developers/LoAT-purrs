@@ -49,7 +49,8 @@ public:
   //! Assignment operator.
   Matrix& operator=(const Matrix& x);
 
-  Expr& operator()(unsigned r, unsigned c) const;
+  // FIXME: dovrebbe tornare Expr&?
+  Expr operator()(unsigned r, unsigned c) const;
 
   Matrix solve(const Matrix& vars, const Matrix& rhs) const;
 private:

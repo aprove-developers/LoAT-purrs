@@ -57,6 +57,9 @@ public:
   //! Builds the integer number \p i.
   Number(int i);
 
+  //! Builds the number \p numer / denom.
+  Number(long numer, long denom);
+
   //! Copy-constructor.
   Number(const Number& s);
 

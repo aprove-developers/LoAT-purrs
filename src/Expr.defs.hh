@@ -35,9 +35,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-// input/output stream operators
-std::ostream & operator<<(std::ostream & os, const Expr& e);
-std::istream & operator>>(std::istream & is, Expr& e);
+// output stream operators
+std::ostream& operator<<(std::ostream& os, const Expr& exp);
 
 // binary arithmetic operators Expr with Expr
 Expr operator+(const Expr& lh, const Expr& rh);
@@ -87,6 +86,8 @@ public:
   //! Assignment operator.
   Expr& operator=(const Expr& exp);
 
+  Expr operator[](int i) const;
+
   bool is_a_symbol() const;
   bool is_a_number() const;
   bool is_a_constant() const;
@@ -110,12 +111,14 @@ public:
   // info
   bool is_integer_polynomial() const;
   bool is_rational_polynomial() const;
+  bool is_relation_equal() const;
 
   unsigned nops() const;
   Expr op(unsigned i) const;
   bool is_equal(const Expr& e) const;
   bool is_zero() const;
-  Expr subs(const Symbol& s, const Expr& e) const;
+  //  Expr subs(const Symbol& s, const Expr& e) const;
+  Expr subs(const Expr& exp1, const Expr& exp2) const;
   Expr subs(const Expr_List& to_replace, const Expr_List& replacements) const;
   bool match(const Expr& pattern) const;
   bool match(const Expr& pattern, Expr_List& replacements) const;
@@ -132,6 +135,10 @@ public:
   Expr numer() const;
   Expr denom() const;
   Expr numer_denom() const;
+  Expr lhs() const;
+  Expr rhs() const;
+
+  Expr diff(const Symbol& symb);
 
   Expr to_rational(Expr_List& lst);
 
@@ -160,6 +167,7 @@ Expr acos(const Expr& e);
 Expr tan(const Expr& e);
 Expr exp(const Expr& e);
 Expr ln(const Expr& e);
+Expr factorial(const Expr& e);
 
 Expr quo(const Expr& a, const Expr& b, const Symbol& x);
 Expr quo(const Expr& a, const Symbol& x, const Symbol& y);

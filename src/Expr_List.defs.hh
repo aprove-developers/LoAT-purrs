@@ -39,8 +39,9 @@ public:
   Expr_List();
 
   explicit Expr_List(const Symbol& symb);
-
   explicit Expr_List(const Expr& exp1, const Expr& exp2);
+  explicit Expr_List(const Expr& exp1, const Expr& exp2, const Expr& exp3,
+		     const Expr& exp4, const Expr& exp5);
 
   //! Copy-constructor.
   Expr_List(const Expr_List& lst);
@@ -51,10 +52,13 @@ public:
   //! Assignment operator.
   Expr_List& operator=(const Expr_List& lst);
 
+  unsigned nops() const;
   Expr op(unsigned i) const;
 
   Expr_List append(const Expr& exp);
   Expr_List prepend(const Expr& exp);
+  // FIXME: dovrebbe tornare Expr_List&?
+  Expr_List remove_first();
 
 private:
   GiNaC::lst l;

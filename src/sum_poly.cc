@@ -89,7 +89,7 @@ poly_dec(const GExpr& p, const GSymbol& x, std::vector<GExpr>& summands) {
     q -= r;
     q /= x - i;
     ++i;
-    r = q.subs(x == i);
+    r = q.subs(x, i);
     summands[i] = r;
   }
 }
@@ -134,7 +134,7 @@ sum_poly_times_exponentials(const GExpr& p, const GSymbol& x,
 			    const GSymbol& n, const GExpr& alpha) {
 
   GExpr q;
-  if (alpha == 1) 
+  if (alpha.is_equal(1)) 
     sum_poly(p, x, n, q);
   // we just have to compute the sum of the values of the polynomial 
   else {
@@ -149,7 +149,7 @@ sum_poly_times_exponentials(const GExpr& p, const GSymbol& x,
       q += r * summands[i];
     }
   }
-  q = expand(q.subs(x == alpha));
+  q = q.subs(x, alpha).expand();
   return q;
 }
 
@@ -165,7 +165,7 @@ sum_poly_times_exponentials_times_cos(const GExpr& p, const GSymbol& x,
 				      const GSymbol& n, const GExpr& alpha, 
 				      const GExpr& theta) {
   GExpr q = 0;
-  if (theta == 0) {
+  if (theta.is_zero()) {
     q = sum_poly_times_exponentials(p, x, n, alpha);
     return q;
   } 
@@ -181,7 +181,7 @@ sum_poly_times_exponentials_times_cos(const GExpr& p, const GSymbol& x,
     r = r.expand();
     q += r * summands[i];
   }
-  q = expand(q.subs(x == alpha));
+  q = expand(q.subs(x, alpha));
   return q;
 }
 
@@ -197,7 +197,7 @@ sum_poly_times_exponentials_times_sin(const GExpr& p, const GSymbol& x,
 				      const GSymbol& n, const GExpr& alpha, 
 				      const GExpr& theta) {
   GExpr q = 0;
-  if (theta == 0) {
+  if (theta.is_zero()) {
     return q;
   } 
   unsigned d = p.degree(x);
@@ -212,6 +212,6 @@ sum_poly_times_exponentials_times_sin(const GExpr& p, const GSymbol& x,
     r = r.expand();
     q += r * summands[i];
   }
-  q = expand(q.subs(x == alpha));
+  q = expand(q.subs(x, alpha));
   return q;
 }

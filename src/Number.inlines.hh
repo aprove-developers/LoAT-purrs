@@ -124,6 +124,11 @@ Number::Number(int i)
 }
 
 inline
+Number::Number(long numer, long denom)
+  : n(numer, denom) {
+}
+
+inline
 Number::Number(const Number& num)
   : n(num.n) {
 };
@@ -143,10 +148,10 @@ inline
 Number::~Number() {
 }
 
-inline Number
-Number::numer_denom() const {
-  return n.numer_denom();
-}
+//  inline Number
+//  Number::numer_denom() const {
+//    return n.numer_denom();
+//  }
 
 inline Number
 Number::real() const {
@@ -170,7 +175,7 @@ Number::denom() const {
 
 inline Number
 irem(const Number& a, const Number& b) {
-return irem(s, b);
+  return irem(a, b);
 }
 
 inline Number

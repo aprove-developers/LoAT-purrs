@@ -72,7 +72,7 @@ void
 clear(GList& l) {
   for (unsigned n = l.nops(); n-- > 0; )
     l.remove_first();
-  assert(l.nops() == 0);
+  assert(l.nops().is_zero());
 }
 
 /*!
@@ -83,7 +83,7 @@ clear(GList& l) {
 GExpr
 get_binding(const GList& substitution, unsigned wild_index) {
   assert(wild_index < substitution.nops());
-  assert(substitution.op(wild_index).info(GiNaC::info_flags::relation_equal));
+  assert(substitution.op(wild_index).is_relation_equal());
   assert(substitution.op(wild_index).lhs() == GiNaC::wild(wild_index));
   return substitution.op(wild_index).rhs();
 }
@@ -202,7 +202,7 @@ isolate_polynomial_part(const GExpr& e, const GSymbol& x,
 */
 GExpr
 convert_to_integer_polynomial(const GExpr& p, const GSymbol& x) {
-  assert(p.info(info_flags::rational_polynomial));
+  assert(p.is_rational_polynomial());
   unsigned deg_p = p.degree(x);
 
   // Choose non-zero starting value and compute least common
@@ -225,7 +225,7 @@ convert_to_integer_polynomial(const GExpr& p, const GSymbol& x) {
 GExpr
 convert_to_integer_polynomial(const GExpr& p, const GSymbol& x,
                               GNumber& factor) {
-  assert(p.info(info_flags::rational_polynomial));
+  assert(p.is_rational_polynomial());
   unsigned deg_p = p.degree(x);
 
   // Choose non-zero starting value and compute least common
@@ -233,7 +233,7 @@ convert_to_integer_polynomial(const GExpr& p, const GSymbol& x,
   GNumber t_lcm = denom(p.coeff(x, deg_p).ex_to_number());
   for (unsigned i = 0; i <= deg_p; ++i) {
     GExpr t_coeff = p.coeff(x, i);
-    assert(is_a<GiNaC::numeric>(t_coeff));
+    assert(t_coeff.is_a_number());
     t_lcm = lcm(t_lcm, denom(t_coeff.ex_to_number()));
   }
 
@@ -256,8 +256,8 @@ convert_to_integer_polynomial(const GExpr& p, const GSymbol& x,
 */
 GExpr
 resultant(const GExpr& p, const GExpr& q, const GSymbol& x) {
-  assert(p.info(info_flags::rational_polynomial));
-  assert(q.info(info_flags::rational_polynomial));
+  assert(p.is_rational_polynomial());
+  assert(q.is_rational_polynomial());
   GExpr f = p.expand();
   GExpr g = q.expand();
   GExpr res = 1;
