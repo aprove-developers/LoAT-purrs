@@ -53,7 +53,7 @@ static struct option long_options[] = {
   {0, 0, 0, 0}
 };
 
-enum Formats {TEXT, PROLOG, LATEX, MATHML};
+enum Formats {TEXT, PROLOG};
 
 const char* program_name = 0;
 
@@ -79,17 +79,8 @@ static bool test_mode = false;
 // When true, the recurrence for the production mode has been specified.
 static bool have_recurrence = false;
 
-// When true, the exact solution is required.
-// static bool exact_solution_required = false;
-
-// When true, the validation of the solution or the approximation is required.
-// static bool validation_solution_required = false;
-
 // When true, the output has the form of prolog term.
 static bool prolog_term_required = false;
-
-// Interactive mode is on when true.
-// static bool interactive = false;
 
 // Output format, defaults to text.
 static int output = TEXT;
@@ -151,6 +142,12 @@ do_not_mix_modes() {
          << endl;
     my_exit(1);
   }
+}
+
+static void
+error_message(const char* msg) {
+  cerr << program_name << ": " << msg << "'" << endl;
+  my_exit(1);
 }
 
 static void
@@ -345,9 +342,9 @@ process_options(int argc, char* argv[]) {
       break;
 
     case 'V':
-      cerr << "rrs_driver version " << PACKAGE_VERSION << ".\n"
-        "This is the Parma Recurrence Relation Solver simple driver.\n"
-        "Copyright (C) 2002-2003 Roberto Bagnara <bagnara@cs.unipr.it>\n"
+      cerr << "multivar_driver version " << PACKAGE_VERSION << ".\n"
+        "This is the Parma Recurrence Relation Solver driver.\n"
+        "Copyright (C) 2002-2005 Roberto Bagnara <bagnara@cs.unipr.it>\n"
         "This is free software; see the source for copying conditions.  There is NO\n"
         "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
         "See http://www.cs.unipr.it/purrs/ for more information.\n"
@@ -700,118 +697,6 @@ prepare_for_the_output(const Kind& kind,
   }
 }
 
-#if 0
-
-void
-do_production_mode() {
-  if (!have_recurrence) {
-    cerr << program_name
-         << ": must specify a recurrence using the `-R' option" << endl;
-    my_exit(1);
-  }
-
-  /*
-  // If nothing has been explicitely requested, we take it
-  // as an implicit request for the exact solution.
-  if (!exact_solution_required
-      && !lower_bound_required
-      && !upper_bound_required)
-    exact_solution_required = true;
-  */
-
-  // See if we have multiple variables.
-  // Detect whether x depends on one or more parameters.
-  bool multivar_mode = false;
-  int num_param;
- 
-  std::vector<Expr> terms_with_x;
-
-  Expr rhs = prhs;
-
-  if (!find_terms_with_x(rhs, terms_with_x)) {
-    std::cerr << "Inconsistent number of parameters for the function x()." << std::endl
-	      << std::endl;
-    abort();
-  }
-
-  if (terms_with_x.size() != 0) {
-    multivar_mode = true;
-    num_param = terms_with_x[0].arg(0).nops();
-  }
-
-  Recurrence::Solver_Status solver_status;
-
-  if (multivar_mode) {
-    multivar_solve(rhs, num_param, terms_with_x, n_replacement, real_var_symbol);
-    // FIXME: Track problems.
-    solver_status = Recurrence::SUCCESS;
-  }
-  else {
-    solver_status=compute_exact_solution_wrapper(*precp);
-  }
-
-  if (exact_solution_required) {
-	Expr exact_solution;
-    
-	switch (solver_status) {
-	case Recurrence::SUCCESS: {
-	// OK: get the exact solution and print it.
-	precp->exact_solution(exact_solution);
-	exact_solution
-	  = precp->substitute_auxiliary_definitions(exact_solution);
-	string validation;
-	// Try to verify the solution.
-	if (validation_solution_required) {
-	  Recurrence::Verify_Status status = precp->verify_exact_solution();
-	  validation = set_string_validation(status);
-	}
-	// Get all informations about this recurrence.
-	std::vector<string> conditions;
-	std::vector<string> blackboard;
-	std::map<index_type, Expr> initial_conditions
-	  = precp->get_initial_conditions();
-	prepare_for_the_output(EXACT, conditions, initial_conditions,
-			       blackboard);
-	if (prolog_term_required)
-	  output_solution_prolog_term(EXACT, exact_solution, conditions,
-				      initial_conditions, blackboard,
-				      validation);
-	else
-	  output_solution(EXACT, exact_solution, conditions,
-			  initial_conditions, blackboard, validation);
-	goto exit;
-	}
-
-    case Recurrence::UNSOLVABLE_RECURRENCE:
-      cout << "unsolvable." << endl;
-      goto exit;
-
-    case Recurrence::INDETERMINATE_RECURRENCE:
-      cout << "indeterminate." << endl;
-      goto exit;
-
-    case Recurrence::MALFORMED_RECURRENCE:
-      cout << "malformed." << endl;
-      goto exit;
-
-    case Recurrence::DOMAIN_ERROR:
-      cout << "domain error." << endl;
-      goto exit;
-
-    case Recurrence::TOO_COMPLEX:
-    default:
-      cout << "exact(too_complex)." << endl;
-      break;
-    }
-  }
-
-
- exit:
-  my_exit(0);
-}
-
-#endif
-
 void
 result_of_the_verification(unsigned type,
                            const Recurrence::Verify_Status& status,
@@ -885,7 +770,7 @@ bool find_terms_with_x(const Expr& this_term, vector<Expr>& terms_with_x) {
     terms_with_x.push_back(this_term);
   }
   else if (this_term.is_the_x1_function()) {
-    invalid_recurrence("The x() function must have two arguments: a unique number and a list of arguments.");
+    error_message("The x() function must have two arguments: a unique number and a list of arguments.");
   }
   else if (this_term.nops() == 0)
     return true;
@@ -902,9 +787,10 @@ bool find_terms_with_x(const Expr& this_term, vector<Expr>& terms_with_x) {
   // Useless. Just to avoid GCC warnings.
   return true;
 }
+
       
-void multivar_solve(Expr& rhs, const int num_param, const vector<Expr>& terms_with_x, 
-		    const Symbol& n_replacement, Expr& real_var_symbol) {
+Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const int num_param, const vector<Expr>& terms_with_x, 
+		    const Symbol& n_replacement, Expr& real_var_symbol, Expr& solution) {
   vector<int> dummy(num_param);
   for (int i = num_param - 1 ; i >= 0; --i) {
     dummy[i] = true;
@@ -935,8 +821,11 @@ void multivar_solve(Expr& rhs, const int num_param, const vector<Expr>& terms_wi
     }
   }
   
-  rhs=rhs.substitute(Recurrence::n, n_replacement);
+  rhs = rhs.substitute(Recurrence::n, n_replacement);
   
+  // One of the x2() functions will be converted into the x1() function.
+  index_type converted_x_index;
+
   for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
     const Expr& this_term = (*i);
     Expr real_var_expr = this_term.arg(1).op(real_var_index);
@@ -951,8 +840,39 @@ void multivar_solve(Expr& rhs, const int num_param, const vector<Expr>& terms_wi
 	  real_var_symbol = real_var_expr.op(j);
       }
     }
-    rhs=rhs.substitute(this_term,x(real_var_expr.substitute(real_var_symbol, Recurrence::n)));
+    rhs = rhs.substitute(this_term, x(real_var_expr.substitute(real_var_symbol, Recurrence::n)));
+    // FIXME: Behave properly when multiple x2() functions appear.
+    converted_x_index = this_term.arg(0).ex_to_number().to_unsigned_int();
   }
+
+  Recurrence rec(rhs);
+  
+  // FIXME: Replace back the original x() index and arguments list.
+  Recurrence::Solver_Status outcome;
+  outcome = compute_exact_solution_wrapper(rec);
+
+  if (outcome == Recurrence::SUCCESS) {
+    rec.exact_solution(solution);
+    
+#ifdef DEBUG
+    std::cerr << solution << endl;
+#endif
+
+    // Restore original arity and symbol names.
+    for (unsigned int i = 0; i < solution.nops(); ++i) {
+      const Expr& this_term = solution.op(i);
+      if (this_term.is_the_x1_function()) {
+	solution = solution.substitute(this_term, 
+				       lhs.substitute(real_var_symbol, this_term.arg(0)));
+      }
+    }
+
+    // Replace the substituted symbols back to their place.
+    solution = solution.substitute(Recurrence::n, real_var_symbol);
+    solution = solution.substitute(n_replacement, Recurrence::n);
+  } 
+
+  return outcome;
 }
 
 int
@@ -979,96 +899,83 @@ main(int argc, char *argv[]) try {
   Expr rhs=this_rec.op(1);
 
   if (!lhs.is_the_x2_function())
-    invalid_recurrence("Invalid lhs: must be in the form x(index, {arg_list})");
+    error_message("Invalid lhs: must be in the form x(index, {arg_list})");
 
-  if (!lhs.arg(0).is_a_number())
-    invalid_recurrence("Invalid lhs: must be in the form x(index, {arg_list})");
+  const Expr& index_expr = lhs.arg(0);
+  const Expr& param_list = lhs.arg(1);
 
-  if (!lhs.arg(1).is_a_Expr_List())
-    invalid_recurrence("Invalid lhs: must be in the form x(index, {arg_list})");
+  if (!index_expr.is_a_number())
+    error_message("Invalid lhs: must be in the form x(index, {arg_list})");
 
-  unsigned int index=lhs.arg(0).ex_to_number().to_unsigned_int();
+  if (!param_list.is_a_Expr_List())
+    error_message("Invalid lhs: must be in the form x(index, {arg_list})");
 
-  function_args.insert(std::map<index_type, Expr>
-		       ::value_type(index, rhs));
+  unsigned int index=index_expr.ex_to_number().to_unsigned_int();
 
+  function_args.insert(std::map<index_type, Expr>::value_type(index, param_list));
 
-    int num_param;
+  int num_param;
 
-    std::vector<Expr> terms_with_x;
+  std::vector<Expr> terms_with_x;
 
-    if (!find_terms_with_x(rhs, terms_with_x)) {
-      std::cerr << "Inconsistent number of arguments for the function x()." << std::endl
-		<< std::endl;
-      abort();
-    }
+  if (!find_terms_with_x(rhs, terms_with_x)) {
+    std::cerr << "Inconsistent number of arguments for the function x()." << std::endl
+	      << std::endl;
+    abort();
+  }
 
-    if (terms_with_x.size() != 0) {
-      num_param = terms_with_x[0].arg(1).nops();
-    }
+  if (terms_with_x.size() != 0) {
+    num_param = terms_with_x[0].arg(1).nops();
+  }
+  
+  Expr exact_solution;
+  
+  Recurrence::Solver_Status solve;
 
-    multivar_solve(rhs, num_param, terms_with_x, n_replacement, real_var_symbol);
-
+  solve = multivar_solve(lhs, rhs, num_param, terms_with_x, n_replacement, real_var_symbol, exact_solution);
+  
 #ifdef DEBUG
-      cout << rhs;
-      cout << endl;
+  cout << rhs;
+  cout << endl;
 #endif
-
-    Recurrence rec(rhs);
-    Expr lower;
-    Expr upper;
-    Expr exact_solution;
+  
+  switch (solve) {
+  case Recurrence::SUCCESS: {
     
-       {
-	switch (compute_exact_solution_wrapper(rec)) {
-	case Recurrence::SUCCESS: {
-	  // OK: get the exact solution and print it.
-	  rec.exact_solution(exact_solution);
-
-	  // Replace the substituted symbols back to their place.
-	  exact_solution=exact_solution.substitute(Recurrence::n, real_var_symbol);
-	  exact_solution=exact_solution.substitute(n_replacement, Recurrence::n);
-
-	  // FIXME: Replace back the original x() index and anguments list.
-
-	    switch (output) {
-	      // FIXME: Prolog must be handled differently. Other formats
-	      // must be removed.
-	    case PROLOG:
-	    case TEXT:
-	    case LATEX:
-	    case MATHML:
-	      cout << lhs << " = " << exact_solution << endl;
-	      break;
-	    }
+    switch (output) {
+      // FIXME: Prolog must be handled differently.
+    case PROLOG:
+    case TEXT:
+      cout << lhs << " = " << exact_solution << endl;
+      break;
+    }
+    goto finish;
+    break;
+  }
+  case Recurrence::UNSOLVABLE_RECURRENCE:
+    cout << endl << "Unsolvable" << endl << endl;
         goto finish;
         break;
-	}
-      case Recurrence::UNSOLVABLE_RECURRENCE:
-          cout << endl << "Unsolvable" << endl << endl;
-        goto finish;
-        break;
-      case Recurrence::INDETERMINATE_RECURRENCE:
-          cout << endl << "Indeterminate" << endl << endl;
-        goto finish;
-        break;
-      case Recurrence::MALFORMED_RECURRENCE:
-          cout << endl << "Malformed" << endl << endl;
-        goto finish;
-        break;
-      case Recurrence::DOMAIN_ERROR:
-          cout << endl << "Domain error" << endl << endl;
-        goto finish;
-        break;
-      case Recurrence::TOO_COMPLEX:
-          cout << endl << "Too complex" << endl << endl;
-      default:
-        break;
-      }
-
-       }
-  finish:
-       my_exit(0);
+  case Recurrence::INDETERMINATE_RECURRENCE:
+    cout << endl << "Indeterminate" << endl << endl;
+    goto finish;
+    break;
+  case Recurrence::MALFORMED_RECURRENCE:
+    cout << endl << "Malformed" << endl << endl;
+    goto finish;
+    break;
+  case Recurrence::DOMAIN_ERROR:
+    cout << endl << "Domain error" << endl << endl;
+    goto finish;
+    break;
+  case Recurrence::TOO_COMPLEX:
+    cout << endl << "Too complex" << endl << endl;
+  default:
+    break;
+  }
+  
+ finish:
+  my_exit(0);
 } 
 catch (exception &p) {
   cerr << "std::exception caught: " << p.what() << endl;
