@@ -42,10 +42,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include <utility>
 #include <algorithm>
 
-// TEMPORARY
-#include <iostream>
-#include <fstream>
-
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 #define Napier exp(Expr(1))
@@ -264,25 +260,31 @@ eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs) {
   Expr coefficient;
   find_max_decrement_and_coeff(rhs, max_decrement, coefficient);
 
-  // The change of variables includes replacing `n' by `n-max_decrement',
-  // changing sign, and dividing by `coefficient'.
+  // We wish to transform `x(n) = a_1 * x(n+1) + ... + a_m * x(n+m)'
+  // into `x(t) = (-x(t-m) + a_1 * x (t-m+1) + ... ) / (-a_m)' where
+  // `t=n+m' and the coefficients a_m may depend on n.
 
-  // First replace `n' with `n-max_decrement' in the coefficient. 
-  coefficient = coefficient.substitute(Recurrence::n, Recurrence::n - max_decrement);
+  // 1: Let `m = max_decrement'. Put `t = n + m'. (For efficiency,
+  // actually replace `n' with `n+m' everywhere).
+  //  DD_MSGVAR("Eliminate negative decrements in ", rhs);
+  const Symbol& n = Recurrence::n;
+  new_rhs = rhs.substitute(n, n - max_decrement);
+  coefficient = coefficient.substitute(n, n - max_decrement);
 
-  // Then do the same in the recurrence.
-  new_rhs = rhs.substitute(Recurrence::n, Recurrence::n - max_decrement);
+  // 2: Move the old `x(n)' (now `x(n-m)') to the right hand side.
+  new_rhs -= x(n - max_decrement);
 
-  // Collect `x(n)' for efficiency/readability and change sign.
-  new_rhs = new_rhs.collect(Expr_List(x(Recurrence::n)));
-  new_rhs *= -1;
+  // 3: Divide everything by the leading coefficient.
+  new_rhs /= -coefficient;
 
-  // Replace arguments of `x' again, so that the new `x(n)' is the old
-  // `x(n+max_decrement)', and divide by the new `coefficient'.
-  new_rhs = new_rhs.substitute(x(Recurrence::n),
-  			       - x(Recurrence::n-max_decrement)
-			       * pwr(coefficient, -1));
-  new_rhs /= coefficient;
+  // 4: The coefficient of `x(n+m)' is now -1. Move it to the left hand side
+  // (i.e., remove it from the right hand side).
+  // FIXME: Assert that coeff(x(n)) is actually -1.
+  new_rhs = new_rhs.substitute(x(n), 0);
+
+  new_rhs = new_rhs.expand();
+
+  //  DD_MSGVAR("Rewritten recurrence: ", new_rhs);
 }
 
 /*!
