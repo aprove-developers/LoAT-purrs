@@ -72,6 +72,12 @@ Cached_Expr::set_expression(const Expr& e) {
   has_expression_ = true;
 }
 
+inline void
+Cached_Expr::unset_expression() {
+  expression_ = 0;
+  has_expression_ = false;
+}
+
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_Cached_Expr_inlines_hh)
