@@ -188,17 +188,17 @@ substitute_function_x(const Expr& e, const std::vector<Expr>& repls,
     <CODE>recurrence_rhs</CODE>.
     We next consider the difference between the partial solution
     and the new right hand side:
-    - if it is equal to zero     -> returns <CODE>true</CODE>:
+    - if it is equal to zero  -> returns <CODE>PROVABLY_CORRECT</CODE>:
                                     the solution is certainly right.
     - if it is not equal to zero (in a syntactical sense)
-                                 -> returns <CODE>false</CODE>:   
-				    the solution can be wrong or
-				    we failed to simplify it.
-
+                              -> returns <CODE>INCONCLUSIVE_VERIFICATION</CODE>:
+			         the solution can be wrong or
+				 we failed to simplify it.
   FIXME: In the latter case, we will need more powerful tools to
-  decide whether the solution is right or it is really wrong.
+  decide whether the solution is right or it is really wrong and, in this last
+  case, to return <CODE>PROVABLY_INCORRECT</CODE>.
 */
-Recurrence::VERIFY_STATUS
+Recurrence::Verify_Status
 PURRS::Recurrence::verify_solution() const {
   if (solved || solve()) {
     D_VAR(old_recurrence_rhs);
@@ -288,7 +288,16 @@ PURRS::Recurrence::verify_solution() const {
       diff = simplify_all(diff);
       D_VAR(diff);
       if (!diff.is_zero())
-	return INCONCLUSIVE_VERIFICATION;
+	if (gcd_decrements_old_rhs != 0) {
+	  // If we have applied the order reduction and we do not have success
+	  // in the verification of the original recurrence, then we please
+	  // ourselves if is verified the reduced redurrence.
+	  solution = solution_order_reduced;
+	  gcd_decrements_old_rhs = 0;
+	  return verify_solution();
+	}
+	else
+	  return INCONCLUSIVE_VERIFICATION;
       return PROVABLY_CORRECT;
     }
   }

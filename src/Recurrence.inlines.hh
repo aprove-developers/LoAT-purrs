@@ -35,6 +35,7 @@ Recurrence::Recurrence()
   : recurrence_rhs(0),
     old_recurrence_rhs(0),
     gcd_decrements_old_rhs(0),
+    solution_order_reduced(0),
     type(ORDER_ZERO),
     tdip(0),
     solved(false) {
@@ -45,6 +46,7 @@ Recurrence::Recurrence(const Expr& e)
   : recurrence_rhs(e),
     old_recurrence_rhs(0),
     gcd_decrements_old_rhs(0),
+    solution_order_reduced(0),
     type(UNKNOWN),
     tdip(0),
     solved(false) {
@@ -55,6 +57,7 @@ Recurrence::Recurrence(const Recurrence& y)
   : recurrence_rhs(y.recurrence_rhs),
     old_recurrence_rhs(y.old_recurrence_rhs),
     gcd_decrements_old_rhs(y.gcd_decrements_old_rhs),
+    solution_order_reduced(y.solution_order_reduced),
     system_rhs(y.system_rhs),
     type(y.type),
     tdip(y.tdip),    
@@ -72,6 +75,7 @@ Recurrence::operator=(const Recurrence& y) {
   recurrence_rhs = y.recurrence_rhs;
   old_recurrence_rhs = y.old_recurrence_rhs;
   gcd_decrements_old_rhs = y.gcd_decrements_old_rhs;
+  solution_order_reduced = y.solution_order_reduced;
   system_rhs = y.system_rhs;
   type = y.type;
   tdip = y.tdip;

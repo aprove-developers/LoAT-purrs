@@ -180,7 +180,7 @@ public:
   Expr exact_solution() const;
   Expr approximated_solution() const;
 
-  enum VERIFY_STATUS {
+  enum Verify_Status {
     /*!
       The system can prove that the recurrence has been successfully
       solved.
@@ -204,7 +204,7 @@ public:
   //! Returns <CODE>false</CODE> if the solution is wrong or the
   //! simplifications are failed, i.e., the solution is right but
   //! this function does not realize.
-  VERIFY_STATUS verify_solution() const;
+  Verify_Status verify_solution() const;
 
   //! \brief
   //! Substitutes eventually auxiliary definitions contained in
@@ -256,6 +256,11 @@ private:
   //! before to solve the reduced recurrence;
   //! stores 0 otherwise.
   mutable unsigned gcd_decrements_old_rhs;
+
+  //! \brief
+  //! When is applied the order reduction stores the solution of the
+  //! reduced order recurrence; stores 0 otherwise.
+  mutable Expr solution_order_reduced;
 
   //! \brief
   //! Holds the right-hand sides of a system of  recurrence equations.

@@ -212,6 +212,7 @@ return_sum(bool distinct, const Number& order, const Expr& coeff,
   if (distinct)
     symbolic_sum = symbolic_sum.subs(x, alpha/lambda);
   symbolic_sum *= pwr(lambda, Recurrence::n);
+  D_VAR(symbolic_sum);
   symbolic_sum = simplify_on_output_ex(symbolic_sum.expand(), false);
   return symbolic_sum;
 }
@@ -1557,6 +1558,7 @@ PURRS::Recurrence::solve_easy_cases() const {
       // -  n                      -> 1 / gcd_among_decrements
       //                              * (n - mod(n, gcd_among_decrements));
       // -  x(k), k non-negative integer -> x(mod(n, gcd_among_decrements)).
+      solution_order_reduced = solution;
       solution = come_back_to_original_variable(solution, r,
 						mod(n, gcd_among_decrements),
 						gcd_among_decrements);

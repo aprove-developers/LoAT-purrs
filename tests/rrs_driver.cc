@@ -235,7 +235,7 @@ all_space(const string& s) {
 }
 
 ostream&
-operator<<(ostream& s, Recurrence::VERIFY_STATUS v) {
+operator<<(ostream& s, Recurrence::Verify_Status v) {
   switch (v) {
   case Recurrence::PROVABLY_CORRECT:
     s << "PROVABLY_CORRECT";
@@ -385,7 +385,7 @@ main(int argc, char *argv[]) try {
 	    && (expect_provably_correct_result
 		|| expect_provably_wrong_result
 		|| expect_inconclusive_verification)) {
-	  Recurrence::VERIFY_STATUS status = rec.verify_solution();
+	  Recurrence::Verify_Status status = rec.verify_solution();
 	  if (expect_provably_correct_result
 	      && status != Recurrence::PROVABLY_CORRECT) {
 	    if (verbose)
