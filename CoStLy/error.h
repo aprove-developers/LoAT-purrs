@@ -31,25 +31,25 @@
 class syntax_error : public std::logic_error 
 {
  public:
-  syntax_error(const std::string& what_arg) : std::logic_error(what_arg) {}
+  syntax_error(const std::string& what_arg) : std::logic_error(what_arg) { abort(); }
 };
 
 class division_by_zero : public std::logic_error  
 {
  public:
-  division_by_zero() : std::logic_error("") {}
+  division_by_zero() : std::logic_error("") { abort(); }
 };
 
 class function_not_defined : public std::invalid_argument
 {
  public:
-  function_not_defined() : std::invalid_argument("") {}
+  function_not_defined() : std::invalid_argument("") { abort(); }
 };
 
 class wrong_dimensions : public std::length_error
 {
  public:
-  wrong_dimensions() : std::length_error("") {}
+  wrong_dimensions() : std::length_error("") { abort(); }
 };
 
 #endif
