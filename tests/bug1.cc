@@ -4,6 +4,7 @@
 #include "purrs_install.hh"
 
 using namespace GiNaC;
+using namespace std;
 
 void
 solve_equation_4(const GNumber& a1, const GNumber& a2,

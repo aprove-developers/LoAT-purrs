@@ -15,9 +15,9 @@ VPATH = @srcdir@
 
 SUBDIRS =
 
-INCLUDES = -I$(top_builddir)/src -I/usr/local/filib/include @extra_includes@
+INCLUDES = -I$(top_builddir)/src @extra_includes@ #-I/usr/local/filib/include 
 
-LDADD = $(top_builddir)/src/libpurrs.a -L/usr/local/filib/lib -lfi -lieee -lprim -lstdc++ @gmp_library_option@
+LDADD = $(top_builddir)/src/libpurrs.a -lstdc++ @gmp_library_option@ #-L/usr/local/filib/lib -lfi -lieee -lprim 
 
 CPPFLAGS = @extra_cpp_flags@
 
