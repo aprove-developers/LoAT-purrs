@@ -122,7 +122,6 @@ n	2*x(n/2)+b
 n	2*x(n/2)+c*n
 n	2*x(n/2)+n/(n+1)
 n	2*x(n/2)+n/log(n)
-n	2*x(n/4)+n^(1/2)
 n	2*x(n/4)+x(n/2)+n*log(n)
 n	2+x(n-10)+x(n-1)
 n	2/x(n-1)
@@ -138,10 +137,7 @@ n	3*x(n/2)+n*log(n*n*a)
 n	3*x(n/2)+n*log(n*n/a)
 n	3*x(n/2)+n*log(n-n/a)
 n	3+(1/(x(n-1)))
-n	4*x(n/2)+(n^2)*n^(1/2)
-n	4*x(n/2)+(n^2)*sqrt(n)
 n	4*x(n/4)+c
-n	4*x(n/4)+n^(1/2)
 n	7*n/5+x(n/5)+(4/10)*n+x((7/10)*n)
 n	a*x(n-1)*x(n)+b*x(n-1)
 n	a*x(n-1)+(1-a)*x(n+1)
@@ -242,6 +238,7 @@ ul	2*x(n/2)+log(n)
 ul	2*x(n/2)+n*log(log(n))
 ul	2*x(n/2)+n*log(n)
 ul	2*x(n/2)+n^n
+ul	2*x(n/4)+n^(1/2)
 ul	2+x(2*n/3)
 ul	3*x(n/2)+n*log(n)
 ul	3*x(n/2)+n*log(n)+n
@@ -250,7 +247,10 @@ ul	3*x(n/2)+n*n*log(n)
 ul	3*x(n/3)+n*log(n)
 ul	3*x(n/4)+n*log(n)
 ul	4*x(n/2)+(n^2)*n
+ul	4*x(n/2)+(n^2)*n^(1/2)
+ul	4*x(n/2)+(n^2)*sqrt(n)
 ul	4*x(n/2)+n^2
+ul	4*x(n/4)+n^(1/2)
 ul	4+x(n/2)+n^3
 ul	5*x(n/4)+n*log(log(n))
 ul	9*x(n/3)+n^2
