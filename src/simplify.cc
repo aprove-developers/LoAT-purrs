@@ -1135,6 +1135,7 @@ find_log_factors(const Expr& e, Expr& log_factors, Expr& rem_factors) {
 
 Expr
 prepare_change_base_logarithm(const Expr& base, const Expr& exponent) {
+  D_MSG("CHANGE BASE");
   Number base_num;
   // The base is a positive number.
   if (base.is_a_number(base_num) && base_num.is_positive()) {
@@ -1155,23 +1156,31 @@ prepare_change_base_logarithm(const Expr& base, const Expr& exponent) {
 	return pwr(change_base_logarithm(base, log_factors_exp, base_num),
 		   rem_factors_exp);
     }
-    // The base is rational with the numerator equal to `1'.
-    if (base_num.is_rational() && base_num.numerator() == 1
-	&& exponent.is_a_mul()) {
-      Number denom_base = base_num.denominator();
-      Expr log_factors_exp = 1;
-      Expr rem_factors_exp = 1;
-      find_log_factors(exponent, log_factors_exp, rem_factors_exp);
-      partial_factor(denom_base, bases, exponents);
-      if (bases.size() == 1) {
-	Number new_base = bases[0];
-	return pwr(change_base_logarithm(base, log_factors_exp, new_base,
-					 exponents[0]),
-		   -rem_factors_exp);
+    if (base_num.is_rational() && exponent.is_a_mul()) {
+      // The base is rational with the numerator equal to `1'.
+      if (base_num.numerator() == 1) {
+	Number denom_base = base_num.denominator();
+	Expr log_factors_exp = 1;
+	Expr rem_factors_exp = 1;
+	find_log_factors(exponent, log_factors_exp, rem_factors_exp);
+	partial_factor(denom_base, bases, exponents);
+	if (bases.size() == 1) {
+	  Number new_base = bases[0];
+	  return pwr(change_base_logarithm(base, log_factors_exp, new_base,
+					   exponents[0]),
+		     -rem_factors_exp);
+	}
+	else
+	  return pwr(change_base_logarithm(base, log_factors_exp, base_num),
+		     -rem_factors_exp);
       }
-      else
+      else {
+	Expr log_factors_exp = 1;
+	Expr rem_factors_exp = 1;
+	find_log_factors(exponent, log_factors_exp, rem_factors_exp);
 	return pwr(change_base_logarithm(base, log_factors_exp, base_num),
-		   -rem_factors_exp);
+		   rem_factors_exp);
+      }
     }
   }
   return pwr(simplify_logarithm_in_expanded_ex(base),
@@ -1228,6 +1237,7 @@ logarithm_of_product(const Expr& arg_log) {
 Expr
 simplify_logarithm_in_expanded_ex(const Expr& e) {
   Expr e_rewritten;
+  D_MSGVAR("*** ", e);
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
@@ -1239,7 +1249,9 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
       e_rewritten *= simplify_logarithm_in_expanded_ex(e.op(i));
   }
   else if (e.is_a_power())
-    // Apply the fifth and sixth properties.
+    // Apply the fifth and sixth properties: note that is important that
+    // these properties are applied before than the third and the fourth
+    // properties.
     return prepare_change_base_logarithm(e.arg(0), e.arg(1));
   else if (e.is_a_function()) {
     if (e.is_the_log_function()) {
@@ -1261,6 +1273,7 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
 	  return exponent;
       }
       else if (arg_log.is_a_number(arg_log_num)) {
+	D_MSG("LOG DI NUM");
 	if (arg_log_num.is_positive_integer())
 	  // Factorize the base of the argument of the logarithm.
 	  return factorize_base_arg_log(arg_log_num);
