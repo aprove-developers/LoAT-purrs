@@ -467,12 +467,9 @@ x_function_in_powers_or_functions(const Expr& e) {
   else if (e.is_a_power()) {
     const Expr& base = e.arg(0);
     const Expr& exponent = e.arg(1);
-    if (base.is_the_x_function())
-      if (base.arg(0).has(Recurrence::n))
-	return 0;
-    if (exponent.is_the_x_function())
-      if (exponent.arg(0).has(Recurrence::n))
-        return 0;
+    if (base.has_x_function(false, Recurrence::n)
+	|| exponent.has_x_function(false, Recurrence::n))
+      return 0;
   }
   return 2;
 }
