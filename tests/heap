@@ -443,6 +443,7 @@ y	2*x(n-1)-4*x(n-3)
 y	2/n*sum(k,0,n-1,x(k))+n
 y	3*x(n-1)*x(n-2)
 y	3*x(n-1)-x(n-3)
+y	4*x(n-1)^(2/3)
 y	factorial(n)-x(n-3)+3*x(n-2)+n*log(n)+a
 y	factorial(n)-x(n-3)+3*x(n-2)+n*log(n)+a+x(n-1)
 y	factorial(n)-x(n-3)+x(n-2)+n*log(n)
