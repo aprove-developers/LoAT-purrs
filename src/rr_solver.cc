@@ -685,7 +685,7 @@ exp_poly_decomposition_summand(const GExpr& e, const GSymbol& n,
   }
   else
     for (unsigned i = num_factors; i-- > 0; ) {
-      if (match(e.op(i), exponential, substitution)) {
+      if (clear(substitution), match(e.op(i), exponential, substitution)) {
 	// We have found something of the form `pow(base, n)'.
 	GExpr base = get_binding(substitution, 0);
 	assert(base != 0);
