@@ -267,6 +267,8 @@ main() try {
     case Recurrence::SUCCESS:
       have_exact_solution = true;
       recurrence.exact_solution(exact_solution);
+      exact_solution
+	= recurrence.substitute_auxiliary_definitions(exact_solution);
       goto done;
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
