@@ -34,16 +34,35 @@ Comments:
 Bug #2
 Title:		Correct but inconsistent solutions
 Description:	Two correct but syntactically different solutions to same rec.
-Status:		New
+Status:		NEW
 Priority:	Low (but worth investigating)
 Reproducible:	Machine-dependent?
 Steps to reproduce:
   1. Run rrs_driver -i
   2. Solve x(n)=x(n-1)+x(n-2)
-  3. Solve it again (cursor up + enter)
+  3. Solve it again (Cursor up + Enter)
   4. While being actually the same, the two solutions look different. Why?
 Comments:
   2004-04-17 pescetti
     Feel like scripting? echo -e "x(n-1)+x(n-2)\nx(n-1)+x(n-2)"|rrs_driver -i
   2004-04-27 pescetti
+    Tried on two quite different machines and got the same behaviour.
+
+-----
+
+Bug #3
+Title:		INCONCLUSIVE_VERIFICATION after a few attempts
+Description:	Solve and verify the same recurrence 4 times; 4th attempt fails
+Status:		ASSIGNED (pescetti)
+Priority:	High
+Reproducible:	Always?
+Steps to reproduce:
+  1. create 'heap.bug3': 4 identical lines, 'yv  ((n+1)*x(n-1)+(2*n-2))/n'
+  2. run rrs_driver -rv < heap.bug3
+  3. The recurrence is correctly solved (and solution verified) 3 times
+  4. On the fourth attempt, verification fails: INCONCLUSIVE_VERIFICATION
+Comments:
+  2004-05-05 pescetti
+    Bug#2 might depend on this one (or be the same problem in harmless form).
+  2004-05-07 pescetti
     Tried on two quite different machines and got the same behaviour.
