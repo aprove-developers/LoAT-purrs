@@ -1462,10 +1462,10 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs,
 }
 
 static Expr
-rewrite_factor(const Expr& e, const Symbol& r, int gcd_among_decrements) {
+rewrite_factor(const Expr& e, const Expr& m, int gcd_among_decrements) {
   if (e.is_a_power())
-    return pwr(rewrite_factor(e.arg(0), r, gcd_among_decrements),
-	       rewrite_factor(e.arg(1), r, gcd_among_decrements));
+    return pwr(rewrite_factor(e.arg(0), m, gcd_among_decrements),
+	       rewrite_factor(e.arg(1), m, gcd_among_decrements));
   else if (e.is_a_function())
     if (e.is_the_x_function()) {
       Expr argument = e.arg(0);
@@ -1478,21 +1478,21 @@ rewrite_factor(const Expr& e, const Symbol& r, int gcd_among_decrements) {
     }
     else
       for (unsigned i = e.nops(); i-- > 0; )
-	return rewrite_factor(e.arg(i), r, gcd_among_decrements);
+	return rewrite_factor(e.arg(i), m, gcd_among_decrements);
   else if (e == Recurrence::n)
-    return gcd_among_decrements * Recurrence::n + r;
+    return gcd_among_decrements * Recurrence::n + m;
   return e;
 }
 
 static Expr
-rewrite_term(const Expr& e, const Symbol& r, int gcd_among_decrements) {
+rewrite_term(const Expr& e, const Expr& m, int gcd_among_decrements) {
   unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
   Expr e_rewritten = 1;
   if (num_factors > 1)
     for (unsigned i = num_factors; i-- > 0; )
-      e_rewritten *= rewrite_factor(e.op(i), r, gcd_among_decrements);
+      e_rewritten *= rewrite_factor(e.op(i), m, gcd_among_decrements);
   else
-    e_rewritten = rewrite_factor(e, r, gcd_among_decrements);
+    e_rewritten = rewrite_factor(e, m, gcd_among_decrements);
   return e_rewritten;
 }
 
@@ -1504,52 +1504,52 @@ rewrite_term(const Expr& e, const Symbol& r, int gcd_among_decrements) {
   than those of the original recurrence. 
 */
 static Expr
-rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
+rewrite_reduced_order_recurrence(const Expr& e, const Expr& m,
 				 int gcd_among_decrements) {
   D_VAR(gcd_among_decrements);
   unsigned num_summands = e.is_a_add() ? e.nops() : 1;
   Expr e_rewritten = 0;
   if (num_summands > 1)
     for (unsigned i = num_summands; i-- > 0; )
-      e_rewritten += rewrite_term(e.op(i), r, gcd_among_decrements);
+      e_rewritten += rewrite_term(e.op(i), m, gcd_among_decrements);
   else
-    e_rewritten = rewrite_term(e, r, gcd_among_decrements);
+    e_rewritten = rewrite_term(e, m, gcd_among_decrements);
   return e_rewritten;
 }
 
 static Expr 
-come_back_to_original_variable(const Expr& e, const Symbol& r,
+come_back_to_original_variable(const Expr& e, const Expr& m,
 			       int gcd_among_decrements) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
       e_rewritten += come_back_to_original_variable(e.op(i),
-						    r, gcd_among_decrements);
+						    m, gcd_among_decrements);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
       e_rewritten *= come_back_to_original_variable(e.op(i),
-						    r, gcd_among_decrements);
+						    m, gcd_among_decrements);
   }
   else if (e.is_a_power())
     return
-      pwr(come_back_to_original_variable(e.arg(0), r, gcd_among_decrements),
-	  come_back_to_original_variable(e.arg(1), r, gcd_among_decrements));
+      pwr(come_back_to_original_variable(e.arg(0), m, gcd_among_decrements),
+	  come_back_to_original_variable(e.arg(1), m, gcd_among_decrements));
   else if (e.is_a_function())
     if (e.is_the_x_function())
-      return x(r);
+      return x(m);
   else {
     unsigned num_argument = e.nops();
     std::vector<Expr> argument(num_argument);
     for (unsigned i = 0; i < num_argument; ++i)
       argument[i] = come_back_to_original_variable(e.arg(i),
-						   r, gcd_among_decrements);
+						   m, gcd_among_decrements);
     return apply(e.functor(), argument);
   }
   else if (e == Recurrence::n)
-    return Number(1, gcd_among_decrements) * (Recurrence::n - r);
+    return Number(1, gcd_among_decrements) * (Recurrence::n - m);
   else
     return e;
   return e_rewritten;
@@ -2006,10 +2006,10 @@ PURRS::Recurrence::solve_easy_cases() const {
 #else
   Expr inhomogeneous_term = 0;
   Solver_Status status;
-  int gcd_among_decrements;
+  int gcd_among_decrements = 0;
   unsigned num_summands = expanded_rhs.is_a_add() ? expanded_rhs.nops() : 1;
   if (num_summands > 1)
-    // Is necessary that in the first turn `i' is `0'.
+    // It is necessary that the following loop starts from `0'.
     for (unsigned i = 0; i < num_summands; ++i) {
       status = classification_summand(expanded_rhs.op(i), n,
 				      inhomogeneous_term, coefficients,
@@ -2027,8 +2027,8 @@ PURRS::Recurrence::solve_easy_cases() const {
       return status;
   }
 #endif
-  // Check if the recurrence is not linear, i.e. there is a non-linear term
-  // containig in `e' containing `x(a*n+b)'.
+  // Check if the recurrence is non linear, i.e. there is a non-linear term
+  // containing in `e' containing `x(a*n+b)'.
   status = find_non_linear_recurrence(inhomogeneous_term, n);
   if (status != OK)
     return status;
@@ -2040,23 +2040,22 @@ PURRS::Recurrence::solve_easy_cases() const {
     solution = inhomogeneous_term;
     return OK;
   }
-
+  D_VAR(gcd_among_decrements);
   // If the greatest common divisor among the decrements is greater than one,
   // the order reduction is applicable.
   if (gcd_among_decrements > 1 && !has_non_constant_coefficients) {
     D_MSG("Order reduction");
-    // `r = n mod gcd_among_decrements'.
-    Symbol r;
-    Expr new_rhs = rewrite_reduced_order_recurrence(expanded_rhs, r,
+    Expr m = mod(n, gcd_among_decrements);
+    Expr new_rhs = rewrite_reduced_order_recurrence(expanded_rhs, m,
 						    gcd_among_decrements);
     recurrence_rhs = new_rhs;
     Solver_Status status = solve_easy_cases();
     if (status == OK) {
       // Perform two substitutions:
-      // -  n                            -> 1/gcd_among_decrements * (n - r);
-      // -  x(k), k non-negative integer -> x(r).
+      // -  n                            -> 1/gcd_among_decrements * (n - m);
+      // -  x(k), k non-negative integer -> x(m).
       solution = come_back_to_original_variable(solution,
-						r, gcd_among_decrements);
+						m, gcd_among_decrements);
       solution = simplify_on_output_ex(solution.expand(), n, false);
     }
     return status;
@@ -2454,4 +2453,3 @@ solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
   solution *= alpha_factorial;
   return OK;
 }
-
