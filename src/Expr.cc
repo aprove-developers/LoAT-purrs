@@ -1171,5 +1171,7 @@ PURRS::mathml_print(const GiNaC::ex & e, std::ostream& s)
 void
 PURRS::Expr::mathml_output(std::ostream& s) const {
   const Expr e = *this;
+  s << "<math xmlns=\"http://www.w3.org/1998/Math/MathML\">" << std::endl;
   mathml_print(e, s);
+  s << "</math>" << std::endl;
 }
