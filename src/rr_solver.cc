@@ -137,8 +137,8 @@ vector_not_all_zero(const std::vector<Expr>& v) {
 static Expr
 return_sum(const bool distinct, const Symbol& n, const Number& order,
 	   const Expr& coeff, const Symbol& alpha, const Symbol& lambda) {
-  Symbol k;
-  Symbol x;
+  Symbol k("k");
+  Symbol x("x");
   Expr q_k = coeff.subs(n,k);
   Expr symbolic_sum;  
   if (distinct)
@@ -493,7 +493,7 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
 
   // Compute the characteristic equation and its roots.
   Expr characteristic_eq;
-  Symbol y;
+  Symbol y("y");
   std::vector<Polynomial_Root> roots;
   bool all_distinct = true;
   // FIXME: il seguente if sull'ordine e' temporaneo perche' cosi' si
@@ -569,7 +569,7 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   if (order > 1)
     add_initial_conditions(g_n, n, num_coefficients, initial_conditions,
 			   solution);
-  
+
   D_MSGVAR("Before calling simplify: ", solution);
   solution = simplify_on_output_ex(solution.expand(), n, false);
   
@@ -930,8 +930,8 @@ solve_constant_coeff_order_1(const Symbol& n, const int order,
   // Computes the sum when `\lambda^{n-k} p(k)' is a polynomial or
   // a product of a polynomial times an exponential.
   if (vector_not_all_zero(exp_poly_coeff)) {
-    Symbol alpha;
-    Symbol lambda;
+    Symbol alpha("alpha");
+    Symbol lambda("lambda");
     std::vector<Expr> symbolic_sum_distinct;
     std::vector<Expr> symbolic_sum_no_distinct;
     compute_symbolic_sum(n, alpha, lambda, roots,
@@ -1149,7 +1149,7 @@ compute_non_homogeneous_part(const Symbol& n, const Expr& g_n,
   for (unsigned i = bases_exp_g_n.size(); i-- > 0; )
     for (unsigned j = base_of_exps.size(); j-- > 0; ) {
       Expr solution = 0;
-      Symbol k;
+      Symbol k("k");
       Expr g_n_coeff_k = g_n_poly_coeff[i].subs(n, n - k);
       Expr exp_poly_coeff_k = exp_poly_coeff[j].subs(n, k);
       solution = sum_poly_times_exponentials(g_n_coeff_k * exp_poly_coeff_k,
@@ -1228,8 +1228,8 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, const int order,
       Expr root_1 = roots[0].value();
       Expr root_2 = roots[1].value();
       Expr diff_roots = root_1 - root_2;
-      Symbol alpha;
-      Symbol lambda;
+      Symbol alpha("alpha");
+      Symbol lambda("lambda");
       std::vector<Expr> symbolic_sum_distinct;
       std::vector<Expr> symbolic_sum_no_distinct;
       compute_symbolic_sum(n, alpha, lambda, roots,
@@ -1341,8 +1341,8 @@ solve_constant_coeff_order_k(const Symbol& n, Expr& g_n,
       // Prepare for to compute the symbolic sum.
       std::vector<Expr> poly_coeff_tot;
       prepare_for_symbolic_sum(n, g_n, roots, exp_poly_coeff, poly_coeff_tot);
-      Symbol alpha;
-      Symbol lambda;
+      Symbol alpha("alpha");
+      Symbol lambda("lambda");
       std::vector<Expr> symbolic_sum_distinct;
       std::vector<Expr> symbolic_sum_no_distinct;
       compute_symbolic_sum(n, alpha, lambda, roots,
