@@ -23,14 +23,16 @@ CPPFLAGS = @extra_cpp_flags@
 
 TESTS =
 
-noinst_PROGRAMS = eqs_driver
-
-eqs_driver_SOURCES = eqs_driver.cc
-
-check_PROGRAMS = $(TESTS) $(BUGS)
-
 # noinst_HEADERS = ehandlers.hh print.hh
 
 BUGS = bug1
 
 bug1_SOURCES = bug1.cc
+
+check_PROGRAMS = eqs_driver $(TESTS) $(BUGS)
+
+eqs_driver_SOURCES = eqs_driver.cc
+
+
+check-local: eqs_driver polynomials
+	./eqs_driver <$(srcdir)/polynomials
