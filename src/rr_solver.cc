@@ -24,7 +24,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
-#define NOISY 1
+#define NOISY 0
 
 #include "globals.hh"
 #include "util.hh"
@@ -72,23 +72,35 @@ build_characteristic_equation(const int order, const GSymbol& x,
 			      const std::vector<GNumber>& coefficients) {
   GExpr p;
   p = 0;
+  unsigned coefficients_size = coefficients.size();
+  
+  // We know taht the coefficients are 'numerics', but we want only
+  // rationals.
+  for (unsigned i = 1; i < coefficients_size; ++i)
+    if (!coefficients[i].is_rational())
+      throw("PURRS error: today the algebraic equation solver works\n"
+            "only with integer coefficients.\n"
+            "Please come back tomorrow.");
+
   // The function 'find_roots' wants only integer coefficients
   // for to calculates the roots of the equation.
-  GNumber c = 0;
-  unsigned coefficients_size = coefficients.size();
+  std::vector<GNumber> denominators;
+  // Find the least common multiple among the denominators of the
+  // rational elements of 'coefficients'.
   for (unsigned i = 1; i < coefficients_size; ++i)
-    if (!coefficients[i].is_integer() && coefficients[i].denom() > c) 
-      c = coefficients[i].denom();
-  if (c != 0) { //FIXME!!!
+    if (!coefficients[i].is_integer())
+      denominators.push_back(coefficients[i].denom());
+  if (denominators.size() != 0) {
+    GNumber least_com_mul = lcm(denominators);
     // Build the vector 'int_coefficients' with the elements of
-    // 'coefficients' multiplies for a factor 'c' that is the
-    // bigger among the denominator of the elements of 'coefficients'.
+    // 'coefficients' multiplies for the least common multiple
+    // 'least_com_mul'.
     std::vector<GNumber> int_coefficients(coefficients);
     for (unsigned i = 1; i < coefficients_size; ++i)
-      int_coefficients[i] *= c;
+      int_coefficients[i] *= least_com_mul;
     for (int i = 0; i < order; ++i)
       p += pow(x, i) * (-int_coefficients[order - i]);
-    p += c * pow(x, order);
+    p += least_com_mul * pow(x, order);
   }
   else {
     for (int i = 0; i < order; ++i)
@@ -96,6 +108,7 @@ build_characteristic_equation(const int order, const GSymbol& x,
     p += pow(x, order);
   }
   return p;
+
 }
 
 /*!
@@ -406,7 +419,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	num_coefficients[i] = GiNaC::ex_to<GiNaC::numeric>(coefficients[i]);
       else
 	throw("PURRS error: today the second order recurrence relations\n"
-	      "does not support parametric coefficients\n."
+	      "does not support parametric coefficients.\n"
 	      "Please come back tomorrow.");
     characteristic_eq = build_characteristic_equation(order, y,
 						      num_coefficients);
