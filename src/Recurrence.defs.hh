@@ -454,13 +454,27 @@ private:
 
   //! \brief
   //! Returns \f$ b \f$, the divisor of \f$ n \f$ in the functional equation
-  //! \f$ x_n = a x_{n/b} + p(n)..
+  //! \f$ x_n = a x_{n/b} + p(n).
   unsigned divisor_arg() const;
 
   //! \brief
   //! Returns \f$ b \f$, the divisor of \f$ n \f$ in the functional equation
-  //! \f$ x_n = a x_{n/b} + p(n)..
+  //! \f$ x_n = a x_{n/b} + p(n).
   unsigned& divisor_arg();
+
+  //! \brief
+  //! Returns the positive integer starting from which the inhomogeneous term
+  //! of a functional equation is a non negative, non decreasing function.
+  unsigned applicability_condition() const;
+
+  //! \brief
+  //! Returns the positive integer starting from which the inhomogeneous term
+  //! of a functional equation is a non negative, non decreasing function.
+  unsigned& applicability_condition();
+
+  //! \p c is the positive integer starting from which the inhomogeneous term
+  //! of a functional equation is a non negative, non decreasing function.
+  void set_applicability_condition(unsigned c) const;
 
   // Method to access to private data of `Order_Reduction_Info'.
 

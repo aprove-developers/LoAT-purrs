@@ -315,6 +315,27 @@ Recurrence::divisor_arg() {
   return functional_eq_p -> divisor_arg();
 }
 
+inline unsigned
+Recurrence::applicability_condition() const {
+  assert(is_functional_equation());
+  assert(functional_eq_p);
+  return functional_eq_p -> applicability_condition();
+}
+
+inline unsigned&
+Recurrence::applicability_condition() {
+  assert(is_functional_equation());
+  assert(functional_eq_p);
+  return functional_eq_p -> applicability_condition();
+}
+
+inline void
+Recurrence::set_applicability_condition(unsigned c) const {
+  assert(is_functional_equation());
+  assert(functional_eq_p);
+  return functional_eq_p -> set_applicability_condition(c);
+}
+
 inline Expr
 Recurrence::old_recurrence_rhs() const {
   assert(order_reduction_p);

@@ -37,9 +37,9 @@ namespace Parma_Recurrence_Relation_Solver {
 class Functional_Equation_Info {
 public:
   //! \brief
-  //! Constructor: sets \f$ coefficient_ = a \f$, and
-  //! \f$ divisor_arg_ = b \f$.
-  Functional_Equation_Info(const Expr& a, unsigned b);
+  //! Constructor: sets \f$ coefficient_ = a \f$, \f$ divisor_arg_ = b \f$
+  //! and \f$ applicability_condition_ = c \f$
+  Functional_Equation_Info(const Expr& a, unsigned b, unsigned c = 1);
 
   //! Copy-constructor.
   Functional_Equation_Info(const Functional_Equation_Info& y);
@@ -62,6 +62,15 @@ public:
   //! Returns <CODE>divisor_arg_</CODE>.
   unsigned& divisor_arg();
 
+  //! Returns <CODE>applicability_condition_</CODE>.
+  unsigned applicability_condition() const;
+
+  //! Returns <CODE>applicability_condition_</CODE>.
+  unsigned& applicability_condition();
+
+  //! Sets <CODE>applicability_condition_</CODE> with \p c.
+  void set_applicability_condition(unsigned c);
+
 private:
   //! \brief
   //! Stores the coefficient \f$ a \f$ of the equation
@@ -72,6 +81,11 @@ private:
   //! Stores the divisor\f$ b \f$ of the argument of the function
   //! \f$ x \f$ in the equation \f$ x_n = a x_{n/b} + d n^e \f$.
   unsigned divisor_arg_;
+
+  //! \brief
+  //! The positive integer starting from which the inhomogeneous term
+  //! is a non negative, non decreasing function. 
+  unsigned applicability_condition_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

@@ -30,16 +30,19 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
-Functional_Equation_Info::Functional_Equation_Info(const Expr& a, unsigned b)
+Functional_Equation_Info::Functional_Equation_Info(const Expr& a, unsigned b,
+						   unsigned c)
   : coefficient_(a),
-    divisor_arg_(b) {
+    divisor_arg_(b),
+    applicability_condition_(c) {
 }
 
 inline
 Functional_Equation_Info::
 Functional_Equation_Info(const Functional_Equation_Info& y)
   : coefficient_(y.coefficient_),
-    divisor_arg_(y.divisor_arg_) {
+    divisor_arg_(y.divisor_arg_),
+    applicability_condition_(y.applicability_condition_) {
 }
 
 inline
@@ -50,6 +53,7 @@ inline Functional_Equation_Info&
 Functional_Equation_Info::operator=(const Functional_Equation_Info& y) {
   coefficient_ = y.coefficient_;
   divisor_arg_ = y.divisor_arg_;
+  applicability_condition_ = y.applicability_condition_;
   return *this;
 }
 
@@ -71,6 +75,21 @@ Functional_Equation_Info::divisor_arg() const {
 inline unsigned&
 Functional_Equation_Info::divisor_arg() {
   return divisor_arg_;
+}
+
+inline unsigned
+Functional_Equation_Info::applicability_condition() const {
+  return applicability_condition_;
+}
+
+inline unsigned&
+Functional_Equation_Info::applicability_condition() {
+  return applicability_condition_;
+}
+
+inline void
+Functional_Equation_Info::set_applicability_condition(unsigned c) {
+  applicability_condition_ = c;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver
