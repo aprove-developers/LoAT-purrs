@@ -486,6 +486,10 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
 					     get_auxiliary_definition
 					     (auxiliary_symbols()[i]));
 	}
+	// We must copy the values in the blackboard of the linear recurrence
+	// in the blackboard of the original recurrences: they could be
+	// necessary in the validation's process of the non-linear recurrence.
+	blackboard = rec_rewritten.blackboard;
 	recurrence_rhs_rewritten = true;
 	return SUCCESS;
       }
