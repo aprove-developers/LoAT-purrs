@@ -41,13 +41,16 @@ http://www.cs.unipr.it/purrs/ . */
 #include <memory>
 #endif
 
+#define DEBUG 1
+
 using namespace std;
 using namespace Parma_Recurrence_Relation_Solver;
 
 static struct option long_options[] = {
-  {"recurrences",       required_argument, 0, 'R'},
+  {"recurrence",        required_argument, 0, 'R'},
   {"initial-condition", required_argument, 0, 'I'},
   {"help",              no_argument,       0, 'h'},
+  {"regress-test",      no_argument,       0, 'r'},
   {"format",            required_argument, 0, 'f'},
   {"version",           no_argument,       0, 'V'},
   {0, 0, 0, 0}
@@ -60,12 +63,12 @@ const char* program_name = 0;
 void
 print_usage() {
   cerr << "Usage: " << program_name << " [OPTION]...\n\n"
-    "  -R, --recurrences \"<recs>\"       set the right-hand side of the recurrence\n"
+    "  -R, --recurrence  \"<rec>\"        set the right-hand side of the recurrence\n"
     "                           that has to be solved/approximated\n" 
         "  -h, --help               print this help text\n"
         "  -f, --format=FORMAT      give output in the specified FORMAT:\n"
        "                           text (default), Prolog\n"
-    "  -r, --regress-test [N]   set regression-testing mode on (N tries)\n"
+    "  -r, --regress-test       set regression-testing mode on\n"
     "  -V, --version            show version number and exit"
        << endl;
 }
@@ -138,7 +141,7 @@ do_not_mix_modes() {
   if (production_mode && test_mode) {
     cerr << program_name
          << ": production mode options (-R, -I, -E, -L, -U, -C, -P, -T) and\n"
-         << "test mode options (-i, -r, -v) are mutually exclusive"
+         << "test mode options (-r, -v) are mutually exclusive"
          << endl;
     my_exit(1);
   }
@@ -238,10 +241,13 @@ process_options(int argc, char* argv[]) {
 	// FIXME: Pre-parse as string to allow using `=' instead of `=='.
         if (!parse_expression(optarg, rec))
           invalid_recurrence(optarg);
+#if 0
         have_recurrence = true;
         init_production_recurrence();
         precp->replace_recurrence(rec);
 	// FIXME: Save lhs as well.
+#endif
+	recs.push_back(rec);
       }
       break;
       
@@ -303,9 +309,11 @@ process_options(int argc, char* argv[]) {
       }
       break;
 
-      /*
     case 'r':
       {
+	cerr << program_name << ": Regression testing is not implemented yet." << endl;
+	my_exit(1);
+	/*
 	if (optarg) {
 	  char* endptr;
 	  tries = strtol(optarg, &endptr, 10);
@@ -318,14 +326,15 @@ process_options(int argc, char* argv[]) {
       regress_test = true;
       test_mode = true;
       do_not_mix_modes();
+	*/
       }
       break;
-      */
 
     case 'v':
       verbose = true;
-      test_mode = true;
-      do_not_mix_modes();
+      // Verbose output can be enabled in both operation modes.
+      // test_mode = true;
+      // do_not_mix_modes();
       break;
 
     case 'V':
@@ -811,17 +820,16 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
 	}
       }
   }
-  const int real_var_index_unassigned = -1;
-  int real_var_index = real_var_index_unassigned;
+  std::vector<int> real_var_index;
   
   for (int i = num_param - 1; i >= 0; --i) {
     if (!dummy[i]) {
-      if (real_var_index != real_var_index_unassigned) {
+      if (real_var_index.size() >= 2) {
 	error_message("Too many true parameters. Resolution can succeed only if\n"
-		      "all the arguments of `x()' but one are useless.");
+		      "all the arguments of `x()' but one - or two if they are related - are useless.");
       }
       else
-	real_var_index = i;
+	real_var_index.push_back(i);
     }
   }
   
@@ -830,51 +838,144 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, const vector<Expr
   // One of the x2() functions will be converted into the x1() function.
   index_type converted_x_index;
 
-  for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
-    const Expr& this_term = (*i);
-    Expr real_var_expr = this_term.arg(1).op(real_var_index);
-    bool symbol_found = false;
-    for (int j = real_var_expr.nops() - 1; j >=0; --j) {
-      if (real_var_expr.op(j).is_a_symbol()) {
-	if (symbol_found) {
-	  assert (real_var_symbol == real_var_expr.op(j));
-	}
-	else
-	  real_var_symbol = real_var_expr.op(j);
-      }
-    }
-    rhs = rhs.substitute(this_term, x(real_var_expr.substitute(real_var_symbol, Recurrence::n)));
-    // FIXME: Behave properly when multiple x2() functions appear.
-    converted_x_index = this_term.arg(0).ex_to_number().to_unsigned_int();
-  }
-
-  Recurrence rec(rhs);
-  
+  Recurrence rec;
   Recurrence::Solver_Status outcome;
-  outcome = compute_exact_solution_wrapper(rec);
-
-  if (outcome == Recurrence::SUCCESS) {
-    rec.exact_solution(solution);
+  bool constant_difference = false;
     
-    if (verbose)
-      std::cerr << solution << endl;
-
-
-    // FIXME: The recurrence must not have been rewritten for this to succeed.
-
-    // Restore original arity and symbol names.
-    for (unsigned int i = 0; i < solution.nops(); ++i) {
-      const Expr& this_term = solution.op(i);
-      if (this_term.is_the_x1_function()) {
-	solution = solution.substitute(this_term, 
-				       lhs.substitute(real_var_symbol, this_term.arg(0)));
+  if (real_var_index.size() == 1) {
+    for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
+      const Expr& this_term = (*i);
+      Expr real_var_expr = this_term.arg(1).op(real_var_index[0]);
+      bool symbol_found = false;
+      for (int j = real_var_expr.nops() - 1; j >=0; --j) {
+	if (real_var_expr.op(j).is_a_symbol()) {
+	  if (symbol_found) {
+	    assert (real_var_symbol == real_var_expr.op(j));
+	  }
+	  else
+	    real_var_symbol = real_var_expr.op(j);
+	}
       }
+      rhs = rhs.substitute(this_term, x(real_var_expr.substitute(real_var_symbol, Recurrence::n)));
+      // FIXME: Behave properly when multiple x2() functions appear.
+      converted_x_index = this_term.arg(0).ex_to_number().to_unsigned_int();
+    }
+    
+    rec.replace_recurrence(rhs);
+    
+    outcome = compute_exact_solution_wrapper(rec);
+    
+    if (outcome == Recurrence::SUCCESS) {
+      rec.exact_solution(solution);
+      
+      if (verbose)
+	std::cerr << solution << endl;
+      
+      
+      // FIXME: The recurrence must not have been rewritten for this to succeed.
+      
+      // Restore original arity and symbol names.
+      for (unsigned int i = 0; i < solution.nops(); ++i) {
+	const Expr& this_term = solution.op(i);
+	if (this_term.is_the_x1_function()) {
+	  solution = solution.substitute(this_term, 
+					 lhs.substitute(real_var_symbol, this_term.arg(0)));
+	}
+      }
+      
+      // Replace the substituted symbols back to their place.
+      solution = solution.substitute(Recurrence::n, real_var_symbol);
+      solution = solution.substitute(n_replacement, Recurrence::n);
+      
+      
+    }
+  }
+  else if (real_var_index.size() == 2) {
+    // We can solve the recurrence even if we have two true parameters
+    // provided that their difference is constant.
+    
+    // Check whether the difference is constant.
+    constant_difference = true;
+    
+    Expr real_var_expr_0;
+    Expr real_var_expr_1;
+    Expr real_var_symbol_0;
+    Expr real_var_symbol_1;
+    
+    for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
+      const Expr& this_term = (*i);
+      real_var_expr_0 = this_term.arg(1).op(real_var_index[0]);
+      real_var_expr_1 = this_term.arg(1).op(real_var_index[1]);
+      real_var_symbol_0 = lhs.arg(1).op(real_var_index[0]);
+      real_var_symbol_1 = lhs.arg(1).op(real_var_index[1]);
+      if (real_var_expr_0 - real_var_expr_1 != real_var_symbol_0 - real_var_symbol_1)
+	constant_difference = false;
     }
 
-    // Replace the substituted symbols back to their place.
-    solution = solution.substitute(Recurrence::n, real_var_symbol);
-    solution = solution.substitute(n_replacement, Recurrence::n);
+    //  if (!real_var_expr_0.substitute(real_var_symbol_0, 0).is_a_number() 
+    //    || !real_var_expr_1.substitute(real_var_symbol_1, 0).is_a_number()) {
+    if (real_var_expr_0.substitute(real_var_symbol_0, different_symbol) !=  
+	real_var_expr_1.substitute(real_var_symbol_1, different_symbol)) {
+      error_message("Too complex. Terms on the right hand side depend on too many terms on the left hand side.");
+    }
+    if (!constant_difference)
+      error_message("Too complex. Difference is not constant");
+#if DEBUG
+    cout << "Constant difference." << endl;
+#endif
+    
+    // Pick one of the two variables and solve the recurrence with respect to it.
+    for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
+      const Expr& this_term = (*i);
+      const Expr& real_var_expr_0 = this_term.arg(1).op(real_var_index[0]);
+      real_var_symbol_0 = lhs.arg(1).op(real_var_index[0]);
+      rhs = rhs.substitute(this_term, x(real_var_expr_0.substitute(real_var_symbol_0, Recurrence::n)));
+    }
+    
+    rec.replace_recurrence(rhs);
+    
+    outcome = compute_exact_solution_wrapper(rec);
+    
+    if (outcome == Recurrence::SUCCESS) {
+      rec.exact_solution(solution);
+      
+      if (verbose)
+	cout << "Auxiliary recurrence solution: " << solution << endl;
+      
+      // FIXME: The recurrence must not have been rewritten for this to succeed.
+      
+      // The final solution will be given as a combination of two possibile solutions.
+      Expr solution_0 = solution;
+      Expr solution_1 = solution;
+      // Restore original arity and symbol names.
+      for (unsigned int i = 0; i < solution.nops(); ++i) {
+	const Expr& this_term = solution.op(i);
+	if (this_term.is_the_x1_function()) {
+	  solution_0 = solution_0.substitute(this_term, 
+					     lhs.substitute(real_var_symbol_0, this_term.arg(0)));
+	  solution_1 = solution_1.substitute(this_term, 
+					     lhs.substitute(real_var_symbol_0, this_term.arg(0)));
+	  //	  cout << this_term << " - " << solution << endl;
+	}
+      }
+
+      //      cout << solution << " - " << rendl;
+      
+      // Replace the substituted symbols back to their place.
+      solution_0 = solution_0.substitute(Recurrence::n, real_var_symbol_0);
+      solution_0 = solution_0.substitute(n_replacement, Recurrence::n);
+      solution_1 = solution_1.substitute(Recurrence::n, real_var_symbol_1);
+      solution_1 = solution_1.substitute(n_replacement, Recurrence::n);
+      //      GiNaC::ex difference;
+      //      difference = static_cast<const GiNaC::ex>(real_var_symbol_0 - real_var_symbol_1);
+      //      GiNaC::ex difference_ginac = static_cast<const GiNaC::ex> difference;
+      Expr zero = 0;
+      solution = max(real_var_symbol_0 - real_var_symbol_1, zero) * solution_0 +
+	max(real_var_symbol_1 - real_var_symbol_0, zero) * solution_1;
+    }
   } 
+  else
+    error_message("Internal error while finding true parameters");
 
   return outcome;
 }
@@ -932,8 +1033,7 @@ main(int argc, char *argv[]) try {
   solve = multivar_solve(lhs, rhs, terms_with_x, n_replacement, real_var_symbol, exact_solution);
   
 #ifdef DEBUG
-  cout << rhs;
-  cout << endl;
+  cout << "Auxiliary recurrence: " << rhs << endl;
 #endif
   
   switch (solve) {
