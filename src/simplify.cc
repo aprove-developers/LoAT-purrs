@@ -57,30 +57,29 @@ simplify_on_output_ex(const Expr& e, const Symbol& n, bool input);
   3. the <CODE>Expr</CODE> \p e not contains \p n:
      returns the <CODE>Expr</CODE> \p e_minus_n equal to \p e.
 */
-static Expr
-erase_factor(const Expr& e, const Symbol& n) {
- bool found = false;
+static bool
+erase_factor(Expr& e, const Symbol& n) {
  if (e.is_a_mul()) {
-   for (unsigned i = e.nops(); i-- > 0; )
+   unsigned num_factors = e.nops();
+   unsigned i;
+   for (i = 0; i < num_factors; ++i)
      if (e[i].is_equal(n))
-       found = true;
- }
- else
-   if (e.is_equal(n))
-     found = true;
-
- Expr e_minus_n = 1;
- if (found) {
-   if (e.is_a_mul()) {
-     for (unsigned i = e.nops(); i-- > 0; )
-       if (!e[i].is_equal(n))
-	 e_minus_n *= e[i];
+       break;
+   if (i < num_factors) {
+     // Found an occurrence of th symbol `n'.
+     Expr r = 1;
+     for (unsigned j = 0; j < num_factors; ++j)
+       if (i != j)
+	 r *= e[i];
+     e = r;
+     return true;
    }
  }
- else
-   e_minus_n = e;
- 
- return e_minus_n;
+ else if (e.is_equal(n)) {
+   e = 1;
+   return true;
+ }
+ return false;
 }
 
 /*!
@@ -112,12 +111,13 @@ static Expr
 return_power(bool is_numeric_base, const Expr& base,
 	     const Expr& num_exp, const Expr& not_num_exp,
 	     const Symbol& n, bool input) {
-  Expr not_num_exp_minus_n;
-  if (input)	
-    not_num_exp_minus_n = erase_factor(not_num_exp, n);
+  Expr not_num_exp_minus_n = not_num_exp;
+  bool n_removed = false;
+  if (input)
+    n_removed = erase_factor(not_num_exp_minus_n, n);
   // We do not want put in evidence the special symbol `n' or it is
   // not in `not_num_exp'.
-  if (!input || not_num_exp_minus_n.is_equal(not_num_exp))
+  if (!input || !n_removed)
     if (is_numeric_base)
       return Parma_Recurrence_Relation_Solver::power(Parma_Recurrence_Relation_Solver::power(base, num_exp), not_num_exp);
     else
