@@ -346,7 +346,7 @@ collect_base_exponent(const GExpr& e) {
     // the argument of the functions.
     // Put this factor simplified in a new GExpr 'factor_function' and
     // remove this factor from 'tmp'.
-    if (is_a<function>(tmp.op(i))) {
+    if (is_a<function>(tmp.op(i)) && !tmp.op(i).match(x(wild()))) {
       GExpr t = simplify_on_output_ex(tmp.op(i).op(0));
       factor_function *= tmp.op(i).subs(tmp.op(i).op(0) == t);
       tmp = tmp.subs(tmp.op(i) == 1);

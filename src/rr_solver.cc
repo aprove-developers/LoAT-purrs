@@ -130,31 +130,39 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     GExpr a;
     // The following matches are attempted starting from the most common,
     // then the second most common and so forth.
+    // The check 'if (!i.has(n))' is necessary because otherwise do not
+    // accept 'x(i)' with 'i' numeric.
     if (clear(substitution), match(e, x_i_plus_r, substitution)) {
       i = get_binding(substitution, 0);
+      if (!i.has(n))                                                
+	break;
       a = 1;
       e = get_binding(substitution, 1);
     }
     else if (clear(substitution), match(e, a_times_x_i_plus_r, substitution)) {
       i = get_binding(substitution, 0);
+      if (!i.has(n))                                                
+	break;
       a = get_binding(substitution, 1);
       e = get_binding(substitution, 2);
     }
     else if (clear(substitution), match(e, a_times_x_i, substitution)) {
       i = get_binding(substitution, 0);
+      if (!i.has(n))                                                
+	break;
       a = get_binding(substitution, 1);
       e = 0;
     }
     else if (clear(substitution), match(e, x_i, substitution)) {
       i = get_binding(substitution, 0);
+      if (!i.has(n))                                                
+	break;
       a = 1;
       e = 0;
     }
     else
       break;
 
-    // FIXME: con questo controllo qui ed in questo modo non accetta
-    // per esempio x(n) = x(n-1) + x(0).
     GNumber decrement;
     if (!get_constant_decrement(i, n, decrement)) {
       failed = true;
@@ -193,7 +201,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       coefficients.insert(coefficients.end(), coefficient);
     else
       coefficients[index] += coefficient;
-  
+    std::cout << std::endl << "i " << i << std::endl;
+    std::cout << "a " << a << std::endl;
+    std::cout << "e " << e << std::endl;
   } while (e != 0);
   if (failed)
     return false;
