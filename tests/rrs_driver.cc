@@ -515,6 +515,8 @@ do_production_mode() {
       cout << "malformed." << endl;
       goto exit;
 
+    case Recurrence::HAS_NON_INTEGER_DECREMENT:
+    case Recurrence::HAS_HUGE_DECREMENT:
     case Recurrence::TOO_COMPLEX:
     default:
       cout << "exact(too_complex)." << endl;
@@ -543,6 +545,8 @@ do_production_mode() {
       cout << "malformed." << endl;
       goto exit;
 
+    case Recurrence::HAS_NON_INTEGER_DECREMENT:
+    case Recurrence::HAS_HUGE_DECREMENT:
     case Recurrence::TOO_COMPLEX:
     default:
       cout << "lower_bound(too_complex)." << endl;
@@ -570,6 +574,8 @@ do_production_mode() {
       cout << "malformed." << endl;
       goto exit;
 
+    case Recurrence::HAS_NON_INTEGER_DECREMENT:
+    case Recurrence::HAS_HUGE_DECREMENT:
     case Recurrence::TOO_COMPLEX:
     default:
       cout << "upper_bound(too_complex)." << endl;
@@ -890,14 +896,16 @@ main(int argc, char *argv[]) try {
 	break;
       case Recurrence::INDETERMINATE_RECURRENCE:
 	if (interactive)
-	  cout << "Indeterminate" << endl;
+	  cout << "Indeterminate" << endl << endl;
 	goto finish;
 	break;
       case Recurrence::MALFORMED_RECURRENCE:
 	if (interactive)
-	  cout << "Malformed" << endl;
+	  cout << "Malformed" << endl << endl;
 	goto finish;
 	break;
+      case Recurrence::HAS_NON_INTEGER_DECREMENT:
+      case Recurrence::HAS_HUGE_DECREMENT:
       case Recurrence::TOO_COMPLEX:
       default:
 	break;
@@ -930,6 +938,8 @@ main(int argc, char *argv[]) try {
 	  cout << "Malformed" << endl;
 	goto finish;
 	break;
+      case Recurrence::HAS_NON_INTEGER_DECREMENT:
+      case Recurrence::HAS_HUGE_DECREMENT:
       case Recurrence::TOO_COMPLEX:
 	if (!too_complex_printed && interactive) {
 	  cout << endl << "Too complex" << endl << endl;
@@ -966,6 +976,8 @@ main(int argc, char *argv[]) try {
 	  cout << "Malformed" << endl;
 	goto finish;
 	break;
+      case Recurrence::HAS_NON_INTEGER_DECREMENT:
+      case Recurrence::HAS_HUGE_DECREMENT:
       case Recurrence::TOO_COMPLEX:
 	if (!too_complex_printed && interactive)
 	  cout << endl << "Too complex" << endl << endl;
