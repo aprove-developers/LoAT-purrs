@@ -292,6 +292,7 @@ main() try {
   Expr lower_bound;
   Expr upper_bound;
   unsigned int first_valid_index_for_solution;
+  string Sc_function;
 
   time_unit_t start_time;
 
@@ -345,6 +346,7 @@ main() try {
       recurrence.lower_bound(lower_bound);
       first_valid_index_for_solution
 	= recurrence.first_valid_index_for_solution();
+      Sc_function = recurrence.definition_Sc();
       solution_time_usecs += time_unit_to_usecs(get_time() - start_time);
 
       start_time = get_time();
@@ -381,6 +383,7 @@ main() try {
       recurrence.upper_bound(upper_bound);
       first_valid_index_for_solution
 	= recurrence.first_valid_index_for_solution();
+      Sc_function = recurrence.definition_Sc();
       solution_time_usecs += time_unit_to_usecs(get_time() - start_time);
 
       start_time = get_time();
@@ -496,8 +499,12 @@ main() try {
       cout << "x(n) <= " << upper_bound << endl;
     }
   }
+
   if (have_exact_solution || have_lower_bound || have_upper_bound)
     cout << br() << "for each n >= " << first_valid_index_for_solution << endl;
+
+  if ((have_lower_bound || have_upper_bound) && !Sc_function.empty())
+    cout << br() << "where " << Sc_function << endl;
   
   // Get a pointer to the environment.
   const CgiEnvironment& env = cgi.getEnvironment();
