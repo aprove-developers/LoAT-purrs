@@ -194,7 +194,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
   unsigned int first_i_c;
   if (rec.is_non_linear_finite_order()) {
     order_rec = rec.order_if_linear();
-    first_i_c = rec.first_i_c_if_linear();
+    first_i_c = rec.non_linear_to_linear_fwdr();
   }
   else {
     order_rec = rec.order();
@@ -464,7 +464,8 @@ compute_non_linear_recurrence(Expr& solution_or_bound, unsigned type) const {
       if ((status = rec_rewritten.solve_linear_finite_order())
 	  == SUCCESS) {
 	set_order_if_linear(rec_rewritten.order());
-	set_first_i_c_if_linear(rec_rewritten.first_well_defined_rhs_linear());
+	set_non_linear_to_linear_fwdr
+	  (rec_rewritten.first_well_defined_rhs_linear());
 	// Transform the solution of the linear recurrence in the solution
 	// of the non linear recurrence.
 	if (rec_rewritten.exact_solution_.expression() == 0)

@@ -38,7 +38,7 @@ Non_Linear_Info::Non_Linear_Info(const Expr& rhs, const Expr& new_rhs,
     base_exp_log_(base_exp_log),
     auxiliary_symbols_(auxiliary_symbols),
     order_if_linear_(0),
-    first_i_c_if_linear_(0) {
+    non_linear_to_linear_fwdr_(0) {
 }
 
 inline
@@ -48,7 +48,7 @@ Non_Linear_Info::Non_Linear_Info(const Non_Linear_Info& y)
     base_exp_log_(y.base_exp_log_),
     auxiliary_symbols_(y.auxiliary_symbols_),
     order_if_linear_(y.order_if_linear_),
-    first_i_c_if_linear_(y.first_i_c_if_linear_) {
+    non_linear_to_linear_fwdr_(y.non_linear_to_linear_fwdr_) {
 }
 
 inline
@@ -62,7 +62,7 @@ Non_Linear_Info::operator=(const Non_Linear_Info& y) {
   base_exp_log_ = y.base_exp_log_;
   auxiliary_symbols_ = y.auxiliary_symbols_;
   order_if_linear_ = y.order_if_linear_;
-  first_i_c_if_linear_ = y.first_i_c_if_linear_;
+  non_linear_to_linear_fwdr_ = y.non_linear_to_linear_fwdr_;
   return *this;
 }
 
@@ -122,18 +122,18 @@ Non_Linear_Info::set_order_if_linear(unsigned int x) {
 }
 
 inline unsigned
-Non_Linear_Info::first_i_c_if_linear() const {
-  return first_i_c_if_linear_;
+Non_Linear_Info::non_linear_to_linear_fwdr() const {
+  return non_linear_to_linear_fwdr_;
 }
 
 inline unsigned&
-Non_Linear_Info::first_i_c_if_linear() {
-  return first_i_c_if_linear_;
+Non_Linear_Info::non_linear_to_linear_fwdr() {
+  return non_linear_to_linear_fwdr_;
 }
 
 inline void
-Non_Linear_Info::set_first_i_c_if_linear(unsigned i_c) {
-  first_i_c_if_linear_ = i_c;
+Non_Linear_Info::set_non_linear_to_linear_fwdr(unsigned i_c) {
+  non_linear_to_linear_fwdr_ = i_c;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

@@ -384,24 +384,24 @@ Recurrence::set_order_if_linear(unsigned int x) const {
 }
 
 inline unsigned
-Recurrence::first_i_c_if_linear() const {
+Recurrence::non_linear_to_linear_fwdr() const {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
-  return non_linear_p -> first_i_c_if_linear();
+  return non_linear_p -> non_linear_to_linear_fwdr();
 }
 
 inline unsigned&
-Recurrence::first_i_c_if_linear() {
+Recurrence::non_linear_to_linear_fwdr() {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
-  return non_linear_p -> first_i_c_if_linear();
+  return non_linear_p -> non_linear_to_linear_fwdr();
 }
 
 inline void
-Recurrence::set_first_i_c_if_linear(unsigned i_c) const {
+Recurrence::set_non_linear_to_linear_fwdr(unsigned i_c) const {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
-  non_linear_p -> set_first_i_c_if_linear(i_c);
+  non_linear_p -> set_non_linear_to_linear_fwdr(i_c);
 }
 
 inline void

@@ -584,21 +584,21 @@ private:
   //! of finite order then this method returns the smallest positive
   //! integer for which the finite order recurrence is well-defined:
   //! the initial conditions will start from it.
-  unsigned first_i_c_if_linear() const;
+  unsigned non_linear_to_linear_fwdr() const;
 
   //! \brief
   //! When the non-linear recurrence is rewritable in a linear recurrence
   //! of finite order then this method returns the smallest positive
   //! integer for which the finite order recurrence is well-defined:
   //! the initial conditions will start from it.
-  unsigned& first_i_c_if_linear();
+  unsigned& non_linear_to_linear_fwdr();
 
   //! \brief
   //! When the non-linear recurrence is rewritable in a linear recurrence
   //! of finite order then this method sets to \p i_c is the smallest
   //! positive integer for which the finite order recurrence is well-defined:
   //! the initial conditions will start from it. 
-  void set_first_i_c_if_linear(unsigned i_c) const;
+  void set_non_linear_to_linear_fwdr(unsigned i_c) const;
 
   mutable Cached_Expr exact_solution_;
   mutable Cached_Expr lower_bound_;
