@@ -158,7 +158,7 @@ check_exp_inhomogeneous_term(GExpr& e, const GSymbol& n) {
 */
 GMatrix
 decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
-  GExpr p,q;
+  GExpr p, q;
   GList(lst_of_exp);
 
   p = e;
@@ -168,37 +168,52 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
 
   if (lst_of_exp.nops() == 0) {
     // In this case there are no axponentials.
-    return GMatrix(2, 1, lst(1, p));
+    GMatrix terms_divided(2, 1, lst(1, p));
+    return terms_divided;
   }
   else {
-    GMatrix terms_divided(2, lst_of_exp.nops()+1, lst_of_exp);
-    // Impose that the last element of the first row is the constant
-    // exponential 1.
-    terms_divided(0, lst_of_exp.nops()) = 1;
-    GList part;
+    // In this case there is at least one exponential in 'p'
+    GList row_exp;
+    GList row_coeff;
     q = p;
     for (size_t i = lst_of_exp.nops(); i-- > 0; ) {
-      clear(part);
-      // 'part' has always only one elements because we have collected
+      GList addendum;
+      // 'addendum' has always only one element because we have collected
       // 'p' with respect to the exponentials.
-      p.find(lst_of_exp.op(i) * wild(), part);
-      if (part.nops() != 0) {
-	GExpr coeff = part.op(0);
+      p.find(lst_of_exp.op(i) * wild(), addendum);
+      row_exp.append(lst_of_exp.op(i));
+      if (addendum.nops() != 0) {
+	// The exponential's coefficient is not 1.
+	GExpr coeff = addendum.op(0);
 	coeff = coeff.subs(wild(1)*pow(wild(2), n) == wild(1));
-	terms_divided(1, i) = coeff;
-	q -= part.op(0);
+	row_coeff.append(coeff);
+	q -= addendum.op(0);
       }
       else {
-	// In this case 'p' does not contain the constant exponential.
-	terms_divided(1, i) = 1;
+	// The exponential's coefficient is 1.
+	row_coeff.append(1);
 	q -= lst_of_exp.op(i);
       }
     }
     // Now 'q' does not contains any exponentials or product of exponential 
     // times other expressions.
-    if (!q.is_zero())
-      terms_divided(1, lst_of_exp.nops()) = q;
-  
+    unsigned int num_columns;
+    if (!q.is_zero()) {
+      row_exp.append(1);
+      row_coeff.append(q);
+      num_columns = lst_of_exp.nops() + 1;
+    }
+    else
+      num_columns = lst_of_exp.nops();
+
+    // The next 'for' is necessary for to use the constructor matrices
+    //      matrix::matrix(unsigned r, unsigned c, const lst& l);
+    unsigned row_coeff_nops = row_coeff.nops();
+    for (size_t i = 0; i < row_coeff_nops; ++i)
+      row_exp.append(row_coeff.op(i));
+
+    GMatrix terms_divided(2, num_columns, row_exp);
+      
     return terms_divided;
   }
 }
@@ -335,7 +350,21 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	GExpr solution = 0;
 	GExpr exponential = decomposition(0, i);
 	GExpr coeff_of_exp = decomposition(1, i);
-	if (i < num_columns - 1) 
+	if (exponential == 1)
+	  // For the constant exponential check only if the coefficient
+	  // is a polynomial.
+	  if (coeff_of_exp.info(info_flags::polynomial)) {
+	    GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
+	    sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
+					pow(coefficients[1], -1),
+					solution);
+	  }	  
+	  else {
+	    std::cout << "We want only polynomials or product" << std::endl
+		      << "of exponentials times polynomials" << std::endl;
+	    abort();
+	  }
+	else
 	  // For non constant exponentials check if the base of the
 	  // exponential is a constant and its coefficient is a polynomial.
 	  if (GiNaC::is_a<GiNaC::numeric>(exponential.op(0)) && 
@@ -349,20 +378,6 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	  else {
 	    std::cout << "We want only polynomials or product" << std::endl
 	    	      << "of exponentials times polynomials" << std::endl;
-	    abort();
-	  }
-	else
-	  // For the constant exponential check only if the coefficient
-	  // is a polynomial.
-	  if (coeff_of_exp.info(info_flags::polynomial)) {
-	    GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
-	    sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
-					pow(coefficients[1], -1),
-					solution);
-	  }	  
-	  else {
-	    std::cout << "We want only polynomials or product" << std::endl
-		      << "of exponentials times polynomials" << std::endl;
 	    abort();
 	  }
 	// 'sum_poly_times_exponentials' calculates the sum from 0 while
