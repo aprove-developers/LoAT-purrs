@@ -30,6 +30,8 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Symbol.defs.hh"
 #include "Constant.defs.hh"
 
+#include <stdexcept>
+
 namespace Parma_Recurrence_Relation_Solver {
 
 inline std::ostream&
@@ -38,6 +40,15 @@ operator<<(std::ostream& os, const Expr& exp) {
   return os;  
 };
 
+inline Expr
+operator+(const Expr& x) {
+  return x;
+}
+
+inline Expr
+operator-(const Expr& x) {
+  return -x.e;
+}
 inline Expr
 operator+(const Expr& x, const Expr& y) {
   return x.e + y.e;
@@ -55,37 +66,35 @@ operator*(const Expr& x, const Expr& y) {
 
 inline Expr
 operator/(const Expr& x, const Expr& y) {
+  if (y.is_zero())
+    throw std::runtime_error("PURRS internal error");
   return x.e / y.e;
 }
 
-inline Expr
-operator+(const Expr& x) {
+inline Expr&
+operator+=(Expr& x, const Expr& y) {
+  x.e += y.e;
   return x;
 }
 
-inline Expr
-operator-(const Expr& x) {
-  return -x.e;
+inline Expr&
+operator-=(Expr& x, const Expr& y) {
+  x.e -= y.e;
+  return x;
 }
 
 inline Expr&
-operator+=(const Expr& x, const Expr& y) {
-  return x.e += y.e;
+operator*=(Expr& x, const Expr& y) {
+  x.e *= y.e;
+  return x;
 }
 
 inline Expr&
-operator-=(const Expr& x, const Expr& y) {
-  return x.e -= y.e;
-}
-
-inline Expr&
-operator*=(const Expr& x, const Expr& y) {
-  return x.e *= y.e;
-}
-
-inline Expr&
-operator/=(const Expr& x, const Expr& y) {
-  return x.e /= y.e;
+operator/=(Expr& x, const Expr& y) {
+  if (y.is_zero())
+    throw std::runtime_error("PURRS internal error");
+  x.e /= y.e;
+  return x;
 }
 
 #if 0

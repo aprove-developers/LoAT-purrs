@@ -39,6 +39,10 @@ namespace Parma_Recurrence_Relation_Solver {
 /*! \relates Expr */
 std::ostream& operator<<(std::ostream& os, const Expr& exp);
 
+//! Unary operators.
+Expr operator+(const Expr& x);
+Expr operator-(const Expr& x);
+
 //! Binary arithmetic operators Expr with Expr.
 Expr operator+(const Expr& x, const Expr& y);
 Expr operator-(const Expr& x, const Expr& y);
@@ -50,10 +54,6 @@ Expr& operator+=(Expr& x, const Expr& y);
 Expr& operator-=(Expr& x, const Expr& y);
 Expr& operator*=(Expr& x, const Expr& y);
 Expr& operator/=(Expr& x, const Expr& y);
-
-//! Unary operators.
-Expr operator+(const Expr& x);
-Expr operator-(const Expr& x);
 
 //! Binary operators Expr with Expr
 #if 0
@@ -73,6 +73,8 @@ Expr tan(const Expr& e);
 Expr exp(const Expr& e);
 Expr log(const Expr& e);
 
+//! \brief
+//! Computes the quozient of expressions or polynomials??
 Expr quo(const Expr& a, const Expr& b, const Symbol& x);
 Expr rem(const Expr& a, const Expr& b, const Symbol& x);
 Expr prem(const Expr& a, const Expr& b, const Symbol& x);
@@ -243,38 +245,41 @@ private:
 
   friend std::ostream& operator<<(std::ostream& os, const Expr& exp);
 
-  //! Returns the expression \f$ x + y \f$.
+  //! Returns \f$ x \f$.
+  friend Expr operator+(const Expr& x);
+
+  //! Returns \f$ - x \f$.
+  friend Expr operator-(const Expr& x);
+
+  //! Returns \f$ x + y \f$.
   friend Expr operator+(const Expr& x, const Expr& y);
 
-  //! Returns the expression \f$ x - y \f$.
+  //! Returns \f$ x - y \f$.
   friend Expr operator-(const Expr& x, const Expr& y);
 
-  //! Returns the expression \f$ x * y \f$.
+  //! Returns \f$ x * y \f$.
   friend Expr operator*(const Expr& x, const Expr& y);
 
-  //! Returns the expression \f$ x / y \f$.
+  //! If \f$ y \neq 0 \f$, returns \f$ x / y \f$.
   /*!
-    \exception std::runtime_error thrown if \p y is zero.
+    \exception std::runtime_error thrown if <CODE>y.is_zero()</CODE>.
   */
   friend Expr operator/(const Expr& x, const Expr& y);
 
-  //! Returns the expression \f$ x \f$.
-  friend Expr operator+(const Expr& x);
-
-  //! Returns the expression \f$ - x \f$.
-  friend Expr operator-(const Expr& x);
-
   //! Returns the expression \f$ x + y \f$ and assigns it to \p x.
-  friend Expr& operator+=(const Expr& x, const Expr& y);
+  friend Expr& operator+=(Expr& x, const Expr& y);
 
   //! Returns the expression \f$ x - y \f$ and assigns it to \p x.
-  friend Expr& operator-=(const Expr& x, const Expr& y);
+  friend Expr& operator-=(Expr& x, const Expr& y);
 
   //! Returns the expression \f$ x * y \f$ and assigns it to \p x.
-  friend Expr& operator*=(const Expr& x, const Expr& y);
+  friend Expr& operator*=(Expr& x, const Expr& y);
 
-  //! Returns the expression \f$ x / y \f$ and assigns it to \p x.
-  friend Expr& operator/=(const Expr& x, const Expr& y);
+  //! If \f$ y \neq 0 \f$, returns \f$ x / y \f$ and assign it to \p x.
+  /*!
+    \exception std::runtime_error thrown if <CODE>y.is_zero()</CODE>.
+  */
+  friend Expr& operator/=(Expr& x, const Expr& y);
 
 #if 0
   friend Expr& operator==(const Expr& x, const Expr& y);
