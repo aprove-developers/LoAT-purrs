@@ -101,7 +101,7 @@ public:
     NON_LINEAR_RECURRENCE,
 
     /*!
-      The recurrence is not unsolvable.
+      The recurrence is not solvable.
     */
     UNSOLVABLE_RECURRENCE,
 
@@ -159,6 +159,9 @@ private:
 			       const std::vector<Polynomial_Root>& roots,
 			       const std::vector<Expr>& initial_conditions,
 			       Expr& solution);
+  static Solver_Status
+  solve_variable_coeff_order_1(const Symbol& n, const Expr& p_n,
+			       const Expr& coefficient, Expr& solution);
 
 #if 0
     Expr poly_char;
