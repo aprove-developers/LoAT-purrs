@@ -238,7 +238,7 @@ REGISTER_FUNCTION(sum,
         \quad \text{if } b = n + j \text{and j is a positive integer}; \\
       \prod_{k = a}^b f(k) = \prod_{k = a}^n f(k) \cdot f(n+1) \cdots f(n+j),
         \quad \text{if } b = n + j \text{and j is a negative integer}; \\
-      \prod_{k = a}^b \alpha f(k) = \alpha \prod_{k = a}^b f(k),
+      \prod_{k = a}^b \alpha f(k) = \alpha^{b-a+1} \prod_{k = a}^b f(k),
         \quad \text{where } \alpha \text{does not depend from } k. 
     \end{cases}
   \f]
@@ -290,13 +290,14 @@ prod_eval(const ex& index, const ex& lower, const ex& upper,
 	ex factors_in = 1;
 	ex factors_out = 1;
 	get_out_factors_from_argument(factor, index, factors_in, factors_out);
-	return factors_out * prod(index, lower, upper, factors_in).hold();
+	return power(factors_out, upper-lower+1)
+	  * prod(index, lower, upper, factors_in).hold();
       }
       if (numeric_term.is_integer()) {
 	ex factors_in = 1;
 	ex factors_out = 1;
 	get_out_factors_from_argument(factor, index, factors_in, factors_out);
-	p *= factors_out
+	p *= power(factors_out, upper-lower+1)
 	  * prod(index, lower, ex(symbolic_term), factors_in).hold();
 	if (numeric_term.is_pos_integer())
 	  for (numeric j = 1; j <= numeric_term; ++j)
@@ -309,14 +310,16 @@ prod_eval(const ex& index, const ex& lower, const ex& upper,
 	ex factors_in = 1;
 	ex factors_out = 1;
 	get_out_factors_from_argument(factor, index, factors_in, factors_out);
-	return factors_out * prod(index, lower, upper, factors_in).hold();
+	return power(factors_out, upper-lower+1)
+	  * prod(index, lower, upper, factors_in).hold();
       }
     }
     else {
       ex factors_in = 1;
       ex factors_out = 1;
       get_out_factors_from_argument(factor, index, factors_in, factors_out);
-      return factors_out * prod(index, lower, upper, factors_in).hold();
+      return power(factors_out, upper-lower+1)
+	* prod(index, lower, upper, factors_in).hold();
     }
   return p;
 }
