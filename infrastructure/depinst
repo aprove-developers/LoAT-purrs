@@ -52,6 +52,42 @@ OPT_NTL="NTL_GMP_LIP=on NTL_STD_CXX=on GMP_PREFIX=$GCC_BASE PREFIX=$GCC_BASE"
 OPT_CGICC="$CONFIGURE_DEFAULT_OPTIONS --enable-namespaces"
 OPT_GIAC="$CONFIGURE_DEFAULT_OPTIONS --disable-debug --disable-gc --without-x --disable-gui --disable-pari --disable-gsl --disable-fltk"
 
+# Function to check if required dependencies are installed.
+could_not_find()
+{
+ PROGRAM=`which $1 2>&1 | grep -v "no $1"`
+ test -n "$PROGRAM" &&
+  { 
+    test -x "$PROGRAM" && return 0 
+  }
+  return 1
+}
+
+# It will be set to 1 if we need further confirmation from the user.
+ASK_CONTINUE=0
+
+# Check that the user is root.
+if [ $( id -u ) -ne 0 ]; then
+  echo "*** You are not running $0 as root. You must have superuser privileges."
+  ASK_CONTINUE=1
+fi
+
+for DEPENDENCY in flex bison ; do
+  could_not_find "$DEPENDENCY" || {
+    echo "*** Could not find $DEPENDENCY in your PATH. This is required to install GiNaC.";
+    ASK_CONTINUE=1
+    }
+done
+
+if test $ASK_CONTINUE -ne 0; then
+  echo -n "Problems were found. Are you sure you want to continue? (y/N): "
+  read CONFIRMATION
+  echo ""
+  if [ "$CONFIRMATION" != "y" ] && [ "$CONFIRMATION" != "yes" ] ; then
+    exit 0 ;
+  fi
+fi
+
 #for LIB_SHORT_NAME in GMP CLN GINAC NTL GIAC CGICC ; do
 for LIB_SHORT_NAME in ; do
   LIBNAME=${!LIB_SHORT_NAME}
