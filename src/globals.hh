@@ -28,7 +28,7 @@ namespace Parma_Recurrence_Relation_Solver {
 
 //! \brief
 //! An unsigned integral type for representing different kinds of
-//! indexes of the recurrence.
+//! indices of the recurrence.
 /*!
   Are <CODE>index_type</CODE> the following elements:
   - the order of a recurrence;

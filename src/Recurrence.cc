@@ -110,7 +110,7 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 	  << first << ".";
 	throw_invalid_argument(method, s.str().c_str());
       }
-      // Check if the indexes of the last `k' initial conditions are
+      // Check if the indices of the last `k' initial conditions are
       // all consecutive (the `k'-th condition is already ok for the
       // previous check).
       unsigned int j = 1;
@@ -835,8 +835,8 @@ compute_solution_finite_order_on_i_c(const Expr& solution) const {
     }
 
     // Build the equations of the linear system to solve:
-    // substitute to `solution_on_i_c' the `k' biggest indexes
-    // among the indexes of the initial conditions contained
+    // substitute to `solution_on_i_c' the `k' biggest index
+    // among the indices of the initial conditions contained
     // in `initial_conditions_'.
     assert(!initial_conditions_.empty());
     Expr_List equations;

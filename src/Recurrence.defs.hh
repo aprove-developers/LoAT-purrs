@@ -42,7 +42,7 @@ namespace Parma_Recurrence_Relation_Solver {
 
 //! \brief
 //! An unsigned integral type for representing different types of
-//! indexes of the recurrence (e.g. the order of the recurrence).
+//! indices of the recurrence (e.g. the order of the recurrence).
 typedef unsigned int index_type;
 
 //! \brief
@@ -305,7 +305,7 @@ public:
       \f]
       for \f$ p \geq 1 \f$.  If \p initial_conditions contains such a sequence
       for more than one value of \f$ p \f$ the biggest of such values is used.
-      Conditions in  \p initial_conditions for indexes less than \f$ j-k+p \f$,
+      Conditions in  \p initial_conditions for indices less than \f$ j-k+p \f$,
       if any, are interpreted as special cases.
 
     - Let \p *this be a \ref weighted_average "weighted-average recurrence".
@@ -332,7 +332,7 @@ public:
     \f$ x(n) = x_1*n + x_0 * (1-n) \f$; successively we evaluate it
     basing us on two different set of initial conditions
     (notice that are necessary at least \f$ 2 \f$ initial conditions
-    with consecutive indexes); at the end we forget the initial conditions
+    with consecutive indices); at the end we forget the initial conditions
     given thanks to the method <CODE>reset_initial_conditions()</CODE>.
     \code
       Recurrence rec(2*x(n-1)-x(n-2));
