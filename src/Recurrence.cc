@@ -87,5 +87,6 @@ PURRS::Recurrence::dump(std::ostream& s) const {
       s << "  " << i->first << " = " << i->second << std::endl;
   }
   //s << "solution = " << solution << std::endl;
+  s << std::endl;
 }
 
