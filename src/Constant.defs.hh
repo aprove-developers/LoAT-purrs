@@ -50,10 +50,11 @@ public:
   static const Constant Euler;
 
 private:
-  GiNaC::constant c;
-
   friend class Expr;
 
+  GiNaC::constant c;
+
+  //! Builds the constant corresponding to \p gc.
   Constant(const GiNaC::constant& gc);
 };
 

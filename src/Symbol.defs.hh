@@ -50,15 +50,16 @@ public:
   Symbol& operator=(const Symbol& y);
 
 private:
-  GiNaC::symbol s;
+  friend class Expr;
+  friend class Expr_List;
 
   friend Expr quo(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr rem(const Expr& a, const Expr& b, const Symbol& x);
   friend Expr prem(const Expr& a, const Expr& b, const Symbol& x);
 
-  friend class Expr;
-  friend class Expr_List;
+  GiNaC::symbol s;
 
+  //! Builds the symbol corresponding to \p gs.
   Symbol(const GiNaC::symbol& gs);
 };
 
