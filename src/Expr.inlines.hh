@@ -397,7 +397,7 @@ Expr::to_rational(Expr_List& lst) {
 }
 
 inline Expr
-Expr::diff(const Symbol& symb, unsigned nth = 1) {
+Expr::diff(const Symbol& symb, unsigned nth) {
   return e.diff(symb.s, nth);
 }
 

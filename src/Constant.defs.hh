@@ -32,7 +32,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-class Parma_Recurrence_Relation_Solver::Constant {
+class Constant {
 public:
   //! Ordinary copy-constructor.
   Constant();

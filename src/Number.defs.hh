@@ -48,7 +48,7 @@ Number& operator--(Number& rh);
 Number operator++(Number& lh, int);
 Number operator--(Number& lh, int);
 
-class Parma_Recurrence_Relation_Solver::Number {
+class Number {
 public:
   //! Default constructor.
   Number();

@@ -33,7 +33,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-class Parma_Recurrence_Relation_Solver::Expr_List {
+class Expr_List {
 public:
   //! Ordinary copy-constructor.
   Expr_List();
