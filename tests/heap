@@ -811,6 +811,7 @@ yv	n+(-1)^n
 yv	n+1
 yv	n+2*x(n-1)
 yv	n+x(n-1)
+yv      n+x(n-1)/n
 yv	n+x(n-3)
 yv	n-1+1
 yv	n^2
