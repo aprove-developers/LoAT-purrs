@@ -38,13 +38,13 @@ public:
   Symbol();
 
   //! Copy-constructor.
-  Symbol(const Symbol& s);
+  Symbol(const Symbol& x);
 
   //! Destructor.
   ~Symbol();
 
   //! Assignment operator.
-  Symbol& operator=(const Symbol& s);
+  Symbol& operator=(const Symbol& x);
 
 private:
   GiNaC::symbol s;
@@ -56,6 +56,7 @@ private:
   friend class Expr;
   friend class Expr_List;
 
+  //! Builds the symbol corresponding to \p gs.
   Symbol(const GiNaC::symbol& gs);
 };
 

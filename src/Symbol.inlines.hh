@@ -32,13 +32,13 @@ Symbol::Symbol() {
 }
 
 inline
-Symbol::Symbol(const Symbol& symb)
-  : s(symb.s) {
+Symbol::Symbol(const Symbol& x)
+  : s(x.s) {
 };
 
 inline Symbol&
-Symbol::operator=(const Symbol& symb) {
-  s = symb.s;
+Symbol::operator=(const Symbol& x) {
+  s = x.s;
   return *this;
 };
 
