@@ -69,6 +69,7 @@ n	c*n+x(n/2)
 n	log(x(n-1))
 n	log(x(n-1))+x(n-2)
 n	log(x(n-2))+x(n-1)
+n	a/n*x(n-1)
 n	n*(n-2)*x(n-2)-(n-1)*x(n-1)
 n	n*x(n-1)+n*x(n-2)
 n	n*x(n-1)+x(n-2)
@@ -279,7 +280,6 @@ y	a*x(n-1)
 y	a*x(n-1)+b
 y	a*x(n-1)+n^2
 y	a+(1-a)*x(n-1)
-y	a/n*x(n-1)
 y	a^2+a*2^c*b+3^c*b
 y	a^3+2^c*a^2*b+3^c*a*b+4^c*b
 y	n
