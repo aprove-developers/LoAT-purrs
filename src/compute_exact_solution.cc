@@ -536,17 +536,17 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     exact_solution_.set_expression(solution);
     return SUCCESS;
   }
-  // Find the largest positive or null integer that cancel the denominator of
-  // `inhomogeneous_term' and store it in `z' if it is bigger than `0'.
+
   Number z = 0;
   if (!inhomogeneous_term.is_zero()) {
     const Expr& denom_inhomogeneous_term = inhomogeneous_term.denominator();
     if (has_parameters(denom_inhomogeneous_term))
       return TOO_COMPLEX;
+    // Find the largest non-negative integer that cancel the
+    // denominator of `inhomogeneous_term' or starting from which
+    // `inhomogeneous_term' is well-defined and store it in `z' if
+    // it is bigger than `0'.
     if (!find_domain_in_N(denom_inhomogeneous_term, n, z))
-      // The system did not find an integer cancelling `inhomogeneous_term' or
-      // starting from which `inhomogeneous_term' is well-defined
-      // (polynomials are always well-defined).
       return TOO_COMPLEX;
   }
   // The initial conditions will start from `z'.
