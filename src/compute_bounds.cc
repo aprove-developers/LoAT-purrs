@@ -137,9 +137,9 @@ PURRS::Recurrence::approximate_functional_equation() const {
       + sum.substitute(n, q_lower);
   }
   else {
-    ub = pwr(coefficient(), q_upper) * get_initial_condition(index.to_int())
+    ub = pwr(coefficient(), q_upper) * get_initial_condition(index.to_unsigned())
       + sum.substitute(n, q_upper + 1);
-    lb = pwr(coefficient(), q_lower) * get_initial_condition(index.to_int())
+    lb = pwr(coefficient(), q_lower) * get_initial_condition(index.to_unsigned())
       + sum.substitute(n, q_lower);
   }
   upper_bound_.set_expression(simplify_logarithm(ub));

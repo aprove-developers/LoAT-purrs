@@ -473,7 +473,7 @@ void
 PURRS::find_divisors(Number n, std::vector<Number>& divisors) {
   assert(n.is_positive_integer());
   assert(n > 0 && n < FIND_DIVISORS_THRESHOLD);
-  unsigned m = n.to_int();
+  unsigned m = n.to_unsigned();
   // Once a divisor `i' is found, it is pushed onto the vector `divisors'
   // along with its conjugate `j = n/i', provided that `j' is less than `i'.
   if (m == 1)

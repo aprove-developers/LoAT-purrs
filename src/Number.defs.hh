@@ -241,6 +241,13 @@ public:
   */
   int to_int() const;
 
+  //! Returns the <CODE>int</CODE> corresponding to \p *this, if any.
+  /*!
+    \exception std::domain_error thrown if \p *this is not convertible
+                                 to <CODE>unsigned</CODE>.
+  */
+  unsigned to_unsigned() const;
+
   //! Returns the <CODE>long</CODE> corresponding to \p *this, if any.
   /*!
     \exception std::domain_error thrown if \p *this is not convertible

@@ -208,7 +208,7 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
   if (!inhomogeneous_term.is_zero())
     largest_positive_int_zero(denominator(inhomogeneous_term).expand(), z);
   // The initial conditions will start from `z'.
-  set_first_initial_condition(z.to_int());
+  set_first_initial_condition(z.to_unsigned());
   Expr alpha_factorial
     = compute_product(transform_in_single_fraction(coefficient), z + 1, n);
   // FIXME: this simplification simplifies the value of `alpha_factorial'
@@ -247,14 +247,14 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
       // (forse prima di vedere gosper)
       Symbol h;
       solution
-	+= alpha_factorial * get_initial_condition(z.to_int()) + alpha_factorial 
+	+= alpha_factorial * get_initial_condition(z.to_unsigned()) + alpha_factorial 
 	* PURRS::sum(h, z + 1, n, inhomogeneous_term.substitute(n, h) 
 		     / alpha_factorial.substitute(n, h));
       exact_solution_.set_expression(solution);
       return SUCCESS;
     }
   }
-  solution += get_initial_condition(z.to_int());
+  solution += get_initial_condition(z.to_unsigned());
   solution *= alpha_factorial;
   exact_solution_.set_expression(solution);
   return SUCCESS;
@@ -552,7 +552,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     largest_positive_int_zero(denominator(inhomogeneous_term).expand(), z);
   }
   // The initial conditions will start from `z'.
-  set_first_initial_condition(z.to_int());
+  set_first_initial_condition(z.to_unsigned());
   D_VAR(first_initial_condition());
 
   // `g_n' is defined here because it is necessary in the function

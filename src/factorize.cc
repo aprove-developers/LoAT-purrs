@@ -101,8 +101,8 @@ in_all_factors(const Expr& e,
       if (bases[j] == base_factor) {
 	exp_common_factor
 	  = exponents[j].ex_to_number() > exponent_factor.ex_to_number()
-	  ? exponent_factor.ex_to_number().to_int()
-	  : exponents[j].ex_to_number().to_int();
+	  ? exponent_factor.ex_to_number().to_unsigned()
+	  : exponents[j].ex_to_number().to_unsigned();
 	break;
       }
     }

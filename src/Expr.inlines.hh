@@ -589,7 +589,7 @@ lcm(const Expr& a, const Expr& b) {
 }
 
 inline Expr
-sqrfree(const Expr& x, const Expr_List& y) {
+sqrfree(const Expr& x, const Expr_List& y = Expr_List()) {
   return GiNaC::sqrfree(x, y.l);
 }
 

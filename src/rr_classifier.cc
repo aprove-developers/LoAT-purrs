@@ -549,7 +549,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	Number divisor;
 	if (get_constant_divisor(argument, divisor)) {
 	  coefficient = 1;
-	  divisor_arg = divisor.to_int(); 
+	  divisor_arg = divisor.to_unsigned(); 
 	}
 	else
 	  return TOO_COMPLEX;
@@ -610,7 +610,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	else if (argument.is_a_mul() && argument.nops() == 2) {
 	  Number divisor;
 	  if (get_constant_divisor(argument, divisor)) {
-	    divisor_arg = divisor.to_int();
+	    divisor_arg = divisor.to_unsigned();
 	    found_function_x = true;
 	    if (is_order_zero() || is_unknown())
 	      set_functional_equation();

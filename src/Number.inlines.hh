@@ -332,6 +332,17 @@ Number::to_int() const {
   return n.to_int();
 }
 
+inline unsigned
+Number::to_unsigned() const {
+  // FIXME: this test is necessary to circumvent a misfeature
+  // of CLN 1.1.5 and/or GiNaC 1.0.11.
+  // See http://www.cs.unipr.it/pipermail/purrs-devel/2002-October/000412.html.
+  if (!is_integer() || (n > 0 && n > INT_MAX)  || (n < 0 && n < INT_MIN))
+    throw std::domain_error("Cannot convert to an `int' "
+			    "in PURRS::Number::to_int()");
+  return unsigned(n.to_int());
+}
+
 inline long
 Number::to_long() const {
   // FIXME: this test is necessary to circumvent a misfeature

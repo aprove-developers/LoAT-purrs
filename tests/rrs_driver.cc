@@ -241,7 +241,7 @@ process_options(int argc, char* argv[]) {
 	  invalid_initial_condition(optarg);
 	init_production_recurrence();
 	production_recurrence
-	  ->replace_initial_condition(unsigned(index.to_int()), r);
+	  ->replace_initial_condition(index.to_unsigned(), r);
       }
       break;
 
