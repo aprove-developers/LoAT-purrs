@@ -1587,6 +1587,9 @@ PURRS::Recurrence::dump(std::ostream& s) const {
   s << "recurrence_rewritten = "
     << (recurrence_rewritten ? "true" : "false") << std::endl;
   s << "recurrence_rhs = " << recurrence_rhs << std::endl;
+  s << "first_valid_index = " << first_valid_index << std::endl;
+  s << "first_valid_index_for_solution = "
+    << first_valid_index_for_solution() << std::endl;
 
   s << "auxiliary_definitions:" << std::endl;
   blackboard.dump(s);
