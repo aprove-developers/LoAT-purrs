@@ -282,8 +282,8 @@ PURRS::convert_to_integer_polynomial(const Expr& p, const Symbol& x,
 Expr
 sylvester_matrix_resultant(const Expr& /*p*/, const Expr& /*q*/) {
   throw
-    "PURRS error: function `compute_resultant_with_determinant()':\n"
-    "work in progress.\n"
+    "PURRS error: function\n"
+    "`compute_resultant_with_determinant()': work in progress.\n"
     "Please come back tomorrow.";
 }
 
@@ -439,7 +439,7 @@ largest_positive_int_zero_on_expanded_ex(const Expr& e, Number& z) {
       if (find_roots(e, Recurrence::n, roots, all_distinct))
 	for (unsigned i = roots.size(); i-- > 0; ) {
 	  Number num_root;
-	  if (roots[i].value().is_a_number(num_root))
+	  if (roots[i].value().is_a_number(num_root) && num_root.is_real())
 	    while (z < num_root)
 	      ++z;
 	}
