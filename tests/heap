@@ -347,6 +347,8 @@ ulv	x(n/3)+5
 ulv	x(n/3)+x(n/3)+x(n/3)
 ulv	x(n/5)+3
 y	(x(n-3)+x(n-4))/2
+y	-sum(k,0,n-1,x(k))
+y	-sum(k,0,n-1,x(k))+n^2
 y	16*x(n-2)-91*x(n-4)-180*x(n-8)+216*x(n-6)+1
 y	2*sum(a,0,n-1,x(a))+5
 y	2*sum(a,0,n-1,x(a))+2*n
