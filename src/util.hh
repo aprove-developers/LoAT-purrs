@@ -79,7 +79,7 @@ convert_to_integer_polynomial(const Expr& p, const Symbol& x,
 Expr
 resultant(const Expr& p, const Expr& q, const Symbol& x);
 
-#ifdef NOISY
+#if defined(NOISY) && NOISY
 #define D_MSG(s) std::cout << s << std::endl
 #define D_VAR(x) std::cout << #x " = " << x << std::endl
 #define D_MSGVAR(s, x) std::cout << s << #x " = " << x << std::endl
