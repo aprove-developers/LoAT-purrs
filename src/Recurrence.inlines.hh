@@ -26,6 +26,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Recurrence_inlines_hh
 
 #include <iostream>
+#include <utility>
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -103,6 +104,29 @@ Recurrence::verify_solution(const Symbol& n) const {
   return true;
 }
 
+inline bool
+operator<(const Symbol& x, const Symbol& y) {
+  return x.get_name() < y.get_name();
+}
+
+inline Symbol
+Recurrence::insert_auxiliary_definition(const Expr& e) {
+  typedef std::map<Symbol, Expr> Map;
+  Symbol new_symbol;
+  std::pair<Map::iterator, bool> r
+    = auxiliary_definitions.insert(Map::value_type(new_symbol, e));
+  assert(r.second);
+  return new_symbol;
+}
+
+inline Expr
+Recurrence::get_auxiliary_definition(const Symbol& z) {
+  typedef std::map<Symbol, Expr> Map;
+  Map::const_iterator i = auxiliary_definitions.find(z);
+  assert(i != auxiliary_definitions.end());
+  return i->second;
+}
+ 
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_Recurrence_inlines_hh)

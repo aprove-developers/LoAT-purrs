@@ -61,9 +61,15 @@ public:
   //! include \f$ x_k(n) = e \f$.
   void replace_recurrence(unsigned k, const Expr& e);
 
-  //! 
-  Symbol insert_auxiliary_equation(const Expr& e);
+  //! Returns a new symbol \f$ z \f$ and records the equation \f$ z = e \f$.
+  Symbol insert_auxiliary_definition(const Expr& e);
 
+private:
+  //! Returns the right-hand side of the auxiliary equation \f$ z = e \f$.
+  // FIXME: what if there is no auxilliary equation defining z?
+  Expr get_auxiliary_definition(const Symbol& z);
+
+public:
   enum Solver_Status {
     /*!
       Solution was successful.
@@ -136,6 +142,8 @@ private:
   mutable bool solved;
 
   mutable Expr solution;
+
+  std::map<Symbol, Expr> auxiliary_definitions;
 
 private:
   static Solver_Status
