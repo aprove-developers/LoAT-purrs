@@ -33,7 +33,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 using namespace GiNaC;
 
-#define NOISY 1
+#define NOISY 0
  
 /*!
   ...
