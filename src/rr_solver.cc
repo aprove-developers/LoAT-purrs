@@ -427,8 +427,9 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	if (coefficients[i].info(info_flags::numeric))
 	  num_coefficients[i] = GiNaC::ex_to<GiNaC::numeric>(coefficients[i]);
 	else
-	  throw("The second order recurrent relations does not "
-		"support the parametric case. ");
+	  throw("PURRS error: the second order recurrence relations does not "
+		"support the case of the inhomogeneous term with "
+		"parameters. ");
       }
 
       bool poly_times_exp = true;
@@ -571,6 +572,7 @@ solution_1_poly_times_exponentials(const GSymbol& x_0, const GSymbol& n,
     GExpr solution = 0;
     GExpr exponential = decomposition(0, i);
     GExpr coeff_of_exp = decomposition(1, i);
+    coeff_of_exp = coeff_of_exp.expand();
     GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
     if (is_a<power>(exponential)) 
       solution = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
@@ -699,6 +701,7 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	GExpr solution_2 = 0;
 	GExpr exponential = decomposition(0, i);
 	GExpr coeff_of_exp = decomposition(1, i);
+	coeff_of_exp = coeff_of_exp.expand();
 	GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
 	if (is_a<power>(exponential)) {
 	  solution_1 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
@@ -799,6 +802,7 @@ solution_2_poly_times_exponentials(const GSymbol& x_0, const GSymbol& x_1,
 	  GExpr solution = 0;
 	  GExpr exponential = decomposition(0, i);
 	  GExpr coeff_of_exp = decomposition(1, i);
+	  coeff_of_exp = coeff_of_exp.expand();
 	  GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
 	  GExpr g_n_k = g_n.subs(n == n - k);
 	  if (is_a<power>(exponential))
