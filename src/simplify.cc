@@ -55,7 +55,7 @@ simplify_on_output_ex(const Expr& e, const Symbol& n, bool input);
   If \f$ e = n \f$ then returns <CODE>true</CODE> and \f$ e \f$
   becomes \f$ 1 \f$.
   For all the other cases returns <CODE>false</CODE> and \f$ e \f$
-  not changes.
+  does not change.
 */
 static bool
 erase_factor(Expr& e, const Symbol& n) {
@@ -102,8 +102,14 @@ perfect_root(const Expr& base, const Number& exponent) {
 /*!
   Given the base \p base, the numeric and non-numeric part of the
   exponent, \p num_exp and \p not_num_exp respectively, this function
-  returns the right power according to some conditions checked
-  by the boolean \p input and \p is_numeric_base.
+  returns a semantically equivalent form of 
+  \f$ base^{num\_exp * not\_num\_exp} \f$, according to some conditions 
+  that depend on the values of the boolean \p input and \p is_numeric_base.
+  The symbol \p n is considered special if and only if \p input is
+  <CODE>true</CODE>.
+  If \p is_numeric_base is <CODE>true</CODE>, the function computes
+  explicitly \f$ base^{num\_exp} \f$, and then raises the result to
+  the power \f$ not\_num\_exp \f$.
 */
 static Expr
 return_power(bool is_numeric_base, const Expr& base,
@@ -150,7 +156,7 @@ find_real_base_and_build_exponent(Expr& base, Expr& numeric_exponent,
 				  Expr& not_numeric_exponent) {
   assert(base.is_a_power());
   while (base.is_a_power()) {
-    // Split the exponent in two parts: those numeric and those not numeric.
+    // Split the exponent in two parts: numeric and non-numeric.
     Expr exponent = base.op(1);
     if (exponent.is_a_mul())
       for (unsigned i = exponent.nops(); i-- > 0; )
@@ -273,10 +279,10 @@ pow_simpl(const Expr& e, const Symbol& n, bool input) {
   because, in this case, the power is automatically decomposed,
   i. e., \f$ (a*b)^4 \f$ is automatically transformed in
   \f$ a^4*b^4 \f$.
-  Returns a new <CODE>Expr</CODE> \p e_rewritten containing the modified
-  expression \p e; the modified vectors \p bases and \p exponents will
-  be used by the function <CODE>collect_same_exponent()</CODE> called soon
-  afterwards this.
+  Returns a new <CODE>Expr</CODE> \p e_rewritten containing the
+  modified expression \p e; the modified vectors \p bases and \p
+  exponents will be used by the function
+  <CODE>collect_same_exponent()</CODE> called immediately after this.
 */
 static Expr
 collect_same_exponents(const Expr& e, std::vector<Expr>& bases,
@@ -285,7 +291,8 @@ collect_same_exponents(const Expr& e, std::vector<Expr>& bases,
   Expr e_rewritten = 1;
   // At the end of the following cycle, `e_rewritten' will contain the powers
   // of `e' with the same exponents simplified in only one power with the
-  // base equal to the previous bases multiplicated among themselves (rule `C3').
+  // base equal to the previous bases multiplicated among themselves 
+  // (rule `C3').
   unsigned i = exponents.size();
   while (i > 0) {
     --i;
@@ -316,20 +323,21 @@ collect_same_exponents(const Expr& e, std::vector<Expr>& bases,
   Applies the rules \f$ \textbf{C1} \f$ and \f$ \textbf{C2} \f$ of the set
   of rules <EM>Collect</EM> to the <CODE>Expr</CODE> \p e that is
   certainly a <CODE>mul</CODE>.
-  The vectors \p bases and \p exponents contain rispectively all bases and
+  The vectors \p bases and \p exponents contain respectively all bases and
   exponents of the powers that are in \p e and, at the end, will contain
   the new bases and exponents of the powers in \p e after the simplification.
   This function is called after <CODE>collect_same_exponents()</CODE>.
-  Returns a new <CODE>Expr</CODE> \p e_rewritten containing the modified
+  It returns a new <CODE>Expr</CODE> \p e_rewritten containing the modified
   expression \p e.
 */
 static Expr
 collect_same_base(const Expr& e, std::vector<Expr>& bases,
 		  std::vector<Expr>& exponents) {
   assert(e.is_a_mul());
-  // At the end of the following cycle, `e_rewritten' will contain all the powers
-  // of `e' with the same bases simplified in only one power with exponent
-  // equal to the sum of the previous powers' exponents (rule `C2').
+  // At the end of the following cycle, `e_rewritten' will contain all 
+  // the powers of `e' with the same bases simplified in only one power
+  // with exponent equal to the sum of the previous powers' exponents
+  // (rule `C2').
   Expr e_rewritten = 1;
   unsigned i = bases.size();
   while (i > 0) {
@@ -799,21 +807,20 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
 }
 
 /*!
-  Crosses the tree of the expanded expression \p e recursevely to find
-  subexpressions to which we apply the rules of the terms rewriting system
-  \f$ \mathfrak{R}_i \f$. More exactly here the rules of the set
-  \emph{Expand} are implemented because the rules of the set <EM>Automatic</EM>
-  are automatically executed.
-  We observe that the rule \f$ \textbf{E4} \f$ is automatically executed
-  if the exponent is integer while the rules \f$ \textbf{E3} \f$ and
-  \f$ \textbf{E6} \f$ are executed by the method <CODE>expand()</CODE>
-  (\f$ \textbf{E3} \f$ only partially because for
-  instance \f$ expand(3^(4*x+2*a)) = 3^(2*a)*3^(4*x) \f$):
-  hence we here consider only <CODE>power</CODE>.
-  \p input is always <CODE>true</CODE> and this means that \p n is a special
-  symbol, i. e., in the simplifications it is always collected with respect
-  of the others parameters.
-  Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
+  Crosses the tree of the expanded expression \p e recursively to find
+  subexpressions to which we apply the rules of the terms rewriting
+  system \f$ \mathfrak{R}_i \f$. More exactly here the rules of the set
+  \emph{Expand} are implemented because the rules of the set
+  <EM>Automatic</EM> are automatically executed.  We remark that the
+  rule \f$ \textbf{E4} \f$ is automatically executed if the exponent is
+  integer, while the rules \f$ \textbf{E3} \f$ and \f$ \textbf{E6} \f$
+  are executed by the method <CODE>expand()</CODE> (\f$ \textbf{E3} \f$
+  only partially because for instance \f$ expand(3^(4*x+2*a)) =
+  3^(2*a)*3^(4*x) \f$): hence we here consider only <CODE>power</CODE>.
+  \p input is always <CODE>true</CODE> and this means that \p n is a
+  special symbol, i.  e., in the simplifications it is always collected
+  with respect to the others parameters.  The function returns a
+  <CODE>Expr</CODE> that contains the modified expression \p e.
 */
 Expr
 simplify_on_input_ex(const Expr& e, const Symbol& n, bool input) {
@@ -845,14 +852,15 @@ simplify_on_input_ex(const Expr& e, const Symbol& n, bool input) {
 
 /*!
   Crosses the tree of the expanded expression \p e recursively to find
-  subexpressions which we want to apply the rules of the terms rewriting system
-  \f$ \mathfrak{R}_o \f$. The observations about the function
-  <CODE>simplify_on_input_ex()</CODE> are correct here too, because all the
-  rules of the term rewriting system \f$ \mathfrak{R}_i \f$, minus
-  \f$ \textbf{E2} \f$, are also in \f$ \mathfrak{R}_o \f$.
-  \p input is always <CODE>false</CODE> and this means that \p n is not
-  considerated like a special symbol but like the others parameters.
-  Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
+  subexpressions to which we want to apply the rules of the terms
+  rewriting system \f$ \mathfrak{R}_o \f$. The remarks about the
+  function <CODE>simplify_on_input_ex()</CODE> are valid here too,
+  because all the rules of the term rewriting system \f$ \mathfrak{R}_i
+  \f$, except for \f$ \textbf{E2} \f$, are also in \f$ \mathfrak{R}_o
+  \f$.  \p input is always <CODE>false</CODE> and this means that \p n
+  is not considerated like a special symbol but like the others
+  parameters.  The function returns a <CODE>Expr</CODE> that contains
+  the modified expression \p e.
 */
 Expr
 simplify_on_output_ex(const Expr& e, const Symbol& n, bool input) {
@@ -907,11 +915,11 @@ simplify_numer_denom(const Expr& e) {
   return num * pwr(den, -1);
 }
 
-
 /*!
-  Given \p a, \p b and \p c elements of the factorial expression
-  \f$ (a n + b)! \f$, this function returns a new expression that put
-  in evidence \f$ (a n)! \f$.
+  Given the factorial expression \f$ (a n + b)! \f$, this function 
+  returns a new expression that contains explicitly \f$ (a n)! \f$.
+  We use the rewrite rule explained in the comment for
+  <CODE>rewrite_factorials()</CODE>
 */
 static Expr
 decompose_factorial(const Expr& a, const Expr& b, const Expr& c,
@@ -1007,7 +1015,7 @@ rewrite_factorials(const Expr& e, const Symbol& n) {
   \f[
     a^{b n + c} = a^{b n} \cdot a^c
   \f]
-  without to expand all expression \p e.
+  without expanding.
 */
 static Expr
 simpl_exponentials(const Expr& e, const Symbol& n) {
