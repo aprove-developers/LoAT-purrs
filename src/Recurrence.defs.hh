@@ -1553,8 +1553,15 @@ private:
   //! Sets to \p i <CODE>first_valid_index</CODE>.
   void set_first_valid_index(index_type i) const;
 
-  //! Sets to \p i <CODE>first_valid_index_for_solution</CODE>.
-  void set_first_valid_index_for_solution(index_type i) const;
+  //! Sets <CODE>first_valid_index_for_solution_</CODE>.
+  /*!
+    Computes
+    \ref first_valid_index_for_solution "first_valid_index_for_solution"
+    knowing <CODE>first_valid_index</CODE> and the type of \p *this.
+    Once it has been computed, assign it to
+    <CODE>first_valid_index_for_solution_</CODE>.
+  */
+  void set_first_valid_index_for_solution() const;
 
   //! \brief
   //! Stores the value, if it exists, of the exact solution

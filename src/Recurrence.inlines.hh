@@ -565,8 +565,26 @@ Recurrence::set_first_valid_index(index_type i) const {
 }
 
 inline void
-Recurrence::set_first_valid_index_for_solution(index_type i) const {
-  first_valid_index_for_solution_ = i;
+Recurrence::set_first_valid_index_for_solution() const {
+  assert(exact_solution_.has_expression()
+	 || lower_bound_.has_expression() || upper_bound_.has_expression());
+  index_type index = first_valid_index;
+  if (initial_conditions_.empty()) {
+    if (is_weighted_average())
+      ++index;
+  }
+  else {
+    if (is_linear_finite_order() || is_non_linear_finite_order()) {
+      std::map<index_type, Expr>::const_reverse_iterator i
+	= initial_conditions_.rbegin();
+      for (index_type j = 0; j < order(); j++)
+	i++;
+      index = std::max(index, i->first);
+    }
+    else if (is_weighted_average())
+      index = std::max(index, initial_conditions_.rbegin()->first) + 1;
+  }
+  first_valid_index_for_solution_ = index;
 }
 
 inline Expr
