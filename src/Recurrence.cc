@@ -425,6 +425,93 @@ verify_new_method_var_coeff(index_type order_rec,
   return false;
 }
 
+namespace {
+using namespace PURRS;
+
+void
+fill_vector_coefficients_i_c(const Expr& summands_with_i_c, unsigned int gcd,
+			     unsigned int first_valid_index,
+			     std::vector<Expr>& coefficients_i_c) {
+  D_VAR(summands_with_i_c);
+  if (summands_with_i_c.is_a_add()) {
+    std::vector<Expr> index_i_c;
+    for (unsigned int i = summands_with_i_c.nops(); i-- > 0; ) {
+      const Expr& addend = summands_with_i_c.op(i);
+      if (addend.is_a_mul()) {
+	Expr arg = 0;
+	Expr coeff = 1;
+	for (unsigned int j = addend.nops(); j-- > 0; ) {
+	  const Expr& factor = addend.op(j);
+	  if (factor.is_the_x_function()) {
+	    assert(arg == 0);
+	    arg = factor.arg(0);
+	  }
+	  else
+	    coeff *= factor;
+	}
+	Number numeric_arg;
+	if (arg.is_a_number(numeric_arg)) {
+	  assert(numeric_arg.is_nonnegative_integer());
+	  assert(numeric_arg.to_unsigned_int()-first_valid_index
+		 < coefficients_i_c.size());
+	  coefficients_i_c[numeric_arg.to_unsigned_int()-first_valid_index]
+	    += coeff;
+	}
+	else if (arg.is_the_mod_function())
+	  coefficients_i_c[0] += coeff;
+	else {
+	  assert(arg.is_a_add() && arg.nops() == 2);
+	  assert(arg.op(0).is_a_number() || arg.op(1).is_a_number());
+	  unsigned int num = arg.op(0).is_a_number()
+	    ? arg.op(0).ex_to_number().to_unsigned_int()
+	    : arg.op(1).ex_to_number().to_unsigned_int();
+	  assert(num/gcd-first_valid_index < coefficients_i_c.size());
+	  coefficients_i_c[num/gcd-first_valid_index] += coeff;
+	}
+      }
+      else {
+	assert(addend.is_the_x_function());
+	const Expr& arg = addend.arg(0);
+	Number numeric_arg;
+	if (arg.is_a_number(numeric_arg)) {
+	  assert(numeric_arg.is_nonnegative_integer());
+	  assert(numeric_arg.to_unsigned_int()-first_valid_index
+		 < coefficients_i_c.size());
+	  coefficients_i_c[numeric_arg.to_unsigned_int()-first_valid_index]
+	    += 1;
+	}
+	else if (arg.is_the_mod_function())
+	  coefficients_i_c[0] += 1;
+	else {
+	  assert(arg.is_a_add() && arg.nops() == 2
+		 && (arg.op(0).is_a_number() || arg.op(1).is_a_number()));
+	  unsigned int num = arg.op(0).is_a_number()
+	    ? arg.op(0).ex_to_number().to_unsigned_int()
+	    : arg.op(1).ex_to_number().to_unsigned_int();
+	  assert(num/gcd-first_valid_index < coefficients_i_c.size());
+	  coefficients_i_c[num/gcd-first_valid_index] += 1;
+	}
+      }
+    }
+  }
+  else if (summands_with_i_c.is_a_mul()) {
+    coefficients_i_c[0] = 1;
+    for (unsigned int j = summands_with_i_c.nops(); j-- > 0; ) {
+      const Expr& factor = summands_with_i_c.op(j);
+      if (!factor.is_the_x_function())
+	coefficients_i_c[0] *= factor;
+    }
+  }
+  else {
+    // FIXME: chiamare metodo `is_a_symbolic_initial_condition()'.
+    assert(summands_with_i_c.is_the_x_function());
+    coefficients_i_c[0] = 1;
+  }
+  D_VEC(coefficients_i_c, 0, coefficients_i_c.size()-1);
+}
+
+} // anonymous namespace
+
 /*!
   Case 1: linear recurrences of finite order.
   Consider the right hand side \p rhs of the order \f$ k \f$ recurrence
@@ -522,7 +609,7 @@ PURRS::Recurrence::verify_finite_order() const {
   // Step 1: validation of symbolic initial conditions.
   Verify_Status status = validate_initial_conditions(order_rec,
 						     first_valid_index);
-  if (status == INCONCLUSIVE_VERIFICATION || status == PROVABLY_INCORRECT)
+  if (status != PROVABLY_CORRECT)
     return status;
   
   // Step 2: split the solution in 2 parts: terms with initial conditions
@@ -572,75 +659,22 @@ PURRS::Recurrence::verify_finite_order() const {
     }
     else {
       // Step 3: new method.
-      // `summands_with_i_c' e' gia' scritto nella forma
-      // `x(n) = x(0)*(...) + x(1)*(...) + ... + x(k)*(...).
-      D_VAR(summands_with_i_c);
-      if (summands_with_i_c.is_a_add()) {
-	for (unsigned int i = summands_with_i_c.nops(); i-- > 0; ) {
-	  const Expr& addend = summands_with_i_c.op(i);
-	  if (addend.is_a_mul()) {
-	    Expr coeff_i_c = 1;
-	    for (unsigned int j = addend.nops(); j-- > 0; ) {
-	      const Expr& factor = addend.op(j);
-	      if (!factor.is_the_x_function())
-		coeff_i_c *= factor;
-	    }
-	    if (verify_new_method_const_coeff(order_rec, coeff_i_c, roots,
-					      false))
-	      goto continue_with_step_4;
-	  }
-	  else
-	    if (!verify_new_method_const_coeff(order_rec, 1, roots,
-					       false))
-	      goto continue_with_step_4;
+      // Prepare a vector containing the coefficients of the symbolic
+      // initial conditions occurring in `summands_with_i_c'.
+      std::vector<Expr> coefficients_i_c(order_rec/gcd_among_decrements());
+      fill_vector_coefficients_i_c(summands_with_i_c, gcd_among_decrements(),
+				   first_valid_index, coefficients_i_c);
+      bool new_step_3_failed = false;
+      for (unsigned int i = 0; i < order_rec/gcd_among_decrements(); ++i)
+	if (!verify_new_method_const_coeff(order_rec, coefficients_i_c[i],
+					   roots, false)) {
+	  new_step_3_failed = true;
+	  break;
 	}
-      }
-      else if (summands_with_i_c.is_a_mul()) {
-	Expr coeff_i_c = 1;
-	for (unsigned int j = summands_with_i_c.nops(); j-- > 0; ) {
-	  const Expr& factor = summands_with_i_c.op(j);
-	  if (!factor.is_the_x_function())
-	    coeff_i_c *= factor;
-	}
-	if (!verify_new_method_const_coeff(order_rec, coeff_i_c, roots,
-					   false))
-	  goto continue_with_step_4;
-      }
-      else {
-	// FIXME: chiamare metodo `is_a_symbolic_initial_condition()'.
-	assert(summands_with_i_c.is_the_x_function());
-	if (!verify_new_method_const_coeff(order_rec, 1, roots,
-					   false))
-	  goto continue_with_step_4;
-      }
-//      // Prepare a vector containing all the coefficient of the initial
-//      // conditions.
-//      std::vector<Expr> coefficients_i_c(order_rec);
-//      // Inserts all number 1 in the vector `coefficients_i_c'.
-//      coefficients_i_c.insert(coefficients_i_c.begin(), order_rec, 1);
-//      if (summands_with_i_c.is_a_add())
-//        for (unsigned int i = summands_with_i_c.nops(); i-- > 0; ) {
-//  	const Expr& addend = summands_with_i_c.op(i);
-//  	if (addend.is_a_mul()) {
-//  	  for (unsigned int j = addend.nops(); j-- > 0; ) {
-//  	    const Expr& factor = addend.op(j);
-//  	    if (!factor.is_the_x_function())
-//  	      coefficients_i_c[i] *= factor;
-//  	  }
-//  	}
-//        }
-//      else if (summands_with_i_c.is_a_mul()) {
-//        for (unsigned int j = summands_with_i_c.nops(); j-- > 0; ) {
-//  	const Expr& factor = summands_with_i_c.op(j);
-//  	if (!factor.is_the_x_function())
-//  	  coefficients_i_c[0] *= factor;
-//        }
-//      }
-//      else
-//        // FIXME: chiamare metodo `is_a_symbolic_initial_condition()'.
-//        assert(summands_with_i_c.is_the_x_function());
-//        DD_VAR(summands_with_i_c);
-//        DD_VEC(coefficients_i_c, 0, coefficients_i_c.size()-1);
+      if (!new_step_3_failed)
+	goto continue_with_step_4;
+
+
     }
   }
 #endif
