@@ -142,7 +142,7 @@ zeilberger_step_one(const Expr& F_m_k,
   Reduce the rational function \f$ q(k) \f$ to canonical form as
   follows.
   Every rational function \f$ q(k) \f$ can be written in the form
-  \f$ q(k) = p_1(k+1)/p_1(k) * p_2(k)/p_3(k) \f$ where 
+  \f$ q(k) = \frac{p_1(k+1)}{p_1(k)} \frac{p_2(k)}{p_3(k)} \f$ where 
   \f$ p_1, p_2, p_3 \f$ are polynomials in \f$ k \f$ and
   \f$ gdc(p_2(n), p_3(n+h)) = 1 \f$ for all nonnegative integers \f$ k \f$.
 */
@@ -154,21 +154,21 @@ parametric_gosper_step_two(const Symbol& k, const Expr& q_k,
   Expr den;
   q_k.numerator_denominator(num, den);
 
-  Expr a_k = num;
-  Expr b_k = den;
-  Expr c_k = 1;
+  p2_k = num;
+  p3_k = den;
+  p1_k = 1;
 
   for (Number h = 1; h <= 100; ++h) {
     // FIXME: Zeilberger trick.
     if (gcd(num, den).degree(k) > 0) {
-      Expr temp_b_k = (b_k.substitute(k, k + h)).expand();
-      Expr s = gcd(a_k, temp_b_k);
-      a_k = quo(a_k, s, k);
+      Expr temp_p3_k = (p3_k.substitute(k, k + h)).expand();
+      Expr s = gcd(p2_k, temp_p3_k);
+      p2_k = quo(p2_k, s, k);
       Expr temp_s = s.substitute(k, k - h);
-      b_k = quo(b_k, temp_s, k);
+      p3_k = quo(p3_k, temp_s, k);
       // Using this trick integer_roots[i] is a Number and not an Expr.
       for (Number j = 1; j <= h; ++j)
-	c_k *= s.substitute(k, k - j);  
+	p1_k *= s.substitute(k, k - j);  
    }
   }
 
@@ -235,13 +235,9 @@ parametric_gosper_step_two(const Symbol& k, const Expr& q_k,
   }
 #endif
 
-  D_VAR(a_k);
-  D_VAR(b_k);
-  D_VAR(c_k);
-
-  p2_k = a_k;
-  p3_k = b_k;
-  p1_k = c_k;
+  D_VAR(p1_k);
+  D_VAR(p2_k);
+  D_VAR(p3_k);
 
   return true;
 }
@@ -489,6 +485,7 @@ bool zeilberger_for_fixed_order(const Expr& F_m_k,
   }
   assert(!coefficients_values[0].is_zero());
   rec_expr = - rec_expr / coefficients_values[0];
+  D_VAR(rec_expr);
 
   // Expr rec_expr =  - (x(n+1) * coefficients_values[1]) / coefficients_values[0];
   Recurrence rec(rec_expr);
