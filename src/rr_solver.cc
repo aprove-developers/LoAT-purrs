@@ -24,7 +24,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
-#define NOISY 0
+#define NOISY 1
 
 #include "globals.hh"
 #include "util.hh"
@@ -839,19 +839,14 @@ find_g_n(const GSymbol& n, const int order, const bool all_distinct,
 }
 
 /*!
-  Given \f$ p(n) \f$ the non homogeneous part of the recurrence relation
+  Consider \f$ p(n) \f$ the non homogeneous part of the recurrence relation
   \f$ p(n) = c_1 p_1^n + c_2 p_2^n + \dotsb + c_k p_k^n \f$ and
   \f$ g(n) = d_1 g_1^n + d_2 g_2^n + \dotsb + d_k g_h^n \f$.
   We consider the decompositions of both the previous sums:
-  \f[
-    bases_of_exp    -> p_1  p_2  \dots  p_k
-    exp_poly_coeff  -> c_1  c_2  \dots  c_k
-  \f]
-  and
-  \f[
-    bases_exp_g_n   -> g_1  g_2  \dots  g_h
-    g_n_poly_coeff  -> d_1  d_2  \dots  d_h.
-  \f]
+  \p bases_of_exp and \p exp_poly_coeff will contain respectively 
+  \f$ p_1, p_2, \cdots, p_k \f$ and \f$ c_1, c_2, \dots, c_k \f$;
+  \p bases_exp_g_n and \p g_n_poly_coeff instead will contain respectively
+  \f$ g_1, g_2, \cdots, g_h \f$ and \f$ d_1, d_2, \cdots, d_h \f$.
   We build the new vector \p poly_coeff_tot multiplting the elements
   of \p exp_poly_coeff and \p g_n_poly_coeff, i. e. it will contain
   \f$ c_1 d_1, c_1 d_2, \cdots, c_1 d_h, c_2 d_1, \cdots, c_k d_h \f$.
@@ -883,9 +878,10 @@ prepare_for_symbolic_sum(const GSymbol& n, const GExpr& g_n,
     if (!roots[i].value().is_equal(bases_exp_g_n[i]))
       equal = false;
   if (!equal) {
-    reverse(bases_exp_g_n.begin(),bases_exp_g_n.end());
-    reverse(g_n_poly_coeff.begin(),g_n_poly_coeff.end());
-    reverse(g_n_no_poly_coeff.begin(),g_n_no_poly_coeff.end());
+    // FIXME: sbagliato!! reverse va bene solo se order == 2.
+    reverse(bases_exp_g_n.begin(), bases_exp_g_n.end());
+    reverse(g_n_poly_coeff.begin(), g_n_poly_coeff.end());
+    reverse(g_n_no_poly_coeff.begin(), g_n_no_poly_coeff.end());
   }
   // The roots are simple, i. e., their multiplicity is 1.
   for (unsigned i = exp_poly_coeff.size(); i-- > 0; )
