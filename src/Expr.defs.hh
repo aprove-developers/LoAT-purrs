@@ -35,6 +35,11 @@ http://www.cs.unipr.it/purrs/ . */
 #include <string>
 #include <ginac/ginac.h>
 
+// FIXME: This declaration must be moved to a more suitable place.
+namespace GiNaC {
+  GiNaC::ex GiNaC::max_eval(const GiNaC::ex&, const GiNaC::ex&);
+}
+
 namespace Parma_Recurrence_Relation_Solver {
 
 //! Type of a functor object.
@@ -1182,6 +1187,17 @@ public:
 
 #ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
+  //! Returns <CODE>true</CODE> if \p *this evaluates to a
+  //! nonnegative number whenever all the symbols it contains
+  //! represent nonnegative numbers;
+  //! returns <CODE>false</CODE> if \p *this can evaluate to
+  //! a negative number or if the former property could not
+  //! be proved.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+  bool preserves_nonnegativity() const;
+
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
+  //! \brief
   //! Let \p x be a simple not numeric expression, i.e., it is not a sum or
   //! a product or a power, which is assumed to be already expanded.
   //! Returns a new expression obtained from \p *this collecting the
@@ -1268,6 +1284,7 @@ private:
   friend Expr prod(const Expr& index, const Expr& lower, const Expr& upper,
 		   const Expr& factor);
   friend Expr max(const Expr& x, const Expr& y);
+  friend GiNaC::ex GiNaC::max_eval(const GiNaC::ex& x, const GiNaC::ex& y);
 
   //! Builds the expression corresponding to \p ge.
   Expr(const Base& ge);

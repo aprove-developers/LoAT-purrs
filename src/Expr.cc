@@ -558,21 +558,23 @@ REGISTER_FUNCTION(prod,
   \param first    The first quantity to compare.
   \param lower    The second quantity to compare.
 
-  // FIXME: add the right exceptions (this were taken from prod).
-  \exception std::invalid_argument thrown if \f$ lower \f$ in not a
-                                   rational number.
-  \exception std::invalid_argument thrown if \f$ upper \f$ is a number but
-                                   not rational.
+  All symbols occurring in the two expressions are assumed
+  to stand for nonnegative quantities.
+
 */
 ex
 max_eval(const ex& first, const ex& second) {
-  if (is_a<numeric>(first) && is_a<numeric>(second)) {
-    return (first >= second)?first:second;
-  }
+  PURRS::Expr diff(first - second);
+  if (diff.is_a_number())
+    if (compare(diff, 0) == 1)
+      return first;
+    else return second;
+  else if (diff.preserves_nonnegativity())
+    return first;
+  else if ((-diff).preserves_nonnegativity())
+    return second;
   else
-    // FIXME: Parameters are assumed to be non-negative. Keep this into account.
-    // throw std::invalid_argument("Cannot evaluate max if the arguments are not numeric");
-  return max(first, second).hold();
+    return max(first, second).hold();
 }
 
 ex
@@ -1103,6 +1105,30 @@ PURRS::Expr::has_sum_or_prod_function() const {
 	if (e.arg(i).has_sum_or_prod_function())
 	  return true;
   return false;
+}
+
+bool
+PURRS::Expr::preserves_nonnegativity() const {
+  const Expr& e = *this;
+  // All symbols are assumed to stand for nonnegative quantities.
+  if (e.is_a_symbol())
+    return true;
+  else if (e.is_a_number())
+    return e.ex_to_number().is_positive();
+  else if (e.is_a_add() || e.is_a_mul()) {
+    for (unsigned int i = e.nops(); i-- > 0; ) {
+      const Expr& operand = e.op(i);
+      if (!operand.preserves_nonnegativity()) {
+	return false;
+      }
+    }
+    return true;
+  }
+  else if (e.is_a_power())
+    return e.arg(0).preserves_nonnegativity();
+  else
+    // If we were unable to prove nonnegativity, return false.
+    return false;
 }
 
 Expr
