@@ -29,52 +29,52 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
-Number
+inline Number
 operator+(const Number& lh, const Number& rh) {
   return lh + rh;
 }
 
-Number
+inline Number
 operator-(const Number& lh, const Number& rh) {
   return lh - rh;
 }
 
-Number
+inline Number
 operator*(const Number& lh, const Number& rh) {
   return lh * rh;
 }
 
-Number
+inline Number
 operator/(const Number& lh, const Number& rh) {
   return lh / rh;
 }
 
-Number
+inline Number
 operator+(const Number& lh) {
   return +lh;
 }
 
-Number
+inline Number
 operator-(const Number& lh) {
   return -lh;
 }
 
-Number&
+inline Number&
 operator++(Number& rh) {
   return ++rh;
 }
 
-Number&
+inline Number&
 operator--(Number& rh) {
   return --rh;
 }
 
-Number
+inline Number
 operator++(Number& lh, int) {
   return lh++;
 }
 
-Number
+inline Number
 operator--(Number& lh, int) {
   return lh--;
 }
