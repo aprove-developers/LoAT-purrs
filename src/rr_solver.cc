@@ -1901,7 +1901,7 @@ solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
       // (forse prima di vedere gosper)
       Symbol h;
       solution += alpha_factorial * x(z + 1) + alpha_factorial 
-	* PURRS::sum(h, 1, n, p_n.subs(n, h) / alpha_factorial.subs(n, h));
+	* PURRS::sum(h, z + 2, n, p_n.subs(n, h) / alpha_factorial.subs(n, h));
       return RECURRENCE_OK;
     }
     // To do this cycle or to consider `z + 2' as the lower limit of
