@@ -53,7 +53,7 @@ FACTOR_THRESHOLD = 100;
   <EM>hypergeometric term</EM> if \f$ t(n+1) / t(n) \f$ is a rational
   function of \f$ n \f$.
   This function returns <CODE>true</CODE> if \p t is an hypergeometric term
-  and in this case \p r_n stores the ratio \f$ t.subs(n, n+1) / t \f$.
+  and in this case \p r_n stores the ratio \f$ t(n+1) / t(n) \f$.
   Returns <CODE>false</CODE> otherwise.
 */
 static bool
@@ -302,25 +302,25 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
 static Expr
 gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
 		 const Expr& x_n, const Symbol& n,
-		 const Number& lower_bound, const Expr& upper_bound,
+		 const Number& lower, const Expr& upper,
 		 Expr solution) {
   Expr shift_b = b_n.subs(n, n-1);
   Expr z_n = shift_b * x_n * t * pwr(c_n, -1);
   z_n = simplify_numer_denom(z_n);
-  // The Gosper's algorithm computes summation with the lower bound `0'
-  // and the upper bound `n - 1': in this case, once we have `z_n',
+  // The Gosper's algorithm computes summation with the lower limit `0'
+  // and the upper limit `n - 1': in this case, once we have `z_n',
   // the sum that we are looking for is `z_n - z_0'.
-  // In general the solution will be `z_n - z_{lower_bound}'.
-  solution = z_n - z_n.subs(n, lower_bound);
-  // We must modify the sum if its upper bound is not `n - 1'.
-  if (upper_bound != n-1)
-    if (upper_bound == n)
+  // In general the solution will be `z_n - z_{lower}'.
+  solution = z_n - z_n.subs(n, lower);
+  // We must modify the sum if its upper limit is not `n - 1'.
+  if (upper != n-1)
+    if (upper == n)
       solution = solution.subs(n, n + 1);
     else {
       Expr n_plus_i = n + wild(0);
-      assert(upper_bound == n_plus_i);
+      assert(upper == n_plus_i);
       Expr_List substitution;
-      upper_bound.match(n_plus_i, substitution);
+      upper.match(n_plus_i, substitution);
       Expr i = get_binding(substitution, 0);
       solution = solution.subs(n, n + i + 1);
     }
@@ -348,12 +348,11 @@ gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
   -  it is possible to express \f$ S_n \f$ in closed form and the solution
      is stored in \p solution;
   -  it is not possible to express \f$ S_n \f$ in closed form and returns
-     in \p solution the initially sum \f$ \sum_{k=0}^{n-1} t_k \f$.
+     in \p solution the symbolic sum \f$ \sum_{k=lower_limit}^{upper} t_k \f$.
 */
-// FIXME: We have to decide the notation for the sum if returns false 
 bool
 gosper(const Expr& t, const Symbol& n,
-       const Number& lower_bound, const Expr& upper_bound, Expr& solution) {
+       const Number& lower, const Expr& upper, Expr& solution) {
   Expr r_n;
   if (!gosper_step_one(t, n, r_n))
     // `t' is not hypergeometric: no chance of using Gosper's algorithm.
@@ -363,10 +362,16 @@ gosper(const Expr& t, const Symbol& n,
   Expr c_n;
   gosper_step_two(r_n, n, a_n, b_n, c_n);
   Expr x_n;
-  if (!gosper_step_three(a_n, b_n, c_n, n, x_n))
-    return false;
-  solution = gosper_step_four(t, b_n, c_n, x_n, n, lower_bound, upper_bound,
-			      solution);
+  if (gosper_step_three(a_n, b_n, c_n, n, x_n))
+    solution = gosper_step_four(t, b_n, c_n, x_n, n, lower, upper,
+				solution);
+  else {
+    // `t' is not Gosper-summable, i. e., there is not hypergeometric
+    // solution.
+    Symbol h("h");
+    Expr t_h = t.subs(n, h);
+    solution = sum(Expr(h), Expr(lower), upper, t_h);
+  }
 #if NOISY
   std::cout << "The sum is: " << solution << std::endl;
 #endif
