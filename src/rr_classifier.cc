@@ -559,7 +559,8 @@ rewrite_non_linear_recurrence(const Recurrence& rec, const Expr& rhs,
       Number num_exp;
       if (factor.is_a_power() && factor.arg(0).is_the_x_function()
 	  && factor.arg(1).is_a_number(num_exp))
-	if (num_exp.is_positive_integer()) {
+	if (num_exp.is_positive()) {
+	  assert(num_exp.is_rational());
 	  simple_cases = true;
 	  common_exponent = lcm(num_exp, common_exponent);
 	}
