@@ -31,16 +31,16 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 Expr
-simplify_on_input_ex(const Expr& e, const Symbol& n, bool input);
+simplify_on_input_ex(const Expr& e, bool input);
 
 Expr
-simplify_on_output_ex(const Expr& e, const Symbol& n, bool input);
+simplify_on_output_ex(const Expr& e, bool input);
 
 Expr
 simplify_numer_denom(const Expr& e);
 
 Expr
-simplify_factorials_and_exponentials(const Expr& e, const Symbol& n);
+simplify_factorials_and_exponentials(const Expr& e);
 
 } // namespace Parma_Recurrence_Relation_Solver
 

@@ -31,6 +31,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "numerator_denominator.hh"
 #include "util.hh"
 #include "Expr.defs.hh"
+#include "Recurrence.defs.hh"
 #include <vector>
 
 // TEMPORARY
@@ -39,10 +40,10 @@ http://www.cs.unipr.it/purrs/ . */
 namespace PURRS = Parma_Recurrence_Relation_Solver;
 
 PURRS::Expr
-PURRS::simplify_on_input_ex(const Expr& e, const Symbol& n, bool input);
+PURRS::simplify_on_input_ex(const Expr& e, bool input);
 
 PURRS::Expr
-PURRS::simplify_on_output_ex(const Expr& e, const Symbol& n, bool input);
+PURRS::simplify_on_output_ex(const Expr& e, bool input);
 
 namespace {
 using namespace PURRS;
@@ -59,12 +60,12 @@ using namespace PURRS;
   does not change.
 */
 bool
-erase_factor(Expr& e, const Symbol& n) {
+erase_factor(Expr& e) {
   if (e.is_a_mul()) {
     unsigned num_factors = e.nops();
     unsigned i;
     for (i = 0; i < num_factors; ++i)
-      if (e[i] == n)
+      if (e[i] == Recurrence::n)
 	break;
     if (i < num_factors) {
       // Found an occurrence of the symbol `n'.
@@ -76,7 +77,7 @@ erase_factor(Expr& e, const Symbol& n) {
       return true;
     }
   }
-  else if (e == n) {
+  else if (e == Recurrence::n) {
     e = 1;
     return true;
   }
@@ -113,12 +114,11 @@ perfect_root(const Expr& base, const Number& exponent) {
 */
 Expr
 return_power(bool is_numeric_base, const Expr& base,
-	     const Expr& num_exp, const Expr& not_num_exp,
-	     const Symbol& n, bool input) {
+	     const Expr& num_exp, const Expr& not_num_exp, bool input) {
   Expr not_num_exp_minus_n = not_num_exp;
   bool n_removed = false;
   if (input)
-    n_removed = erase_factor(not_num_exp_minus_n, n);
+    n_removed = erase_factor(not_num_exp_minus_n);
   // We do not want to collect the special symbol `n' or it is
   // not in `not_num_exp'.
   if (!input || !n_removed)
@@ -129,13 +129,14 @@ return_power(bool is_numeric_base, const Expr& base,
   // We collect the special symbol `n'. 
   else
     if (is_numeric_base)
-      return pwr(pwr(pwr(base, num_exp), not_num_exp_minus_n), n);
+      return pwr(pwr(pwr(base, num_exp), not_num_exp_minus_n), Recurrence::n);
     else
-      return pwr(pwr(base, num_exp * not_num_exp_minus_n), n);
+      return pwr(pwr(base, num_exp * not_num_exp_minus_n), Recurrence::n);
 }
 
 /*!
-  Separates numeric factors and non-numeric factors of an expression \p e. 
+  Separates numeric factors and non-numeric factors of an expression \p e and
+  it stores them in \p num and \p not_num, respectively.
 */
 void
 split_exponent(const Expr& e, Expr& num, Expr& not_num) {
@@ -173,7 +174,7 @@ find_real_base_and_build_exponent(Expr& base, Expr& numeric_exponent,
   number of \p base: \p vect_base, \p vect_num_exp and \p vect_not_num_exp.
   Initially \p vect_num_exp and \p vect_not_num_exp will have each element
   equal to \p num_exponent or \p not_num_exponents, respectively.
-  The function looks at each factor of \p e and there are two cases:
+  The function looks at each factor of \p base and there are two cases:
   -  if it is a power, puts its base in the respective position of the vector
      \p vect_base and updates the respective values of \p vect_num_exp and
      \p vect_not_num_exp with the exponent of \p base's factor;
@@ -185,8 +186,7 @@ find_real_base_and_build_exponent(Expr& base, Expr& numeric_exponent,
 */
 Expr
 simpl_powers_base(const Expr& base, const Expr& num_exponent,
-		  const Expr& not_num_exponent, const Symbol& n,
-		  bool input) {
+		  const Expr& not_num_exponent, bool input) {
   assert(base.is_a_mul());
   std::vector<Expr> vect_base(base.nops());
   std::vector<Expr> vect_num_exp(base.nops());
@@ -213,24 +213,22 @@ simpl_powers_base(const Expr& base, const Expr& num_exponent,
   for (unsigned i = base.nops(); i-- > 0; )
     if (!vect_base[i].is_a_number())
       tot *= return_power(false, vect_base[i],
-			  vect_num_exp[i], vect_not_num_exp[i],
-			  n, input);
+			  vect_num_exp[i], vect_not_num_exp[i], input);
     else
       tot *= return_power(true, vect_base[i],
-			  vect_num_exp[i], vect_not_num_exp[i],
-			  n, input);
+			  vect_num_exp[i], vect_not_num_exp[i], input);
   return tot;
 }
 
 /*!
   This function applies the rules \f$ \textbf{E1}, \textbf{E2},
   \textbf{E4} \f$ and \f$ \textbf{E5} \f$ of the rules' set
-  <EM>Expand</EM>.  The <CODE>Expr</CODE> \p e is a <CODE>power</CODE>:
+  <EM>Expand</EM>.  The expression \p e is a power:
   this function finds the base and the exponent of the power (\p e could
   be a series of nested powers). The exponents may contain products but
   not sums, since the expression \p e is expanded.  The function
-  separates the exponents into two parts: it puts numeric factors in \p
-  num_exponent, and non-numeric factors in \p not_num_exponent.
+  separates the exponents into two parts: it puts numeric factors in
+  \p num_exponent, and non-numeric factors in \p not_num_exponent.
   Afterwards it tests the base: if it is not a multiplication the
   function returns; otherwise it must raise every factor of the base to
   the exponents.
@@ -239,7 +237,7 @@ simpl_powers_base(const Expr& base, const Expr& num_exponent,
   is <CODE>false</CODE>, \p n is like the other parameters.
 */
 Expr
-pow_simpl(const Expr& e, const Symbol& n, bool input) {
+simplify_powers(const Expr& e, bool input) {
   assert(e.is_a_power());
   // Accumulate here the numerical part of the exponent.
   Expr num_exponent = 1;
@@ -255,7 +253,7 @@ pow_simpl(const Expr& e, const Symbol& n, bool input) {
 
   // The base is a multiplication.
   if (base.is_a_mul())
-    return simpl_powers_base(base, num_exponent, not_num_exponent, n, input);
+    return simpl_powers_base(base, num_exponent, not_num_exponent, input);
   // The base is not a multiplication: is not necessary to call the function
   // `simpl_powers_base' that uses vectors.
   else
@@ -263,15 +261,12 @@ pow_simpl(const Expr& e, const Symbol& n, bool input) {
       Number num_exp = num_exponent.ex_to_number();
       // The function `perfect_root' allows to apply the rule `E1'.
       if (num_exp.is_integer() || perfect_root(base, num_exp))
-	return return_power(true, base, num_exp, not_num_exponent,
-			    n, input);
+	return return_power(true, base, num_exp, not_num_exponent, input);
       else
-	return return_power(false, base, num_exp, not_num_exponent,
-			    n, input);
+	return return_power(false, base, num_exp, not_num_exponent, input);
     }
     else
-      return return_power(false, base, num_exponent, not_num_exponent,
-			  n, input);
+      return return_power(false, base, num_exponent, not_num_exponent, input);
 }
 
 /*!
@@ -706,7 +701,7 @@ reduce_product(const Expr& e) {
   Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
 */
 Expr
-manip_factor(const Expr& e, const Symbol& n, bool input) {
+manip_factor(const Expr& e, bool input) {
   assert(e.is_a_mul());
   Expr e_rewritten = 1;
 
@@ -714,8 +709,8 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
   for (unsigned i = e.nops(); i-- > 0; ) {
     const Expr& factor_e = e.op(i);
     if (factor_e.is_a_power()) {
-      Expr base = simplify_on_output_ex(factor_e.arg(0), n, input);
-      Expr exp = simplify_on_output_ex(factor_e.arg(1), n, input);
+      Expr base = simplify_on_output_ex(factor_e.arg(0), input);
+      Expr exp = simplify_on_output_ex(factor_e.arg(1), input);
       Number num_base;
       Number num_exp;
       if (base.is_a_number(num_base) && exp.is_a_number(num_exp))
@@ -723,7 +718,7 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
       else {
 	Expr tmp = pwr(base, exp);
 	if (tmp.is_a_power())
-	  e_rewritten *= pow_simpl(tmp, n, input);
+	  e_rewritten *= simplify_powers(tmp, input);
 	else
 	  e_rewritten *= tmp;
       }
@@ -746,14 +741,12 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
 	if (factor_e_rewritten.nops() == 1)
 	  factor_function
 	    *= apply(factor_e_rewritten.functor(),
-		     simplify_on_output_ex(factor_e_rewritten.arg(0),
-					   n, input));
+		     simplify_on_output_ex(factor_e_rewritten.arg(0), input));
 	else {
 	  unsigned num_argument = factor_e_rewritten.nops();
 	  std::vector<Expr> argument(num_argument);
 	  for (unsigned i = 0; i < num_argument; ++i)
-	    argument[i] = simplify_on_output_ex(factor_e_rewritten.arg(i),
-						n, input);
+	    argument[i] = simplify_on_output_ex(factor_e_rewritten.arg(i), input);
 	  factor_function *= apply(factor_e_rewritten.functor(), argument);
 	}
       }
@@ -765,12 +758,12 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
   else if (e_rewritten.is_a_function()) {
     if (e_rewritten.nops() == 1)
       e_rewritten = apply(e_rewritten.functor(),
-			  simplify_on_output_ex(e_rewritten.arg(0), n, input));
+			  simplify_on_output_ex(e_rewritten.arg(0), input));
     else {
       unsigned num_argument = e_rewritten.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = simplify_on_output_ex(e_rewritten.arg(i), n, input);
+	argument[i] = simplify_on_output_ex(e_rewritten.arg(i), input);
       e_rewritten = apply(e_rewritten.functor(), argument);
     }
   }
@@ -827,24 +820,24 @@ manip_factor(const Expr& e, const Symbol& n, bool input) {
 }
 
 Expr
-rewrite_factorial(const Symbol& n, const Number& a, const Number& b) {
-  Expr prod = factorial(a*n);
+rewrite_factorial(const Number& a, const Number& b) {
+  Expr prod = factorial(a * Recurrence::n);
   if (b > 0)
     for (Number j = 1; j <= b; ++j)
-      prod *= a*n + j; 
+      prod *= a * Recurrence::n + j; 
   else
     for (Number j = 0; j < abs(b); ++j)
-      prod *= pwr(a*n - j, -1);
+      prod *= pwr(a * Recurrence::n - j, -1);
   return prod;
 }
 
 bool
-check_form_of_mul(const Symbol& n, const Expr& e, Number& a) {
+check_form_of_mul(const Expr& e, Number& a) {
   assert(e.is_a_mul() && e.nops() == 2);
   const Expr& first = e.op(0);
   const Expr& second = e.op(1);
-  if ((first == n && second.is_a_number(a) && a.is_positive_integer())
-      || (second == n && first.is_a_number(a) && a.is_positive_integer()))
+  if ((first == Recurrence::n && second.is_a_number(a) && a.is_positive_integer())
+      || (second == Recurrence::n && first.is_a_number(a) && a.is_positive_integer()))
     return true;
   else
     return false;
@@ -857,7 +850,7 @@ check_form_of_mul(const Symbol& n, const Expr& e, Number& a) {
   <CODE>rewrite_factorials()</CODE>
 */
 Expr
-decompose_factorial(const Expr& e, const Symbol& n) {
+decompose_factorial(const Expr& e) {
   assert(e.is_the_factorial_function());
   const Expr& argument = e.arg(0);
   if (argument.is_a_add() && argument.nops() == 2) {
@@ -869,21 +862,21 @@ decompose_factorial(const Expr& e, const Symbol& n) {
 	Number a;
 	// Checks if `second' has the form `a*n with `a' a positive
 	// integer number'. 
-	if (check_form_of_mul(n, second, a))
-	  return rewrite_factorial(n, a, b);
+	if (check_form_of_mul(second, a))
+	  return rewrite_factorial(a, b);
       }
-      else if (second == n)
-	return rewrite_factorial(n, 1, b);
+      else if (second == Recurrence::n)
+	return rewrite_factorial(1, b);
     if (second.is_a_number(b) && b.is_integer())
       if (first.is_a_mul() && first.nops() == 2) {
 	Number a;
 	// Checks if `second' has the form `a*n with `a' a positive
 	// integer number'. 
-	if (check_form_of_mul(n, first, a))
-	  return rewrite_factorial(n, a, b);
+	if (check_form_of_mul(first, a))
+	  return rewrite_factorial(a, b);
       }
-      else if (first == n)
-	return rewrite_factorial(n, 1, b);
+      else if (first == Recurrence::n)
+	return rewrite_factorial(1, b);
   }
   return e;
 }
@@ -908,36 +901,36 @@ decompose_factorial(const Expr& e, const Symbol& n) {
     \f]
 */
 Expr
-rewrite_factorials_and_exponentials(const Expr& e, const Symbol& n) {
+rewrite_factorials_and_exponentials(const Expr& e) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten += rewrite_factorials_and_exponentials(e.op(i), n);
+      e_rewritten += rewrite_factorials_and_exponentials(e.op(i));
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten *= rewrite_factorials_and_exponentials(e.op(i), n);
+      e_rewritten *= rewrite_factorials_and_exponentials(e.op(i));
   }
   else if (e.is_a_power()) {
-    e_rewritten = pwr(rewrite_factorials_and_exponentials(e.arg(0), n),
-		      rewrite_factorials_and_exponentials(e.arg(1), n));
+    e_rewritten = pwr(rewrite_factorials_and_exponentials(e.arg(0)),
+		      rewrite_factorials_and_exponentials(e.arg(1)));
     if (e_rewritten.is_a_power() && e_rewritten.arg(1).is_a_add())
       e_rewritten = e_rewritten.expand();
   }
   else if (e.is_a_function())
     if (e.is_the_factorial_function())
-      e_rewritten = decompose_factorial(e, n);
+      e_rewritten = decompose_factorial(e);
     else
       if (e.nops() == 1)
 	e_rewritten = apply(e.functor(),
-			    rewrite_factorials_and_exponentials(e.arg(0), n));
+			    rewrite_factorials_and_exponentials(e.arg(0)));
       else {
 	unsigned num_argument = e.nops();
 	std::vector<Expr> argument(num_argument);
 	for (unsigned i = 0; i < num_argument; ++i)
-	  argument[i] = rewrite_factorials_and_exponentials(e.arg(i), n);
+	  argument[i] = rewrite_factorials_and_exponentials(e.arg(i));
 	e_rewritten = apply(e.functor(), argument);
       }
   else
@@ -953,46 +946,44 @@ rewrite_factorials_and_exponentials(const Expr& e, const Symbol& n) {
   system \f$ \mathfrak{R}_i \f$. More exactly here the rules of the set
   <EM>Expand</EM> are implemented because the rules of the set
   <EM>Automatic</EM> are automatically executed.  We remark that the
-  rule \f$ \textbf{E4} \f$ is automatically executed if the exponent is
+  rule \f$ \textbf{E4} \f$ is automatically executed when the exponent is
   integer, while the rules \f$ \textbf{E3} \f$ and \f$ \textbf{E6} \f$
   are executed by the method <CODE>expand()</CODE> (\f$ \textbf{E3} \f$
   only partially because for instance \f$ expand(3^(4*x+2*a)) =
-  3^(2*a)*3^(4*x) \f$): hence we here consider only <CODE>power</CODE>.
+  3^(2*a)*3^(4*x) \f$): hence we here consider only powers.
   \p input is always <CODE>true</CODE> and this means that \p n is a
-  special symbol, i.  e., in the simplifications it is always collected
+  special symbol, i. e., in the simplifications it is always collected
   with respect to the others parameters.  The function returns a
-  <CODE>Expr</CODE> that contains the modified expression \p e.
+  new expression containing the modified expression \p e.
 */
 PURRS::Expr
-PURRS::simplify_on_input_ex(const Expr& e, const Symbol& n, bool input) {
+PURRS::simplify_on_input_ex(const Expr& e, bool input) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten += simplify_on_input_ex(e.op(i), n, input);
+      e_rewritten += simplify_on_input_ex(e.op(i), input);
   }
   else if (e.is_a_mul()) {
     e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten *= simplify_on_input_ex(e.op(i), n, input);
+      e_rewritten *= simplify_on_input_ex(e.op(i), input);
   }
   else if (e.is_a_power())
-    return pow_simpl(e, n, input);
+    return simplify_powers(e, input);
   else if (e.is_a_function()) {
     if (e.nops() == 1)
-      e_rewritten = apply(e.functor(),
-			  simplify_on_input_ex(e.arg(0), n, input));
+      e_rewritten = apply(e.functor(), simplify_on_input_ex(e.arg(0), input));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = simplify_on_input_ex(e.arg(i), n, input);
+	argument[i] = simplify_on_input_ex(e.arg(i), input);
       e_rewritten = apply(e.functor(), argument);
     }
   }
   else
     e_rewritten = e;
-
   return e_rewritten;
 }
 
@@ -1009,22 +1000,22 @@ PURRS::simplify_on_input_ex(const Expr& e, const Symbol& n, bool input) {
   the modified expression \p e.
 */
 PURRS::Expr
-PURRS::simplify_on_output_ex(const Expr& e, const Symbol& n, bool input) {
+PURRS::simplify_on_output_ex(const Expr& e, bool input) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
     for (unsigned i = e.nops(); i-- > 0; )
-      e_rewritten += simplify_on_output_ex(e.op(i), n, input);
+      e_rewritten += simplify_on_output_ex(e.op(i), input);
   }
   else if (e.is_a_mul())
-    // We can not call `simplify_on_output_ex' on every factor because
+    // We can not call `simplify_on_output_ex()' on every factor because
     // otherwise it is not possible to transform products.
-    e_rewritten = manip_factor(e, n, input);
+    e_rewritten = manip_factor(e, input);
   else if (e.is_a_power()) {
     // Is necessary to call `red_prod()' in order to rewrite irrational
     // numbers, i.e., powers with base and exponent both numerics. 
-    Expr base = simplify_on_output_ex(e.arg(0), n, input);
-    Expr exp = simplify_on_output_ex(e.arg(1), n, input);
+    Expr base = simplify_on_output_ex(e.arg(0), input);
+    Expr exp = simplify_on_output_ex(e.arg(1), input);
     Number num_base;
     Number num_exp;
     if (base.is_a_number(num_base) && exp.is_a_number(num_exp))
@@ -1032,7 +1023,7 @@ PURRS::simplify_on_output_ex(const Expr& e, const Symbol& n, bool input) {
     else {
       Expr tmp = pwr(base, exp);
       if (tmp.is_a_power())
-	e_rewritten = pow_simpl(tmp, n, input);
+	e_rewritten = simplify_powers(tmp, input);
       else
 	e_rewritten = tmp;
     }
@@ -1045,12 +1036,12 @@ PURRS::simplify_on_output_ex(const Expr& e, const Symbol& n, bool input) {
   else if (e.is_a_function()) {
     if (e.nops() == 1)
       e_rewritten = apply(e.functor(),
-			  simplify_on_output_ex(e.arg(0), n, input));
+			  simplify_on_output_ex(e.arg(0), input));
     else {
       unsigned num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned i = 0; i < num_argument; ++i)
-	argument[i] = simplify_on_output_ex(e.arg(i), n, input);
+	argument[i] = simplify_on_output_ex(e.arg(i), input);
       e_rewritten = apply(e.functor(), argument);
     }
   }
@@ -1061,7 +1052,7 @@ PURRS::simplify_on_output_ex(const Expr& e, const Symbol& n, bool input) {
 
 
 /*!
-  Using the function <CODE>numerator_denomominator()</CODE> we are able to
+  Using the function <CODE>numerator_denomominator_purrs()</CODE> we are able to
   simplify better rational expression.
 */
 PURRS::Expr
@@ -1100,12 +1091,12 @@ PURRS::simplify_numer_denom(const Expr& e) {
   Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
 */
 PURRS::Expr
-PURRS::simplify_factorials_and_exponentials(const Expr& e, const Symbol& n) {
+PURRS::simplify_factorials_and_exponentials(const Expr& e) {
   Expr e_numerator;
   Expr e_denominator;
   numerator_denominator_purrs(e, e_numerator, e_denominator);
-  e_numerator = rewrite_factorials_and_exponentials(e_numerator, n);
-  e_denominator = rewrite_factorials_and_exponentials(e_denominator, n);
+  e_numerator = rewrite_factorials_and_exponentials(e_numerator);
+  e_denominator = rewrite_factorials_and_exponentials(e_denominator);
   return e_numerator / e_denominator;
 }
 

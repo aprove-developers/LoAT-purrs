@@ -199,9 +199,9 @@ return_sum(bool distinct, const Number& order, const Expr& coeff,
   Expr q_k = coeff.subs(Recurrence::n, k);
   Expr symbolic_sum;  
   if (distinct)
-    symbolic_sum = sum_poly_times_exponentials(q_k, k, Recurrence::n, x);
+    symbolic_sum = sum_poly_times_exponentials(q_k, k, x);
   else
-    symbolic_sum = sum_poly_times_exponentials(q_k, k, Recurrence::n, 1);
+    symbolic_sum = sum_poly_times_exponentials(q_k, k, 1);
   // `sum_poly_times_exponentials' computes the sum from 0, whereas
   // we want that the sum start from `order'.
   symbolic_sum -= q_k.subs(k, 0);
@@ -210,7 +210,7 @@ return_sum(bool distinct, const Number& order, const Expr& coeff,
   if (distinct)
     symbolic_sum = symbolic_sum.subs(x, alpha/lambda);
   symbolic_sum *= pwr(lambda, Recurrence::n);
-  symbolic_sum = simplify_on_output_ex(symbolic_sum.expand(), Recurrence::n, false);
+  symbolic_sum = simplify_on_output_ex(symbolic_sum.expand(), false);
   return symbolic_sum;
 }
 
@@ -386,7 +386,7 @@ compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
       Expr t_n = pwr(base_of_exps[i], Recurrence::n) * exp_no_poly_coeff[i]
 	* pwr(roots[0].value(), -Recurrence::n);
       D_VAR(t_n);
-      if (!full_gosper(t_n, Recurrence::n, lower, upper, gosper_solution))
+      if (!full_gosper(t_n, lower, upper, gosper_solution))
 	return false;
     }
     solution += gosper_solution;
@@ -424,7 +424,7 @@ compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
       * pwr(roots[0].value(), -Recurrence::n);
     D_VAR(t_n);
     D_VAR(r_n);
-    if (!partial_gosper(t_n, r_n, Recurrence::n, lower, upper, gosper_solution))
+    if (!partial_gosper(t_n, r_n, lower, upper, gosper_solution))
       return false;
     solution += gosper_solution;
   }
@@ -601,9 +601,8 @@ compute_non_homogeneous_part(const Expr& g_n, int order,
       Symbol k("k");
       Expr g_n_coeff_k = g_n_poly_coeff[i].subs(Recurrence::n, Recurrence::n - k);
       Expr exp_poly_coeff_k = exp_poly_coeff[j].subs(Recurrence::n, k);
-      solution = sum_poly_times_exponentials(g_n_coeff_k * exp_poly_coeff_k,
-					     k, Recurrence::n, 1/bases_exp_g_n[i]
-					     * base_of_exps[j]);
+      solution = sum_poly_times_exponentials(g_n_coeff_k * exp_poly_coeff_k, k,
+					     1/bases_exp_g_n[i] * base_of_exps[j]);
       // `sum_poly_times_exponentials' computes the sum from 0, whereas
       // we want that the sum start from `order'.
       solution -= (g_n_coeff_k * exp_poly_coeff_k).subs(k, 0);
@@ -1329,17 +1328,17 @@ verify_solution(const Expr& solution, int order, const Expr& rhs) {
   std::vector<Expr> terms_to_sub(order);
   for (int i = 0; i < order; ++i)
     terms_to_sub[i] = partial_solution.subs(Recurrence::n, Recurrence::n - i - 1);
-  Expr substituted_rhs = simplify_on_input_ex(rhs.expand(), Recurrence::n, true);
+  Expr substituted_rhs = simplify_on_input_ex(rhs.expand(), true);
   for (unsigned i = terms_to_sub.size(); i-- > 0; )
     substituted_rhs = substituted_rhs.subs(x(Recurrence::n - i - 1),
 					   terms_to_sub[i]);
   Expr diff = (partial_solution - substituted_rhs);
   // `simplify_factorials_and_exponentials()' must be call on not
   // expanded expression.
-  diff = simplify_factorials_and_exponentials(diff, Recurrence::n).expand();
+  diff = simplify_factorials_and_exponentials(diff).expand();
   diff = simplify_numer_denom(diff);
   if (!diff.is_zero()) {
-    diff = simplify_factorials_and_exponentials(diff, Recurrence::n).expand();
+    diff = simplify_factorials_and_exponentials(diff).expand();
     if (!diff.is_zero()) {
       print_bad_exp(diff, rhs, false);
       return false;
@@ -1710,7 +1709,7 @@ PURRS::Recurrence::solve_easy_cases() const {
       // -  x(k), k non-negative integer -> x(m).
       solution = come_back_to_original_variable(solution,
 						m, gcd_among_decrements);
-      solution = simplify_on_output_ex(solution.expand(), n, false);
+      solution = simplify_on_output_ex(solution.expand(), false);
     }
     return status;
   }
@@ -1720,7 +1719,7 @@ PURRS::Recurrence::solve_easy_cases() const {
   D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
 
   // Simplifies expanded expressions, in particular rewrites nested powers.
-  inhomogeneous_term = simplify_on_input_ex(inhomogeneous_term, n, true);
+  inhomogeneous_term = simplify_on_input_ex(inhomogeneous_term, true);
 
   // FIXME: the initial conditions can not start always from 0:
   // make a function for this check.
@@ -1814,7 +1813,7 @@ PURRS::Recurrence::solve_easy_cases() const {
     add_initial_conditions(g_n, num_coefficients, initial_conditions,
 			   solution);
   D_MSGVAR("Before calling simplify: ", solution);
-  solution = simplify_on_output_ex(solution.expand(), n, false);
+  solution = simplify_on_output_ex(solution.expand(), false);
   // Resubstitutes eventually auxiliary definitions contained in
   // the solution with their original values.
   //solution = substitute_auxiliary_definitions(solution);
@@ -2056,7 +2055,7 @@ solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
   // FIXME: this simplification simplifies the value of `alpha_factorial'
   // but not the solution because we need to the simplification about
   // factorials and exponentials for the output.
-  //alpha_factorial = simplify_factorials_and_exponentials(alpha_factorial, n);
+  //alpha_factorial = simplify_factorials_and_exponentials(alpha_factorial);
   D_VAR(alpha_factorial);
   // Compute the non-homogeneous term for the recurrence
   // `y_n = y_{n-1} + \frac{p(n)}{\alpha!(n)}'.
@@ -2068,7 +2067,7 @@ solve_variable_coeff_order_1(const Expr& p_n, const Expr& coefficient,
   if (!p_n.is_zero()) {
     new_p_n = p_n.subs(n, n+1) / (p_n * coefficient.subs(Recurrence::n,
 							 Recurrence::n+1));
-    new_p_n = simplify_on_output_ex(new_p_n.expand(), Recurrence::n, false);
+    new_p_n = simplify_on_output_ex(new_p_n.expand(), false);
     new_p_n = simplify_numer_denom(new_p_n);
     D_VAR(new_p_n);
     std::vector<Expr> base_of_exps;

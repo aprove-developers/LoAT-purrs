@@ -149,8 +149,7 @@ compute_product_on_power(const Expr& e, const Number& lower, const Expr& upper) 
       Symbol k("k");
       for (unsigned i = base_of_exps.size(); i-- > 0; ) {
 	Expr coeff_k = exp_poly_coeff[i].subs(Recurrence::n, k);
-	new_exponent += sum_poly_times_exponentials(coeff_k, k, Recurrence::n,
-						    base_of_exps[i]);
+	new_exponent += sum_poly_times_exponentials(coeff_k, k, base_of_exps[i]);
 	// `sum_poly_times_exponentials' computes the sum from 0, whereas
 	// we want that the sum start from `1'.
 	new_exponent -= coeff_k.subs(k, 0);

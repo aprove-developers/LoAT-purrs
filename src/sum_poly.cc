@@ -33,6 +33,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "sum_poly.hh"
 #include "Expr.defs.hh"
+#include "Recurrence.defs.hh"
 #include <vector>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
@@ -49,7 +50,7 @@ using namespace PURRS;
   The result is returned in the expression <CODE>q</CODE>. 
 */
 
-static void
+void
 falling_product(const Expr& x, const Number& k, Expr& q) {
   q = 1;
   for (Number i = 0; i < k; ++i) 
@@ -62,15 +63,14 @@ falling_product(const Expr& x, const Number& k, Expr& q) {
   The closed formula is returned in the expression <CODE>q</CODE>. 
 */
 
-static void
-sum_falling_prod_times_exp(const Symbol& n, const Number& k, 
-			   const Symbol& x, Expr& q) {
+void
+sum_falling_prod_times_exp(const Number& k, const Symbol& x, Expr& q) {
 
   q = pwr(1-x, -k-1);
   Expr r;
   for (Number i = 0; i <= k; ++i) {
-    falling_product(n + 1, i, r);
-    q -= r / factorial(i) * pwr(x, n+1-i) * pwr(1-x, i-k-1);
+    falling_product(Recurrence::n + 1, i, r);
+    q -= r / factorial(i) * pwr(x, Recurrence::n + 1 - i) * pwr(1 - x, i - k - 1);
   }
   q *= factorial(k) * pwr(x, k);
 }
@@ -83,7 +83,7 @@ sum_falling_prod_times_exp(const Symbol& n, const Number& k,
   in the vector <CODE> summands </CODE>. 
 */
 
-static void 
+void 
 poly_dec(const Expr& p, const Symbol& x, std::vector<Expr>& summands) {
 
   unsigned d = p.degree(x);
@@ -106,8 +106,8 @@ poly_dec(const Expr& p, const Symbol& x, std::vector<Expr>& summands) {
   The closed formula is returned in the expression <CODE> q </CODE>. 
 */
 
-static void 
-sum_poly(const Expr& p, const Symbol& x, const Symbol& n, Expr& q) {
+void 
+sum_poly(const Expr& p, const Symbol& x, Expr& q) {
   
   unsigned d = p.degree(x);
   std::vector<Expr> summands(d+1);
@@ -115,8 +115,8 @@ sum_poly(const Expr& p, const Symbol& x, const Symbol& n, Expr& q) {
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
     Expr r;
-    falling_product(n+1, i+1, r);
-    q += Number(1, i+1) * summands[i] * r;
+    falling_product(Recurrence::n + 1, i + 1, r);
+    q += Number(1, i + 1) * summands[i] * r;
   }
 }
 
@@ -138,11 +138,11 @@ sum_poly(const Expr& p, const Symbol& x, const Symbol& n, Expr& q) {
 
 PURRS::Expr 
 PURRS::sum_poly_times_exponentials(const Expr& p, const Symbol& x, 
-				   const Symbol& n, const Expr& alpha) {
+				   const Expr& alpha) {
 
   Expr q;
   if (alpha == 1)
-    sum_poly(p, x, n, q);
+    sum_poly(p, x, q);
   // we just have to compute the sum of the values of the polynomial 
   else {
     Expr r;
@@ -151,7 +151,7 @@ PURRS::sum_poly_times_exponentials(const Expr& p, const Symbol& x,
     poly_dec(p, x, summands);
     q = 0;
     for (unsigned i = 0; i <= d; ++i) {
-      sum_falling_prod_times_exp(n, i, x, r);
+      sum_falling_prod_times_exp(i, x, r);
       r = r.expand();
       q += r * summands[i];
     }
@@ -169,11 +169,10 @@ PURRS::sum_poly_times_exponentials(const Expr& p, const Symbol& x,
 
 PURRS::Expr
 PURRS::sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x, 
-					     const Symbol& n, const Expr& alpha, 
-					     const Expr& theta) {
+					     const Expr& alpha, const Expr& theta) {
   Expr q = 0;
   if (theta.is_zero()) {
-    q = sum_poly_times_exponentials(p, x, n, alpha);
+    q = sum_poly_times_exponentials(p, x, alpha);
     return q;
   } 
   unsigned d = p.degree(x);
@@ -181,7 +180,8 @@ PURRS::sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x,
   poly_dec(p, x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
-    Expr r = pwr(x, n+2) * cos(n*theta) - pwr(x, n+1) * cos((n+1)*theta);
+    Expr r = pwr(x, Recurrence::n + 2) * cos(Recurrence::n * theta)
+      - pwr(x, Recurrence::n + 1) * cos((Recurrence::n + 1) * theta);
     r += 1 - x * cos(theta);
     r /= pwr(x,2) - 2* x * cos(theta) + 1;
     r = pwr(x,i) * r.diff(x,i);
@@ -201,8 +201,7 @@ PURRS::sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x,
 
 PURRS::Expr
 PURRS::sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x, 
-					     const Symbol& n, const Expr& alpha, 
-					     const Expr& theta) {
+					     const Expr& alpha, const Expr& theta) {
   Expr q = 0;
   if (theta.is_zero()) {
     return q;
@@ -212,7 +211,8 @@ PURRS::sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x,
   poly_dec(p, x, summands);
   q = 0;
   for (unsigned i = 0; i <= d; ++i) {
-    Expr r = pwr(x, n+2) * sin(n*theta) - pwr(x, n+1) * sin((n+1)*theta);
+    Expr r = pwr(x, Recurrence::n + 2) * sin(Recurrence::n * theta)
+      - pwr(x, Recurrence::n + 1) * sin((Recurrence::n + 1) * theta);
     r -= x * sin(theta);
     r /= pwr(x,2) - 2* x * cos(theta) + 1;
     r = pwr(x,i) * r.diff(x,i);

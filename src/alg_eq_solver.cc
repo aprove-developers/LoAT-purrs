@@ -66,19 +66,19 @@ namespace {
 using namespace PURRS;
 
 //! Solve the equation \f$x^2 + b x + c = 0\f$.
-static void
+void
 solve_equation_2(const Expr& b, const Expr& c,
 		 Expr& x1, Expr& x2) {
   Symbol n("n");
   Expr sqrt_d = sqrt(b*b - 4*c);
   D_MSGVAR("Before: ", sqrt_d);
-  sqrt_d = simplify_on_output_ex(sqrt_d, n, false);
+  sqrt_d = simplify_on_output_ex(sqrt_d, false);
   D_VAR(sqrt_d);
   x1 = (-b + sqrt_d)/2;
   x2 = (-b - sqrt_d)/2;
 
-  x1 = simplify_on_output_ex(x1, n, false);
-  x2 = simplify_on_output_ex(x2, n, false);
+  x1 = simplify_on_output_ex(x1, false);
+  x2 = simplify_on_output_ex(x2, false);
 }
 
 /*!
@@ -94,7 +94,7 @@ solve_equation_2(const Expr& b, const Expr& c,
   numbers, the quantities \f$ d \f$, \f$ Q \f$ and \f$ R \f$ are
   rational numbers themselves, and we can safely compare them with 0.
 */
-static bool
+bool
 solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
 		 Expr& x1, Expr& x2, Expr& x3) {
   Symbol n("n");
@@ -142,8 +142,8 @@ solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
     }
     D_MSGVAR("Before: ", S); 
     D_MSGVAR("Before: ", T);
-    S = simplify_on_output_ex(S, n, false);
-    T = simplify_on_output_ex(T, n, false);
+    S = simplify_on_output_ex(S, false);
+    T = simplify_on_output_ex(T, false);
     D_VAR(S); 
     D_VAR(T);
     Expr S_plus_T = S + T;
@@ -158,16 +158,16 @@ solve_equation_3(const Number& a1, const Number& a2, const Number& a3,
     x3 = t1 - t2;
   }
 
-  x1 = simplify_on_output_ex(x1, n, false);
-  x2 = simplify_on_output_ex(x2, n, false);
-  x3 = simplify_on_output_ex(x3, n, false);
+  x1 = simplify_on_output_ex(x1, false);
+  x2 = simplify_on_output_ex(x2, false);
+  x3 = simplify_on_output_ex(x3, false);
 
   // The roots are all real if and only if d <= 0.
   return d <= 0;
 }
 
 //! Solve the equation \f$x^4 + a_1 x^3 + a_2 x^2 + a_3 x + a_4 = 0\f$.
-static void
+void
 solve_equation_4(const Number& a1, const Number& a2,
 		 const Number& a3, const Number& a4,
 		 Expr& x1, Expr& x2, Expr& x3, Expr& x4) {
@@ -202,14 +202,14 @@ solve_equation_4(const Number& a1, const Number& a2,
   // FIXME: the one and only `n' symbol should be global,
   // i.e., created once and for all.
   Symbol n("n");
-  p = simplify_on_output_ex(p, n, false);
-  q = simplify_on_output_ex(q, n, false);
+  p = simplify_on_output_ex(p, false);
+  q = simplify_on_output_ex(q, false);
   D_VAR(p); 
   D_VAR(q);
 
   Expr r = -g/(8*p*q);
   D_MSGVAR("Before: ", r); 
-  r = simplify_on_output_ex(r, n, false);
+  r = simplify_on_output_ex(r, false);
   Expr s = a1/4;
   D_VAR(r); 
   D_VAR(s); 
@@ -224,10 +224,10 @@ solve_equation_4(const Number& a1, const Number& a2,
   D_VAR(x3); 
   D_VAR(x4);
   D_MSG("");
-  x1 = simplify_on_output_ex(x1, n, false);
-  x2 = simplify_on_output_ex(x2, n, false);
-  x3 = simplify_on_output_ex(x3, n, false);
-  x4 = simplify_on_output_ex(x4, n, false);
+  x1 = simplify_on_output_ex(x1, false);
+  x2 = simplify_on_output_ex(x2, false);
+  x3 = simplify_on_output_ex(x3, false);
+  x4 = simplify_on_output_ex(x4, false);
 }
 
 /*!
@@ -235,7 +235,7 @@ solve_equation_4(const Number& a1, const Number& a2,
   the largest integer \f$n\f$ such that there is a polynomial \f$q\f$
   such that \f$p(x) = q(x^n)\f$ and the polynomial \f$q\f$ itself.
 */
-static unsigned
+unsigned
 is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
   D_MSGVAR("nested polynomial ", p);
   unsigned degree = p.degree(x);  
@@ -286,7 +286,7 @@ is_nested_polynomial(const Expr& p, const Symbol& x, Expr& q) {
   return n;
 }
 
-static bool
+bool
 find_roots(const Expr& p, const Symbol& x,
 	   std::vector<Polynomial_Root>& roots,
 	   Number multiplicity) {
@@ -449,7 +449,7 @@ find_roots(const Expr& p, const Symbol& x,
   return false;
 }
 
-static bool
+bool
 find_power_roots(const Expr& p, const Symbol& x,
 		 std::vector<Polynomial_Root>& roots) {
   assert(p.is_a_power());

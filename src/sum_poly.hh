@@ -31,18 +31,15 @@ http://www.cs.unipr.it/purrs/ . */
 namespace Parma_Recurrence_Relation_Solver {
 
 Expr
-sum_poly_times_exponentials(const Expr&, const Symbol&, 
-			    const Symbol&, const Expr&);
+sum_poly_times_exponentials(const Expr& p, const Symbol& x, const Expr& alpha);
 
 Expr
-sum_poly_times_exponentials_times_cos(const Expr&, const Symbol&, 
-				      const Symbol&, const Expr&, 
-				      const Expr&);
+sum_poly_times_exponentials_times_cos(const Expr& p, const Symbol& x, 
+				      const Expr& alpha, const Expr& theta);
 
 Expr
-sum_poly_times_exponentials_times_sin(const Expr&, const Symbol&, 
-				      const Symbol&, const Expr&, 
-				      const Expr&);
+sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x, 
+				      const Expr& alpha, const Expr& theta);
 
 } // namespace Parma_Recurrence_Relation_Solver
 
