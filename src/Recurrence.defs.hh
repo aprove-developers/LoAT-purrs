@@ -167,7 +167,7 @@ private:
   static Solver_Status
   find_non_linear_recurrence(const Expr& e);
   static Solver_Status
-  compute_order(const Expr& argument, int& order, unsigned long& index,
+  compute_order(const Number& decrement, int& order, unsigned long& index,
 		unsigned long max_size);
   static Solver_Status
   classification_summand(const Expr& r, Expr& e, std::vector<Expr>& coefficients,

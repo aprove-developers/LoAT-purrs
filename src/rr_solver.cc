@@ -1747,12 +1747,9 @@ PURRS::Recurrence::find_non_linear_recurrence(const Expr& e) {
 }
 
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::compute_order(const Expr& argument, 
+PURRS::Recurrence::compute_order(const Number& decrement, 
 				 int& order, unsigned long& index,
 				 unsigned long max_size) {
-  Number decrement;
-  if (!get_constant_decrement(argument, decrement))
-    return HAS_NON_INTEGER_DECREMENT;
   if (decrement < 0)
     return HAS_NEGATIVE_DECREMENT;
   // Make sure that (1) we can represent `decrement' as a long, and
@@ -1797,12 +1794,10 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
       if (argument == Recurrence::n)
 	return HAS_NULL_DECREMENT;
       else if (argument.is_a_add() && argument.nops() == 2) {
-	const Expr& first = argument.op(0);
-	const Expr& second = argument.op(1);
-	if ((first == Recurrence::n && second.is_a_number())
-	    || (second == Recurrence::n && first.is_a_number())) {
+	Number decrement;
+	if (get_constant_decrement(argument, decrement)) {
 	  unsigned long index;
-	  Solver_Status status = compute_order(argument, order, index,
+	  Solver_Status status = compute_order(decrement, order, index,
 					       coefficients.max_size());
 	  if (status != OK)
 	    return status;
@@ -1813,7 +1808,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	  insert_coefficients(1, index, coefficients);
 	}
 	else
-	  return TOO_COMPLEX;
+	  return HAS_NON_INTEGER_DECREMENT;
       }
       else if (argument.has(n))
 	return TOO_COMPLEX;
@@ -1834,13 +1829,11 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	if (argument == Recurrence::n)
 	  return HAS_NULL_DECREMENT;
 	else if (argument.is_a_add() && argument.nops() == 2) {
-	  const Expr& first = argument.op(0);
-	  const Expr& second = argument.op(1);
-	  if ((first == Recurrence::n && second.is_a_number())
-	      || (second == Recurrence::n && first.is_a_number())) {
+	  Number decrement;
+	  if (get_constant_decrement(argument, decrement)) {
 	    if (found_function_x)
 	      return NON_LINEAR_RECURRENCE;
-	    Solver_Status status = compute_order(argument, order, index,
+	    Solver_Status status = compute_order(decrement, order, index,
 						 coefficients.max_size());
 	    if (status != OK)
 	      return status;
@@ -1851,7 +1844,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	    found_function_x = true;
 	  }
 	  else
-	    return TOO_COMPLEX;
+	    return HAS_NON_INTEGER_DECREMENT;
 	}
 	else if (argument.has(Recurrence::n))
 	  return TOO_COMPLEX;
