@@ -49,45 +49,66 @@ public:
   //! Assignment operator.
   Order_Reduction_Info& operator=(const Order_Reduction_Info& y);
 
+  //! Returns <CODE>old_recurrence_rhs_</CODE>.
   Expr old_recurrence_rhs() const;
+
+  //! Returns <CODE>old_recurrence_rhs_</CODE>.
   Expr& old_recurrence_rhs();
 
+  //! Returns <CODE>gcd_decrements_old_rhs_</CODE>.
   unsigned gcd_decrements_old_rhs() const;
+
+  //! Returns <CODE>gcd_decrements_old_rhs_</CODE>.
   unsigned& gcd_decrements_old_rhs();
+
+  //! Sets <CODE>gcd_decrements_old_rhs_</CODE> with \p g.
   void set_gcd_decrements_old_rhs(unsigned g);
 
+  //! Returns <CODE>symbol_for_mod_</CODE>.
   Symbol symbol_for_mod() const;
+
+  //! Returns <CODE>symbol_for_mod_</CODE>.
   Symbol& symbol_for_mod();
 
+  //! Returns <CODE>solution_order_reduced_</CODE>.
   Expr solution_order_reduced() const;
+
+  //! Returns <CODE>solution_order_reduced_</CODE>.
   Expr& solution_order_reduced();
+
+  //! Sets <CODE>solution_order_reduced_</CODE> with \p e.
   void set_solution_order_reduced(const Expr& e);
 
+  //! Returns <CODE>verified_one_time_</CODE>.
   bool verified_one_time() const;
+
+  //! Returns <CODE>verified_one_time_</CODE>.
   void not_verified_one_time(); 
 
 private:
   //! \brief
-  //! When is applied the order reduction stores the value of the
-  //! <CODE>recurrence_rhs</CODE> before to solve the reduced recurrence;
-  //! stores 0 otherwise.
+  //! Stores the value of the <CODE>recurrence_rhs</CODE> before
+  //! to apply the order reduction.
   Expr old_recurrence_rhs_;
 
   //! \brief
-  //! When is applied the order reduction stores the greatest common
-  //! divisor among the decrements <CODE>d</CODE> of the terms
-  //! <CODE>x(n-d)</CODE> present in the right hand side of the recurrence
-  //! before to solve the reduced recurrence;
-  //! stores 0 otherwise.
+  //! Stores the greatest common divisor among the decrements
+  //! <CODE>d</CODE> of the terms <CODE>x(n-d)</CODE> present in the
+  //! right hand side of the recurrence before to apply the order reduction.
   unsigned gcd_decrements_old_rhs_;
 
+  //! \brief
+  //! Stores the auxiliary symbol used in place of the function
+  //! \f$ mod() \f$.
   Symbol symbol_for_mod_;
 
-  //! \brief
-  //! When is applied the order reduction stores the solution of the
-  //! reduced order recurrence; stores 0 otherwise.
+  //! Stores the solution of the reduced order recurrence.
   Expr solution_order_reduced_;
 
+  //! \brief
+  //! If \p verified_one_time_ is true means that the system will
+  //! try to verify the non-reduced recurrence; if \p verified_one_time_
+  //! is false then the system will verify only the reduced recurrence.
   bool verified_one_time_;
 };
 
