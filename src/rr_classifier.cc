@@ -706,6 +706,8 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	  D_MSG("infinite order");
 	  return TOO_COMPLEX;
 	}
+	else
+	  possibly_coeff *= factor;
       }
       else {
 	if (factor.has(n))
