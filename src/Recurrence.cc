@@ -885,9 +885,11 @@ PURRS::Recurrence::solve_new_infinite_order_rec(const Expr& weight,
   Recurrence rec_rewritten(weight * PURRS::sum(h, 0, n-1, x(h))
 			   + inhomogeneous);
   const Expr& coeff_first_order
-    = weight  / weight.substitute(n, n-1) * (1 + weight.substitute(n, n-1));
-  const Expr& inhomog_first_order = weight
-    * (inhomogeneous / weight - (inhomogeneous / weight).substitute(n, n-1));
+    = simplify_all(weight / weight.substitute(n, n-1)
+		   * (1 + weight.substitute(n, n-1)));
+  const Expr& inhomog_first_order
+    = simplify_all(weight * (inhomogeneous / weight
+			     - (inhomogeneous / weight).substitute(n, n-1)));
   rec_rewritten.infinite_order_p
     = new Infinite_Order_Info(coeff_first_order*x(n-1)+inhomog_first_order,
 			      coeff_first_order, inhomog_first_order,
@@ -897,6 +899,45 @@ PURRS::Recurrence::solve_new_infinite_order_rec(const Expr& weight,
   rec_rewritten.set_inhomogeneous_term(inhomogeneous);
   return rec_rewritten.compute_infinite_order_recurrence(solution);
 }
+
+namespace {
+using namespace PURRS;
+
+Expr
+increase_argument_x_function(const Expr& e, unsigned num) {
+  Expr e_rewritten;
+  if (e.is_a_add()) {
+    e_rewritten = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten += increase_argument_x_function(e.op(i), num);
+  }
+  else if (e.is_a_mul()) {
+    e_rewritten = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      e_rewritten *= increase_argument_x_function(e.op(i), num);
+  }
+  else if (e.is_a_power())
+    return pwr(increase_argument_x_function(e.arg(0), num),
+	       increase_argument_x_function(e.arg(1), num));
+  else if (e.is_a_function()) {
+    if (e.is_the_x_function())
+      return x(e.arg(0)+num);
+    else if (e.nops() == 1)
+      return apply(e.functor(), increase_argument_x_function(e.arg(0), num));
+    else {
+      unsigned num_argument = e.nops();
+      std::vector<Expr> argument(num_argument);
+      for (unsigned j = 0; j < num_argument; ++j)
+	argument[j] = increase_argument_x_function(e.arg(j), num);
+      return apply(e.functor(), argument);
+    }
+  }
+  else
+    e_rewritten = e;
+  return e_rewritten; 
+}
+
+} // anonymous namespace
 
 /*!
   Builds a new object <CODE>Recurrence</CODE> containing a linear
@@ -1012,7 +1053,7 @@ compute_infinite_order_recurrence(Expr& solution) const {
     // not have any sense for positive integer less than
     // `infinite_order_fwdr()', so it is not possible to consider the
     // aforesaid method.
-      else if (lower > 0 && infinite_order_fwdr() == 0) {
+      else if (lower > 0) {
 	const Expr& weight_rewritten
 	  = weight_inf_order().substitute(n, n + lower);
 	const Expr& inhomogeneous_rewritten
@@ -1027,8 +1068,7 @@ compute_infinite_order_recurrence(Expr& solution) const {
 	// We must shift the solution: n    -> n - lower,
 	//                             x(a) -> x(a + lower).
 	solution = solution.substitute(n, n - lower);
-	solution = solution.substitute(x(infinite_order_fwdr()),
-				       x(infinite_order_fwdr() + lower));
+	solution = increase_argument_x_function(solution, lower);
 	return SUCCESS;
       }
       else
