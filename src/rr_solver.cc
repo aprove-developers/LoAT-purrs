@@ -93,7 +93,7 @@ build_characteristic_equation(const GSymbol& x,
   // rational elements of `coefficients'.
   for (unsigned i = coefficients.size(); i-- > 0; )
     if (!coefficients[i].is_integer())
-      denominators.push_back(coefficients[i].denom());
+      denominators.push_back(coefficients[i].denominator());
   GExpr p = 0;
   // Build the vector `int_coefficients' with the elements of
   // `coefficients' multiplied for the least common multiple

@@ -29,6 +29,125 @@ http://www.cs.unipr.it/purrs/ . */
 
 namespace Parma_Recurrence_Relation_Solver {
 
+
+inline
+Number::Number() {
+}
+
+inline
+Number::Number(int i)
+  : n(i) {
+}
+
+inline
+Number::Number(unsigned int i)
+  : n(i) {
+}
+
+inline
+Number::Number(long i)
+  : n(i) {
+}
+
+inline
+Number::Number(unsigned long i)
+  : n(i) {
+}
+
+inline
+Number::Number(const char* s)
+  : n(s) {
+}
+
+inline
+Number::Number(long n, long d)
+  : n(n, d) {
+}
+
+inline
+Number::Number(const Number& y)
+  : n(y.n) {
+}
+
+inline
+Number::Number(const GiNaC::numeric& gn)
+  : n(gn) {
+}
+
+inline
+Number::~Number() {
+}
+
+inline Number&
+Number::operator=(const Number& y) {
+  n = y.n;
+  return *this;
+}
+
+inline Number&
+Number::operator=(int i) {
+  n = i;
+  return *this;
+}
+
+inline Number&
+Number::operator=(unsigned int i) {
+  n = i;
+  return *this;
+}
+
+inline Number&
+Number::operator=(long i) {
+  n = i;
+  return *this;
+}
+
+inline Number&
+Number::operator=(unsigned long i) {
+  n = i;
+  return *this;
+}
+
+inline Number&
+Number::operator=(const char* s) {
+  n = s;
+  return *this;
+}
+
+inline Number&
+operator+=(Number& x, const Number& y) {
+  x.n += y.n;
+  return x;
+}
+
+inline Number&
+operator-=(Number& x, const Number& y) {
+  x.n -= y.n;
+  return x;
+}
+
+inline Number&
+operator*=(Number& x, const Number& y) {
+  x.n *= y.n;
+  return x;
+}
+
+inline Number&
+operator/=(Number& x, const Number& y) {
+  x.n /= y.n;
+  return x;
+}
+
+inline Number
+operator+(const Number& x) {
+  return x;
+}
+
+inline Number
+operator-(const Number& x) {
+  return -x.n;
+}
+
 inline Number
 operator+(const Number& x, const Number& y) {
   return x.n + y.n;
@@ -47,16 +166,6 @@ operator*(const Number& x, const Number& y) {
 inline Number
 operator/(const Number& x, const Number& y) {
   return x.n / y.n;
-}
-
-inline Number
-operator+(const Number& x) {
-  return x;
-}
-
-inline Number
-operator-(const Number& x) {
-  return -x.n;
 }
 
 inline Number&
@@ -111,77 +220,29 @@ operator<=(const Number& x, const Number& y) {
   return x.n <= y.n;
 }
 
-inline
-Number::Number() {
+inline Number
+abs(const Number& x) {
+  return GiNaC::abs(x.n);
 }
 
-inline
-Number::Number(int i)
-  : n(i) {
+inline Number
+factorial(const Number& n) {
+  return GiNaC::factorial(n.n);
+};
+
+inline Number
+gcd(const Number& x, const Number& y) {
+  return GiNaC::gcd(x.n, y.n);
 }
 
-inline
-Number::Number(unsigned int i)
-  : n(i) {
+inline Number
+lcm(const Number& x, const Number& y) {
+  return GiNaC::lcm(x.n, y.n);
 }
 
-inline
-Number::Number(long i)
-  : n(i) {
-}
-
-inline
-Number::Number(unsigned long i)
-  : n(i) {
-}
-
-inline
-Number::Number(long n, long d)
-  : n(n, d) {
-}
-
-inline
-Number::Number(const Number& num)
-  : n(num.n) {
-}
-
-inline Number&
-Number::operator=(const Number& y) {
-  n = y.n;
-  return *this;
-}
-
-inline Number&
-Number::operator=(int i) {
-  n = i;
-  return *this;
-}
-
-inline Number&
-Number::operator=(unsigned int i) {
-  n = i;
-  return *this;
-}
-
-inline Number&
-Number::operator=(long i) {
-  n = i;
-  return *this;
-}
-
-inline Number&
-Number::operator=(unsigned long i) {
-  n = i;
-  return *this;
-}
-
-inline
-Number::Number(const GiNaC::numeric& gn)
-  : n(gn) {
-}
-
-inline
-Number::~Number() {
+inline Number
+power(const Number& x, const Number& y) {
+  return GiNaC::pow(x.n, y.n);
 }
 
 inline bool
@@ -195,12 +256,12 @@ Number::Number::is_integer() const {
 }
 
 inline bool
-Number::Number::is_pos_integer() const {
+Number::Number::is_positive_integer() const {
   return n.is_pos_integer();
 }
 
 inline bool
-Number::Number::is_nonneg_integer() const {
+Number::Number::is_nonnegative_integer() const {
   return n.is_nonneg_integer();
 }
 
@@ -230,19 +291,9 @@ Number::Number::is_real() const {
 }
 
 inline bool
-Number::Number::is_cinteger() const {
+Number::Number::is_complex_integer() const {
   return n.is_cinteger();
 }
-
-inline bool
-Number::Number::is_crational() const {
-  return n.is_crational();
-}
-
-//  inline Expr
-//  numer_denom() const {
-//    return n.numer_denom();
-//  }
 
 inline int
 Number::to_int() const {
@@ -260,17 +311,17 @@ Number::real() const {
 }
 
 inline Number
-Number::imag() const {
+Number::imaginary() const {
   return n.imag();
 }
 
 inline Number
-Number::numer() const {
+Number::numerator() const {
   return n.numer();
 }
 
 inline Number
-Number::denom() const {
+Number::denominator() const {
   return n.denom();
 }
 
@@ -278,31 +329,6 @@ inline Number
 irem(const Number& a, const Number& b) {
   return irem(a, b);
 }
-
-inline Number
-abs(const Number& n) {
-  return abs(n);
-}
-
-inline Number
-power(const Number& x, const Number& y) {
-  return GiNaC::pow(x.n, y.n);
-}
-
-inline Number
-gcd(const Number& x, const Number& y) {
-  return GiNaC::gcd(x.n, y.n);
-}
-
-inline Number
-lcm(const Number& x, const Number& y) {
-  return GiNaC::lcm(x.n, y.n);
-}
-
-inline Number
-factorial(const Number& n) {
-  return GiNaC::factorial(n.n);
-};
 
 } // namespace Parma_Recurrence_Relation_Solver
 

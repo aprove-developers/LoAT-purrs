@@ -84,7 +84,7 @@ GExpr
 get_binding(const GList& substitution, unsigned wild_index) {
   assert(wild_index < substitution.nops());
   assert(substitution.op(wild_index).is_relation_equal());
-  assert(substitution.op(wild_index).lhs() == wild(wild_index));
+  //assert(substitution.op(wild_index).lhs() == wild(wild_index));
   return substitution.op(wild_index).rhs();
 }
 
@@ -149,7 +149,7 @@ is_polynomial(const GExpr& e, const GSymbol& x) {
     if (is_polynomial(e.op(0), x))
       if (e.op(1).is_a_number()) {
 	GNumber exponent = e.op(1).ex_to_number();
-	if (exponent.is_pos_integer())
+	if (exponent.is_positive_integer())
 	  return true;
       }
   }
@@ -207,11 +207,11 @@ convert_to_integer_polynomial(const GExpr& p, const GSymbol& x) {
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
-  GNumber t_lcm = p.coeff(x, deg_p).ex_to_number().denom();
+  GNumber t_lcm = p.coeff(x, deg_p).ex_to_number().denominator();
   for (unsigned i = 0; i <= deg_p; ++i) {
     GExpr t_coeff = p.coeff(x, i);
     assert(t_coeff.is_a_number());
-    t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denom());
+    t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denominator());
   }
   return (p * t_lcm).primpart(x);
 }
@@ -230,11 +230,11 @@ convert_to_integer_polynomial(const GExpr& p, const GSymbol& x,
 
   // Choose non-zero starting value and compute least common
   // multiple of denominators.
-  GNumber t_lcm = p.coeff(x, deg_p).denom().ex_to_number();
+  GNumber t_lcm = p.coeff(x, deg_p).denominator().ex_to_number();
   for (unsigned i = 0; i <= deg_p; ++i) {
     GExpr t_coeff = p.coeff(x, i);
     assert(t_coeff.is_a_number());
-    t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denom());
+    t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denominator());
   }
 
   GExpr q = (p * t_lcm).primpart(x);

@@ -71,7 +71,7 @@ gosper_step_one(const GExpr&/*t*/, const GSymbol& /*n*/, GExpr& num_den_r_n) {
   // FIXME: general simplifications to be inserted here.
   Expr numer;
   Expr denom;
-  num_den_r_n.numer_denom(numer, denom);
+  num_den_r_n.numerator_denominator(numer, denom);
   return true;
 }
 
@@ -161,12 +161,12 @@ gosper_step_two(const GExpr& r_n, const GSymbol& n,
   // have integer coefficients. 
   GNumber a_n_factor;
   a_n = convert_to_integer_polynomial(a_n, n, a_n_factor);
-  a_n *= a_n_factor.numer();
-  b_n *= a_n_factor.denom();
+  a_n *= a_n_factor.numerator();
+  b_n *= a_n_factor.denominator();
   GNumber b_n_factor;
   b_n = convert_to_integer_polynomial(b_n, n, b_n_factor);
-  a_n *= b_n_factor.numer();
-  b_n *= b_n_factor.denom();
+  a_n *= b_n_factor.numerator();
+  b_n *= b_n_factor.denominator();
 #if NOISY
   std::cout << "a(n) = " << a_n << std::endl;
   std::cout << "b(n) = " << b_n << std::endl;
@@ -273,7 +273,7 @@ gosper_step_three(const GExpr& a_n, const GExpr& b_n, const GExpr& c_n,
     assert(B_A_e.is_a_number());
     GNumber B_A = B_A_e.ex_to_number();
     GNumber possible_deg = deg_c - deg_a + 1;
-    if (B_A.is_nonneg_integer())
+    if (B_A.is_nonnegative_integer())
       if (B_A > possible_deg)
 	possible_deg = B_A;
     deg_x = possible_deg >= 0 ? possible_deg : -1;

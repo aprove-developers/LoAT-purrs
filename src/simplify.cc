@@ -551,8 +551,8 @@ reduce_to_standard_form(const GNumber root_index, const GNumber r) {
   if (k > 0)
     if (r == 0)
       return 0;
-  GNumber num = r.numer();
-  GNumber den = r.denom();
+  GNumber num = r.numerator();
+  GNumber den = r.denominator();
   // FIXME: deal with complex numbers
   if (!r.is_real()) {
     GExpr index = 1 / root_index;
@@ -630,10 +630,10 @@ red_prod(const GNumber& base1, const GNumber& exp1,
   assert(exp1 != 0);
   assert(exp2 != 0);
   
-  GNumber k1_num = exp1.numer();
-  GNumber k1_den = exp1.denom();
-  GNumber k2_num = exp2.numer();
-  GNumber k2_den = exp2.denom();
+  GNumber k1_num = exp1.numerator();
+  GNumber k1_den = exp1.denominator();
+  GNumber k2_num = exp2.numerator();
+  GNumber k2_den = exp2.denominator();
   
   base_1 = power(base_1, k1_num);
   base_2 = power(base_2, k2_num);
@@ -899,7 +899,7 @@ simplify_numer_denom(const GExpr& e) {
   // is faster than to use 'numer()' and 'denom()' separately.
   Expr numer_e;
   Expr denom_e;
-  e.numer_denom(numer_e, denom_e);
+  e.numerator_denominator(numer_e, denom_e);
   GExpr num = numer_e.expand();
   GExpr den = denom_e.expand();
   GExpr ris = num * power(den, -1);

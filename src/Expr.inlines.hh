@@ -322,17 +322,17 @@ Expr::primpart(const Symbol& symb) const {
 }
 
 inline Expr
-Expr::numer() const {
+Expr::numerator() const {
   return e.numer();
 }
 
 inline Expr
-Expr::denom() const {
+Expr::denominator() const {
   return e.denom();
 }
 
 inline void
-Expr::numer_denom(Expr& numer, Expr& denom) const {
+Expr::numerator_denominator(Expr& numer, Expr& denom) const {
   numer =  e.numer_denom().op(0);
   denom =  e.numer_denom().op(1);
 }

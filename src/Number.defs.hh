@@ -44,7 +44,7 @@ Number operator+(const Number& x, const Number& y);
 //! Returns \f$ x - y \f$.
 Number operator-(const Number& x, const Number& y);
 
-//! Returns \f$ x * y \f$.
+//! Returns \f$ x \cdot y \f$.
 Number operator*(const Number& x, const Number& y);
 
 //! If \f$ y \neq 0 \f$, returns \f$ x / y \f$.
@@ -53,26 +53,45 @@ Number operator*(const Number& x, const Number& y);
 */
 Number operator/(const Number& x, const Number& y);
 
-//! Yields <CODE>true</CODE> if \f$ x = y \f$, <CODE>false</CODE> otherwise.
+//! Assigns \f$ x + y \f$ to \f$ x \f$ and returns the result.
+Number& operator+=(Number& x, const Number& y);
+
+//! Assigns \f$ x - y \f$ to \f$ x \f$ and returns the result.
+Number& operator-=(Number& x, const Number& y);
+
+//! Assigns \f$ x \cdot y \f$ to \f$ x \f$ and returns the result.
+Number& operator*=(Number& x, const Number& y);
+
+//! If \f$ y \neq 0 \f$, assigns \f$ x / y \f$ to \f$ x \f$
+//! and returns the result.
+/*!
+  \exception std::runtime_error thrown if \f$ y = 0 \f$.
+*/
+Number& operator/=(Number& x, const Number& y);
+
+//! Returns <CODE>true</CODE> if and only if \f$ x = y \f$.
 bool operator==(const Number& x, const Number& y);
 
-//! Yields <CODE>true</CODE> if \f$ x \neq y \f$, <CODE>false</CODE> otherwise.
+//! Returns <CODE>true</CODE> if and only if \f$ x \neq y \f$.
 bool operator!=(const Number& x, const Number& y);
 
-//! Yields <CODE>true</CODE> if \f$ x > y \f$, <CODE>false</CODE> otherwise.
+//! Returns <CODE>true</CODE> if and only if \f$ x > y \f$.
 bool operator>(const Number& x, const Number& y);
 
-//! Yields <CODE>true</CODE> if \f$ x < y \f$, <CODE>false</CODE> otherwise.
+//! Returns <CODE>true</CODE> if and only if \f$ x < y \f$.
 bool operator<(const Number& x, const Number& y);
 
-//! Yields <CODE>true</CODE> if \f$ x \geq y \f$, <CODE>false</CODE> otherwise.
+//! Returns <CODE>true</CODE> if and only if \f$ x \geq y \f$.
 bool operator>=(const Number& x, const Number& y);
 
-//! Yields <CODE>true</CODE> if \f$ x \leq y \f$, <CODE>false</CODE> otherwise.
+//! Returns <CODE>true</CODE> if and only if \f$ x \leq y \f$.
 bool operator<=(const Number& x, const Number& y);
 
-//! If ..., returns \f$ x^y \f$.
-Number power(const Number& x, const Number& y);
+//! Returns the absolute value of \f$ x \f$.
+Number abs(const Number& x);
+
+//! Returns the least common multiple of \f$ x \f$ and \f$ y \f$.
+Number factorial(const Number& n);
 
 //! Returns the greatest common divisor of \f$ x \f$ and \f$ y \f$.
 Number gcd(const Number& x, const Number& y);
@@ -80,8 +99,9 @@ Number gcd(const Number& x, const Number& y);
 //! Returns the least common multiple of \f$ x \f$ and \f$ y \f$.
 Number lcm(const Number& x, const Number& y);
 
-//! Returns the least common multiple of \f$ x \f$ and \f$ y \f$.
-Number factorial(const Number& n);
+//! If ..., returns \f$ x^y \f$.
+Number power(const Number& x, const Number& y);
+
 
 class Number {
 public:
@@ -99,6 +119,9 @@ public:
 
   //! Builds the integer number \p i.
   Number(unsigned long i);
+
+  //! Builds the integer corresponding to the decimal integer numeral in \p s.
+  Number(const char* s);
 
   //! If \f$ d \neq 0 \f$, builds the rational number \f$ n/d \f$.
   /*!
@@ -127,6 +150,10 @@ public:
   //! Assigns \p i to \p *this.
   Number& operator=(unsigned long i);
 
+  //! Assignes to \p *this the integer corresponding
+  //! to the decimal integer numeral in \p s.
+  Number& operator=(const char* s);
+
   //! Pre-increment operator.
   Number& operator++();
 
@@ -136,27 +163,37 @@ public:
   //! Post-increment operator.
   Number operator++(int);
 
-  //! Post-increment operator.
+  //! Post-decrement operator.
   Number operator--(int);
 
+  //! Returns <CODE>true</CODE> if and only if \p *this is positive.
   bool is_positive() const;
+
+  //! Returns <CODE>true</CODE> if and only if \p *this is an integer.
   bool is_integer() const;
-  bool is_pos_integer() const;
-  bool is_nonneg_integer() const;
+
+  //! Returns <CODE>true</CODE> if and only if \p *this is a positive integer.
+  bool is_positive_integer() const;
+
+  //! Returns <CODE>true</CODE> if and only if \p *this
+  //! is a nonnegative integer.
+  bool is_nonnegative_integer() const;
+
+  //! Returns <CODE>true</CODE> if and only if \p *this is an even integer.
   bool is_even() const;
+
   bool is_odd() const;
   bool is_prime() const;
   bool is_rational() const;
   bool is_real() const;
-  bool is_cinteger() const;
-  bool is_crational() const;
+  bool is_complex_integer() const;
 
   int to_int() const;
   long to_long() const;
   Number real() const;
-  Number imag() const;
-  Number numer() const;
-  Number denom() const;
+  Number imaginary() const;
+  Number numerator() const;
+  Number denominator() const;
 
 private:
   friend class Expr;
@@ -169,6 +206,11 @@ private:
   friend Number operator*(const Number& x, const Number& y);
   friend Number operator/(const Number& x, const Number& y);
 
+  friend Number& operator+=(Number& x, const Number& y);
+  friend Number& operator-=(Number& x, const Number& y);
+  friend Number& operator*=(Number& x, const Number& y);
+  friend Number& operator/=(Number& x, const Number& y);
+
   friend bool operator==(const Number& x, const Number& y);
   friend bool operator!=(const Number& x, const Number& y);
   friend bool operator>(const Number& x, const Number& y);
@@ -176,9 +218,11 @@ private:
   friend bool operator>=(const Number& x, const Number& y);
   friend bool operator<=(const Number& x, const Number& y);
 
-  friend Number power(const Number& b, const Number& e);
+  friend Number abs(const Number& x);
+  friend Number factorial(const Number& x);
+  friend Number gcd(const Number& x, const Number& y);
   friend Number lcm(const Number& x, const Number& y);
-  friend Number factorial(const Number& n);
+  friend Number power(const Number& x, const Number& y);
 
 private:
   GiNaC::numeric n;

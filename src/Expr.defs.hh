@@ -230,9 +230,9 @@ public:
   Expr lcoeff(const Symbol& symb) const;
   Expr tcoeff(const Symbol& symb) const;
   Expr primpart(const Symbol& symb) const;
-  Expr numer() const;
-  Expr denom() const;
-  void numer_denom(Expr& numer, Expr& denom) const;
+  Expr numerator() const;
+  Expr denominator() const;
+  void numerator_denominator(Expr& numer, Expr& denom) const;
   Expr lhs() const;
   Expr rhs() const;
 

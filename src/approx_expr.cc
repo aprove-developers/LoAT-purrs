@@ -42,7 +42,7 @@ approximate_rational(const GNumber& n) {
   if (n.is_integer())
     return approximate_integer(n);
   else if (n.is_rational())
-    return approximate_integer(n.numer()) / approximate_integer(n.denom());
+    return approximate_integer(n.numerator()) / approximate_integer(n.denominator());
   else
     abort();
 }
@@ -54,7 +54,7 @@ approximate(const GNumber& n) {
 		     0);
   else
     return CInterval(approximate_rational(n.real()),
-		     approximate_rational(n.imag()));
+		     approximate_rational(n.imaginary()));
 }
 
 CInterval

@@ -65,7 +65,7 @@ static GExpr zero = 0;
 */
 void
 find_divisors(GNumber n, std::vector<GNumber>& divisors) {
-  assert(n.is_pos_integer());
+  assert(n.is_positive_integer());
   assert(n > 0 && n < FIND_DIVISORS_THRESHOLD);
   unsigned m = n.to_int();
   // Once a divisor `i' is found, it is pushed onto the vector `divisors'
@@ -238,7 +238,7 @@ find_power_roots(const GExpr& p, const GSymbol& x,
   GExpr base = p.op(0);
   assert(p.op(1).is_a_number());
   GNumber exponent = p.op(1).ex_to_number();
-  assert(exponent.is_pos_integer() && exponent >= 2);
+  assert(exponent.is_positive_integer() && exponent >= 2);
   if (!find_roots(base, x, roots, exponent))
     // No way: we were unable to solve the base.
     return false;
