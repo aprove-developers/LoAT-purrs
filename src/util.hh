@@ -109,10 +109,6 @@ do { \
 #define D_VAR(x) DD_VAR(x) 
 #define D_MSGVAR(s, x) DD_MSGVAR(s, x) 
 #define D_VEC(vec, first, last) DD_VEC(vec, first, last)
-do { \
-  for (int i = (int) first; i <= (int) last; ++i) \
-    std::cout << #vec << "[" << i << "] = " << vec[i] << std::endl; \
-} while (0)
 #else
 #define D_MSG(s)
 #define D_VAR(x)
