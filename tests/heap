@@ -574,6 +574,7 @@ yv	8*x(n-1)-21*x(n-2)+18*x(n-3)
 yv	8*x(n-2)+1*x(n-1)+9*n-18
 yv	8*x(n-2)+1*x(n-1)-18
 yv	a*b+(1-a)*x(n-1)
+yv	a*x(n)+x(n)
 yv	a*x(n-1)
 yv	a*x(n-1)+b
 yv	a*x(n-1)+b*(d*n)+c
