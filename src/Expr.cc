@@ -695,14 +695,16 @@ PURRS::Expr::is_rational_scalar_representation(const Symbol& x) const {
     return true;
   else if (e.is_a_symbol() && e != x)
     return true;
-  else if (e.is_a_power()) {
+  else if (e.is_a_power())
     if (e.arg(0).is_rational_scalar_representation(x)) {
       Number exponent;
-      if ((e.arg(1).is_a_number(exponent) && exponent.is_positive_integer())
-	  || (e.is_a_symbol() && e != x)) 
+      if (e.arg(1).is_a_number(exponent)) {
+	if (exponent.is_positive_integer() || !e.arg(0).is_a_number())
+	  return true;
+      }
+      else
 	return true;
     }
-  }
   else if (e.is_a_function()) {
     for (unsigned i = e.nops(); i-- > 0; )
       if (!(e.arg(i).is_a_symbol() && e != x))

@@ -862,9 +862,12 @@ public:
       rational scalar representation;
     - if \f$ a \f$ and \f$ b \f$ are rational scalar representations then
       \f$ a+b \f$, \f$ a*b \f$ are rational scalar representations;
-    - if \f$ a \f$ is a rational scalar representation in \f$ x \f$ and
-      \f$ b \f$ is a positive integer or a parameter different from
-      \f$ x \f$, then \f$ a^b \f$ is a rational scalar representation.
+    - if \f$ a \f$ and \f$ b \f$ are rational scalar representations
+      for \f$ x \f$ such that
+      -  \f$ a \f$ and \f$ b \f$ are not both equal to \f$ 0 \f$,
+      -  if \f$ a \f$ is \f$ 0 \f$ then \f$ b \f$ is not a negative number,
+      -  if \f$ a \f$ is a number then \f$ b \f$ is a positive integer number,
+      then \f$ a^b \f$ is a rational scalar representation.
   */
   bool is_rational_scalar_representation(const Symbol& x) const;
 
@@ -925,8 +928,7 @@ public:
   /*!
     This function realizes the definition of
     <EM>rational polynomial in \f$ x \f$</EM>, where \f$ x \f$ is any symbol.
-    This is more briefly written <EM>rational polynomial</EM> and defined
-    inductively as follows:
+    This is defined inductively as follows:
     - every rational scalar representation for \f$ x \f$ is a rational
       polynomial;
     - \f$ x \f$ is a rational polynomial;
