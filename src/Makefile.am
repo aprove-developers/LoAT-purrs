@@ -70,6 +70,8 @@ factorize.hh \
 compute_prod.hh \
 ep_decomp.hh \
 sum_poly.hh \
+finite_order.hh \
+functional_equation.hh \
 util.hh \
 Finite_Order_Info.defs.hh \
 Finite_Order_Info.inlines.hh \
@@ -102,6 +104,8 @@ gosper.cc \
 numerator_denominator.cc \
 factorize.cc \
 poly_factor.cc \
+finite_order.cc \
+functional_equation.cc \
 rr_solver.cc \
 simplify.cc \
 compute_prod.cc \
