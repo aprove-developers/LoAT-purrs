@@ -850,6 +850,10 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     // `solution' is already the sum of the homogeneous part and the
     // non-homogeneous part of the solution of the recurrence.
     exact_solution_.set_expression(solution);
+
+  // Resubstitute auxiliary definitions possibly appearing in
+  // the solution with their original values.
+  //exact_solution_.set_expression(blackboard.rewrite(solution));
   
 #else
   // `g_n' is defined here because it is necessary in the function
@@ -880,6 +884,11 @@ PURRS::Recurrence::solve_linear_finite_order() const {
     // do not give up.
     if (vector_not_all_zero(exp_no_poly_coeff))
       return TOO_COMPLEX;
+
+    // If there are non-rational roots, substitute them with symbols for
+    // efficiency.
+    substitute_non_rational_roots(*this, roots);
+
 
     for (size_t j = 0; j < base_of_exps.size(); ++j) {
       poly = exp_poly_coeff[j];
@@ -939,6 +948,7 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 	//	Expr tmp = x(first_valid_index + i) - general_solution.substitute(n, first_valid_index + i);
 	//	D_MSGVAR("Equation: ", tmp);
 	equations.prepend(Expr(x(first_valid_index + i) - general_solution.substitute(n, first_valid_index + i), 0));
+	D_MSGVAR("Equation: ", equations.op(0));
       }
 
       // Solve the system.
@@ -956,20 +966,17 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 
       D_MSGVAR("Complete solution: ", general_solution);
      
-      exact_solution_.set_expression(general_solution);
+      // Resubstitute auxiliary definitions possibly appearing in
+      // the solution with their original values.
+      exact_solution_.set_expression(blackboard.rewrite(general_solution));
     }
   else
     // In the case of variable coefficients the expression contained in
     // `solution' is already the sum of the homogeneous part and the
     // non-homogeneous part of the solution of the recurrence.
-    exact_solution_.set_expression(solution);
-
+    exact_solution_.set_expression(blackboard.rewrite(solution));
 
 #endif
-
-  // Resubstitute auxiliary definitions possibly appearing in
-  // the solution with their original values.
-  //exact_solution_.set_expression(blackboard.rewrite(solution));
 
   // Only for the output.
   if (exact_solution_.expression().is_a_add()) {
