@@ -400,9 +400,8 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	  // is a polynomial.
 	  if (coeff_of_exp.info(info_flags::polynomial)) {
 	    GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
-	    sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
-					pow(coefficients[1], -1),
-					solution);
+	    solution = sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
+					pow(coefficients[1], -1));
 	  }	  
 	  else {
 	    std::cout << "We want only polynomials or product" << std::endl
@@ -415,10 +414,8 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	  if (GiNaC::is_a<GiNaC::numeric>(exponential.op(0)) && 
 	      coeff_of_exp.info(info_flags::polynomial)) {
 	    GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
-	    sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
-					exponential.op(0)*pow(coefficients[1],
-							      -1),
-					solution);
+	    solution = sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
+		       exponential.op(0)*pow(coefficients[1], -1));
 	  }
 	  else {
 	    std::cout << "We want only polynomials or product" << std::endl
@@ -426,7 +423,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	    abort();
 	  }
 	// 'sum_poly_times_exponentials' calculates the sum from 0 while
-	// we want start from 1. 
+	// we want to start from 1. 
 	solution -= coeff_of_exp.subs(n == 0);	
 	solution_tot += solution;
       }
