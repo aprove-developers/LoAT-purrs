@@ -48,11 +48,15 @@ PURRS::simplify_on_output_ex(const Expr& e, bool input);
 namespace {
 using namespace PURRS;
 
-//! Applies the rule `E2' of the set <EM>Expand</EM>.
+//! \brief
+//! Given an expression that is a power this function consider its exponent.. 
+//! Returns <CODE>true</CODE> if the rule `E2' of the rules's set <EM>Expand</EM>
+//! is applicable and in this case \p e will contain the new exponent for
+//! the expression; returns <CODE>false</CODE> otherwise.
 /*!
   If \f$ e = e_1 \cdots e_k \f$ and
-  \f$ \exists i \in \{1, \dotsc , k\} \st e_i == n \f$,
-  then returns <CODE>true</CODE> and \f$ e \f$ becomes
+  \f$ \exists i \in \{1, \dotsc , k\} \st e_i = n \f$,
+  then this function returns <CODE>true</CODE> and \f$ e \f$ becomes
   \f$ e_1 \cdots e_{i-1} \cdot e_{i+1} \cdots e_k \f$.
   If \f$ e = n \f$ then returns <CODE>true</CODE> and \f$ e \f$
   becomes \f$ 1 \f$.
@@ -84,6 +88,7 @@ erase_factor(Expr& e) {
   return false;
 }
 
+//! Application of a part of the rule `E1' of the rules's set <EM>Expand</EM>.
 /*!
   Returns <CODE>true</CODE> if \p base and \p exponent are rational numbers
   and \f$ base^exponent \f$ is again a rational number.
@@ -101,13 +106,13 @@ perfect_root(const Expr& base, const Number& exponent) {
 }
 
 /*!
-  Given the base \p base, the numeric and non-numeric part of the
+  Given the base \p base of a power, the numeric and non-numeric part of the
   exponent, \p num_exp and \p not_num_exp respectively, this function
-  returns a semantically equivalent form of 
+  returns a semantically equivalent form of
   \f$ base^{num\_exp * not\_num\_exp} \f$, according to some conditions 
   that depend on the values of the boolean \p input and \p is_numeric_base.
-  The symbol \p n is considered special if and only if \p input is
-  <CODE>true</CODE>.
+  If \p input is <CODE>true</CODE> \p n is considered like a special symbol,
+  i. e., it is always collected with respect to the others parameters.
   If \p is_numeric_base is <CODE>true</CODE>, the function computes
   explicitly \f$ base^{num\_exp} \f$, and then raises the result to
   the power \f$ not\_num\_exp \f$.
@@ -185,8 +190,8 @@ find_real_base_and_build_exponent(Expr& base, Expr& numeric_exponent,
   is <CODE>false</CODE>, \p n is like the other parameters.
 */
 Expr
-simpl_powers_base(const Expr& base, const Expr& num_exponent,
-		  const Expr& not_num_exponent, bool input) {
+simplify_powers_with_bases_mul(const Expr& base, const Expr& num_exponent,
+			       const Expr& not_num_exponent, bool input) {
   assert(base.is_a_mul());
   std::vector<Expr> vect_base(base.nops());
   std::vector<Expr> vect_num_exp(base.nops());
@@ -206,18 +211,17 @@ simpl_powers_base(const Expr& base, const Expr& num_exponent,
     else
       vect_base[i] = base_factor;
   }
-
   // The numeric and non-numeric part of the exponent of each factor
   // of the base is determined.
-  Expr tot = 1;
+  Expr result = 1;
   for (unsigned i = base.nops(); i-- > 0; )
     if (!vect_base[i].is_a_number())
-      tot *= return_power(false, vect_base[i],
-			  vect_num_exp[i], vect_not_num_exp[i], input);
+      result *= return_power(false, vect_base[i],
+			     vect_num_exp[i], vect_not_num_exp[i], input);
     else
-      tot *= return_power(true, vect_base[i],
-			  vect_num_exp[i], vect_not_num_exp[i], input);
-  return tot;
+      result *= return_power(true, vect_base[i],
+			     vect_num_exp[i], vect_not_num_exp[i], input);
+  return result;
 }
 
 /*!
@@ -253,9 +257,10 @@ simplify_powers(const Expr& e, bool input) {
 
   // The base is a multiplication.
   if (base.is_a_mul())
-    return simpl_powers_base(base, num_exponent, not_num_exponent, input);
+    return simplify_powers_with_bases_mul(base, num_exponent, not_num_exponent,
+					  input);
   // The base is not a multiplication: is not necessary to call the function
-  // `simpl_powers_base' that uses vectors.
+  // `simplify_powers_with_bases_mul' that uses vectors.
   else
     if (base.is_a_number()) {
       Number num_exp = num_exponent.ex_to_number();
@@ -837,7 +842,8 @@ check_form_of_mul(const Expr& e, Number& a) {
   const Expr& first = e.op(0);
   const Expr& second = e.op(1);
   if ((first == Recurrence::n && second.is_a_number(a) && a.is_positive_integer())
-      || (second == Recurrence::n && first.is_a_number(a) && a.is_positive_integer()))
+      || (second == Recurrence::n && first.is_a_number(a)
+	  && a.is_positive_integer()))
     return true;
   else
     return false;
