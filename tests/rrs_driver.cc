@@ -146,10 +146,12 @@ error(const string& s) {
 
 static bool explodes;
 static bool expect_exactly_solved;
+static bool expect_upper_bound;
+static bool expect_lower_bound;
 static bool expect_provably_correct_result;
 static bool expect_provably_wrong_result;
 static bool expect_inconclusive_verification;
-static bool expect_not_exactly_solved;
+static bool expect_not_to_be_solved;
 static bool expect_diagnose_unsolvable;
 static bool expect_not_diagnose_unsolvable;
 
@@ -158,10 +160,12 @@ set_expectations(const string& s) {
   // No expectations by default.
   explodes
     = expect_exactly_solved
+    = expect_upper_bound
+    = expect_lower_bound
     = expect_provably_correct_result
     = expect_provably_wrong_result
     = expect_inconclusive_verification
-    = expect_not_exactly_solved
+    = expect_not_to_be_solved
     = expect_diagnose_unsolvable
     = expect_not_diagnose_unsolvable
     = false;
@@ -186,13 +190,19 @@ set_expectations(const string& s) {
     case 'd':
       expect_inconclusive_verification = true;
       break;
-    case 'n':
-      expect_not_exactly_solved = true;
+    case 'u':
+      expect_upper_bound = true;
       break;
-    case 'U':
+    case 'l':
+      expect_lower_bound = true;
+      break;
+    case 'n':
+      expect_not_to_be_solved = true;
+      break;
+    case 'K':
       expect_diagnose_unsolvable = true;
       break;
-    case 'u':
+    case 'k':
       expect_not_diagnose_unsolvable = true;
       break;
     case '*':
@@ -260,8 +270,10 @@ main(int argc, char *argv[]) try {
 
   process_options(argc, argv);
 
-  unsigned unexpected_exact_solutions = 0;
+  unsigned unexpected_solution_or_bounds_for_it = 0;
   unsigned unexpected_exact_failures = 0;
+  unsigned unexpected_lower_failures = 0;
+  unsigned unexpected_upper_failures = 0;
   unsigned unexpected_unsolvability_diagnoses = 0;
   unsigned unexpected_failures_to_diagnose_unsolvability = 0;
   unsigned unexpected_failures_to_verify = 0;
@@ -376,62 +388,85 @@ main(int argc, char *argv[]) try {
 
     Recurrence rec(rhs);
 
+    Expr lower;
+    Expr upper;
     Expr solution;
-
     switch (solve_wrapper(rec)) {
     case Recurrence::SUCCESS:
       if (regress_test) {
-	if (expect_exactly_solved
-	    && (expect_provably_correct_result
-		|| expect_provably_wrong_result
-		|| expect_inconclusive_verification)) {
-	  Recurrence::Verify_Status status = rec.verify_solution();
+	// FIXME: add the check about what kind of the solution the
+	// system has found.
+	if (expect_exactly_solved) {
 	  if (expect_provably_correct_result
-	      && status != Recurrence::PROVABLY_CORRECT) {
-	    if (verbose)
-	      cerr << "*** unexpected failure to verify solution: gave "
-		   << status << endl;
-	    ++unexpected_failures_to_verify;
-	  }
-	  if (expect_provably_wrong_result
-	      && status != Recurrence::PROVABLY_INCORRECT) {
-	    if (verbose)
-	      cerr << "*** unexpected failure to disprove solution: gave "
-		   << status << endl;
-	    ++unexpected_failures_to_disprove;
-	  }
-	  if (expect_inconclusive_verification
-	      && status != Recurrence::INCONCLUSIVE_VERIFICATION) {
-	    if (verbose)
-	      cerr << "*** unexpected conclusive verification: gave "
-		   << status << endl;
-	    ++unexpected_conclusive_verifications;
+	      || expect_provably_wrong_result
+	      || expect_inconclusive_verification) {
+	    Recurrence::Verify_Status status = rec.verify_solution();
+	    if (expect_provably_correct_result
+		&& status != Recurrence::PROVABLY_CORRECT) {
+	      if (verbose)
+		cerr << "*** unexpected failure to verify solution: gave "
+		     << status << endl;
+	      ++unexpected_failures_to_verify;
+	    }
+	    if (expect_provably_wrong_result
+		&& status != Recurrence::PROVABLY_INCORRECT) {
+	      if (verbose)
+		cerr << "*** unexpected failure to disprove solution: gave "
+		     << status << endl;
+	      ++unexpected_failures_to_disprove;
+	    }
+	    if (expect_inconclusive_verification
+		&& status != Recurrence::INCONCLUSIVE_VERIFICATION) {
+	      if (verbose)
+		cerr << "*** unexpected conclusive verification: gave "
+		     << status << endl;
+	      ++unexpected_conclusive_verifications;
+	    }
 	  }
 	}
-	if (expect_not_exactly_solved) {
+	if (expect_not_to_be_solved) {
 	  if (verbose)
-	    cerr << "*** unexpected exact solution" << endl;
-	  ++unexpected_exact_solutions;
+	    cerr << "*** unexpected solution or bounds for it" << endl;
+	  ++unexpected_solution_or_bounds_for_it;
 	}
       }
       if (interactive) {
-	cout << "*** SOLUTION ***"
+	if (rec.exact_solution(solution)) {
+	  cout << "*** EXACT SOLUTION ***"
+	       << endl
+	       << solution
+	       << endl
+	       << "**********************"
+	       << endl << endl;
+	  cout << "*** APPROXIMATED SOLUTION ***"
+	       << endl
+	       << rec.approximated_solution()
+	       << endl
+	       << "*****************************"
+	       << endl << endl;
+	}
+	else
+	  cout << "There is not an exact solution" << endl;
+	cout << "*** LOWER BOUND ***"
 	     << endl
-	     << rec.exact_solution()
+	     << rec.lower_bound_solution()
 	     << endl
-	     << "****************"
+	     << "*******************"
+	     << endl << endl;
+	cout << "*** UPPER BOUND ***"
+	     << endl
+	     << rec.upper_bound_solution()
+	     << endl
+	     << "*******************"
 	     << endl << endl;
 	rec.dump(cout);
-	cout << "*** APPROXIMATED SOLUTION ***"
-	     << endl
-	     << rec.approximated_solution()
-	     << endl
-	     << "****************"
-	     << endl << endl;
       }
       if (latex) {
 	cout << "\\medskip\\indent\n\\(\n x(n) = ";
-	rec.exact_solution().latex_print(cout);
+	rec.exact_solution(solution);
+	solution.latex_print(cout);
+	rec.lower_bound_solution().latex_print(cout);
+	rec.upper_bound_solution().latex_print(cout);
 	cout << "\n\\)\n" << endl;
       }
       break;
@@ -464,6 +499,18 @@ main(int argc, char *argv[]) try {
 	    cerr << "*** unexpected failure to find exact solution" << endl;
 	  ++unexpected_exact_failures;
 	}
+	if (expect_lower_bound) {
+	  if (verbose)
+	    cerr << "*** unexpected failure to find lower bound for "
+		 << "the solution" << endl;
+	  ++unexpected_lower_failures;
+	}
+	if (expect_upper_bound) {
+	  if (verbose)
+	    cerr << "*** unexpected failure to find upper bound for "
+		 << "the solution" << endl;
+	  ++unexpected_upper_failures;
+	}
       }
     }
   } // while (input_stream)
@@ -491,16 +538,28 @@ main(int argc, char *argv[]) try {
 	   << "unexpected conclusive verifications "
 	   << endl;
     }
-    if (unexpected_exact_solutions > 0) {
+    if (unexpected_solution_or_bounds_for_it > 0) {
       failed = true;
-      cerr << unexpected_exact_solutions
-	   << " unexpected exact solutions"
+      cerr << unexpected_solution_or_bounds_for_it
+	   << " unexpected solution or bounds for it"
 	   << endl;
     }
     if (unexpected_exact_failures > 0) {
       failed = true;
       cerr << unexpected_exact_failures
 	   << " unexpected failures to find exact solutions"
+	   << endl;
+    }
+    if (unexpected_lower_failures > 0) {
+      failed = true;
+      cerr << unexpected_lower_failures
+	   << " unexpected failures to find lower bound for solutions"
+	   << endl;
+    }
+    if (unexpected_upper_failures > 0) {
+      failed = true;
+      cerr << unexpected_upper_failures
+	   << " unexpected failures to find upper bound for solutions"
 	   << endl;
     }
     if (unexpected_unsolvability_diagnoses > 0) {

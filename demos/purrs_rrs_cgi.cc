@@ -259,7 +259,7 @@ main() try {
   try {
     switch (recurrence.solve()) {
     case Recurrence::SUCCESS:
-      solution = recurrence.exact_solution();
+      recurrence.exact_solution(solution);
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
       error("this recurrence is unsolvable");
