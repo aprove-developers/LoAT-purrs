@@ -24,6 +24,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include <config.h>
 
-#include "Infinite_Order_Info.defs.hh"
+#include "Weighted_Average_Info.defs.hh"
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;

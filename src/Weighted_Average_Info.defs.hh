@@ -23,10 +23,10 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#ifndef PURRS_Infinite_Order_Info_defs_hh
-#define PURRS_Infinite_Order_Info_defs_hh 1
+#ifndef PURRS_Weighted_Average_Info_defs_hh
+#define PURRS_Weighted_Average_Info_defs_hh 1
 
-#include "Infinite_Order_Info.types.hh"
+#include "Weighted_Average_Info.types.hh"
 #include "globals.hh"
 #include "Expr.defs.hh"
 #include "Recurrence.defs.hh"
@@ -102,6 +102,6 @@ private:
 
 } // namespace Parma_Recurrence_Relation_Solver
 
-#include "Infinite_Order_Info.inlines.hh"
+#include "Weighted_Average_Info.inlines.hh"
 
-#endif // !defined(PURRS_Infinite_Order_Info_defs_hh)
+#endif // !defined(PURRS_Weighted_Average_Info_defs_hh)

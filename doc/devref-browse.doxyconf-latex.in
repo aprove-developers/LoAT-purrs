@@ -441,6 +441,10 @@ INPUT                  = @srcdir@/definitions.dox \
                          @srcdir@/../src/Recurrence.types.hh \
                          @srcdir@/../src/Recurrence.inlines.hh \
                          @srcdir@/../src/Recurrence.cc \
+                         @srcdir@/../src/Weighted_Average_Info.defs.hh \
+                         @srcdir@/../src/Weighted_Average_Info.types.hh \
+                         @srcdir@/../src/Weighted_Average_Info.inlines.hh \
+                         @srcdir@/../src/Weighted_Average_Info.cc \
                          @srcdir@/../src/rr_classifier.cc \
                          @srcdir@/../src/simplify.cc \
                          @srcdir@/../src/simplify.hh \

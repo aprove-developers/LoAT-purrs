@@ -27,7 +27,7 @@ http://www.cs.unipr.it/purrs/ . */
 #define PURRS_Recurrence_inlines_hh
 
 #include "Non_Linear_Info.defs.hh"
-#include "Infinite_Order_Info.defs.hh"
+#include "Weighted_Average_Info.defs.hh"
 
 #include <iostream>
 #include <utility>

@@ -9,8 +9,8 @@ WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR
 PURPOSE. */
 
-#ifndef PURRS_Infinite_Order_Info_types_hh
-#define PURRS_Infinite_Order_Info_types_hh 1
+#ifndef PURRS_Weighted_Average_Info_types_hh
+#define PURRS_Weighted_Average_Info_types_hh 1
 
 namespace Parma_Recurrence_Relation_Solver {
 
@@ -18,4 +18,4 @@ class Weighted_Average_Info;
 
 }
 
-#endif // !defined(PURRS_Infinite_Order_Info_types_hh)
+#endif // !defined(PURRS_Weighted_Average_Info_types_hh)

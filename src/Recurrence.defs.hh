@@ -28,7 +28,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Recurrence.types.hh"
 #include "Cached_Expr.defs.hh"
 #include "Non_Linear_Info.types.hh"
-#include "Infinite_Order_Info.types.hh"
+#include "Weighted_Average_Info.types.hh"
 #include "Blackboard.defs.hh"
 #include "Finite_Order_Info.defs.hh"
 #include "Functional_Equation_Info.defs.hh"
