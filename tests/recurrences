@@ -170,6 +170,27 @@ x(n-1) / n + 2
 % Solution: x(n) = (x(1) - 2) / factorial(n) + 2 / factorial(n)
 %		* sum(k, 1, n, factorial(k))
 
+% 11. System
+%
+% a(n) = a(n-1) + b(n-1)
+% b(n) = e(n-1) + c(n-1)
+% e(n) = b(n-1) + c(n-1)
+% c(n) = a(n-1)
+
+% 12. System
+%
+% a(n) =    a(n-1) + b(n-1) + 2^n
+% b(n) =  5 a(n-1) + c(n-1)
+% c(n) = -5 a(n-1) + d(n-1) - 3^n
+% d(n) = -4 a(n-1) + e(n-1)
+% e(n) =  4 a(n-1)
+
+% 13. System
+%
+% b(n) = 2 b(n-1) + c(n-1) + d(n-1)
+% c(n) =   c(n-1) - d(n-1) + 4^(n-1)
+% d(n) = - c(n-1) + d(n-1) + 4^(n-1)
+
 % from Lueker 
 
 % Order two, homogeneous
