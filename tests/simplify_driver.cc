@@ -330,7 +330,7 @@ main(int argc, char *argv[]) try {
       get_expression(e_simpl_output, symbols);
       get_expression(e_simpl_factorials, symbols);
       get_expression(e_simpl_logarithms, symbols);
-      // get_expression(e_simpl_sums, symbols);
+      get_expression(e_simpl_sums, symbols);
     }
     else
       getline(line, s);
@@ -370,7 +370,7 @@ main(int argc, char *argv[]) try {
       check_and_notify("output", ex, e_simpl_output, sol_output);
       check_and_notify("factorials", ex, e_simpl_factorials, sol_factorials);
       check_and_notify("logarithms", ex, e_simpl_logarithms, sol_logarithms);
-      // check_and_notify("sums", ex, e_simpl_sums, sol_sums);
+      check_and_notify("sums", ex, e_simpl_sums, sol_sums);
     }    
     if (interactive) {
       cout << endl;

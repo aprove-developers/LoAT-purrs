@@ -1,10 +1,11 @@
 %
 % Some expressions that must be simplified 
 % 
-% Each expression is rewritten using three different functions:
+% Each expression is rewritten using four different functions:
 % - simplify_on_input_ex();
 % - simplify_on_output_ex();
-% - simplify_factorials_and_exponentials().
+% - simplify_factorials_and_exponentials();
+% - simplify_logarithm().
 % 
 % Each expression is marked with one or more characters
 % whose meaning is as follows:
@@ -16,6 +17,7 @@ x^d*x^a*x*x^n*c*x^b
 x^(1+b+a+d+n)*c
 x^d*x^a*x*x^n*c*x^b
 x^d*x^a*x*x^n*c*x^b
+x^d*x^a*x*x^n*c*x^b
 
 %%%%%%%%
 
@@ -24,6 +26,7 @@ x^a*x*x^(3*d)*(x^3)^n*c*x^b
 x^(1+b+a+3*d+3*n)*c
 x^a*x*x^(3*d)*x^(3*n)*c*x^b
 x^a*x*x^(3*d)*x^(3*n)*c*x^b
+x^(3*d)*x^a*x^b*c*x^(3*n)*x
 
 %%%%%%%%
 
@@ -32,12 +35,15 @@ a^d*3^a*a^b*a*3^b*d^5*c
 3^a*a^(1+d)*d^5*c*(3*a)^b
 a^d*3^a*a^b*a*3^b*d^5*c
 a^d*3^a*a^b*a*3^b*d^5*c
+a^d*3^a*a^b*a*3^b*d^5*c
+
 
 %%%%%%%%
 
 y	4^(1/2*a)
 2^a
 2^a
+4^(1/2*a)
 4^(1/2*a)
 4^(1/2*a)
 
@@ -48,12 +54,14 @@ y	(4*b)^(1/2*a)
 2^a*b^(1/2*a)
 (4*b)^(1/2*a)
 (4*b)^(1/2*a)
+(4*b)^(1/2*a)
 
 %%%%%%%%
 
 y	sqrt(18)^a
 18^(1/2*a)
 (3*sqrt(2))^a
+sqrt(18)^a
 sqrt(18)^a
 sqrt(18)^a
 
@@ -64,6 +72,7 @@ a^b*2^b
 (2*a)^b
 (4*a^2)^(1/2*b)
 (4*a^2)^(1/2*b)
+(4*a^2)^(1/2*b)
 
 %%%%%%%%
 
@@ -72,11 +81,13 @@ y	(3*2^n)^(a*b)
 2^(b*a*n)*3^(b*a)
 (3*2^n)^(b*a)
 (3*2^n)^(b*a)
+(3*2^n)^(b*a)
 
 %%%%%%%%
 
 y	(3*c)^(a*b)
 c^(b*a)*3^(b*a)
+(3*c)^(b*a)
 (3*c)^(b*a)
 (3*c)^(b*a)
 (3*c)^(b*a)
@@ -88,11 +99,13 @@ y	3^(2*b*n)
 9^(b*n)
 3^(2*b*n)
 3^(2*b*n)
+3^(2*b*n)
 
 %%%%%%%%
 
 y	a^(2*n)
 (a^2)^n
+a^(2*n)
 a^(2*n)
 a^(2*n)
 a^(2*n)
@@ -104,12 +117,14 @@ sqrt(3)^n
 3^(1/2*n)
 sqrt(3^n)
 sqrt(3^n)
+sqrt(3^n)
 
 %%%%%%%%
 
 y	(((2^a)^(3*b))^(2*n))^c
 (64^(b*a*c))^n
 64^(b*a*c*n)
+(((2^a)^(3*b))^(2*n))^c
 (((2^a)^(3*b))^(2*n))^c
 (((2^a)^(3*b))^(2*n))^c
 
@@ -120,6 +135,7 @@ y	(((2^a)^(3+b))^(2*n))^c
 4^(b*a*c*n)*64^(a*c*n)
 (((2^a)^b*(2^a)^3)^(2*n))^c
 (((2^a)^b*(2^a)^3)^(2*n))^c
+(((2^a)^b*(2^a)^3)^(2*n))^c
 
 %%%%%%%%
 
@@ -127,6 +143,7 @@ y	3^(a*(1/2+n))
 3^(1/2*a)*(3^a)^n
 3^(a*n+1/2*a)
 3^(a*(1/2+n))
+3^(1/2*a)*3^(a*n)
 3^(1/2*a)*3^(a*n)
 
 %%%%%%%%
@@ -136,11 +153,13 @@ y	(2*a^b)^(3*n*b)
 a^(3*b^2*n)*8^(b*n)
 (2*a^b)^(3*b*n)
 (2*a^b)^(3*b*n)
+(2*a^b)^(3*b*n)
 
 %%%%%%%%
 
 y	3*b^(2*a*n)
 3*(b^(2*a))^n
+3*b^(2*a*n)
 3*b^(2*a*n)
 3*b^(2*a*n)
 3*b^(2*a*n)
@@ -153,6 +172,7 @@ y	b^n*b*(1-b^(-1))^(-1)
 (-1+b)^(-1)*b^(2+n)
 b*(1-b^(-1))^(-1)*b^n
 b*(1-b^(-1))^(-1)*b^n
+b*(1-b^(-1))^(-1)*b^n
 
 %%%%%%%%
 
@@ -161,12 +181,14 @@ n	-1/5-6/125*(-4/25+1/75*sqrt(75)*sqrt(3))^(-1/2)*(-4/25-1/75*sqrt(75)*sqrt(3))^
 I
 1/125*(-4/25+1/75*sqrt(75)*sqrt(3))^(-1/2)*(-6+125*(-4/25+1/75*sqrt(75)*sqrt(3))*sqrt(-4/25-1/75*sqrt(75)*sqrt(3))-25*sqrt(-4/25+1/75*sqrt(75)*sqrt(3))*sqrt(-4/25-1/75*sqrt(75)*sqrt(3))+sqrt(-4/25+1/75*sqrt(75)*sqrt(3))*(-20-5/3*sqrt(75)*sqrt(3)))*(-4/25-1/75*sqrt(75)*sqrt(3))^(-1/2)
 -1/5-6/125*(-4/25+1/75*sqrt(75)*sqrt(3))^(-1/2)*(-4/25-1/75*sqrt(75)*sqrt(3))^(-1/2)+sqrt(-4/25-1/75*sqrt(75)*sqrt(3))+sqrt(-4/25+1/75*sqrt(75)*sqrt(3))
+-1/5-6/125*(-4/25+1/75*sqrt(75)*sqrt(3))^(-1/2)*(-4/25-1/75*sqrt(75)*sqrt(3))^(-1/2)+sqrt(-4/25-1/75*sqrt(75)*sqrt(3))+sqrt(-4/25+1/75*sqrt(75)*sqrt(3))
 
 %%%%%%%%
 
 y	-1+1/6*sqrt(sqrt(3)*sqrt(6))*sqrt(6)+1/6*sqrt(-sqrt(3)*sqrt(6))*sqrt(6)
 -1+(1/6+1/6*I)*3^(1/4)*6^(3/4)
 -1+1/2*sqrt(-sqrt(2))*sqrt(2)+1/2*8^(1/4)
+-1+1/6*sqrt(sqrt(3)*sqrt(6))*sqrt(6)+1/6*sqrt(-sqrt(3)*sqrt(6))*sqrt(6)
 -1+1/6*sqrt(sqrt(3)*sqrt(6))*sqrt(6)+1/6*sqrt(-sqrt(3)*sqrt(6))*sqrt(6)
 -1+1/6*sqrt(sqrt(3)*sqrt(6))*sqrt(6)+1/6*sqrt(-sqrt(3)*sqrt(6))*sqrt(6)
 
@@ -177,12 +199,14 @@ y	-1+1/12*sqrt(-sqrt(3)*sqrt(12))*sqrt(12)+1/12*sqrt(sqrt(3)*sqrt(12))*sqrt(12)
 -1+(1/2+1/2*I)*sqrt(2)
 -1+1/12*sqrt(-sqrt(3)*sqrt(12))*sqrt(12)+1/12*sqrt(sqrt(3)*sqrt(12))*sqrt(12)
 -1+1/12*sqrt(-sqrt(3)*sqrt(12))*sqrt(12)+1/12*sqrt(sqrt(3)*sqrt(12))*sqrt(12)
+-1+1/12*sqrt(-sqrt(3)*sqrt(12))*sqrt(12)+1/12*sqrt(sqrt(3)*sqrt(12))*sqrt(12)
 
 %%%%%%%%
 
 y	sqrt(-(1/3*I)*sqrt(3)*27^(1/6))+sqrt((1/3*I)*sqrt(3)*27^(1/6))
 3^(1/4)*27^(1/12)*sqrt(1/3*I)+3^(1/4)*27^(1/12)*sqrt(-1/3*I)
 sqrt(-I)+sqrt(I)
+sqrt(-(1/3*I)*sqrt(3)*27^(1/6))+sqrt((1/3*I)*sqrt(3)*27^(1/6))
 sqrt(-(1/3*I)*sqrt(3)*27^(1/6))+sqrt((1/3*I)*sqrt(3)*27^(1/6))
 sqrt(-(1/3*I)*sqrt(3)*27^(1/6))+sqrt((1/3*I)*sqrt(3)*27^(1/6))
 
@@ -193,12 +217,14 @@ y	3^sqrt(8)
 9^sqrt(2)
 3^sqrt(8)
 3^sqrt(8)
+3^sqrt(8)
 
 %%%%%%%%
 
 y	3^(2*2^n)
 9^(2^n)
 9^(2^n)
+3^(2*2^n)
 3^(2*2^n)
 3^(2*2^n)
 
@@ -209,12 +235,14 @@ y	((-a)^(1/2*2^n))^2
 (-a)^(2^n)
 ((-a)^(1/2*2^n))^2
 ((-a)^(1/2*2^n))^2
+((-a)^(1/2*2^n))^2
 
 %%%%%%%%
 
 y	3*3^sqrt(8)
 3*3^sqrt(8)
 3*9^sqrt(2)
+3*3^sqrt(8)
 3*3^sqrt(8)
 3*3^sqrt(8)
 
@@ -225,12 +253,14 @@ y	3^4/3^(sqrt(2)*sqrt(8))
 1
 81*(3^(sqrt(2)*sqrt(8)))^(-1)
 81*(3^(sqrt(2)*sqrt(8)))^(-1)
+81*(3^(sqrt(2)*sqrt(8)))^(-1)
 
 %%%%%%%%
 
 y	3^(4*x-x*sqrt(2)*sqrt(8))
 (1/3)^(x*sqrt(2)*sqrt(8))*81^x
 1
+3^(4*x)*3^(-x*sqrt(2)*sqrt(8))
 3^(4*x)*3^(-x*sqrt(2)*sqrt(8))
 3^(4*x)*3^(-x*sqrt(2)*sqrt(8))
 
@@ -241,12 +271,14 @@ y	3^(cos(2^(3*x)))
 3^cos(8^x)
 3^cos(2^(3*x))
 3^cos(2^(3*x))
+3^cos(2^(3*x))
 
 %%%%%%%%
 
 y	3^(cos(2^(3*x)))*6+5
 5+6*3^cos(2^(3*x))
 5+6*3^cos(8^x)
+5+6*3^cos(2^(3*x))
 5+6*3^cos(2^(3*x))
 5+6*3^cos(2^(3*x))
 
@@ -257,12 +289,14 @@ cos(2^(3*x))^3
 cos(8^x)^3
 cos(2^(3*x))^3
 cos(2^(3*x))^3
+cos(2^(3*x))^3
 
 %%%%%%%%
 
 y	cos(2^(3*x))^3*a+c
 c+cos(2^(3*x))^3*a
 cos(8^x)^3*a+c
+c+cos(2^(3*x))^3*a
 c+cos(2^(3*x))^3*a
 c+cos(2^(3*x))^3*a
 
@@ -273,6 +307,7 @@ y	sin(2^x*2^a)*4
 4*sin(2^(x+a))
 4*sin(2^a*2^x)
 4*sin(2^a*2^x)
+4*sin(2^a*2^x)
 
 %%%%%%%%
 
@@ -280,6 +315,7 @@ y	exp(x)*exp(-x)
 exp(-x)*exp(x)
 1
 exp(-x)*exp(x)
+exp(x)*exp(-x)
 exp(x)*exp(-x)
 
 %%%%%%%%
@@ -289,12 +325,14 @@ y	5+a*exp(x)*exp(-x)
 5+a
 5+exp(-x)*exp(x)*a
 5+a*exp(x)*exp(-x)
+5+a*exp(x)*exp(-x)
 
 %%%%%%%%
 
 y	exp(x)*exp(-x)*6*exp(2)*exp(5)+c
 6*exp(-x)*exp(2)*exp(5)*exp(x)+c
 6*exp(7)+c
+6*exp(-x)*exp(2)*exp(5)*exp(x)+c
 6*exp(-x)*exp(2)*exp(5)*exp(x)+c
 6*exp(-x)*exp(2)*exp(5)*exp(x)+c
 
@@ -305,12 +343,14 @@ y	exp(2^(3*x))*exp(x^a*b^a)*9+21
 21+9*exp((x*b)^a+8^x)
 21+9*exp(2^(3*x))*exp(x^a*b^a)
 21+9*exp(2^(3*x))*exp(x^a*b^a)
+21+9*exp(2^(3*x))*exp(x^a*b^a)
 
 %%%%%%%%
 
 y	exp(x-sqrt(8))*exp(2*sqrt(2))
 exp(x-sqrt(8))*exp(2*sqrt(2))
 exp(x)
+exp(x-sqrt(8))*exp(2*sqrt(2))
 exp(x-sqrt(8))*exp(2*sqrt(2))
 exp(x-sqrt(8))*exp(2*sqrt(2))
 
@@ -321,12 +361,14 @@ y	3*x^(1/2)*x^a*exp(x)*exp(-x)+6
 6+3*x^(1/2+a)
 6+3*x^a*sqrt(x)*exp(-x)*exp(x)
 6+3*x^a*sqrt(x)*exp(-x)*exp(x)
+6+3*x^a*sqrt(x)*exp(-x)*exp(x)
 
 %%%%%%%%
 
 y	2^(1/3)*3^(1/2)
 2^(1/3)*sqrt(3)
 108^(1/6)
+2^(1/3)*sqrt(3)
 2^(1/3)*sqrt(3)
 2^(1/3)*sqrt(3)
 
@@ -337,6 +379,7 @@ y	-4+4*(3/2)^n*(2/3)^n
 0
 -4+4*(3/2)^n*(2/3)^n
 -4+4*(3/2)^n*(2/3)^n
+-4+4*(3/2)^n*(2/3)^n
 
 %%%%%%%%
 
@@ -344,6 +387,7 @@ y	(n+3)!
 factorial(3+n)
 factorial(3+n)
 factorial(n)*(3+n)*(1+n)*(2+n)
+factorial(3+n)
 factorial(3+n)
 
 %%%%%%%%
@@ -353,6 +397,7 @@ y	5*(n+3)!
 5*factorial(3+n)
 5*factorial(n)*(3+n)*(1+n)*(2+n)
 5*factorial(3+n)
+5*factorial(3+n)
 
 %%%%%%%%
 
@@ -360,6 +405,7 @@ y	a*(n-3)!+4
 4+a*factorial(-3+n)
 4+a*factorial(-3+n)
 4+(-1+n)^(-1)*(-2+n)^(-1)*factorial(n)*a*n^(-1)
+4+a*factorial(-3+n)
 4+a*factorial(-3+n)
 
 %%%%%%%%
@@ -369,6 +415,7 @@ a^n*a^2+factorial(1+n)*a
 a^(2+n)+factorial(1+n)*a
 a^n*a^2+factorial(n)*a*(1+n)
 a^n*a^2+factorial(1+n)*a
+a^n*a^2+factorial(1+n)*a
 
 %%%%%%%%
 
@@ -376,6 +423,7 @@ y	2^(3*n+4)+a*(n+1)!
 16*8^n+factorial(1+n)*a
 16*8^n+factorial(1+n)*a
 16*2^(3*n)+factorial(n)*a*(1+n)
+factorial(1+n)*a+16*2^(3*n)
 factorial(1+n)*a+16*2^(3*n)
 
 %%%%%%%%
@@ -385,13 +433,15 @@ y	(3*n)! / (27^n * n! * (n+1)! * (n+2)!)
 (1/27)^n*factorial(1+n)^(-1)*factorial(2+n)^(-1)*factorial(n)^(-1)*factorial(3*n)
 (27^n)^(-1)*factorial(n)^(-3)*(1+n)^(-2)*(2+n)^(-1)*factorial(3*n)
 (27^n)^(-1)*factorial(1+n)^(-1)*factorial(2+n)^(-1)*factorial(n)^(-1)*factorial(3*n)
+(27^n)^(-1)*factorial(1+n)^(-1)*factorial(2+n)^(-1)*factorial(n)^(-1)*factorial(3*n)
 
 %%%%%%%%
 
 y	(2*n+3)!
 factorial(3+2*n)
- factorial(3+2*n)
+factorial(3+2*n)
 (3+2*n)*(2+2*n)*(1+2*n)*factorial(2*n)
+factorial(3+2*n)
 factorial(3+2*n)
 
 %%%%%%%%
@@ -401,6 +451,7 @@ y	a*4*(2*n+3)!+b
 4*factorial(3+2*n)*a+b
 4*a*(3+2*n)*(2+2*n)*(1+2*n)*factorial(2*n)+b
 4*factorial(3+2*n)*a+b
+4*factorial(3+2*n)*a+b
 
 %%%%%%%%
 
@@ -408,6 +459,7 @@ y	4*(2*n-3)!+a
 a+4*factorial(-3+2*n)
 a+4*factorial(-3+2*n)
 2*(-2+2*n)^(-1)*(-1+2*n)^(-1)*n^(-1)*factorial(2*n)+a
+a+4*factorial(-3+2*n)
 a+4*factorial(-3+2*n)
  
 %%%%%%%%
@@ -417,6 +469,7 @@ a+12*factorial(-3+2*n)
 a+12*factorial(-3+2*n)
 6*(-2+2*n)^(-1)*(-1+2*n)^(-1)*n^(-1)*factorial(2*n)+a
 a+12*factorial(-3+2*n)
+a+12*factorial(-3+2*n)
 
 %%%%%%%%
 
@@ -424,6 +477,7 @@ y	(a+b+1)!/(a+b)!
 factorial(b+a)^(-1)*factorial(1+b+a)
 factorial(b+a)^(-1)*factorial(1+b+a)
 1+b+a
+factorial(b+a)^(-1)*factorial(1+b+a)
 factorial(b+a)^(-1)*factorial(1+b+a)
 
 %%%%%%%%
@@ -433,12 +487,14 @@ factorial(b+a)*factorial(1+b+a)^(-1)
 factorial(b+a)*factorial(1+b+a)^(-1)
 (1+b+a)^(-1)
 factorial(b+a)*factorial(1+b+a)^(-1)
+factorial(b+a)*factorial(1+b+a)^(-1)
 
 %%%%%%%%
 
 y	a^n*(2*a)^(-n)
 (1/2)^n
 (1/2)^n
+a^n*(2*a)^(-n)
 a^n*(2*a)^(-n)
 a^n*(2*a)^(-n)
 
@@ -449,6 +505,7 @@ y	(2*a+b+3)!*c+9
 9+c*factorial(3+b+2*a)
 9+(3+b+2*a)*(1+b+2*a)*(2+b+2*a)*c*factorial(b+2*a)
 9+c*factorial(3+b+2*a)
+9+c*factorial(3+b+2*a)
 
 %%%%%%%%
 
@@ -456,6 +513,7 @@ y	binom(n,k)
 binom(n,k)
 binom(n,k)
 factorial(-k+n)^(-1)*factorial(k)^(-1)*factorial(n)
+binom(n,k)
 binom(n,k)
  
 %%%%%%%%
@@ -465,6 +523,7 @@ y	3*(n-k-1)!+5
 5+3*factorial(-1-k+n)
 5+3*(-k+n)^(-1)*factorial(-k+n)
 5+3*factorial(-1-k+n)
+5+3*factorial(-1-k+n)
 
 %%%%%%%%
 
@@ -472,6 +531,7 @@ y	binom(n+1,k)
 binom(1+n,k)
 binom(1+n,k)
 factorial(k)^(-1)*(1-k+n)^(-1)*factorial(n)*factorial(-k+n)^(-1)*(1+n)
+binom(1+n,k)
 binom(1+n,k)
 
 %%%%%%%%
@@ -481,6 +541,7 @@ binom(n,1+k)
 binom(n,1+k)
 factorial(k)^(-1)*(-k+n)*(1+k)^(-1)*factorial(n)*factorial(-k+n)^(-1)
 binom(n,1+k)	
+binom(n,1+k)	
 
 %%%%%%%%
  
@@ -489,12 +550,14 @@ binom(n,k)^(-1)*binom(1+n,k)
 binom(n,k)^(-1)*binom(1+n,k)
 (1-k+n)^(-1)*(1+n)
 binom(n,k)^(-1)*binom(1+n,k)
+binom(n,k)^(-1)*binom(1+n,k)
 
 %%%%%%%%
 
 y	a^(-n)*(2*a)^(n)*c
 2^n*c
 2^n*c
+a^(-n)*(2*a)^n*c
 a^(-n)*(2*a)^n*c
 a^(-n)*(2*a)^n*c
 
@@ -505,12 +568,14 @@ y	(4^n-2^(n+1)+1)/7^n
 -2*(2/7)^n+(4/7)^n+(1/7)^n
 (7^n)^(-1)*(1-2*2^n+4^n)
 4^n*(7^n)^(-1)-2*2^n*(7^n)^(-1)+(7^n)^(-1)
+4^n*(7^n)^(-1)-2*2^n*(7^n)^(-1)+(7^n)^(-1)
 
 %%%%%%%%
 
 y	1/2*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n
 1/2*2^n
 1/2*2^n
+1/2*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n
 1/2*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n
 1/2*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n
 
@@ -521,12 +586,14 @@ y	1/2*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n+1/2*(1-sqrt(3))^(-n)*(2-2*sqrt(3))^n
 2^n
 1/2*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n+1/2*(1-sqrt(3))^(-n)*(2-2*sqrt(3))^n
 1/2*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n+1/2*(1-sqrt(3))^(-n)*(2-2*sqrt(3))^n
+1/2*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n+1/2*(1-sqrt(3))^(-n)*(2-2*sqrt(3))^n
 
 %%%%%%%%
 
 y	-2^n+1/3*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n*sqrt(3)-1/3*(1-sqrt(3))^(-n)*(2-2*sqrt(3))^n*sqrt(3)+1/2*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n+1/2*(1-sqrt(3))^(-n)*(2-2*sqrt(3))^n
 0
 0
+-2^n+1/3*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n*sqrt(3)-1/3*(1-sqrt(3))^(-n)*(2-2*sqrt(3))^n*sqrt(3)+1/2*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n+1/2*(1-sqrt(3))^(-n)*(2-2*sqrt(3))^n
 -2^n+1/3*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n*sqrt(3)-1/3*(1-sqrt(3))^(-n)*(2-2*sqrt(3))^n*sqrt(3)+1/2*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n+1/2*(1-sqrt(3))^(-n)*(2-2*sqrt(3))^n
 -2^n+1/3*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n*sqrt(3)-1/3*(1-sqrt(3))^(-n)*(2-2*sqrt(3))^n*sqrt(3)+1/2*(1+sqrt(3))^(-n)*(2+2*sqrt(3))^n+1/2*(1-sqrt(3))^(-n)*(2-2*sqrt(3))^n
 
@@ -537,6 +604,7 @@ log(36^a)
 log(36^a)
 log(36^a)
 2*log(6)*a
+log(36^a)
 
 %%%%%%%%
 
@@ -545,6 +613,7 @@ log((3/5)^a)
 log((3/5)^a)
 log((3/5)^a)
 log(3)*a-log(5)*a
+log((3/5)^a)
 
 %%%%%%%%
 
@@ -553,6 +622,7 @@ log((1/5)^a)
 log((1/5)^a)
 log((5^a)^(-1))
 -log(5)*a
+log((5^a)^(-1))
 
 %%%%%%%%
 
@@ -561,6 +631,7 @@ y	a*log(3/5)^(1/2)+4
 4+sqrt(log(3/5))*a
 4+sqrt(log(3/5))*a
 4+a*sqrt(-log(5)+log(3))
+4+sqrt(log(3/5))*a
 
 %%%%%%%%
 
@@ -569,6 +640,7 @@ y	2^(log(2)^(-1)*log(n))
 2^(log(2)^(-1)*log(n))
 2^(log(2)^(-1)*log(n))
 n
+2^(log(2)^(-1)*log(n))
 
 %%%%%%%%
 
@@ -577,6 +649,7 @@ a*2^(log(2)^(-1)*log(n))
 a*2^(log(2)^(-1)*log(n))
 a*2^(log(2)^(-1)*log(n))
 a*n
+a*2^(log(2)^(-1)*log(n))
 
 %%%%%%%%
 
@@ -585,6 +658,7 @@ y	4*2^(log(2)^(-1)*log(n))
 4*2^(log(2)^(-1)*log(n))
 4*2^(log(2)^(-1)*log(n))
 4*n
+4*2^(log(2)^(-1)*log(n))
 
 %%%%%%%%
 
@@ -593,6 +667,7 @@ log(2)*2^(log(2)^(-1)*log(n))
 log(2)*2^(log(2)^(-1)*log(n))
 log(2)*2^(log(2)^(-1)*log(n))
 log(2)*n
+log(2)*2^(log(2)^(-1)*log(n))
 
 %%%%%%%%
 
@@ -601,6 +676,7 @@ y	8^(log(2)^(-1)*log(n))
 8^(log(2)^(-1)*log(n))
 8^(log(2)^(-1)*log(n))
 n^3
+8^(log(2)^(-1)*log(n))
 
 %%%%%%%%
 
@@ -609,6 +685,7 @@ y	8^(log(2)^(-1)*log(3))
 8^(log(2)^(-1)*log(3))
 8^(log(2)^(-1)*log(3))
 27
+8^(log(2)^(-1)*log(3))
 
 %%%%%%%%
 
@@ -617,6 +694,7 @@ y	2^(log(2)^(-1)*log(3))
 2^(log(2)^(-1)*log(3))
 2^(log(2)^(-1)*log(3))
 3
+2^(log(2)^(-1)*log(3))
 
 %%%%%%%%
 
@@ -625,6 +703,7 @@ y	(1/2)^(log(2)^(-1)*log(3))
 (1/2)^(log(2)^(-1)*log(3))
 (1/2)^(log(2)^(-1)*log(3))
 1/3
+(1/2)^(log(2)^(-1)*log(3))
 
 %%%%%%%%
 
@@ -633,6 +712,7 @@ y	5*log(8)*8^(log(2)^(-1)*log(n))
 5*log(8)*8^(log(2)^(-1)*log(n))
 5*log(8)*8^(log(2)^(-1)*log(n))
 15*log(2)*n^3
+5*log(8)*8^(log(2)^(-1)*log(n))
 
 %%%%%%%%
 
@@ -641,6 +721,7 @@ log(2^n)
 log(2^n)
 log(2^n)
 log(2)*n
+log(2^n)
 
 %%%%%%%%
 
@@ -649,6 +730,7 @@ y	5*a*log(2^n)
 5*log(2^n)*a
 5*log(2^n)*a
 5*log(2)*a*n
+5*log(2^n)*a
 
 %%%%%%%%
 
@@ -657,6 +739,7 @@ y	7*log(4^n)
 7*log(4^n)
 7*log(4^n)
 14*log(2)*n
+7*log(4^n)
 
 %%%%%%%%
 
@@ -665,6 +748,7 @@ log(n^2)
 log(n^2)
 log(n^2)
 2*log(n)
+log(n^2)
 
 %%%%%%%%
 y	log(36)
@@ -672,6 +756,7 @@ log(36)
 log(36)
 log(36)
 2*log(6)
+log(36)
 
 %%%%%%%%
 
@@ -680,6 +765,7 @@ log(3/2)^(-1)*log(2/3)
 log(3/2)^(-1)*log(2/3)
 log(3/2)^(-1)*log(2/3)
 -1
+log(3/2)^(-1)*log(2/3)
 
 %%%%%%%%
 
@@ -688,6 +774,7 @@ y	log(2/3)/log(3/2)*a+4
 4+log(3/2)^(-1)*log(2/3)*a
 4+log(3/2)^(-1)*log(2/3)*a
 4-a
+4+log(3/2)^(-1)*log(2/3)*a
 
 %%%%%%%%
 
@@ -696,6 +783,7 @@ a*log(36)+4
 a*log(36)+4
 a*log(36)+4
 4+2*log(6)*a
+a*log(36)+4
 
 %%%%%%%%
 
@@ -704,6 +792,7 @@ a*log(216^a)+4
 a*log(216^a)+4
 a*log(216^a)+4
 4+3*log(6)*a^2
+a*log(216^a)+4
 
 %%%%%%%%
 
@@ -712,6 +801,7 @@ y	log(2/3)/log(3/2)*4*a*log(3/5)
 4*log(3/5)*log(3/2)^(-1)*log(2/3)*a
 4*log(3/5)*log(3/2)^(-1)*log(2/3)*a
 -4*log(3)*a+4*log(5)*a
+4*log(3/5)*log(3/2)^(-1)*log(2/3)*a
 
 %%%%%%%%
 
@@ -720,6 +810,7 @@ y	log(2/3)/log(3/2)*4*a*1/log(7/12)
 4*log(7/12)^(-1)*log(3/2)^(-1)*log(2/3)*a
 4*log(7/12)^(-1)*log(3/2)^(-1)*log(2/3)*a
 -4*a*(-log(12)+log(7))^(-1)
+4*log(7/12)^(-1)*log(3/2)^(-1)*log(2/3)*a
 
 %%%%%%%%
 
@@ -728,6 +819,7 @@ y	log(2/3)/log(3/2)*4*a*log(3/5)/log(7/12)
 4*log(7/12)^(-1)*log(3/5)*log(3/2)^(-1)*log(2/3)*a
 4*log(7/12)^(-1)*log(3/5)*log(3/2)^(-1)*log(2/3)*a
 4*log(5)*a*(-log(12)+log(7))^(-1)-4*log(3)*a*(-log(12)+log(7))^(-1)
+4*log(7/12)^(-1)*log(3/5)*log(3/2)^(-1)*log(2/3)*a
 
 %%%%%%%%
 
@@ -736,6 +828,7 @@ log(exp(1)^4)
 log(exp(1)^4)
 log(exp(1)^4)
 4
+log(exp(1)^4)
 
 %%%%%%%%
 
@@ -744,6 +837,7 @@ y	2^(2^n*log(2)^(-1)*log(3))
 2^(2^n*log(2)^(-1)*log(3))
 2^(2^n*log(2)^(-1)*log(3))
 3^(2^n)
+2^(2^n*log(2)^(-1)*log(3))
 
 %%%%%%%%
 
@@ -752,6 +846,7 @@ y	2^(1/4*log(2)^(-1)*log(3)*sqrt(2))
 2^(1/4*log(2)^(-1)*log(3)*sqrt(2))
 2^(1/4*log(2)^(-1)*log(3)*sqrt(2))
 3^(1/4*sqrt(2))
+2^(1/4*log(2)^(-1)*log(3)*sqrt(2))
 
 %%%%%%%%
 
@@ -760,6 +855,7 @@ y	(1/2)^(1/4*log(2)^(-1)*log(3)*sqrt(2))
 (1/2)^(1/4*log(2)^(-1)*log(3)*sqrt(2))
 (1/2)^(1/4*log(2)^(-1)*log(3)*sqrt(2))
 3^(-1/4*sqrt(2))
+(1/2)^(1/4*log(2)^(-1)*log(3)*sqrt(2))
 
 %%%%%%%%
 
@@ -768,6 +864,7 @@ y	5*log(1/n)
 5*log(n^(-1))
 5*log(n^(-1))
 -5*log(n)
+5*log(n^(-1))
 
 %%%%%%%%
 
@@ -776,6 +873,7 @@ y	3*a*log(2/5)
 3*log(2/5)*a
 3*log(2/5)*a
 3*a*log(2)-3*a*log(5)
+3*log(2/5)*a
 
 %%%%%%%%
 
@@ -784,6 +882,7 @@ log(1/5*n)
 log(1/5*n)
 log(1/5*n)
 log(n)-log(5)
+log(1/5*n)
 
 %%%%%%%%
 
@@ -792,6 +891,7 @@ y	3*a*log(n/5)
 3*log(1/5*n)*a
 3*log(1/5*n)*a
 3*a*log(n)-3*a*log(5)
+3*log(1/5*n)*a
 
 %%%%%%%%
 
@@ -800,6 +900,7 @@ log(b^(-1)*a)
 log(b^(-1)*a)
 log(b^(-1)*a)
 -log(b)+log(a)
+log(b^(-1)*a)
 
 %%%%%%%%
 
@@ -808,6 +909,7 @@ log(1/3*n)
 log(1/3*n)
 log(1/3*n)
 log(n)-log(3)
+log(1/3*n)
 
 %%%%%%%%
 
@@ -816,6 +918,7 @@ y	4+c*log(3/n)
 4+log(3*n^(-1))*c
 4+log(3*n^(-1))*c
 4+c*log(3)-c*log(n)
+4+log(3*n^(-1))*c
 
 %%%%%%%%
 
@@ -824,6 +927,7 @@ y	100^(log(2)^(-1)*log(n))
 100^(log(2)^(-1)*log(n))
 100^(log(2)^(-1)*log(n))
 n^(2*log(2)^(-1)*log(10))
+100^(log(2)^(-1)*log(n))
 
 %%%%%%%%
 
@@ -832,6 +936,7 @@ y	100^(log(10)^(-1)*log(n))
 100^(log(10)^(-1)*log(n))
 100^(log(10)^(-1)*log(n))
 n^2
+100^(log(10)^(-1)*log(n))
 
 %%%%%%%%
 
@@ -840,6 +945,7 @@ y	10^(log(10)^(-1)*log(n))
 10^(log(10)^(-1)*log(n))
 10^(log(10)^(-1)*log(n))
 n
+10^(log(10)^(-1)*log(n))
 
 %%%%%%%%
 
@@ -848,6 +954,7 @@ y	100^(log(1000)^(-1)*log(n))
 100^(log(1000)^(-1)*log(n))
 100^(log(1000)^(-1)*log(n))
 n^(2/3)
+100^(log(1000)^(-1)*log(n))
 
 %%%%%%%%
 
@@ -856,6 +963,7 @@ y	100^(log(10000)^(-1)*log(n))
 100^(log(10000)^(-1)*log(n))
 100^(log(10000)^(-1)*log(n))
 sqrt(n)
+100^(log(10000)^(-1)*log(n))
 
 %%%%%%%%
 
@@ -864,6 +972,7 @@ y	100^(log(10)^(-1)*log(a))
 100^(log(10)^(-1)*log(a))
 100^(log(10)^(-1)*log(a))
 a^2
+100^(log(10)^(-1)*log(a))
 
 %%%%%%%%
 
@@ -872,6 +981,7 @@ y	10^(log(2)/log(100))
 10^(log(2)*log(100)^(-1))
 10^(log(2)*log(100)^(-1))
 sqrt(2)
+10^(log(2)*log(100)^(-1))
 
 %%%%%%%%
 
@@ -880,10 +990,12 @@ y	100^(log(2)/log(10))
 100^(log(2)*log(10)^(-1))
 100^(log(2)*log(10)^(-1))
 4
+100^(log(2)*log(10)^(-1))
 
 %%%%%%%%
 
 y	100^(log(2)/log(10)*log(3))
+100^(log(2)*log(10)^(-1)*log(3))
 100^(log(2)*log(10)^(-1)*log(3))
 100^(log(2)*log(10)^(-1)*log(3))
 100^(log(2)*log(10)^(-1)*log(3))
@@ -896,6 +1008,7 @@ a*(1/1000)^(log(2)*log(10)^(-1)*b)
 a*(1/1000)^(log(2)*log(10)^(-1)*b)
 a*(1/1000)^(log(2)*log(10)^(-1)*b)
 2^(-3*b)*a
+a*(1/1000)^(log(2)*log(10)^(-1)*b)
 
 %%%%%%%%
 
@@ -904,6 +1017,7 @@ y	2^(log(3)^(-1)*log(1/3*n))
 2^(log(3)^(-1)*log(1/3*n))
 2^(log(3)^(-1)*log(1/3*n))
 (1/3*n)^(log(2)*log(3)^(-1))
+2^(log(3)^(-1)*log(1/3*n))
 
 %%%%%%%%
 
@@ -912,6 +1026,7 @@ y	(3/2)^(log(3/2)^(-1)*log(n))
 (3/2)^(log(3/2)^(-1)*log(n))
 (3/2)^(log(3/2)^(-1)*log(n))
 n
+(3/2)^(log(3/2)^(-1)*log(n))
 
 %%%%%%%%
 
@@ -920,6 +1035,7 @@ y	1/((3/2)^(log(3/2)^(-1)*log(n)))
 (2/3)^(log(3/2)^(-1)*log(n))
 1/((3/2)^(log(3/2)^(-1)*log(n)))
 1/n
+1/((3/2)^(log(3/2)^(-1)*log(n)))
 
 %%%%%%%%
 
@@ -928,6 +1044,7 @@ y	(2/3)^(log(n)/log(3/2))
 (2/3)^(log(3/2)^(-1)*log(n))
 (2/3)^(log(3/2)^(-1)*log(n))
 n^(-1)
+(2/3)^(log(3/2)^(-1)*log(n))
 
 %%%%%%%%
 
@@ -936,6 +1053,7 @@ a*7*(2/5)^(log(2/5)^(-1)*log(b))
 a*7*(2/5)^(log(2/5)^(-1)*log(b))
 a*7*(2/5)^(log(2/5)^(-1)*log(b))
 7*a*b	
+a*7*(2/5)^(log(2/5)^(-1)*log(b))
 
 %%%%%%%%
 
@@ -944,6 +1062,7 @@ exp(1)^log(a)
 exp(1)^log(a)
 exp(1)^log(a)
 a
+exp(1)^log(a)
 
 %%%%%%%%
 
@@ -952,6 +1071,7 @@ y	4*exp(1)^log(3)*sin(2)
 4*exp(1)^log(3)*sin(2)
 4*exp(1)^log(3)*sin(2)
 12*sin(2)
+4*exp(1)^log(3)*sin(2)
 
 %%%%%%%%
 
@@ -960,10 +1080,12 @@ exp(1)^(log(a)*5)
 exp(1)^(log(a)*5)
 exp(1)^(log(a)*5)
 a^5
+exp(1)^(log(a)*5)
 
 %%%%%%%%
 
 y	exp(1)^(log(a)*log(b)*5)
+exp(1)^(log(a)*log(b)*5)
 exp(1)^(log(a)*log(b)*5)
 exp(1)^(log(a)*log(b)*5)
 exp(1)^(log(a)*log(b)*5)
@@ -976,6 +1098,7 @@ y	5*b*exp(1)^(log(3)*c)
 5*b*exp(1)^(log(3)*c)
 5*b*exp(1)^(log(3)*c)
 5*3^c*b
+5*b*exp(1)^(log(3)*c)
 
 %%%%%%%%
 
@@ -984,6 +1107,7 @@ exp(1)^5*exp(1)^log(a)
 exp(1)^(5+log(a))
 exp(1)^5*exp(1)^log(a)
 exp(1)^5*a
+exp(1)^5*exp(1)^log(a)
 
 %%%%%%%%
 
@@ -992,6 +1116,7 @@ exp(1)^5*exp(1)^(3*log(a))
 exp(1)^(5+3*log(a))
 exp(1)^5*exp(1)^(3*log(a))
 exp(1)^5*a^3
+exp(1)^5*exp(1)^(3*log(a))
 
 %%%%%%%%
 
@@ -1000,6 +1125,7 @@ y	2^(log(4)^(-1)*log(a))
 2^(log(4)^(-1)*log(a))
 2^(log(4)^(-1)*log(a))
 sqrt(a)
+2^(log(4)^(-1)*log(a))
 
 %%%%%%%%
 
@@ -1008,6 +1134,7 @@ y	2^(log(8)^(-1)*log(a))
 2^(log(8)^(-1)*log(a))
 2^(log(8)^(-1)*log(a))
 a^(1/3)
+2^(log(8)^(-1)*log(a))
 
 %%%%%%%%
 
@@ -1016,6 +1143,7 @@ y	(1/2)^(log(8)^(-1)*log(a))
 (1/2)^(log(8)^(-1)*log(a))
 (1/2)^(log(8)^(-1)*log(a))
 a^(-1/3)
+(1/2)^(log(8)^(-1)*log(a))
 
 %%%%%%%%
 
@@ -1024,12 +1152,14 @@ y	4^(log(4)^(-1)*log(a))
 4^(log(4)^(-1)*log(a))
 4^(log(4)^(-1)*log(a))
 a
+4^(log(4)^(-1)*log(a))
 
 %%%%%%%%
 
 y	(n^2)^(-1/2)*n
 1
 1
+(n^2)^(-1/2)*n
 (n^2)^(-1/2)*n
 (n^2)^(-1/2)*n
 
@@ -1040,3 +1170,22 @@ y	-2*(-1)^n*2^(-1/4+1/4*(-1)^n)
 8^(1/4)*(-1)^(1+n)*2^(1/4*(-1)^n)
 -2^(1/4*(-1)^n)*2^(3/4)*(-1)^n
 -2^(1/4*(-1)^n)*2^(3/4)*(-1)^n
+-2^(1/4*(-1)^n)*2^(3/4)*(-1)^n
+
+%%%%%%%%
+
+y	sum(a,1,n,a+1)+sum(a,1,n,-a-1)
+sum(a,1,n,a+1)+sum(a,1,n,-a-1)
+sum(a,1,n,a+1)+sum(a,1,n,-a-1)
+sum(a,1,n,a+1)+sum(a,1,n,-a-1)
+sum(a,1,n,a+1)+sum(a,1,n,-a-1)
+0
+
+%%%%%%%%
+
+y	sum(a,1,n,a^2+2*a+1)+sum(a,1,n,-a^2-2*a)
+sum(a,1,n,1+2*a+a^2)+sum(a,1,n,-2*a-a^2)
+sum(a,1,n,1+2*a+a^2)+sum(a,1,n,-2*a-a^2)
+sum(a,1,n,1+2*a+a^2)+sum(a,1,n,-2*a-a^2)
+sum(a,1,n,1+2*a+a^2)+sum(a,1,n,-2*a-a^2)
+n
