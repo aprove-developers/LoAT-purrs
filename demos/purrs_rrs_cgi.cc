@@ -347,8 +347,6 @@ main() try {
   Expr rhs = Expr(**expr, symbols);
   Recurrence recurrence(rhs);
 
-  time_unit_t start_time = get_time();
-
   bool have_exact_solution = false;
   bool have_lower_bound = false;
   bool have_upper_bound = false;
@@ -361,17 +359,28 @@ main() try {
   Expr lower_bound;
   Expr upper_bound;
 
+  time_unit_t start_time;
+
+  long solution_time_msecs = 0;
+  long verification_time_msecs = 0;
+
   try {
+    start_time = get_time();
     switch (recurrence.compute_exact_solution()) {
     case Recurrence::SUCCESS:
       have_exact_solution = true;
       recurrence.exact_solution(exact_solution);
       exact_solution
         = recurrence.substitute_auxiliary_definitions(exact_solution);
+      solution_time_msecs += time_unit_to_msecs(get_time() - start_time);
+
+      start_time = get_time();
       if (verify
 	  &&
-	  recurrence.verify_exact_solution() == Recurrence::PROVABLY_CORRECT)
+	  recurrence.verify_exact_solution() == Recurrence::PROVABLY_CORRECT) {
 	have_verified_exact_solution = true;
+	verification_time_msecs += time_unit_to_msecs(get_time() - start_time);
+      }
       goto done;
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
@@ -393,14 +402,20 @@ main() try {
   }
 
   try {
+    start_time = get_time();
     switch (recurrence.compute_lower_bound()) {
     case Recurrence::SUCCESS:
       have_lower_bound = true;
       recurrence.lower_bound(lower_bound);
+      solution_time_msecs += time_unit_to_msecs(get_time() - start_time);
+
+      start_time = get_time();
       if (verify
 	  &&
-	  recurrence.verify_lower_bound() == Recurrence::PROVABLY_CORRECT)
+	  recurrence.verify_lower_bound() == Recurrence::PROVABLY_CORRECT) {
 	have_verified_lower_bound = true;
+	verification_time_msecs += time_unit_to_msecs(get_time() - start_time);
+      }
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
       error("this recurrence is unsolvable");
@@ -421,14 +436,20 @@ main() try {
   }
 
   try {
+    start_time = get_time();
     switch (recurrence.compute_upper_bound()) {
     case Recurrence::SUCCESS:
       have_upper_bound = true;
       recurrence.upper_bound(upper_bound);
+      solution_time_msecs += time_unit_to_msecs(get_time() - start_time);
+
+      start_time = get_time();
       if (verify
 	  &&
-	  recurrence.verify_upper_bound() == Recurrence::PROVABLY_CORRECT)
+	  recurrence.verify_upper_bound() == Recurrence::PROVABLY_CORRECT) {
 	have_verified_upper_bound = true;
+	verification_time_msecs += time_unit_to_msecs(get_time() - start_time);
+      }
       break;
     case Recurrence::UNSOLVABLE_RECURRENCE:
       error("this recurrence is unsolvable");
@@ -454,9 +475,6 @@ main() try {
     error("sorry, this is too difficult");
 
  done:
-
-  time_unit_t end_time = get_time();
-  long ms_of_cpu_time = time_unit_to_msecs(end_time - start_time);
 
   // Output the HTTP headers for an HTML document, and the HTML 4.0 DTD info.
   cout << HTTPHTMLHeader() << HTMLDoctype(HTMLDoctype::eStrict) << endl
@@ -545,9 +563,21 @@ main() try {
   // Timings and thank you.
   cout << br() << br()
        <<cgicc::div().set("align", "center").set("class", "bigger") << endl;
-  cout << "The computation took about "
-       << ms_of_cpu_time << " ms of CPU time."
-       << br() << br() << endl;
+  cout << "Computing the "
+       << (have_exact_solution ? "exact solution"
+	   : ((have_lower_bound && have_upper_bound)
+	      ? "approximations" : "approximation"))
+       << " took about " << solution_time_msecs << " ms of CPU time";
+  if (have_verified_exact_solution
+      || have_verified_lower_bound || have_verified_upper_bound) {
+  cout << "Verifying "
+       << ((have_lower_bound && have_upper_bound) ? "them" : "it")
+       << " took about " << verification_time_msecs << " ms of CPU time.";
+  }
+  else {
+    cout << "." << endl;
+  }
+  cout << br() << br() << endl;
   string host = env.getRemoteHost();
   if (host.empty())
     host = env.getRemoteAddr();
