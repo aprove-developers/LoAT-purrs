@@ -90,7 +90,7 @@ process_options(int argc, char* argv[]) {
       break;
 
     case 'i':
-      interactive = 1;
+      interactive = true;
       break;
 
     default:
