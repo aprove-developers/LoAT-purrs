@@ -476,6 +476,7 @@ main(int argc, char *argv[]) try {
 	lower_bound_required = true;
 	upper_bound_required = true;
       }
+      bool required_exact_too_complex = false;
       if (exact_solution_required)
 	switch (compute_exact_solution_wrapper(*precp)) {
 	case Recurrence::SUCCESS:
@@ -499,10 +500,13 @@ main(int argc, char *argv[]) try {
 	    cout << "exact(too_complex)." << endl;
 	    goto exit;
 	  }
+	  required_exact_too_complex = true;
 	  break;
 	default:
 	  break;
 	}
+      bool required_lower_too_complex = false;
+      bool required_upper_too_complex = false;
       if (lower_bound_required)
 	switch (precp->compute_lower_bound()) {
 	case Recurrence::SUCCESS:
@@ -519,7 +523,7 @@ main(int argc, char *argv[]) try {
 	  goto exit;
 	  break;
 	case Recurrence::TOO_COMPLEX:
-	  cout << "lower_bound(too_complex)." << endl;
+	  required_lower_too_complex = true;
 	  break;
 	default:
 	  break;
@@ -540,11 +544,29 @@ main(int argc, char *argv[]) try {
 	  goto exit;
 	  break;
 	case Recurrence::TOO_COMPLEX:
-	  cout << "upper_bound(too_complex)." << endl;
+	  required_upper_too_complex = true;
 	  break;
 	default:
 	  break;
 	}
+      if (required_exact_too_complex)
+	//If the exact solution is too complex and we are arrived here,
+	// then this means that at least one bound has been required.
+	if (required_lower_too_complex && required_upper_too_complex)
+	  cout << "too_complex." << endl;
+	else {
+	  cout << "exact(too_complex)." << endl;
+	  if (required_lower_too_complex)
+	    cout << "lower_bound(too_complex)." << endl;
+	  if (required_upper_too_complex)
+	    cout << "upper_bound(too_complex)." << endl;
+	}
+      else {
+	if (required_lower_too_complex)
+	  cout << "lower_bound(too_complex)." << endl;
+	if (required_upper_too_complex)
+	  cout << "upper_bound(too_complex)." << endl;
+      }
     }
     else {
       cerr << program_name
