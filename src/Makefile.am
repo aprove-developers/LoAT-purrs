@@ -38,6 +38,7 @@ Functional_Equation_Info.types.hh \
 Blackboard.types.hh \
 Cached_Expr.types.hh \
 Non_Linear_Info.types.hh \
+Infinite_Order_Info.types.hh \
 Recurrence.types.hh \
 Symbol.types.hh \
 Complex_Interval.defs.hh \
@@ -85,6 +86,8 @@ Cached_Expr.defs.hh \
 Cached_Expr.inlines.hh \
 Non_Linear_Info.defs.hh \
 Non_Linear_Info.inlines.hh \
+Infinite_Order_Info.defs.hh \
+Infinite_Order_Info.inlines.hh \
 Recurrence.defs.hh \
 Recurrence.inlines.hh
 
@@ -94,6 +97,7 @@ Functional_Equation_Info.cc \
 Blackboard.cc \
 Cached_Expr.cc \
 Non_Linear_Info.cc \
+Infinite_Order_Info.cc \
 Complex_Interval.cc \
 Bool3.cc \
 Constant.cc \
