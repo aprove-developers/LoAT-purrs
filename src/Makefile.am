@@ -106,9 +106,11 @@ $(INCLUDE_FILES)
 
 # The ordering of the following list *matters*!
 DOC_FILES = \
-alg_eq_solver.hh \
+Recurrence.types.hh \
+Bool3.types.hh \
+Recurrence.defs.hh \
 Bool3.defs.hh \
-Recurrence.defs.hh
+alg_eq_solver.hh
 
 libpurrs_a_LIBADD =
 
