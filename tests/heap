@@ -6,12 +6,14 @@
 %   w with a provably wrong result
 %   d with a result whose correctness can neither be proved nor be disproved
 % n expected not to be solved
-% U unsolvable: expect the system to diagnose this
-% u unsolvable: expect the system not to diagnose this
+% K unsolvable: expect the system to diagnose this
+% k unsolvable: expect the system not to diagnose this
 % M malformed: expect the system to gracefully deal with it
 % m malformed: expect the system to die badly
-% A expected to be approximated with a provably correct result
-% a expected to be approximated
+% U expected to find upper bound with a provably correct result	
+% u expected to find upper bound with a provably correct result
+% L expected to find lower bound
+% l expected to find lower bound
 % E explodes
 % * no expectations
 
@@ -24,10 +26,7 @@ n	(4*x(n-2))/((n+1)*(n+2))
 n	(n+3)*x(n-1)-n*x(n-2)
 n	(n-3)*x(n-3)+(1/3)
 n	(n-3)*x(n-3)+(1/3)^n
-n	(n/2)^2-1+2*x(n/2)
 n	-(n+a-4)*x(n-1)/((n+a)*(n+a-7))
-n	1+3*x(n/3)
-n	1+x(n/2)
 n	1/(n*a)*x(n-1)
 n	1/x(n-1)
 n	1/x(n-1)+3
@@ -39,41 +38,24 @@ n	2*x(n-1)+4*x(n-2)^x(n-1)
 n	2*x(n-1)-a*x(n-2)+a
 n	2*x(n-1)-b+3*a*x(n-2)
 n	2*x(n-2)*(n-1)+a
-n	2*x(n/2)
-n	2*x(n/2)+1
-n	2*x(n/2)+2*n
 n	2*x(n/2)+2*n*log(n)
-n	2*x(n/2)+3*n
 n	2*x(n/2)+a
 n	2*x(n/2)+c*n
 n	2*x(n/2)+log(n)
-n	2*x(n/2)+n
 n	2*x(n/2)+n*log(n)
-n	2*x(n/2)+n-1
 n	2*x(n/4)+x(n/2)+n*log(n)
-n	2*x(n/5)+n
 n	2+x(2*n/3)
 n	2+x(n-10)+x(n-1)
-n	2+x(n/2)
 n	2/x(n-1)
 n	2^a*x(n/2^a)+a*n
 n	3*x(n+5)-x(3*n-9)+a
 n	3*x(n-8)+x(n-1)
-n	3*x(n/2)+n
 n	3*x(n/2)+n*log(n)
 n	3*x(n/2)+x(n-3)+3*n
-n	3*x(n/3)+(2*n-1)
-n	3*x(n/3)+2*n
 n	3*x(n/4)+n*log(n)
 n	3+(1/(x(n-1)))
-n	4*x(n/2)+n^2
 n	5*x(n/4)+n*log(log(n))
-n	5*x(n/5)+5*n
-n	6*x(n/7)+n
 n	7*n/5+x(n/5)+(4/10)*n+x((7/10)*n)
-n	7*x(n/5)
-n	7*x(n/5)+10
-n	7*x(n/5)+10*n
 n	a*x(n-1)+b+c*x(n-1)^2
 n	a*x(n/2)+2*n
 n	a/n*x(n-1)
@@ -91,12 +73,7 @@ n	n*x(n-1)^2
 n	n*x(n-2)
 n	n*x(n-3)
 n	n*x(n-3)+(1/3)
-n	n+2*x(n/2)
-n	n+3*x(n/3)
 n	n+x(n*2)
-n	n+x(n/2)
-n	n+x(n/5)+7*n/10
-n	n/2+x(n/2)
 n	n^2*x(n-1)-6*x(n/2)
 n	n^2*x(n-1)-x(n/2)
 n	sqrt(n)*x(sqrt(n))+n
@@ -122,22 +99,19 @@ n	x(n-1)^2+x(n-2)
 n	x(n-2)*n!
 n	x(n-3)+x(n-7)
 n	x(n-3)+x(n-7.6)
-n	x(n/2)
-n	x(n/2)+1
 n	x(n/2)+1/n
 n	x(n/2)+(1-(-1)^n)/2
 n	x(n/2)+a
 n	x(n/3)+x(n/5)+x(n/7)+x(n/11)+x(n/13)+a
 n	x(n/3)+x(n/5)+x(n/7)+x(n/11)+x(n/13)+n
-n	x(n/5)+3
 n	x(n^(1/2))+1
 n	x(n^.5)+1
 n	x(n^5)
 n	x(x(n-1))
-nU	x(n)
-nU	x(n)+n!
-nU	x(n)-2
-nu	2^x(n)
+nK	x(n)
+nK	x(n)+n!
+nK	x(n)-2
+nk	2^x(n)
 y	1.01*x(n-1)*(20000)-b
 y	1.01*x(n-1)*20000-b
 y	2*x(n-1)+3*x(n-3)
@@ -462,4 +436,32 @@ yv 	144*x(n-3)+56*x(n-2)+x(n-1)
 yv 	144*x(n-3)+56*x(n-2)+x(n-1)+3^n*n+4
 yv 	x(n-2)+n
 yv	(n+1)/n*x(n-1)+2
+yul	x(n/2)
+ul	(n/2)^2-1+2*x(n/2)
+ul	1+3*x(n/3)
+ul	1+x(n/2)
+ul	2*x(n/2)
+ul	2*x(n/2)+1
+ul	2*x(n/2)+2*n
+ul	2*x(n/2)+3*n
+ul	2*x(n/2)+n
+ul	2*x(n/2)+n-1
+ul	2*x(n/5)+n
+ul	2+x(n/2)
+ul	3*x(n/2)+n
+ul	3*x(n/3)+(2*n-1)
+ul	3*x(n/3)+2*n
+ul	4*x(n/2)+n^2
+ul	5*x(n/5)+5*n
+ul	6*x(n/7)+n
+ul	7*x(n/5)
+ul	7*x(n/5)+10
+ul	7*x(n/5)+10*n
+ul	n+2*x(n/2)
+ul	n+3*x(n/3)
+ul	n+x(n/2)
+ul	n+x(n/5)+7*n/10
+ul	n/2+x(n/2)
+ul	x(n/2)+1
+ul	x(n/5)+3
 n	((n + 2)*(n - a)*(4*n^3  + 4*n^2*a - 2*n*a^2  + 10*n*a*b - 10*n*b^2  - 2*a^3  + 8*a^2*b - 8*a*b^2 + 26*n^2  + 19*n*a - 5*n*b - 3*a^2  + 20*a*b - 24*b^2  + 57*n + 23*a - 12*b + 42)*x(n - 1)-(2*n + 3)*(n + 2)*(n + 1)*(n - a + 2*b + 2)*(n + a - 2*b + 1)*x(n - 2))/((n + b + 3)*(n + a + 3)*(n - a + 1)*(n - a)*(2*n + 2*a - 2*b + 5))
