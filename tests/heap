@@ -523,6 +523,7 @@ yv	1+n*x(n-1)
 yv	1+n^-1*n-1+2
 yv	1+x(n-1)
 yv	1+x(n-1)+x(n-2)
+yv      1+x(n-1)-100^(log(10)^(-1)*log(n))
 yv	1-n*x(n-1)
 yv	1/(n+1)
 yv	1/(n-1)*x(n-1)+2
@@ -827,6 +828,7 @@ yv	n+x(n-3)
 yv	n-1+1
 yv	n^2
 yv	n^2*x(n-1)
+yv	n^2+x(n-1)-100^(log(10)^(-1)*log(n))
 yv	n^3-(n+x(n-1))
 yv	n^3-5*n^2+8*n-4
 yv	n^3-n-x(n-1)
