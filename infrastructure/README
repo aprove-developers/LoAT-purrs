@@ -9,6 +9,10 @@ ginac 1.0.5
 fi_lib++ 2.0   (apply patches and be careful about how you build it (3)
 ntl 5.2        (4)
 
+Just for the web-based demos:
+
+cgicc 3.2      (see http://www.gnu.org/software/cgicc/cgicc.html)
+
 (1)
 Your configure command should be something like
 

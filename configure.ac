@@ -130,7 +130,7 @@ extra_includes="${extra_includes} ${gmp_includes_option}"
 
 dnl GiNaC library
 
-AC_PATH_GINAC(1.0.3, [
+AC_PATH_GINAC(1.0.5, [
   LIBS="$LIBS $GINACLIB_LIBS"
   extra_includes="${extra_includes} $GINACLIB_CPPFLAGS"  
 ], AC_MSG_ERROR([need to have GiNaC installed]))
@@ -295,8 +295,14 @@ AC_ARG_WITH(cxxflags,
 [  --with-cxxflags=xxx     use XXX as options for the C++ compiler],
 CXXFLAGS=$with_cxxflags)
 
-dnl Check for machine architecture features
+dnl Checks for machine architecture features
 AC_C_BIGENDIAN
+
+dnl Libtool.
+# Turn off shared libraries during beta-testing, since they
+# make debugging harder and the build process take too long.
+AC_DISABLE_SHARED
+AC_PROG_LIBTOOL
 
 dnl Checks for programs.
 AC_PROG_MAKE_SET
@@ -317,7 +323,9 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 # Nothing for the time being.
 
 dnl Checks for library functions.
-# Nothing for the time being.
+AC_HEADER_TIME
+AC_CHECK_HEADERS(sys/resource.h sys/time.h)
+AC_CHECK_FUNCS(gettimeofday getrlimit setrlimit)
 
 AC_SUBST(extra_includes)
 AC_SUBST(extra_cpp_flags)
@@ -327,9 +335,10 @@ AC_SUBST(extra_if_Prolog_subdirs)
 
 AC_OUTPUT(Makefile
           src/Makefile src/Intervals/Makefile src/Intervals/sysdep/Makefile
-          tests/Makefile
           m4/Makefile
           doc/Makefile
+          tests/Makefile
+          demos/Makefile
           doc/user-browse.doxyconf-latex doc/devref-browse.doxyconf-latex
           doc/user-print.doxyconf-latex  doc/devref-print.doxyconf-latex
           doc/user.doxyconf-html         doc/devref.doxyconf-html)

@@ -8,13 +8,19 @@
 # WITHOUT ANY WARRANTY, to the extent permitted by law; without even the
 # implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
-AUTOMAKE_OPTIONS = foreign dist-bzip2 dist-zip 1.5
-
 srcdir = @srcdir@
 VPATH = @srcdir@
 
-EXTRA_DIST = configure # purrs.lsm.in purrs.spec.in acinclude.m4 BUGS CREDITS
-
 @SET_MAKE@
 
-SUBDIRS = src doc m4 tests demos #interfaces
+SUBDIRS =
+
+INCLUDES = -I$(top_builddir)/src @extra_includes@ #-I/usr/local/filib/include 
+
+LDADD = $(top_builddir)/src/libpurrs.a -lstdc++ @gmp_library_option@ -lcgicc #-L/usr/local/filib/lib -lfi -lieee -lprim 
+
+CPPFLAGS = @extra_cpp_flags@
+
+noinst_PROGRAMS = purrs_eqs.cgi
+
+purrs_eqs_cgi_SOURCES = purrs_eqs_cgi.cc
