@@ -1055,7 +1055,7 @@ PURRS::Recurrence::check_number_for_evaluation(const char* method,
 }
 
 Expr
-PURRS::Recurrence::evaluate(unsigned int kind, const Number& num) const {
+PURRS::Recurrence::evaluate(unsigned int kind, const Number& x) const {
   const char* method;
   const char* name;
   Expr evaluated;
@@ -1079,35 +1079,37 @@ PURRS::Recurrence::evaluate(unsigned int kind, const Number& num) const {
     throw std::runtime_error("PURRS internal error: "
 			     "evaluate().");    
   }
-  // Check that the number `num' is in agreement with the type of the
+  // Check that the number `x' is in agreement with the type of the
   // recurrence.
-  check_number_for_evaluation(method, name, num);
+  check_number_for_evaluation(method, name, x);
 
   switch (type_) {
   case ORDER_ZERO:
     // If the recurrence has order zero, the solution is simply the
     // right-hand side.
-    evaluated = evaluated.substitute(n, num);
+    evaluated = evaluated.substitute(n, x);
     break;
   case LINEAR_FINITE_ORDER_CONST_COEFF:
   case LINEAR_FINITE_ORDER_VAR_COEFF:
     // The solution or the bound is valid for the non-negative integer
     // `n' such that `n > first_valid_index'; for `n <= first_valid_index'
     //  the solution is represented by the initial condition with index
-    // equal to `num'.
-    if (num < first_valid_index() + 1)
-      evaluated = get_initial_condition(num.to_unsigned_int());
+    // equal to `x'.
+    if (x < first_valid_index() + 1)
+      evaluated = get_initial_condition(x.to_unsigned_int());
     else
-      evaluated = evaluated.substitute(n, num);
+      evaluated = evaluated.substitute(n, x);
     break;
   case WEIGHTED_AVERAGE:
+    // RIFARE!!!!
+
     // The solution or the bound is valid for the non-negative integer
     // `n' such that `n > 0'; for `n == 0' the solution is represented
     // by the initial condition `x(0)'.
-    if (num == 0)
+    if (x == 0)
       evaluated = get_initial_condition(0);
     else
-      evaluated = evaluated.substitute(n, num);
+      evaluated = evaluated.substitute(n, x);
     break;
   case NON_LINEAR_FINITE_ORDER:
   case FUNCTIONAL_EQUATION:

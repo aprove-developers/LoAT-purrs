@@ -170,20 +170,20 @@ Recurrence::get_max_index_initial_condition() const {
 }
 
 inline Expr
-Recurrence::evaluate_exact_solution(const Number& num) const {
+Recurrence::evaluate_exact_solution(const Number& x) const {
   // `0' means that is the case of exact solution.
-  return evaluate(0, num);
+  return evaluate(0, x);
 }
 
 template <class OutputIterator>
 void
-Recurrence::evaluate_exact_solution(const Number& l, const Number& r,
+Recurrence::evaluate_exact_solution(const Number& begin, const Number& end,
 				    OutputIterator oi) const {
-  if (l > r)
+  if (begin > end)
     throw_invalid_argument("PURRS::Recurrence::evaluate_exact_solution()",
 			   "the numbers represent an interval and the first\n"
 			   "must be smaller or equal to the second");
-  for (Number i = l; i <= r; ++i) {
+  for (Number i = begin; i < end; ++i) {
     // `0' means that is the case of exact solution.
     *oi = evaluate(0, i);
     ++oi;
@@ -191,20 +191,20 @@ Recurrence::evaluate_exact_solution(const Number& l, const Number& r,
 }
 
 inline Expr
-Recurrence::evaluate_lower_bound(const Number& num) const {
+Recurrence::evaluate_lower_bound(const Number& x) const {
   // `1' means that is the case of lower bound.
-  return evaluate(1, num);
+  return evaluate(1, x);
 }
 
 template <class OutputIterator>
 void
-Recurrence::evaluate_lower_bound(const Number& l, const Number& r,
+Recurrence::evaluate_lower_bound(const Number& begin, const Number& end,
 				 OutputIterator oi) const {
-  if (l > r)
+  if (begin > end)
     throw_invalid_argument("PURRS::Recurrence::evaluate_lower_bound()",
 			   "the numbers represent an interval and the first\n"
 			   "must be smaller or equal to the second");
-  for (Number i = l; i <= r; ++i) {
+  for (Number i = begin; i < end; ++i) {
     // `1' means that is the case of lower bound.
     *oi = evaluate(1, i);
     ++oi;
@@ -212,20 +212,20 @@ Recurrence::evaluate_lower_bound(const Number& l, const Number& r,
 }
 
 inline Expr
-Recurrence::evaluate_upper_bound(const Number& num) const {
+Recurrence::evaluate_upper_bound(const Number& x) const {
   // `2' means that is the case of upper bound.
-  return evaluate(2, num);
+  return evaluate(2, x);
 }
 
 template <class OutputIterator>
 void
-Recurrence::evaluate_upper_bound(const Number& l, const Number& r,
+Recurrence::evaluate_upper_bound(const Number& begin, const Number& end,
 				 OutputIterator oi) const {
-  if (l > r)
+  if (begin > end)
     throw_invalid_argument("PURRS::Recurrence::evaluate_upper_bound()",
 			   "the numbers represent an interval and the first\n"
 			   "must be smaller or equal to the second");
-  for (Number i = l; i <= r; ++i) {
+  for (Number i = begin; i < end; ++i) {
     // `2' means that is the case of upper bound.
     *oi = evaluate(2, i);
     ++oi;
