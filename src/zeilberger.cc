@@ -379,40 +379,13 @@ parametric_gosper_step_three(const Symbol& m, const std::vector<Symbol>& coeffic
     DD_MSGVAR("Polynomial solution found: ", solution);
   }
 
-#if 1
-  // FIXME: +1?
   std::vector<unsigned int> dummy_vars(number_of_unknowns);
-  //unsigned int ct = 0;
   // Replace solutions in the form "A==A" by putting A=1.
   for (unsigned int j = 0; j < solution.nops(); ++j)
     if (solution.op(j).op(0) == solution.op(j).op(1))
       for (unsigned int i = 0; i < number_of_unknowns; ++i)
 	if (solution.op(j).op(1) == unknowns.op(i))
 	  dummy_vars.push_back(i);
-  Expr solution_tmp = solution;
-  for (unsigned int i = 0; i < dummy_vars.size(); ++i) {
-    solution_tmp = solution.substitute(unknowns.op(dummy_vars[i]), 1);
-  }
-  for (unsigned int i = 0; i < solution_tmp.nops(); ++i) {
-    D_VAR(solution_tmp.op(i));
-  }
-  /*
-	  DD_MSGVAR("Replacing dummy variable ", solution.op(j));
-	  for (unsigned int k = 0; k < solution.nops(); ++k) {
-	    DD_MSGVAR("Before: ", solution.op(k));
-	    Expr temp = solution.op(k).op(1).substitute(unknowns.op(i), 1);
-	    D_VAR(temp);
-	    solution.op(k).op(1) = temp;
-	    D_VAR(solution.op(k).op(1));
-	    DD_MSGVAR("After:  ", solution.op(k));
-	  }
-	}
-      }
-    }
-  }
-  */
-#endif
-
 
   // Builds the solution `x(n)'.
   for (unsigned int i = 0; i < number_of_coeffs; ++i)
@@ -492,9 +465,10 @@ bool zeilberger_for_fixed_order(const Expr& F_m_k,
   Expr b_k;
   if (parametric_gosper_step_three(k, coefficients, p_2_k.expand(), p_3_k.expand(),
 				   p_k.expand(), b_k, coefficients_values)) {
-    DD_MSGVAR("Polynomial solution is:", b_k);
-    DD_MSGVAR("Coefficient 0 is: ", coefficients_values[0]);
-    DD_MSGVAR("Coefficient 1 is: ", coefficients_values[1]);
+    DD_MSGVAR("Polynomial solution is: ", b_k);
+    for (unsigned int i = 0; i < coefficients_values.size(); ++i) {
+      D_VAR(coefficients_values[i]);
+    }
   }
   else 
     // Could not solve the linear system. Maybe we should just try an higher order.
@@ -520,12 +494,17 @@ bool zeilberger_for_fixed_order(const Expr& F_m_k,
   Recurrence rec(rec_expr);
   Expr exact_solution;
   std::map<index_type, Expr> initial_conditions;
-  // FIXME: Are exactly N initial conditions needed for a recurrence of order N?
   rec.compute_exact_solution();
+  // FIXME: Are exactly N initial conditions needed for a recurrence of order N?
+  // Revise this when number_initial_conditions() is written.
   for (unsigned int i = 0; i < order; ++i) {
-    // FIXME: This happens very often, but we must compute it explicitly.
-    initial_conditions[1] = 2;
-    // initial_conditions[i] = sum (k, 0, 10, F_m_k.substitute(m,i));
+    unsigned int evaluation_point = i + rec.first_valid_initial_condition();
+    D_VAR(evaluation_point);
+    // FIXME: The support of F_m_k for m==evaluation_point must be in [0, max_support].
+    // Calculate it explicitly if possible.
+    Expr max_support = 10;
+    initial_conditions[evaluation_point] = sum( (Expr) k, (Expr) 0, max_support, 
+						F_m_k.substitute(m, (Number) evaluation_point));
   }
   rec.set_initial_conditions(initial_conditions);
   rec.exact_solution(exact_solution);
