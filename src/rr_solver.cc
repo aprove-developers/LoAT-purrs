@@ -62,21 +62,21 @@ get_linear_decrement(const GExpr& e, const GSymbol& n, GNumber& decrement) {
   into \f$(a^b)^x\f$.
 */
 GExpr
-split_exp(GExpr& p, const GSymbol& x, const GList powers) {
+split_exp(GExpr& p, const GSymbol& x, const GList lst_of_exp) {
   GExpr q = 0;
 
-  for (size_t i = powers.nops(); i-- > 0; ) {
-    // Finds coefficient of exponential 'powers.op(i)'.
+  for (size_t i = lst_of_exp.nops(); i-- > 0; ) {
+    // Finds coefficient of exponential 'lst_of_exp.op(i)'.
     GList l;
     GExpr coeff;
-    if (p.find(powers.op(i) * wild(), l)) {
+    if (p.find(lst_of_exp.op(i) * wild(), l)) {
       coeff = l.op(0);
       coeff = coeff.subs(wild(0)*pow(wild(1), wild(2)*x) == wild(0));
     }
-    GExpr tmp = powers.op(i);
+    GExpr tmp = lst_of_exp.op(i);
     tmp = tmp.subs(pow(wild(0),x*wild(1)) == pow(pow(wild(0),wild(1)),x));
     q += tmp*coeff;
-    p -= coeff*powers.op(i);
+    p -= coeff*lst_of_exp.op(i);
   }
   // Now p does not contain other exponential of the form a^(b*x). 
   q += p;
@@ -89,11 +89,12 @@ split_exp(GExpr& p, const GSymbol& x, const GList powers) {
   into \f$(a^b)^x\f$.
 */
 GExpr 
-union_exp(GExpr& p, const GSymbol& x, const GList powers, const unsigned n) {
+union_exp(GExpr& p, const GSymbol& x, const GList lst_of_exp,
+	  const unsigned n) {
   GExpr q = 0;
 
-  for (size_t i = powers.nops(); i-- > 0; ) {
-    GExpr tmp = powers.op(i);
+  for (size_t i = lst_of_exp.nops(); i-- > 0; ) {
+    GExpr tmp = lst_of_exp.op(i);
     if (n == 1) {
       tmp = tmp.subs(pow(wild(0),x)*pow(wild(1),x) == pow(wild(0)*wild(1),x));
       q += tmp;
@@ -101,16 +102,16 @@ union_exp(GExpr& p, const GSymbol& x, const GList powers, const unsigned n) {
     else {
       tmp = tmp.subs(pow(wild(0),x)*pow(wild(1),x)*wild(2) == 
 		     pow(wild(0)*wild(1),x));
-      // Finds coefficient of exponential 'powers.op(i)'.  
+      // Finds coefficient of exponential 'lst_of_exp.op(i)'.  
       GList l;
       GExpr coeff;
-      if (p.find(powers.op(i) * wild(), l)) {
+      if (p.find(lst_of_exp.op(i) * wild(), l)) {
 	coeff = l.op(0);
 	coeff = coeff.subs(wild(0)*pow(wild(1), x)*pow(wild(2), x) == wild(0));
       }
       q += tmp*coeff;
     }
-    p -= powers.op(i);
+    p -= lst_of_exp.op(i);
   }
   // Now p does not contain other exponential of the form a^x*b^x.
   q += p;
@@ -120,26 +121,26 @@ union_exp(GExpr& p, const GSymbol& x, const GList powers, const unsigned n) {
 
 void
 check_exp_inhomogeneous_term(GExpr& e, const GSymbol& n) {
-  GList powers;
+  GList lst_of_exp;
 
   // Transforms a^(bn+c) into (a^b)^n*a^c.
   static GExpr a_bn = pow(wild(0), n*wild(1));
   static GExpr a_n_c = pow(wild(0), n+wild(1));
   static GExpr a_bn_c = pow(wild(0), n*wild(1)+wild(2));
-  if (e.find(a_bn_c, powers) || e.find(a_n_c, powers)) 
+  if (e.find(a_bn_c, lst_of_exp) || e.find(a_n_c, lst_of_exp)) 
     e = e.expand();
-  if (e.find(a_bn, powers))
-    e = split_exp(e, n, powers);
+  if (e.find(a_bn, lst_of_exp))
+    e = split_exp(e, n, lst_of_exp);
 
   // Transforms a^n*b^n into (a*b)^n.
   static GExpr a_n_b_n = pow(wild(0), n)*pow(wild(1), n);
   static GExpr c_a_n_b_n = pow(wild(0), n)*pow(wild(1), n)*wild(2);
-  while (e.find(a_n_b_n, powers) || e.find(c_a_n_b_n, powers)) { 
-    if (e.find(a_n_b_n, powers))
-	e = union_exp(e, n, powers, 1);
+  while (e.find(a_n_b_n, lst_of_exp) || e.find(c_a_n_b_n, lst_of_exp)) { 
+    if (e.find(a_n_b_n, lst_of_exp))
+	e = union_exp(e, n, lst_of_exp, 1);
     else
-      e = union_exp(e, n, powers, 2);
-    clear(powers);
+      e = union_exp(e, n, lst_of_exp, 2);
+    clear(lst_of_exp);
   }
 }
 
@@ -158,29 +159,29 @@ check_exp_inhomogeneous_term(GExpr& e, const GSymbol& n) {
 GMatrix
 decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
   GExpr p,q;
-  GList(powers);
+  GList(lst_of_exp);
 
   p = e;
   GExpr pattern = pow(wild(), n);
-  p.find(pattern, powers);
-  p = p.collect(powers);
+  p.find(pattern, lst_of_exp);
+  p = p.collect(lst_of_exp);
 
-  if (powers.nops() == 0) {
+  if (lst_of_exp.nops() == 0) {
     // In this case there are no axponentials.
     return GMatrix(2, 1, lst(1, p));
   }
   else {
-    GMatrix terms_divided(2, powers.nops()+1, powers);
+    GMatrix terms_divided(2, lst_of_exp.nops()+1, lst_of_exp);
     // Impose that the last element of the first row is the constant
     // exponential 1.
-    terms_divided(0, powers.nops()) = 1;
+    terms_divided(0, lst_of_exp.nops()) = 1;
     GList part;
     q = p;
-    for (size_t i = powers.nops(); i-- > 0; ) {
+    for (size_t i = lst_of_exp.nops(); i-- > 0; ) {
       clear(part);
       // 'part' has always only one elements because we have collected
       // 'p' with respect to the exponentials.
-      p.find(powers.op(i) * wild(), part);
+      p.find(lst_of_exp.op(i) * wild(), part);
       if (part.nops() != 0) {
 	GExpr coeff = part.op(0);
 	coeff = coeff.subs(wild(1)*pow(wild(2), n) == wild(1));
@@ -190,13 +191,13 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
       else {
 	// In this case 'p' does not contain the constant exponential.
 	terms_divided(1, i) = 1;
-	q -= powers.op(i);
+	q -= lst_of_exp.op(i);
       }
     }
     // Now 'q' does not contains any exponentials or product of exponential 
     // times other expressions.
     if (!q.is_zero())
-      terms_divided(1, powers.nops()) = q;
+      terms_divided(1, lst_of_exp.nops()) = q;
   
     return terms_divided;
   }
@@ -316,7 +317,6 @@ solve(const GExpr& rhs, const GSymbol& n) {
   // Calculates the number of columns of the matrix.
   unsigned num_columns = decomposition.cols();
 
-  GSymbol k("k");
   // Initial condition.
   GSymbol x_0("x_0");
   GExpr solution_tot = x_0;
@@ -329,27 +329,22 @@ solve(const GExpr& rhs, const GSymbol& n) {
       // x(n) = \alpha^n * x_0 + sum_{k=1}^n \alpha^(n-k)*p(k)
       // that can be rewritten as
       // x(n) = \alpha^n * ( x_0 - p(0) + sum_{k=0}^n \alpha^(-k)*p(k) )
-      GExpr prod = pow(coefficients[1],n);
-      //std::cout << "Part of solution  " << prod << std::endl;
+      GSymbol k("k");
+      GExpr alpha_n = pow(coefficients[1],n);
       for (size_t i = 0; i < num_columns; ++i) {
 	GExpr solution = 0;
 	GExpr exponential = decomposition(0, i);
-	GExpr coeff = decomposition(1, i);
-	if (i < num_columns -1) 
+	GExpr coeff_of_exp = decomposition(1, i);
+	if (i < num_columns - 1) 
 	  // For non constant exponentials check if the base of the
 	  // exponential is a constant and its coefficient is a polynomial.
 	  if (GiNaC::is_a<GiNaC::numeric>(exponential.op(0)) && 
-	      coeff.info(info_flags::polynomial))  {
-	    GExpr coeff_k = coeff.subs(n == k);
-	    sum_poly_times_exponentials(coeff_k, k, n, 
+	      coeff_of_exp.info(info_flags::polynomial)) {
+	    GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
+	    sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
 					exponential.op(0)*pow(coefficients[1],
 							      -1),
 					solution);
-	    // std::cout << "solution formula " << prod << std::endl;
-	    // 'sum_poly_times_exponentials' calculates the sum from 0 while
-	    // we want start from 1. 
-	    solution -= coeff.subs(n == 0);
-	    //std::cout << "solution - p(0) " << prod << std::endl;
 	  }
 	  else {
 	    std::cout << "We want only polynomials or product" << std::endl
@@ -359,24 +354,23 @@ solve(const GExpr& rhs, const GSymbol& n) {
 	else
 	  // For the constant exponential check only if the coefficient
 	  // is a polynomial.
-	  if (coeff.info(info_flags::polynomial)) {
-	    GExpr coeff_k = coeff.subs(n == k);  
-	    sum_poly_times_exponentials(coeff, k, n, pow(coefficients[1], -1),
+	  if (coeff_of_exp.info(info_flags::polynomial)) {
+	    GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
+	    sum_poly_times_exponentials(coeff_of_exp_k, k, n, 
+					pow(coefficients[1], -1),
 					solution);
-	    //std::cout << "solution formula " << solution << std::endl;
-	    //std::cout << "coeff " << coeff << std::endl;
-	    //solution -= coeff.subs(n == 0);
-  	    solution -= coeff*pow(coefficients[1], -1).subs(n == 0);
-	    //std::cout << "coeff after subs " << coeff << std::endl;
-	  }
+	  }	  
 	  else {
 	    std::cout << "We want only polynomials or product" << std::endl
 		      << "of exponentials times polynomials" << std::endl;
 	    abort();
 	  }
+	// 'sum_poly_times_exponentials' calculates the sum from 0 while
+	// we want start from 1. 
+	solution -= coeff_of_exp.subs(n == 0);	
 	solution_tot += solution;
       }
-      solution_tot *= prod;
+      solution_tot *= alpha_n;
       break;
     }
   default:
@@ -386,7 +380,7 @@ solve(const GExpr& rhs, const GSymbol& n) {
     } 
   } 
 
-  std::cout << "Solution  " << solution_tot.expand() << std::endl;
+  std::cout << "Solution  " << solution_tot.expand() << std::endl << std::endl;
 
   /*
   // Build the expression here.
