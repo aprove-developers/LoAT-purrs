@@ -193,9 +193,9 @@ set_expectations(const string& s) {
 }
 
 Recurrence::Solver_Status
-solve_wrapper(const Recurrence& rec, const Symbol& n) {
+solve_wrapper(const Recurrence& rec) {
   try {
-    return rec.solve(n);
+    return rec.solve(Recurrence::n);
   }
   catch (exception& e) {
     if (verbose) {
@@ -252,12 +252,11 @@ main(int argc, char *argv[]) try {
   if (latex)
     cout << "\\documentclass{article}\n\\begin{document}" << endl;
 
-  Symbol n("n");
   Symbol a("a");
   Symbol b("b");
   Symbol c("c");
   Symbol d("d");
-  Expr_List symbols(n, a, b, c, d);
+  Expr_List symbols(Recurrence::n, a, b, c, d);
 
   while (input_stream) {
     ++line_number;
@@ -344,7 +343,7 @@ main(int argc, char *argv[]) try {
     Recurrence rec(rhs);
 
     Expr solution;
-    switch (solve_wrapper(rec, n)) {
+    switch (solve_wrapper(rec)) {
     case Recurrence::OK:
       if (regress_test) {
 	if (expect_not_exactly_solved) {
@@ -356,14 +355,14 @@ main(int argc, char *argv[]) try {
       if (interactive) {
 	cout << "*** SOLUTION ***"
 	     << endl
-	     << rec.exact_solution(n)
+	     << rec.exact_solution(Recurrence::n)
 	     << endl
 	     << "****************"
 	     << endl << endl;
       }
       if (latex) {
 	cout << "\\medskip\\indent\n\\(\n x(n) = ";
-	rec.exact_solution(n).latex_print(cout);
+	rec.exact_solution(Recurrence::n).latex_print(cout);
 	cout << "\n\\)\n" << endl;
       }
       break;
