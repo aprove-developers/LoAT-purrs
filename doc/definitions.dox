@@ -101,7 +101,7 @@ similar to <EM>differential calculus</EM>.
 
 
 
-\section introduction An Introduction to Recurrence Relation
+\section introduction An Introduction to Recurrence Relations
 
 <B>Recurrence relation</B>
 
@@ -148,11 +148,11 @@ we say that the recurrence in normal form has <EM>order</EM> (at most)
 \f$ k \f$.
 We take the <EM>smallest</EM> possible value of \f$ k \f$ as the order
 of the recurrence.
-If no such \f$ k \f$ exists, then we say that the recurrence has no
-finite order.
+If no such \f$ k \f$ exists, then we do not assign an order to the
+recurrence.
 
 In the following section we will consider the different types of
-recurrences that the system is able to deal.
+recurrences that the system is able to handle.
 
 
 
@@ -180,9 +180,9 @@ Every recurrence is given with a set of \f$ k \f$
 <EM>initial conditions</EM> \f$ x_0 \f$, \f$ x_1 \f$, \f$ \dots \f$,
 \f$ x_{k-1} \f$, which we assume to be known: the initial conditions
 allow to uniquely identify the recurrence.
-The initial conditions not yet defined by the user, i.e. again in the
-form \f$ x_k \f$, with \f$ k \in \Nset \f$, are called
-<EM>symbolic initial conditions</EM>.
+The user may define some or all of the initial conditions: those that
+have not been defined will appear symbolically in the explicit form of
+the solution, and will be called <EM>symbolic initial conditions</EM>.
 
 If the coefficients \f$ \alpha_j(n) \f$ are constant with respect to the
 variable \f$ n \f$, for \f$ j = 1, \dots, k \f$, then the recurrence
@@ -199,15 +199,15 @@ bla bla
 
 
 
-\section weighted_average "Weighted-Average" Recurrences
+\section weighted_average ``Weighted-Average'' Recurrences
 
 We consider here a rather different set of recurrences from the previous
 ones, where we allow \f$ x_n \f$ to depend on <EM>all</EM> the previous
 values of \f$ x \f$, and not only the last \f$ k \f$ of them, \f$ k \f$
 being a fixed positive integer.
 
-We call <EM>"Weighted-Average"</EM> recurrences the recurrence in the form
-\anchor general_weighted_average
+We call <EM>``Weighted-Average''</EM> recurrence a recurrence in the
+form \anchor general_weighted_average
 \f[
   x_n = f(n) \sum_{k=0}^{n-1} x_k + g(n),
 \f]
@@ -220,11 +220,11 @@ If \f$ f_k(n) \f$ is constant for each \f$ k = 0, \dotsc, n-1 \f$, then
 the recurrence is called with <EM>constant coefficients</EM>; otherwise
 the recurrence is called with <EM>variable coefficients</EM>.
 
-Sometimes we call this type of recurrence of <EM>infinite order</EM>.
+Sometimes we say that this type of recurrence is of <EM>infinite order</EM>.
 
 We show how to transform any recurrence of this form into a first order
 recurrence with variable coefficients.
-Then, for \f$ n \geq 2 \f$ the sequence \f$ x \f$ also satisfies
+In fact, for \f$ n \geq 2 \f$ the sequence \f$ x \f$ also satisfies
 \f[
   x_n = \alpha(n) x_{n-1} + \beta(n),
 \f]
@@ -252,8 +252,7 @@ that \f$ z_n = x_{n+1} \f$:
 Once this has been solved, PURRS computes \f$ x_n = z_{n-1} \f$ and
 \anchor initial_condition
 then lets \f$ x_1 = f(1) x_0 + g(1) \f$, using the
-\ref general_weighted_average "general formula for the weighted average
- recurrence" with \f$ n = 1 \f$.
+\ref general_weighted_average "general formula for the weighted average recurrence" with \f$ n = 1 \f$.
 It is quite important to remark that the closed formula for \f$ x_n \f$ is
 guaranteed to hold for \f$ n \ge 1 \f$ only.
 
@@ -318,7 +317,7 @@ part.
 
 We call <EM>rank</EM> of a functional equation the number of terms
 of the form \f$ \alpha x \Bigl( \frac n\beta \Bigr) \f$, where \f$ \beta \f$
-is an integer number larger than one.
+is an integer larger than one.
 
 <B>Functional equation of rank \f$ 1 \f$</B>
 
