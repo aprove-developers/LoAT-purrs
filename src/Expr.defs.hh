@@ -654,8 +654,18 @@ public:
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
-  //! function <CODE>x()</CODE>.
+  //! function <CODE>x()</CODE> either with one or two arguments.
   bool is_the_x_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>x()</CODE> with one argument.
+  bool is_the_x1_function() const;
+
+  //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic
+  //! function <CODE>x()</CODE> with two arguments.
+  bool is_the_x2_function() const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is the symbolic

@@ -798,6 +798,20 @@ Expr::is_the_x_function() const {
   return is_ex_the_function(*this, x);
 }
 
+// FIXME: Use underlying GiNaC methods if possible.
+inline bool
+Expr::is_the_x1_function() const {
+  using namespace GiNaC;
+  return is_ex_the_function(*this, x) && ((*this).nops() == 1);
+}
+
+// FIXME: Use underlying GiNaC methods if possible.
+inline bool
+Expr::is_the_x2_function() const {
+  using namespace GiNaC;
+  return is_ex_the_function(*this, x) && ((*this).nops() == 2);
+}
+
 inline bool
 Expr::is_the_floor_function() const {
   using namespace GiNaC;
