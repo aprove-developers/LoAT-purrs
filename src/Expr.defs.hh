@@ -708,6 +708,8 @@ public:
   */
   bool is_rational_function(const Symbol& x) const;
 
+  int size_norm() const;
+
 private:
   friend class Number;
   friend class Symbol;
