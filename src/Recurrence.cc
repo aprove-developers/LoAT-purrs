@@ -587,7 +587,7 @@ substitute_i_c_shifting(bool linear, const Expr& solution_or_bound) const {
 	max_i_c = i->first;
     
     // Shift initial conditions and the index of the recurrence `n'.
-    if (first_well_defined_rhs < max_i_c) {
+    if (first_well_defined_rhs + order_or_rank - 1 < max_i_c) {
       unsigned shift_forward = max_i_c - first_well_defined_rhs;
       sol_or_bound
 	= sol_or_bound.substitute(n, n - (shift_forward - order_or_rank + 1));
