@@ -122,6 +122,8 @@ n	(x(n-1)+x(n-2))*x(n-3)
 n	(x(n-1)+x(n-2))^2
 n	(x(n-1)-a+1)/(2*a-1)
 n	-(n+a-4)*x(n-1)/((n+a)*(n+a-7))
+n	1+sum(k,0,n-1,1/2^(n-1)*binom(n-1,k)*(x(k)+x(n-k)))
+n	1+sum(k,0,n-b,1/2^(n-b)*binom(n-b,k)*(x(k)+x(n-k)))
 n	1+x((n-1)/2)
 n	1+x((n-mod(n,2)))
 n	1+x((n-mod(n,2))/2)
