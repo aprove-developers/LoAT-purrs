@@ -53,6 +53,7 @@ static struct option long_options[] = {
   {"non_linear_finite_order",         no_argument,       0, 'D'},
   {"weighted_average",                no_argument,       0, 'E'},
   {"functional_equation",             no_argument,       0, 'F'},
+  {"rec_to_solve_with_order_reduct",  no_argument,       0, 'O'},
   {"recurrence_to_exactly_solve",     no_argument,       0, 'Y'},
   {"recurrence_to_verify",            no_argument,       0, 'V'},
   {0, 0, 0, 0}
@@ -82,6 +83,11 @@ print_usage() {
     "  -E, --weighted_average                select weighted-average "
                                              "recurrences\n"
     "  -F, --functional_equation             select functional equations\n"
+    "  -O, --rec_to_solve_with_order_reduct  select linear finite order\n"
+                                             "\t\t\t\t\trecurrences with "
+                                             "constant coefficients\n"
+                                             "\t\t\t\t\tsolvable applying "
+                                             "the order reduction method\n" 
     "  -Y, --recurrence_to_exactly_solve     select recurrences marked "
                                              "with `y'\n" 
     "  -V, --recurrence_to_verify            select recurrences marked "
@@ -89,7 +95,7 @@ print_usage() {
        << endl;
 }
 
-#define OPTION_LETTERS "hirvABCDEFYV"
+#define OPTION_LETTERS "hirvABCDEFOYV"
 
 // Interactive mode is on when true.
 static bool interactive = false;
@@ -117,6 +123,10 @@ static bool weighted_average = false;
 
 // Functional equation filter mode is on when true.
 static bool functional_equation = false;
+
+// Recurrences solvable applying the order reduction method
+// filter mode is on when true.
+static bool rec_to_solve_with_order_reduct = false;
 
 // Recurrences marked with `y' filter mode is on when true.
 static bool recurrence_to_exactly_solve = false;
@@ -220,6 +230,10 @@ process_options(int argc, char* argv[]) {
 
     case 'F':
       functional_equation = true;
+      break;
+
+    case 'O':
+      rec_to_solve_with_order_reduct = true;
       break;
 
     case 'Y':
@@ -350,9 +364,13 @@ main(int argc, char *argv[]) try {
     Recurrence rec(rhs);
     Recurrence::Classifier_Status classifier_status
       = rec.classify_and_catch_special_cases();
-    if (classifier_status == Recurrence::CL_SUCCESS)
+    if (classifier_status == Recurrence::CL_SUCCESS) {
       // *** regress test
       if (regress_test) {
+	if (rec_to_solve_with_order_reduct)
+	  if (rec.type_ != Recurrence::LINEAR_FINITE_ORDER_CONST_COEFF
+	      || rec.gcd_among_decrements() == 1)
+	    continue;
 	switch (rec.type_) {
 	case Recurrence::ORDER_ZERO:
 	  if (order_zero)
@@ -360,7 +378,9 @@ main(int argc, char *argv[]) try {
  	      cout << expectations << "\t" << rhs << endl;
 	  break;
 	case Recurrence::LINEAR_FINITE_ORDER_CONST_COEFF:
-	  if (linear_finite_order_const_coeff)
+	  if (linear_finite_order_const_coeff
+	      || (rec_to_solve_with_order_reduct
+		  && rec.gcd_among_decrements() > 1))
  	    if (verbose)
  	      cout << expectations << "\t" << rhs << endl;
 	  break;
@@ -424,6 +444,7 @@ main(int argc, char *argv[]) try {
 	  throw std::runtime_error("PURRS internal error: rr_filter");
 	}
       }
+    }
   }
 }
 catch (exception &p) {
