@@ -58,8 +58,8 @@ using namespace PURRS;
 
 /*!
   Returns <CODE>true</CODE> if \p e is of the form \f$ n - d \f$ with
-  \f$ d \f$ an integer: in this case assign the opposite of \f$ d \f$ to
-  \p decrement.
+  \f$ d \f$ an integer different from \f$ 0 \f$: in this case assign
+  the opposite of \f$ d \f$ to \p decrement.
   Returns <CODE>false</CODE> otherwise.
 */
 bool
@@ -80,6 +80,26 @@ get_constant_decrement(const Expr& e, Number& decrement) {
       decrement = -i;
       return true;
     }
+  }
+  return false;
+}
+
+bool
+has_constant_decrement(const Expr& e) {
+  if (e.is_a_add() && e.nops() == 2) {
+    // `e' is of the form a+b.
+    const Expr& a = e.op(0);
+    const Expr& b = e.op(1); 
+    Expr d;
+    if (a == Recurrence::n)
+      d = b;
+    else if (b == Recurrence::n)
+      d = a;
+    else
+      return false;
+    Number i;
+    if (d.is_a_number(i) && i.is_integer())
+      return true;
   }
   return false;
 }
@@ -290,6 +310,8 @@ find_coeff_x_n_and_remainder(const Expr& e,
   If the recurrence is solvable, it is rewritten into its normal form,
   which is then written in \f$ new_rhs \f$, and the function returns
   \f$ 0 \f$.
+  Returns \f$ 3 \f$ in all the other cases for which the recurrence is
+  considered too complex.
 */
 unsigned
 eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
@@ -310,6 +332,8 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
     Expr a = 0;
     Expr b = rhs;
     find_coeff_x_n_and_remainder(rhs, a, b);
+    D_VAR(a);
+    D_VAR(b);
     if (a == 1) {
       // Case 2. and Case 3.
       bool found_x = false;
@@ -317,27 +341,52 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
 	for (unsigned i = b.nops(); i-- > 0; ) {
 	  const Expr& term = b.op(i);
 	  if (term.is_a_mul()) {
-	    for (unsigned j = term.nops(); j-- > 0; )
-	      if (term.op(j).is_the_x_function()) {
-		found_x = true;
-		break;
+	    for (unsigned j = term.nops(); j-- > 0; ) {
+	      const Expr& t_j = term.op(j);
+	      if (t_j.is_the_x_function()) {
+		const Expr& t_j_arg = t_j.arg(0);
+		if (t_j_arg == Recurrence::n 
+		    || has_constant_decrement(t_j_arg)) {
+		  found_x = true;
+		  break;
+		}
+		else
+		  return 3;
 	      }
+	    }
 	  }
 	  else
 	    if (term.is_the_x_function()) {
-	      found_x = true;
-	      break;
+	      const Expr& arg = term.arg(0);
+	      if (arg == Recurrence::n  || has_constant_decrement(arg)) {
+		found_x = true;
+		break;
+	      }
+	      else
+		return 3;
 	    }
 	}
       else if (b.is_a_mul())
 	for (unsigned i = b.nops(); i-- > 0; ) {
-	  if (b.op(i).is_the_x_function()) {
-	    found_x = true;
-	    break;
+	  const Expr& b_i = b.op(i);
+	  if (b_i.is_the_x_function()) {
+	    const Expr& b_i_arg = b_i.arg(0);
+	    if (b_i_arg == Recurrence::n 
+		|| has_constant_decrement(b_i_arg)) {
+	      found_x = true;
+	      break;
+	    }
+	    else
+	      return 3;
 	  }
 	}
-      else if (b.is_the_x_function())
-	found_x = true;
+      else if (b.is_the_x_function()) {
+	const Expr& arg = b.arg(0);
+	if (arg == Recurrence::n  || has_constant_decrement(arg))
+	  found_x = true;
+	else
+	  return 3;
+      }
       // Case 2.
       if (!found_x)
 	return 1;
@@ -923,8 +972,10 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	}
 	else if (result == 1)
 	  status = UNSOLVABLE_RECURRENCE;
-	else
+	else if (result == 2)
 	  status = INDETERMINATE_RECURRENCE;
+	else
+	  return TOO_COMPLEX;
 	exit_anyway = true;
       }
       break;
