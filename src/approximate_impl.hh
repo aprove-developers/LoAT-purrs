@@ -27,7 +27,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Expr.defs.hh"
 #include "Number.defs.hh"
-#include "complint.hh"
 #include <cimath.h>
 #include <cln/rational.h>
 #include <cmath>
