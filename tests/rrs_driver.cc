@@ -498,6 +498,7 @@ set_expectations(const string& s) {
       return;
     switch (c) {
     case 'E':
+    case 'b':
       explodes = true;
       break;
     case 'y':
