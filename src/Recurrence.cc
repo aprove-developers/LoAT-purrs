@@ -553,48 +553,61 @@ compute_infinite_order_recurrence(Expr& solution) const {
   D_MSG("compute_linear_infinite_order_recurrence");
   // At the moment we consider only recurrences of infinite order
   // transformable in first order recurrences.
-  std::vector<Expr> coefficients(2);
-  // Shift forward `n -> n + 1' the coefficient.
-  coefficients[1] = coeff_first_order().substitute(n, n+1);
-  Recurrence rec_rewritten(rhs_transformed_in_first_order());
-  // It is not necessary to repeat the classification's process
-  // because we already know the order, the coefficients and the
-  // inhomogeneous term.
-  rec_rewritten.finite_order_p = new Finite_Order_Info(1, coefficients, 1);
-  if (coeff_first_order().has(n))
-    rec_rewritten.set_type(LINEAR_FINITE_ORDER_VAR_COEFF);
-  else
-    rec_rewritten.set_type(LINEAR_FINITE_ORDER_CONST_COEFF);
-  // Shift forward `n -> n + 1' the inhomogeneous term.
-  rec_rewritten.set_inhomogeneous_term(inhomog_first_order()
-				       .substitute(n, n+1));
-  Solver_Status status;
-  if ((status = rec_rewritten.solve_linear_finite_order())
-      == SUCCESS) {
-    solution = rec_rewritten.exact_solution_.expression();
-    // Shift backward: n -> n - 1.
-    solution = solution.substitute(n, n - 1);
-    solution = solution
-      .substitute(x(rec_rewritten.first_well_defined_rhs_linear()),
-		  x(rec_rewritten.first_well_defined_rhs_linear()+1));
-    // If there is the initial condition `x(1)' specified then
-    // the system substitute it with the respective value; otherwise
-    // the system does the substitution `x(1) = 2*x(0)+1' where the
-    // value `2*x(0)+1' is returned by `value_of_first_element()'.
-    // FIXME: At the moment we substitute here only the initial
-    // condition `x(1)'.
-    std::map<unsigned, Expr>::const_iterator i = initial_conditions.find(1);
-    if (i != initial_conditions.end())
-      solution = solution.substitute(x(1), get_initial_condition(1));
-    else
-      solution = solution
-	.substitute(x(rec_rewritten.first_well_defined_rhs_linear()+1),
-		    value_of_first_element());
-    //	solution = simplify_ex_for_output(solution, false);
+  if (weight_inf_order() == -1) {
+    // Special case: the recurrence of infinite order starting
+    // from which we have found the components of the linear recurrence
+    // of finite order was of the form `x(n) = f(n) sum(k,0,n-1,x(k)) + g(n)'
+    // with `f(n) = -1'. In this case the solution of the recurrence
+    // is simply `x(n) = g(n) - g(n-1)' and is not necessary all the normal
+    // procedure.
+    solution
+      = inhomogeneous_term - inhomogeneous_term.substitute(n, n-1).expand();
     return SUCCESS;
   }
-  else
-    return status;
+  else {
+    std::vector<Expr> coefficients(2);
+    // Shift forward `n -> n + 1' the coefficient.
+    coefficients[1] = coeff_first_order().substitute(n, n+1);
+    Recurrence rec_rewritten(rhs_transformed_in_first_order());
+    // It is not necessary to repeat the classification's process
+    // because we already know the order, the coefficients and the
+    // inhomogeneous term.
+    rec_rewritten.finite_order_p = new Finite_Order_Info(1, coefficients, 1);
+    if (coeff_first_order().has(n))
+      rec_rewritten.set_type(LINEAR_FINITE_ORDER_VAR_COEFF);
+    else
+      rec_rewritten.set_type(LINEAR_FINITE_ORDER_CONST_COEFF);
+    // Shift forward `n -> n + 1' the inhomogeneous term.
+    rec_rewritten.set_inhomogeneous_term(inhomog_first_order()
+					 .substitute(n, n+1));
+    Solver_Status status;
+    if ((status = rec_rewritten.solve_linear_finite_order())
+	== SUCCESS) {
+      solution = rec_rewritten.exact_solution_.expression();
+      // Shift backward: n -> n - 1.
+      solution = solution.substitute(n, n - 1);
+      solution = solution
+	.substitute(x(rec_rewritten.first_well_defined_rhs_linear()),
+		    x(rec_rewritten.first_well_defined_rhs_linear()+1));
+      // If there is the initial condition `x(1)' specified then
+      // the system substitute it with the respective value; otherwise
+      // the system does the substitution `x(1) = 2*x(0)+1'.
+      // FIXME: At the moment we substitute here only the initial
+      // condition `x(1)'.
+      std::map<unsigned, Expr>::const_iterator i = initial_conditions.find(1);
+      if (i != initial_conditions.end())
+	solution = solution.substitute(x(1), get_initial_condition(1));
+      else
+	solution = solution
+	  .substitute(x(rec_rewritten.first_well_defined_rhs_linear()+1),
+		      (weight_inf_order()*x(0)+inhomogeneous_term)
+		      .substitute(n, 1));
+      //	solution = simplify_ex_for_output(solution, false);
+      return SUCCESS;
+    }
+    else
+      return status;
+  }
 }
 
 //! \brief
