@@ -690,6 +690,14 @@ compute_special_solution(const Expr& homo_rhs, const index_type order_rec,
   // the original recurrence if, and only if, `diff' is the zero polynomial.
   diff = diff.expand();
 
+  // FIXME: We need to explicitly simplify diff otherwise it will not be
+  // recognized as a polynomial. But remove the unneeded simplifications
+  // from below.
+  diff = simplify_ex_for_output(diff, false);
+  diff = simplify_binomials_factorials_exponentials(diff);
+  diff = simplify_logarithm(diff);
+  diff = diff.expand();
+
   // Set up a system of `deg + 1' unknowns, forcing all coefficients
   // of the polynomial `diff' to vanish.
   Expr_List equations;
