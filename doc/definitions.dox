@@ -163,6 +163,13 @@ recurrences that the system is able to handle.
 We call <EM>first valid index</EM> the least non-negative integer
 \f$ j \f$ such that the recurrence is well-defined for \f$ n \geq j \f$.
 
+\anchor first_valid_index_for_solution
+<B>First valid index for solution</B>
+
+We call <EM>first valid index for solution</EM> the least non-negative integer
+\f$ j \f$ such that the solution (or the approximation) of the recurrence
+is valid for \f$ n \geq j \f$.
+
 
 \section linear_finite_order Linear Recurrences of Finite Order
 
