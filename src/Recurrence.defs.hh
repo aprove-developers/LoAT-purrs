@@ -1323,12 +1323,15 @@ private:
   //! Returns the coefficients of the linear finite order recurrence.
   std::vector<Expr>& coefficients();
 
+  // FIXME: this public section is temporary.
+public:
   //! \brief
   //! Returns the greatest common divisor among the decrements \f$ k \f$
   //! of the terms \f$ x(n-k) \f$ of a linear finite order recurrence.
   //! Returns \f$ 0 \f$ if the order of the recurrence is \f$ 0 \f$.
   unsigned int gcd_among_decrements() const;
 
+private:
   //! \brief
   //! Returns the expression \f$ \prod_{i}^n a(k)\f$,
   //! where \f$ i \f$ is the \ref first_valid_index "first valid index"
