@@ -254,12 +254,15 @@ private:
   //! \brief
   //! Returns the positive integers \f$ d \f$ of the \f$ x(n - d) \f$
   //! contained in the right hand side of the finite order recurrence.  
-  std::vector<unsigned> get_decrements() const;
+  const std::vector<unsigned>& get_decrements() const;
 
   //! \brief
   //! Returns the initial conditions associated to the finite order
   //! recurrence.
-  std::vector<unsigned> get_initial_conditions() const;
+  const std::vector<unsigned>& get_initial_conditions() const;
+
+  //! Returns the coefficients of the finite order recurrence.
+  const std::vector<Expr>& get_coefficients() const;
 
   mutable bool solved;
 
