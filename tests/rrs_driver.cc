@@ -56,7 +56,7 @@ print_usage() {
   cerr << "Usage: " << program_name << " [OPTION]...\n\n"
     "  -h, --help              prints this help text\n"
     "  -i, --interactive       sets interactive mode on\n"
-    "  -r, --regress-test      sets regression-testing mode on"
+    "  -r, --regress-test      sets regression-testing mode on\n"
     "  -v, --verbose           be verbose"
        << endl;
 }
