@@ -1103,6 +1103,20 @@ rewrite_factorials_and_exponentials(const Expr& e) {
       e_rewritten *= rewrite_factorials_and_exponentials(e.op(i));
   }
   else if (e.is_a_power()) {
+    // In nested powers swap exponents when convenient. 
+    // Simplify ((-1)^n)^2 into ((-1)^2)^n and such.
+    if (e.arg(0).is_a_power() && e.arg(0).arg(0).is_a_number()
+	&& !e.arg(0).arg(1).is_a_number() && e.arg(1).is_a_number()) {
+      D_MSGVAR("Simplify: base ", e.arg(0));
+      D_MSGVAR("Simplify: exp ", e.arg(1));
+      e_rewritten = pwr(pwr(rewrite_factorials_and_exponentials(e.arg(0).arg(0)),
+			    rewrite_factorials_and_exponentials(e.arg(1))),
+			rewrite_factorials_and_exponentials(e.arg(0).arg(1)));
+      D_MSGVAR("Rewritten: ", e_rewritten);
+      // Avoid loops.
+      if (!e_rewritten.is_a_power() || !e_rewritten.arg(0).is_a_power())
+	return rewrite_factorials_and_exponentials(e_rewritten);
+    }
     e_rewritten = pwr(rewrite_factorials_and_exponentials(e.arg(0)),
 		      rewrite_factorials_and_exponentials(e.arg(1)));
     if (e_rewritten.is_a_power() && e_rewritten.arg(1).is_a_add())
