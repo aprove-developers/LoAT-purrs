@@ -37,9 +37,11 @@ class Finite_Order_Info {
 public:
   //! \brief
   //! Constructor: sets \f$ order_ = k \f$,
-  //! \f$ first_initial_condition_ = i_c \f$, and
-  //! \f$ coefficients_ = coeffs \f$.
-  Finite_Order_Info(int k, unsigned i_c, const std::vector<Expr>& coeffs);
+  //! \f$ first_initial_condition_ = i_c \f$,
+  //! \f$ coefficients_ = coeffs \f$ and
+  //! \f$ gcd_among_decrements_ = gcd \f$.
+  Finite_Order_Info(int k, unsigned i_c, const std::vector<Expr>& coeffs,
+		    unsigned gcd);
 
   //! Copy-constructor.
   Finite_Order_Info(const Finite_Order_Info& y);
@@ -71,6 +73,12 @@ public:
   //! Returns <CODE>coefficients_</CODE>.
   std::vector<Expr>& coefficients();
 
+  //! Returns <CODE>gcd_among_decrements_</CODE>.
+  unsigned gcd_among_decrements() const;
+
+  //! Returns <CODE>gcd_among_decrements_</CODE>.
+  unsigned& gcd_among_decrements();
+
 private:
   //! The order of the recurrence. 
   unsigned int order_;
@@ -83,6 +91,7 @@ private:
   //! Stores the coefficients of the recurrence.
   std::vector<Expr> coefficients_;
 
+  unsigned gcd_among_decrements_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

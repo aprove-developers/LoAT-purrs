@@ -95,11 +95,14 @@ compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
 
 Expr
 rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
-				 int gcd_among_decrements);
+				 unsigned gcd_among_decrements,
+				 const std::vector<Expr>& coefficients,
+				 std::vector<Expr>& new_coefficients,
+				 Expr& inhomogeneous);
 
 Expr 
 come_back_to_original_variable(const Expr& e, const Symbol& r, const Expr& m,
-			       int gcd_among_decrements);
+			       unsigned gcd_among_decrements);
 
 void
 substitute_non_rational_roots(const Recurrence& rec,

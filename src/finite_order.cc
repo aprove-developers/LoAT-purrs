@@ -128,8 +128,8 @@ return_sum(bool distinct, const Number& order, const Expr& coeff,
 }
 
 Expr
-rewrite_factor(const Expr& e, const Symbol& r, int gcd_among_decrements) {
-  if (e.is_a_power())
+rewrite_factor(const Expr& e, const Symbol& r, unsigned gcd_among_decrements) {
+  if (e.is_a_power())    
     return pwr(rewrite_factor(e.arg(0), r, gcd_among_decrements),
 	       rewrite_factor(e.arg(1), r, gcd_among_decrements));
   else if (e.is_a_function())
@@ -161,7 +161,7 @@ rewrite_factor(const Expr& e, const Symbol& r, int gcd_among_decrements) {
   ...
 */
 Expr
-rewrite_term(const Expr& e, const Symbol& r, int gcd_among_decrements) {
+rewrite_term(const Expr& e, const Symbol& r, unsigned gcd_among_decrements) {
   unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
   Expr e_rewritten = 1;
   if (num_factors > 1)
@@ -614,7 +614,10 @@ compute_sum_with_gosper_algorithm(const Number& lower, const Expr& upper,
 */
 PURRS::Expr
 PURRS::rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
-					int gcd_among_decrements) {
+					unsigned gcd_among_decrements,
+					const std::vector<Expr>& coefficients,
+					std::vector<Expr>& new_coefficients,
+					Expr& inhomogeneous) {
   unsigned num_summands = e.is_a_add() ? e.nops() : 1;
   Expr e_rewritten = 0;
   if (num_summands > 1)
@@ -622,6 +625,23 @@ PURRS::rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
       e_rewritten += rewrite_term(e.op(i), r, gcd_among_decrements);
   else
     e_rewritten = rewrite_term(e, r, gcd_among_decrements);
+  
+  // Find the non-homogeneous term of the new right hand side found.
+  if (e_rewritten.is_a_add())
+    for (unsigned i = e_rewritten.nops(); i-- > 0; ) {
+      if (!e_rewritten.op(i).has_x_function(false, Recurrence::n))
+	inhomogeneous += e_rewritten.op(i);
+    }
+  else
+    if (!e_rewritten.has_x_function(false, Recurrence::n))
+      inhomogeneous = e_rewritten;
+  
+  // Find the coefficients of the reduced order recurrence.
+  for (unsigned i = coefficients.size(); i-- > 0; )
+    // FIXME: !!!
+    if (mod(Number(i), Number(gcd_among_decrements)) == 0)
+      new_coefficients[i / gcd_among_decrements] = coefficients[i];
+  
   return e_rewritten;
 }
 
@@ -630,7 +650,8 @@ PURRS::rewrite_reduced_order_recurrence(const Expr& e, const Symbol& r,
 */
 PURRS::Expr 
 PURRS::come_back_to_original_variable(const Expr& e, const Symbol& r,
-				      const Expr& m, int gcd_among_decrements) {
+				      const Expr& m,
+				      unsigned gcd_among_decrements) {
   Expr e_rewritten;
   if (e.is_a_add()) {
     e_rewritten = 0;
@@ -666,12 +687,62 @@ PURRS::come_back_to_original_variable(const Expr& e, const Symbol& r,
     }
   else if (e == Recurrence::n)
     return Number(1, gcd_among_decrements) * (Recurrence::n - m);
-  else if (e == r) {
+  else if (e == r)
     return m;
-  }
   else
     return e;
   return e_rewritten;
+}
+
+/*!
+  Returns the expanded solution of the recurrence \p rec
+  to which we have applied the order reduction.
+  The expansion of the solution is obtained removing the use of the
+  function \f$ mod() \f$ from the solution.
+*/
+PURRS::Expr
+PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
+					   unsigned gcd_among_decrements) {
+  // We first rewrite the part of the solution depending on the initial
+  // conditions.
+  Expr part_depending_on_ic = 0;
+  Expr theta = 2*Constant::Pi/gcd_among_decrements;
+  for (unsigned i = gcd_among_decrements; i-- > 0; ) {
+    Expr tmp = 0;
+    for (unsigned j = gcd_among_decrements+1; j-- > 1; ) {	  
+      Expr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
+      tmp += pwr(root_of_unity, Recurrence::n - i);
+    }
+    tmp *= rec.get_initial_condition(i) * 1/gcd_among_decrements;
+    part_depending_on_ic += tmp;
+  }
+  part_depending_on_ic = simplify_ex_for_input(part_depending_on_ic, true);
+  D_VAR(part_depending_on_ic);
+  
+  // Now we rewrite the part of the solution not depending on the initial
+  // conditions.
+  Expr to_sub_in_solution = 0;
+  for (unsigned j = gcd_among_decrements+1; j-- > 1; ) {
+    Expr root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
+    // Skip the contribution of the root of unity equal to `1'.
+    if (root_of_unity != 1)
+      to_sub_in_solution += root_of_unity * pwr(1 - root_of_unity, -1)
+	* pwr(root_of_unity, Recurrence::n);
+  }
+  // Add the contribution of the root of unity equal to `1'.
+  to_sub_in_solution += Number(1, 2) * (gcd_among_decrements - 1);
+  Expr remainder_solution = 0;
+  if (rec.exact_solution_.expression().is_a_add()) {
+    for (unsigned i = rec.exact_solution_.expression().nops(); i-- > 0; )
+      if (!rec.exact_solution_.expression().op(i).has_x_function(true))
+	remainder_solution += rec.exact_solution_.expression().op(i);
+  }
+  remainder_solution
+    = remainder_solution.substitute(mod(n, gcd_among_decrements),
+				    to_sub_in_solution);
+  D_VAR(remainder_solution);
+  return simplify_ex_for_output(part_depending_on_ic + remainder_solution,
+				false);
 }
 
 /*!

@@ -37,7 +37,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Number.defs.hh"
 #include "Finite_Order_Info.defs.hh"
 #include "Functional_Equation_Info.defs.hh"
-#include "Order_Reduction_Info.defs.hh"
 #include "Recurrence.defs.hh"
 
 #include <climits>
@@ -823,8 +822,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
   <CODE>HAS_NON_INTEGER_DECREMENT</CODE>, <CODE>TOO_COMPLEX</CODE>.
 */
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::classification_recurrence(const Expr& rhs,
-					     int& gcd_among_decrements) const {
+PURRS::Recurrence::classification_recurrence(const Expr& rhs) const {
   // Check if the inhomogeneous term contains non rational numbers.
   if (rhs.has_non_rational_numbers())
     return MALFORMED_RECURRENCE;
@@ -843,6 +841,10 @@ PURRS::Recurrence::classification_recurrence(const Expr& rhs,
   unsigned int order = 0;
   // We will store here the coefficients of linear part of the recurrence.
   std::vector<Expr> coefficients;
+  // We will store here the greatest common denominator among the decrements
+  // `d' of the terms `x(n-d)' contained in the linear part of the
+  // recurrence.
+  int gcd_among_decrements = 0;
 
   // We will store here the coefficient of the functional equation
   // `x(n) = a x(n/b) + d n^e'.
@@ -885,7 +887,8 @@ PURRS::Recurrence::classification_recurrence(const Expr& rhs,
       set_order_zero();
 
   if (is_linear_finite_order())
-    finite_order_p = new Finite_Order_Info(order, 0, coefficients);
+    finite_order_p = new Finite_Order_Info(order, 0, coefficients,
+					   gcd_among_decrements);
   else if (is_functional_equation())
     functional_eq_p = new Functional_Equation_Info(coefficient, divisor_arg);
   
@@ -900,49 +903,23 @@ PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classify() const {
   D_VAR(recurrence_rhs);
   // Simplifies expanded expressions, in particular rewrites nested powers.
-  Expr rhs = simplify_ex_for_input(recurrence_rhs, true);
-  D_VAR(rhs);
-
-  // We will store here the greatest common denominator among the decrements
-  // `d' of the terms `x(n-d)' contained in the linear part of the
-  // recurrence.
-  int gcd_among_decrements = 0;
+  recurrence_rhs = simplify_ex_for_input(recurrence_rhs, true);
 
   Solver_Status status;
 
   // The function `classification_recurrence()' returns `SUCCESS' if
   // is the order is finite or if is the case of functional equation.
-  if ((status = classification_recurrence(rhs, gcd_among_decrements))
+  if ((status = classification_recurrence(recurrence_rhs))
       != SUCCESS)
     return status;
   assert(is_linear_finite_order() || is_functional_equation()
 	 || is_non_linear_finite_order());
 
-  D_VAR(gcd_among_decrements);
-  if (finite_order_p != 0)
-    // If the greatest common divisor among the decrements is greater than one,
-    // the order reduction is applicable.
-    // FIXME: the order reduction is for the moment applied only to
-    // recurrences with constant coefficients because the recurrences
-    // with variable coefficients are not allowed with parameters.
-    if (gcd_among_decrements > 1 && is_linear_finite_order_const_coeff()) {
-      recurrence_rhs_rewritten = true;
-      Symbol r = insert_auxiliary_definition(mod(n, gcd_among_decrements));
-      order_reduction_p
-	= new Order_Reduction_Info(rhs, gcd_among_decrements, r);
-      // Build the new recurrence substituting `n' not contained in the
-      // `x' functions with `gcd_among_decrements * n + r' and `x(n-k)' with
-      // `x(n - k / gcd_among_decrements)'.
-      recurrence_rhs = rewrite_reduced_order_recurrence(rhs, r,
-							gcd_among_decrements);
-      status = classify();
-    }
-
   if (is_non_linear_finite_order()) {
     Expr new_rhs;
     Expr base;
     std::vector<Symbol> auxiliary_symbols;
-    if (rewrite_non_linear_recurrence(*this, rhs, new_rhs, base,
+    if (rewrite_non_linear_recurrence(*this, recurrence_rhs, new_rhs, base,
 				      auxiliary_symbols)) {
       set_unknown();
       recurrence_rhs_rewritten = true;

@@ -27,7 +27,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Recurrence.types.hh"
 #include "Cached_Expr.defs.hh"
-#include "Order_Reduction_Info.defs.hh"
 #include "Non_Linear_Info.defs.hh"
 #include "Blackboard.defs.hh"
 #include "Finite_Order_Info.defs.hh"
@@ -269,8 +268,7 @@ public:
 private:
   Solver_Status classify() const;
   Solver_Status classify_and_catch_special_cases() const;
-  Solver_Status classification_recurrence(const Expr& rhs,
-					  int& gcd_among_decrements) const;
+  Solver_Status classification_recurrence(const Expr& rhs) const;
   Solver_Status classification_summand(const Expr& r, Expr& e,
 				       std::vector<Expr>& coefficients,
 				       unsigned int& order,
@@ -312,6 +310,8 @@ private:
   //! in the case there are null or negative decrements or if has been applied
   //! the order reduction; it is <CODE>false</CODE> in all the other cases.
   mutable bool recurrence_rhs_rewritten;
+
+  mutable bool applied_order_reduction;
 
   //! \brief
   //! Stores the inhomogeneous part of \p *this, i. e., those terms
@@ -366,11 +366,15 @@ private:
     FUNCTIONAL_EQUATION
   };
 
-  mutable Type type;
+  mutable Type type_;
   mutable Finite_Order_Info* finite_order_p;
   mutable Functional_Equation_Info* functional_eq_p;
-  mutable Order_Reduction_Info* order_reduction_p;
   mutable Non_Linear_Info* non_linear_p;
+
+  Type type() const;
+  Type& type();
+
+  void set_type(const Type& t) const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if the recurrence's type is unknown;
@@ -457,6 +461,11 @@ private:
   //! Returns the coefficients of the finite order recurrence.
   std::vector<Expr>& coefficients();
 
+  //! 
+  unsigned gcd_among_decrements() const;
+
+  //! 
+  unsigned& gcd_among_decrements();
 
   // Methods to access to private data of `Functional_Equation_Info'.
 
@@ -494,68 +503,6 @@ private:
   //! of a functional equation is a non negative, non decreasing function.
   void set_applicability_condition(unsigned c) const;
 
-
-  // Method to access to private data of `Order_Reduction_Info'.
-
-  //! \brief
-  //! Stores the value of the <CODE>recurrence_rhs</CODE> before
-  //! to apply the order reduction.
-  Expr old_recurrence_rhs() const;
-
-  //! \brief
-  //! Stores the value of the <CODE>recurrence_rhs</CODE> before
-  //! to apply the order reduction.
-  Expr& old_recurrence_rhs();
-
-  //! \brief
-  //! Stores the greatest common divisor among the decrements
-  //! <CODE>d</CODE> of the terms <CODE>x(n-d)</CODE> present in the
-  //! right hand side of the recurrence before to apply the order reduction.
-  unsigned gcd_decrements_old_rhs() const;
-
-  //! \brief
-  //! Stores the greatest common divisor among the decrements
-  //! <CODE>d</CODE> of the terms <CODE>x(n-d)</CODE> present in the
-  //! right hand side of the recurrence before to apply the order reduction.
-  unsigned& gcd_decrements_old_rhs();
-
-  //! \brief
-  //! Sets to \p g the greatest common divisor among the decrements
-  //! <CODE>d</CODE> of the terms <CODE>x(n-d)</CODE> present in the
-  //! right hand side of the recurrence before to apply the order reduction.
-  void set_gcd_decrements_old_rhs(unsigned g) const;
-
-  //! \brief
-  //! Stores the auxiliary symbol used in place of the function
-  //! \f$ mod() \f$.
-  Symbol symbol_for_mod() const;
-
-  //! \brief
-  //! Stores the auxiliary symbol used in place of the function
-  //! \f$ mod() \f$.
-  Symbol& symbol_for_mod();
-  
-  //! Stores the solution of the reduced order recurrence.
-  Expr solution_order_reduced() const;
-
-  //! Stores the solution of the reduced order recurrence.
-  Expr& solution_order_reduced();
-
-  //! Sets to \p e the solution of the reduced order recurrence.
-  void set_solution_order_reduced(const Expr& e) const;
-
-  //! \brief
-  //! If \p verified_one_time_ is true means that the system will
-  //! try to verify the non-reduced recurrence; if \p verified_one_time_
-  //! is false then the system will verify only the reduced recurrence.
-  bool verified_one_time() const;
-
-  //! \brief
-  //! If \p verified_one_time_ is true means that the system will
-  //! try to verify the non-reduced recurrence; if \p verified_one_time_
-  //! is false then the system will verify only the reduced recurrence.
-  void not_verified_one_time() const; 
-  
 
   // Method to access to private data of `Non_Linear_Info'.
 
@@ -613,7 +560,8 @@ private:
   compute_order(const Number& decrement, unsigned int& order,
 		unsigned long& index, unsigned long max_size);
   static Expr
-  write_expanded_solution(const Recurrence& rec);
+  write_expanded_solution(const Recurrence& rec,
+			  unsigned gcd_among_decrements);
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

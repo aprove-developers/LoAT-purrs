@@ -35,11 +35,11 @@ inline
 Recurrence::Recurrence()
   : recurrence_rhs(0),
     recurrence_rhs_rewritten(false),
+    applied_order_reduction(false),
     inhomogeneous_term(0),
-    type(ORDER_ZERO),
+    type_(ORDER_ZERO),
     finite_order_p(0),
     functional_eq_p(0),
-    order_reduction_p(0),
     non_linear_p(0),
     tested_exact_solution(false) {
 }
@@ -48,11 +48,11 @@ inline
 Recurrence::Recurrence(const Expr& e)
   : recurrence_rhs(e),
     recurrence_rhs_rewritten(false),
+    applied_order_reduction(false),
     inhomogeneous_term(0),
-    type(UNKNOWN),
+    type_(UNKNOWN),
     finite_order_p(0),
     functional_eq_p(0),
-    order_reduction_p(0),
     non_linear_p(0),
     tested_exact_solution(false) {
 }
@@ -61,12 +61,12 @@ inline
 Recurrence::Recurrence(const Recurrence& y)
   : recurrence_rhs(y.recurrence_rhs),
     recurrence_rhs_rewritten(y.recurrence_rhs_rewritten),
+    applied_order_reduction(y.applied_order_reduction),
     inhomogeneous_term(y.inhomogeneous_term),
     system_rhs(y.system_rhs),
-    type(y.type),
+    type_(y.type_),
     finite_order_p(y.finite_order_p),
     functional_eq_p(y.functional_eq_p),    
-    order_reduction_p(y.order_reduction_p),
     non_linear_p(y.non_linear_p),
     exact_solution_(y.exact_solution_),
     lower_bound_(y.lower_bound_),
@@ -78,7 +78,6 @@ inline
 Recurrence::~Recurrence() {
   delete finite_order_p;
   delete functional_eq_p;
-  delete order_reduction_p;
   delete non_linear_p;
 }
 
@@ -86,12 +85,12 @@ inline Recurrence&
 Recurrence::operator=(const Recurrence& y) {
   recurrence_rhs = y.recurrence_rhs;
   recurrence_rhs_rewritten = y.recurrence_rhs_rewritten;
+  applied_order_reduction = y.applied_order_reduction;
   inhomogeneous_term = y.inhomogeneous_term;
   system_rhs = y.system_rhs;
-  type = y.type;
+  type_ = y.type_;
   finite_order_p = y.finite_order_p;
   functional_eq_p = y.functional_eq_p;
-  order_reduction_p = y.order_reduction_p;
   non_linear_p = y.non_linear_p;
   exact_solution_ = y.exact_solution_;
   lower_bound_ = y.lower_bound_;
@@ -150,141 +149,149 @@ Recurrence::set_inhomogeneous_term(const Expr& e) const {
   inhomogeneous_term = e;
 }
 
+inline Recurrence::Type
+Recurrence::type() const {
+  return type_;
+}
+
+inline Recurrence::Type&
+Recurrence::type() {
+  return type_;
+}
+
+inline void
+Recurrence::set_type(const Type& t) const {
+  type_ = t;
+}
+
 inline bool
 Recurrence::is_unknown() const {
-  return type == UNKNOWN;
+  return type_ == UNKNOWN;
 }
 
 inline void
 Recurrence::set_unknown() const {
-  type = UNKNOWN; 
+  type_ = UNKNOWN; 
 }
 
 inline bool
 Recurrence::is_order_zero() const {
-  return type == ORDER_ZERO; 
+  return type_ == ORDER_ZERO; 
 }
 
 inline void
 Recurrence::set_order_zero() const {
-  type = ORDER_ZERO; 
+  type_ = ORDER_ZERO; 
 }
 
 inline bool
 Recurrence::is_linear_finite_order_const_coeff() const {
-  return type == LINEAR_FINITE_ORDER_CONST_COEFF;
+  return type_ == LINEAR_FINITE_ORDER_CONST_COEFF;
 }
 
 inline void
 Recurrence::set_linear_finite_order_const_coeff() const {
-  type = LINEAR_FINITE_ORDER_CONST_COEFF;
+  type_ = LINEAR_FINITE_ORDER_CONST_COEFF;
 }
 
 inline bool
 Recurrence::is_linear_finite_order_var_coeff() const {
-  return type == LINEAR_FINITE_ORDER_VAR_COEFF;
+  return type_ == LINEAR_FINITE_ORDER_VAR_COEFF;
 }
 
 inline void
 Recurrence::set_linear_finite_order_var_coeff() const {
-  type = LINEAR_FINITE_ORDER_VAR_COEFF;
+  type_ = LINEAR_FINITE_ORDER_VAR_COEFF;
 }
 
 inline bool
 Recurrence::is_linear_finite_order() const {
-  return (type == ORDER_ZERO
-	  || type == LINEAR_FINITE_ORDER_CONST_COEFF
-	  || type == LINEAR_FINITE_ORDER_VAR_COEFF);
+  return (type_ == ORDER_ZERO
+	  || type_ == LINEAR_FINITE_ORDER_CONST_COEFF
+	  || type_ == LINEAR_FINITE_ORDER_VAR_COEFF);
 }
 
 inline bool
 Recurrence::is_non_linear_finite_order() const {
-  return type == NON_LINEAR_FINITE_ORDER;
+  return type_ == NON_LINEAR_FINITE_ORDER;
 }
 
 inline void
 Recurrence::set_non_linear_finite_order() const {
-  type = NON_LINEAR_FINITE_ORDER;
+  type_ = NON_LINEAR_FINITE_ORDER;
 }
 
 inline bool
 Recurrence::is_functional_equation() const {
-  return type == FUNCTIONAL_EQUATION;
+  return type_ == FUNCTIONAL_EQUATION;
 }
 
 inline void
 Recurrence::set_functional_equation() const {
-  type = FUNCTIONAL_EQUATION;
+  type_ = FUNCTIONAL_EQUATION;
 }
 
 inline unsigned int
 Recurrence::order() const {
-  assert(is_order_zero()
-	 || is_linear_finite_order_const_coeff()
-	 || is_linear_finite_order_var_coeff()
-	 || is_non_linear_finite_order());
+  assert(is_linear_finite_order());
   assert(finite_order_p);
   return finite_order_p -> order();
 }
 
 inline unsigned int&
 Recurrence::order() {
-  assert(is_order_zero()
-	 || is_linear_finite_order_const_coeff()
-	 || is_linear_finite_order_var_coeff()
-	 || is_non_linear_finite_order());
+  assert(is_linear_finite_order());
   assert(finite_order_p);
   return finite_order_p -> order();
 }
 
 inline unsigned
 Recurrence::first_initial_condition() const {
-  assert(is_order_zero()
-	 || is_linear_finite_order_const_coeff()
-	 || is_linear_finite_order_var_coeff()
-	 || is_non_linear_finite_order());
+  assert(is_linear_finite_order());
   assert(finite_order_p);
   return finite_order_p -> first_initial_condition();
 }
 
 inline unsigned&
 Recurrence::first_initial_condition() {
-  assert(is_order_zero()
-	 || is_linear_finite_order_const_coeff()
-	 || is_linear_finite_order_var_coeff()
-	 || is_non_linear_finite_order());
+  assert(is_linear_finite_order());
   assert(finite_order_p);
   return finite_order_p -> first_initial_condition();
 }
 
 inline void
 Recurrence::set_first_initial_condition(unsigned i_c) const {
-  assert(is_order_zero()
-	 || is_linear_finite_order_const_coeff()
-	 || is_linear_finite_order_var_coeff()
-	 || is_non_linear_finite_order());
+  assert(is_linear_finite_order());
   assert(finite_order_p);
   finite_order_p -> set_first_initial_condition(i_c);
 }
 
 inline const std::vector<Expr>&
 Recurrence::coefficients() const {
-  assert(is_order_zero()
-	 || is_linear_finite_order_const_coeff()
-	 || is_linear_finite_order_var_coeff()
-	 || is_non_linear_finite_order());
+  assert(is_linear_finite_order());
   assert(finite_order_p);
   return finite_order_p -> coefficients();
 }
 
 inline std::vector<Expr>&
 Recurrence::coefficients() {
-  assert(is_order_zero()
-	 || is_linear_finite_order_const_coeff()
-	 || is_linear_finite_order_var_coeff()
-	 || is_non_linear_finite_order());
+  assert(is_linear_finite_order());
   assert(finite_order_p);
   return finite_order_p -> coefficients();
+}
+
+inline unsigned
+Recurrence::gcd_among_decrements() const {
+  assert(is_linear_finite_order());
+  assert(finite_order_p);
+  return finite_order_p -> gcd_among_decrements();
+}
+
+inline unsigned&
+Recurrence::gcd_among_decrements() {
+  assert(is_linear_finite_order());
+  assert(finite_order_p);
+  return finite_order_p -> gcd_among_decrements();
 }
 
 inline Expr
@@ -334,77 +341,6 @@ Recurrence::set_applicability_condition(unsigned c) const {
   assert(is_functional_equation());
   assert(functional_eq_p);
   return functional_eq_p -> set_applicability_condition(c);
-}
-
-inline Expr
-Recurrence::old_recurrence_rhs() const {
-  assert(order_reduction_p);
-  return order_reduction_p -> old_recurrence_rhs();
-}
-
-inline Expr&
-Recurrence::old_recurrence_rhs() {
-  assert(order_reduction_p);
-  return order_reduction_p -> old_recurrence_rhs();
-}
-inline unsigned
-Recurrence::gcd_decrements_old_rhs() const {
-  assert(order_reduction_p);
-  return order_reduction_p -> gcd_decrements_old_rhs();
-}
-
-inline unsigned&
-Recurrence::gcd_decrements_old_rhs() {
-  assert(order_reduction_p);
-  return order_reduction_p -> gcd_decrements_old_rhs();
-}
-
-inline void
-Recurrence::set_gcd_decrements_old_rhs(unsigned g) const {
-  assert(order_reduction_p);
-  return order_reduction_p -> set_gcd_decrements_old_rhs(g);
-}
-
-inline Symbol
-Recurrence::symbol_for_mod() const {
-  assert(order_reduction_p);
-  return order_reduction_p -> symbol_for_mod();
-}
-
-inline Symbol&
-Recurrence::symbol_for_mod() {
-  assert(order_reduction_p);
-  return order_reduction_p -> symbol_for_mod();
-}
-
-inline Expr
-Recurrence::solution_order_reduced() const {
-  assert(order_reduction_p);
-  return order_reduction_p -> solution_order_reduced();
-}
-
-inline Expr&
-Recurrence::solution_order_reduced() {
-  assert(order_reduction_p);
-  return order_reduction_p -> solution_order_reduced();
-}
-
-inline void
-Recurrence::set_solution_order_reduced(const Expr& e) const {
-  assert(order_reduction_p);
-  return order_reduction_p -> set_solution_order_reduced(e);
-}
-
-inline bool
-Recurrence::verified_one_time() const {
-  assert(order_reduction_p);
-  return order_reduction_p -> verified_one_time();
-}
-
-inline void
-Recurrence::not_verified_one_time() const {
-  assert(order_reduction_p);
-  return order_reduction_p -> not_verified_one_time();
 }
 
 inline Expr

@@ -35,7 +35,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include "finite_order.hh"
 #include "Expr.defs.hh"
 #include "Cached_Expr.defs.hh"
-#include "Order_Reduction_Info.defs.hh"
 #include "Non_Linear_Info.defs.hh"
 #include "Blackboard.defs.hh"
 #include <algorithm>
@@ -191,10 +190,6 @@ PURRS::Recurrence::verify_solution() const {
     D_VAR(recurrence_rhs);
     D_VAR(order());
     D_VAR(first_initial_condition());
-    if (order_reduction_p) {
-      D_VAR(old_recurrence_rhs());
-      D_VAR(gcd_decrements_old_rhs());
-    }
 
     if (non_linear_p)
       recurrence_rhs = original_recurrence_rhs();
@@ -208,14 +203,10 @@ PURRS::Recurrence::verify_solution() const {
 	solution_valuated = blackboard.rewrite(solution_valuated);
 	solution_valuated = simplify_all(solution_valuated);
 	D_VAR(solution_valuated);
-	// We have to substitute `first_initial_condition() + i'
-	// in `x(mod(first_initial_condition() + i, gcd))' and, when
-	// `gcd_decrements_old_rhs <= i'
-	// `x(mod(first_initial_condition() + i, gcd))' is equal to
-	// `x(mod(first_initial_condition() + i - gcd, gcd))'.
 	unsigned i_c = first_initial_condition() + i;
-	if (order_reduction_p && gcd_decrements_old_rhs() <= i)
-	  i_c -= gcd_decrements_old_rhs();
+	if (applied_order_reduction)
+	  // FIXME: !!!
+	  i_c = mod(Number(i_c), Number(gcd_among_decrements())).to_unsigned();
 	if (solution_valuated != x(i_c))
 	  return INCONCLUSIVE_VERIFICATION;
       }
@@ -244,27 +235,12 @@ PURRS::Recurrence::verify_solution() const {
       Expr substituted_rhs;
       std::vector<Expr> terms_to_sub(order());
 
-      unsigned gcd_decrements_old;
-      if (order_reduction_p && verified_one_time()) {
-	// We have applied the order reduction in order to solve the
-	// recurrence.
-	substituted_rhs = old_recurrence_rhs();
-	gcd_decrements_old = gcd_decrements_old_rhs();
-      }
-      else {
-	// We have not applied the order reduction in order to solve the
-	// recurrence.
-	substituted_rhs = recurrence_rhs;
-	gcd_decrements_old = 1;
-      }
-	
+      substituted_rhs = recurrence_rhs;
       for (unsigned i = order(); i-- > 0; ) {
 	terms_to_sub[i] = simplify_all(partial_solution.substitute
-				       (n, n - (i + 1)
-					* gcd_decrements_old));
+				       (n, n - (i + 1)));
 	substituted_rhs = substituted_rhs
-	  .substitute(x(n - (i + 1) * gcd_decrements_old),
-		      terms_to_sub[i]);
+	  .substitute(x(n - (i + 1)), terms_to_sub[i]);
       }
       D_VEC(terms_to_sub, 0, terms_to_sub.size()-1);
       D_VAR(substituted_rhs);
@@ -272,14 +248,28 @@ PURRS::Recurrence::verify_solution() const {
       diff = simplify_all(diff);
       D_VAR(diff);
       if (!diff.is_zero())
-	if (order_reduction_p && verified_one_time()) {
-	  not_verified_one_time();
+	if (applied_order_reduction) {
+	  applied_order_reduction = false;
 	  // If we have applied the order reduction and we do not have success
 	  // in the verification of the original recurrence, then we please
-	  // ourselves if is verified the reduced redurrence.
-	  exact_solution_.set_expression(solution_order_reduced());
-	  set_gcd_decrements_old_rhs(0);
-	  return verify_solution();
+	  // ourselves if is verified the reduced recurrence.
+	  Symbol r = insert_auxiliary_definition(mod(n,
+						     gcd_among_decrements()));
+	  unsigned dim = coefficients().size() / gcd_among_decrements() + 1;
+	  std::vector<Expr> new_coefficients(dim);
+	  Expr inhomogeneous = 0;
+	  Recurrence rec_rewritten
+	    (rewrite_reduced_order_recurrence(recurrence_rhs, r,
+					      gcd_among_decrements(),
+					      coefficients(), new_coefficients,
+					      inhomogeneous));
+	  rec_rewritten.finite_order_p
+	    = new Finite_Order_Info(dim - 1, 0, new_coefficients, 1);
+	  rec_rewritten.set_type(type());
+	  rec_rewritten.set_inhomogeneous_term(inhomogeneous);
+	  rec_rewritten.solve_linear_finite_order();
+	  D_VAR(exact_solution_.expression());
+	  return rec_rewritten.verify_solution();
 	}
 	else
 	  return INCONCLUSIVE_VERIFICATION;
@@ -402,6 +392,60 @@ PURRS::Recurrence::compute_exact_solution() const {
   if ((status = classify_and_catch_special_cases()) == SUCCESS) {
     assert(is_linear_finite_order() || is_functional_equation());
     if (is_linear_finite_order()) {
+      // If the greatest common divisor among the decrements is greater
+      // than one, the order reduction is applicable.
+      // FIXME: the order reduction is for the moment applied only to
+      // recurrences with constant coefficients because the recurrences
+      // with variable coefficients are not allowed with parameters.
+      if (gcd_among_decrements() > 1 && is_linear_finite_order_const_coeff()) {
+	applied_order_reduction = true;
+	// Build the new recurrence substituting `n' not contained in the
+	// `x' functions with `gcd_among_decrements * n + r' and `x(n-k)' with
+	// `x(n - k / gcd_among_decrements)'.
+	Symbol r = insert_auxiliary_definition(mod(n, gcd_among_decrements()));
+	unsigned dim = coefficients().size() / gcd_among_decrements() + 1;
+	std::vector<Expr> new_coefficients(dim);
+	Expr inhomogeneous = 0;
+	Recurrence rec_rewritten
+	  (rewrite_reduced_order_recurrence(recurrence_rhs, r,
+					    gcd_among_decrements(),
+					    coefficients(), new_coefficients,
+					    inhomogeneous));
+	rec_rewritten.finite_order_p
+	  = new Finite_Order_Info(dim - 1, 0, new_coefficients, 1);
+	rec_rewritten.set_type(type());
+	rec_rewritten.set_inhomogeneous_term(inhomogeneous);
+	if ((status = rec_rewritten.solve_linear_finite_order()) == SUCCESS) {
+	  // Now we must compute the solution for the original recurrence.
+	  // Perform three substitutions:
+	  // - r                      -> mod(n, gcd_among_decrements);
+	  // - n                      -> 1 / gcd_among_decrements
+	  //                             * (n - mod(n, gcd_among_decrements));
+	  // - x(k), k non-negative integer -> x(mod(n, gcd_among_decrements)).
+	  exact_solution_.set_expression(come_back_to_original_variable
+					 (rec_rewritten
+					  .exact_solution_.expression(), r,
+					  get_auxiliary_definition(r),
+					  gcd_among_decrements()));
+	  // If there are defined initial conditions in the map
+	  // `initial_conditions' then we must to deduce the exact form
+	  // of the solution and substitute to it the defined initial
+	  // conditions.
+	  if (!initial_conditions.empty()) {
+	    exact_solution_.set_expression
+	      (simplify_ex_for_output(exact_solution_.expression(), false));
+	    Expr expanded_solution
+	      = write_expanded_solution(*this, gcd_among_decrements());
+	    exact_solution_.set_expression(expanded_solution);
+	  }
+	  exact_solution_.set_expression
+	    (simplify_ex_for_output(exact_solution_.expression(), false));
+	  lower_bound_.set_expression(exact_solution_.expression());
+	  upper_bound_.set_expression(exact_solution_.expression());
+	  return SUCCESS;
+	}
+      }
+
       if ((status = solve_linear_finite_order()) == SUCCESS) {
 	lower_bound_.set_expression(exact_solution_.expression());
 	upper_bound_.set_expression(exact_solution_.expression());
@@ -490,7 +534,7 @@ PURRS::Recurrence::OK() const {
   using std::cerr;
 #endif
 
-  switch(type) {
+  switch(type_) {
   case UNKNOWN:
   case ORDER_ZERO:
     if (finite_order_p != 0) {

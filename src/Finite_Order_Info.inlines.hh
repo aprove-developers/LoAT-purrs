@@ -32,17 +32,20 @@ namespace Parma_Recurrence_Relation_Solver {
 
 inline
 Finite_Order_Info::Finite_Order_Info(int k, unsigned i_c,
-				     const std::vector<Expr>& coeffs)
+				     const std::vector<Expr>& coeffs,
+				     unsigned gcd)
   : order_(k),
     first_initial_condition_(i_c),
-    coefficients_(coeffs) {
+    coefficients_(coeffs),
+    gcd_among_decrements_(gcd) {
 }
 
 inline
 Finite_Order_Info::Finite_Order_Info(const Finite_Order_Info& y) 
   : order_(y.order_),
     first_initial_condition_(y.first_initial_condition_),
-    coefficients_(y.coefficients_) {
+    coefficients_(y.coefficients_),
+    gcd_among_decrements_(y.gcd_among_decrements_) {
 }
 
 inline
@@ -54,6 +57,7 @@ Finite_Order_Info::operator=(const Finite_Order_Info& y) {
   order_ = y.order_;
   first_initial_condition_ = y.first_initial_condition_;
   coefficients_ = y.coefficients_;
+  gcd_among_decrements_ = y.gcd_among_decrements_;
   return *this;
 }
 
@@ -90,6 +94,16 @@ Finite_Order_Info::coefficients() const {
 inline std::vector<Expr>&
 Finite_Order_Info::coefficients() {
   return coefficients_;
+}
+
+inline unsigned
+Finite_Order_Info::gcd_among_decrements() const {
+  return gcd_among_decrements_;
+}
+
+inline unsigned&
+Finite_Order_Info::gcd_among_decrements() {
+  return gcd_among_decrements_;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver
