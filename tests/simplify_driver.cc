@@ -308,6 +308,7 @@ main(int argc, char *argv[]) try {
     Expr e_simpl_output;
     Expr e_simpl_factorials;
     Expr e_simpl_logarithms;
+    Expr e_simpl_sums;
 
     if (regress_test) {
       // Read the expectations' string and use it.
@@ -329,6 +330,7 @@ main(int argc, char *argv[]) try {
       get_expression(e_simpl_output, symbols);
       get_expression(e_simpl_factorials, symbols);
       get_expression(e_simpl_logarithms, symbols);
+      // get_expression(e_simpl_sums, symbols);
     }
     else
       getline(line, s);
@@ -362,11 +364,13 @@ main(int argc, char *argv[]) try {
     Expr sol_output = simplify_ex_for_output(ex_expanded, false);
     Expr sol_factorials = simplify_binomials_factorials_exponentials(ex);
     Expr sol_logarithms = simplify_logarithm(ex);
+    Expr sol_sums = simplify_collect_sums(ex);
     if (expect_right_simplification) {
       check_and_notify("input", ex, e_simpl_input, sol_input);
       check_and_notify("output", ex, e_simpl_output, sol_output);
       check_and_notify("factorials", ex, e_simpl_factorials, sol_factorials);
       check_and_notify("logarithms", ex, e_simpl_logarithms, sol_logarithms);
+      // check_and_notify("sums", ex, e_simpl_sums, sol_sums);
     }    
     if (interactive) {
       cout << endl;
@@ -378,9 +382,11 @@ main(int argc, char *argv[]) try {
       cout << "Factorials and exponentials' simplifications " << endl;
       cout << sol_factorials << endl << endl;
       cout << "Logarithms' simplifications " << endl;
-      cout << sol_logarithms << endl;
-      cout << endl << "---------------------------------------------"
-	   << endl << endl;
+      cout << sol_logarithms << endl << endl;
+      cout << "Sums simplifications " << endl;
+      cout << sol_sums << endl;
+      cout << "---------------------------------------------"
+	   << endl;
     }
   }
   if (regress_test)
