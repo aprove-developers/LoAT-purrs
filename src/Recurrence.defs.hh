@@ -622,17 +622,27 @@ private:
   Expr& rhs_transformed_in_linear();
 
   //! \brief
-  //! If the rewriting of the non-linear recurrence in a linear
-  //! recurrence has success then this data contains the value that
-  //! will be the logarithm's base or the exponential's base
-  //! used in the rewriting.
+  //! In the case of simple non-linear recurrence of the form
+  //! \f$ c x(n-1)^{\alpha} \f$ contains \f$ c \f$; in all the
+  //! other cases contains \f$ 0 \f$.
+  Number coeff_simple_non_linear_rec() const;
+
+  //! \brief
+  //! In the case of simple non-linear recurrence of the form
+  //! \f$ c x(n-1)^{\alpha} \f$ contains \f$ c \f$; in all the
+  //! other cases contains \f$ 0 \f$.
+  Number& coeff_simple_non_linear_rec();
+
+  //! \brief
+  //! Contains the value that will be the logarithm's base or the
+  //! exponential's base used in the rewriting of the non-linear recurrence
+  //! in the correspondent linear recurrence.
   Expr base_exp_log() const;
 
   //! \brief
-  //! If the rewriting of the non-linear recurrence in a linear
-  //! recurrence has success then this data contains the value that
-  //! will be the logarithm's base or the exponential's base
-  //! used in the rewriting.
+  //! Contains the value that will be the logarithm's base or the
+  //! exponential's base used in the rewriting of the non-linear recurrence
+  //! in the correspondent linear recurrence.
   Expr& base_exp_log();
 
   //! \brief

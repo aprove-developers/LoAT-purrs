@@ -362,6 +362,18 @@ Recurrence::rhs_transformed_in_linear() {
   return non_linear_p -> rhs_transformed_in_linear();
 }
 
+inline Number
+Recurrence::coeff_simple_non_linear_rec() const {
+  assert(non_linear_p);
+  return non_linear_p -> coeff_simple_non_linear_rec();
+}
+
+inline Number&
+Recurrence::coeff_simple_non_linear_rec() {
+  assert(non_linear_p);
+  return non_linear_p -> coeff_simple_non_linear_rec();
+}
+
 inline Expr
 Recurrence::base_exp_log() const {
   assert(non_linear_p);
