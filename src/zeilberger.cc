@@ -471,14 +471,14 @@ parametric_gosper_step_three(const Symbol& m, const std::vector<Symbol>& coeffic
 */
 bool
 PURRS::zeilberger_algorithm(const Expr& F_m_k,
-			    const Symbol& m, const Symbol& k) {
+			    const Symbol& m, const Symbol& k, Expr& solution) {
   Expr p_0_k = 0;
   Expr r_k = 0;
   Expr s_k = 0;
   // FIXME: temporary.
   // We must consider the maximum order for the
   // recurrence ... and, starting from the lower, if the algorithm fails,
-  // increase the order until `order' and to repeat the algorithm.
+  // increase the order until `order' and repeat the algorithm.
   index_type order = 1; // TEMPORARY
   std::vector<Symbol> coefficients(order + 1);
   std::vector<Expr> coefficients_values(order + 1);
@@ -526,10 +526,8 @@ PURRS::zeilberger_algorithm(const Expr& F_m_k,
   }
 
   const Symbol& n = Recurrence::n;
-  Recurrence rec( - (x(n+1) * coefficients_values[1]) / coefficients_values[0]);
-  //D_VAR(myrec);
 
-  //  Recurrence myrec(rec);
+  Recurrence rec( - (x(n+1) * coefficients_values[1]) / coefficients_values[0]);
   Expr exact_solution;
   std::map<index_type, Expr> initial_conditions;
   // FIXME: Calculate this explicitly.
@@ -540,9 +538,7 @@ PURRS::zeilberger_algorithm(const Expr& F_m_k,
   exact_solution = simplify_all(exact_solution);
   D_VAR(exact_solution);
 
-  //  Expr G_n_k = ((p_3_k.substitute(k, k-1)) / p_k * b_k * F_m_k).expand();
-
-  //  DD_MSGVAR("Telescoped recurrence: ",G_n_k);
+  solution = exact_solution;
 
   return true;
 }

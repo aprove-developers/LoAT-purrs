@@ -32,7 +32,8 @@ namespace Parma_Recurrence_Relation_Solver {
 
 bool
 zeilberger_algorithm(const Expr& F_m_k,
-		     const Symbol& m, const Symbol& k);
+		     const Symbol& m, const Symbol& k, 
+		     Expr& solution);
 
 } // namespace Parma_Recurrence_Relation_Solver
 
