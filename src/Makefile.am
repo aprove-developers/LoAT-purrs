@@ -32,6 +32,7 @@ Expr_List.types.hh \
 Init.types.hh \
 Matrix.types.hh \
 Number.types.hh \
+Finite_Order_Info.types.hh \
 Blackboard.types.hh \
 Recurrence.types.hh \
 Symbol.types.hh \
@@ -65,12 +66,15 @@ compute_prod.hh \
 ep_decomp.hh \
 sum_poly.hh \
 util.hh \
+Finite_Order_Info.defs.hh \
+Finite_Order_Info.inlines.hh \
 Blackboard.defs.hh \
 Blackboard.inlines.hh \
 Recurrence.defs.hh \
 Recurrence.inlines.hh
 
 libpurrs_a_SOURCES = \
+Finite_Order_Info.cc \
 Blackboard.cc \
 Complex_Interval.cc \
 Constant.cc \
