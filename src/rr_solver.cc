@@ -492,7 +492,7 @@ Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
 	const Expr& first = argument.op(0);
 	const Expr& second = argument.op(1);
 	if ((first == n && second.is_a_number())
-	    || (second.op(1) == n && first.is_a_number())) {
+	    || (second == n && first.is_a_number())) {
 	  status = compute_order(argument, n, order, index,
 				 coefficients.max_size());
 	  if (status != OK)
