@@ -11,6 +11,23 @@ ginac 1.0.13     (use our ftp version!)
 cgicc 3.2.1
 giac-0.3.0
 
+Please note that, due to buggy GCC and library versions, some configurations
+may not work. The following configuration has been found to work:
+
+autoconf 2.59
+automake 1.9.3
+libtool 1.5.8
+gcc 3.3.3
+gmp 4.1.4
+cln 1.1.8
+ntl 5.3.2
+ginac 1.2.4	 (official version)
+cgicc 3.2.3
+giac-0.4.0
+
+GCC 3.4 cannot compile giac-0.4.0 because of a bug, fixed in GCC 3.4.1 and
+later versions. See <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=15299>.
+
 ============================================================================
 
 More Detailed Installation Instructions:
