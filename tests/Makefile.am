@@ -29,11 +29,12 @@ EXTRA_DIST = ehandlers.cc
 
 BUGS =
 
-noinst_PROGRAMS = eqs_driver rrs_driver simplify_driver
+noinst_PROGRAMS = eqs_driver rrs_driver simplify_driver gosper_driver
 
 eqs_driver_SOURCES = eqs_driver.cc
 rrs_driver_SOURCES = rrs_driver.cc
 simplify_driver_SOURCES = simplify_driver.cc
+gosper_driver_SOURCES = gosper_driver.cc
 
 check_PROGRAMS = $(TESTS) $(BUGS)
 
