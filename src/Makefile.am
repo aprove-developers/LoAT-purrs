@@ -51,6 +51,7 @@ alg_eq_solver.hh \
 poly_factor.hh \
 gosper.hh \
 simplify.hh \
+numerator_denominator.hh \
 sum_poly.hh \
 util.hh \
 Recurrence.defs.hh \
@@ -72,6 +73,7 @@ poly_factor.cc \
 rr_solver.cc \
 gosper.cc \
 simplify.cc \
+numerator_denominator.cc \
 sum_poly.cc \
 util.cc \
 $(INCLUDE_FILES)
