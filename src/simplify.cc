@@ -664,12 +664,9 @@ manip_factor(const GExpr& e) {
     while (repeat) {
       GExpr input = tmp.op(i);
       if (is_a<power>(tmp.op(i))) {
-	if (is_a<mul>(tmp.op(i).op(0)))
- 	  tmp = tmp.subs(tmp.op(i).op(0)
- 			 == collect_base_exponent(tmp.op(i).op(0)));
- 	if (is_a<mul>(tmp.op(i).op(1)))
- 	  tmp = tmp.subs(tmp.op(i).op(1)
- 			 == collect_base_exponent(tmp.op(i).op(1)));
+	GExpr base = simplify_on_output_ex(tmp.op(i).op(0));
+	GExpr exp = simplify_on_output_ex(tmp.op(i).op(1));
+	tmp = tmp.subs(tmp.op(i) == pow_simpl(pow(base, exp)));
       }
       if (!is_a<mul>(tmp) || tmp.op(i).is_equal(input))
 	repeat = false;
