@@ -396,6 +396,7 @@ yv	x(n-1)+(2^n+5)^a
 yv	x(n-1)+(n*n)!
 yv	x(n-1)+(n/2)
 yv	x(n-1)+1
+yv	x(n-1)+1/(3*(n-3)!)
 yv	x(n-1)+2
 yv	x(n-1)+2*n
 yv	x(n-1)+2*n-1
