@@ -35,7 +35,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 using namespace GiNaC;
 
-#define NOISY 0
+#define NOISY 1
+
 
 static GExpr
 get_binding(const GList& l, unsigned wild_index) {
@@ -246,17 +247,18 @@ static GMatrix
 decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n);
 
 static bool
-order_1_sol_poly_times_exponentials(const std::vector<GExpr> 
-				    initials_conditions, const GSymbol& n,
+order_1_sol_poly_times_exponentials(const GSymbol& n,
 				    const GMatrix& decomposition,
+				    const std::vector<GExpr>& 
+				    initials_conditions,
 				    const std::vector<GExpr>& coefficients,
 				    GExpr& solution);
 
 static bool
-order_2_sol_poly_times_exponentials(const std::vector<GExpr> 
-				    initials_conditions,
-				    const GSymbol& n,
+order_2_sol_poly_times_exponentials(const GSymbol& n,
 				    const GMatrix& decomposition,
+				    const std::vector<GExpr>& 
+				    initials_conditions,
 				    const std::vector<GNumber>& coefficients,
 				    GExpr& solution);
 
@@ -432,6 +434,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	if (!is_a<power>(exponential) && exponential != 1) {
 	  poly_times_exp = false;
 	}
+	// FIXME: what is a polynomial in a variable n?
 	if (!coeff_of_exp.info(info_flags::polynomial)) 
 	    poly_times_exp = false;
       }
@@ -439,9 +442,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	// Calculates the solution of the first order recurrences when
 	// the inhomogeneous term is a polynomial or the product of a
 	// polynomial and an exponential.      
-	order_1_sol_poly_times_exponentials(initials_conditions, n,
-					    decomposition, coefficients,
-					    solution);
+	order_1_sol_poly_times_exponentials(n, decomposition,
+					    initials_conditions,
+					    coefficients, solution);
       }
       else 
 	throw ("PURRS error: for the moment the recurrence "
@@ -454,7 +457,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     {
       // Check that the vector 'coefficients' does not contains
       // parameters and in this case creates a vector of GNumber.
-      // This is temporary until will supports also the second order
+      // FIXME: this is temporary until will supports also the second order
       // recurrence relation with parameters.
       std::vector<GNumber>  num_coefficients(order+1);
       for (int i = 1; i <= order; ++i) {
@@ -477,6 +480,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	  poly_times_exp = false;
 	if (!is_a<power>(exponential) && exponential != 1)
 	  poly_times_exp = false;
+	// FIXME: what is a polynomial in a variable n?
 	if (!coeff_of_exp.info(info_flags::polynomial))
 	  poly_times_exp = false;
       }
@@ -484,9 +488,9 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	// Calculates the solution of the second order recurrences when
 	// the inhomogeneous term is a polynomial or the product of a
 	// polynomial and an exponential.      
-	order_2_sol_poly_times_exponentials(initials_conditions, n, 
-					    decomposition, num_coefficients,
-					    solution);
+	order_2_sol_poly_times_exponentials(n, decomposition,
+					    initials_conditions,
+					    num_coefficients, solution);
       }	
       else 
 	throw ("PURRS error: for the moment the recurrence "
@@ -591,15 +595,15 @@ decomposition_inhomogeneous_term(const GExpr& e, const GSymbol& n) {
   contains the coefficients of the recurrence.
  */
 static bool
-order_1_sol_poly_times_exponentials(const std::vector<GExpr> 
-				    initials_conditions, const GSymbol& n,
-				    const GMatrix& decomposition,
+order_1_sol_poly_times_exponentials(const GSymbol& n,
+				    const GMatrix& decomposition, 
+				    const std::vector<GExpr>& 
+				    initials_conditions,
 				    const std::vector<GExpr>& coefficients,
 				    GExpr& solution_tot) {
   // The closed formula of the solution can be rewritten as
   // x(n) = \alpha^n * ( x(0) - p(0) + sum_{k=0}^n \alpha^(-k)*p(k) ).
   solution_tot = initials_conditions[0];
-  GSymbol k("k");
   // Calculates the number of columns of the matrix 'decomposition'.
   unsigned num_columns = decomposition.cols();
   GExpr alpha_n = pow(coefficients[1],n);
@@ -607,6 +611,7 @@ order_1_sol_poly_times_exponentials(const std::vector<GExpr>
     GExpr solution = 0;
     GExpr exponential = decomposition(0, i);
     GExpr coeff_of_exp = decomposition(1, i);
+    GSymbol k("k");
     GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
     if (is_a<power>(exponential)) 
       solution = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
@@ -629,7 +634,7 @@ order_1_sol_poly_times_exponentials(const std::vector<GExpr>
 } 
 
 static void
-build_characteristic_equation(GExpr& p, const GSymbol x,
+build_characteristic_equation(GExpr& p, const GSymbol& x,
 			      const std::vector<GNumber>& coefficients) {
   // The function 'find_roots' wants only integer coefficients
   // for to calculates the roots of the equation.
@@ -651,6 +656,187 @@ build_characteristic_equation(GExpr& p, const GSymbol x,
     p = pow(x, 2) + (-coefficients[1])*x + (-coefficients[2]);
 }
 
+static GExpr
+order_2_sol_roots_distinct(const GSymbol& n, const GMatrix& decomposition,
+			   const std::vector<GExpr>& initials_conditions,
+			   const std::vector<GNumber>& coefficients,
+			   const std::vector<Polynomial_Root>& roots) {
+  // In this case g(n) has the explicit expression
+  // g(n) = \frac{\lambda_1^{n+1} - \lambda_2^{n+1}}
+  // {\lambda_1 - \lambda_2}.   
+  // Hence for n \ge 2 we have
+  // x_n = g(n-1) * x(1) + \beta g(n-2) * x(0) +
+  // \frac{\lambda_1^{n+1}}{\lambda_1 - \lambda_2}
+  //   \sum_{k=2}^n \lambda_1^{-k} \, p(k) -
+  //\frac{\lambda_2^{n+1}}{\lambda_1 - \lambda_2}
+  //   \sum_{k=2}^n \lambda_2^{-k} \, p(k).
+
+  // Calculates the number of columns of the matrix.
+  unsigned num_columns = decomposition.cols();
+ 
+  // Construct g(n).
+  GExpr root_1 = roots[0].value();
+  GExpr root_2 = roots[1].value();
+#if NOISY
+  std::cout << "root_1 " << root_1 << std::endl;
+  std::cout << "root_2 " << root_2 << std::endl;
+#endif
+  GExpr diff_roots = root_1 - root_2;
+  GExpr g_n = (pow(root_1, n+1) - pow(root_2, n+1)) / diff_roots;
+#if NOISY
+  std::cout << "g_n " << g_n << std::endl;
+#endif
+  GExpr g_n_1 = g_n.subs(n == n - 1);
+  GExpr g_n_2 = g_n.subs(n == n - 2);
+  
+  GExpr solution_tot = initials_conditions[1] * g_n_1 + 
+                       initials_conditions[0] * g_n_2 * coefficients[2];
+  for (size_t i = 0; i < num_columns; ++i) {
+    GExpr solution_1 = 0;
+    GExpr solution_2 = 0;
+    GExpr exponential = decomposition(0, i);
+    GExpr coeff_of_exp = decomposition(1, i);
+    GSymbol k("k");
+    GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
+    if (is_a<power>(exponential)) {
+      solution_1 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
+					       exponential.op(0)*
+					       pow(root_1, -1));
+      solution_2 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
+					       exponential.op(0)*
+					       pow(root_2, -1));
+    }     
+    else {
+      // This is the case of the constant exponential.
+      solution_1 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
+					       pow(root_1, -1));
+      solution_2 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
+					       pow(root_2, -1));
+    }
+    // 'sum_poly_times_exponentials' calculates the sum from 0 while
+    // we want to start from 2.
+    solution_1 -= coeff_of_exp.subs(n == 0) + coeff_of_exp.subs(n == 1) *
+      (1/root_1);
+    solution_2 -= coeff_of_exp.subs(n == 0) + coeff_of_exp.subs(n == 1) *
+      (1/root_2);
+    solution_1 *= pow(root_1, n+1) / diff_roots;
+    solution_2 *= pow(root_2, n+1) / diff_roots;
+    solution_tot += solution_1 - solution_2;
+  }
+  solution_tot = solution_tot.expand();
+  solution_tot = solution_tot.collect(lst(initials_conditions[0],
+					  initials_conditions[1]));
+  transform_exponentials(solution_tot, n, false);
+  return solution_tot;
+}
+
+static GExpr
+order_2_sol_roots_no_distinct(const GSymbol& n, const GMatrix& decomposition,
+			      const std::vector<GExpr> initials_conditions,
+			      const std::vector<GNumber>& coefficients,
+			      const std::vector<Polynomial_Root>& roots) {
+  GExpr solution_tot;
+  // Calculates the number of columns of the matrix.
+  unsigned num_columns = decomposition.cols();
+
+  GSymbol a("a"), b("b");
+  GExpr root = roots[0].value();
+#if NOISY
+  std::cout << "root " << root << std::endl;
+#endif      
+  if (decomposition(1, 0).is_zero()) {
+    // The binary recurrence is homogeneous.
+    // The solution of the homogeneous recurrence is of the form
+    // x_n = (a + b * n) \lambda^n where
+    // \lambda is the root with multiplicity 2.
+    // In this case we must to solve a linear system:
+    //             a = x(0)
+    //             (a + b) * \lambda = x(1).
+    solution_tot = (a + b * n) * pow(root, n);
+    // Solved the system with the inverse matrix'method.
+    GMatrix vars(2, 2, lst(1, 0, root, root));
+    GMatrix rhs(2, 1, lst(initials_conditions[0], initials_conditions[1]));
+    GMatrix sol(2, 1);
+    sol = vars.inverse();
+    sol = sol.mul(rhs);
+    
+    solution_tot = solution_tot.subs(a == sol(0,0));
+    solution_tot = solution_tot.subs(b == sol(1,0));
+  }
+  else {
+    // The binary recurrence is non-homogeneous.
+    // We set
+    // g(n) = \alpha * g(n-1) + \beta * g(n-2)
+    // with g_0 = 1 and g_1 = \alpha as initials conditions for the
+    // fundamental solution.
+    // g_n = (a + b * n) \lambda^n where
+    // \lambda is the root with multiplicity 2.
+    // In this case we must to solve a linear system:
+    //             a = 1
+    //             (a + b) * \lambda = \alpha.
+    GExpr g_n = (a + b * n) * pow(root, n);
+    // Solved the system with the inverse matrix'method.
+    GMatrix vars(2, 2, lst(1, 0, root, root));
+    GMatrix rhs(2, 1, lst(1, coefficients[1]));
+    GMatrix sol(2, 1);
+    sol = vars.inverse();
+    sol = sol.mul(rhs);
+    
+    g_n = g_n.subs(a == sol(0,0));
+    g_n = g_n.subs(b == sol(1,0));
+	
+    GExpr g_n_1 = g_n.subs(n == n - 1);
+    GExpr g_n_2 = g_n.subs(n == n - 2);
+	
+    solution_tot = initials_conditions[1]*g_n_1 + 
+                   initials_conditions[0]*g_n_2*coefficients[2];
+    for (size_t i = 0; i < num_columns; ++i) {
+      GExpr solution = 0;
+      GExpr exponential = decomposition(0, i);
+      GExpr coeff_of_exp = decomposition(1, i);
+      GSymbol k("k");
+      GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
+      GExpr g_n_k = g_n.subs(n == n - k);
+      // In this case g_n_k always contains root^(n-k).
+      // We pass to the function 'sum_poly_exponentials' only
+      // (1/root)^k that it is multiplied for exponential.op(0).
+      // Hence we pass only the polynomial part of g_n with
+      // the substitution n == n - k.
+      GExpr poly_g_n = g_n.subs(wild(0)*power(wild(1), n) == wild(0));
+      poly_g_n = poly_g_n.subs(n == n - k);
+      if (is_a<power>(exponential)) {
+	solution = sum_poly_times_exponentials(coeff_of_exp_k * poly_g_n,
+					       k, n, exponential.op(0) *
+					       pow(root, -1));
+	// 'sum_poly_times_exponentials' calculates the sum from 0 while
+	// we want to start from 2.
+	solution -= (coeff_of_exp_k * poly_g_n).subs(k == 0) +
+	  (coeff_of_exp_k * poly_g_n).subs(k == 1) * 
+	  (1/root) * exponential.op(0);
+      }
+      else {
+	// This is the case of the constant exponential.
+	solution = sum_poly_times_exponentials(coeff_of_exp_k * poly_g_n,
+					       k, n, pow(root, -1));
+	// 'sum_poly_times_exponentials' calculates the sum from 0 while
+	// we want to start from 2.
+	solution -= (coeff_of_exp_k * poly_g_n).subs(k == 0) +
+	  (coeff_of_exp_k * poly_g_n).subs(k == 1) * (1/root);
+      }
+      // We have passed to the function 'sum_poly_times_exponentials'
+      // only (1/root)^k then now we must multiply for (root)^n.
+      solution *= power(root, n);
+      solution = solution.expand();
+      solution_tot += solution;
+    }
+    solution_tot = solution_tot.expand();
+    solution_tot = solution_tot.collect(lst(initials_conditions[0],
+					    initials_conditions[1]));
+    transform_exponentials(solution_tot, n, false);
+  }
+  return solution_tot;
+}
+
 /*!
   Calculates the solution of the second order recurrence
   \f$x(n) = \alpha * x(n-1) + \beta * x(n-2) + p(n)\f$, (\f$ beta \neq 0\f$),
@@ -667,16 +853,12 @@ build_characteristic_equation(GExpr& p, const GSymbol x,
   contains the coefficients of the recurrence.
  */
 static bool
-order_2_sol_poly_times_exponentials(const std::vector<GExpr> 
+order_2_sol_poly_times_exponentials(const GSymbol& n,
+				    const GMatrix& decomposition, 
+				    const std::vector<GExpr>& 
 				    initials_conditions,
-				    const GSymbol& n, 
-				    const GMatrix& decomposition,
 				    const std::vector<GNumber>& coefficients,
 				    GExpr& solution_tot) {
-    solution_tot = 0;
-    // Calculates the number of columns of the matrix.
-    unsigned num_columns = decomposition.cols();
-
     // We first solve the equation with g(n) by means of the
     // characteristic equation wich, by definition, is the polynomial
     // equation x^2 + \alpha * x + \beta = 0.
@@ -694,183 +876,18 @@ order_2_sol_poly_times_exponentials(const std::vector<GExpr>
     // We proceed in two different ways in according to the value of
     // the boolean 'all_distinct', i. e., if all roots of the
     // characteristic equation are distinct or not.
-    if (all_distinct) {
-      // In this case g(n) has the explicit expression
-      // g(n) = \frac{\lambda_1^{n+1} - \lambda_2^{n+1}}
-      // {\lambda_1 - \lambda_2}.   
-      // Hence for n \ge 2 we have
-      // x_n = g(n-1) * x(1) + \beta g(n-2) * x(0) +
-      // \frac{\lambda_1^{n+1}}{\lambda_1 - \lambda_2}
-      //   \sum_{k=2}^n \lambda_1^{-k} \, p(k) -
-      //\frac{\lambda_2^{n+1}}{\lambda_1 - \lambda_2}
-      //   \sum_{k=2}^n \lambda_2^{-k} \, p(k).
-      
-      // Construct g(n).
-      GExpr root_1 = roots[0].value();
-      GExpr root_2 = roots[1].value();
-#if NOISY
-      std::cout << "root_1 " << root_1 << std::endl;
-      std::cout << "root_2 " << root_2 << std::endl;
-#endif
-      GExpr diff_roots = root_1 - root_2;
-      GExpr g_n = (pow(root_1, n+1) - pow(root_2, n+1)) / diff_roots;
-#if NOISY
-      std::cout << "g_n " << g_n << std::endl;
-#endif
-      // FIXME: this is necessary for a bug of GiNaC about subs
-      // (in the next release of GiNaC it must be fix and then
-      // the GSymbol k will be useless).
-      GSymbol k("k");
-      GExpr g_n_1 = g_n.subs(n == k-1);
-      GExpr g_n_2 = g_n.subs(n == k-2);
-      g_n_1 = g_n_1.subs(k == n);
-      g_n_2 = g_n_2.subs(k == n);
-
-      solution_tot = initials_conditions[1]*g_n_1 + 
-	             initials_conditions[0]*g_n_2*coefficients[2];
-      for (size_t i = 0; i < num_columns; ++i) {
-	GExpr solution_1 = 0;
-	GExpr solution_2 = 0;
-	GExpr exponential = decomposition(0, i);
-	GExpr coeff_of_exp = decomposition(1, i);
-	GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
-	if (is_a<power>(exponential)) {
-	  solution_1 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
-						   exponential.op(0)*
-						   pow(root_1, -1));
-	  solution_2 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
-						  exponential.op(0)*
-						   pow(root_2, -1));
-	}     
-	else {
-	  // This is the case of the constant exponential.
-	  solution_1 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
-						   pow(root_1, -1));
-	  solution_2 = sum_poly_times_exponentials(coeff_of_exp_k, k, n,
-						   pow(root_2, -1));
-	}
-	// 'sum_poly_times_exponentials' calculates the sum from 0 while
-	// we want to start from 2.
-	solution_1 -= coeff_of_exp.subs(n == 0) + coeff_of_exp.subs(n == 1) *
-	  (1/root_1);
-	solution_2 -= coeff_of_exp.subs(n == 0) + coeff_of_exp.subs(n == 1) *
-	  (1/root_2);
-	solution_1 *= pow(root_1, n+1) / diff_roots;
-	solution_2 *= pow(root_2, n+1) / diff_roots;
-	solution_tot += solution_1 - solution_2;
-      }
-      solution_tot = solution_tot.expand();
-      solution_tot = solution_tot.collect(lst(initials_conditions[0],
-					      initials_conditions[1]));
-      transform_exponentials(solution_tot, n, false);
-    }
+    if (all_distinct)
+      solution_tot = order_2_sol_roots_distinct(n, decomposition,
+						initials_conditions,
+						coefficients, roots);
     else {
-      // 'all_distinct == false': the characteristic equation
+      // The characteristic equation
       // x^2 + \alpha * x + \beta = 0 has a double root.
-      assert(roots[0].multiplicity() == 2);
-      
-      GSymbol a("a"), b("b");
-      GExpr root = roots[0].value();
-#if NOISY
-      std::cout << "root " << root << std::endl;
-#endif
-      
-      if (decomposition(1, 0).is_zero()) {
-	// The binary recurrence is homogeneous.
-	// The solution of the homogeneous recurrence is of the form
-	// x_n = (a + b * n) \lambda^n where
-	// \lambda is the root with multiplicity 2.
-	// In this case we must to solve a linear system:
-	//             a = x(0)
-	//             (a + b) * \lambda = x(1).
-	solution_tot = (a + b * n) * pow(root, n);
-	// Solved the system with the inverse matrix'method.
-	GMatrix vars(2, 2, lst(1, 0, root, root));
-	GMatrix rhs(2, 1, lst(initials_conditions[0], initials_conditions[1]));
-	GMatrix sol(2, 1);
-	sol = vars.inverse();
-	sol = sol.mul(rhs);
-
-	solution_tot = solution_tot.subs(a == sol(0,0));
-	solution_tot = solution_tot.subs(b == sol(1,0));
-      }
-      else {
-	// The binary recurrence is non-homogeneous.
-	// We set
-	// g(n) = \alpha * g(n-1) + \beta * g(n-2)
-	// with g_0 = 1 and g_1 = \alpha as initials conditions for the
-	// fundamental solution.
-	// g_n = (a + b * n) \lambda^n where
-	// \lambda is the root with multiplicity 2.
-	// In this case we must to solve a linear system:
-	//             a = 1
-	//             (a + b) * \lambda = \alpha.
-	GExpr g_n = (a + b * n) * pow(root, n);
-	// Solved the system with the inverse matrix'method.
-	GMatrix vars(2, 2, lst(1, 0, root, root));
-	GMatrix rhs(2, 1, lst(1, coefficients[1]));
-	GMatrix sol(2, 1);
-	sol = vars.inverse();
-	sol = sol.mul(rhs);
-
-	g_n = g_n.subs(a == sol(0,0));
-	g_n = g_n.subs(b == sol(1,0));
-	
-	// FIXME: this is necessary for a bug of GiNaC about subs
-	// (in the next release of GiNaC it must be fix and then
-	// the GSymbol k will be useless).
-	GSymbol k("k");
-	GExpr g_n_1 = g_n.subs(n == k-1);
-	GExpr g_n_2 = g_n.subs(n == k-2);
-	g_n_1 = g_n_1.subs(k == n);
-	g_n_2 = g_n_2.subs(k == n);
-	
-	solution_tot = initials_conditions[1]*g_n_1 + 
-	                        initials_conditions[0]*g_n_2*coefficients[2];
-	for (size_t i = 0; i < num_columns; ++i) {
-	  GExpr solution = 0;
-	  GExpr exponential = decomposition(0, i);
-	  GExpr coeff_of_exp = decomposition(1, i);
-	  GExpr coeff_of_exp_k = coeff_of_exp.subs(n == k);
-	  GExpr g_n_k = g_n.subs(n == n - k);
-	  // In this case g_n_k always contains root^(n-k).
-	  // We pass to the function 'sum_poly_exponentials' only
-	  // (1/root)^k that it is multiplied for exponential.op(0).
-	  // Hence we pass only the polynomial part of g_n with
-	  // the substitution n == n - k.
-          GExpr poly_g_n = g_n.subs(wild(0)*power(wild(1), n) == wild(0));
-	  poly_g_n = poly_g_n.subs(n == n - k);
-	  if (is_a<power>(exponential)) {
-	    solution = sum_poly_times_exponentials(coeff_of_exp_k * poly_g_n,
-						   k, n, exponential.op(0) *
- 						   pow(root, -1));
-	    // 'sum_poly_times_exponentials' calculates the sum from 0 while
-	    // we want to start from 2.
-	    solution -= (coeff_of_exp_k * poly_g_n).subs(k == 0) +
-	      (coeff_of_exp_k * poly_g_n).subs(k == 1) * 
-	      (1/root) * exponential.op(0);
-	  }
-	  else {
-	    // This is the case of the constant exponential.
-	    solution = sum_poly_times_exponentials(coeff_of_exp_k * poly_g_n,
-						   k, n, pow(root, -1));
-	    // 'sum_poly_times_exponentials' calculates the sum from 0 while
-	    // we want to start from 2.
-	    solution -= (coeff_of_exp_k * poly_g_n).subs(k == 0) +
-	      (coeff_of_exp_k * poly_g_n).subs(k == 1) * (1/root);
-	  }
-	  // We have passed to the function 'sum_poly_times_exponentials'
-	  // only (1/root)^k then now we must multiply for (root)^n.
-	  solution *= power(root, n);
-  	  solution = solution.expand();
-	  solution_tot += solution;
-	}
-	solution_tot = solution_tot.expand();
-	solution_tot = solution_tot.collect(lst(initials_conditions[0],
-						initials_conditions[1]));
-	transform_exponentials(solution_tot, n, false);
-      }
+      assert(roots[0].multiplicity() == 2);      
+      solution_tot = order_2_sol_roots_no_distinct(n, decomposition,
+						   initials_conditions,
+						   coefficients, roots);
     }
-
-  return true;
+    
+    return true;
 }
