@@ -439,12 +439,16 @@ parametric_gosper_step_three(const Symbol& m, const std::vector<Symbol>& coeffic
 
   // Give unknown coefficients the values just found.
   //  for (unsigned int i = 0; i < number_of_coeffs; ++i)
-  //    b_m = b_m.substitute(unknowns.op(i), solution.op(i).op(1));
   for (unsigned int i = 0; i < dummy_vars.size(); ++i) {
     b_m = b_m.substitute(unknowns.op(dummy_vars[i]), 1);
   }
 
   D_VAR(b_m);
+
+  // If the polynomial solution is zero, it is invalid and we must try 
+  // a recurrence of higher order.
+  if (b_m.is_zero())
+    return false;
 
   for (unsigned int j = 0; j < coefficients.size(); ++j) {
     Expr coeff_expr = solution.op(number_of_unknowns - coefficients.size() + j).op(1);
@@ -454,38 +458,32 @@ parametric_gosper_step_three(const Symbol& m, const std::vector<Symbol>& coeffic
     coefficients_values[j]=coeff_expr;
   }
 
-  //for 
-
   return true;
 }
 
 
 } // anonymous namespace
 
-/*!
-  \param F_m_k    proper hypergeometric sequence.
-  \param m        first variable of \p F_m_k.
-  \param k        second variable of \p F_m_k.
-
-  \return         ...
-*/
-bool
-PURRS::zeilberger_algorithm(const Expr& F_m_k,
-			    const Symbol& m, const Symbol& k, Expr& solution) {
+bool zeilberger_for_fixed_order(const Expr& F_m_k,
+				const Symbol& m, const Symbol& k,
+				const index_type order,
+				Expr& solution) {
   Expr p_0_k = 0;
   Expr r_k = 0;
   Expr s_k = 0;
-  // FIXME: temporary.
-  // We must consider the maximum order for the
-  // recurrence ... and, starting from the lower, if the algorithm fails,
-  // increase the order until `order' and repeat the algorithm.
-  index_type order = 1; // TEMPORARY
+
   std::vector<Symbol> coefficients(order + 1);
   std::vector<Expr> coefficients_values(order + 1);
-  coefficients[0] = Symbol("F");
-  coefficients[1] = Symbol("G");
-  //  for (index_type i = 0; i < order+1; ++i)
-  //    coefficients[i] = Symbol();
+#if 1
+  // FIXME: Temporary, to use familiar names when order==1.
+  if (order == 1) {
+    coefficients[0] = Symbol("F");
+    coefficients[1] = Symbol("G");
+  }
+  else
+#endif
+    for (index_type i = 0; i < order + 1; ++i)
+      coefficients[i] = Symbol();
   if (!zeilberger_step_one(F_m_k, m, k, coefficients, p_0_k, r_k, s_k))
     return false;
   DD_VAR(p_0_k);
@@ -517,7 +515,9 @@ PURRS::zeilberger_algorithm(const Expr& F_m_k,
     DD_MSGVAR("Coefficient 0 is: ", coefficients_values[0]);
     DD_MSGVAR("Coefficient 1 is: ", coefficients_values[1]);
   }
-  else return false;
+  else 
+    // Could not solve the linear system. Maybe we should just try an higher order.
+    return false;
 
   for (unsigned int i = 0; i < coefficients.size(); ++i) {
     p_2_k = p_2_k.substitute(coefficients[i], coefficients_values[i]);
@@ -525,14 +525,27 @@ PURRS::zeilberger_algorithm(const Expr& F_m_k,
     p_k = p_2_k.substitute(coefficients[i], coefficients_values[i]);
   }
 
+  // Construct the telescoped recurrence.
   const Symbol& n = Recurrence::n;
+  Expr rec_expr = 0;
+  for (unsigned int i = 1; i < order + 1; ++i) {
+    rec_expr += coefficients_values[i] * x(n+i);
+    D_VAR(rec_expr);
+  }
+  assert(!coefficients_values[0].is_zero());
+  rec_expr = - rec_expr / coefficients_values[0];
 
-  Recurrence rec( - (x(n+1) * coefficients_values[1]) / coefficients_values[0]);
+  // Expr rec_expr =  - (x(n+1) * coefficients_values[1]) / coefficients_values[0];
+  Recurrence rec(rec_expr);
   Expr exact_solution;
   std::map<index_type, Expr> initial_conditions;
-  // FIXME: Calculate this explicitly.
+  // FIXME: Are exactly N initial conditions needed for a recurrence of order N?
   rec.compute_exact_solution();
-  initial_conditions[0] = 1;
+  for (unsigned int i = 0; i < order; ++i) {
+    // FIXME: This happens very often, but we must compute it explicitly.
+    initial_conditions[i] = 1;
+    // initial_conditions[i] = sum (k, 0, 10, F_m_k.substitute(m,i));
+  }
   rec.set_initial_conditions(initial_conditions);
   rec.exact_solution(exact_solution);
   exact_solution = simplify_all(exact_solution);
@@ -542,3 +555,35 @@ PURRS::zeilberger_algorithm(const Expr& F_m_k,
 
   return true;
 }
+
+
+/*!
+  \param F_m_k    proper hypergeometric sequence.
+  \param m        first variable of \p F_m_k.
+  \param k        second variable of \p F_m_k.
+  \param solution Variable where the solution will be stored.
+  \return         ...
+*/
+bool
+PURRS::zeilberger_algorithm(const Expr& F_m_k,
+			    const Symbol& m, const Symbol& k, Expr& solution) {
+  // FIXME: Calculate the highest possible order for the target recurrence.
+  index_type highest_possible_order = 10;
+
+  unsigned int i = 1;
+
+  for (i = 1; i < highest_possible_order; ++i) {
+    DD_MSGVAR("Zeilberger: trying order ", i);
+    if (zeilberger_for_fixed_order(F_m_k, m, k, i, solution)) {
+      break;
+    }
+    // No further attempts can be made.
+    if (i == highest_possible_order - 1)
+      return false;
+  }
+
+  DD_MSGVAR("Zeilberger: found solution for order ", i);
+  D_VAR(solution);
+  return true;
+}
+       
