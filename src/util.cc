@@ -26,9 +26,11 @@ http://www.cs.unipr.it/purrs/ . */
 #define NOISY 0
 #endif
 
+#include "numerator_denominator.hh"
 #include "Expr.defs.hh"
 #include "Number.defs.hh"
 #include "Symbol.defs.hh"
+#include "Recurrence.defs.hh"
 #include "util.hh"
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
@@ -265,4 +267,92 @@ PURRS::resultant(const Expr& p, const Expr& q, const Symbol& x) {
   }
   D_MSGVAR("Resultant(f(x), g(x)): ", res);
   return res;
+}
+
+namespace {
+using namespace PURRS;
+
+/*!
+  Returns <CODE>true</CODE> if \p e is on the form
+  \f$ a n + b \f$ with \f$ a \in \Nset \setminus \{0\} \f$ and
+  \f$ b \in \Zset \f$;
+  returns <CODE>false</CODE> otherwise. 
+*/
+bool
+ok_argument_factorial(const Expr& argument, const Symbol& n) {
+  D_VAR(argument);
+  if (argument.is_a_add() && argument.nops() == 2) {
+    const Expr& first = argument.op(0);
+    const Expr& second = argument.op(1);
+    Number a;
+    Number b;
+    if ((first.is_a_mul() && first.nops() == 2
+	 && (first.op(0) == n && first.op(1).is_a_number(a)
+	     || first.op(1) == n && first.op(0).is_a_number(a))
+	 && second.is_a_number(b))
+	||
+	(second.is_a_mul() && second.nops() == 2
+	 && (second.op(0) == n && second.op(1).is_a_number(a)
+	     || second.op(1) == n && second.op(0).is_a_number(a))
+	 && first.is_a_number(b)))
+      if (a.is_positive_integer() && b.is_integer())
+	return true;
+    if ((first == n && second.is_a_number(b))
+	|| (second == n && first.is_a_number(b)))
+      if (b.is_integer())
+	return true;
+  }
+  return false;
+}
+
+} // anonymous namespace
+
+/*!
+  Let \f$ e(n) \f$ be the expression in \p n contained in \p e,
+  which is assumed to be already expanded and with denominator equal to 1.
+  This function find the biggest positive integer that cancel \f$ e(n) \f$
+  and, if it is bigger than \p z, store it in \p z; if do not exist a
+  positive integer that cancel \f$ e(n) \f$ or exist but smaller than \p z,
+  then \p z is left unchanged.
+*/
+void
+PURRS::biggest_positive_int_zero(const Expr& e, Number& z) {
+  assert(denominator(e) == 1);
+  if (e.is_polynomial(Recurrence::n)) {
+    Expr partial_e = e;
+    unsigned lower_degree = partial_e.ldegree(Recurrence::n);
+    while (lower_degree > 0) {
+      partial_e = quo(partial_e, Recurrence::n, Recurrence::n);
+      lower_degree = partial_e.ldegree(Recurrence::n);
+      if (z < 0)
+	z = 0;
+    }
+    std::vector<Number> potential_roots;
+    Number constant_term
+      = abs(partial_e.tcoeff(Recurrence::n).ex_to_number());
+    // Find the divisors of the constant term.
+    if (constant_term.is_positive_integer())
+      find_divisors(constant_term, potential_roots);
+    // Find non-negative integral roots of the denominator.
+    for(unsigned i = potential_roots.size(); i-- > 0; ) {
+      Number temp = partial_e.substitute(Recurrence::n,
+					 potential_roots[i]).ex_to_number();
+      if (temp == 0 &&  potential_roots[i] > z)
+	z = potential_roots[i];
+    }
+  }
+  else {
+    if (e.is_a_add() || e.is_a_mul())
+      for (unsigned i = e.nops(); i-- > 0; )
+	biggest_positive_int_zero(e.op(i), z);
+    else if (e.is_a_function()) {
+      if (e.is_the_log_function())
+	biggest_positive_int_zero(e.arg(0) - 1, z);
+      else if (e.is_the_factorial_function())
+	// If it is in the form `(a n + b)!' with `a' positive integer
+	// then we find the minimum `n' such that `a n + b >= 0'.
+	if (ok_argument_factorial(e.arg(0), Recurrence::n))
+	  biggest_positive_int_zero(e.arg(0), z);
+    }
+  }
 }

@@ -617,311 +617,6 @@ compute_non_homogeneous_part(const Expr& g_n, unsigned int order,
   return solution_tot;
 }
 
-/*!
-  Consider the linear recurrence relation of the second order with
-  constant coefficients
-  \f[
-    x_n = a_1 x_{n-1} + a_2 + p(n),
-  \f]
-  where \f$ p(n) \f$ is a function defined over the natural numbers.
-  If the roots of the characteristic equation \f$ \lambda_1 \f$ and
-  \f$ \lambda_2 \f$ are distinct then we know the final formula that
-  give the solution:
-  \f[
-    x_n = g_{n-1} x_1 + a_2 g_{n-2} x_0
-          + \frac{\lambda_1^{n+1}}{\lambda_1-\lambda_2}
-	    \sum_{k=2}^n \lambda_1^{-k} p(k)
-          - \frac{\lambda_2^{n+1}}{\lambda_1-\lambda_2}
-	    \sum_{k=2}^n \lambda_2^{-k} p(k),
-  \f]
-  where
-  \f[
-    g(n) = \frac{\lambda_1^{n+1}-\lambda_2^{n+1}}{\lambda_1-\lambda_2}.
-  \f]
-  If there is one root, \f$ \lambda \f$, with double multiplicity,
-  computes \f$ g_n = (\alpha_1 + \alpha_2) * \lambda^n \f$,
-  where \f$ \alpha_1 \f$ and \f$ \alpha_2 \f$ are complex numbers.
-  Introduced the <EM>fundamental</EM> solution of the associated
-  homogeneous equation, which is
-  \f[
-    \begin{cases}
-      g_n = a_1 g_{n-1} + a_2 g_{n-2},\\
-      g_0 = 1, \\
-      g_1 = a_1 g_0,
-    \end{cases}
-  \f]
-  this function returns the general solution of recurrence relation
-  which is calculated by the formula
-  \f[
-    x_n = \sum_{i=k}^n g_{n-i} p(i)
-          + \sum_{i=0}^{k-1} g_{n-i}
-	    \Bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \Bigr).
-  \f]
-  The two sums in the previous formula correspond to the non-homogeneous
-  part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
-  the function <CODE>add_initial_conditions()</CODE>), respectively.
-*/
-Expr
-solve_constant_coeff_order_2(Expr& g_n, unsigned int order, bool all_distinct,
-			     const Expr& inhomogeneous_term,
-			     const std::vector<Number>& coefficients,
-			     const std::vector<Polynomial_Root>& roots) {
-  // We search exponentials in `n' (for this the expression
-  // `inhomogeneous_term' must be expanded).
-  // The vector `base_of_exps' contains the exponential's bases
-  // of all exponentials in `inhomogeneous_term'.
-  // In the `i'-th position of the vectors
-  // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
-  // the polynomial part and possibly non polynomial part of the coefficient
-  // of the exponential with the base in `i'-th position of `base_of_exp'.
-  // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
-  // coefficient of base_of_exps[i]^n.
-  std::vector<Expr> base_of_exps;
-  std::vector<Expr> exp_poly_coeff;
-  std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(inhomogeneous_term,
-			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
-  D_VEC(base_of_exps, 0, base_of_exps.size()-1);
-  D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
-  D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
-
-  Expr solution;
-  // Calculates the solution of the second order recurrences when
-  // the inhomogeneous term is a polynomial or the product of a
-  // polynomial and an exponential; return the symbolic solution with
-  // the object `sum' otherwise.
-  if (all_distinct) {
-    const Expr& root_1 = roots[0].value();
-    const Expr& root_2 = roots[1].value();
-    Expr diff_roots = root_1 - root_2;
-    g_n = (pwr(root_1, Recurrence::n+1) - pwr(root_2, Recurrence::n+1))
-      / diff_roots;
-    if (!vector_not_all_zero(exp_no_poly_coeff)) {
-      Symbol alpha("alpha");
-      Symbol lambda("lambda");
-      std::vector<Expr> symbolic_sum_distinct;
-      std::vector<Expr> symbolic_sum_no_distinct;
-      compute_symbolic_sum(alpha, lambda, roots,
-			   base_of_exps, exp_poly_coeff,
-			   symbolic_sum_distinct, symbolic_sum_no_distinct);
-      for (unsigned j = symbolic_sum_distinct.size(); j-- > 0; ) {
-	symbolic_sum_no_distinct[j] *= lambda / diff_roots;
-	symbolic_sum_distinct[j] *= lambda / diff_roots;
-      }
-      // Substitutes to the sums in the vector `symbolic_sum_distinct'
-      // or `symbolic_sum_no_distinct' the corresponding values of the
-      // characteristic equation's roots and of the bases of the
-      // eventual exponentials and in `solution' put the sum of all
-      // sums of the vector after the substitution.
-      solution = subs_to_sum_roots_and_bases(alpha, lambda, roots,
-					     base_of_exps,
-					     symbolic_sum_distinct,
-					     symbolic_sum_no_distinct);
-    }
-    else {
-      Symbol h;
-      solution = 1 / diff_roots
-	* (pwr(root_1, Recurrence::n+1)
-	   * PURRS::sum(h, 2, Recurrence::n, pwr(root_1, -h)
-			* inhomogeneous_term.substitute(Recurrence::n, h))
-	   - (pwr(root_2, Recurrence::n+1)
-	      * PURRS::sum(h, 2, Recurrence::n, pwr(root_2, -h)
-			   * inhomogeneous_term.substitute(Recurrence::n, h))));
-    }
-  }
-  else {
-    // The characteristic equation
-    // x^2 + a_1 * x + a_2 = 0 has a double root.
-    assert(roots[0].multiplicity() == 2);      
-    
-    // Solve system in order to finds `alpha_i' (i = 1,...,order).
-    Matrix sol = solve_system(all_distinct, coefficients, roots);
-    
-    // Finds `g_n', always taking into account the root's multiplicity.
-    g_n = find_g_n(all_distinct, sol, roots);
-    if (!vector_not_all_zero(exp_no_poly_coeff))
-      solution = compute_non_homogeneous_part(g_n, order, base_of_exps,
-					      exp_poly_coeff);
-    else {
-      Symbol h;
-      solution
-	= PURRS::sum(h, 2, Recurrence::n,
-		     g_n.substitute(Recurrence::n, Recurrence::n - h)
-		     * inhomogeneous_term.substitute(Recurrence::n, h));
-    }
-  }
-  return solution;
-}
-
-/*!
-  Consider the linear recurrence relation of order \f$ k \f$ with
-  constant coefficients
-  \f[
-    x_n = a_1 x_{n-1} + a_2 x_{n-2} + \cdots + a_k x_{n-k} + p(n),
-  \f]
-  where \f$ p(n) \f$ is a function defined over the natural numbers.
-  Knowing the roots \f$ \lambda_1, \cdots, \lambda_k \f$ of the
-  characteristic equation, builds the general solution of the homogeneous
-  recurrence \f$ g_n \f$:
-  - if the roots are simple, i. e., they are all distinct, then
-    \f$ g_n = \alpha_1 \lambda_1^n + \cdots + \alpha_k \lambda_k^n \f$,
-  - if there are multiple roots then
-    \f[
-      g_n = \sum_{j=1}^r (\alpha_{j,0} + \alpha_{j,1}n
-            + \cdots + \alpha_{j,\mu_j-1}n^{\mu_j-1}) \lambda_j^n,
-    \f]
-  where \f$ \alpha_1, \cdots, \alpha_k \f$ are complex numbers
-  (\f$ g_n \f$ in the fisrt case is contained in those of the second
-  case as special case).
-  Introduced the <EM>fundamental</EM> solution of the associated
-  homogeneous equation, which is
-  \f[
-    \begin{cases}
-      g_n = a_1 g_{n-1} + a_2 g_{n-2} + \cdots + a_k g_{n-k}, \\
-      g_0 = 1, \\
-      g_n = a_1 g_{n-1} + a_2 g_{n-2} + \cdots + a_{n-1} g_1 + a_n g_0
-        & \text{for $1 \le n < k$,} \\
-     \end{cases}
-  \f]
-  this function returns the general solution of recurrence relation
-  which is calculated by the formula
-  \f[
-    x_n = \sum_{i=k}^n g_{n-i} p(i)
-          + \sum_{i=0}^{k-1} g_{n-i}
-	    \Bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \Bigr).
-  \f]
-  The two sums in the previous formula correspond to the non-homogeneous
-  part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
-  the function <CODE>add_initial_conditions()</CODE>), respectively.
-*/
-Expr
-solve_constant_coeff_order_k(Expr& g_n, unsigned int order, bool all_distinct,
-			     const Expr& inhomogeneous_term,
-			     const std::vector<Number>& coefficients,
-			     const std::vector<Polynomial_Root>& roots) {
-  // We search exponentials in `n' (for this the expression
-  // `inhomogeneous_term' must be expanded).
-  // The vector `base_of_exps' contains the exponential's bases
-  // of all exponentials in `inhomogeneous_term'.
-  // In the `i'-th position of the vectors
-  // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
-  // the polynomial part and possibly non polynomial part of the coefficient
-  // of the exponential with the base in `i'-th position of `base_of_exp'.
-  // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
-  // coefficient of base_of_exps[i]^n.
-  std::vector<Expr> base_of_exps;
-  std::vector<Expr> exp_poly_coeff;
-  std::vector<Expr> exp_no_poly_coeff;
-  exp_poly_decomposition(inhomogeneous_term,
-			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
-  D_VEC(base_of_exps, 0, base_of_exps.size()-1);
-  D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
-  D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
-
-  Expr solution;
-  // Calculates the solution of the recurrences when
-  // the inhomogeneous term is a polynomial or the product of a
-  // polynomial and an exponential; return the symbolic solution with
-  // the object `sum' otherwise.
-
-  // Solve system in order to finds `alpha_i' (i = 1,...,order).
-  Matrix sol = solve_system(all_distinct, coefficients, roots);
-
-  // Finds `g_n', always taking into account the root's multiplicity
-  g_n = find_g_n(all_distinct, sol, roots);
-  D_VAR(g_n);
-
-  if (all_distinct)
-    if (!vector_not_all_zero(exp_no_poly_coeff)) {
-      // Prepare for to compute the symbolic sum.
-      std::vector<Expr> poly_coeff_tot;
-      prepare_for_symbolic_sum(g_n, roots, exp_poly_coeff, poly_coeff_tot);
-      Symbol alpha("alpha");
-      Symbol lambda("lambda");
-      std::vector<Expr> symbolic_sum_distinct;
-      std::vector<Expr> symbolic_sum_no_distinct;
-      compute_symbolic_sum(alpha, lambda, roots,
-			   base_of_exps, poly_coeff_tot,
-			   symbolic_sum_distinct, symbolic_sum_no_distinct);
-      // Substitutes to the sums in the vector `symbolic_sum_distinct'
-      // or `symbolic_sum_no_distinct' the corresponding values of the
-      // characteristic equation's roots and of the bases of the
-      // eventual exponentials and in `solution' put the sum of all
-      // sums of the vector after the substitution.
-      solution = subs_to_sum_roots_and_bases(alpha, lambda, roots,
-					     base_of_exps,
-					     symbolic_sum_distinct,
-					     symbolic_sum_no_distinct);
-    }
-    else {
-      Symbol h;
-      solution
-	= PURRS::sum(h, order, Recurrence::n,
-		     g_n.substitute(Recurrence::n, Recurrence::n - h)
-		     * inhomogeneous_term.substitute(Recurrence::n, h));
-    }
-  else
-    if (!vector_not_all_zero(exp_no_poly_coeff))
-      // There are roots with multiplicity greater than 1.
-      solution = compute_non_homogeneous_part(g_n, order, base_of_exps,
-					      exp_poly_coeff);
-    else {
-      Symbol h;
-      solution
-	= PURRS::sum(h, order, Recurrence::n,
-		     g_n.substitute(Recurrence::n, Recurrence::n - h)
-		     * inhomogeneous_term.substitute(Recurrence::n, h));
-    }
-  return solution;
-}
-
-/*!
-  Let \f$ e(n) \f$ be the expression in \p n contained in \p e,
-  which is assumed to be already expanded.
-  This function find the biggest positive integer that cancel the
-  numerator or the denominator of \f$ e(n) \f$ and, if it is
-  bigger than \p z, store it in \p z; if do not exist a positive
-  integer that cancel numerator or denominator of \f$ e(n) \f$ or
-  exist but smaller than \p z, then \p z is left unchanged.
-  Note: this function works only if \f$ e(n) \f$ is a rational function
-  in \p n.
-*/
-void
-domain_recurrence(const Expr& e, Number& z) {
-  if (e.is_rational_function(Recurrence::n)) {
-    Expr numerator;
-    Expr denominator;
-    numerator_denominator_purrs(e, numerator, denominator); 
-    for (unsigned i = 0; i < 2; ++i) {
-      Expr partial_e;
-      if (i == 0)
-	partial_e = numerator;
-      else
-	partial_e = denominator;
-      unsigned lower_degree = partial_e.ldegree(Recurrence::n);
-      while (lower_degree > 0) {
-	partial_e = quo(partial_e, Recurrence::n, Recurrence::n);
-	lower_degree = partial_e.ldegree(Recurrence::n);
-	if (z < 0)
-	  z = 0;
-      }
-      std::vector<Number> potential_roots;
-      Number constant_term
-	= abs(partial_e.tcoeff(Recurrence::n).ex_to_number());
-      // Find the divisors of the constant term.
-      if (constant_term.is_positive_integer())
-	find_divisors(constant_term, potential_roots);
-      // Find non-negative integral roots of the denominator.
-      for(unsigned i = potential_roots.size(); i-- > 0; ) {
-	Number temp = partial_e.substitute(Recurrence::n,
-					   potential_roots[i]).ex_to_number();
-	if (temp == 0 &&  potential_roots[i] > z)
-	  z = potential_roots[i];
-      }
-    }
-  }
-}
-
 //! Returns <CODE>true</CODE> if \p e contains parameters;
 //! returns <CODE>false</CODE> otherwise.
 /*!
@@ -1723,6 +1418,21 @@ PURRS::Recurrence::solve_linear_finite_order(int gcd_among_decrements) const {
     return status;
   }
 
+  // Find the biggest positive or null integer that cancel the denominator of
+  // `inhomogeneous_term' and store it in `z' if it is bigger than `0'.
+  Number z = 0;
+  if (!inhomogeneous_term.is_zero()) {
+    if (find_parameters(denominator(inhomogeneous_term))) {
+      D_MSG("Constant coefficient with parameters in the denominator of "
+	    "the inhomogeneous term.");
+      return TOO_COMPLEX;
+    }
+    biggest_positive_int_zero(denominator(inhomogeneous_term).expand(), z);
+  }
+  // The initial conditions will start from `z'.
+  set_first_initial_condition(z.to_int());
+  D_VAR(first_initial_condition());
+
   // `g_n' is defined here because it is necessary in the function
   // `add_initial_conditions()' (at the end of function
   // `solve_linear_finite_order()').
@@ -1766,8 +1476,7 @@ PURRS::Recurrence::solve_linear_finite_order(int gcd_among_decrements) const {
       // If there is some root not rational then, for efficiency, we substitute
       // it with an arbitrary symbol.
       substitute_non_rational_roots(*this, roots);
-      solution = solve_constant_coeff_order_2(g_n, order(), all_distinct,
-					      inhomogeneous_term,
+      solution = solve_constant_coeff_order_2(g_n, all_distinct,
 					      num_coefficients, roots);
     }
     else
@@ -1791,8 +1500,7 @@ PURRS::Recurrence::solve_linear_finite_order(int gcd_among_decrements) const {
       // If there is some root not rational then, for efficiency, we substitute
       // it with an arbitrary symbol.
       substitute_non_rational_roots(*this, roots);
-      solution = solve_constant_coeff_order_k(g_n, order(), all_distinct,
-					      inhomogeneous_term,
+      solution = solve_constant_coeff_order_k(g_n, all_distinct,
 					      num_coefficients, roots);
     }
     else
@@ -2009,15 +1717,18 @@ solve_constant_coeff_order_1(const std::vector<Polynomial_Root>& roots) const {
   // The summand must be an hypergeometric term.
   if (vector_not_all_zero(exp_no_poly_coeff)) {
     Expr gosper_solution;
-    if (compute_sum_with_gosper_algorithm(1, n, base_of_exps,
-					  exp_no_poly_coeff, roots,
-					  gosper_solution))
+    if (compute_sum_with_gosper_algorithm(first_initial_condition() + 1, n,
+					  base_of_exps, exp_no_poly_coeff,
+					  roots, gosper_solution))
       solution += gosper_solution;
     else {
       // FIXME: the summand is not hypergeometric:
       // no chance of using Gosper's algorithm.
       Symbol h;
-      solution += PURRS::sum(h, 1, n, pwr(roots[0].value(), n - h)
+      unsigned lower = first_initial_condition() > 0
+	? first_initial_condition() + 1	: 1;
+      solution += PURRS::sum(h, lower, n,
+			     pwr(roots[0].value(), n - h)
 			     * inhomogeneous_term.substitute(n, h));
     }
   }
@@ -2063,12 +1774,13 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
   // that cancel the denominator of the coefficient.
   // If this integer does not exist then `z' is left to 0.
   Number z = 0;
-  domain_recurrence(coefficient.expand(), z);
+  biggest_positive_int_zero(numerator(coefficient).expand(), z);
+  biggest_positive_int_zero(denominator(coefficient).expand(), z);
   // Find the biggest positive or null integer that cancel the denominator of
   // `inhomogeneous_term' and store it in `z' if it is bigger than the
   // current `z'.
   if (!inhomogeneous_term.is_zero())
-    domain_recurrence(denominator(inhomogeneous_term).expand(), z);
+    biggest_positive_int_zero(denominator(inhomogeneous_term).expand(), z);
   // The initial conditions will start from `z'.
   set_first_initial_condition(z.to_int());
   Expr alpha_factorial
@@ -2119,4 +1831,270 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
   solution += x(z);
   solution *= alpha_factorial;
   return SUCCESS;
+}
+
+/*!
+  Consider the linear recurrence relation of the second order with
+  constant coefficients
+  \f[
+    x_n = a_1 x_{n-1} + a_2 + p(n),
+  \f]
+  where \f$ p(n) \f$ is a function defined over the natural numbers.
+  If the roots of the characteristic equation \f$ \lambda_1 \f$ and
+  \f$ \lambda_2 \f$ are distinct then we know the final formula that
+  give the solution:
+  \f[
+    x_n = g_{n-1} x_1 + a_2 g_{n-2} x_0
+          + \frac{\lambda_1^{n+1}}{\lambda_1-\lambda_2}
+	    \sum_{k=2}^n \lambda_1^{-k} p(k)
+          - \frac{\lambda_2^{n+1}}{\lambda_1-\lambda_2}
+	    \sum_{k=2}^n \lambda_2^{-k} p(k),
+  \f]
+  where
+  \f[
+    g(n) = \frac{\lambda_1^{n+1}-\lambda_2^{n+1}}{\lambda_1-\lambda_2}.
+  \f]
+  If there is one root, \f$ \lambda \f$, with double multiplicity,
+  computes \f$ g_n = (\alpha_1 + \alpha_2) * \lambda^n \f$,
+  where \f$ \alpha_1 \f$ and \f$ \alpha_2 \f$ are complex numbers.
+  Introduced the <EM>fundamental</EM> solution of the associated
+  homogeneous equation, which is
+  \f[
+    \begin{cases}
+      g_n = a_1 g_{n-1} + a_2 g_{n-2},\\
+      g_0 = 1, \\
+      g_1 = a_1 g_0,
+    \end{cases}
+  \f]
+  this function returns the general solution of recurrence relation
+  which is calculated by the formula
+  \f[
+    x_n = \sum_{i=k}^n g_{n-i} p(i)
+          + \sum_{i=0}^{k-1} g_{n-i}
+	    \Bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \Bigr).
+  \f]
+  The two sums in the previous formula correspond to the non-homogeneous
+  part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
+  the function <CODE>add_initial_conditions()</CODE>), respectively.
+*/
+PURRS::Expr::Expr
+PURRS::Recurrence::
+solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
+			     const std::vector<Number>& coefficients,
+			     const std::vector<Polynomial_Root>& roots) const {
+  // We search exponentials in `n' (for this the expression
+  // `inhomogeneous_term' must be expanded).
+  // The vector `base_of_exps' contains the exponential's bases
+  // of all exponentials in `inhomogeneous_term'.
+  // In the `i'-th position of the vectors
+  // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
+  // the polynomial part and possibly non polynomial part of the coefficient
+  // of the exponential with the base in `i'-th position of `base_of_exp'.
+  // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
+  // coefficient of base_of_exps[i]^n.
+  std::vector<Expr> base_of_exps;
+  std::vector<Expr> exp_poly_coeff;
+  std::vector<Expr> exp_no_poly_coeff;
+  exp_poly_decomposition(inhomogeneous_term,
+			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
+  D_VEC(base_of_exps, 0, base_of_exps.size()-1);
+  D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
+  D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
+
+  Expr solution;
+  // Calculates the solution of the second order recurrences when
+  // the inhomogeneous term is a polynomial or the product of a
+  // polynomial and an exponential; return the symbolic solution with
+  // the object `sum' otherwise.
+  if (all_distinct) {
+    const Expr& root_1 = roots[0].value();
+    const Expr& root_2 = roots[1].value();
+    Expr diff_roots = root_1 - root_2;
+    g_n = (pwr(root_1, Recurrence::n+1) - pwr(root_2, Recurrence::n+1))
+      / diff_roots;
+    if (!vector_not_all_zero(exp_no_poly_coeff)) {
+      Symbol alpha("alpha");
+      Symbol lambda("lambda");
+      std::vector<Expr> symbolic_sum_distinct;
+      std::vector<Expr> symbolic_sum_no_distinct;
+      compute_symbolic_sum(alpha, lambda, roots,
+			   base_of_exps, exp_poly_coeff,
+			   symbolic_sum_distinct, symbolic_sum_no_distinct);
+      for (unsigned j = symbolic_sum_distinct.size(); j-- > 0; ) {
+	symbolic_sum_no_distinct[j] *= lambda / diff_roots;
+	symbolic_sum_distinct[j] *= lambda / diff_roots;
+      }
+      // Substitutes to the sums in the vector `symbolic_sum_distinct'
+      // or `symbolic_sum_no_distinct' the corresponding values of the
+      // characteristic equation's roots and of the bases of the
+      // eventual exponentials and in `solution' put the sum of all
+      // sums of the vector after the substitution.
+      solution = subs_to_sum_roots_and_bases(alpha, lambda, roots,
+					     base_of_exps,
+					     symbolic_sum_distinct,
+					     symbolic_sum_no_distinct);
+    }
+    else {
+      Symbol h;
+      unsigned lower = first_initial_condition() > 1
+	? first_initial_condition() + 1	: 2;
+      solution = 1 / diff_roots
+	* (pwr(root_1, Recurrence::n+1)
+	   * PURRS::sum(h, lower, Recurrence::n, pwr(root_1, -h)
+			* inhomogeneous_term.substitute(Recurrence::n, h))
+	   - (pwr(root_2, Recurrence::n+1)
+	      * PURRS::sum(h, lower, Recurrence::n, pwr(root_2, -h)
+			   * inhomogeneous_term.substitute(Recurrence::n, h))));
+    }
+  }
+  else {
+    // The characteristic equation
+    // x^2 + a_1 * x + a_2 = 0 has a double root.
+    assert(roots[0].multiplicity() == 2);      
+    
+    // Solve system in order to finds `alpha_i' (i = 1,...,order).
+    Matrix sol = solve_system(all_distinct, coefficients, roots);
+    
+    // Finds `g_n', always taking into account the root's multiplicity.
+    g_n = find_g_n(all_distinct, sol, roots);
+    if (!vector_not_all_zero(exp_no_poly_coeff))
+      solution = compute_non_homogeneous_part(g_n, order(), base_of_exps,
+					      exp_poly_coeff);
+    else {
+      Symbol h;
+      unsigned lower = first_initial_condition() > 1
+	? first_initial_condition() + 1	: 2;
+      solution
+	= PURRS::sum(h, lower, Recurrence::n,
+		     g_n.substitute(Recurrence::n, Recurrence::n - h)
+		     * inhomogeneous_term.substitute(Recurrence::n, h));
+    }
+  }
+  return solution;
+}
+
+/*!
+  Consider the linear recurrence relation of order \f$ k \f$ with
+  constant coefficients
+  \f[
+    x_n = a_1 x_{n-1} + a_2 x_{n-2} + \cdots + a_k x_{n-k} + p(n),
+  \f]
+  where \f$ p(n) \f$ is a function defined over the natural numbers.
+  Knowing the roots \f$ \lambda_1, \cdots, \lambda_k \f$ of the
+  characteristic equation, builds the general solution of the homogeneous
+  recurrence \f$ g_n \f$:
+  - if the roots are simple, i. e., they are all distinct, then
+    \f$ g_n = \alpha_1 \lambda_1^n + \cdots + \alpha_k \lambda_k^n \f$,
+  - if there are multiple roots then
+    \f[
+      g_n = \sum_{j=1}^r (\alpha_{j,0} + \alpha_{j,1}n
+            + \cdots + \alpha_{j,\mu_j-1}n^{\mu_j-1}) \lambda_j^n,
+    \f]
+  where \f$ \alpha_1, \cdots, \alpha_k \f$ are complex numbers
+  (\f$ g_n \f$ in the fisrt case is contained in those of the second
+  case as special case).
+  Introduced the <EM>fundamental</EM> solution of the associated
+  homogeneous equation, which is
+  \f[
+    \begin{cases}
+      g_n = a_1 g_{n-1} + a_2 g_{n-2} + \cdots + a_k g_{n-k}, \\
+      g_0 = 1, \\
+      g_n = a_1 g_{n-1} + a_2 g_{n-2} + \cdots + a_{n-1} g_1 + a_n g_0
+        & \text{for $1 \le n < k$,} \\
+     \end{cases}
+  \f]
+  this function returns the general solution of recurrence relation
+  which is calculated by the formula
+  \f[
+    x_n = \sum_{i=k}^n g_{n-i} p(i)
+          + \sum_{i=0}^{k-1} g_{n-i}
+	    \Bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \Bigr).
+  \f]
+  The two sums in the previous formula correspond to the non-homogeneous
+  part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
+  the function <CODE>add_initial_conditions()</CODE>), respectively.
+*/
+PURRS::Expr::Expr
+PURRS::Recurrence::
+solve_constant_coeff_order_k(Expr& g_n, bool all_distinct,
+			     const std::vector<Number>& coefficients,
+			     const std::vector<Polynomial_Root>& roots) const {
+  // We search exponentials in `n' (for this the expression
+  // `inhomogeneous_term' must be expanded).
+  // The vector `base_of_exps' contains the exponential's bases
+  // of all exponentials in `inhomogeneous_term'.
+  // In the `i'-th position of the vectors
+  // `exp_poly_coeff' and `exp_no_poly_coeff' there are respectively
+  // the polynomial part and possibly non polynomial part of the coefficient
+  // of the exponential with the base in `i'-th position of `base_of_exp'.
+  // `exp_poly_coeff[i] + exp_no_poly_coeff[i]' represents the
+  // coefficient of base_of_exps[i]^n.
+  std::vector<Expr> base_of_exps;
+  std::vector<Expr> exp_poly_coeff;
+  std::vector<Expr> exp_no_poly_coeff;
+  exp_poly_decomposition(inhomogeneous_term,
+			 base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
+  D_VEC(base_of_exps, 0, base_of_exps.size()-1);
+  D_VEC(exp_poly_coeff, 0, exp_poly_coeff.size()-1);
+  D_VEC(exp_no_poly_coeff, 0, exp_no_poly_coeff.size()-1);
+
+  Expr solution;
+  // Calculates the solution of the recurrences when
+  // the inhomogeneous term is a polynomial or the product of a
+  // polynomial and an exponential; return the symbolic solution with
+  // the object `sum' otherwise.
+
+  // Solve system in order to finds `alpha_i' (i = 1,...,order).
+  Matrix sol = solve_system(all_distinct, coefficients, roots);
+
+  // Finds `g_n', always taking into account the root's multiplicity
+  g_n = find_g_n(all_distinct, sol, roots);
+  D_VAR(g_n);
+
+  if (all_distinct)
+    if (!vector_not_all_zero(exp_no_poly_coeff)) {
+      // Prepare for to compute the symbolic sum.
+      std::vector<Expr> poly_coeff_tot;
+      prepare_for_symbolic_sum(g_n, roots, exp_poly_coeff, poly_coeff_tot);
+      Symbol alpha("alpha");
+      Symbol lambda("lambda");
+      std::vector<Expr> symbolic_sum_distinct;
+      std::vector<Expr> symbolic_sum_no_distinct;
+      compute_symbolic_sum(alpha, lambda, roots,
+			   base_of_exps, poly_coeff_tot,
+			   symbolic_sum_distinct, symbolic_sum_no_distinct);
+      // Substitutes to the sums in the vector `symbolic_sum_distinct'
+      // or `symbolic_sum_no_distinct' the corresponding values of the
+      // characteristic equation's roots and of the bases of the
+      // eventual exponentials and in `solution' put the sum of all
+      // sums of the vector after the substitution.
+      solution = subs_to_sum_roots_and_bases(alpha, lambda, roots,
+					     base_of_exps,
+					     symbolic_sum_distinct,
+					     symbolic_sum_no_distinct);
+    }
+    else {
+      Symbol h;
+      unsigned lower = first_initial_condition() > order() - 1
+	? first_initial_condition() + 1	: order();
+      solution
+	= PURRS::sum(h, lower, Recurrence::n,
+		     g_n.substitute(Recurrence::n, Recurrence::n - h)
+		     * inhomogeneous_term.substitute(Recurrence::n, h));
+    }
+  else
+    if (!vector_not_all_zero(exp_no_poly_coeff))
+      // There are roots with multiplicity greater than 1.
+      solution = compute_non_homogeneous_part(g_n, order(), base_of_exps,
+					      exp_poly_coeff);
+    else {
+      Symbol h;
+      unsigned lower = first_initial_condition() > order() - 1
+	? first_initial_condition() + 1	: order();
+      solution
+	= PURRS::sum(h, lower, Recurrence::n,
+		     g_n.substitute(Recurrence::n, Recurrence::n - h)
+		     * inhomogeneous_term.substitute(Recurrence::n, h));
+    }
+  return solution;
 }
