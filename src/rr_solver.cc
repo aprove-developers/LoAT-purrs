@@ -201,9 +201,6 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       coefficients.insert(coefficients.end(), coefficient);
     else
       coefficients[index] += coefficient;
-    std::cout << std::endl << "i " << i << std::endl;
-    std::cout << "a " << a << std::endl;
-    std::cout << "e " << e << std::endl;
   } while (e != 0);
   if (failed)
     return false;
