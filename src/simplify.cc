@@ -308,9 +308,12 @@ find_bases_and_exponents(const Expr& e, std::vector<Expr>& bases,
   \f$ a^4*b^4 \f$.
   Returns a new expression \p e_rewritten containing the
   modified expression \p e.
+  When \p collect_only_n is <CODE>true</CODE> then the function
+  collect powers with the same exponent only when it is equal
+  to \p Recurrence::n.
 */
 Expr
-collect_same_exponents(const Expr& e) {
+collect_same_exponents(const Expr& e, bool collect_only_n = false) {
   assert(e.is_a_mul());
   // Builds two vectors containing the bases and the exponents of
   // the eventual multiplication's factors which are powers. 
@@ -325,12 +328,15 @@ collect_same_exponents(const Expr& e) {
   for (unsigned i = exponents.size(); i-- > 0; ) {
     for (unsigned j = i; j-- > 0; ) {
       if (exponents[j] == exponents[i]) {
-	// We have found two equal exponents. We store in the i-th
-	// position of the vectors `bases' and `exponents' the new power
-	// with base equal to the product of the base in the i-th and in
-	// the j-th position and exponent unchanged.
-	bases[i] *= bases[j];
-	exponents[j] = 0;
+	if (!collect_only_n
+	    || (collect_only_n && exponents[j] == Recurrence::n)) {
+	  // We have found two equal exponents. We store in the i-th
+	  // position of the vectors `bases' and `exponents' the new power
+	  // with base equal to the product of the base in the i-th and in
+	  // the j-th position and exponent unchanged.
+	  bases[i] *= bases[j];
+	  exponents[j] = 0;
+	}
       }
       else if (exponents[j] == -exponents[i]) {
 	// We have found two opposite exponents. We store in the i-th
@@ -902,6 +908,9 @@ simplify_expanded_ex_for_input(const Expr& e, bool input) {
     e_rewritten = 1;
     for (unsigned i = e.nops(); i-- > 0; )
       e_rewritten *= simplify_expanded_ex_for_input(e.op(i), input);
+    // In the case of expressions for input we are interesting to collect
+    // powers with the same exponents when this is equal to `Recurrence::n'. 
+    e_rewritten = collect_same_exponents(e_rewritten, true);
   }
   else if (e.is_a_power())
     return simplify_powers(e, input);
