@@ -414,7 +414,7 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
   // Will be set to true if at least one element of coefficients is
   // non-constant.
   bool has_non_constant_coefficients = false;
-
+#if 1
   do {
     // These patterns are used repeatedly for pattern matching.
     // We avoid recreating them over and over again by declaring
@@ -504,7 +504,79 @@ solve(const Expr& rhs, const Symbol& n, Expr& solution) {
     else
       coefficients[index] += a;
   } while (!e.is_zero());
-  
+#else
+  e = 0;
+  Expr_List substitution;
+  if (rhs.is_a_add()) {
+    for (unsigned j = rhs.nops(); j-- > 0; ) {
+      Expr term = e.op(j);
+      if (term.is_a_mul()) {
+	Expr possibly_coeff;
+	bool found_function_x = false;
+	bool found_n = false;
+	for (unsigned h = term.nops(); h-- > 0; ) {
+	  Expr factor = term.op(h);
+	  Expr possibly_coeff = 1;
+	  if (factor.is_the_x_function()) {
+	  //	  if (factor.match(x_i)) {
+	  //  Expr argument = get_binding(substitution, 0);
+	    Expr argument = factor.op(0);
+	    if (argument.has(n))
+	      if (found_function_x)
+		return NON_LINEAR_RECURRENCE;
+	      else {
+		// Puo' tornare HAS_NON_INTEGER_DECREMENT, ...
+		computation_of_order(argument, order);
+		found_function_x = true;
+	      }
+	    else
+	      possibly_coeff *= factor;
+	  }
+	  else {
+	    if (factor == n)
+	      found_n = true;
+	    possibly_coeff *= factor;
+	  }
+	}
+	if (found_function_x) {
+	  insert_in_coefficients(possibly_coeff, order, coefficients);
+	  if (found_n)
+	    has_non_constant_coefficients = true;
+	}
+	else
+	  e += possibly_coeff;
+      }
+      else
+	// `term' has a unique factor.
+	if (term.match(x(wild(0)))) {
+	  argument = get_binding(substitution, 0);
+	  if (i.has(n)) {
+	    // Puo' tornare HAS_NON_INTEGER_DECREMENT, ...
+	    computation_of_order(argument, order);
+	    insert_in_coefficients(1, order, coefficients);
+	  }
+	  else
+	    e += term;
+	}
+	else
+	  e += term;
+    }
+  }
+  else
+    // `rhs' has a unique term.
+    if (rhs.match(x(wild(0)))) {
+      argument = get_binding(substitution, 0);
+      if (argument.has(n)) {
+	computation_of_order(argument, order);
+	insert_in_coefficients(order, coefficients);
+      }
+      else
+	e += rhs;
+    }
+    else
+      e += rhs;
+#endif
+
   // `order' is negative in two cases. 
   if (order < 0)
     if (e.has(x(wild(0)))) {
