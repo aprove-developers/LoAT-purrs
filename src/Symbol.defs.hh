@@ -34,17 +34,20 @@ namespace Parma_Recurrence_Relation_Solver {
 
 class Symbol {
 public:
-  //! Default constructor.
+  //! Builds a symbol with a unique name.
   Symbol();
 
+  //! Builds a symbol named \p n.
+  Symbol(const char* n);
+
   //! Copy-constructor.
-  Symbol(const Symbol& x);
+  Symbol(const Symbol& y);
 
   //! Destructor.
   ~Symbol();
 
   //! Assignment operator.
-  Symbol& operator=(const Symbol& x);
+  Symbol& operator=(const Symbol& y);
 
 private:
   GiNaC::symbol s;
@@ -56,7 +59,6 @@ private:
   friend class Expr;
   friend class Expr_List;
 
-  //! Builds the symbol corresponding to \p gs.
   Symbol(const GiNaC::symbol& gs);
 };
 

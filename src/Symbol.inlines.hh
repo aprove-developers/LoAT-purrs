@@ -32,13 +32,18 @@ Symbol::Symbol() {
 }
 
 inline
-Symbol::Symbol(const Symbol& x)
-  : s(x.s) {
+Symbol::Symbol(const char* n)
+  : s(n) {
+}
+
+inline
+Symbol::Symbol(const Symbol& y)
+  : s(y.s) {
 };
 
 inline Symbol&
-Symbol::operator=(const Symbol& x) {
-  s = x.s;
+Symbol::operator=(const Symbol& y) {
+  s = y.s;
   return *this;
 };
 
