@@ -252,6 +252,7 @@ find_max_decrement_and_coeff(const Expr& e,
 */
 void
 eliminate_negative_decrements(const Expr& rhs, Expr& new_rhs) {
+  assert(rhs.is_expanded());
   // Seeks `max_decrement', i.e., the largest positive integer `j' such that
   // `x(n+j)' occurs in `rhs' with a coefficient `coefficient' which is not
   // syntactically 0.
@@ -317,6 +318,7 @@ find_coeff_x_n_and_remainder(const Expr& e,
 */
 unsigned int
 eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
+  assert(rhs.is_expanded());
   // Collect the terms `x(n)' so that the right hand side of the recurrence
   // `rhs' is in the form `rhs = a*x(n) + b' and that `b' does different to
   // zero and does not contain `x(n)'.
@@ -424,8 +426,10 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs) {
   else if (new_rhs.is_a_mul())
     for (unsigned int i = new_rhs.nops(); i-- > 0; ) {
       const Expr& factor = new_rhs.op(i);
-      if (factor == x(Recurrence::n))
+      if (factor == x(Recurrence::n)) {
 	new_rhs = 0;
+	break;
+      }
     }
   // Let `rhs = x(n)'.
   else if (new_rhs == x(Recurrence::n))
@@ -1136,8 +1140,9 @@ PURRS::Recurrence::classification_summand(const Expr& rhs, const Expr& addend,
 */
 PURRS::Recurrence::Classifier_Status
 PURRS::Recurrence::classify() const {
+  Expr& rhs = const_cast<Expr&>(recurrence_rhs);
   // Simplifies expanded expressions, in particular rewrites nested powers.
-  Expr rhs = simplify_ex_for_input(recurrence_rhs, true);
+  rhs = simplify_ex_for_input(recurrence_rhs, true);
   // Splits the sum in many sums how many are the addends of the summand
   // and computes, when possible, symbolic sums.
   rhs = simplify_sum(rhs, false, true);
