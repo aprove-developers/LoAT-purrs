@@ -690,6 +690,9 @@ private:
 
   Expr evaluate(unsigned int kind, const Number& num) const;
 
+  void check_number_for_evaluation(const char* method, const char* name,
+				   const Number& num) const;
+
   //! \brief
   //! Throw a <CODE>std::invalid_argument</CODE> exception
   //! containing the appropriate error message.

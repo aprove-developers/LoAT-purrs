@@ -966,6 +966,53 @@ PURRS::Recurrence::set_initial_conditions(const std::map<index_type, Expr>&
   initial_conditions = map_initial_conditions;
 }
 
+void
+PURRS::Recurrence::check_number_for_evaluation(const char* method,
+					       const char* name,
+					       const Number& num) const {
+  // Check that `num' is non-negative.
+  std::ostringstream s;
+  if (num.is_negative()) {
+    s << "the " << name << " can be evaluated on non-negative numbers";
+    throw_invalid_argument(method, s.str().c_str());
+  }
+  
+  switch (type_) {
+  case LINEAR_FINITE_ORDER_CONST_COEFF:
+  case LINEAR_FINITE_ORDER_VAR_COEFF:
+    {
+      // Check that the number `num' is bigger than
+      // `first_valid_index() - order() + 1'.
+      unsigned int min_index = first_valid_index() + 1 >= order()
+	? first_valid_index() - order() + 1 : 0;
+      if (num < min_index) {
+	s << "*this is a recurrence of order " << order() << ";\n"
+	  << "the least non-negative integer `j' such that the\n"
+	  << "recurrence is well-defined for `n >= j' is "
+	  << first_valid_index()
+	  << ". Hence, you can not to evaluate the solution\n"
+	  << "for number smaller than " << min_index;
+	throw_invalid_argument(method, s.str().c_str());
+      }
+    }
+    break;
+  case ORDER_ZERO:
+  case WEIGHTED_AVERAGE:
+    break;
+  case NON_LINEAR_FINITE_ORDER:
+  case FUNCTIONAL_EQUATION:
+    // FIXME: to do!
+    throw
+      "PURRS error: today the evaluation of the solution\n"  
+      "is allowed only for linear finite order recurrences and\n"  
+      "weighted-average recurrences.";
+    break;
+  default:
+    throw std::runtime_error("PURRS internal error: "
+			     "check_number_for_evaluation().");
+  }
+}
+
 Expr
 PURRS::Recurrence::evaluate(unsigned int kind, const Number& num) const {
   const char* method;
@@ -991,14 +1038,10 @@ PURRS::Recurrence::evaluate(unsigned int kind, const Number& num) const {
     throw std::runtime_error("PURRS internal error: "
 			     "evaluate().");    
   }
+  // Check that the number `num' is in agreement with the type of the
+  // recurrence.
+  check_number_for_evaluation(method, name, num);
 
-  // Check that `num' is non-negative.
-  std::ostringstream s;
-  if (num.is_negative()) {
-    s << "the " << name << " can be evaluated on non-negative numbers";
-    throw_invalid_argument(method, s.str().c_str());
-  }
-  
   switch (type_) {
   case ORDER_ZERO:
     // If the recurrence has order zero, the solution is simply the
@@ -1007,46 +1050,75 @@ PURRS::Recurrence::evaluate(unsigned int kind, const Number& num) const {
     break;
   case LINEAR_FINITE_ORDER_CONST_COEFF:
   case LINEAR_FINITE_ORDER_VAR_COEFF:
-    {
-      // Check that the number `num' is bigger than
-      // `first_valid_index() - order() + 1'.
-      unsigned int min_index = first_valid_index() + 1 >= order()
-	? first_valid_index() - order() + 1 : 0;
-      if (num < min_index) {
-	s << "*this is a recurrence of order " << order() << ";\n"
-	  << "the least non-negative integer `j' such that the\n"
-	  << "recurrence is well-defined for `n >= j' is "
-	  << first_valid_index()
-	  << ". Hence, you can not to evaluate the solution\n"
-	  << "for number smaller than " << min_index;
-	throw_invalid_argument(method, s.str().c_str());
-      }
-
-      // The solution or the bound is valid for the non-negative integer
-      // `n' such that `n > first_valid_index'; for `n <= first_valid_index'
-      //  the solution is represented by the initial condition with index
-      // equal to `num'.
-      if (num < first_valid_index() + 1)
-	evaluated = get_initial_condition(num.to_unsigned_int());
-      else
-	evaluated = evaluated.substitute(n, num);
-    }
+    // The solution or the bound is valid for the non-negative integer
+    // `n' such that `n > first_valid_index'; for `n <= first_valid_index'
+    //  the solution is represented by the initial condition with index
+    // equal to `num'.
+    if (num < first_valid_index() + 1)
+      evaluated = get_initial_condition(num.to_unsigned_int());
+    else
+      evaluated = evaluated.substitute(n, num);
     break;
   case WEIGHTED_AVERAGE:
-    {
-      // The solution or the bound is valid for the non-negative integer
-      // `n' such that `n > 0'; for `n == 0' the solution is represented
-      // by the initial condition `x(0)'.
-      if (num == 0)
-	evaluated = get_initial_condition(0);
-      else
-	evaluated = evaluated.substitute(n, num);
-    }
+    // The solution or the bound is valid for the non-negative integer
+    // `n' such that `n > 0'; for `n == 0' the solution is represented
+    // by the initial condition `x(0)'.
+    if (num == 0)
+      evaluated = get_initial_condition(0);
+    else
+      evaluated = evaluated.substitute(n, num);
     break;
   case NON_LINEAR_FINITE_ORDER:
   case FUNCTIONAL_EQUATION:
+    // FIXME: to do!
     throw
       "PURRS error: today the evaluation of the solution\n"  
+      "is allowed only for linear finite order recurrences and\n"  
+      "weighted-average recurrences.";
+    break;
+  default:
+    throw std::runtime_error("PURRS internal error: "
+			     "evaluate_exact_solution().");
+  }
+  return evaluated;
+}
+
+Expr
+PURRS::Recurrence::evaluate_recurrence_rhs(const Number& num) const {
+  if (classifier_status_ == NOT_CLASSIFIED_YET)
+    classify_and_catch_special_cases();
+
+  // FIXME: exception?
+  if (classifier_status_ != CL_SUCCESS)
+    throw std::logic_error("PURRS::Recurrence::evaluate_recurrence_rhs():\n"
+			   "impossible to evaluate because *this is not\n"
+			   "in the class that the system is able to handle.");
+  // Check that the number `num' is in agreement with the type of the
+  // recurrence.
+  check_number_for_evaluation("PURRS::Recurrence::evaluate_exact_solution()",
+			      "recurrence", num);
+  
+  Expr evaluated;
+  switch (type_) {
+  case ORDER_ZERO:
+    evaluated = recurrence_rhs.substitute(n, num);
+    break;
+  case LINEAR_FINITE_ORDER_CONST_COEFF:
+  case LINEAR_FINITE_ORDER_VAR_COEFF:
+    {
+      std::vector<Expr> rec_evaluated(order()+1);
+      for (unsigned int i = first_valid_index(); i < num; i++) {
+	;      
+      }
+    }
+    break;
+  case WEIGHTED_AVERAGE:
+    break;
+  case NON_LINEAR_FINITE_ORDER:
+  case FUNCTIONAL_EQUATION:
+    // FIXME: to do!
+    throw
+      "PURRS error: today the evaluation of the right-hand side\n"  
       "is allowed only for linear finite order recurrences and\n"  
       "weighted-average recurrences.";
     break;
@@ -1614,13 +1686,14 @@ PURRS::Recurrence::compute_exact_solution_non_linear() const {
   // eventually shift the solution in according with them before to
   // substitute the values of the initial conditions to the
   // symbolic initial condition `x(i)'.
-  if (!initial_conditions.empty())
+  if (!initial_conditions.empty()) {
     evaluated_exact_solution_.set_expression
       (substitute_i_c_shifting(solution));
-  evaluated_lower_bound_.set_expression
-    (evaluated_exact_solution_.expression());
-  evaluated_upper_bound_.set_expression
-    (evaluated_exact_solution_.expression());
+    evaluated_lower_bound_.set_expression
+      (evaluated_exact_solution_.expression());
+    evaluated_upper_bound_.set_expression
+      (evaluated_exact_solution_.expression());
+  }
 #endif
   return SUCCESS;
 }
