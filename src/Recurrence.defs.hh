@@ -1510,10 +1510,29 @@ private:
   Recurrence& associated_first_order_rec();
 
   //! \brief
-  //! When the weighted-average recurrence is not in normal form,
-  //! this data contains its right hand side before the transformation
-  //! in normal form.
+  //! Sets <CODE>original_rhs_</CODE> with the right hand side of the
+  //! recurrence before the rewriting of the system in a weighted-average
+  //! recurrence
+  //! \f[
+  //!   x(n) = f(n) \sum_{k=0}^{n-1} x(k) + g(n).
+  //! \f]
   void set_original_rhs(const Expr& original_rhs) const;
+
+  //! \brief
+  //! Returns the lower limit of the sum \f$ n_0 \f$ of a recurrence
+  //! \f[
+  //!   x(n) = f(n) \sum_{k=n_0}^{u(n)} x(k) + g(n).
+  //! \f]
+  //! rewritable in a weighted-average recurrence.
+  unsigned int lower_limit() const;
+
+  //! Sets <CODE>lower_limit_</CODE> with the lower limit of the sum
+  //! \f$ n_0 \f$ of a recurrence
+  //! \f[
+  //!   x(n) = f(n) \sum_{k=n_0}^{u(n)} x(k) + g(n).
+  //! \f]
+  //! rewritable in a weighted-average recurrence. 
+  void set_lower_limit(unsigned int lower) const;
 
   //! \brief
   //! Returns the factor \f$ f(n) \f$ of the weighted-average recurrence
@@ -1528,6 +1547,7 @@ private:
   //!   T(n) = f(n) \sum_{k=0}^n T(k) + g(n).
   //! \f]
   Expr& weight();
+
 
   //! \brief
   //! Stores the value, if it exists, of the exact solution

@@ -509,6 +509,19 @@ Recurrence::set_original_rhs(const Expr& original_rhs) const {
   weighted_average_p->set_original_rhs(original_rhs);
 }
 
+inline unsigned int
+Recurrence::lower_limit() const {
+  assert(is_weighted_average());
+  assert(weighted_average_p);
+  return weighted_average_p->lower_limit();
+}
+
+inline void
+Recurrence::set_lower_limit(unsigned int lower) const {
+  assert(is_weighted_average());
+  weighted_average_p->set_lower_limit(lower);
+}
+
 inline const Expr&
 Recurrence::weight() const {
   assert(is_weighted_average());
