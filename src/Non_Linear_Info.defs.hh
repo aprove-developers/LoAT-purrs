@@ -1,5 +1,5 @@
 /* A class for containing all informations necessary for to solve
-   non linear recurrence.
+   non linear recurrences.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -35,7 +35,7 @@ namespace Parma_Recurrence_Relation_Solver {
 class Non_Linear_Info {
 public:
   //! \brief
-  //! Constructor: sets \f$ recurrence_rhs_reritten_ = new_rhs \f$,
+  //! Constructor: sets \f$ rhs_transformed_in_linear_ = new_rhs \f$,
   //! \f$ base_exp_log_ = base_exp_log \f$,
   //! \f$ auxiliary_symbols_ = auxiliary_symbols \f$.
   Non_Linear_Info(const Expr& new_rhs, const Expr& base_exp_log,
