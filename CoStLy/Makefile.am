@@ -17,7 +17,7 @@ SUBDIRS =
 
 INCLUDES = -I$(top_builddir)/src @extra_includes@
 
-CPPFLAGS = @extra_cpp_flags@
+CPPFLAGS = -DFILIB_VERSION @extra_cpp_flags@
 
 noinst_LIBRARIES = libCoStLy.a
 
