@@ -66,12 +66,6 @@ public:
   //! Returns <CODE>weight_</CODE>.
   Expr& weight();
 
-  //! Returns <CODE>first_valid_index_inf_order_</CODE>.
-  index_type first_valid_index_inf_order() const;
-
-  //! Sets <CODE>first_valid_index_inf_order_</CODE> with \p i_c
-  void set_first_valid_index_inf_order(index_type i_c);
-
 private:
   //! \brief
   //! In the case which the system is able to rewrite the weighted-average
@@ -93,11 +87,6 @@ private:
   //!   x(n) = f(n) \sum_{k=n_0}^{u(n)} x(k) + g(n).
   //! \f]
   Expr weight_;
-
-  //! \brief
-  //! Stores the least non-negative integer \f$ j \f$ such that
-  //! the recurrence is well-defined for \f$ n \geq j \f$.
-  index_type first_valid_index_inf_order_;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver

@@ -40,8 +40,7 @@ inline
 Weighted_Average_Info::Weighted_Average_Info(const Weighted_Average_Info& y)
   : associated_first_order_rec_(y.associated_first_order_rec_),
     original_rhs_(y.original_rhs_),
-    weight_(y.weight_),
-    first_valid_index_inf_order_(y.first_valid_index_inf_order_) {
+    weight_(y.weight_) {
 }
 
 inline
@@ -53,7 +52,6 @@ Weighted_Average_Info::operator=(const Weighted_Average_Info& y) {
   associated_first_order_rec_ = y.associated_first_order_rec_;
   original_rhs_ = y.original_rhs_;
   weight_ = y.weight_;
-  first_valid_index_inf_order_ = y.first_valid_index_inf_order_;
   return *this;
 }
 
@@ -80,16 +78,6 @@ Weighted_Average_Info::weight() const {
 inline Expr&
 Weighted_Average_Info::weight() {
   return weight_;
-}
-
-inline index_type
-Weighted_Average_Info::first_valid_index_inf_order() const {
-  return first_valid_index_inf_order_;
-}
-
-inline void
-Weighted_Average_Info::set_first_valid_index_inf_order(index_type i_c) {
-  first_valid_index_inf_order_ = i_c;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver
