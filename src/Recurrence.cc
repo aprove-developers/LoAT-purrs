@@ -371,9 +371,7 @@ PURRS::Recurrence::dump(std::ostream& s) const {
   s << "auxiliary_definitions:" << std::endl;
   blackboard.dump(s);
   
-  if (initial_conditions.empty())
-    s << "There are not defined initial conditions" << std::endl;
-  else {
+  if (!initial_conditions.empty()) {
     s << "Initial conditions:" << std::endl;
     for (std::map<unsigned, Expr>::const_iterator i = initial_conditions.begin(),
 	   initial_conditions_end = initial_conditions.end();
