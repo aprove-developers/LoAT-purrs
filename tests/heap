@@ -55,7 +55,6 @@ n	3*x(n/2)+n*log(n)
 n	3*x(n/2)+x(n-3)+3*n
 n	3*x(n/4)+n*log(n)
 n	4*x(n/2)+n^2
-n	5*x(n-4)+n*log(log(n))
 n	5*x(n/4)+n*log(log(n))
 n	6*x(n/7)+n
 n	7*n/5+x(n/5)+(4/10)*n+x((7/10)*n)
@@ -261,6 +260,7 @@ y	5*x(n-1)+n*log(n)
 y	5*x(n-1)-6*x(n-2)
 y	5*x(n-1)-6*x(n-2)+2*n+2^n
 y	5*x(n-1)-6*x(n-2)+4
+y	5*x(n-4)+n*log(log(n))
 y	5^n
 y	6*x(n-1)-9*x(n-2)
 y	7*x(n-1)+10*(2^(n-1)*c)^2
