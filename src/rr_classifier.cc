@@ -535,26 +535,38 @@ x_function_in_powers_or_functions(const Expr& e) {
 //! returns \f$ 2 \f$ otherwise.
 unsigned
 find_non_linear_term(const Expr& e) {
+  // Even if we find a `legal' (i.e. not containing two nested `x' function)
+  // non-linear term we do not exit from this function because we must be
+  // sure that there are not non-linear term not legal.
+  // If `non_linera_term' at the end of this function is again `2' means
+  // that we are not find non-linear terms.
+  unsigned non_linear_term = 2;
   unsigned num_summands = e.is_a_add() ? e.nops() : 1;
   if (num_summands > 1)
     for (unsigned i = num_summands; i-- > 0; ) {
       const Expr& term = e.op(i);
       unsigned num_factors = term.is_a_mul() ? term.nops() : 1;
       if (num_factors == 1) {
-	unsigned non_linear_term = x_function_in_powers_or_functions(term);
-	if (non_linear_term != 2)
-	  return non_linear_term;
+	unsigned tmp = x_function_in_powers_or_functions(term);
+	// Nested `x' function.
+	if (tmp == 1)
+	  return 1;
+	else if (tmp == 0)
+	  non_linear_term = 0;
       }
       else {
 	bool found_function_x = false;
 	for (unsigned j = num_factors; j-- > 0; ) {
 	  const Expr& factor = term.op(j);
-	  unsigned non_linear_term = x_function_in_powers_or_functions(factor);
-	  if (non_linear_term != 2)
-	    return non_linear_term;
+	  unsigned tmp = x_function_in_powers_or_functions(factor);
+	  // Nested `x' function.
+	  if (tmp == 1)
+	    return 1;
+	  else if (tmp == 0)
+	    non_linear_term = 0;
 	  if (factor.is_the_x_function())
 	    if (found_function_x)
-	      return 0;
+	      non_linear_term = 0;
 	    else
 	      if (factor.arg(0).has(Recurrence::n))
 		found_function_x = true;
@@ -564,27 +576,33 @@ find_non_linear_term(const Expr& e) {
   else {
     unsigned num_factors = e.is_a_mul() ? e.nops() : 1;
     if (num_factors == 1) {
-      unsigned non_linear_term = x_function_in_powers_or_functions(e);
-      if (non_linear_term != 2)
-	return non_linear_term;
+      unsigned tmp = x_function_in_powers_or_functions(e);
+      // Nested `x' function.
+      if (tmp == 1)
+	return 1;
+      else if (tmp == 0)
+	non_linear_term = 0;
     }
     else {
       bool found_function_x = false;
       for (unsigned j = num_factors; j-- > 0; ) {
 	const Expr& factor = e.op(j);
-	unsigned non_linear_term = x_function_in_powers_or_functions(factor);
-	if (non_linear_term != 2)
-	  return non_linear_term;
+	unsigned tmp = x_function_in_powers_or_functions(factor);
+	// Nested `x' function.
+	if (tmp == 1)
+	  return 1;
+	else if (tmp == 0)
+	  non_linear_term = 0;
 	if (factor.is_the_x_function())
 	  if (found_function_x)
-	    return 0;
+	    non_linear_term = 0;
 	  else
 	    if (factor.arg(0).has(Recurrence::n))
 	      found_function_x = true;
       }
     }
   }
-  return 2;
+  return non_linear_term;
 }
 
 //! \brief
@@ -897,12 +915,12 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classify() const {
   D_VAR(recurrence_rhs);
+  // Simplifies expanded expressions, in particular rewrites nested powers.
+  recurrence_rhs = simplify_ex_for_input(recurrence_rhs, true);
+
   // Check if the inhomogeneous term contains non rational numbers.
   if (recurrence_rhs.has_non_rational_numbers())
     return MALFORMED_RECURRENCE;
-
-  // Simplifies expanded expressions, in particular rewrites nested powers.
-  recurrence_rhs = simplify_ex_for_input(recurrence_rhs, true);
 
   // `non_linear_term == 0' or `non_linear_term == 1' indicate
   // two different cases of non-linearity.
