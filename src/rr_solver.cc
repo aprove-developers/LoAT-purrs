@@ -1809,7 +1809,8 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
 			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
     std::vector<Polynomial_Root> new_roots;
     new_roots.push_back(Polynomial_Root(Expr(1), RATIONAL));
-    if (!compute_sum_with_gosper_algorithm(1, n, base_of_exps, exp_poly_coeff,
+    if (!compute_sum_with_gosper_algorithm(first_initial_condition() + 1, n,
+					   base_of_exps, exp_poly_coeff,
 					   exp_no_poly_coeff, new_roots,
 					   inhomogeneous_term/alpha_factorial,
 					   solution)) {
@@ -1823,10 +1824,6 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
 		     / alpha_factorial.substitute(n, h));
       return SUCCESS;
     }
-    // To do this cycle or to consider `z + 1' as the lower limit of
-    // the sum is the same thing,  but so is better for the output.
-    for (Number i = 1; i < z + 1; ++i)
-      solution -= (inhomogeneous_term / alpha_factorial).substitute(n, i);
   }
   solution += x(z);
   solution *= alpha_factorial;
