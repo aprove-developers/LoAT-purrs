@@ -1151,7 +1151,8 @@ private:
 
   //! Solves the linear recurrence of first order with variable coefficient. 
   Solver_Status
-  solve_variable_coeff_order_1(const std::vector<Expr>& coefficients) const;
+  solve_variable_coeff_order_1(const std::vector<Expr>& coefficients,
+			       Expr& solution) const;
 
   //! Solves the linear recurrence of second order with constant coefficients. 
   Expr solve_constant_coeff_order_2(Expr& g_n, bool all_distinct,
