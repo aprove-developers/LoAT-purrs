@@ -1,4 +1,4 @@
-/* Recurrence class implementation (non-inline functions).
+/* Declare the public function for approximating expressions.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -22,27 +22,20 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#ifndef NOISY
-#define NOISY 0
-#endif
+#ifndef PURRS_approx_expr_hh
+#define PURRS_approx_expr_hh 1
 
-#include <config.h>
+#include "Expr.types.hh"
+#include "Number.defs.hh"
+#include "complint.hh"
 
-#include "Recurrence.defs.hh"
-#include "util.hh"
-#include <iostream>
+namespace Parma_Recurrence_Relation_Solver {
 
-namespace PURRS = Parma_Recurrence_Relation_Solver;
+//! Returns an interval-based approximation of \p e.
+Expr
+approximate(const Expr& e);
 
-const PURRS::Symbol&
-PURRS::Recurrence::n = Symbol("n");
 
-void
-PURRS::Recurrence::dump(std::ostream& s) const {
-  s << "solved = " << (solved ? "true" : "false") << std::endl;
-  s << "recurrence_rhs = " << recurrence_rhs << std::endl;
-  s << "auxiliary_definitions:" << std::endl;
-  blackboard.dump(s);
-  //s << "solution = " << solution << std::endl;
-  s << std::endl;
-}
+} // namespace Parma_Recurrence_Relation_Solver
+
+#endif // !defined(PURRS_approx_expr_hh)

@@ -52,7 +52,8 @@ Matrix.inlines.hh \
 Init.defs.hh \
 Init.inlines.hh \
 initializer.hh \
-approx_expr.hh \
+approximate.hh \
+approximate_impl.hh \
 alg_eq_solver.hh \
 poly_factor.hh \
 gosper.hh \
@@ -77,7 +78,7 @@ Number.cc \
 Recurrence.cc \
 Symbol.cc \
 alg_eq_solver.cc \
-approx_expr.cc \
+approximate.cc \
 complint.cc \
 gosper.cc \
 numerator_denominator.cc \

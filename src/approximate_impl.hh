@@ -1,4 +1,4 @@
-/* To be written.
+/* Inline functions implementing the approximation of expressions.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -22,25 +22,24 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#include <config.h>
+#ifndef PURRS_approximate_impl_hh
+#define PURRS_approximate_impl_hh 1
 
-
-#include "approx_expr.hh"
+#include "Expr.defs.hh"
 #include "Number.defs.hh"
-#include "Complex_Interval.defs.hh"
+#include "complint.hh"
 #include "cimath.h"
 #include <cln/rational.h>
-#include <ginac/ginac.h>
 
 namespace Parma_Recurrence_Relation_Solver {
 
-Interval
+inline Interval
 approximate_integer(const Number& n) {
   // Kludge!!!
   return Interval(n.to_int());
 }
 
-Interval
+inline Interval
 approximate_rational(const Number& n) {
   if (n.is_integer())
     return approximate_integer(n);
@@ -52,7 +51,7 @@ approximate_rational(const Number& n) {
     abort();
 }
 
-CInterval
+inline CInterval
 approximate(const Number& n) {
   if (n.is_real())
     return CInterval(approximate_rational(n.real()),
@@ -62,82 +61,11 @@ approximate(const Number& n) {
 		     approximate_rational(n.imaginary()));
 }
 
-#if 0
-CInterval
-approximate(const Expr& e) {
-  CInterval r;
-  if (e.is_a_number())
-    return approximate(e.ex_to_number());
-  else if (e.is_a_add()) {
-    r = CInterval(0, 0);
-    for (unsigned i = 0, n = e.nops(); i < n; ++i)
-      r += approximate(e.op(i));
-  }
-  else if (e.is_a_mul()) {
-    r = CInterval(1, 0);
-    for (unsigned i = 0, n = e.nops(); i < n; ++i)
-      r *= approximate(e.op(i));
-  }
-  else if (e.is_a_power()) {
-    static Expr one_half = Number(1)/2;
-    const Expr& base = e.op(0);
-    const Expr& exponent = e.op(1);
-#if 0
-    return pow(approximate(base), approximate(exponent));
-#else
-    std::cout << base << "^" << exponent << std::endl;
-    CInterval abase = approximate(base);
-    CInterval aexponent = approximate(exponent);
-    std::cout << abase << "^" << aexponent << " = ";
-    CInterval result = pow(abase, aexponent);
-    std::cout << result << std::endl;
-    return result;
-#endif
-  }
-  else if (e.is_a_function()) {
-    const Expr& arg = e.op(0);
-    CInterval aarg = approximate(arg);
-#if 0
-    if (e.is_the_function(abs))
-      return abs(aarg);
-    else
-#endif
-    if (e.is_the_exp_function())
-      return exp(aarg);
-    else if (e.is_the_log_function())
-      return ln(aarg);
-    else if (e.is_the_sin_function())
-      return sin(aarg);
-    else if (e.is_the_cos_function())
-      return cos(aarg);
-    else if (e.is_the_tan_function())
-      return tan(aarg);
-    else if (e.is_the_acos_function())
-      return acos(aarg);
-    else
-      abort();
-      abort();
-  }
-  else if (e.is_a_constant()) {
-    if (e == Constant::Pi)
-      return CInterval(Interval::PI(), Interval::ZERO());
-#if 0
-    else if (e == Constant::Euler)
-      return CInterval(Interval(E_lower_bound.d, E_upper_bound.d),
-                       Interval::ZERO());
-#endif
-    else
-      abort();
-  }
-  else
-    abort();
 
-  return r;
-}
-#endif
-
-bool
-approximate(const Expr& e, Expr& ae, CInterval& aci) {
+template <typename SymbolHandler>
+inline bool
+generic_approximate(const Expr& e, const SymbolHandler& sh,
+		    Expr& ae, CInterval& aci) {
   static Expr operand_ae;
   static CInterval operand_aci;
   bool interval_result = true;
@@ -152,7 +80,7 @@ approximate(const Expr& e, Expr& ae, CInterval& aci) {
     CInterval accumulated_aci(Interval::ZERO(), Interval::ZERO());
     bool non_trivial_interval = false;
     for (unsigned i = e.nops(); i-- > 0; ) {
-      if (approximate(e.op(i), operand_ae, operand_aci)) {
+      if (generic_approximate(e.op(i), sh, operand_ae, operand_aci)) {
 	accumulated_aci += operand_aci;
 	non_trivial_interval = true;
       }
@@ -173,7 +101,7 @@ approximate(const Expr& e, Expr& ae, CInterval& aci) {
     CInterval accumulated_aci(Interval::ONE(), Interval::ZERO());
     bool non_trivial_interval = false;
     for (unsigned i = e.nops(); i-- > 0; ) {
-      if (approximate(e.op(i), operand_ae, operand_aci)) {
+      if (generic_approximate(e.op(i), sh, operand_ae, operand_aci)) {
 	accumulated_aci *= operand_aci;
 	non_trivial_interval = true;
       }
@@ -192,12 +120,12 @@ approximate(const Expr& e, Expr& ae, CInterval& aci) {
   else if (e.is_a_power()) {
     Expr base_ae;
     CInterval base_aci;
-    bool base_interval_result = approximate(e.arg(0),
-					    base_ae, base_aci);
+    bool base_interval_result
+      = generic_approximate(e.arg(0), sh, base_ae, base_aci);
     Expr exponent_ae;
     CInterval exponent_aci;
-    bool exponent_interval_result = approximate(e.arg(1),
-						exponent_ae, exponent_aci);
+    bool exponent_interval_result
+      = generic_approximate(e.arg(1), sh, exponent_ae, exponent_aci);
     if (base_interval_result)
       if (exponent_interval_result) 
 	aci = pow(base_aci, exponent_aci);
@@ -215,7 +143,7 @@ approximate(const Expr& e, Expr& ae, CInterval& aci) {
     switch (e.nops()) {
     case 1:
       {
-	if (approximate(e.arg(0), operand_ae, operand_aci))
+	if (generic_approximate(e.arg(0), sh, operand_ae, operand_aci))
 	  if (e.is_the_exp_function())
 	    aci = exp(operand_aci);
 	  else if (e.is_the_log_function())
@@ -251,20 +179,20 @@ approximate(const Expr& e, Expr& ae, CInterval& aci) {
     else
       abort();
   }
+  else if (e.is_a_symbol()) {
+    if (sh.approximate(e.ex_to_symbol(), operand_ae, operand_aci))
+      aci = operand_aci;
+    else {
+      ae = operand_ae;
+      interval_result = false;
+    }
+  }
   else
     abort();
 
   return interval_result;
 }
 
-Expr
-approximate(const Expr& e) {
-  Expr ae;
-  CInterval aci;
-  if (approximate(e, ae, aci))
-    return Complex_Interval(aci);
-  else
-    return ae;
-}
-
 } // namespace Parma_Recurrence_Relation_Solver
+
+#endif // !defined(PURRS_approximate_impl_hh)

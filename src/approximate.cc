@@ -1,4 +1,4 @@
-/* To be written.
+/* Implementation of the public function for approximating expressions.
    Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
@@ -22,17 +22,30 @@ USA.
 For the most up-to-date information see the PURRS site:
 http://www.cs.unipr.it/purrs/ . */
 
-#ifndef PURRS_approx_expr_hh
-#define PURRS_approx_expr_hh 1
+#include <config.h>
 
-#include "Expr.types.hh"
-#include "complint.hh"
+#include "approximate.hh"
+#include "approximate_impl.hh"
 
-namespace Parma_Recurrence_Relation_Solver {
+namespace PURRS = Parma_Recurrence_Relation_Solver;
 
-Expr
-approximate(const Expr& e);
+namespace {
 
-} // namespace Parma_Recurrence_Relation_Solver
+struct Identity {
+  bool approximate(const PURRS::Symbol& s, PURRS::Expr& ae, CInterval&) const {
+    ae = s;
+    return false;
+  }
+};
 
-#endif // !defined(PURRS_approx_expr_hh)
+}
+
+PURRS::Expr
+PURRS::approximate(const PURRS::Expr& e) {
+  PURRS::Expr ae;
+  CInterval aci;
+  if (generic_approximate(e, Identity(), ae, aci))
+    return PURRS::Complex_Interval(aci);
+  else
+    return ae;
+}

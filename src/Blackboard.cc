@@ -30,7 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "Blackboard.defs.hh"
 #include "util.hh"
-#include "approx_expr.hh"
+#include "approximate_impl.hh"
 #include <iostream>
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
