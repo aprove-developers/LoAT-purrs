@@ -583,35 +583,7 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
     // In fact, the recurrences could be in a non-standard form like
     // `x(n) = f(n) sum(k, 0, n-1, x(k)+h(n))'. For standard form
     // we consider recurrences with the argument of the sum equal to `x(k)'. 
-    // Find the lower_bound of the sum.
-    // FIXME: maybe it is better put the lower bound of the sum
-    // in the class `Infinite_Order_Info', so we could avoid this search.
-    unsigned lower_bound_sum;
-    if (rec.recurrence_rhs.is_a_add())
-      for (unsigned i = rec.recurrence_rhs.nops(); i-- > 0; ) {
-	const Expr& term = rec.recurrence_rhs.op(i);
-	if (term.is_a_mul()) {
-	  for (unsigned j = term.nops(); j-- > 0; )
-	    if (term.op(i).is_the_sum_function())
-	      lower_bound_sum = term.op(i).arg(1).ex_to_number().to_unsigned();
-	}
-	else
-	  if (term.is_the_sum_function())
-	    lower_bound_sum = term.arg(1).ex_to_number().to_unsigned();
-      }
-    else
-      if (rec.recurrence_rhs.is_a_mul())
-	for (unsigned i = rec.recurrence_rhs.nops(); i-- > 0; ) {
-	  if (rec.recurrence_rhs.op(i).is_the_sum_function()) {
-	    lower_bound_sum
-	      = rec.recurrence_rhs.op(i).arg(1).ex_to_number().to_unsigned();
-	    break;
-	  }
-	}
-      else 
-	lower_bound_sum
-	  = rec.recurrence_rhs.arg(1).ex_to_number().to_unsigned();
-    
+
     // Let `x(n) = f(n) sum(k, n_0, n-1, x(k)) + g(n)' be the infinite
     // order recurrence. Now we must consider the expression
     // `x(n) - f(n) x(n_0) - f(n) sum(k, n_0 + 1, n - 1, x(k)) - g(n)',
@@ -619,13 +591,13 @@ PURRS::Recurrence::verify_exact_solution(const Recurrence& rec) {
     // If we are able to demonstrate that this expression is syntactically
     // zero, then the solution is correct.
     Symbol h("h");
-    Expr diff = PURRS::sum(h, lower_bound_sum + 1, n - 1,
+    Expr diff = PURRS::sum(h, rec.lower_bound_sum() + 1, n - 1,
 			   rec.exact_solution_.expression()
 			   .substitute(n, h));
     diff = simplify_sum(diff, false, true);
     diff = rec.exact_solution_.expression()
       - diff * rec.weight_inf_order()
-      - x(lower_bound_sum) * rec.weight_inf_order()
+      - x(rec.lower_bound_sum()) * rec.weight_inf_order()
       - rec.inhomogeneous_term;
     diff = simplify_all(diff);
     if (diff == 0)
