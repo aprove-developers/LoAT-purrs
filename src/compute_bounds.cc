@@ -48,7 +48,7 @@ namespace {
 using namespace PURRS;
 
 
-void
+bool
 compute_bounds_for_exp_function(bool lower, const Number& coeff,
 				const Number& divisor, const Number& base,
 				Expr& bound) {
@@ -70,11 +70,11 @@ compute_bounds_for_exp_function(bool lower, const Number& coeff,
 	* gamma(1 + log(coeff) * pwr(log(divisor), -1));
     else
       // cmp == 2.
-      throw std::runtime_error("PURRS internal error: "
-			       "failure of the function `compare()'.");      
+      return false;
     bound = pwr(base, Recurrence::n)
       + constant * pwr(base, Recurrence::n / divisor);
   }
+  return true;
 }
 
 bool
@@ -146,8 +146,7 @@ compute_bounds_for_power_of_n(bool lower,
       }
       else
 	// diff_coeff_pow_div_k == 2.
-	throw std::runtime_error("PURRS internal error: "
-				 "failure of the function `compare()'.");
+	return false;
     }
     // 0 < k < 1.
     else {
@@ -168,8 +167,7 @@ compute_bounds_for_power_of_n(bool lower,
 	  - pow_c_b_k * (log(Recurrence::n) / log(divisor) - 1);
       else
 	// diff_coeff_pow_div_k == 2.
-	throw std::runtime_error("PURRS internal error: "
-				 "failure of the function `compare()'.");
+	return false;
     }
 #else
     return false;
@@ -187,8 +185,7 @@ compute_bounds_for_power_of_n(bool lower,
 	/ (coeff - pow_div_k);
     else
       // diff_coeff_pow_div_k == 2.
-      throw std::runtime_error("PURRS internal error: "
-			       "failure of the function `compare()'.");
+      return false;
   return true;
 }
 
@@ -214,7 +211,6 @@ compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
 	  * (pwr(Recurrence::n, log(coeff) / log(divisor))
 	     - (coeff - 1) * frac_log - coeff);
       }
-      return true;
     }
     else
 #endif
@@ -228,8 +224,8 @@ compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
       bound = log(divisor) / exact_pwr(coeff - 1, 2)
 	* (coeff * pwr(Recurrence::n, log(coeff) / log(divisor))
 	   - (coeff - 1) * log(Recurrence::n) / log(divisor) - coeff);
-    return true;
   }
+  return true;
 }
 
 bool
@@ -261,9 +257,7 @@ compute_bounds_for_power_times_logarithm_function(bool lower,
 	     - ((coeff - pow_div_k) * frac_log + coeff) * pow_n_k);
       else
 	// diff_coeff_pow_div_k == 2.
-	throw std::runtime_error("PURRS internal error: "
-				 "failure of the function `compare()'.");
-      return true;
+	return false;
     }
     else
 #endif
@@ -280,10 +274,9 @@ compute_bounds_for_power_times_logarithm_function(bool lower,
 	   - (coeff - pow_div_k) * pow_n_k_log / log(divisor) - coeff);
     else
       // diff_coeff_pow_div_k == 2.
-      throw std::runtime_error("PURRS internal error: "
-				 "failure of the function `compare()'.");
-    return true;
+      return false;
   }
+  return true;
 }
 
 /*!
@@ -312,8 +305,7 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
 	return false;
     }
     else
-      throw std::runtime_error("PURRS internal error: "
-			       "failure of the function `compare()'.");
+      return false;
     bound += poly_coeff * tmp_bound;
     return true;
   }
@@ -381,8 +373,7 @@ sharper_bounds_for_polynomial_function(bool lower, const Expr& poly_coeff,
 	return false;
     }
     else
-      throw std::runtime_error("PURRS internal error: "
-			       "failure of the function `compare()'.");
+      return false;
     bound += factor * tmp_bound;
     return true;
   }
@@ -457,8 +448,7 @@ sharper_bounds_for_no_polynomial_function(bool lower,
 	compute_bounds_for_logarithm_function(!lower, coeff, divisor,
 					      tmp_bound);
       else
-	throw std::runtime_error("PURRS internal error: "
-				 "failure of the function `compare()'.");
+	return false;
       bound += factor * tmp_bound;
       return true;
     }
@@ -472,8 +462,7 @@ sharper_bounds_for_no_polynomial_function(bool lower,
       else if (cmp == -1)
 	compute_bounds_for_power_of_n(!lower, coeff, divisor, k, tmp_bound);
       else
-	throw std::runtime_error("PURRS internal error: "
-				 "failure of the function `compare()'.");
+	return false;
       bound += factor * tmp_bound;
       return true;
     }
@@ -491,8 +480,7 @@ sharper_bounds_for_no_polynomial_function(bool lower,
 							  divisor, k,
 							  tmp_bound);
       else
-	throw std::runtime_error("PURRS internal error: "
-				 "failure of the function `compare()'.");
+	return false;
       bound += factor * tmp_bound;
       return true;
     }
@@ -516,17 +504,20 @@ sharper_bounds_for_exponential(bool lower,
 	    && !has_parameters(poly_coeff))) {
       int cmp = compare(poly_coeff, 0);
       Expr tmp_bound;
-      if (cmp == 1)
+      if (cmp == 1) {
 	// `a' positive number.
-	compute_bounds_for_exp_function(lower, coeff, divisor, base,
-					tmp_bound);
-      else if (cmp == -1)
+	if (!compute_bounds_for_exp_function(lower, coeff, divisor, base,
+					     tmp_bound))
+	  return false;
+      }
+      else if (cmp == -1) {
 	// `a' negative number -> swap lower with upper or upper with lower.
-	compute_bounds_for_exp_function(!lower, coeff, divisor, base,
-					tmp_bound);
+	if (!compute_bounds_for_exp_function(!lower, coeff, divisor, base,
+					     tmp_bound))
+	  return false;
+      }
       else
-	throw std::runtime_error("PURRS internal error: "
-				 "failure of the function `compare()'.");
+	return false;
       bound += poly_coeff * tmp_bound;
       return true;
     }
@@ -546,16 +537,19 @@ sharper_bounds_for_exponential(bool lower,
       int cmp = compare(factor, 0);
       // `a' positive number.
       Expr tmp_bound;
-      if (cmp == 1)
-	compute_bounds_for_exp_function(lower, coeff, divisor, base,
-					tmp_bound);
-      else if (cmp == -1)
+      if (cmp == 1) {
+	if (!compute_bounds_for_exp_function(lower, coeff, divisor, base,
+					     tmp_bound))
+	return false;
+      }
+      else if (cmp == -1) {
 	// `a' negative number -> swap lower with upper or upper with lower.
-	compute_bounds_for_exp_function(!lower, coeff, divisor, base,
-					tmp_bound);
+	if (!compute_bounds_for_exp_function(!lower, coeff, divisor, base,
+					     tmp_bound))
+	  return false;
+      }
       else
-	throw std::runtime_error("PURRS internal error: "
-				 "failure of the function `compare()'.");
+	return false;
       bound += factor * tmp_bound;
       return true;
     }
