@@ -1477,7 +1477,7 @@ main(int argc, char *argv[]) try {
     if (unexpected_failures_to_partially_verify > 0) {
       failed = true;
       cerr << unexpected_failures_to_partially_verify
-           << " unexpected failures to partially_verify solutions"
+           << " unexpected failures to partially verify solutions"
            << endl;
     }
     if (unexpected_failures_to_disprove > 0) {
