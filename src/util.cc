@@ -424,6 +424,7 @@ ok_argument_factorial(const Expr& argument, const Symbol& n) {
 */
 bool
 largest_positive_int_zero_on_expanded_ex(const Expr& e, Number& z) {
+  assert(e.is_expanded());
   bool ok = false;
   // FIXME: `if (e.has(Recurrence::n))' is necessary because here there is
   // the method `PURRS::is_polynomial()' and there are the methods
