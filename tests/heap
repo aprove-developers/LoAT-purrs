@@ -160,6 +160,7 @@ n	3*x(n/2)+n*log(n*n*a)
 n	3*x(n/2)+n*log(n*n/a)
 n	3*x(n/2)+n*log(n-n/a)
 n	3+(1/(x(n-1)))
+n	4*x(n-1)*(1-x(n-1))
 n	4*x(n/4)+c
 n	7*n/5+x(n/5)+(4/10)*n+x((7/10)*n)
 n	a*x(n+1)-b*x(n+2)
