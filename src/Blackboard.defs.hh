@@ -70,11 +70,13 @@ public:
   //! \f$ z \f$ and records the equation \f$ z = e \f$.
   Symbol find_symbol(const Expr& e);
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Substitutes the left-hand side \p system_generated_symbol
   //! of the auxiliary equation \f$ system\_generated\_symbol = e \f$
   //! with \p new_symbol, so that to have the auxiliary equation
   //! \f$ new\_symbol = e \f$.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   void substitute(const Symbol& system_generated_symbol,
 		  const Symbol& new_symbol);
 

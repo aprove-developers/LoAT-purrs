@@ -845,12 +845,12 @@ PURRS::Recurrence::compute_order(const Number& decrement, index_type& order,
 				 unsigned long& index,
 				 unsigned long max_size) {
   if (decrement < 0)
-    return HAS_NEGATIVE_DECREMENT;
+    return CL_HAS_NEGATIVE_DECREMENT;
   // Make sure that (1) we can represent `decrement' as a long, and
   // (2) we will be able to store the coefficient into the
   // appropriate position of the `coefficients' vector.
   if (decrement >= LONG_MAX || decrement >= max_size)
-    return HAS_HUGE_DECREMENT;
+    return CL_HAS_HUGE_DECREMENT;
   
   // The `order' is defined as the maximum value of `index'.
   index = decrement.to_long();
@@ -914,7 +914,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
     else if (addend.is_the_x_function()) {
       const Expr& argument = addend.arg(0);
       if (argument == n)
-	return HAS_NULL_DECREMENT;
+	return CL_HAS_NULL_DECREMENT;
       else if (has_parameters(argument))
 	return CL_TOO_COMPLEX;
       // Check if this term has the form `x(n + d)'.
@@ -1021,7 +1021,7 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
       else if (factor.is_the_x_function()) {
 	const Expr& argument = factor.arg(0);
 	if (argument == n)
-	  return HAS_NULL_DECREMENT;
+	  return CL_HAS_NULL_DECREMENT;
 	else if (has_parameters(argument))
 	  return CL_TOO_COMPLEX;
 	else if (argument.is_a_add() && argument.nops() == 2) {
@@ -1149,23 +1149,21 @@ PURRS::Recurrence::classification_summand(const Expr& addend, Expr& rhs,
 					      the case of functional equation;
   - <CODE>CL_HAS_NON_INTEGER_DECREMENT</CODE> if the right-hand side of the
                                               recurrence contains at least an
-					      occurrence of
-					      <CODE>x(n-k)</CODE>, where
-					      <CODE>k</CODE> is not an integer;
-  - <CODE>HAS_NEGATIVE_DECREMENT</CODE>       if the right-hand side of the
-                                              recurrence contains at least an
-					      occurrence of
-					      <CODE>x(n-k)</CODE>, where
-					      <CODE>k</CODE> is a negative
+					      occurrence of \f$ x(n-k) \f$,
+					      where \f$ k \f$ is not an
 					      integer;
-  - <CODE>HAS_NULL_DECREMENT</CODE>           if the right-hand side of the
+  - <CODE>CL_HAS_NEGATIVE_DECREMENT</CODE>    if the right-hand side of the
                                               recurrence contains at least an
-					      occurrence of <CODE>x(n)</CODE>;
-  - <CODE>CL_HAS_HUGE_DECREMENT</CODE>        if the right-hand side of the
+					      occurrence of \f$ x(n-k) \f$,
+					      where \f$ k \f$ is a negative
+					      integer;
+  - <CODE>CL_HAS_NULL_DECREMENT</CODE>        if the right-hand side of the
                                               recurrence contains at least an
-					      occurrence of
-					      <CODE>x(n-k)</CODE>, where
-					      <CODE>k</CODE> is too big to
+					      occurrence of \f$ x(n) \f$;
+  - <CODE>CL_CL_HAS_HUGE_DECREMENT</CODE>     if the right-hand side of the
+                                              recurrence contains at least an
+					      occurrence of \f$ x(n-k) \f$,
+					      where \f$ k \f$ is too big to
 					      be handled by the standard
 					      solution techniques;
   - <CODE>CL_MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
@@ -1306,10 +1304,10 @@ PURRS::Recurrence::classify() const {
   Classifies the recurrence \p *this calling the method
   <CODE>classify()</CODE>.
   If the function <CODE>classify()</CODE> returns the value
-  <CODE>HAS_NEGATIVE_DECREMENT</CODE> or the value
-  <CODE>HAS_NULL_DECREMENT</CODE>, this function tries to rewrite the
+  <CODE>CL_HAS_NEGATIVE_DECREMENT</CODE> or the value
+  <CODE>CL_HAS_NULL_DECREMENT</CODE>, this function tries to rewrite the
   recurrence in the normal form \f$ x(n) = r \f$, where \f$ r \f$
-  does not contain terms <CODE>x(n-k)</CODE>, where <CODE>k</CODE>
+  does not contain terms \f$ x(n-k) \f$, where \f$ k \f$
   is not a positive integer.
 
   Returns:
@@ -1319,15 +1317,13 @@ PURRS::Recurrence::classify() const {
 					      the case of functional equation;
   - <CODE>CL_HAS_NON_INTEGER_DECREMENT</CODE> if the right-hand side of the
                                               recurrence contains at least an
-					      occurrence of
-					      <CODE>x(n-k)</CODE>,
-					      where <CODE>k</CODE> is not an
+					      occurrence of \f$ x(n-k) \f$,
+					      where \f$ k \f$ is not an
 					      integer;
-  - <CODE>CL_HAS_HUGE_DECREMENT</CODE>        if the right-hand side of the
+  - <CODE>CL_CL_HAS_HUGE_DECREMENT</CODE>     if the right-hand side of the
                                               recurrence contains at least an
-					      occurrence of
-					      <CODE>x(n-k)</CODE>,
-					      where <CODE>k</CODE> is too big
+					      occurrence of \f$ x(n-k) \f$,
+					      where \f$ k \f$ is too big
 					      to be handled by the standard
 					      solution techniques;
   - <CODE>CL_MALFORMED_RECURRENCE</CODE>      if the recurrence does not have
@@ -1362,13 +1358,13 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
     case CL_SUCCESS:
       break;
     case CL_HAS_NON_INTEGER_DECREMENT:
-    case HAS_HUGE_DECREMENT:
+    case CL_HAS_HUGE_DECREMENT:
     case CL_MALFORMED_RECURRENCE:
     case CL_DOMAIN_ERROR:
     case CL_TOO_COMPLEX:
       exit_anyway = true;
       break;
-    case HAS_NEGATIVE_DECREMENT:
+    case CL_HAS_NEGATIVE_DECREMENT:
       {
 	Expr new_rhs;
 	eliminate_negative_decrements(recurrence_rhs, new_rhs);
@@ -1381,7 +1377,7 @@ PURRS::Recurrence::classify_and_catch_special_cases() const {
 	status = classify_and_catch_special_cases();
       }
       break;
-    case HAS_NULL_DECREMENT:
+    case CL_HAS_NULL_DECREMENT:
       {
 	Expr new_rhs;
 	unsigned int result

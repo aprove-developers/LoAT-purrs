@@ -884,13 +884,13 @@ PURRS::Recurrence::map_status(Classifier_Status classifier_status) {
     return INDETERMINATE_RECURRENCE;
   case CL_UNSOLVABLE_RECURRENCE:
     return UNSOLVABLE_RECURRENCE;
+  case CL_HAS_NON_INTEGER_DECREMENT:
+    // Intentionally fall through.
   case CL_MALFORMED_RECURRENCE:
     return MALFORMED_RECURRENCE;
   case CL_DOMAIN_ERROR:
     return DOMAIN_ERROR;
-  case CL_HAS_NON_INTEGER_DECREMENT:
-    return HAS_NON_INTEGER_DECREMENT;
-  case HAS_HUGE_DECREMENT:
+  case CL_HAS_HUGE_DECREMENT:
     // Intentionally fall through.
   case CL_TOO_COMPLEX:
     return TOO_COMPLEX;

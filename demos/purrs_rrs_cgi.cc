@@ -291,7 +291,6 @@ main() try {
     case Recurrence::MALFORMED_RECURRENCE:
       error("this recurrence is malformed");
       break;
-    case Recurrence::HAS_NON_INTEGER_DECREMENT:
     case Recurrence::TOO_COMPLEX:
     default:
       ;
@@ -316,7 +315,6 @@ main() try {
     case Recurrence::MALFORMED_RECURRENCE:
       error("this recurrence is malformed");
       break;
-    case Recurrence::HAS_NON_INTEGER_DECREMENT:
     case Recurrence::TOO_COMPLEX:
     default:
       ;
@@ -341,7 +339,6 @@ main() try {
     case Recurrence::MALFORMED_RECURRENCE:
       error("this recurrence is malformed");
       break;
-    case Recurrence::HAS_NON_INTEGER_DECREMENT:
     case Recurrence::TOO_COMPLEX:
     default:
       ;

@@ -151,14 +151,16 @@ bool less_than(const Recurrence& x, const Recurrence& y);
   will be transformed in the normal form and, moreover,
   the recurrence is rewritten, if possible, so that the lower limit of
   the sum is \f$ 0 \f$ and the upper limit is \f$ n-1 \f$:
-  \f$ x(n) = -2 \sum_{k=0}^n x(k) + 2 n + 6 \f$.
+  \f$ x(n) = -2 \sum_{k=0}^{n-1} x(k) + 2 n + 6 \f$.
 */
 class Recurrence {
 public:
   //! Default constructor: builds the singleton satisfying \f$ x(n) = 0 \f$.
   Recurrence();
 
-  //! Builds the set of sequences satisfying \f$ x(n) = e \f$.
+  //! \brief
+  //! Builds the set of sequences satisfying \f$ x(n) = e \f$,
+  //! with \f$ e \f$ the right-hand side of the recurrence.
   explicit Recurrence(const Expr& e);
 
   //! Copy-constructor.
@@ -184,9 +186,9 @@ public:
   void replace_recurrence(const Expr& e);
 
   //! \brief
-  //! Sets to \f$ e \f$ the right-hand side of the recurrence
-  //! of index \f$ k \f$.  The system of recurrences will then
-  //! include \f$ x_k(n) = e \f$.
+  //! To use in the case of system of recurrences: sets to \f$ e \f$
+  //! the right-hand side of the recurrence of index \f$ k \f$.
+  //! The system of recurrences will then include \f$ x_k(n) = e \f$.
   void replace_recurrence(unsigned int k, const Expr& e);
 
   //! Returns a new symbol \f$ z \f$ and records the equation \f$ z = e \f$.
@@ -202,12 +204,14 @@ public:
   //! <CODE>initial_conditions</CODE> with the expression \p e. 
   void replace_initial_condition(unsigned int k, const Expr& e);
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Checks if all the invariants are satisfied.
   /*!
     The check is performed so as to intrude as little as possible.
     In case invariants are violated error messages are written on
     <CODE>std::cerr</CODE>.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool OK() const; 
 
 private:
@@ -244,7 +248,8 @@ public:
     SUCCESS,
 
     /*!
-      The recurrence is indeterminate, hence it has infinite solutions.
+      The recurrence is indeterminate, hence it has infinitely
+      many solutions.
     */
     INDETERMINATE_RECURRENCE,
 
@@ -254,20 +259,21 @@ public:
     UNSOLVABLE_RECURRENCE,
 
     /*!
-      The recurrence does not have any sense.
+      The recurrence does not have any sense. We include in this status
+      three types of malformation:
+      - the recurrence contains non-rational numbers;
+      - there is a function \f$ x() \f$ with another function \f$ x() \f$
+        as argument;
+      - the right-hand side of the recurrence contains at least an
+        occurrence of \f$ x(n-k) \f$, where \f$ k \f$ is not an integer.
     */
     MALFORMED_RECURRENCE,
 
     /*!
-      The recurrence is not well-defined.
+      The recurrence is not well-defined
+      (ex. \f$ x_n = (n-2) \sum_{k=0}^{n-1} x(k) \f$).
     */
     DOMAIN_ERROR,
-
-    /*!
-      The right-hand side of the recurrence contains at least an occurrence
-      of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is not an integer.
-    */
-    HAS_NON_INTEGER_DECREMENT,
 
     /*!
       Catchall: the recurrence is generically too complex for the solver.
@@ -304,7 +310,7 @@ public:
   /*!
     The system tries to compute the exact solution with every type
     of recurrence, linear and non-linear of finite order, weighted-average
-    and also with functional equations, eventually calling the methods
+    and also with functional equations, possibly calling the methods
     that compute lower bound and upper bound and verifying if they are
     coinciding.
 
@@ -521,7 +527,8 @@ private:
     CL_SUCCESS,
 
     /*!
-      The recurrence is indeterminate, hence it has infinite solutions.
+      The recurrence is indeterminate, hence it has infinitely many
+      solutions.
     */
     CL_INDETERMINATE_RECURRENCE,
 
@@ -531,12 +538,17 @@ private:
     CL_UNSOLVABLE_RECURRENCE,
 
     /*!
-      The recurrence does not have any sense.
+      The recurrence does not have any sense. We include in this status
+      two types of malformation:
+      - the recurrence contains non-rational numbers;
+      - there is a function \f$ x() \f$ with another function \f$ x() \f$
+        as argument.
     */
     CL_MALFORMED_RECURRENCE,
 
     /*!
-      The recurrence is not well-defined.
+      The recurrence is not well-defined
+      (ex. \f$ x_n = (n-2) \sum_{k=0}^{n-1} x(k) \f$).
     */
     CL_DOMAIN_ERROR,
 
@@ -551,7 +563,7 @@ private:
       of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is too big to be handled
       by the standard solution techniques.
     */
-    HAS_HUGE_DECREMENT,
+    CL_HAS_HUGE_DECREMENT,
 
     /*!
       Catchall: the recurrence is generically too complex for the solver.
@@ -562,13 +574,13 @@ private:
       The right-hand side of the recurrence contains at least an occurrence
       of <CODE>x(n-k)</CODE> where <CODE>k</CODE> is a negative integer.
     */
-    HAS_NEGATIVE_DECREMENT,
+    CL_HAS_NEGATIVE_DECREMENT,
 
     /*!
       The right-hand side of the recurrence contains at least an occurrence
       of <CODE>x(n)</CODE>.
     */
-    HAS_NULL_DECREMENT,
+    CL_HAS_NULL_DECREMENT,
 
     /*!
       The recurrence is not yet classified.

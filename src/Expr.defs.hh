@@ -319,6 +319,7 @@ Expr binom(const Expr& m, const Expr& k);
 // lcm(), degree(), ldegree(), coeff(), lcoeff(), tcoeff(), expand(),
 // collect(), primpart() and content(). 
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 //! \brief
 //! Computes the quotient \f$ q(x) \f$ of polynomials \f$ a(x) \f$ and
 //! \f$ b(x) \f$ in \f$ Q[x] \f$.
@@ -331,8 +332,10 @@ Expr binom(const Expr& m, const Expr& k);
   \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
                                    rational polynomials.
 */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 Expr quo(const Expr& a, const Expr& b, const Symbol& x);
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 //! \brief
 //! Computes the remainder \f$ r(x) \f$ of polynomials \f$ a(x) \f$ and
 //! \f$ b(x) \f$ in \f$ Q[x] \f$.
@@ -345,8 +348,10 @@ Expr quo(const Expr& a, const Expr& b, const Symbol& x);
   \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
                                    rational polynomials.
 */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 Expr rem(const Expr& a, const Expr& b, const Symbol& x);
   
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 //! \brief
 //! Computes the pseudo-remainder \f$ pseudo\_r(x) \f$ of polynomials
 //! \f$ a(x) \f$ and \f$ b(x) \f$ in \f$ Z[x] \f$.
@@ -362,9 +367,11 @@ Expr rem(const Expr& a, const Expr& b, const Symbol& x);
   \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
                                    rational polynomials.
 */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 // FIXME: what is the pseudo-quotient?
 Expr prem(const Expr& a, const Expr& b, const Symbol& x);
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 //! \brief
 //! Computes the GCD (greatest common divisor) of multivariate polynomials
 //! \f$ a(X) \f$ and \f$ b(X) \f$ in \f$ Z[X] \f$.
@@ -373,9 +380,11 @@ Expr prem(const Expr& a, const Expr& b, const Symbol& x);
   \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
                                    rational polynomials.
 */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 // FIXME: what is a multivariate polynomial?
 Expr gcd(const Expr& a, const Expr& b);
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 //! \brief
 //! Computes the LCM (least common multiple) of multivariate polynomials
 //! \f$ a(X) \f$ and \f$ b(X) \f$ in \f$ Z[X] \f$.
@@ -384,9 +393,11 @@ Expr gcd(const Expr& a, const Expr& b);
   \exception std::invalid_argument thrown if \f$ a \f$ or \f$ b \f$ are not
                                    rational polynomials.
 */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 // FIXME: what is a multivariate polynomial?
 Expr lcm(const Expr& a, const Expr& b);
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 //! \brief
 //! Computes a square-free factorization for the polynomial \p x with respect
 //! to the variable in the list \p y.
@@ -420,8 +431,10 @@ Expr lcm(const Expr& a, const Expr& b);
   Observe also that the factors \f$ p_i(X) \f$ need not be irreducible
   polynomials.
 */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 Expr sqrfree(const Expr& x, const Expr_List& y);
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 //! Solves a linear system of equations.
 /*!
   \relates Expr
@@ -433,6 +446,7 @@ Expr sqrfree(const Expr& x, const Expr_List& y);
 				   symbols, respectively.
   \exception std::logic_error      thrown if the system is not linear. 
 */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 Expr lsolve(const Expr_List& x, const Expr_List& y);
 
 //! Returns the function \f$ x(y) \f$.
@@ -534,9 +548,11 @@ public:
   //! expression.
   bool is_a_constant() const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is a complex
   //! interval expression.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool is_a_complex_interval() const;
 
   //! \brief
@@ -738,25 +754,34 @@ public:
   //! matches \p x.
   bool has(const Expr& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Expands \p *this, i.e., distributes multiplication over addition.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   Expr distribute_mul_over_add() const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Expands further \p *this, i.e., distributes multiplication over
   //! addition and executes the powers with exponents positive integers
   //! numbers.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   Expr expand() const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if the expression \p *this is expanded;
   //! returns <CODE>false</CODE> otherwise.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool is_expanded() const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Sorts expanded expression \p *this collecting, or, in other words,
   //! putting in evidence, the expressions in \p x.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   Expr collect(const Expr_List& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! If \p *this is a polynomial or a rational function, returns the degree
   //! of the polynomial or the asymptotic degree of the rational function,
@@ -774,8 +799,10 @@ public:
                                  the powers with base equal to \p x not
 				 integer.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   unsigned int degree(const Symbol& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! If \p *this is a polynomial or a rational function, returns the low
   //! degree of the polynomial or the low asymptotic degree of the rational
@@ -793,8 +820,10 @@ public:
                                  the powers with base equal to \p x not
 				 integer.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   unsigned int ldegree(const Symbol& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! If \p *this is a polynomial returns the coefficient of the term
   //! of degree equal to \p k.
@@ -802,8 +831,10 @@ public:
   //! is not a polynomial or \p x is not contained in \p *this or there
   //! is not a term of \p k's degree.
   // FIXME: lavora anche sulle espressioni non polinomiali!!
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   Expr coeff(const Symbol& x, int k) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! If \p *this is a polynomial returns the leading coefficient
   //! (the term with highest degree, it is equivalent to
@@ -812,8 +843,10 @@ public:
   //! is not a polynomial or \p x is not contained in \p *this or there
   //! is not a term of \p k's degree.
   // FIXME: lavora anche sulle espressioni non polinomiali!!
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   Expr lcoeff(const Symbol& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! If \p *this is a polynomial returns the trailing coefficient
   //! (the term with lowest degree, it is equivalent to
@@ -822,8 +855,10 @@ public:
   //! is not a polynomial or \p x is not contained in \p *this or there
   //! is not a term of \p k's degree.
   // FIXME: lavora anche sulle espressioni non polinomiali!!
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   Expr tcoeff(const Symbol& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Computes the primitive part of a multivariate polynomial in
   //! \f$ Z[x] \f$ with respect to \p x.
@@ -840,8 +875,10 @@ public:
     \exception std::domain_error     thrown if VEDI TEST primpart.cc   
     \exception std::invalid_argument thrown if VEDI TEST primpart.cc
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   Expr primpart(const Symbol& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Computes content part of a multivariate polynomial in \f$ Z[x]
   //! \f$ with respect to \p x.
@@ -851,8 +888,10 @@ public:
     The product of content part and primitive part is the polynomial itself.
     FIXME: rivedere eccezioni.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   Expr content(const Symbol& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Returns the numerator \p x and the denominator \p y of \p *this.
   /*!
     If the expression is not of the normal form `numerator/denominator'
@@ -860,6 +899,7 @@ public:
     it is first converted to this form and then the numerator and
     denominator are returned.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   // FIXME: what is a polynomial?
   void numerator_denominator(Expr& x, Expr& y) const;
 
@@ -877,13 +917,16 @@ public:
   */
   Expr rhs() const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns partial derivative of \p nth order of \p *this with respect
   //! to the variable \p x.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   Expr diff(const Symbol& x, unsigned int nth = 1);
 
   void latex_print(std::ostream& s);
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this is a scalar rapresentation for
   //! \p x; returns <CODE>false</CODE> otherwise.
@@ -900,8 +943,10 @@ public:
     - if \f$ a \f$ and \f$ b \f$ are scalars then
       \f$ a+b \f$, \f$ a*b \f$, and \f$ a^b \f$ are scalars.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool is_scalar_representation(const Symbol& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this is an integer scalar
   //! rapresentation for \p x; returns <CODE>false</CODE> otherwise.
@@ -923,8 +968,10 @@ public:
       \f$ b \f$ is a positive integer or a parameter different from
       \f$ x \f$, then \f$ a^b \f$ is an integer scalar representation.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool is_integer_scalar_representation(const Symbol& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this is a rational scalar
   //! rapresentation for \p x; returns <CODE>false</CODE> otherwise.
@@ -947,8 +994,10 @@ public:
       -  if \f$ a \f$ is a number then \f$ b \f$ is a positive integer number,
       then \f$ a^b \f$ is a rational scalar representation.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool is_rational_scalar_representation(const Symbol& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this is a scalar rapresentation;
   //! returns <CODE>false</CODE> otherwise.
@@ -963,8 +1012,10 @@ public:
     - if \f$ a \f$ and \f$ b \f$ are scalar representations, then
       \f$ a+b \f$, \f$ a*b \f$ and \f$ a^b \f$ are scalars.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool is_scalar_representation() const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this is a polynomial in \p x;
   //! returns <CODE>false</CODE> otherwise.
@@ -980,8 +1031,10 @@ public:
     - if \f$ a \f$ and \f$ b \f$ are polynomials then
       \f$ a + b \f$ and \f$ a * b \f$ are polynomials.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool is_polynomial(const Symbol& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this is an integer polynomial in \p x;
   //! returns <CODE>false</CODE> otherwise.
@@ -998,8 +1051,10 @@ public:
     - if \f$ a \f$ and \f$ b \f$ are integer polynomials then
       \f$ a + b \f$ and \f$ a * b \f$ are integer polynomials.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool is_integer_polynomial(const Symbol& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this is a rational polynomial in \p x;
   //! returns <CODE>false</CODE> otherwise.
@@ -1015,8 +1070,10 @@ public:
     - if \f$ a \f$ and \f$ b \f$ are rational polynomials then
       \f$ a + b \f$ and \f$ a * b \f$ are rational polynomials.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool is_rational_polynomial(const Symbol& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this is a multivariate polynomial;
   //! returns <CODE>false</CODE> otherwise.
@@ -1030,8 +1087,10 @@ public:
     - if \f$ a \f$ and \f$ b \f$ are multivariate polynomials then
       \f$ a + b \f$ and \f$ a * b \f$ are multivariate polynomials.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool is_multivariate_polynomial() const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this is a rational function in \p x;
   //! returns <CODE>false</CODE> otherwise.
@@ -1042,19 +1101,25 @@ public:
     \f]
     is called a <EM>rational function</EM>.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool is_rational_function(const Symbol& x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this contains non rational numbers;
   //! returns <CODE>false</CODE> otherwise.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool has_non_rational_numbers() const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if \p *this contains the function
   //! \f$ x() \f$ with its argument containing the expression \p e;
   //! returns <CODE>false</CODE> otherwise.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool has_x_function(const Expr& y) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Returns <CODE>true</CODE> if and only if the functions \f$ x() \f$
   //! occurring in \p *this are all initial conditions; returns
@@ -1068,23 +1133,30 @@ public:
     - the argument is equal to \f$ mod(n, k) + h \f$, with
       \f$ k, h \in \Nset \f$.
   */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   bool has_symbolic_initial_conditions() const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Let \p x be a simple not numeric expression, i.e., it is not a sum or
   //! a product or a power, which is assumed to be already expanded.
   //! Returns a new expression obtained from \p *this collecting the
   //! expression \p x and puts in \p coeff_x the new coefficient of the
   //! expression \p x. If \p x it is not in \p *this, then returns \p *this.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   Expr collect_term(const Expr& x, Expr& coeff_x) const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! Returns \p *this evaluated numerically. 
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   Expr unsafe_fp_approximation() const;
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   //! \brief
   //! Collects all symbols contained in \p *this in two sets dividing
   //! the symbols generated by the system (i.e., symbols with the name
   //! of the shape "symbol" followed by a number) from all the other symbols.
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
   void collect_symbols(Symbol::SymbolSet& system_generated_symbols,
 		       Symbol::SymbolSet& new_symbols) const;
 

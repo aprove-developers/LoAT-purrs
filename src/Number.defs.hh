@@ -112,18 +112,22 @@ bool operator<=(const Number& x, const Number& y);
 /*! \relates Number */
 Number abs(const Number& x);
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 //! \brief
 //! If \f$ x \f$ and \f$ y \f$ are integer, returns the greatest common
 //! divisor of \f$ x \f$ and \f$ y \f$.
 //! Returns 1 otherwise.
 /*! \relates Number */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 Number gcd(const Number& x, const Number& y);
 
+#ifdef PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 //! \brief
 //! If \f$ x \f$ and \f$ y \f$ are integer, returns the least common
 //! multiple of \f$ x \f$ and \f$ y \f$.
 //! Returns \f$ x \cdot y \f$ otherwise.
 /*! \relates Number */
+#endif // PURRS_DOXYGEN_INCLUDE_IMPLEMENTATION_DETAILS
 Number lcm(const Number& x, const Number& y);
 
 //! \brief
