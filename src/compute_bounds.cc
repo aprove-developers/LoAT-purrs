@@ -119,9 +119,9 @@ compute_bounds_for_power_of_n(bool lower,
       // FIXME!!
       Number pow_div_k_numeric_minus = pwr(divisor, k-1);
 
-      const Expr& pow_div_k_minus = pwr(divisor, k - 1);
+      const Expr& pow_div_k_minus = pwr(divisor_ex, k_ex - 1);
       const Expr& pow_n_k_minus = pwr(Recurrence::n, k-1);
-      if (coeff < pow_div_k_numeric - 1)
+      if (coeff < pow_div_k_numeric_minus)
 	tmp_lb = pow_div_k / (pow_div_k - coeff)
 	  * (pow_n_k - pow_frac_log * pwr(pow_div_k / coeff, mu_b));
       else if (coeff == pow_div_k_numeric_minus)
@@ -201,7 +201,7 @@ compute_bounds_for_logarithm_function(bool lower, const Number& coeff,
 	assert(coeff > 1);
 	tmp_lb = log(divisor) * pwr(coeff - 1, -2)
 	  * (pwr(Recurrence::n, log(coeff) / log(divisor))
-	     - (coeff - 1) * frac_log + coeff);
+	     - (coeff - 1) * frac_log - coeff);
       }
       bound =+ num * tmp_lb;
       return true;
@@ -675,10 +675,122 @@ known_class_of_functional_eq_rank_1(const Expr& coefficient,
   return true;
 }
 
+/*!
+  Computes the bound relative to the \f$ i \f$-th addend of the
+  form \f$ a b^n \f$ of the non homogeneous term of the functional equation,
+  where \f$ a \f$ is contained in \p e, while \f$ b \f$ is contained
+  in \p base.
+
+  \param poly         <CODE>true</CODE> if \p e is a (syntactically) a
+                      polynomial in the variable \p Recurrence::n;
+		      <CODE>false</CODE> otherwise.
+  \param e            The coefficient of the exponential in the variable
+                      \p Recurrence::n the whose base is \p base.
+  \param base         The base of the exponential in the variable
+                      \p Recurrence::n.
+  \param lower        <CODE>true</CODE> if the system is computing the lower
+                      bound, <CODE>false</CODE> if it is computing the upper
+		      bound.
+  \param coeff        The coefficient \f$ \alpha \f$ of the functional
+                      equation \f$ x(n) = \alpha x(n / \beta) + g(n) \f$.
+  \param divisor_arg  The positive number \f$ \beta \f$ of the functional
+                      equation \f$ x(n) = \alpha x(n / \beta) + g(n) \f$.
+  \param bound        The part of the bound computed by this function
+                      that is that relative to the non homogeneous term
+		      \f$ g(n) \f$ of the functional equation
+		      \f$ x(n) = \alpha x(n / \beta) + g(n) \f$.
+  \param condition    The positive integer starting from which the
+                      inhomogeneous term \f$ g(n) \f$ of the functional
+		      equation \f$ x(n) = \alpha x(n / \beta) + g(n) \f$
+		      is a non negative, non decreasing function.
+
+  \return             <CODE>true</CODE> if the function is able to
+                      compute the bound; <CODE>false</CODE> otherwise.
+*/
+bool
+compute_poly_or_no_poly(bool poly, const Expr& e, const Number& base,
+			bool lower,
+			const Number& coeff, const Number& divisor_arg,
+			Expr& bound, Number& condition) {
+  if (e.is_a_add())
+    for (unsigned i = e.nops(); i-- > 0; ) {
+      const Expr& addend = e.op(i);
+      if ((poly && !sharper_bounds_for_polynomial_function(lower, addend,
+							   coeff, divisor_arg,
+							   bound))
+	  || (!poly
+	      && !sharper_bounds_for_no_polynomial_function(lower, addend,
+							    coeff, divisor_arg,
+							    bound))
+	  || base != 1) {
+	// Check if the i-th addend of `e' is a non-negative,
+	// non-decreasing function.
+	if (!is_non_negative_non_decreasing(base, addend, poly,
+					    Recurrence::n, true,
+					    condition))
+	  return false ;
+	Expr sum;
+	try_to_compute_sum(lower, addend * pwr(base, Recurrence::n),
+			   coeff, divisor_arg, sum);
+	if (lower)
+	  bound += sum.substitute(Recurrence::n,
+				  log(Recurrence::n) / log(divisor_arg) - 1);
+	else
+	  bound += sum.substitute(Recurrence::n,
+				  log(Recurrence::n) / log(divisor_arg)  + 1);
+      }
+    }
+  else
+    if (!e.is_zero()
+	&& ((poly && !sharper_bounds_for_polynomial_function(lower, e, coeff,
+							     divisor_arg,
+							     bound))
+	    || (!poly
+		&& !sharper_bounds_for_no_polynomial_function(lower, e, coeff,
+							      divisor_arg,
+							      bound)))
+	|| base != 1) {
+      // Check if `e' is a non-negative, non-decreasing function.
+      if (!is_non_negative_non_decreasing(base, e, poly, Recurrence::n, true,
+					  condition))
+	return false;
+      Expr sum;
+      try_to_compute_sum(lower, e, coeff, divisor_arg, sum);
+      if (lower)
+	bound += sum.substitute(Recurrence::n,
+				log(Recurrence::n) / log(divisor_arg) - 1);
+      else
+	bound += sum.substitute(Recurrence::n,
+				log(Recurrence::n) / log(divisor_arg) + 1);
+    }
+  return true;
+}
+
+/*!
+  Let \f$ e(n) \f$ be the inhomogeneous term of the functional equation
+  contained in \p inhomogeneous.
+  This function decomposes the inhomogeneous in the following way:
+  \f$ e(n) = \sum_{i=0}^k \alpha_i^n \bigl(p_i(n) + q_i(n)\bigr) \f$, where
+  - \f$ \alpha_i \f$ is a expression valid for to be an exponential's base.
+    (syntactically different from \p 0);
+  - \f$ \alpha_i \neq \alpha_j \f$ if \f$ i \neq j \f$;
+  - \f$ p_i(n) \f$ is (syntactically) a polynomial in \f$ n \f$.
+  Each expression \f$ \alpha_i^n p_i(n) \f$ and \f$ \alpha_i^n q_i(n) \f$
+  is ulteriorly divided in many expression how many are the addends
+  of \f$ p_i(n) \f$ and \f$ q_i(n) \f$.
+  For each expression computes the lower and the upper bounds:
+  - try to apply the sharper bounds;
+  - try to apply the theorem 2.1 of ...
+  - if the previous tests are failed returns the symbolic sum.
+
+  Returns <CODE>true</CODE> if the function is able to compute the bound
+  relative to the non homogeneous term of the functional equation;
+  <CODE>false</CODE> otherwise.
+*/
 bool
 compute_non_homogeneous_part(bool lower,
 			     const Number& coeff, const Number& divisor_arg,
-			     const Expr& inhomogeneous, const Expr& q,
+			     const Expr& inhomogeneous,
 			     Expr& bound, Number& condition) {
   std::vector<Expr> bases_of_exp;
   std::vector<Expr> exp_poly_coeff;
@@ -694,77 +806,32 @@ compute_non_homogeneous_part(bool lower,
       // Base of exponential is equal to `1'.
       if (num_base == 1) {
 	// Consider the eventual polynomial part.
-	if (!poly_coeff.is_zero()
-	    && !sharper_bounds_for_polynomial_function(lower, poly_coeff, 
-						       coeff, divisor_arg,
-						       bound)) {
-	  // Check if the polynomial part is a non-negative,
-	  // non-decreasing function.
-	  if (!is_non_negative_non_decreasing(1, poly_coeff, true,
-					      Recurrence::n, true,
-					      condition))
-	    return false ;
-	  Expr sum;
-	  try_to_compute_sum(lower, poly_coeff, coeff, divisor_arg, sum);
-	  if (lower)
-	    bound += sum.substitute(Recurrence::n, q);
-	  else
-	    bound += sum.substitute(Recurrence::n, q + 1);
-	}
+	if (!compute_poly_or_no_poly(true, poly_coeff, 1, lower,
+				     coeff, divisor_arg, bound, condition))
+	  return false;
 	// Consider the eventual non-polynomial part.
-	if (!no_poly_coeff.is_zero()
-	    && !sharper_bounds_for_no_polynomial_function(lower, no_poly_coeff,
-							  coeff, divisor_arg,
-							  bound)) {
-	  // Check if the non-polynomial part is a non-negative,
-	  // non-decreasing function.
-	  if (!is_non_negative_non_decreasing(1, no_poly_coeff, false,
-					      Recurrence::n, true, condition))
-	    return false;
-	  Expr sum;
-	  try_to_compute_sum(lower, no_poly_coeff, coeff, divisor_arg, sum);
-	  if (lower)
-	    bound += sum.substitute(Recurrence::n, q);
-	  else
-	    bound += sum.substitute(Recurrence::n, q + 1);
-	}
+	if (!compute_poly_or_no_poly(false, no_poly_coeff, 1, lower,
+				     coeff, divisor_arg, bound, condition))
+	  return false;
       }
       // Base of exponential is a number different from `1'.
       else {
 	if (!poly_coeff.is_zero())
 	  // Apply, if it possible, the sharper bounds for the exponential.
 	  if (!sharper_bounds_for_exponential(lower, num_base, poly_coeff,
-					      coeff, divisor_arg, bound)) {
-	    // Check if the polynomial part times esponential is a
-	    // non-negative, non-decreasing function.
-	    if (!is_non_negative_non_decreasing(num_base, poly_coeff, true,
-						Recurrence::n, true,
-						condition))
-	      return false ;
-	    Expr sum;
-	    try_to_compute_sum(lower, pwr(base, Recurrence::n) * poly_coeff,
-			       coeff, divisor_arg, sum);
-	    if (lower)
-	      bound += sum.substitute(Recurrence::n, q);
-	    else
-	      bound += sum.substitute(Recurrence::n, q + 1);
-	  }
-	if (!no_poly_coeff.is_zero()) {
+					      coeff, divisor_arg, bound))
+	    // Consider the eventual polynomial part.
+	    if (!compute_poly_or_no_poly(true, poly_coeff, num_base, lower,
+					 coeff, divisor_arg, bound, condition))
+	      return false;
+	if (!no_poly_coeff.is_zero())
 	  // In this case is not possible to apply the sharper
 	  // bounds for the exponential.
-	  // Check if the polynomial part times exponential is a
-	  // non-negative, non-decreasing function.
-	  if (!is_non_negative_non_decreasing(num_base, no_poly_coeff, false,
-					      Recurrence::n, true, condition))
-	    return false ;
-	  Expr sum;
-	  try_to_compute_sum(lower, pwr(base, Recurrence::n) * no_poly_coeff,
-			     coeff, divisor_arg, sum);
-	  if (lower)
-	    bound += sum.substitute(Recurrence::n, q);
-	  else
-	    bound += sum.substitute(Recurrence::n, q + 1);
-	}
+	  // Consider the eventual non-polynomial part.
+	  if (!compute_poly_or_no_poly(false, no_poly_coeff, num_base,
+				       lower, coeff, divisor_arg,
+				       bound, condition))
+	    return false;
       }
     }
     // The base of the exponential is not a number.
@@ -793,7 +860,7 @@ PURRS::Recurrence::add_term_with_initial_condition(bool lower, const Expr& q,
     index_initial_condition 
       = simplify_logarithm(n / pwr(functional_eq_p->ht_begin()->first, q + 1));
   else
-    index_initial_condition 
+    index_initial_condition
       = simplify_logarithm(n / pwr(functional_eq_p->ht_begin()->first, q));
   index_initial_condition = simplify_ex_for_output(index_initial_condition,
 						   false);
@@ -823,7 +890,7 @@ PURRS::Recurrence::approximate_functional_equation_lower() const {
     Number condition = -1;
     if (!inhomogeneous_term.is_zero()
 	&& !compute_non_homogeneous_part(true, coeff, divisor_arg,
-					 inhomogeneous_term, q_lower,
+					 inhomogeneous_term,
 					 lower_bound, condition))
       return TOO_COMPLEX;
 
@@ -858,7 +925,7 @@ PURRS::Recurrence::approximate_functional_equation_upper() const {
     Number condition = -1;    
     if (!inhomogeneous_term.is_zero()
 	&& !compute_non_homogeneous_part(false, coeff, divisor_arg,
-					 inhomogeneous_term, q_upper,
+					 inhomogeneous_term,
 					 upper_bound, condition))
       return TOO_COMPLEX;
 
