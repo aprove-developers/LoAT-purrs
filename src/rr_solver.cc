@@ -26,6 +26,8 @@ http://www.cs.unipr.it/purrs/ . */
 #include "util.hh"
 #include "alg_eq_solver.hh"
 
+using namespace GiNaC;
+
 static GExpr
 get_binding(const GList& l, unsigned wild_index) {
   assert(wild_index < l.nops());
@@ -119,8 +121,17 @@ solve(const GExpr& rhs, const GSymbol& n) {
       coefficients[index] += coefficient;
   } while (e != 0);
 
-  if (e.has(x_i))
-    failed = true;
+  // See if what is left is the inhomogeneous term,
+  // i.e., if all the occurrences of `x(e)' are such that
+  // `e' is numeric.
+  GList occurrences;
+  if (e.find(x_i, occurrences)) {
+    for (unsigned i = 0, n = occurrences.nops(); i < n; ++i)
+      if (!is_a<numeric>(occurrences.op(i))) {
+	failed = true;
+	break;
+      }
+  }
 
   if (failed)
     return false;
