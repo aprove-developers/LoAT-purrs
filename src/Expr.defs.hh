@@ -903,13 +903,10 @@ public:
   bool has_non_rational_numbers() const;
 
   //! \brief
-  //! If \p any_x_function is <CODE>true</CODE> then returns
-  //! <CODE>true</CODE> if \p *this contains any type of \f$ x \f$ function;
+  //! Returns <CODE>true</CODE> if \p *this contains the function
+  //! \f$ x() \f$ with its argument containing the expression \p x;
   //! returns <CODE>false</CODE> otherwise.
-  //! If \p any_x_function is false then returns <CODE>true</CODE> if
-  //! \p *this contains the \f$ x \f$ function with its argument containing
-  //! the expression \p x; returns <CODE>false</CODE> otherwise.
-  bool has_x_function(bool any_x_function, const Expr& x = 0) const;
+  bool has_x_function(const Expr& x) const;
 
   //! \brief
   //! Returns <CODE>true</CODE> if and only if the functions \f$ x() \f$
