@@ -156,7 +156,7 @@ build_characteristic_equation(const Symbol& x,
   characteristic equations; returns <CODE>true<CODE> otherwise. 
 */
 bool
-characteristic_equation_and_its_roots(int order,
+characteristic_equation_and_its_roots(unsigned int order,
 				      const std::vector<Expr>& coefficients,
 				      std::vector<Number>& num_coefficients,
 				      Expr& characteristic_eq,
@@ -334,6 +334,7 @@ subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
   return solution;
 }
 
+#if 0
 /*!
   Adds to the sum already computed those corresponding to the initial
   conditions:
@@ -361,6 +362,7 @@ add_initial_conditions(const Expr& g_n,
     solution += tmp * g_n_i;
   }
 }
+#endif
 
 /*!
   Applies the Gosper's algorithm to express in closed form, if it is
@@ -587,7 +589,7 @@ prepare_for_symbolic_sum(const Expr& g_n,
 }
 
 Expr
-compute_non_homogeneous_part(const Expr& g_n, int order,
+compute_non_homogeneous_part(const Expr& g_n, unsigned int order,
 			     const std::vector<Expr>& base_of_exps,
 			     const std::vector<Expr>& exp_poly_coeff) {
   Expr solution_tot = 0;
@@ -607,7 +609,7 @@ compute_non_homogeneous_part(const Expr& g_n, int order,
       // `sum_poly_times_exponentials' computes the sum from 0, whereas
       // we want that the sum start from `order'.
       solution -= (g_n_coeff_k * exp_poly_coeff_k).subs(k, 0);
-      for (int h = 1; h < order; ++h)
+      for (unsigned int h = 1; h < order; ++h)
 	solution -= (g_n_coeff_k * exp_poly_coeff_k).subs(k, h)
 	  * pwr(1/bases_exp_g_n[i] * base_of_exps[j], h);
       solution *= pwr(bases_exp_g_n[i], Recurrence::n);
@@ -661,7 +663,7 @@ compute_non_homogeneous_part(const Expr& g_n, int order,
   the function <CODE>add_initial_conditions()</CODE>), respectively.
 */
 Expr
-solve_constant_coeff_order_2(Expr& g_n, int order, bool all_distinct,
+solve_constant_coeff_order_2(Expr& g_n, unsigned int order, bool all_distinct,
 			     const Expr& inhomogeneous_term,
 			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots) {
@@ -793,7 +795,7 @@ solve_constant_coeff_order_2(Expr& g_n, int order, bool all_distinct,
   the function <CODE>add_initial_conditions()</CODE>), respectively.
 */
 Expr
-solve_constant_coeff_order_k(Expr& g_n, int order, bool all_distinct,
+solve_constant_coeff_order_k(Expr& g_n, unsigned int order, bool all_distinct,
 			     const Expr& inhomogeneous_term,
 			     const std::vector<Number>& coefficients,
 			     const std::vector<Polynomial_Root>& roots) {
@@ -1286,12 +1288,8 @@ PURRS::Recurrence::find_non_linear_recurrence(const Expr& e) {
 }
 
 PURRS::Recurrence::Solver_Status
-PURRS::Recurrence::compute_order_inserting_decrement(const Number& decrement, 
-						     int& order,
-						     unsigned long& index,
-						     std::vector<unsigned>&
-						     decrements,
-						     unsigned long max_size) {
+PURRS::Recurrence::compute_order(const Number& decrement, unsigned int& order,
+				 unsigned long& index, unsigned long max_size) {
   if (decrement < 0)
     return HAS_NEGATIVE_DECREMENT;
   // Make sure that (1) we can represent `decrement' as a long, and
@@ -1302,8 +1300,7 @@ PURRS::Recurrence::compute_order_inserting_decrement(const Number& decrement,
   
   // The `order' is defined as the maximum value of `index'.
   index = decrement.to_long();
-  decrements.push_back(index);
-  if (order < 0 || index > unsigned(order))
+  if (order == 0 || index > unsigned(order))
     order = index;
   return RECURRENCE_OK;
 }
@@ -1326,8 +1323,7 @@ insert_coefficients(const Expr& coeff, unsigned long index,
 PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 					  std::vector<Expr>& coefficients,
-					  int& order,
-					  std::vector<unsigned>& decrements,
+					  unsigned int& order,
 					  int& gcd_among_decrements,
 					  int num_term) const {
   unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
@@ -1341,9 +1337,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	if (get_constant_decrement(argument, decrement)) {
 	  unsigned long index;
 	  Solver_Status status
-	    = compute_order_inserting_decrement(decrement, order, index,
-						decrements,
-						coefficients.max_size());
+	    = compute_order(decrement, order, index, coefficients.max_size());
 	  if (status != RECURRENCE_OK)
 	    return status;
 	  if (num_term == 0)
@@ -1379,9 +1373,7 @@ PURRS::Recurrence::classification_summand(const Expr& r, Expr& e,
 	    if (found_function_x)
 	      return NON_LINEAR_RECURRENCE;
 	    Solver_Status status
-	      = compute_order_inserting_decrement(decrement, order, index,
-						  decrements,
-						  coefficients.max_size());
+	      = compute_order(decrement, order, index, coefficients.max_size());
 	    if (status != RECURRENCE_OK)
 	      return status;
 	    if (num_term == 0)
@@ -1425,6 +1417,33 @@ substitute_non_rational_roots(const Recurrence& rec,
 }
 
 /*!
+  Adds to the sum already computed those corresponding to the initial
+  conditions:
+  \f[
+    \sum_{i=0}^{order - 1} g_{n-i}
+      \bigl( x_i - \sum_{j=1}^i a_j x_{i-j} \bigr).
+  \f]
+*/
+// FIXME: il vettore `coefficients' dovra' diventare di `Expr' quando
+// sapremo risolvere anche le eq. di grado superiore al primo con i
+// parametri.
+void
+PURRS::Recurrence::add_initial_conditions(const Expr& g_n,
+					  const std::vector<Number>& coefficients,
+					  Expr& solution) const {
+    // `coefficients.size()' has `order + 1' elements because in the first
+  // position there is the value 0.
+  D_VAR(g_n);
+  for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
+    Expr g_n_i = g_n.subs(Recurrence::n, Recurrence::n - i);
+    Expr tmp = x(first_initial_condition() + i);
+    for (unsigned j = i; j > 0; j--)
+      tmp -= coefficients[j] * x(first_initial_condition() + i - j);
+    solution += tmp * g_n_i;
+  }
+}
+
+/*!
   This function solves recurrences of SOME TYPE provided they are
   supplied in SOME FORM. (Explain.)
 */
@@ -1437,16 +1456,13 @@ PURRS::Recurrence::solve_easy_cases() const {
 
   // Initialize the computation of the order of the linear part of the
   // recurrence.  This works like the computation of a maximum: it is
-  // the maximum `k' such that `rhs = a*x(n-k) + b' where `a' is not
-  // syntactically 0. 
-  int order = -1;
+  // the maximum `k', if it exists, such that `rhs = a*x(n-k) + b' where `a'
+  // is not syntactically 0; if not exists `k' such that `rhs = a*x(n-k) + b',
+  // then `order' is left to `0'. 
+  unsigned int order = 0;
 
   // We will store here the coefficients of linear part of the recurrence.
   std::vector<Expr> coefficients;
-
-  // We will store here the decrements `d' of `x(n-d)' of linear part of
-  // the recurrence.
-  std::vector<unsigned> decrements;
 
   Expr inhomogeneous_term = 0;
   Solver_Status status;
@@ -1456,15 +1472,13 @@ PURRS::Recurrence::solve_easy_cases() const {
     // It is necessary that the following loop starts from `0'.
     for (unsigned i = 0; i < num_summands; ++i) {
       status = classification_summand(expanded_rhs.op(i), inhomogeneous_term,
-				      coefficients, order, decrements,
-				      gcd_among_decrements, i);
+				      coefficients, order, gcd_among_decrements, i);
       if (status != RECURRENCE_OK)
 	return status;
     }
   else {
     status = classification_summand(expanded_rhs, inhomogeneous_term,
-				    coefficients, order, decrements,
-				    gcd_among_decrements, 0);
+				    coefficients, order, gcd_among_decrements, 0);
     if (status != RECURRENCE_OK)
       return status;
   }
@@ -1475,12 +1489,16 @@ PURRS::Recurrence::solve_easy_cases() const {
   if (status != RECURRENCE_OK)
     return status;
 
-  tdip = new Finite_Order_Info(order, decrements, coefficients);
+  // FIXME: the initial conditions can not start always from 0:
+  // make a function for this check.
+  // Create the vector of initial conditions.
+  tdip = new Finite_Order_Info(order, 0, coefficients);
 
   // `inhomogeneous_term' is a function of `n', the parameters and of
   // `x(k_1)', ..., `x(k_m)' where `m >= 0' and `k_1', ..., `k_m' are
   //  non-negative integers.
-  if (order < 0) {
+  if (order == 0) {
+    set_order_zero();
     solution = inhomogeneous_term;
     return RECURRENCE_OK;
   }
@@ -1509,19 +1527,11 @@ PURRS::Recurrence::solve_easy_cases() const {
   }
 
   D_VAR(order);
-  D_VEC(decrements, 0, decrements.size()-1);
   D_VEC(coefficients, 1, order);
   D_MSGVAR("Inhomogeneous term: ", inhomogeneous_term);
 
   // Simplifies expanded expressions, in particular rewrites nested powers.
   inhomogeneous_term = simplify_on_input_ex(inhomogeneous_term, true);
-
-  // FIXME: the initial conditions can not start always from 0:
-  // make a function for this check.
-  // Create the vector of initial conditions.
-  std::vector<Expr> initial_conditions(order);
-  for (int i = 0; i < order; ++i)
-    initial_conditions[i] = x(i);
 
   // `num_coefficients' and `g_n' are defined here because they are
   // necessary in the function `add_initial_conditions()' (at the end
@@ -1542,7 +1552,7 @@ PURRS::Recurrence::solve_easy_cases() const {
 						   all_distinct))
 	  return TOO_COMPLEX;
 	status = solve_constant_coeff_order_1(inhomogeneous_term, roots,
-					      initial_conditions, solution);
+					      solution);
       }
       else
 	status = solve_variable_coeff_order_1(inhomogeneous_term,
@@ -1605,8 +1615,8 @@ PURRS::Recurrence::solve_easy_cases() const {
   }
   
   if (order > 1)
-    add_initial_conditions(g_n, num_coefficients, initial_conditions,
-			   solution);
+    add_initial_conditions(g_n, num_coefficients, solution);
+
   D_MSGVAR("Before calling simplify: ", solution);
   solution = simplify_on_output_ex(solution.expand(), false);
   // Resubstitutes eventually auxiliary definitions contained in
@@ -1618,7 +1628,7 @@ PURRS::Recurrence::solve_easy_cases() const {
   if (solution.is_a_add()) {
     Expr_List conditions;
     for (unsigned i = order; i-- > 0; )
-      conditions.append(initial_conditions[i]);
+      conditions.append(x(first_initial_condition() + i));
     // FIXME: `collect' throws an exception if the object to collect has
     // non-integer exponent. 
     solution = solution.collect(conditions);
@@ -1716,8 +1726,7 @@ PURRS::Recurrence::Solver_Status
 PURRS::Recurrence::
 solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
 			     const std::vector<Polynomial_Root>& roots,
-			     const std::vector<Expr>& initial_conditions,
-			     Expr& solution) {
+			     Expr& solution) const {
   // We search exponentials in `n' (for this the expression
   // `inhomogeneous_term' must be expanded).
   // The vector `base_of_exps' contains the exponential's bases
@@ -1783,7 +1792,7 @@ solve_constant_coeff_order_1(const Expr& inhomogeneous_term,
   // parametriche (g_n pu' essere posta uguale ad 1 in questo caso).
   // add_initial_conditions(g_n, n, coefficients, initial_conditions,
   //		              solution);
-  solution += initial_conditions[0] * pwr(roots[0].value(), Recurrence::n);
+  solution += x(first_initial_condition()) * pwr(roots[0].value(), Recurrence::n);
   return RECURRENCE_OK;
 }
 
