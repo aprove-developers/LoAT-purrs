@@ -32,6 +32,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "purrs_install.hh"
 #include "ehandlers.hh"
+#include "timings.hh"
 
 #ifdef USE_READLINE
 #include "readlinebuf.hh"
@@ -39,10 +40,6 @@ http://www.cs.unipr.it/purrs/ . */
 #endif
 
 #define PROFILE_VERIFICATION 1
-
-#if PROFILE_VERIFICATION
-#include "tsc.hh"
-#endif
 
 using namespace std;
 using namespace Parma_Recurrence_Relation_Solver;
@@ -689,28 +686,28 @@ result_of_the_verification(unsigned type,
 }
 
 #if PROFILE_VERIFICATION
-class TSC_Profiler {
+class Profiler {
 private:
-  tsc_t accumulator;
+  time_unit_t accumulator;
   std::string name;
 
 public:
-  TSC_Profiler(const std::string& n)
+  Profiler(const std::string& n)
     : name(n) {
   }
 
-  void accumulate(tsc_t i) {
+  void accumulate(time_unit_t i) {
     accumulator += i;
   }
 
-  ~TSC_Profiler() {
+  ~Profiler() {
     std::cerr << "Time spent in " << name
-	      << ": " << tsc_to_msecs(accumulator) << " ms"
+	      << ": " << time_unit_to_usecs(accumulator)/1000 << " ms"
 	      << std::endl;
   }
 };
 
-TSC_Profiler ves_profiler("verify_exact_solution()");
+Profiler ves_profiler("verify_exact_solution()");
 #endif
 
 int
@@ -841,12 +838,12 @@ main(int argc, char *argv[]) try {
               || expect_provably_wrong_result
               || expect_inconclusive_verification) {
 #if PROFILE_VERIFICATION
-	    tsc_t tsc_begin = read_tsc();
+	    time_unit_t time_begin = get_time();
 #endif
             Recurrence::Verify_Status status = rec.verify_exact_solution();
 #if PROFILE_VERIFICATION
-	    tsc_t tsc_end = read_tsc(); 
-	    ves_profiler.accumulate(tsc_end-tsc_begin);
+	    time_unit_t time_end = get_time(); 
+	    ves_profiler.accumulate(time_end-time_begin);
 #endif
             result_of_the_verification(0, status,
                                        unexpected_failures_to_verify,

@@ -34,13 +34,6 @@ http://www.cs.unipr.it/purrs/ . */
 #include <vector>
 #include <cassert>
 
-#define USE_TSC 1
-#if USE_TSC
-#include "tsc.hh"
-#endif
-
-#undef HAVE_GETRUSAGE
-
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
@@ -59,6 +52,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include <cgicc/HTMLClasses.h>
 
 #include "purrs_install.hh"
+#include "timings.hh"
 
 #if !defined(HAVE_GETRLIMIT) || !defined(HAVE_SETRLIMIT)
 #error "We must have a way of limiting time and space!"
@@ -242,67 +236,6 @@ mark_verified_solution() {
     .set("href", "http://www.cs.unipr.it/purrs/details#verification")
        << " ";
 }
-
-#if USE_TSC
-
-typedef tsc_t time_unit_t;
-
-inline time_unit_t
-get_time() {
-  return read_tsc();
-}
-
-inline long
-time_unit_to_usecs(time_unit_t t) {
-  return tsc_to_usecs(t);
-}
-
-#elif HAVE_GETRUSAGE
-
-typedef timeval time_unit_t;
-
-inline time_unit_t
-get_time() {
-  rusage rsg;
-  if (getrusage(RUSAGE_SELF, &rsg) != 0)
-    error("getrusage failed");
-  return rsg.ru_utime;
-}
-
-inline time_unit_t
-operator-(const time_unit_t& t1, const time_unit_t& t2) {
-  time_unit_t t;
-  if (t1.tv_usec < t2.tv_usec) {
-    t.tv_sec = t1.tv_sec - t2.tv_sec - 1;
-    t.tv_usec = (1000000 - t2.tv_usec) + t1.tv_usec;
-  }
-  else {
-    t.tv_sec = t1.tv_sec - t2.tv_sec;
-    t.tv_usec = t1.tv_usec - t2.tv_usec;
-  }
-  return t;
-}
-
-inline long
-time_unit_to_usecs(time_unit_t t) {
-  return t.tv_sec*1000000 + t.tv_usec;
-}
-
-#else
-
-typedef long time_unit_t;
-
-inline time_unit_t
-get_time() {
-  return 0;
-}
-
-inline long
-time_unit_to_usecs(time_unit_t t) {
-  return t;
-}
-
-#endif
 
 int
 main() try {
