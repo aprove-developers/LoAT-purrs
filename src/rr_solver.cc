@@ -1042,8 +1042,9 @@ substitute_non_rational_roots(const Recurrence& rec,
 bool
 is_non_negative_in_one(const Expr& e, const Symbol& x) {
   Number i = -1;
-  biggest_positive_int_zero(numerator(e).expand(), i);
-  biggest_positive_int_zero(denominator(e).expand(), i);
+  largest_positive_int_zero(numerator(e).expand(), i);
+  largest_positive_int_zero(denominator(e).expand(), i);
+  D_VAR(i);
   if (i == -1)
     ++i;
   Number num;
@@ -1140,6 +1141,7 @@ is_non_decreasing_no_poly(const Expr& e, const Symbol& x) {
 //! function in \p x; returns <CODE>false</CODE> otherwise.
 bool
 is_non_negative_non_decreasing(const Expr& f, const Symbol& x) {
+  D_VAR(f);
   // We search exponentials in `n' (for this the expression
   // `f' must be expanded).
   // The vector `base_of_exps' contains the exponential's bases
@@ -1168,7 +1170,6 @@ is_non_negative_non_decreasing(const Expr& f, const Symbol& x) {
       return false;
     // Second step: checks the polynomial part of the exponential's
     // coefficient.
-    // FIXME!!!!!!!!!!!! commentato solo per fare `2*x(1/2*n)+n-1'
     if (!exp_poly_coeff[i].is_zero())
       if (!is_non_negative_in_one(exp_poly_coeff[i], x))
 	if (!is_non_decreasing_poly(exp_poly_coeff[i], x)
@@ -1570,7 +1571,7 @@ PURRS::Recurrence::solve_linear_finite_order(int gcd_among_decrements) const {
     return status;
   }
 
-  // Find the biggest positive or null integer that cancel the denominator of
+  // Find the largest positive or null integer that cancel the denominator of
   // `inhomogeneous_term' and store it in `z' if it is bigger than `0'.
   Number z = 0;
   if (!inhomogeneous_term.is_zero()) {
@@ -1579,7 +1580,7 @@ PURRS::Recurrence::solve_linear_finite_order(int gcd_among_decrements) const {
 	    "the inhomogeneous term.");
       return TOO_COMPLEX;
     }
-    biggest_positive_int_zero(denominator(inhomogeneous_term).expand(), z);
+    largest_positive_int_zero(denominator(inhomogeneous_term).expand(), z);
   }
   // The initial conditions will start from `z'.
   set_first_initial_condition(z.to_int());
@@ -1714,7 +1715,7 @@ PURRS::Recurrence::approximate_functional_equation() const {
     return TOO_COMPLEX;
   // Check if the inhomogeneous term `p(n)' is a non-negative,
   // non-decreasing function. For to do this, the parameters are
-  // not allowed. 
+  // not allowed.
   if (find_parameters(inhomogeneous_term)
       || !is_non_negative_non_decreasing(inhomogeneous_term, n))
     return TOO_COMPLEX;
@@ -1727,6 +1728,7 @@ PURRS::Recurrence::approximate_functional_equation() const {
 			 bases_of_exp, exp_poly_coeff, exp_no_poly_coeff);
   assert(coefficient().is_a_number());
   Expr sum = 0;
+  // FIXME: rivedere questa parte perche' nei casi di `log' e' possibile 
   if (vector_not_all_zero(exp_no_poly_coeff))
     return TOO_COMPLEX;
   else
@@ -1977,17 +1979,17 @@ solve_variable_coeff_order_1(const Expr& coefficient) const {
     D_MSG("Variable coefficient with parameters");
     return TOO_COMPLEX;
   }
-  // `z' will contain the biggest positive or null integer, if it exist,
+  // `z' will contain the largest positive or null integer, if it exist,
   // that cancel the denominator of the coefficient.
   // If this integer does not exist then `z' is left to 0.
   Number z = 0;
-  biggest_positive_int_zero(numerator(coefficient).expand(), z);
-  biggest_positive_int_zero(denominator(coefficient).expand(), z);
-  // Find the biggest positive or null integer that cancel the denominator of
+  largest_positive_int_zero(numerator(coefficient).expand(), z);
+  largest_positive_int_zero(denominator(coefficient).expand(), z);
+  // Find the largest positive or null integer that cancel the denominator of
   // `inhomogeneous_term' and store it in `z' if it is bigger than the
   // current `z'.
   if (!inhomogeneous_term.is_zero())
-    biggest_positive_int_zero(denominator(inhomogeneous_term).expand(), z);
+    largest_positive_int_zero(denominator(inhomogeneous_term).expand(), z);
   // The initial conditions will start from `z'.
   set_first_initial_condition(z.to_int());
   Expr alpha_factorial

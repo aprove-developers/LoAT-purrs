@@ -80,10 +80,10 @@ Expr
 resultant(const Expr& p, const Expr& q, const Symbol& x);
 
 //! \brief
-//! Finds the biggest positive integer that cancel \p e: if it exists and
+//! Finds the largest positive integer that cancel \p e: if it exists and
 //! it is bigger than \p z, store it in \p z; otherwise \p z is left unchanged.
 void
-biggest_positive_int_zero(const Expr& e, Number& z);
+largest_positive_int_zero(const Expr& e, Number& z);
 
 #if defined(NOISY) && NOISY
 #define D_MSG(s) std::cout << s << std::endl

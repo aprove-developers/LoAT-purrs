@@ -310,13 +310,13 @@ ok_argument_factorial(const Expr& argument, const Symbol& n) {
 /*!
   Let \f$ e(n) \f$ be the expression in \p n contained in \p e,
   which is assumed to be already expanded and with denominator equal to 1.
-  This function find the biggest positive integer that cancel \f$ e(n) \f$
+  This function find the largest positive integer that cancel \f$ e(n) \f$
   and, if it is bigger than \p z, store it in \p z; if do not exist a
   positive integer that cancel \f$ e(n) \f$ or exist but smaller than \p z,
   then \p z is left unchanged.
 */
 void
-PURRS::biggest_positive_int_zero(const Expr& e, Number& z) {
+PURRS::largest_positive_int_zero(const Expr& e, Number& z) {
   assert(denominator(e) == 1);
   if (e.is_polynomial(Recurrence::n)) {
     Expr partial_e = e;
@@ -344,15 +344,20 @@ PURRS::biggest_positive_int_zero(const Expr& e, Number& z) {
   else {
     if (e.is_a_add() || e.is_a_mul())
       for (unsigned i = e.nops(); i-- > 0; )
-	biggest_positive_int_zero(e.op(i), z);
+	largest_positive_int_zero(e.op(i), z);
     else if (e.is_a_function()) {
       if (e.is_the_log_function())
-	biggest_positive_int_zero(e.arg(0) - 1, z);
+	if (e.arg(0).is_polynomial(Recurrence::n))
+	  largest_positive_int_zero(e.arg(0) - 1, z);
+	else if (e.arg(0).is_the_log_function()) {
+	  largest_positive_int_zero(e.arg(0), z);
+	  ++z;
+	}  
       else if (e.is_the_factorial_function())
 	// If it is in the form `(a n + b)!' with `a' positive integer
 	// then we find the minimum `n' such that `a n + b >= 0'.
 	if (ok_argument_factorial(e.arg(0), Recurrence::n))
-	  biggest_positive_int_zero(e.arg(0), z);
+	  largest_positive_int_zero(e.arg(0), z);
     }
   }
 }
