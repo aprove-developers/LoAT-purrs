@@ -30,7 +30,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "util.hh"
 #include "Expr.defs.hh"
-
 #include "numerator_denominator.hh"
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
@@ -542,7 +541,7 @@ PURRS::Expr::is_integer_scalar_representation(const Symbol& x) const {
   }
   else if (e.is_a_function()) {
     for (unsigned i = e.nops(); i-- > 0; )
-      if (!e.arg(i).is_integer_scalar_representation(x))
+      if (!(e.arg(i).is_a_symbol() && e != x))
 	return false;
     return true;
   }

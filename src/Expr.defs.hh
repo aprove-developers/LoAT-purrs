@@ -750,8 +750,8 @@ public:
     as follows:
     - every integer number is a scalar;
     - every parameter different from \f$ x \f$ is a scalar;
-    - if \f$ f \f$ is any function and \f$ x_1, \dots, x_k \f$ are scalars,
-      then \f$ f(x_1, \dots, x_k) \f$ is a scalar;
+    - if \f$ f \f$ is any function and \f$ x_1, \dots, x_k \f$ are parameters
+      different from \f$ x \f$, then \f$ f(x_1, \dots, x_k) \f$ is a scalar;
     - if \f$ a \f$ and \f$ b \f$ are scalars then
       \f$ a+b \f$, \f$ a*b \f$ are scalars;
     - if \f$ a \f$ is an integer scalar representation in \f$ x \f$ and
