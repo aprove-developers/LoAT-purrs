@@ -902,4 +902,163 @@ simplify_numer_denom(const Expr& e) {
   return ris;
 }
 
+
+/*!
+  Given \p a, \p b and \p c elements of the factorial expression
+  \f$ (a n + b)! \f$, this function returns a new expression that put
+  in evidence \f$ (a n)! \f$.
+*/
+static Expr
+decompose_factorial(const Symbol& n,
+		    const Expr& a, const Expr& b, const Expr& c) {
+  Expr prod = c * factorial(a*n);
+  if (b.is_a_number()) {
+    Number tmp_b = b.ex_to_number();
+    if (tmp_b > 0)
+      for (Number j = 1; j <= tmp_b; ++j)
+	prod *= a*n + j; 
+    else
+      for (Number j = 0; j < abs(tmp_b); ++j)
+	prod *= Parma_Recurrence_Relation_Solver::power(a*n - j, -1);
+  }
+  return prod;
+}
+
+/*!
+  Applies the following rewrite rule where \f$ a \in \Nset \setminus \{0\} \f$
+  and \f$ b \in \Zset \f$:
+  \f[
+    \begin{cases}
+      (a n + b)!
+      =
+      (a n)! \cdot (a n + 1) \cdots (a n + b),
+        \quad \text{if } b \in \Nset \setminus \{0\}; \\
+      (a n)!,
+        \quad \text{if } b = 0; \\
+      \dfrac{(a n)!}{(a n) \cdot (a n - 1) \cdots (a n + b + 1))},
+        \quad \text{if } b \in \Zset \setminus \Nset.
+    \end{cases}
+  \f]
+*/
+static Expr
+rewrite_factorials(const Expr& e, const Symbol& n) {
+  Expr new_e;
+  Expr fact_of_sum = factorial(n + wild(0));
+  Expr a_times_fact_of_sum = wild(1) * fact_of_sum;
+  Expr fact_of_sum_coeff = factorial(wild(0) * n + wild(1));
+  Expr a_times_fact_of_sum_coeff = wild(2) * fact_of_sum_coeff;
+  Expr_List substitution;
+  if (e.is_a_add()) {
+    new_e = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (clear(substitution), e.op(i).match(fact_of_sum, substitution))
+	new_e += decompose_factorial(n, 1, get_binding(substitution, 0), 1);
+      else if (clear(substitution),
+	       e.op(i).match(a_times_fact_of_sum, substitution))
+	new_e += decompose_factorial(n, 1,
+				     get_binding(substitution, 0),
+				     get_binding(substitution, 1));
+      else if (clear(substitution),
+	       e.op(i).match(fact_of_sum_coeff, substitution))
+	new_e += decompose_factorial(n, get_binding(substitution, 0),
+				     get_binding(substitution, 1), 1);
+      else if (clear(substitution),
+	       e.op(i).match(a_times_fact_of_sum_coeff, substitution))
+	new_e += decompose_factorial(n, get_binding(substitution, 0),
+				     get_binding(substitution, 1),
+				     get_binding(substitution, 2));
+      else
+	new_e += e.op(i);
+  }
+  else if (e.is_a_mul()) {
+    new_e = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (clear(substitution), e.op(i).match(fact_of_sum, substitution))
+	new_e *= decompose_factorial(n, 1, get_binding(substitution, 0), 1);
+      else if (clear(substitution),
+	       e.op(i).match(fact_of_sum_coeff, substitution))
+	new_e *= decompose_factorial(n, get_binding(substitution, 0),
+				     get_binding(substitution, 1), 1);
+      else
+	new_e *= e.op(i);
+  }
+  else {
+    new_e = 0;
+    if (clear(substitution), e.match(fact_of_sum, substitution))
+      new_e += decompose_factorial(n, 1, get_binding(substitution, 0), 1);
+    else if (clear(substitution), e.match(fact_of_sum_coeff, substitution))
+      new_e += decompose_factorial(n, get_binding(substitution, 0),
+				   get_binding(substitution, 1), 1);
+    else
+      new_e += e;
+  }
+  return new_e;
+}
+
+/*!
+  Applies the following rewrite rule
+  \f[
+    a^{b n + c} = a^{b n} \cdot a^c
+  \f]
+  without to expand all expression \p e.
+*/
+static Expr
+simpl_exponentials(const Expr& e, const Symbol& n) {
+  Expr new_e;
+  if (e.is_a_add()) {
+    new_e = 0;
+    for (unsigned i = e.nops(); i-- > 0; )
+      new_e += simpl_exponentials(e.op(i), n);
+  }
+  else if (e.is_a_mul()) {
+    new_e = 1;
+    for (unsigned i = e.nops(); i-- > 0; )
+      if (e.op(i)
+	  .match(Parma_Recurrence_Relation_Solver::power(wild(0), n + wild(1)))
+	  || e.op(i)
+	  .match(Parma_Recurrence_Relation_Solver::power(wild(0),
+							 wild(2) * n + wild(1))))
+	new_e *= e.op(i).expand();
+      else
+	new_e *= e.op(i);
+  }
+  else
+    if (e.match(Parma_Recurrence_Relation_Solver::power(wild(0), n + wild(1)))
+	|| e.match(Parma_Recurrence_Relation_Solver::power(wild(0),
+							   wild(2) * n + wild(1))))
+      new_e += e.expand();
+    else
+      new_e += e;
+  return new_e;
+}
+
+/*!
+  Let \p e be an expression containing ratios of factorials or ratios
+  of exponentials.
+  This function tries in the numerator and denominator of \p e eventual
+  factorials of the type \f$ (a n + b)! \f$, whit
+  \f$ a \in \Nset \setminus \{0\} \f$ and \f$ b \in \Zset \f$, and
+  eventual exponentials in order to put in evidence common factors to
+  numerator and denominator to erase.
+  We remark that, for this type of simplifications, is not good to call
+  the function <CODE>simplify_on_output_ex()</CODE> because it expanded
+  the expression while we want to mantain the product of factors. 
+  Returns a <CODE>Expr</CODE> that contains the modified expression \p e.
+*/
+Expr
+simplify_factorials_and_exponentials(const Expr& e, const Symbol& n) {
+  Expr e_numerator;
+  Expr e_denominator;
+  e.numerator_denominator(e_numerator, e_denominator);
+
+  e_numerator = rewrite_factorials(e_numerator, n);
+  e_numerator = simpl_exponentials(e_numerator, n);
+  e_denominator = rewrite_factorials(e_denominator, n);
+  e_denominator = simpl_exponentials(e_denominator, n);
+
+  Expr new_e = e_numerator / e_denominator;
+
+  return new_e;
+}
+
 } // namespace Parma_Recurrence_Relation_Solver

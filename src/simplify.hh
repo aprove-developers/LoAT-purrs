@@ -39,6 +39,9 @@ simplify_on_output_ex(const Expr& e, const Symbol& n, const bool& input);
 Expr
 simplify_numer_denom(const Expr& e);
 
+Expr
+simplify_factorials_and_exponentials(const Expr& e, const Symbol& n);
+
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif
