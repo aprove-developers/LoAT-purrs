@@ -420,7 +420,7 @@ solve_equation_2(const GExpr& b, const GExpr& c,
 #if NOISY
   std::cout << "sqrt_d before = " << sqrt_d << std::endl;
 #endif
-  sqrt_d = simplify_on_output_ex(sqrt_d, n);
+  sqrt_d = simplify_on_output_ex(sqrt_d, n, false);
 #if NOISY
   std::cout << "sqrt_d = " << sqrt_d << std::endl;
 #endif
@@ -489,8 +489,8 @@ solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
     std::cout << "S before= " << S << std::endl; 
     std::cout << "T before= " << T << std::endl;
 #endif
-    S = simplify_on_output_ex(S, n);
-    T = simplify_on_output_ex(T, n);
+    S = simplify_on_output_ex(S, n, false);
+    T = simplify_on_output_ex(T, n, false);
 #if NOISY
     std::cout << "S = " << S << std::endl; 
     std::cout << "T = " << T << std::endl;
@@ -552,8 +552,8 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
   std::cout << "p before = " << p << std::endl; 
   std::cout << "q before = " << q << std::endl;
 #endif
-  p = simplify_on_output_ex(p, n);
-  q = simplify_on_output_ex(q, n);
+  p = simplify_on_output_ex(p, n, false);
+  q = simplify_on_output_ex(q, n, false);
 #if NOISY
   std::cout << "p = " << p << std::endl; 
   std::cout << "q = " << q << std::endl;
@@ -562,7 +562,7 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
 #if NOISY
   std::cout << "r before = " << r << std::endl; 
 #endif
-  r = simplify_on_output_ex(r, n);
+  r = simplify_on_output_ex(r, n, false);
   GExpr s = numeric(a1)/4;
 #if NOISY
   std::cout << "r = " << r << std::endl; 
@@ -580,10 +580,10 @@ solve_equation_4(const GNumber& a1, const GNumber& a2,
    std::cout << "x4 = " << x4 << std::endl;
    std::cout << std::endl;
 #endif
-   x1 = simplify_on_output_ex(x1, n);
-   x2 = simplify_on_output_ex(x2, n);
-   x3 = simplify_on_output_ex(x3, n);
-   x4 = simplify_on_output_ex(x4, n);
+   x1 = simplify_on_output_ex(x1, n, false);
+   x2 = simplify_on_output_ex(x2, n, false);
+   x3 = simplify_on_output_ex(x3, n, false);
+   x4 = simplify_on_output_ex(x4, n, false);
 }
 
 // The old method used to solve equation of degree 4 was wrong, as you

@@ -36,10 +36,10 @@ static const unsigned
 FACTOR_THRESHOLD = 100;
 
 GExpr
-simplify_on_input_ex(const GExpr& e, const GSymbol& n);
+simplify_on_input_ex(const GExpr& e, const GSymbol& n, const bool& input);
 
 GExpr
-simplify_on_output_ex(const GExpr& e, const GSymbol& n);
+simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input);
 
 
 
@@ -122,10 +122,14 @@ perfect_root(const GExpr& base, const GNumber& exp_num)
      \p vect_not_num_exp with the exponent of \p e's factor;
   -  if it is not a power, puts it in the respective position of the vector
      \p vect_base and left unchanged the others vector.
+  If \p input is <CODE>true</CODE> then we use the simplifications
+  which put in evidence the special symbol \p n; otherwise, i. e. \p input
+  is <CODE>false</CODE>, \p n is like the other parameters.
  */
 static GExpr
 simpl_powers_base(const GExpr& e, const GExpr& num_exponent,
-                  const GExpr& not_num_exponent, const GSymbol& n) {
+                  const GExpr& not_num_exponent, const GSymbol& n,
+		  const bool& input) {
   std::vector<GExpr> vect_base(e.nops());
   std::vector<GExpr> vect_num_exp(e.nops());
   std::vector<GExpr> vect_not_num_exp(e.nops());
@@ -155,22 +159,26 @@ simpl_powers_base(const GExpr& e, const GExpr& num_exponent,
   // and not numeric part of its exponent. These values are put in the right
   // position of the right vector.
   GExpr tot = 1;
-  for (unsigned i = e.nops(); i-- > 0; )
+  for (unsigned i = e.nops(); i-- > 0; ) {
+    GExpr not_num_exp_minus_n;
     if (!is_a<numeric>(vect_base[i])) {
-      GExpr not_num_exp_minus_n = found_and_erase_n(vect_not_num_exp[i], n);
-      if (not_num_exp_minus_n.is_equal(vect_not_num_exp[i]))
+      if (input)
+	not_num_exp_minus_n = found_and_erase_n(vect_not_num_exp[i], n);
+      if (!input || not_num_exp_minus_n.is_equal(vect_not_num_exp[i]))
 	tot *= pow(vect_base[i], vect_num_exp[i] * vect_not_num_exp[i]);
       else
 	tot *= pow(pow(vect_base[i], vect_num_exp[i] * not_num_exp_minus_n),n);
     }
     else {
-      GExpr not_num_exp_minus_n = found_and_erase_n(vect_not_num_exp[i], n);
-      if (not_num_exp_minus_n.is_equal(vect_not_num_exp[i]))
+      if (input)
+	not_num_exp_minus_n = found_and_erase_n(vect_not_num_exp[i], n);
+      if (!input || not_num_exp_minus_n.is_equal(vect_not_num_exp[i]))
 	tot *= pow(pow(vect_base[i], vect_num_exp[i]), vect_not_num_exp[i]);
       else
 	tot *= pow(pow(pow(vect_base[i], vect_num_exp[i]),
 		       not_num_exp_minus_n),n);
     }
+  }
   return tot;
 }
 
@@ -186,9 +194,12 @@ simpl_powers_base(const GExpr& e, const GExpr& num_exponent,
   Therefore tests the base: if it is not a multiplication the checks and the
   simplifications are finished, otherwise we must elevate every factor of the
   base to the exponents.
+  If \p input is <CODE>true</CODE> then we use the simplifications
+  which put in evidence the special symbol \p n; otherwise, i. e. \p input
+  is <CODE>false</CODE>, \p n is like the other parameters.
 */
 static GExpr
-pow_simpl(const GExpr& e, const GSymbol& n) {
+pow_simpl(const GExpr& e, const GSymbol& n, const bool& input) {
   GExpr num_exponent = 1;
   GExpr not_num_exponent = 1;
   GExpr base = e;
@@ -211,24 +222,27 @@ pow_simpl(const GExpr& e, const GSymbol& n) {
 #endif
   // The base is a multiplication.
   if (is_a<mul>(base))
-    return simpl_powers_base(base, num_exponent, not_num_exponent, n);
+    return simpl_powers_base(base, num_exponent, not_num_exponent, n, input);
   // The base is not a multiplication: is not necessary to use the vectors,
   // i.e., call the function 'simpl_powers_base'.
-  else
+  else {
+    GExpr not_num_exp_minus_n;
     // The base is numeric.
     if (is_a<numeric>(base)) {
       GNumber exp_num = GiNaC::ex_to<GiNaC::numeric>(num_exponent);
       // The function 'perfect_root' allows to apply the rule E1.
       if (exp_num.is_integer() || perfect_root(base, exp_num)) {
-	GExpr not_num_exp_minus_n = found_and_erase_n(not_num_exponent, n);
-	if (not_num_exp_minus_n.is_equal(not_num_exponent))
+	if (input)	
+	  not_num_exp_minus_n = found_and_erase_n(not_num_exponent, n);
+	if (!input || not_num_exp_minus_n.is_equal(not_num_exponent))
 	  return pow(pow(base, exp_num), not_num_exponent);
 	else
 	  return pow(pow(pow(base, exp_num), not_num_exp_minus_n), n);
       }
       else {
-	GExpr not_num_exp_minus_n = found_and_erase_n(not_num_exponent, n);
-	if (not_num_exp_minus_n.is_equal(not_num_exponent))
+	if (input)
+	  not_num_exp_minus_n = found_and_erase_n(not_num_exponent, n);
+	if (!input || not_num_exp_minus_n.is_equal(not_num_exponent))
 	  return pow(base, exp_num * not_num_exponent);
 	else
 	  return pow(pow(base, exp_num * not_num_exp_minus_n), n);
@@ -236,12 +250,14 @@ pow_simpl(const GExpr& e, const GSymbol& n) {
     }
     // The base is not numeric.
     else {
-      GExpr not_num_exp_minus_n = found_and_erase_n(not_num_exponent, n);
-      if (not_num_exp_minus_n.is_equal(not_num_exponent))
+      if (input)      
+	not_num_exp_minus_n = found_and_erase_n(not_num_exponent, n);
+      if (!input || not_num_exp_minus_n.is_equal(not_num_exponent))
 	return pow(base, num_exponent * not_num_exponent);
       else
 	return pow(pow(base, num_exponent * not_num_exp_minus_n), n);
     }
+  }
 }
 
 /*!
@@ -755,15 +771,15 @@ split(const GExpr& e, GExpr& numerica, GExpr& symbolic) {
   expression \p e.
 */
 static GExpr
-manip_factor(const GExpr& e, const GSymbol& n) {
+manip_factor(const GExpr& e, const GSymbol& n, const bool& input) {
   assert(is_a<mul>(e));
   GExpr tmp = 1;
   // Simplifies each factor that is a 'GiNaC::power'.
   for (unsigned i = e.nops(); i-- > 0; )
     if (is_a<power>(e.op(i))) {
-      GExpr base = simplify_on_output_ex(e.op(i).op(0), n);
-      GExpr exp = simplify_on_output_ex(e.op(i).op(1), n);
-      tmp *= pow_simpl(pow(base, exp), n);
+      GExpr base = simplify_on_output_ex(e.op(i).op(0), n, input);
+      GExpr exp = simplify_on_output_ex(e.op(i).op(1), n, input);
+      tmp *= pow_simpl(pow(base, exp), n, input);
     }
     else
       tmp *= e.op(i);
@@ -778,7 +794,7 @@ manip_factor(const GExpr& e, const GSymbol& n) {
     GExpr factor_no_function = 1;
     for (unsigned i = tmp.nops(); i-- > 0; )
       if (is_a<function>(tmp.op(i))) {
-	GExpr argument = simplify_on_output_ex(tmp.op(i).op(0), n);
+	GExpr argument = simplify_on_output_ex(tmp.op(i).op(0), n, input);
 	factor_function *= tmp.op(i).subs(tmp.op(i).op(0) == argument);
       }
       else
@@ -786,7 +802,7 @@ manip_factor(const GExpr& e, const GSymbol& n) {
     tmp = factor_function * factor_no_function;
   }
   else if (is_a<function>(tmp)) {
-    GExpr argument = simplify_on_output_ex(tmp.op(0), n);
+    GExpr argument = simplify_on_output_ex(tmp.op(0), n, input);
     tmp = tmp.subs(tmp.op(0) == argument);
   }
 #if NOISY
@@ -870,23 +886,23 @@ manip_factor(const GExpr& e, const GSymbol& n) {
   Returns a <CODE>GExpr</CODE> that contains the modified expression \p e.
 */
 GExpr
-simplify_on_input_ex(const GExpr& e, const GSymbol& n) {
+simplify_on_input_ex(const GExpr& e, const GSymbol& n, const bool& input) {
   GExpr ris;
   if (is_a<add>(e)) {
     ris = 0;
     for (unsigned i = e.nops(); i-- > 0; )
-      ris += simplify_on_input_ex(e.op(i), n);
+      ris += simplify_on_input_ex(e.op(i), n, input);
   }
   else if (is_a<mul>(e)) {
     ris = 1;
     for (unsigned i = e.nops(); i-- > 0; )
-      ris *= simplify_on_input_ex(e.op(i), n);
+      ris *= simplify_on_input_ex(e.op(i), n, input);
   }
   else if (is_a<power>(e))
-      return pow_simpl(e, n);
+      return pow_simpl(e, n, input);
   else if (is_a<function>(e)) {
     GExpr f = e;
-    GExpr tmp = simplify_on_input_ex(e.op(0), n);
+    GExpr tmp = simplify_on_input_ex(e.op(0), n, input);
     ris = f.subs(f.op(0) == tmp);
   }
   else
@@ -906,31 +922,31 @@ simplify_on_input_ex(const GExpr& e, const GSymbol& n) {
   Returns a <CODE>GExpr</CODE> that contains the modified expression \p e.
 */
 GExpr
-simplify_on_output_ex(const GExpr& e, const GSymbol& n) {
+simplify_on_output_ex(const GExpr& e, const GSymbol& n, const bool& input) {
   GExpr ris;
   if (is_a<add>(e)) {
     ris = 0;
     for (unsigned i = e.nops(); i-- > 0; )
-      ris += simplify_on_output_ex(e.op(i), n);
+      ris += simplify_on_output_ex(e.op(i), n, input);
   }
   else if (is_a<function>(e)) {
     GExpr f = e;
-    GExpr tmp = simplify_on_output_ex(e.op(0), n);
+    GExpr tmp = simplify_on_output_ex(e.op(0), n, input);
     ris = f.subs(f.op(0) == tmp);
   }
   else if (is_a<power>(e)) {
-    GExpr base = simplify_on_output_ex(e.op(0), n);
-    GExpr exp = simplify_on_output_ex(e.op(1), n);
+    GExpr base = simplify_on_output_ex(e.op(0), n, input);
+    GExpr exp = simplify_on_output_ex(e.op(1), n, input);
     if (is_a<numeric>(base) && is_a<numeric>(exp)) {
       GNumber base_1 = GiNaC::ex_to<GiNaC::numeric>(base);
       GNumber exp_1 = GiNaC::ex_to<GiNaC::numeric>(exp);
       ris = red_prod(1, 1, base_1, exp_1);
     }
     else
-      ris = pow_simpl(pow(base, exp), n);
+      ris = pow_simpl(pow(base, exp), n, input);
   }
   else if (is_a<mul>(e)) {
-    ris = manip_factor(e, n);
+    ris = manip_factor(e, n, input);
   }
   else
     ris += e;
