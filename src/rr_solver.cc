@@ -840,19 +840,25 @@ order_2_sol_poly_times_exponentials(const std::vector<GExpr>
 	  // the substitution n == n - k.
           GExpr poly_g_n = g_n.subs(wild(0)*power(wild(1), n) == wild(0));
 	  poly_g_n = poly_g_n.subs(n == n - k);
-	  if (is_a<power>(exponential))
+	  if (is_a<power>(exponential)) {
 	    solution = sum_poly_times_exponentials(coeff_of_exp_k * poly_g_n,
 						   k, n, exponential.op(0) *
  						   pow(root, -1));
-	  else
+	    // 'sum_poly_times_exponentials' calculates the sum from 0 while
+	    // we want to start from 2.
+	    solution -= (coeff_of_exp_k * poly_g_n).subs(k == 0) +
+	      (coeff_of_exp_k * poly_g_n).subs(k == 1) * 
+	      (1/root) * exponential.op(0);
+	  }
+	  else {
 	    // This is the case of the constant exponential.
 	    solution = sum_poly_times_exponentials(coeff_of_exp_k * poly_g_n,
 						   k, n, pow(root, -1));
-	  // 'sum_poly_times_exponentials' calculates the sum from 0 while
-	  // we want to start from 2.
-	  solution -= (coeff_of_exp_k * poly_g_n).subs(k == 0) +
-	              (coeff_of_exp_k * poly_g_n).subs(k == 1) * 
-	              (1/root) * exponential.op(0);
+	    // 'sum_poly_times_exponentials' calculates the sum from 0 while
+	    // we want to start from 2.
+	    solution -= (coeff_of_exp_k * poly_g_n).subs(k == 0) +
+	      (coeff_of_exp_k * poly_g_n).subs(k == 1) * (1/root);
+	  }
 	  // We have passed to the function 'sum_poly_times_exponentials'
 	  // only (1/root)^k then now we must multiply for (root)^n.
 	  solution *= power(root, n);
