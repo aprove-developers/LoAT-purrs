@@ -150,7 +150,7 @@ check_poly_times_exponential(const std::vector<GExpr>& exp_no_poly_coeff) {
 static void
 compute_symbolic_sum(const int order, const GSymbol& n,
 		     const GSymbol& alpha, const GSymbol& lambda,
-		     const std::vector<Polynomial_Root> roots,
+		     const std::vector<Polynomial_Root>& roots,
 		     std::vector<GExpr>& base_of_exps,
 		     std::vector<GExpr>& exp_poly_coeff,
 		     std::vector<GExpr>& symbolic_sum_distinct,
@@ -167,8 +167,7 @@ compute_symbolic_sum(const int order, const GSymbol& n,
       // The root is different from the exponential's base.
       if (distinct) {
 	GSymbol x("x");
-	symbolic_sum_distinct[i] = sum_poly_times_exponentials(q_k, k, n,
-                                                               x);
+	symbolic_sum_distinct[i] = sum_poly_times_exponentials(q_k, k, n, x);
 	// 'sum_poly_times_exponentials' calculates the sum from 0 while
         // we want to start from 'order'.
         symbolic_sum_distinct[i] -= q_k.subs(k == 0);
@@ -216,14 +215,14 @@ subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
 static void
 add_initial_conditions(GExpr& g_n, const GSymbol& n,
 		       std::vector<GNumber>& coefficients,
-		       const std::vector<GExpr> initial_conditions,
+		       const std::vector<GExpr>& initial_conditions,
 		       GExpr& solution);
 
 static GExpr
 order_2_sol_roots_no_distinct(const GSymbol& n,
-			      const std::vector<GExpr> base_of_exps,
-			      const std::vector<GExpr> exp_poly_coeff,
-			      const std::vector<GExpr> initial_conditions,
+			      const std::vector<GExpr>& base_of_exps,
+			      const std::vector<GExpr>& exp_poly_coeff,
+			      const std::vector<GExpr>& initial_conditions,
 			      const std::vector<GNumber>& coefficients,
 			      const std::vector<Polynomial_Root>& roots);
 
@@ -783,7 +782,7 @@ subs_to_sum_roots_and_bases(const GSymbol& alpha, const GSymbol& lambda,
 static void
 add_initial_conditions(GExpr& g_n, const GSymbol& n,
 		       std::vector<GNumber>& coefficients,
-		       const std::vector<GExpr> initial_conditions,
+		       const std::vector<GExpr>& initial_conditions,
 		       GExpr& solution) {
   // 'coefficients.size()' has 'order + 1' elements because in the first
   // position there is the value 0. 
@@ -800,8 +799,9 @@ add_initial_conditions(GExpr& g_n, const GSymbol& n,
 
 static GExpr
 order_2_sol_roots_no_distinct(const GSymbol& n,
-			      const std::vector<GExpr> base_of_exps,
-			      const std::vector<GExpr> exp_poly_coeff,
+			      const std::vector<GExpr>& base_of_exps,
+			      const std::vector<GExpr>& exp_poly_coeff,
+			      const std::vector<GExpr>& initial_conditions,
 			      const std::vector<GNumber>& coefficients,
 			      const std::vector<Polynomial_Root>& roots) {
   GExpr solution_tot;
