@@ -341,8 +341,10 @@ gosper(const GExpr& t, GExpr& r_n, const GSymbol& n,
   GExpr c_n;
   gosper_step_two(r_n, n, a_n, b_n, c_n);
   GExpr x_n;
-  if (!gosper_step_three(a_n, b_n, c_n, n, x_n))
+  if (!gosper_step_three(a_n, b_n, c_n, n, x_n)) {
+    std::cout << "No non-zero polynomial solution" << std::endl;
     return false;
+  }
   solution = gosper_step_four(t, b_n, c_n, x_n, n, lower_bound, upper_bound,
 			      solution);
 #if NOISY
