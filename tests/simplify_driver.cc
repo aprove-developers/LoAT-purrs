@@ -28,6 +28,11 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "purrs_install.hh"
 
+#ifdef USE_READLINE
+#include "readlinebuf.hh"
+#include <memory>
+#endif
+
 using namespace std;
 using namespace Parma_Recurrence_Relation_Solver;
 
@@ -36,38 +41,78 @@ using namespace Parma_Recurrence_Relation_Solver;
 #endif
 
 int main() try {
-  Expr p;
+  readlinebuf* prdlb = 0;
+  istream* pinput_stream;
+
+#ifdef USE_READLINE
+  prdlb = new readlinebuf();
+  pinput_stream = new istream(prdlb);
+#else
+  pinput_stream = &cin;
+#endif
+  istream& input_stream = *pinput_stream;
+
+  Expr e;
   Symbol x("x");
   Symbol n("n");
   Symbol a("a");
   Symbol b("b");
   Symbol c("c");
   Symbol d("d");
-  string s;
 
-  for (int i = 0; i < 10; ++i) {
-    cout << "---------------------------------------------" << endl;
-    cout << endl << "Insert an expression: ";
-    getline(cin,s);
+  while (input_stream) {
+    cout << endl;
+    cout << "What kind of expression do you want to simplify?" << endl;
+    cout << "1. For the input (to put in evidence the symbol `n')" << endl;
+    cout << "2. For the output" << endl;
+    cout << "3. Containing factorials" << endl;
     Expr_List l(x, n, a, b, c, d);
-    p = Expr(s, l);
+    string s;
+    Expr tmp;
+    do {
+      getline(input_stream, s);
+      if (!input_stream)
+	return 0;
+      tmp = Expr(s, l);
+    } while (!tmp.is_equal(1) && !tmp.is_equal(2) && !tmp.is_equal(3)); 
+    Number choice;
+    choice = tmp.ex_to_number();
+    cout << endl << "Insert an expression: ";
+    getline(input_stream, s);
+    
+    if (!input_stream)
+	return 0;
+    
+    // Skip comments.
+    if (s.find("%") == 0)
+      continue;
+    
+    e = Expr(s, l);
     // `expand' does the simplification of the rule E6.
-    p = p.expand();
+    e = e.expand();
 #if NOISY
-    cout << "p after expand: " << p << endl;
+    cout << "Expanded expression = " << e << endl;
 #endif
-    // Da fare sulle espressioni in input. 
-    //Expr q = simplify_on_input_ex(p, n, true);
-    // Da fare sulle espressioni in output.
-    Expr q = simplify_on_output_ex(p, n, false);
+    Expr solution;
+    switch (choice.to_int()) {
+    case 1:
+      solution = simplify_on_input_ex(e, n, true);
+      break;
+    case 2:
+      solution = simplify_on_output_ex(e, n, false);
+      break;
+    case 3:
+      solution = simplify_factorials_and_exponentials(e, n);
+      break;
+    }
 #if NOISY
-    cout << endl << "SOLUZIONE    " << q << endl;
+    cout << endl << "SOLUTION = " << solution << endl;
+    cout << endl << "---------------------------------------------" << endl;
 #endif
   }
   return 0;
 }
 catch (exception &p) {
-#if NOISY
   cerr << "Exception caught: " << p.what() << endl;
-#endif
+  return 1;
 }
