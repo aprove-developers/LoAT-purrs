@@ -69,12 +69,10 @@ get_constant_decrement(const Expr& e, const Symbol& n, Number& decrement) {
       d = a;
     else
       return false;
-    if (d.is_a_number()) {
-      Number i = d.ex_to_number();
-      if (i.is_integer()) {
-	decrement = -i;
-	return true;
-      }
+    Number i;
+    if (d.is_a_number(i) && i.is_integer()) {
+      decrement = -i;
+      return true;
     }
   }
   return false;
@@ -1758,8 +1756,8 @@ compute_product_on_add(const Expr& e, const Symbol& n,
   bool e_prod_computed = false;
   if (e.match(n + wild(0), substitution)) {
     Expr tmp = get_binding(substitution, 0);
-    if (tmp.is_a_number()) {
-      Number num = tmp.ex_to_number();
+    Number num;
+    if (tmp.is_a_number(num))
       if (num.is_positive_integer()) {
 	e_prod = factorial(e) / factorial(lower + num - 1);
 	e_prod_computed = true;
@@ -1778,7 +1776,6 @@ compute_product_on_add(const Expr& e, const Symbol& n,
 	    e_prod = 0;
 	    e_prod_computed = true;
 	  }
-    }
   }
   else if (e == 2*n+1) {
     e_prod = factorial(2*n+1) * pwr(2, -n) / factorial(n);
@@ -1823,8 +1820,8 @@ compute_product_on_power(const Expr& e, const Symbol& n,
   Expr e_prod;
   bool e_prod_computed = false;
   if (e.op(0).has(n)) {
-    if (e.op(1).is_a_number()) {
-      Number exponent = e.op(1).ex_to_number();
+    Number exponent;
+    if (e.op(1).is_a_number(exponent)) {
       if (exponent.is_positive_integer())
 	e_prod = pwr(compute_product(e.op(0), n, lower, upper), e.op(1));
       else

@@ -92,11 +92,9 @@ static bool
 perfect_root(const Expr& base, const Number& exponent) {
   if (exponent.is_rational()) {
     Expr pow_base_num_exp = pwr(base, exponent);
-    if (pow_base_num_exp.is_a_number()) {
-      Number tmp = pow_base_num_exp.ex_to_number();
-      if (tmp.is_rational())
-	return true;
-    }
+    Number num;
+    if (pow_base_num_exp.is_a_number(num) && num.is_rational())
+      return true;
   }
   return false;
 }
@@ -671,10 +669,10 @@ reduce_product(const Expr& e) {
     for (unsigned i = tmp.nops(); i-- > 0; )
       if (tmp.op(i).is_a_power()) {
 	// Base and exponent of `tmp.op(i)' are both numerics.
-	if (tmp.op(i).op(0).is_a_number() &&
-	    tmp.op(i).op(1).is_a_number()) {
-	  Number base_2 = tmp.op(i).op(0).ex_to_number();
-	  Number exp_2  = tmp.op(i).op(1).ex_to_number();
+	Number base_2;
+	Number exp_2;
+	if (tmp.op(i).op(0).is_a_number(base_2) &&
+	    tmp.op(i).op(1).is_a_number(exp_2)) {
 	  Expr to_reduce = red_prod(base_1, exp_1, base_2, exp_2);
 	  // red_prod returns `numeric' or `numeric^numeric' or
 	  // `numeric * numeric^numeric'.

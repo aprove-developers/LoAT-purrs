@@ -315,12 +315,11 @@ PURRS::Expr::is_polynomial(const Symbol& x) const {
   else if (e == x)
     return true;
   else if (e.is_a_power()) {
-    if (e.op(0).is_polynomial(x))
-      if (e.op(1).is_a_number()) {
-	Number exponent = e.op(1).ex_to_number();
-	if (exponent.is_positive_integer())
-	  return true;
-      }
+    if (e.op(0).is_polynomial(x)) {
+      Number exponent;
+      if (e.op(1).is_a_number(exponent) && exponent.is_positive_integer()) 
+	return true;
+    }
   }
   else if (e.is_a_add() || e.is_a_mul()) {
     for (unsigned i = e.nops(); i-- > 0; )
