@@ -50,8 +50,8 @@ gcd(int n, int m) {
 */
 Expr
 general_gcd(const Expr& p, const Expr& q, const Symbol& x) {
-  Expr f = convert_to_integer_polynomial(p, x);
-  Expr g = convert_to_integer_polynomial(q, x);
+  const Expr& f = convert_to_integer_polynomial(p, x);
+  const Expr& g = convert_to_integer_polynomial(q, x);
   return gcd(f,g);
 }
 
@@ -142,7 +142,7 @@ convert_to_integer_polynomial(const Expr& p, const Symbol& x) {
   // multiple of denominators.
   Number t_lcm = p.coeff(x, deg_p).ex_to_number().denominator();
   for (unsigned i = 0; i <= deg_p; ++i) {
-    Expr t_coeff = p.coeff(x, i);
+    const Expr& t_coeff = p.coeff(x, i);
     t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denominator());
   }
   return (p * t_lcm).primpart(x);
@@ -164,11 +164,11 @@ convert_to_integer_polynomial(const Expr& p, const Symbol& x,
   // multiple of denominators.
   Number t_lcm = p.coeff(x, deg_p).ex_to_number().denominator();
   for (unsigned i = 0; i <= deg_p; ++i) {
-    Expr t_coeff = p.coeff(x, i);
+    const Expr& t_coeff = p.coeff(x, i);
     t_lcm = lcm(t_lcm, t_coeff.ex_to_number().denominator());
   }
 
-  Expr q = (p * t_lcm).primpart(x);
+  const Expr& q = (p * t_lcm).primpart(x);
   factor  = p.lcoeff(x).ex_to_number();
   factor *= pwr(q.lcoeff(x), -1).ex_to_number();
   return q;
@@ -210,12 +210,12 @@ resultant(const Expr& p, const Expr& q, const Symbol& x) {
       // quozient of `g' and `f' and
       // `factor = f.lcoeff(x)^(g.degree(x) - f.degree(x) + 1)'.
       Expr r = prem(g, f, x);
-      Expr factor = pwr(f.lcoeff(x), g.degree(x) - f.degree(x) + 1);
+      const Expr& factor = pwr(f.lcoeff(x), g.degree(x) - f.degree(x) + 1);
       // The rest of euclidean's division is given by the ratio
       // `pseudo-remainder / factor'.
       r *= pwr(factor, -1);
       unsigned deg_r = r.degree(x);
-      Expr a = f.lcoeff(x);
+      const Expr& a = f.lcoeff(x);
       // Using rule two.
       res *= pwr(a, deg_g - deg_r);
       // Using rule one.

@@ -53,7 +53,7 @@ find_denominator_single_factor(const Expr& e, unsigned position,
   // `e' is a denominator.
   if (e.is_a_power() && e.arg(1).is_a_number(exponent)
       && !exponent.is_nonnegative_integer()) {
-    Expr den = pwr(e.arg(0), -exponent);
+    const Expr& den = pwr(e.arg(0), -exponent);
     denominators[position] *= den;
     return den;
   }
@@ -252,7 +252,7 @@ take_common_factors(const Expr& d, const Expr& f) {
   Expr temp_d = d;
   if (f.is_a_mul())
     for (unsigned i = f.nops(); i-- > 0; ) {
-      Expr factor = f.op(i);
+      const Expr& factor = f.op(i);
       take_common_single_factors(temp_d, factor, common_factors);
       temp_d = common_factors;
     }
@@ -330,7 +330,7 @@ find_numerator(const std::vector<Expr>& numerators,
   assert(numerators.size() == denominators.size());
   Expr numerator = 0;
   for (unsigned i = numerators.size(); i-- > 0; ) {
-    Expr i_th_denominator = denominators[i];
+    const Expr& i_th_denominator = denominators[i];
     Expr multiply_to_numerator = 1;
     // If `denominator == denominators[i]' we do not have factors to multiply
     // to numerator.
@@ -427,7 +427,7 @@ numerator_denominator_purrs(const Expr& e, Expr& numerator, Expr& denominator) {
       numerator_denominator_factor(e.op(i), numerator, tmp_denominator);
       numerators[i] = numerator;
       denominators[i] = tmp_denominator;
-      Expr old_denominator = denominator;
+      Expr& old_denominator = denominator;
       denominator = take_common_factors(old_denominator, tmp_denominator);
     }
     numerator = find_numerator(numerators, denominators, denominator);

@@ -60,11 +60,9 @@ FACTOR_THRESHOLD = 100;
 static bool
 gosper_step_one(const Expr& t_n, Expr& r_n, const Symbol& n, bool full) {
   // Not is the case of variable coefficient.
-  if (full) {
-    Expr t_plus_one = t_n.subs(n, n+1); 
-    r_n = simplify_factorials_and_exponentials(t_plus_one, n)
+  if (full)
+    r_n = simplify_factorials_and_exponentials(t_n.subs(n, n+1), n)
       * pwr(simplify_factorials_and_exponentials(t_n, n), -1);
-  }
   r_n = transform_in_single_fraction(r_n);
   D_VAR(r_n);
   if (r_n.is_rational_function(n))
@@ -84,7 +82,7 @@ compute_resultant_and_its_roots(const Expr& f, const Expr& g,
 				const Symbol& n,
 				std::vector<Number>& integer_roots) {
   Symbol h("h");
-  Expr temp_g = g.subs(n, n + h);
+  const Expr& temp_g = g.subs(n, n + h);
   Expr R = resultant(f, temp_g, n);
   R = R.primpart(h);
   if (!R.is_integer_polynomial())
@@ -137,19 +135,19 @@ gosper_step_two(const Expr& r_n, const Symbol& n,
   // of polynomials.
 
   // normalize f and g, and store conversion factor in Z
-  Expr lead_f = f.lcoeff(n);
-  Expr lead_g = g.lcoeff(n);
-  Expr Z = lead_f * pwr(lead_g, -1);
+  const Expr& lead_f = f.lcoeff(n);
+  const Expr& lead_g = g.lcoeff(n);
+  const Expr& Z = lead_f * pwr(lead_g, -1);
   a_n = f * pwr(lead_f, -1);
   b_n = g * pwr(lead_g, -1);
   // Computation of the output polynomials.
   c_n = 1;
   unsigned integer_roots_size = integer_roots.size();
   for (unsigned i = 0; i < integer_roots_size; ++i) {
-    Expr temp_b_n = (b_n.subs(n, n + integer_roots[i])).expand();
-    Expr s = general_gcd(a_n, temp_b_n, n);
+    const Expr& temp_b_n = (b_n.subs(n, n + integer_roots[i])).expand();
+    const Expr& s = general_gcd(a_n, temp_b_n, n);
     a_n = quo(a_n, s, n);
-    Expr temp_s = s.subs(n, n - integer_roots[i]);
+    const Expr& temp_s = s.subs(n, n - integer_roots[i]);
     b_n = quo(b_n, temp_s, n);
     for (Number j = 1; j <= integer_roots[i]; ++j)
       c_n *= s.subs(n, n - j);
@@ -200,8 +198,8 @@ find_polynomial_solution(const Symbol& n, const Number& deg_x,
   for (unsigned i = 0; i < number_of_coeffs; ++i)
     x_n += pwr(n, i) * unknowns.op(i);
 
-  Expr x_n_shift = x_n.subs(n, n+1);
-  Expr b_shift = b_n.subs(n, n-1);
+  const Expr& x_n_shift = x_n.subs(n, n+1);
+  const Expr& b_shift = b_n.subs(n, n-1);
 
   // Considers the recurrence relation to solve.
   Expr rr = a_n * x_n_shift - b_shift * x_n - c_n;
@@ -210,7 +208,7 @@ find_polynomial_solution(const Symbol& n, const Number& deg_x,
   // Builds the lists to put in the matrix `rr_coefficients' and `rhs'.
   Expr_List equations;
   for (unsigned i = 0; i < number_of_unknowns; ++i) {
-    Expr lhs = rr.coeff(n, i);
+    const Expr& lhs = rr.coeff(n, i);
     equations.prepend(Expr(lhs, 0));
   }
     
@@ -245,8 +243,8 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
   unsigned deg_a = a_n.degree(n);
   unsigned deg_b = b_n.degree(n);
   unsigned deg_c = c_n.degree(n);
-  Expr lead_a = a_n.lcoeff(n);
-  Expr lead_b = b_n.lcoeff(n);
+  const Expr& lead_a = a_n.lcoeff(n);
+  const Expr& lead_b = b_n.lcoeff(n);
   Number deg_x = -1;
   // On output, if a possible degree exists,
   // `deg_x' will contain a non-negative number.
@@ -258,11 +256,9 @@ gosper_step_three(const Expr& a_n, const Expr& b_n, const Expr& c_n,
   }
   else {
     // `deg_a = deg_b' and `lead_a = lead_b'.
-    Expr shift_b = b_n.subs(n, n - 1);
-    Expr A = a_n.coeff(n, deg_a - 1);
-    Expr B = shift_b.coeff(n, deg_a - 1);
-    Expr B_A_e = (B - A) * pwr(lead_a, -1);
-    Number B_A = B_A_e.ex_to_number();
+    const Expr& A = a_n.coeff(n, deg_a - 1);
+    const Expr& B = b_n.subs(n, n - 1).coeff(n, deg_a - 1);
+    Number B_A = ((B - A) * pwr(lead_a, -1)).ex_to_number();
     Number possible_deg = Number(deg_c) - Number(deg_a) + 1;
     if (B_A.is_nonnegative_integer())
       if (B_A > possible_deg)
@@ -286,7 +282,7 @@ gosper_step_four(const Expr& t, const Expr& b_n, const Expr& c_n,
 		 const Expr& x_n, const Symbol& n,
 		 const Number& lower, const Expr& upper,
 		 Expr solution) {
-  Expr shift_b = b_n.subs(n, n-1);
+  const Expr& shift_b = b_n.subs(n, n-1);
   Expr z_n = shift_b * x_n * t * pwr(c_n, -1);
   z_n = simplify_numer_denom(z_n);
   // The Gosper's algorithm computes summation with the lower limit `0'
@@ -351,8 +347,7 @@ full_gosper(const Expr& t_n, const Symbol& n,
     // `t' is not Gosper-summable, i. e., there is not hypergeometric
     // solution.
     Symbol h;
-    Expr t_h = t_n.subs(n, h);
-    solution = sum(Expr(h), Expr(lower), upper, t_h);
+    solution = sum(Expr(h), Expr(lower), upper, t_n.subs(n, h));
   }
   D_MSGVAR("The sum is: ", solution);
 
@@ -386,8 +381,7 @@ partial_gosper(const Expr& t_n, Expr& r_n, const Symbol& n,
     // `t' is not Gosper-summable, i. e., there is not hypergeometric
     // solution.
     Symbol h;
-    Expr t_h = t_n.subs(n, h);
-    solution = sum(Expr(h), Expr(lower), upper, t_h);
+    solution = sum(Expr(h), Expr(lower), upper, t_n.subs(n, h));
   }
   D_MSGVAR("The sum is: ", solution);
 

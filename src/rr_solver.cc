@@ -195,14 +195,14 @@ return_sum(bool distinct, const Symbol& n, const Number& order,
 	   const Expr& coeff, const Symbol& alpha, const Symbol& lambda) {
   Symbol k("k");
   Symbol x("x");
-  Expr q_k = coeff.subs(n, k);
+  const Expr& q_k = coeff.subs(n, k);
   Expr symbolic_sum;  
   if (distinct)
     symbolic_sum = sum_poly_times_exponentials(q_k, k, n, x);
   else
     symbolic_sum = sum_poly_times_exponentials(q_k, k, n, 1);
-  // `sum_poly_times_exponentials' computes the sum from 0, while
-  // we want it to start from `order'.
+  // `sum_poly_times_exponentials' computes the sum from 0, whereas
+  // we want that the sum start from `order'.
   symbolic_sum -= q_k.subs(k, 0);
   for (Number j = 1; j < order; ++j)
     symbolic_sum -= q_k.subs(k, j) * pwr(alpha, j) * pwr(lambda, -j);
@@ -314,7 +314,7 @@ subs_to_sum_roots_and_bases(const Symbol& alpha, const Symbol& lambda,
   unsigned r = 0;
   for (unsigned i = base_of_exps.size(); i-- > 0; )
     for (unsigned j = roots.size(); j-- > 0; ) {
-      Expr base_exp = base_of_exps[i];
+      const Expr& base_exp = base_of_exps[i];
       Expr tmp;
       if (base_exp != roots[j].value())
 	tmp = symbolic_sum_distinct[r]
@@ -380,9 +380,8 @@ Recurrence::check_powers_and_functions(const Expr& e, const Symbol& n) {
   // If `x(n + k)' is the argument of an other function, then
   // the recurrence is non-linear.
   if (e.is_a_function()) {
-    Expr operand;
     for (unsigned i = e.nops(); i-- > 0; ) {
-      operand = e.arg(i);
+      const Expr& operand = e.arg(i);
       if (operand.is_the_x_function())
 	if (operand.arg(0).has(n))
 	  return NON_LINEAR_RECURRENCE;
@@ -391,8 +390,8 @@ Recurrence::check_powers_and_functions(const Expr& e, const Symbol& n) {
   // If `x(n + k)' is the base or the exponent of a power, then
   // the recurrence is non-linear.
   else if (e.is_a_power()) {
-    Expr base = e.arg(0);
-    Expr exponent = e.arg(1);
+    const Expr& base = e.arg(0);
+    const Expr& exponent = e.arg(1);
     if (base.is_the_x_function())
       if (base.arg(0).has(n))
 	return NON_LINEAR_RECURRENCE;
@@ -409,7 +408,7 @@ Recurrence::find_non_linear_recurrence(const Expr& e, const Symbol& n) {
   unsigned num_summands = e.is_a_add() ? e.nops() : 1;
   if (num_summands > 1)
     for (unsigned i = num_summands; i-- > 0; ) {
-      Expr term = e.op(i);
+      const Expr& term = e.op(i);
       unsigned num_factors = term.is_a_mul() ? term.nops() : 1;
       if (num_factors == 1) {
 	status = check_powers_and_functions(term, n);
@@ -486,12 +485,14 @@ Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
   unsigned num_factors = r.is_a_mul() ? r.nops() : 1;
   if (num_factors == 1) {
     if (r.is_the_x_function()) {
-      Expr argument = r.arg(0);
+      const Expr& argument = r.arg(0);
       if (argument == n)
 	return HAS_NULL_DECREMENT;
-      else if (argument.is_a_add() && argument.nops() == 2)
-	if ((argument.op(0) == n && argument.op(1).is_a_number())
-	    || (argument.op(1) == n && argument.op(0).is_a_number())) {
+      else if (argument.is_a_add() && argument.nops() == 2) {
+	const Expr& first = argument.op(0);
+	const Expr& second = argument.op(1);
+	if ((first == n && second.is_a_number())
+	    || (second.op(1) == n && first.is_a_number())) {
 	  status = compute_order(argument, n, order, index,
 				 coefficients.max_size());
 	  if (status != OK)
@@ -500,6 +501,7 @@ Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
 	}
 	else
 	  return TOO_COMPLEX;
+      }
       else if (argument.has(n))
 	return TOO_COMPLEX;
       else
@@ -513,14 +515,16 @@ Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
     bool found_function_x = false;
     bool found_n = false;
     for (unsigned i = num_factors; i-- > 0; ) {
-      Expr factor = r.op(i);
+      const Expr& factor = r.op(i);
       if (factor.is_the_x_function()) {
-	Expr argument = factor.arg(0);
+	const Expr& argument = factor.arg(0);
 	if (argument == n)
 	  return HAS_NULL_DECREMENT;
-	else if (argument.is_a_add() && argument.nops() == 2)
-	  if ((argument.op(0) == n && argument.op(1).is_a_number())
-	      || (argument.op(1) == n && argument.op(0).is_a_number())) {
+	else if (argument.is_a_add() && argument.nops() == 2) {
+	  const Expr& first = argument.op(0);
+	  const Expr& second = argument.op(1);
+	  if ((first == n && second.is_a_number())
+	      || (second == n && first.is_a_number())) {
 	    if (found_function_x)
 	      return NON_LINEAR_RECURRENCE;
 	    status = compute_order(argument, n, order, index,
@@ -531,6 +535,7 @@ Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
 	  }
 	  else
 	    return TOO_COMPLEX;
+	}
 	else if (argument.has(n))
 	  return TOO_COMPLEX;
 	else
@@ -975,15 +980,17 @@ eliminate_null_decrements(const Expr& rhs, Expr& new_rhs,
     // Tries `a' and `b'.
     Expr a;
     Expr b = rhs;
-    for (unsigned j = rhs.nops(); j-- > 0; )
-      if (clear(substitution), rhs.op(j).match(x(n)*wild(0), substitution)) {
+    for (unsigned j = rhs.nops(); j-- > 0; ) {
+      const Expr& term = rhs.op(j);
+      if (clear(substitution), term.match(x(n)*wild(0), substitution)) {
 	a = get_binding(substitution, 0);
-	b -= rhs.op(j);
+	b -= term;
       }
-      else if (clear(substitution), rhs.op(j).match(x(n), substitution)) {
+      else if (clear(substitution), term.match(x(n), substitution)) {
 	a = 1;
-	b -= rhs.op(j);
+	b -= term;
       }
+    }
     Expr x_i = x(wild(0));
     Expr a_times_x_i = x_i * wild(1);
     if (a == 1)
@@ -1114,10 +1121,10 @@ exp_poly_decomposition_factor(const Expr& base,
   // possibly not polynomial parts of `e' can be added to
   // `p[position]' and `q[position]', respectively.
   Expr polynomial;
-  Expr possibly_not_polynomial;
-  isolate_polynomial_part(e, n, polynomial, possibly_not_polynomial);
+  Expr possibly_non_polynomial;
+  isolate_polynomial_part(e, n, polynomial, possibly_non_polynomial);
   p[position] += polynomial;
-  q[position] += possibly_not_polynomial;
+  q[position] += possibly_non_polynomial;
 }
 
 static void
@@ -1216,7 +1223,7 @@ add_initial_conditions(const Expr& g_n, const Symbol& n,
   // `coefficients.size()' has `order + 1' elements because in the first
   // position there is the value 0. 
   for (unsigned i = coefficients.size() - 1; i-- > 0; ) {
-    Expr g_n_i = g_n.subs(n, n - i);
+    const Expr& g_n_i = g_n.subs(n, n - i);
     Expr tmp = initial_conditions[i];
     for (unsigned j = i; j > 0; j--)
       tmp -= coefficients[j] * initial_conditions[i-j];
@@ -1243,17 +1250,17 @@ compute_sum_with_gosper_algorithm(const Symbol& n,
 				  Expr& solution) {
   solution = 0;
   for (unsigned i = exp_no_poly_coeff.size(); i-- > 0; ) {
-    Expr tmp;
+    Expr gosper_solution;
     if (!exp_no_poly_coeff[i].is_zero()) {
       // FIXME: for the moment use this function only when the `order'
       // is one, then `roots' has only one elements.
-      Expr t_n = pwr(base_of_exps[i], n) * exp_no_poly_coeff[i]
+      const Expr& t_n = pwr(base_of_exps[i], n) * exp_no_poly_coeff[i]
 	* pwr(roots[0].value(), -n);
       D_VAR(t_n);
-      if (!full_gosper(t_n, n, lower, upper, tmp))
+      if (!full_gosper(t_n, n, lower, upper, gosper_solution))
 	return false;
     }
-    solution += tmp;
+    solution += gosper_solution;
   }
   return true;
 }
@@ -1277,7 +1284,7 @@ compute_sum_with_gosper_algorithm(const Symbol& n,
 				  const Expr& t_n, Expr& solution) {
   solution = 0;
   for (unsigned i = exp_poly_coeff.size(); i-- > 0; ) {
-    Expr tmp;
+    Expr gosper_solution;
     Expr coefficient = 1;
     if (!exp_poly_coeff[i].is_zero())
       coefficient *= exp_poly_coeff[i];
@@ -1289,9 +1296,9 @@ compute_sum_with_gosper_algorithm(const Symbol& n,
       * pwr(roots[0].value(), -n);
     D_VAR(t_n);
     D_VAR(r_n);
-    if (!partial_gosper(t_n, r_n, n, lower, upper, tmp))
+    if (!partial_gosper(t_n, r_n, n, lower, upper, gosper_solution))
       return false;
-    solution += tmp;
+    solution += gosper_solution;
   }
   return true;
 }
@@ -1442,7 +1449,7 @@ solve_system(bool all_distinct,
 }
 
 static Expr
-find_g_n(const Symbol& n, bool all_distinct, const Matrix sol,
+find_g_n(const Symbol& n, bool all_distinct, const Matrix& sol,
 	 const std::vector<Polynomial_Root>& roots) {
   // Compute the order of the recurrence relation.
   Number order = 0;
@@ -1531,13 +1538,13 @@ compute_non_homogeneous_part(const Symbol& n, const Expr& g_n, int order,
     for (unsigned j = base_of_exps.size(); j-- > 0; ) {
       Expr solution = 0;
       Symbol k("k");
-      Expr g_n_coeff_k = g_n_poly_coeff[i].subs(n, n - k);
-      Expr exp_poly_coeff_k = exp_poly_coeff[j].subs(n, k);
+      const Expr& g_n_coeff_k = g_n_poly_coeff[i].subs(n, n - k);
+      const Expr& exp_poly_coeff_k = exp_poly_coeff[j].subs(n, k);
       solution = sum_poly_times_exponentials(g_n_coeff_k * exp_poly_coeff_k,
 					     k, n, 1/bases_exp_g_n[i]
 					     * base_of_exps[j]);
-      // `sum_poly_times_exponentials' calculates the sum from 0 while
-      // we want to start from `order'.
+      // `sum_poly_times_exponentials' computes the sum from 0, whereas
+      // we want that the sum start from `order'.
       solution -= (g_n_coeff_k * exp_poly_coeff_k).subs(k, 0);
       for (int h = 1; h < order; ++h)
 	solution -= (g_n_coeff_k * exp_poly_coeff_k).subs(k, h)
@@ -1606,9 +1613,9 @@ solve_constant_coeff_order_2(const Symbol& n, Expr& g_n, int order,
   // polynomial and an exponential.
   if (!vector_not_all_zero(exp_no_poly_coeff))
     if (all_distinct) {
-      Expr root_1 = roots[0].value();
-      Expr root_2 = roots[1].value();
-      Expr diff_roots = root_1 - root_2;
+      const Expr& root_1 = roots[0].value();
+      const Expr& root_2 = roots[1].value();
+      const Expr& diff_roots = root_1 - root_2;
       Symbol alpha("alpha");
       Symbol lambda("lambda");
       std::vector<Expr> symbolic_sum_distinct;
@@ -1838,9 +1845,8 @@ compute_product_on_add(const Expr& e, const Symbol& n,
     }
   }
   if (!e_prod_computed) {
-    Symbol h("h");
-    Expr e_h = e.subs(n, h);
-    e_prod = prod(Expr(h), Expr(lower), upper, e_h);
+    Symbol h;
+    e_prod = prod(Expr(h), Expr(lower), upper, e.subs(n, h));
   }
   return e_prod;
 }
@@ -1851,15 +1857,19 @@ compute_product_on_add(const Expr& e, const Symbol& n,
 static Expr
 compute_product_on_power(const Expr& e, const Symbol& n,
 			 const Number& lower, const Expr& upper) {
+  assert(e.is_a_power());
+  const Expr& base_e = e.arg(0);
+  const Expr& exponent_e = e.arg(1);
   Expr e_prod;
   bool e_prod_computed = false;
-  if (e.arg(0).has(n)) {
+  if (base_e.has(n)) {
     Number exponent;
-    if (e.arg(1).is_a_number(exponent)) {
+    if (exponent_e.is_a_number(exponent)) {
       if (exponent.is_positive_integer())
-	e_prod = pwr(compute_product(e.arg(0), n, lower, upper), e.arg(1));
+	e_prod = pwr(compute_product(base_e, n, lower, upper), exponent_e);
       else
-	e_prod = pwr(compute_product(e.arg(0), n, lower, upper, true), e.arg(1));
+	e_prod
+	  = pwr(compute_product(base_e, n, lower, upper, true), exponent_e);
       e_prod_computed = true;
     }
   }
@@ -1868,7 +1878,7 @@ compute_product_on_power(const Expr& e, const Symbol& n,
     std::vector<Expr> base_of_exps;
     std::vector<Expr> exp_poly_coeff;
     std::vector<Expr> exp_no_poly_coeff;
-    exp_poly_decomposition(e.arg(1), n,
+    exp_poly_decomposition(exponent_e, n,
 			   base_of_exps, exp_poly_coeff, exp_no_poly_coeff);
     Expr new_exponent = 0;
     // `f(h)' is a polynomial or a product of a polynomial times an
@@ -1876,14 +1886,14 @@ compute_product_on_power(const Expr& e, const Symbol& n,
     if (vector_not_all_zero(exp_poly_coeff)) {
       Symbol k("k");
       for (unsigned i = base_of_exps.size(); i-- > 0; ) {
-	Expr coeff_k = exp_poly_coeff[i].subs(n, k);
+	const Expr& coeff_k = exp_poly_coeff[i].subs(n, k);
 	new_exponent += sum_poly_times_exponentials(coeff_k, k, n,
 						    base_of_exps[i]);
-	// `sum_poly_times_exponentials' computes the sum from 0, while
-	// we want it to start from `1'.
+	// `sum_poly_times_exponentials' computes the sum from 0, whereas
+	// we want that the sum start from `1'.
 	new_exponent -= coeff_k.subs(k, 0);
       }
-      e_prod = pwr(e.arg(0), new_exponent);
+      e_prod = pwr(base_e, new_exponent);
       e_prod_computed = true;
     }
     // FIXME: aggiungere anche 
@@ -1891,9 +1901,8 @@ compute_product_on_power(const Expr& e, const Symbol& n,
     // per risolvere altre sommatorie risolvibili solo con gosper.
   }
   if (!e_prod_computed) {
-    Symbol h("h");
-    Expr e_h = e.subs(n, h);
-    e_prod = prod(Expr(h), Expr(lower), upper, e_h);
+    Symbol h;
+    e_prod = prod(Expr(h), Expr(lower), upper, e.subs(n, h));
   }
   return e_prod;
 }
@@ -1958,10 +1967,9 @@ compute_product(const Expr& e, const Symbol& n,
       return tmp;
     }
   }
-  Expr exp_power = upper - lower + 1;
   Expr e_prod;
   if (!e.has(n))
-    e_prod = pwr(e, exp_power);
+    e_prod = pwr(e, upper - lower + 1);
   else if (e == n) {
     if (lower > 0)
       e_prod = factorial(upper) / factorial(lower - 1);
@@ -1983,9 +1991,8 @@ compute_product(const Expr& e, const Symbol& n,
       e_prod *= compute_product(e.op(i), n, lower, upper);
   }
   else {
-    Symbol h("h");
-    Expr e_h = e.subs(n, h);
-    e_prod = prod(Expr(h), Expr(lower), upper, e_h);
+    Symbol h;
+    e_prod = prod(Expr(h), Expr(lower), upper, e.subs(n, h));
   }
   return e_prod;
 }
