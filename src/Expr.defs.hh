@@ -371,6 +371,12 @@ public:
   bool is_a_symbol() const;
 
   //! \brief
+  //! Returns <CODE>true</CODE> if and only if \p *this is a symbolic
+  //! expression, in which case its value is assigned to \p s.
+  //! Returns <CODE>false</CODE> leaving \p n untouched otherwise.
+  bool is_a_symbol(Symbol& s) const;
+
+  //! \brief
   //! Returns <CODE>true</CODE> if and only if \p *this is a numeric
   //! expression.
   bool is_a_number() const;

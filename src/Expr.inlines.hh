@@ -132,6 +132,15 @@ Expr::is_a_symbol() const {
 }
 
 inline bool
+Expr::is_a_symbol(Symbol& s) const {
+  if (GiNaC::is_a<GiNaC::symbol>(*this)) {
+    s = GiNaC::ex_to<GiNaC::symbol>(*this);
+    return true;
+  }
+  return false;
+}
+
+inline bool
 Expr::is_a_number() const {
   return GiNaC::is_a<GiNaC::numeric>(*this);
 }
