@@ -548,8 +548,8 @@ Recurrence::classification_summand(const Expr& r, const Symbol& n, Expr& e,
 
 #if 1
 static void
-substitute_non_rational_roots_with_symbols(const Recurrence& rec,
-					   std::vector<Polynomial_Root>& roots) {
+substitute_non_rational_roots(const Recurrence& rec,
+			      std::vector<Polynomial_Root>& roots) {
   for (unsigned i = roots.size(); i-- > 0; )
     if (roots[i].is_non_rational())
       roots[i].value() = rec.insert_auxiliary_definition(roots[i].value());
@@ -788,7 +788,7 @@ Recurrence::solve_easy_cases() const {
 	return TOO_COMPLEX;
       // If there is some root not rational then, for efficiency, we substitute
       // it with an arbitrary symbol.
-      substitute_non_rational_roots_with_symbols(*this, roots);
+      substitute_non_rational_roots(*this, roots);
       solution = solve_constant_coeff_order_2(n, g_n, order, all_distinct,
 					      base_of_exps, exp_poly_coeff,
 					      exp_no_poly_coeff, 
@@ -814,7 +814,7 @@ Recurrence::solve_easy_cases() const {
       }
       // If there is some root not rational then, for efficiency, we substitute
       // it with an arbitrary symbol.
-      substitute_non_rational_roots_with_symbols(*this, roots);
+      substitute_non_rational_roots(*this, roots);
       solution = solve_constant_coeff_order_k(n, g_n, order, all_distinct,
 					      base_of_exps, exp_poly_coeff,
 					      exp_no_poly_coeff,
@@ -832,6 +832,9 @@ Recurrence::solve_easy_cases() const {
 			   solution);
   D_MSGVAR("Before calling simplify: ", solution);
   solution = simplify_on_output_ex(solution.expand(), n, false);
+  // Resubstitutes eventually auxiliary definitions contained in
+  // the solution with their original values.
+  //  solution = substitute_auxiliary_definition(solution);
   // Only for the output.
   // FIXME: the initial conditions can not start always from 0 then
   // the following `for' is temporary.
