@@ -690,7 +690,8 @@ private:
   //! \brief
   //! This function must have access to the private data
   //! <CODE>blackboard<CODE>of the class <CODE>Recurrence</CODE>.
-  friend Expr Cached_Expr::remove_bad_symbols(const Recurrence& rec) const;
+  friend Expr Cached_Expr::
+  replace_system_generated_symbols(const Recurrence& rec) const;
 };
 
 } // namespace Parma_Recurrence_Relation_Solver
