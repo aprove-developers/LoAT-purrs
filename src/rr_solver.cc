@@ -842,7 +842,7 @@ find_g_n(const GSymbol& n, const int order, const bool all_distinct,
   Given \f$ p(n) \f$ the non homogeneous part of the recurrence relation
   \f$ p(n) = c_1 p_1^n + c_2 p_2^n + \dotsb + c_k p_k^n \f$ and
   \f$ g(n) = d_1 g_1^n + d_2 g_2^n + \dotsb + d_k g_h^n \f$.
-  We consider the decompositions of both the previous sum:
+  We consider the decompositions of both the previous sums:
   \f[
     bases_of_exp    -> p_1  p_2  \dots  p_k
     exp_poly_coeff  -> c_1  c_2  \dots  c_k
@@ -854,7 +854,10 @@ find_g_n(const GSymbol& n, const int order, const bool all_distinct,
   \f]
   We build the new vector \p poly_coeff_tot multiplting the elements
   of \p exp_poly_coeff and \p g_n_poly_coeff, i. e. it will contain
-  \f$ c_1 d_1, c_1 d_2, \cdtos, c_1 d_h, c_2 d_1, \cdots, c_k d_h \f$. 
+  \f$ c_1 d_1, c_1 d_2, \cdots, c_1 d_h, c_2 d_1, \cdots, c_k d_h \f$.
+  The function <CODE>compute_symbolic_sum()</CODE> will fill the vectors
+  \p symbolic_sum_distinct and \p symbolic sum_distinct from the position
+  \f$ 0 \f$ and it will have like parameters the elements of \p poly_coeff_tot.
 */
 static void
 prepare_for_symbolic_sum(const GSymbol& n, const GExpr& g_n,
@@ -1017,7 +1020,7 @@ solve_order_2(const GSymbol& n, GExpr& g_n, const int order,
   \f]
   The two sums in the previous formula correspond to the non-homogeneous
   part \f$ p(n) \f$ and to the initial conditions (computed afterwards by
-  the function <CODE>add_initial_conditions</CODE>), respectively.
+  the function <CODE>add_initial_conditions()</CODE>), respectively.
 */
 static GExpr
 solve_linear_constant_coeff(const GSymbol& n, GExpr& g_n,
