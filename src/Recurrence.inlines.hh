@@ -226,6 +226,16 @@ Recurrence::set_functional_equation() const {
   type_ = FUNCTIONAL_EQUATION;
 }
 
+inline bool
+Recurrence::is_linear_infinite_order() const {
+  return type_ == LINEAR_INFINITE_ORDER;
+}
+
+inline void
+Recurrence::set_linear_infinite_order() const {
+  type_ = LINEAR_INFINITE_ORDER;
+}
+
 inline unsigned int
 Recurrence::order() const {
   assert(is_linear_finite_order());
@@ -390,6 +400,55 @@ Recurrence::set_non_linear_to_linear_fwdr(unsigned i_c) const {
   assert(is_non_linear_finite_order());
   assert(non_linear_p);
   non_linear_p -> set_non_linear_to_linear_fwdr(i_c);
+}
+
+inline Expr
+Recurrence::rhs_transformed_in_first_order_var_coeffs() const {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  return infinite_order_p -> rhs_transformed_in_first_order_var_coeffs();
+}
+
+inline Expr&
+Recurrence::rhs_transformed_in_first_order_var_coeffs() {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  return infinite_order_p -> rhs_transformed_in_first_order_var_coeffs();
+}
+
+inline Expr
+Recurrence::weight() const {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  return infinite_order_p -> weight();
+}
+
+inline Expr&
+Recurrence::weight() {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  return infinite_order_p -> weight();
+}
+
+inline unsigned
+Recurrence::infinite_order_fwdr() const {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  return infinite_order_p -> infinite_order_fwdr();
+}
+
+inline unsigned&
+Recurrence::infinite_order_fwdr() {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  return infinite_order_p -> infinite_order_fwdr();
+}
+
+inline void
+Recurrence::set_infinite_order_fwdr(unsigned i_c) const {
+  assert(is_linear_infinite_order());
+  assert(infinite_order_p);
+  infinite_order_p -> set_infinite_order_fwdr(i_c);
 }
 
 inline void

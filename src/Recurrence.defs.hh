@@ -28,6 +28,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Recurrence.types.hh"
 #include "Cached_Expr.defs.hh"
 #include "Non_Linear_Info.defs.hh"
+#include "Infinite_Order_Info.defs.hh"
 #include "Blackboard.defs.hh"
 #include "Finite_Order_Info.defs.hh"
 #include "Functional_Equation_Info.defs.hh"
@@ -390,6 +391,7 @@ private:
   mutable Finite_Order_Info* finite_order_p;
   mutable Functional_Equation_Info* functional_eq_p;
   mutable Non_Linear_Info* non_linear_p;
+  mutable Infinite_Order_Info* infinite_order_p;
 
   //! Returns <CODE>type_</CODE>.
   Type type() const;
@@ -447,6 +449,13 @@ private:
   //! Sets <CODE>type_recurrence = FUNCTIONAL_EQUATION</CODE>.
   void set_functional_equation() const;
 
+  //! \brief
+  //! Returns <CODE>true</CODE> if the recurrence is linear
+  //! of infinite order; returns <CODE>false</CODE> otherwise.
+  bool is_linear_infinite_order() const;
+
+  //! Sets <CODE>type_recurrence =  LINEAR_INFINITE_ORDER</CODE>.
+  void set_linear_infinite_order() const;
 
   // Methods to access to private data of `Finite_Order_Info'.
 
@@ -519,7 +528,7 @@ private:
   //! \brief
   //! If the non-linear recurrence is rewritable in a linear recurrence
   //! then this data contains the right hand side of the linear recurrence
-  //! associated to the original non-linear recurrence. 
+  //! associated to the original non-linear recurrence.
   Expr rhs_transformed_in_linear() const;
 
   //! \brief
@@ -587,6 +596,60 @@ private:
   //! positive integer for which the finite order recurrence is well-defined:
   //! the initial conditions will start from it. 
   void set_non_linear_to_linear_fwdr(unsigned i_c) const;
+
+
+  // Method to access to private data of `Infinite_Order_Info'.
+
+  //! \brief
+  //! If the infinite order recurrence is rewritable in a first order linear
+  //! recurrence with variable coefficient then this last recurrence is
+  //! stored in this data.
+  Expr rhs_transformed_in_first_order_var_coeffs() const;
+
+  //! \brief
+  //! If the infinite order recurrence is rewritable in a first order linear
+  //! recurrence with variable coefficient then this last recurrence is
+  //! stored in this data.
+  Expr& rhs_transformed_in_first_order_var_coeffs();
+
+  //! \brief
+  //! If the infinite order recurrence is rewritable in a first order linear
+  //! recurrence with variable coefficient then this data contains the
+  //! common coefficient \f$ f(n) \f$ to all terms \f$ x(i) \f$, for
+  //! \f$ i = 0, dots, n-1 \f$, of the infinite order recurrence of the form
+  //! \f[
+  //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
+  //! \f]
+  Expr weight() const;
+
+  //! \brief
+  //! If the infinite order recurrence is rewritable in a first order linear
+  //! recurrence with variable coefficient then this data contains the
+  //! common coefficient \f$ f(n) \f$ to all terms \f$ x(i) \f$, for
+  //! \f$ i = 0, dots, n-1 \f$, of the infinite order recurrence of the form
+  //! \f[
+  //!   T(n) = f(n) \sum_{k=0}^{n-1} T(k) + g(n).
+  //! \f]
+  Expr& weight();
+
+  //! \brief
+  //! Stores the smallest positive integer for which the infinite
+  //! order recurrence is well-defined: the initial conditions will
+  //! start from it.
+  unsigned infinite_order_fwdr() const;
+
+  //! \brief
+  //! Stores the smallest positive integer for which the infinite
+  //! order recurrence is well-defined: the initial conditions will
+  //! start from it.
+  unsigned& infinite_order_fwdr();
+
+  //! \brief
+  //! Stores the smallest positive integer for which the infinite
+  //! order recurrence is well-defined: the initial conditions will
+  //! start from it.
+  void set_infinite_order_fwdr(unsigned i_c) const;
+
 
   mutable Cached_Expr exact_solution_;
   mutable Cached_Expr lower_bound_;
