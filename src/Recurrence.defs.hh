@@ -1086,7 +1086,7 @@ private:
   Solver_Status compute_weighted_average_recurrence(Expr& solution) const;
 
   Expr
-  subs_i_c_finite_order_and_functional_eq(const Expr& solution_or_bound) const;
+  compute_solution_functional_equation_on_i_c(const Expr& bound) const;
 
   Expr
   compute_solution_finite_order_on_i_c(const Expr& solution) const;

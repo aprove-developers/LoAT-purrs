@@ -63,12 +63,9 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
   if (classifier_status_ == NOT_CLASSIFIED_YET)
     classify_and_catch_special_cases();
 
-  // FIXME: exception?
   if (classifier_status_ != CL_SUCCESS)
-    throw std::logic_error("PURRS::Recurrence::set_initial_conditions():\n"
-			   "useless to set initial conditions because "
-			   "the system can not to solve the recurrence");
-
+    throw std::runtime_error("PURRS::Recurrence::set_initial_conditions():\n"
+			     "sorry, this recurrence is too difficult.");
   const char* method = "PURRS::Recurrence::set_initial_conditions()";
   std::ostringstream s;
   switch (type_) {
@@ -94,7 +91,7 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
       index_type first = first_valid_index;
       // Check the number of initial conditions.
       if (initial_conditions.size() < k) {
-	s << "This is a recurrence of order " << k
+	s << "this is a recurrence of order " << k
 	  << " and at least " << k << " initial conditions\n"
 	  << "are necessary to uniquely determine it.";
 	throw_invalid_argument(method, s.str().c_str());
@@ -104,7 +101,7 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
       assert(!initial_conditions.empty());
       index_type largest = initial_conditions.rbegin()->first;
       if (largest < first) {
-	s << "This is a recurrence of order " << k
+	s << "this is a recurrence of order " << k
 	  << " and it is well-defined only for `n >= " << first << "'.\n"
 	  << "Hence, the largest index can not to be smaller than "
 	  << first << ".";
@@ -119,7 +116,7 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 	// Skip the check on the largest initial condition.
 	i++;
 	if (i->first != largest - j) {
-	  s << "This is a recurrence of order " << k
+	  s << "this is a recurrence of order " << k
 	    << " and the " << k << " largest initial conditions\n"
 	    << " must be consecutive.";
 	  throw_invalid_argument(method, s.str().c_str());
@@ -135,7 +132,7 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
 	  Number index;
 	  if (i->second.is_a_number(index) && index.is_negative())
 	    throw_invalid_argument(method,
-				   "This is a non-linear recurrence "
+				   "this is a non-linear recurrence "
 				   "and at the moment we accept only\n"
 				   "non-negative values for the initial "
 				   "conditions.");
@@ -150,11 +147,11 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
       // conditions.
       if (initial_conditions.empty())
 	throw_invalid_argument(method,
-			       "This is a weighted-average recurrence "
+			       "this is a weighted-average recurrence "
 			       "and we need one initial condition\n"
 			       "to uniquely determine it.");
       if (initial_conditions.rbegin()->first < first_valid_index) {
-	s << "This recurrence is well-defined for `n >= " << first_valid_index
+	s << "this recurrence is well-defined for `n >= " << first_valid_index
 	  << "'.\nAt least an initial condition with index "
 	  << "larger than or equal to " << first_valid_index
 	  << "\nmust be present.";
@@ -163,10 +160,75 @@ set_initial_conditions(const std::map<index_type, Expr>& initial_conditions) {
     }
     break;
   case FUNCTIONAL_EQUATION:
-    throw
-      "PURRS error: "
-      "for the moment the susbtitution of the initial conditions\n"  
-      "is not allowed for functional equations. Sorry.";  
+    {
+      unsigned int number_i_c
+	= (functional_eq_p->ht_begin()->first - 1).to_unsigned_int();;
+      // Check the number of initial conditions.
+      if (initial_conditions.size() != number_i_c) {
+	if (number_i_c == 1)
+	  s << "this functional equation needs only "
+	    << "the initial condition x(1).";
+	else
+	  s << "for this functional equation " << number_i_c
+	    << " initial conditions are necessary\n"
+	    << "to uniquely determine it.";
+	throw_invalid_argument(method, s.str().c_str());
+      }
+      // Check if the indexes of the last `number_i_c' initial conditions
+      // are all consecutive in the interval `[1, number_ic]' and the values
+      // are numeric.
+      if (number_i_c == 1) {
+	if (initial_conditions.begin()->first != 1) {
+	  s << "this functional equation needs only "
+	    << "the initial condition x(1).";
+	  throw_invalid_argument(method, s.str().c_str());
+	}
+	if (!initial_conditions.begin()->second.is_a_number()) {
+	  s << "at the moment are allowed only numerical values\n"
+	    << "for the initial conditions.";
+	  throw_invalid_argument(method, s.str().c_str());
+	}
+	// FIXME: very temporary `else'!!
+	// If the number is negative the homogeneous parts of lower bound
+	// and upper bound must be swapped!
+	else {
+	  Number num = initial_conditions.begin()->second.ex_to_number();
+	  if (num.is_negative()) {
+	    s << "at the moment are allowed only non-negative values\n"
+	      << "for the initial conditions.";
+	    throw_invalid_argument(method, s.str().c_str());
+	  }
+	}
+      }
+      else {
+	unsigned int j = 1;
+	for (std::map<index_type, Expr>::const_iterator i 
+	       = initial_conditions.begin(); j <= number_i_c; ++j) {
+	  if (i->first != j) {
+	    s << "the indices of the " << number_i_c << " initial conditions\n"
+	      << "must be in the interval [1, " << number_i_c << "].";
+	    throw_invalid_argument(method, s.str().c_str());
+	  }
+	  if (!i->second.is_a_number()) {
+	    s << "at the moment are allowed only numerical values\n"
+	      << "for the initial conditions.";
+	    throw_invalid_argument(method, s.str().c_str());
+	  }
+	  // FIXME: very temporary `else'!!
+	  // If the number is negative the homogeneous parts of lower bound
+	  // and upper bound must be swapped!
+	  else {
+	    Number num = i->second.ex_to_number();
+	    if (num.is_negative()) {
+	      s << "at the moment are allowed only non-negative values\n"
+		<< "for the initial conditions.";
+	      throw_invalid_argument(method, s.str().c_str());
+	    }
+	  }
+	  ++i;
+	}
+      }
+    }
     break;
   default:
     throw std::runtime_error("PURRS internal error: "
@@ -697,6 +759,9 @@ get_max_index_symbolic_i_c(const Expr& e, unsigned int& max_index) {
 
 } // anonymous namespace
 
+#if 0
+// FIXME: this is an old version that substitutes initial conditions
+// in the symbolic solution of the recurrence.
 Expr
 PURRS::Recurrence::
 subs_i_c_finite_order_and_functional_eq(const Expr& solution_or_bound) const {
@@ -797,6 +862,7 @@ subs_i_c_finite_order_and_functional_eq(const Expr& solution_or_bound) const {
 
   return sol_or_bound;  
 }
+#endif
 
 Expr
 PURRS::Recurrence::
@@ -915,6 +981,17 @@ compute_solution_weighted_average_on_i_c(const Expr& solution) const {
   return sol;
 }
 
+Expr
+PURRS::Recurrence::
+compute_solution_functional_equation_on_i_c(const Expr& bound) const {
+  Expr bound_evaluated = bound;
+  const Number& divisor = functional_eq_p->ht_begin()->first;
+  if (divisor == 2)
+    bound_evaluated
+      = bound_evaluated.substitute(x(1), get_initial_condition(1));
+  return bound_evaluated;
+}
+
 /*!
   FIXME: update the comment!!
   \param solution_or_bound  Contains the solution or the bound computed
@@ -956,9 +1033,12 @@ compute_solution_on_i_c(const Expr& solution_or_bound) const {
       = compute_solution_weighted_average_on_i_c(solution_or_bound);
     break;
   case FUNCTIONAL_EQUATION:
-    // FIXME: temporary!!
+    solution_or_bound_on_i_c
+      = compute_solution_functional_equation_on_i_c(solution_or_bound);
+#if 0
     solution_or_bound_on_i_c
       = subs_i_c_finite_order_and_functional_eq(solution_or_bound);
+#endif
     break;
   default:
     throw std::runtime_error("PURRS internal error: "
