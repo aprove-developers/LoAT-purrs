@@ -1026,12 +1026,14 @@ rewrite_factorial(const Number& a, const Number& b, const Symbol& k) {
 }
 
 bool
-check_form_of_mul(const Expr& e, const Symbol& k, Number& a) {
+check_form_of_mul(const Expr& e, Symbol& k, Number& a) {
   assert(e.is_a_mul() && e.nops() == 2);
   const Expr& first = e.op(0);
   const Expr& second = e.op(1);
-  if ((first == k && second.is_a_number(a) && a.is_positive_integer())
-      || (second == k && first.is_a_number(a) && a.is_positive_integer()))
+  if ((first.is_a_symbol(k)
+       && second.is_a_number(a) && a.is_positive_integer())
+      || (second.is_a_symbol(k)
+	  && first.is_a_number(a) && a.is_positive_integer()))
     return true;
   else
     return false;
@@ -1066,7 +1068,7 @@ decompose_factorial(const Expr& e) {
       if (first.is_a_mul() && first.nops() == 2) {
 	Number a;
 	// Checks if `second' has the form `a*k with `a' a positive
-	// integer number'. 
+	// integer number'.
 	if (check_form_of_mul(first, k, a))
 	  return rewrite_factorial(a, b, k);
       }
