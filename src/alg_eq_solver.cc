@@ -316,7 +316,7 @@ solve_equation_3(const GNumber& a1, const GNumber& a2, const GNumber& a3,
   GExpr a1_div_3 = a1/3;
   if (d < 0) {
     GExpr sqrt_minus_Q = sqrt(-Q);
-    GExpr theta = acos(-R/Q*sqrt_minus_Q);
+    GExpr theta = acos(-R/(Q*sqrt_minus_Q));
     x1 = -a1_div_3 + 2*sqrt_minus_Q*cos(theta/3);
     x2 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+2*Pi)/3);
     x3 = -a1_div_3 + 2*sqrt_minus_Q*cos((theta+4*Pi)/3);
