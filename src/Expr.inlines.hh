@@ -39,64 +39,64 @@ operator<<(std::ostream& os, const Expr& exp) {
 };
 
 inline Expr
-operator+(const Expr& lh, const Expr& rh) {
-  return lh.e + rh.e;
+operator+(const Expr& x, const Expr& y) {
+  return x.e + y.e;
 }
 
 inline Expr
-operator-(const Expr& lh, const Expr& rh) {
-  return lh.e - rh.e;
+operator-(const Expr& x, const Expr& y) {
+  return x.e - y.e;
 }
 
 inline Expr
-operator*(const Expr& lh, const Expr& rh) {
-  return lh.e * rh.e;
+operator*(const Expr& x, const Expr& y) {
+  return x.e * y.e;
 }
 
 inline Expr
-operator/(const Expr& lh, const Expr& rh) {
-  return lh.e / rh.e;
+operator/(const Expr& x, const Expr& y) {
+  return x.e / y.e;
 }
 
 inline Expr
-operator+(const Expr& lh) {
-  return +lh.e;
+operator+(const Expr& x) {
+  return x;
 }
 
 inline Expr
-operator-(const Expr& lh) {
-  return -lh.e;
+operator-(const Expr& x) {
+  return -x.e;
 }
 
 inline Expr&
-operator+=(const Expr& lh, const Expr& rh) {
-  return lh.e += rh.e;
+operator+=(const Expr& x, const Expr& y) {
+  return x.e += y.e;
 }
 
 inline Expr&
-operator-=(const Expr& lh, const Expr& rh) {
-  return lh.e -= rh.e;
+operator-=(const Expr& x, const Expr& y) {
+  return x.e -= y.e;
 }
 
 inline Expr&
-operator*=(const Expr& lh, const Expr& rh) {
-  return lh.e *= rh.e;
+operator*=(const Expr& x, const Expr& y) {
+  return x.e *= y.e;
 }
 
 inline Expr&
-operator/=(const Expr& lh, const Expr& rh) {
-  return lh.e /= rh.e;
+operator/=(const Expr& x, const Expr& y) {
+  return x.e /= y.e;
 }
 
 #if 0
 inline bool
-operator==(const Expr& lh, const Expr& rh) {
-  return lh.e == rh.e;
+operator==(const Expr& x, const Expr& y) {
+  return x.e == y.e;
 }
 
 inline bool
-operator!=(const Expr& lh, const Expr& rh) {
-  return lh.e != rh.e;
+operator!=(const Expr& x, const Expr& y) {
+  return x.e != y.e;
 }
 #endif
 

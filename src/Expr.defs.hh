@@ -40,25 +40,25 @@ namespace Parma_Recurrence_Relation_Solver {
 std::ostream& operator<<(std::ostream& os, const Expr& exp);
 
 //! Binary arithmetic operators Expr with Expr.
-Expr operator+(const Expr& lh, const Expr& rh);
-Expr operator-(const Expr& lh, const Expr& rh);
-Expr operator*(const Expr& lh, const Expr& rh);
-Expr operator/(const Expr& lh, const Expr& rh);
+Expr operator+(const Expr& x, const Expr& y);
+Expr operator-(const Expr& x, const Expr& y);
+Expr operator*(const Expr& x, const Expr& y);
+Expr operator/(const Expr& x, const Expr& y);
 
 //! Binary arithmetic assignment operators with Expr.
-Expr& operator+=(Expr& lh, const Expr& rh);
-Expr& operator-=(Expr& lh, const Expr& rh);
-Expr& operator*=(Expr& lh, const Expr& rh);
-Expr& operator/=(Expr& lh, const Expr& rh);
+Expr& operator+=(Expr& x, const Expr& y);
+Expr& operator-=(Expr& x, const Expr& y);
+Expr& operator*=(Expr& x, const Expr& y);
+Expr& operator/=(Expr& x, const Expr& y);
 
 //! Unary operators.
-Expr operator+(const Expr& lh);
-Expr operator-(const Expr& lh);
+Expr operator+(const Expr& x);
+Expr operator-(const Expr& x);
 
 //! Binary operators Expr with Expr
 #if 0
-bool operator==(const Expr& lh, const Expr& rh);
-bool operator!=(const Expr& lh, const Expr& rh);
+bool operator==(const Expr& x, const Expr& y);
+bool operator!=(const Expr& x, const Expr& y);
 #endif
 
 // FIXME: meglio con argomento di default `unsigned label = 0'?
@@ -101,7 +101,7 @@ public:
   //! Builds the constant expression \p k.
   Expr(const Constant& k);
 
-  //! Builds the list expression \p lst.
+  //! Builds the expression from string \p st and a list of symbol \p lst.
   Expr(const std::string& st, const Expr_List& lst);
 
   //! Copy-constructor.
@@ -114,58 +114,56 @@ public:
   Expr& operator=(const Expr& exp);
 
   //! \brief
-  //! Accede to \f$i\f$-th term/factor of a
-  //! <CODE>GiNaC::add</CODE>/<CODE>GiNaC::mul</CODE>. 
+  //! Accedes to \f$ i \f$-th term/factor of an addiction/multiplication of
+  //! expressions.
   Expr operator[](int i) const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is a
-  //! <CODE>GiNaC::symbol</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is a symbolic
+  //! expression.
   bool is_a_symbol() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is a
-  //! <CODE>GiNaC::numeric</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is a numberic
+  //! expression.
   bool is_a_number() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is a
-  //! <CODE>GiNaC::constant</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is a constant
+  //! expression.
   bool is_a_constant() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is a
-  //! <CODE>GiNaC::add</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is an addiction
+  //! of expressions.
   bool is_a_add() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is a
-  //! <CODE>GiNaC::mul</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is a multiplication
+  //! of expressions.
   bool is_a_mul() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is a
-  //! <CODE>GiNaC::power</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is an expression
+  //! in the form of power.
   bool is_a_power() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is a
-  //! <CODE>GiNaC::function</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is a function
+  //! with like argument an expression.
   bool is_a_function() const;
 
-  //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is a
-  //! <CODE>GiNaC::matrix</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is a matrix expression.
   bool is_a_matrix() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is a
-  //! <CODE>GiNaC::lst</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is a list of
+  //! expression.
   bool is_a_Expr_List() const;
 
   //! \brief
-  //! Returns <CODE>true</CODE> if and only if \p *this is a
-  //! <CODE>GiNaC::relational</CODE>.
+  //! Returns <CODE>true</CODE> if and only if \p *this is an expression
+  //! in the form of relational.
   bool is_a_relational() const;
 
   bool is_the_abs_function() const;
@@ -176,7 +174,7 @@ public:
   bool is_the_tan_function() const;
   bool is_the_acos_function() const;
 
-  //! Put in a Number object the numeric value of the \p *this.
+  //! Returns the numeric value of \p *this.
   Number ex_to_number() const;
 
   // info
@@ -184,20 +182,20 @@ public:
   bool is_rational_polynomial() const;
   bool is_relation_equal() const;
 
-  //! If \p *this is a <CODE>GiNaC::add</CODE> or a <CODE>GiNaC::mul</CODE>
+  //! If \p *this is an addiction or a multiplication of expressions
   //! returns the terms'number or the factors'number, respectively.
-  //! If \p *this is a <CODE>GiNaC::power</CODE> returns \f$ 2 \f$.
-  //! If \p *this is a <CODE>GiNaC::function</CODE> returns \f$ 1 \f$.
+  //! If \p *this is a power returns \f$ 2 \f$.
+  //! If \p *this is a function returns \f$ 1 \f$.
   //! Returns \f$ 0 \f$ otherwise.
   unsigned nops() const;
 
-  //! If \p *this is a <CODE>GiNaC::add</CODE> or a <CODE>GiNaC::mul</CODE>
-  //! returns \f$i\f$-th (\f$ i = 0, \dotsc, nops()-1 \f$) term or factor,
+  //! If \p *this is an addiction or a multiplication of expressions
+  //! returns \f$ i \f$-th (\f$ i = 0, \dotsc, nops()-1 \f$) term or factor,
   //! respectively.
-  //! If \p *this is a <CODE>GiNaC::power</CODE> then <CODE>op(0)</CODE> and
-  //! <CODE>op(1)</CODE> return base and exponent of the power.
-  //! If \p *this is a <CODE>GiNaC::function</CODE> returns <CODE>op(0)</CODE>
-  //! return the function's argument.
+  //! If \p *this is a power then <CODE>op(0)</CODE> and <CODE>op(1)</CODE>
+  //! return base and exponent of the power.
+  //! If \p *this is a function then <CODE>op(0)</CODE>
+  //! returns the function's argument.
   Expr op(unsigned i) const;
 
   //! Returns <CODE>true</CODE> if and only if \p *this is sinctatically
@@ -245,39 +243,42 @@ private:
 
   friend std::ostream& operator<<(std::ostream& os, const Expr& exp);
 
-  //! Returns the expression \p lh + \p rh.
-  friend Expr operator+(const Expr& lh, const Expr& rh);
+  //! Returns the expression \f$ x + y \f$.
+  friend Expr operator+(const Expr& x, const Expr& y);
 
-  //! Returns the expression \p lh - \p rh.
-  friend Expr operator-(const Expr& lh, const Expr& rh);
+  //! Returns the expression \f$ x - y \f$.
+  friend Expr operator-(const Expr& x, const Expr& y);
 
-  //! Returns the expression \p lh * \p rh.
-  friend Expr operator*(const Expr& lh, const Expr& rh);
+  //! Returns the expression \f$ x * y \f$.
+  friend Expr operator*(const Expr& x, const Expr& y);
 
-  //! Returns the expression \p lh / \p rh.
-  friend Expr operator/(const Expr& lh, const Expr& rh);
+  //! Returns the expression \f$ x / y \f$.
+  /*!
+    \exception std::runtime_error thrown if \p y is zero.
+  */
+  friend Expr operator/(const Expr& x, const Expr& y);
 
-  //! Returns the expression + \p lh.
-  friend Expr operator+(const Expr& lh);
+  //! Returns the expression \f$ x \f$.
+  friend Expr operator+(const Expr& x);
 
-  //! Returns the expression - \p lh.
-  friend Expr operator-(const Expr& lh);
+  //! Returns the expression \f$ - x \f$.
+  friend Expr operator-(const Expr& x);
 
-  //! Returns the expression \p lh + \p rh and assigns it to \p lh.
-  friend Expr& operator+=(const Expr& lh, const Expr& rh);
+  //! Returns the expression \f$ x + y \f$ and assigns it to \p x.
+  friend Expr& operator+=(const Expr& x, const Expr& y);
 
-  //! Returns the expression \p lh - \p rh and assigns it to \p lh.
-  friend Expr& operator-=(const Expr& lh, const Expr& rh);
+  //! Returns the expression \f$ x - y \f$ and assigns it to \p x.
+  friend Expr& operator-=(const Expr& x, const Expr& y);
 
-  //! Returns the expression \p lh * \p rh and assigns it to \p lh.
-  friend Expr& operator*=(const Expr& lh, const Expr& rh);
+  //! Returns the expression \f$ x * y \f$ and assigns it to \p x.
+  friend Expr& operator*=(const Expr& x, const Expr& y);
 
-  //! Returns the expression \p lh / \p rh and assigns it to \p lh.
-  friend Expr& operator/=(const Expr& lh, const Expr& rh);
+  //! Returns the expression \f$ x / y \f$ and assigns it to \p x.
+  friend Expr& operator/=(const Expr& x, const Expr& y);
 
 #if 0
-  friend Expr& operator==(const Expr& lh, const Expr& rh);
-  friend Expr& operator!=(const Expr& lh, const Expr& rh);
+  friend Expr& operator==(const Expr& x, const Expr& y);
+  friend Expr& operator!=(const Expr& x, const Expr& y);
 #endif
 
   friend Expr power(const Expr& b, const Expr& e);
