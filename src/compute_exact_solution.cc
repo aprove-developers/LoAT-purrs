@@ -661,6 +661,11 @@ PURRS::Expr
 compute_special_solution(const Expr& homo_rhs, const index_type order_rec,
 			 const Expr& poly, const Expr& base,
 			 const unsigned int mult) {
+  D_VAR(homo_rhs);
+  D_VAR(order_rec);
+  D_VAR(poly);
+  D_VAR(base);
+  D_VAR(mult);
   // Build the generic polynomial `q' of the correct degree
   // with unknown coefficients.
   unsigned int deg = poly.degree(Recurrence::n) + mult;
@@ -696,6 +701,7 @@ compute_special_solution(const Expr& homo_rhs, const index_type order_rec,
   diff = simplify_binomials_factorials_exponentials(diff);
   diff = simplify_logarithm(diff);
   diff = diff.expand();
+  D_VAR(diff);
 
   // Set up a system of `deg + 1' unknowns, forcing all coefficients
   // of the polynomial `diff' to vanish.
@@ -855,17 +861,20 @@ PURRS::Recurrence::solve_linear_finite_order() const {
   //exact_solution_.set_expression(blackboard.rewrite(solution));
   
 #else
+  /*
   // `g_n' is defined here because it is necessary in the function
   // `compute_term_about_initial_conditions()' (at the end of function
   // `solve_linear_finite_order()').
   Expr g_n;
+  */
   if (is_linear_finite_order_const_coeff()) {
 #if DEBUG
     for (size_t i = 0; i < roots.size(); ++i)
       std::cerr << i << " - " << roots[i].value()  << " - " << roots[i].multiplicity() << std::endl;
 #endif
     Expr homo_rhs = recurrence_rhs - inhomogeneous_term;
-    // DD_MSGVAR("Homogeneous term: ", homo_rhs);
+    D_MSGVAR("rhs: ", recurrence_rhs);
+    D_MSGVAR("Homogeneous term: ", homo_rhs);
     const index_type order_rec = order();
     Expr sol = 0;
     Expr poly;
@@ -962,10 +971,18 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 					 * pwr(coefficients()[1],
 					       n-(first_valid_index-order()+1))
 					 + solution);
-	else
-	  exact_solution_.set_expression(compute_term_about_initial_conditions
-					 (g_n, num_coefficients, first_valid_index)
-					 + solution);
+	else {
+	  /*
+	  Expr tmp = compute_term_about_initial_conditions(g_n, num_coefficients, first_valid_index) + solution;
+	  tmp = blackboard.rewrite(tmp.expand());
+	  D_MSGVAR("Solution with old method: ", tmp);
+	  exact_solution_.set_expression(tmp);
+	  */
+	  exact_solution_.set_expression(blackboard.rewrite
+					 (compute_term_about_initial_conditions
+					  (g_n, num_coefficients, first_valid_index) + solution).expand());
+
+	}
       else
 	// In the case of variable coefficients the expression contained in
 	// `solution' is already the sum of the homogeneous part and the
