@@ -305,6 +305,8 @@ find_bases_and_exponents(const Expr& e, std::vector<Expr>& bases,
 Expr
 collect_same_exponents(const Expr& e) {
   assert(e.is_a_mul());
+  // Builds two vectors containing the bases and the exponents of
+  // the eventual multiplication's factors which are powers. 
   std::vector<Expr> bases;
   std::vector<Expr> exponents;
   find_bases_and_exponents(e, bases, exponents);
@@ -341,9 +343,7 @@ collect_same_exponents(const Expr& e) {
 	exponents[j] = 0;
       }
       // We have marked with `0' the j-th position of the vector `exponents' in
-      // order to remember to us that it contains garbage and in the 
-      // function `collect_same_base()' we will skip these positions of
-      // the vectors.
+      // order to remember to us that it contains garbage.
     }
     bases[i] = simplify_numer_denom(bases[i]);
     e_rewritten *= pwr(bases[i], exponents[i]);
