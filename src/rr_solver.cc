@@ -432,8 +432,8 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       if (is_a<numeric>(coefficients[i]))
 	num_coefficients[i] = ex_to<numeric>(coefficients[i]);
       else
-	throw("PURRS error: today the second order recurrence relations\n"
-	      "does not support not rationals coefficients.\n"
+	throw("PURRS error: today the recurrence relation\n"
+	      "does not support irrationals coefficients.\n"
 	      "Please come back tomorrow.");
     characteristic_eq = build_characteristic_equation(order, y,
 						      num_coefficients);
@@ -1104,7 +1104,7 @@ solve_linear_constant_coeff(const GSymbol& n, GExpr& g_n,
 #if NOISY
   std::cout << "alpha_i: " << sol << std::endl;
 #endif
-  // Finds 'g_n', always in according to multplicity of the roots.
+  // Finds 'g_n', always taking into account the root's multiplicity
   g_n = 0;
   if (all_distinct)
     for (int i = 0; i < order; ++i)
