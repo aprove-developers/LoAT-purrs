@@ -251,6 +251,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 	}
       }
   }
+
   if (finished) {
     solution = e; 
 #if NOISY 
@@ -338,6 +339,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
       coefficients.insert(coefficients.end(), coefficient);
     else
       coefficients[index] += coefficient;
+
   } while (e != 0);
   if (failed)
     return false;
@@ -353,7 +355,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
 
   // Simplifies expressions, in particular rewrites nested powers.
   e = simplify_on_input_ex(e, n, true);
-
+  
   // 'decomposition' is a matrix with three rows and a number of columns
   // which is at most the number of exponentials in the inhomogeneous term
   // plus one.
@@ -364,12 +366,13 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   // polynomial then in the second row there is zero and, similarly, in the
   // third row there is zero if the coefficient is a polynomial.
   // In the last column there is the constant exponential with its
-  // coefficients. 
+  // coefficients.
   GMatrix decomposition = decomposition_inhomogeneous_term(e, n);
 #if NOISY
   std::cout << "Inhomogeneous term's decomposition"
 	    << decomposition << std::endl;
 #endif
+
   // Creates the vector of initials conditions.
   // FIXME: fare controllo sulle condizioni iniziali
   // (numero minore dell'ordine).
@@ -382,14 +385,17 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   GSymbol y("y");
   std::vector<Polynomial_Root> roots;
   bool all_distinct;
+ 
   // FIXME: il seguente if sull'ordine e' temporaneo perche' cosi' si
   // riescono a fare le parametriche del primo ordine almeno.
   // Temporaneo fino a che 'find_roots' accettera' i parametri anche
   // per equazioni di grado superiore al primo. 
   std::vector<GNumber> num_coefficients(order+1);
+
   if (order == 1) {
     characteristic_eq = y - coefficients[1];
     roots.push_back(coefficients[1]);
+    all_distinct = true;
   } 
   else {
     // Check that the vector 'coefficients' does not contains
@@ -406,6 +412,7 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
     if (!find_roots(characteristic_eq, y, roots, all_distinct))
       return false;
   }
+
 #if NOISY
   std::cout << "characteristic equation " << characteristic_eq << std::endl;
   for (size_t i = roots.size(); i-- > 0; )
@@ -417,10 +424,11 @@ solve(const GExpr& rhs, const GSymbol& n, GExpr& solution) {
   GSymbol lambda("lambda");
   std::vector<GExpr> symbolic_sum_distinct(decomposition.cols());
   std::vector<GExpr> symbolic_sum_no_distinct(decomposition.cols());
+
   if (all_distinct)
     // Fills the two vector 'symbolic_sum_distinct' and
     // 'symbolic_sum_no_distinct' with two different symbolic sum
-    // A SECONDA CHE the roots are equal or not to the exponential's bases.
+    // in according to the roots are equal or not to the exponential's bases.
     compute_symbolic_sum(order, n, alpha, lambda, roots, decomposition,
 			 symbolic_sum_distinct, symbolic_sum_no_distinct);
   switch (order) {
