@@ -261,7 +261,8 @@ REGISTER_FUNCTION(sum,
       \prod_{k = a}^b f(k) = \prod_{k = a}^n f(k) \cdot f(n+1) \cdots f(n+j),
         \quad \text{if } b = n + j \text{and j is a negative integer}; \\
       \prod_{k = a}^b \alpha f(k) = \alpha^{b-a+1} \prod_{k = a}^b f(k),
-        \quad \text{where } \alpha \text{does not depend from } k. 
+        \quad \text{where } \alpha \text{does not depend from } k; \\
+      \prod_{k = a}^b 1 = 1.
     \end{cases}
   \f]
 
@@ -281,6 +282,7 @@ prod_eval(const ex& index, const ex& lower, const ex& upper,
     throw std::invalid_argument("The lower limit of a product"
 				"must be an integer");
   ex p = 1;
+  // `upper' is a number.
   if (is_a<numeric>(upper)) {
     numeric num_upper = ex_to<numeric>(upper);
     if (!num_upper.is_integer())
@@ -294,7 +296,12 @@ prod_eval(const ex& index, const ex& lower, const ex& upper,
       for (numeric j = num_lower; j <= num_upper; ++j)
 	p *= factor.subs(index == j);
   }
-  else
+  // `upper' is not a number.
+  else {
+    // `factor' is equal to `1'.
+    if (factor == 1)
+      return 1;
+    // `upper' is a sum of two addends.
     if (is_a<add>(upper) && upper.nops() == 2) {
       ex first_term = upper.op(0);
       ex second_term = upper.op(1);
@@ -312,15 +319,21 @@ prod_eval(const ex& index, const ex& lower, const ex& upper,
 	ex factors_in = 1;
 	ex factors_out = 1;
 	get_out_factors_from_argument(factor, index, factors_in, factors_out);
-	return power(factors_out, upper-lower+1)
-	  * prod(index, lower, upper, factors_in).hold();
+	if (factors_in == 1)
+	  return power(factors_out, upper-lower+1);
+	else
+	  return power(factors_out, upper-lower+1)
+	    * prod(index, lower, upper, factors_in).hold();
       }
       if (numeric_term.is_integer()) {
 	ex factors_in = 1;
 	ex factors_out = 1;
 	get_out_factors_from_argument(factor, index, factors_in, factors_out);
-	p *= power(factors_out, upper-lower+1)
-	  * prod(index, lower, ex(symbolic_term), factors_in).hold();
+	if (factors_in == 1)
+	  p *= power(factors_out, upper-lower+1);
+	else
+	  p *= power(factors_out, upper-lower+1)
+	    * prod(index, lower, ex(symbolic_term), factors_in).hold();
 	if (numeric_term.is_pos_integer())
 	  for (numeric j = 1; j <= numeric_term; ++j)
 	    p *= factor.subs(index == symbolic_term + j);
@@ -332,17 +345,24 @@ prod_eval(const ex& index, const ex& lower, const ex& upper,
 	ex factors_in = 1;
 	ex factors_out = 1;
 	get_out_factors_from_argument(factor, index, factors_in, factors_out);
-	return power(factors_out, upper-lower+1)
-	  * prod(index, lower, upper, factors_in).hold();
+	if (factors_in == 1)
+	  return power(factors_out, upper-lower+1);
+	else
+	  return power(factors_out, upper-lower+1)
+	    * prod(index, lower, upper, factors_in).hold();
       }
     }
     else {
       ex factors_in = 1;
       ex factors_out = 1;
       get_out_factors_from_argument(factor, index, factors_in, factors_out);
-      return power(factors_out, upper-lower+1)
-	* prod(index, lower, upper, factors_in).hold();
+      if (factors_in == 1)
+	return power(factors_out, upper-lower+1);
+      else
+	return power(factors_out, upper-lower+1)
+	  * prod(index, lower, upper, factors_in).hold();
     }
+  }
   return p;
 }
 
