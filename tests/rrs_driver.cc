@@ -53,6 +53,7 @@ static struct option long_options[] = {
   {"latex",             no_argument,       0, 'l'},
   {"regress-test",      no_argument,       0, 'r'},
   {"verbose",           no_argument,       0, 'v'},
+  {"version",           no_argument,       0, 'V'},
   {0, 0, 0, 0}
 };
 
@@ -75,11 +76,12 @@ print_usage() {
     "  -i, --interactive        set interactive mode on\n"
     "  -l, --latex              output LaTeX code\n"
     "  -r, --regress-test       set regression-testing mode on\n"
-    "  -v, --verbose            be verbose"
+    "  -v, --verbose            be verbose\n"
+    "  -V, --version            show version number and exit"
        << endl;
 }
 
-#define OPTION_LETTERS "EI:LR:T:Uhilrv"
+#define OPTION_LETTERS "EI:LR:T:UhilrvV"
 
 // To avoid mixing incompatible options.
 static bool production_mode = false;
@@ -312,6 +314,17 @@ process_options(int argc, char* argv[]) {
       verbose = true;
       test_mode = true;
       do_not_mix_modes();
+      break;
+
+    case 'V':
+      cerr << "rrs_driver version " << PACKAGE_VERSION << ".\n"
+	"This is the Parma Recurrence Relation Solver simple driver.\n"
+	"Copyright (C) 2002-2003 Roberto Bagnara <bagnara@cs.unipr.it>\n"
+	"This is free software; see the source for copying conditions.  There is NO\n"
+	"warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
+	"See http://www.cs.unipr.it/purrs/ for more information.\n"
+	   << endl;
+      my_exit(0);
       break;
 
     default:
