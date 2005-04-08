@@ -7,8 +7,8 @@
 
 \item (Added on 4.9.2002)
 In \texttt{simplify.cc}, emphasize the fact that $n$  is an integer variable:
-for example, the expression $(1-(-1)^n) \cdot (1+(-1)^n)$ simplifies to 
-0 only if n is an integer.
+for example, the expression $(1-(-1)^n) \cdot (1+(-1)^n)$ simplifies to
+0 only if n is an integer. FIXED.
 
 \item (Added on 4.9.2002)
 Use \texttt{numer\_denom()} as a default simplification of expressions?
@@ -26,7 +26,7 @@ Consider the example
   2*(1-a^{-1})^{-3}*a^{-3},
   \end{aligned}
 \]
-which \texttt{GiNaC} does not simplify. After calling 
+which \texttt{GiNaC} does not simplify. After calling
 \texttt{numer\_denom()} on this
 expression, we get the list $\{\, 0$, $1\,\}$.
 This arises from the recurrence $x_n = a*x_{n-1} + n^2$ in the
@@ -38,6 +38,7 @@ FIXED.
 sequence because it does not simplify the formula as much as it should.
 Consider the possibility of introducing formal parameters to perform the
 simplifications on expressions that do not contain irrational quantities.
+FIXED.
 
 \item (Added on 4.9.2002)
 Give conditions on parameters when solving parametric recurrences.
@@ -64,7 +65,7 @@ given the recurrence
 \[
   x_n = 2 \cdot x_{n-1} - x_{n-2} + \frac1{n(n+1)}
 \]
-we use the formula 
+we use the formula
 \[
   x_n = \sum_{i=k}^n g_{n-i} p(i)
   +
@@ -98,20 +99,20 @@ How we compute the roots for the resultant is not right in this case.
 \item (Added on 10.10.2002)
 Modify \texttt{simplify.cc} so that only one call to the
 function \texttt{simplify\_on\_output\_ex()} is necessary to arrive
-at the maximum simplification of the expression in input. 
+at the maximum simplification of the expression in input.
 For example, consider the recurrence:
 \[
   x(n) = (n-2)^2+x(n-2);
 \]
 when we try to verify the solution of the recurrence, we have to compute
-the difference $x(n) - (n-2)^2 - x(n-2)$, which is simplified to  
+the difference $x(n) - (n-2)^2 - x(n-2)$, which is simplified to
 $5/2+((-1)^n)^2*n-n-5/2*((-1)^n)^2$, and not to $0$.
 We remark that the expression $5/2+((-1)^n)^2*n-n-5/2*((-1)^n)^2$ is
 simplified to $0$ on a further call to \texttt{simplify\_on\_output\_ex()}.
 
 \item (Added on 24.10.2002)
 Write a message to ginac list about the problem of initialization mechanism
-of the symbolic functions (x(n), sum(), ...). 
+of the symbolic functions (x(n), sum(), ...).
 
 \item (Added on 6.1.2003)
 It is necessary for several reasons (efficiency, approximation,
@@ -126,7 +127,7 @@ I tried $x(n) = x(n-1) + x(n-2) + 2n$ and the (correct) answer is
   -
   2 \psi^n (\psi-\phi)^{-1} \\
   +
-  2 (-1+\phi)^{-2} (\psi-\phi)^{-1} \phi 
+  2 (-1+\phi)^{-2} (\psi-\phi)^{-1} \phi
   -
   2 (-\psi \phi+\psi^2
   -
@@ -162,7 +163,7 @@ We see a proliferation of \emph{constant} coefficients (coefficients
 that depend only on $\phi$ and $\psi$, not on $n$), some repeated many
 times.
 
-If we collect the term $A := (\psi-\phi)^{-1}$, we can simplify the answer 
+If we collect the term $A := (\psi-\phi)^{-1}$, we can simplify the answer
 a little bit:
 \begin{multline*}
   2 A (\phi^n - \psi^n) + 2 (-1+\phi)^{-2} A \phi
@@ -197,7 +198,7 @@ containing only $\phi$ (in this particular case $\phi^2 = \phi + 1$).
   (\psi - 1)^{-1}  &= \psi   \\
   (\phi - 1)^{-1}  &= \phi   \\
   (\psi - 1)^{-2}  &= \psi^2 \\
-  (\phi - 1)^{-2}  &= \phi^2 \\
+  (\phi - 1)^{-2}  &= \phi^2
 \end{align*}
 Using these identities repeatedly, we obtain the simpler form
 \begin{multline*}
@@ -242,7 +243,7 @@ symbolic sums (when the inhomogeneous term is polynomial, exponential or
 product of them) removing the two vectors \texttt{symbolic\_sum\_distinct} and
 \texttt{symbolic\_sum\_no\_distinct}.
 Now the Gosper's algorithm is applied only when the order of the recurrences
-with constant coefficients is $1$: extend it! 
+with constant coefficients is $1$: extend it!
 
 \item (Added on 8-3-2003)
 In the function \texttt{solve\_variable\_coeff\_order\_1()} before use of the
@@ -257,7 +258,7 @@ that the degree is $1$: in fact we consider equations with integer
 coefficients and we have already found rational roots.
 Therefore, the \texttt{case 1} of the \texttt{switch} is useless.
 Is useless also the function \texttt{nested\_polynomial()} because
-we already applied the order reduction. 
+we already applied the order reduction.
 
 \item (Added on 1-4-2003)
 Fix the problem of initial conditions (to find the index starting from which
@@ -275,6 +276,109 @@ the old definition of \verb/Polynomial_Root/) or an \verb/unsigned/
 (as in \verb/Expr::degree()/).
 We have temporarily standardized to \verb/unsigned/, but the issue
 deserves further study.
+
+\item (Added on 8.4.2005)
+\emph{Verification of the solution}: too many recurrences have a
+solution that \texttt{purrs} does not verify.
+These include linear recurrences of finite order with constant
+coefficients whose characteristic equation has irrational roots, and
+many ``infinite order'' recurrences.
+
+\item (Added on 8.4.2005)
+\emph{Verification of the solution}:
+when the recurrence is rewritten, check the correctness of the
+solution of the \emph{original} recurrence.
+
+\item (Added on 8.4.2005)
+\emph{Verification of the solution}:
+write a test for the verification procedure.
+
+\item (Added on 8.4.2005)
+\emph{Verification of the solution}:
+Consider the possibility of \emph{numerical} tests of the solution and
+of its approximations.
+
+\item (Added on 8.4.2005)
+\emph{Linear recurrences of finite order with constant coefficients}:
+Use the function \verb/sum_poly_alt()/ to compute the symbolic sum of
+polynomials.
+
+\item (Added on 8.4.2005)
+\emph{Linear recurrences of finite order with constant coefficients}:
+Choose a syntax for systems, and write a filter to handle them.
+
+\item (Added on 8.4.2005)
+\emph{Linear recurrences of finite order with constant coefficients}:
+Handle symbolic sums arising from summands in the non-homogeneous term
+that are not linear combinations of products of polynomials and
+exponentials.
+When possible, express these sums in terms of higher transcendental
+functions, or as partial sums of hypegeometric series.
+
+\item (Added on 8.4.2005)
+\emph{Infinite order recurrences}:
+Extend both code and documentation to cover the more general case
+\[
+  x_n
+  =
+  f(n) \sum_{i = a}^{n-b} x_i + g(n),
+\]
+where $a$ and $b$ are fixed non-negative integers.
+
+\item (Added on 8.4.2005)
+\emph{Divide-et-impera recurrences}:
+Deal with recurrences of the type $x(n) = \alpha x(n/\beta) + g(n)$
+where $\beta > 1$ is \emph{not} an integer.
+
+\item (Added on 8.4.2005)
+\emph{Divide-et-impera recurrences}:
+Deal with recurrences of the type $x(n) = \alpha(n) x(n/\beta) + g(n)$
+where $\alpha(n)$ is a function.
+
+\item (Added on 8.4.2005)
+\emph{Divide-et-impera recurrences}:
+Deal with recurrences of rank 2 or more.
+
+\item (Added on 8.4.2005)
+\emph{Linear recurrences with variable coefficients of order $1$}:
+allow parameters in the variable coefficient.
+
+\item (Added on 8.4.2005)
+\emph{Linear recurrences with variable coefficients of order $1$}:
+Express the solution in terms of Euler's Gamma function, of the
+incomplete Gamma function and other higher transcendental functions,
+including hypergeometric functions.
+
+\item (Added on 8.4.2005)
+\emph{Linear recurrences with variable coefficients of any order}:
+Complete the implementation of Zeilberger's method, and other
+algorithms deriving from holonomy theory.
+
+\item (Added on 8.4.2005)
+\emph{Linear recurrences with variable coefficients of any order}:
+Implement the \emph{generating function} method.
+
+\item (Added on 8.4.2005)
+\emph{Approximation of the solution, given the exact solution}:
+Fully implement the method described in valid.tex.
+
+\item (Added on 8.4.2005)
+\emph{Approximation of the solution, given the exact solution}:
+Approximations arising from partial sums of suitable Taylor series.
+See approximations.tex.
+
+\item (Added on 8.4.2005)
+\emph{Approximation of the solution, without computing it explicitly}:
+See approximations.tex.
+
+\item (Added on 8.4.2005)
+\emph{Multivariate recurrences}.
+
+\item (Added on 8.4.2005)
+\emph{Special recurrences}:
+Deal with recurrences arising from Newton's algorithm.
+
 \end{enumerate}
+
 
 \end{document}
