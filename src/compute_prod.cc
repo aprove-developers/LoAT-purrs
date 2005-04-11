@@ -110,7 +110,8 @@ compute_product_on_add(const Symbol& index, const Number& lower,
 		       const Expr& e, bool is_denominator) {
   Expr e_prod;
   bool e_prod_computed = false;
-  if (try_special_cases(index, lower, e, e_prod))
+  // Special cases only involve polynomials.
+  if (e.is_polynomial(index) && try_special_cases(index, lower, e, e_prod))
     return e_prod;
   if (e.is_a_add() && e.nops() == 2) {
     // `e' is of the form a + b.
