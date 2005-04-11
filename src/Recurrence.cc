@@ -1161,14 +1161,19 @@ PURRS::Recurrence::compute_exact_solution_finite_order() const {
   upper_bound_.set_expression(exact_solution_.expression());
   
   // Check if there are specified initial conditions and in this case
-  // eventually shift the solution in according with them before to
-  // substitute the values of the initial conditions to the
+  // shift the solution according to them if necessary before
+  // substituting the values of the initial conditions to the
   // symbolic initial conditions `x(i)'.
   // If the order of the recurrence is `0' no initial conditions
   // must be substituted.
   if (!initial_conditions_.empty() && order() > 0) {
     evaluated_exact_solution_.set_expression
       (compute_solution_or_bound_on_i_c(exact_solution_.expression()));
+    // FIXME: This ought to be done more generally in 
+    // exact_solution(Expr& e) below.
+    evaluated_exact_solution_
+      .set_expression(evaluated_exact_solution_
+		      .replace_system_generated_symbols(*this));
     evaluated_lower_bound_.set_expression
       (evaluated_exact_solution_.expression());
     evaluated_upper_bound_.set_expression
@@ -1385,6 +1390,8 @@ PURRS::Recurrence::exact_solution(Expr& e) const {
     // possibly shift the solution in according with the initial conditions
     // before replacing the values of the initial conditions to the
     // symbolic initial conditions `x(i)'.
+    // FIXME: Always replace system generated symbols and consider that
+    // evaluated_exact_solution_ might have been given an expression above.
     if (!evaluated_exact_solution_.has_expression()) {
       evaluated_exact_solution_.set_expression
 	(compute_solution_or_bound_on_i_c(exact_solution_.expression()));
