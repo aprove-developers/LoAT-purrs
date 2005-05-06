@@ -103,39 +103,6 @@ poly_dec(const Expr& p, const Symbol& x, std::vector<Expr>& summands) {
 
 /*!
   This routine computes \f$\sum_{j=0}^N p(j) \f$ for a non
-  negative integer \f$ N \f$ and a polynomial \f$ p \f$ using
-  Levy's algorithm based on iterated symbolic integration.
-  The closed formula is returned in the expression <CODE> q </CODE>.
-*/
-void
-sum_poly_alt(const Expr& p, const Symbol& x, const Symbol& N, Expr& q) {
-
-  unsigned int deg = p.degree(x);
-  Number coefficients[deg + 2];
-  Expr symbolic_sum = (N + 1) * p.coeff(x, 0);;
-  
-  coefficients[0] = 0;
-  coefficients[1] = 1;
-  for (unsigned int i = 1; i < deg + 1; ++i) {
-    Number sum = 0;
-    // Loop for symbolic integration
-    for (int j = i + 2; --j > 1; ) {
-      coefficients[j] = i * coefficients[j - 1] / j;
-      sum += coefficients[j];
-    }
-    // Compute the `constant of integration' by fitting the formula for n = 1
-    coefficients[1] = 1 - sum;
-    coefficients[0] = 0;
-    Expr partial_sum = 0;
-    for (int j = i + 2; --j > 0; )
-      partial_sum += pwr(N, j) * coefficients[j];
-    symbolic_sum += partial_sum * p.coeff(x, i);
-  } 
-  q = symbolic_sum;
-}
-
-/*!
-  This routine computes \f$\sum_{j=0}^N p(j) \f$ for a non
   negative integer \f$ N \f$ and a polynomial \f$ p \f$ by means
   of a formula explained in purrs.tex, section~4.3.3.
   The closed formula is returned in the expression <CODE> q </CODE>.
@@ -160,6 +127,38 @@ sum_poly(const Expr& p, const Symbol& x, const Symbol& N, Expr& q) {
   products of polynomials and exponentials (including extreme
   cases of constant polynomials or exponentials).
 */
+
+/*!
+  This routine computes \f$\sum_{j=0}^N p(j) \f$ for a non
+  negative integer \f$ N \f$ and a polynomial \f$ p \f$ using
+  Levy's algorithm based on iterated symbolic integration.
+*/
+PURRS::Expr
+PURRS::sum_poly_alt(const Expr& p, const Symbol& x, const Symbol& N) {
+
+  unsigned int deg = p.degree(x);
+  Number coefficients[deg + 2];
+  Expr symbolic_sum = (N + 1) * p.coeff(x, 0);;
+  
+  coefficients[0] = 0;
+  coefficients[1] = 1;
+  for (unsigned int i = 1; i < deg + 1; ++i) {
+    Number sum = 0;
+    // Loop for symbolic integration
+    for (int j = i + 2; --j > 1; ) {
+      coefficients[j] = i * coefficients[j - 1] / j;
+      sum += coefficients[j];
+    }
+    // Compute the `constant of integration' by fitting the formula for n = 1
+    coefficients[1] = 1 - sum;
+    coefficients[0] = 0;
+    Expr partial_sum = 0;
+    for (int j = i + 2; --j > 0; )
+      partial_sum += pwr(N, j) * coefficients[j];
+    symbolic_sum += partial_sum * p.coeff(x, i);
+  } 
+  return(symbolic_sum);
+}
 
 /*!
   This routine computes the closed formula for

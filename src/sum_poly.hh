@@ -44,6 +44,9 @@ sum_poly_times_exponentials_times_sin(const Expr& p, const Symbol& x,
 				      const Symbol& N, const Expr& alpha,
 				      const Expr& theta);
 
+Expr
+sum_poly_alt(const Expr& p, const Symbol& x, const Symbol& N);
+
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif

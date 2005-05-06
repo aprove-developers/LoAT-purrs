@@ -31,6 +31,7 @@ http://www.cs.unipr.it/purrs/ . */
 
 #include "util.hh"
 #include "simplify.hh"
+#include "sum_poly.hh"
 #include "compute_prod.hh"
 #include "ep_decomp.hh"
 #include "finite_order.hh"
@@ -666,6 +667,13 @@ compute_special_solution(const Expr& homo_rhs, const index_type order_rec,
   D_VAR(poly);
   D_VAR(base);
   D_VAR(mult);
+
+  // Use fast, tailor-made method for summing polynomials when possible
+  if ((base == 1) && (homo_rhs == x(Recurrence::n-1))) {
+    Expr q = sum_poly_alt(poly, Recurrence::n, Recurrence::n);
+    return(q);
+  }
+
   // Build the generic polynomial `q' of the correct degree
   // with unknown coefficients.
   unsigned int deg = poly.degree(Recurrence::n) + mult;
@@ -732,6 +740,7 @@ compute_special_solution(const Expr& homo_rhs, const index_type order_rec,
   // FIXME: Check that the removed unknowns are the right ones.
   assert(removed_unknowns == mult);
 
+  D_VAR(q);
   return q;
 }
 
@@ -1102,4 +1111,3 @@ PURRS::Recurrence::solve_linear_finite_order() const {
 
   return SUCCESS;
 }
-
