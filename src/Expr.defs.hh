@@ -37,8 +37,8 @@ http://www.cs.unipr.it/purrs/ . */
 
 // FIXME: This declaration must be moved to a more suitable place.
 namespace GiNaC {
-  GiNaC::ex GiNaC::max_eval(const GiNaC::ex&, const GiNaC::ex&);
-  GiNaC::ex GiNaC::min_eval(const GiNaC::ex&, const GiNaC::ex&);
+  ex max_eval(const ex&, const ex&);
+  ex min_eval(const ex&, const ex&);
 }
 
 namespace Parma_Recurrence_Relation_Solver {
