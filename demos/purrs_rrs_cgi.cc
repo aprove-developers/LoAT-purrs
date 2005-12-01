@@ -60,7 +60,6 @@ http://www.cs.unipr.it/purrs/ . */
 
 using std::string;
 using std::cout;
-using std::cerr;
 using std::endl;
 using std::vector;
 
@@ -214,11 +213,13 @@ my_uncaught_exception() {
   error("uncaught exception");
 }
 
+#if 0
 static void
 my_exit(int status) {
   //(void) purrs_finalize();
   exit(status);
 }
+#endif
 
 Expr_List symbols;
 
@@ -288,14 +289,16 @@ invalid_initial_condition(const Expr& e) {
 
 static void
 invalid_initial_condition(const string& culprit) {
-  cerr << "Invalid initial condition `" << culprit << "';\n"
-       << "must be of the form `x(i)=k'"
-       << "for `i' a non-negative integer\n"
-       << "and `k' a number (not a floating point) "
-       << "or a symbolic expression\n"
-       << "containing the parameters a, b,..., z"
-       << " different from `n', `x' and `e'." << endl;
-  my_exit(1);
+    std::ostringstream m;
+    const char* nl = "<br />";
+    m << "Invalid initial condition `" << culprit << "';" << nl
+      << "Initial conditions must be given in the form `x(i)=k' where:"  << nl
+      << "`i' is a non-negative integer" << nl
+      << "`k' is a number (not a floating point) " << nl
+      << "or a symbolic expression" << nl
+      << "containing the parameters a, b,..., z" << nl
+      << " different from `n', `x' and `e'." << endl;
+    error(m.str());
 }
 
 #if 0
