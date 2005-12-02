@@ -290,14 +290,20 @@ invalid_initial_condition(const Expr& e) {
 static void
 invalid_initial_condition(const string& culprit) {
     std::ostringstream m;
-    const char* nl = "<br />";
-    m << "Invalid initial condition `" << culprit << "';" << nl
-      << "Initial conditions must be given in the form `x(i)=k' where:"  << nl
-      << "`i' is a non-negative integer" << nl
-      << "`k' is a number (not a floating point) " << nl
-      << "or a symbolic expression" << nl
-      << "containing the parameters a, b,..., z" << nl
-      << " different from `n', `x' and `e'." << endl;
+    m << "Invalid initial condition &quot;" 
+      << tt() << culprit << tt() << "&quot;;" << br()
+      << "Initial conditions must be given in the form " << br()
+      << tt() << "x(i)=k" << tt() << br()
+      << " where "
+      << tt() << "i" << tt() << " is a non-negative integer and "
+      << tt() << "k" << tt() << " is a number (not a floating point) "
+      << "or a symbolic expression " 
+      << "containing the parameters " << tt() << "a, b,..., z" << tt()
+      << " different from "
+      << tt() << "n" << tt() << ", "
+      << tt() << "x" << tt() << " and "
+      << tt() << "e" << tt() << "."
+      << endl;
     error(m.str());
 }
 
