@@ -1,32 +1,23 @@
 Tools needed by PURRS (see detailed instructions):
 
-autoconf 2.57
-automake 1.7.2
-libtool 1.4.2
-gcc 3.2.1        (gcc 3.0.4 is enough)
-gmp 4.1.2
-cln 1.1.5
-ntl 5.3
-ginac 1.0.13     (use our ftp version!)
-cgicc 3.2.1
-giac-0.3.0
-
-Please note that, due to buggy GCC and library versions, some configurations
-may not work. The following configuration has been found to work:
-
 autoconf 2.59
 automake 1.9.3
 libtool 1.5.8
-gcc 3.3.3
-gmp 4.1.4
-cln 1.1.8
+gcc 3.4.1 or higher
+gmp 4.1.2 or higher
+cln 1.1.8 or higher
 ntl 5.3.2
-ginac 1.2.4	 (official version)
+ginac 1.2.4 or higher
 cgicc 3.2.3
-giac-0.4.0
+giac 0.4.0
 
-GCC 3.4 cannot compile giac-0.4.0 because of a bug, fixed in GCC 3.4.1 and
-later versions. See <http://gcc.gnu.org/bugzilla/show_bug.cgi?id=15299>.
+Please note that, due to incompatible GCC and library versions, you
+could experience problems in compiling some dependencies if you use
+certain software versions. Upgrading to the latest stable release of the
+libraries or to GCC 4.x is a safe bet in most cases.
+
+For automatic configuration and installation of dependencies you can use
+the "depinst" script that comes with PURRS.
 
 ============================================================================
 
@@ -62,18 +53,20 @@ should output something like
 
 ============================================================================
 
-automake-1.7.2 install how-to:
+[FIXME: Links and versions below must be updated]
+
+automake-1.9.3 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/automake-1.7.2.tar.bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/automake-1.9.3.tar.bz2
   cd your-path-to-download-dir
-  tar jxvf automake-1.7.2.tar.bz2
+  tar jxvf automake-1.9.3.tar.bz2
 
 Configuring and building (and optionally check the build):
   cd your-path-to-download-dir
   mkdir obj-automake
   cd obj-automake
-  ../automake-1.7.2/configure --prefix=/usr/local
+  ../automake-1.9.3/configure --prefix=/usr/local
   make
   make check
 
@@ -86,27 +79,27 @@ Installing (as root):
 Checking whether you actually call the right executable:
   automake --version
 You should obtain the following output:
-  automake (GNU automake) 1.7.2
+  automake (GNU automake) 1.9.3
   Written by Tom Tromey <tromey@redhat.com>.
 
-  Copyright 2002 Free Software Foundation, Inc.
+  Copyright 2005 Free Software Foundation, Inc.
   This is free software; see the source for copying conditions.  There is NO
   warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 ============================================================================
 
-autoconf-2.57 install how-to:
+autoconf-2.59 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/autoconf-2.57.tar.bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/autoconf-2.59.tar.bz2
   cd your-path-to-download-dir
-  tar jxvf autoconf-2.57.tar.bz2
+  tar jxvf autoconf-2.59.tar.bz2
 
 Configuring and building (and optionally check the build):
   cd your-path-to-download-dir
   mkdir obj-autoconf
   cd obj-autoconf
-  ../autoconf-2.57/configure --prefix=/usr/local
+  ../autoconf-2.59/configure --prefix=/usr/local
   make
   make check
 
@@ -119,10 +112,10 @@ Installing (as root):
 Checking whether you actually call the right executable:
   autoconf --version
 You should obtain the following output:
-  autoconf (GNU Autoconf) 2.57
+  autoconf (GNU Autoconf) 2.59
   Written by David J. MacKenzie and Akim Demaille.
 
-  Copyright 2002 Free Software Foundation, Inc.
+  Copyright 2003 Free Software Foundation, Inc.
   This is free software; see the source for copying conditions.  There is NO
   warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
