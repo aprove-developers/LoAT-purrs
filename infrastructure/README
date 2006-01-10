@@ -1,15 +1,15 @@
 Tools needed by PURRS (see detailed instructions):
 
 autoconf 2.59
-automake 1.9.3
-libtool 1.5.8
+automake 1.9.2 or higher
+libtool 1.5.6 or higher
 gcc 3.4.1 or higher
 gmp 4.1.2 or higher
 cln 1.1.8 or higher
 ntl 5.3.2
 ginac 1.2.4 or higher
 cgicc 3.2.3
-giac 0.4.0
+giac 0.4.0-ap3 (use our FTP version!)
 
 Please note that, due to incompatible GCC and library versions, you
 could experience problems in compiling some dependencies if you use
@@ -29,15 +29,17 @@ More Detailed Installation Instructions:
         in a directory called "your-path-to-download-dir".
 	It is also assumed that you install the packages in the order
 	shown before because there are dependencies among them.
-        For CVS access, it is assumed that you have ssh installed
-        into directory "your-path-to-ssh".
+        The installation notes below can refer to more recent versions
+        than our minimum requirements, but will apply with minimal
+        changes to all supported versions.
 
 ============================================================================
 
 Setting up your environment variables (once for all):
 
 If you use the Bash shell, add the following lines to file .bashrc into
-your home directory:
+your home directory (the latter is required only if you want to checkout
+a CVS version of PURRS):
 
   export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
   export CVS_RSH=your-path-to-ssh/ssh
@@ -53,20 +55,19 @@ should output something like
 
 ============================================================================
 
-[FIXME: Links and versions below must be updated]
-
-automake-1.9.3 install how-to:
+automake-1.9.2 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/automake-1.9.3.tar.bz2
+  (FIXME: not available by ftp yet!)
+  ftp://ftp.cs.unipr.it/pub/infrastructure/automake-1.9.2.tar.bz2
   cd your-path-to-download-dir
-  tar jxvf automake-1.9.3.tar.bz2
+  tar jxvf automake-1.9.2.tar.bz2
 
 Configuring and building (and optionally check the build):
   cd your-path-to-download-dir
   mkdir obj-automake
   cd obj-automake
-  ../automake-1.9.3/configure --prefix=/usr/local
+  ../automake-1.9.2/configure --prefix=/usr/local
   make
   make check
 
@@ -79,10 +80,10 @@ Installing (as root):
 Checking whether you actually call the right executable:
   automake --version
 You should obtain the following output:
-  automake (GNU automake) 1.9.3
+  automake (GNU automake) 1.9.2
   Written by Tom Tromey <tromey@redhat.com>.
 
-  Copyright 2005 Free Software Foundation, Inc.
+  Copyright 2004 Free Software Foundation, Inc.
   This is free software; see the source for copying conditions.  There is NO
   warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
@@ -121,19 +122,19 @@ You should obtain the following output:
 
 ============================================================================
 
-libtool-1.4.2 install how-to:
+libtool-1.5.16 install how-to:
 
 Downloading and unpacking:
   (FIXME: not available by ftp yet!)
-  ftp://ftp.cs.unipr.it/pub/infrastructure/libtool-1.4.2.tar.bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/libtool-1.5.16.tar.bz2
   cd your-path-to-download-dir
-  tar jxvf libtool-1.4.2.tar.bz2
+  tar jxvf libtool-1.5.16.tar.bz2
 
 Configuring and building (and optionally check the build):
   cd your-path-to-download-dir
   mkdir obj-libtool
   cd obj-libtool
-  ../libtool-1.4.2/configure --prefix=/usr/local
+  ../libtool-1.5.16/configure --prefix=/usr/local
   make
   make check
 
@@ -146,27 +147,26 @@ Installing (as root):
 Checking whether you actually call the right executable:
   libtool --version
 You should obtain the following output:
-  ltmain.sh (GNU libtool) 1.4e (1.1129 2002/08/28 20:40:28)
+  ltmain.sh (GNU libtool) 1.5.16 (1.1220.2.235 2005/04/25 18:13:26)
 
-  Copyright 1996, 1997, 1998, 1999, 2000, 2001
-  Free Software Foundation, Inc.
+  Copyright (C) 2005  Free Software Foundation, Inc.
   This is free software; see the source for copying conditions.  There is NO
   warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 ============================================================================
 
-gcc 3.2.1 install how-to:
+gcc 3.4.5 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/gcc-3.2.1.tar.bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/gcc-3.4.5.tar.bz2
   cd your-path-to-download-dir
-  tar jxvf gcc-3.2.1.tar.bz2
+  tar jxvf gcc-3.4.5.tar.bz2
 
 Configuring and building (and optionally check the build):
   cd your-path-to-download-dir
   mkdir obj-gcc
   cd obj-gcc
-  ../gcc-3.2.1/configure --prefix=/usr/local
+  ../gcc-3.4.5/configure --prefix=/usr/local
   make
   make check
 
@@ -179,31 +179,31 @@ Installing (as root):
 Checking whether you actually call the right executable:
   g++ --version
 You should obtain the following output:
-  g++ (GCC) 3.2.1
-  Copyright (C) 2002 Free Software Foundation, Inc.
+  g++ (GCC) 3.4.5
+  Copyright (C) 2004 Free Software Foundation, Inc.
   This is free software; see the source for copying conditions.  There is NO
   warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
 
 ============================================================================
 
-gmp 4.1.2 install how-to:
+gmp 4.1.4 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/gmp-4.1.2.tar.bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/gmp-4.1.4.tar.bz2
   cd your-path-to-download-dir
-  tar jxvf gmp-4.1.2.tar.bz2
+  tar jxvf gmp-4.1.4.tar.bz2
 
 Configuring and building (and optionally check the build):
   cd your-path-to-download-dir
   mkdir obj-gmp
   cd obj-gmp
-  ../gmp-4.1.2/configure --prefix=/usr/local --enable-cxx
+  ../gmp-4.1.4/configure --prefix=/usr/local --enable-cxx
   make
   make check
 
 NOTE: if you want to build with support for exception handling
       (not required now) change the above configure command with:
-CPPFLAGS=-fexceptions ../gmp-4.1.2/configure --prefix=/usr/local --enable-cxx
+CPPFLAGS=-fexceptions ../gmp-4.1.4/configure --prefix=/usr/local --enable-cxx
 
 Installing (as root):
   su
@@ -213,18 +213,18 @@ Installing (as root):
 
 ============================================================================
 
-cln-1.1.5 install how-to:
+cln-1.1.11 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/cln-1.1.5.tar.bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/cln-1.1.11.tar.bz2
   cd your-path-to-download-dir
-  tar jxvf cln-1.1.5.tar.bz2
+  tar jxvf cln-1.1.11.tar.bz2
 
 Configuring and building (and optionally check the build):
   cd your-path-to-download-dir
   mkdir obj-cln
   cd obj-cln
-  ../cln-1.1.5/configure --prefix=/usr/local
+  ../cln-1.1.11/configure --prefix=/usr/local
   make
   make check
 
@@ -234,13 +234,7 @@ Installing (as root):
   make install
   exit
 
-Note that the `make install' command will result in the following error
-message, which you should simply *ignore*:
-
-  /usr/bin/install: cannot stat `cln.m4': No such file or directory
-  make: *** [install] Error 1
-
-However, if you had already installed cln before (from inside
+If you had already installed cln before (from inside
 the source tree), then you should remove the previously installed
 configuration file:
   su
@@ -250,16 +244,16 @@ configuration file:
 
 ============================================================================
 
-ntl-5.3 install how-to:
+ntl-5.3.2 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/ntl-5.3.tar.bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/ntl-5.3.2.tar.gz
   cd your-path-to-download-dir
-  tar jxvf ntl-5.3.tar.bz2
+  tar zxvf ntl-5.3.2.tar.gz
 
 Configuring and building (and optionally check the build):
   cd your-path-to-download-dir
-  cd ntl-5.3/src
+  cd ntl-5.3.2/src
   ./configure NTL_GMP_LIP=on NTL_STD_CXX=on GMP_PREFIX=/usr/local
   make
   make check
@@ -275,15 +269,15 @@ Installing (as root):
 GiNaC install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/GiNaC-1.0.13-parma.tar.bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/ginac-1.3.3.tar.bz2
   cd your-path-to-download-dir
-  tar jxvf GiNaC-1.0.13-parma.tar.bz2
+  tar jxvf ginac-1.3.3.tar.bz2
 
 Configuring and building:
   cd your-path-to-download-dir
-  mkdir obj-GiNaC
-  cd obj-GiNaC
-  ../GiNaC-1.0.13/configure --prefix=/usr/local
+  mkdir obj-ginac
+  cd obj-ginac
+  ../ginac-1.3.3/configure --prefix=/usr/local
   make
 
 Installing (as root):
@@ -295,31 +289,30 @@ Installing (as root):
 Checking whether you built right executable:
   ginsh
 You should obtain the following output:
-
-  ginsh - GiNaC Interactive Shell (GiNaC V1.0.13)
-    __,  _______  Copyright (C) 1999-2003 Johannes Gutenberg University Mainz,
+  ginsh - GiNaC Interactive Shell (ginac V1.3.3)
+    __,  _______  Copyright (C) 1999-2005 Johannes Gutenberg University Mainz,
    (__) *       | Germany.  This is free software with ABSOLUTELY NO WARRANTY.
     ._) i N a C | You are welcome to redistribute it under certain conditions.
   <-------------' For details type `warranty;'.
-  
-  Type ?? for a list of help topics.
+
+  Type ?? for a list of help topics
   > 
   <Type CTRL-D to exit the GiNaC shell>
 
 ============================================================================
 
-cgicc-3.2.1 install how-to:
+cgicc-3.2.3 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/cgicc-3.2.1.tar.bz2
+  ftp://ftp.cs.unipr.it/pub/infrastructure/cgicc-3.2.3.tar.bz2
   cd your-path-to-download-dir
-  tar jxvf cgicc-3.2.1.tar.bz2
+  tar jxvf cgicc-3.2.3.tar.bz2
 
 Configuring and building (and optionally check the build):
   cd your-path-to-download-dir
   mkdir obj-cgicc
   cd obj-cgicc
-  ../cgicc-3.2.1/configure --prefix=/usr/local --enable-namespaces
+  ../cgicc-3.2.3/configure --prefix=/usr/local --enable-namespaces
   make
   make check
 
@@ -331,17 +324,17 @@ Installing (as root):
 
 ============================================================================
 
-giac-0.3.0 install how-to:
+giac-0.4.0-ap3 install how-to:
 
 Downloading and unpacking:
-  ftp://ftp.cs.unipr.it/pub/infrastructure/giac_unstable.tgz
+  ftp://ftp.cs.unipr.it/pub/infrastructure/giac-0.4.0-ap3.tar.bz2
   cd your-path-to-download-dir
-  tar zxf giac_unstable.tgz (or gunzip -c giac_unstable.tgz | tar -xvf -)
+  tar jxvf giac-0.4.0-ap3.tar.bz2
 
 Configuring and building:
   cd your-path-to-download-dir
-  cd giac-0.3.0
-  ./configure --prefix=/usr/local
+  cd giac-0.4.0-ap3
+  ./configure --prefix=/usr/local --disable-debug --disable-gc --without-x --disable-gui --disable-pari --disable-gsl --disable-fltk
   make
 
 Installing (as root):
