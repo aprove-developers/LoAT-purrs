@@ -1,11 +1,11 @@
 #!/bin/bash
 # PURRS dependencies installation script.
-#   Copyright (C) 2005 Roberto Bagnara <bagnara@cs.unipr.it>
+# Copyright (C) 2006 Roberto Bagnara <bagnara@cs.unipr.it>
 #
 # This file is part of the Parma University's Recurrence Relation
 # Solver (PURRS).
 # 
-# The PURRS is free software; you can redistribute it and/or modify it
+# PURRS is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
 # Free Software Foundation; either version 2 of the License, or (at your
 # option) any later version.
@@ -23,17 +23,16 @@
 # For the most up-to-date information see the PURRS site:
 # http://www.cs.unipr.it/purrs/ .
 #
-# This script compiles and install the PURRS dependencies.
-# While it is meant to test whether PURRS and its dependencies compile 
-# with the latest GCC snapshot, it can be used to set up the PURRS 
-# infrastructure.
+# This script compiles and install the PURRS dependencies. It can be
+# used to set up the PURRS infrastructure.
 # Known limitations:
 # * Some libraries require packaging changes
 # In order to run the script you need:
 # - A GCC compiler, or a properly configured snapshot 
 #   (say, --prefix=/usr/local/gcctest --with-local-prefix=/usr/local/gcctest)
-# - A package repository with all the PURRS dependencies in bzip2/gz format
-# - Superuser privileges
+# - A package repository with all the PURRS dependencies in bzip2/gz format.
+#    You can get most of the needed files via anonymous FTP from
+#    ftp://ftp.cs.unipr.it/pub/infrastructure/.
 
 # General Options
 #
@@ -43,27 +42,30 @@ REPOSITORY="$HOME/purrs-infrastructure"
 GCC_BASE="/usr"
 # Base path where the libraries will be installed.
 LIB_BASE="/usr/local"
-
+# Libraries to be installed. Set the right version below.
+INSTALL_LIST="GMP CLN GINAC NTL GIAC CGICC"
 # Set to yes if you also want to download/compile/check PURRS.
-export TEST_PURRS="yes"
-
-CONFIGURE_DEFAULT_OPTIONS="--prefix=$LIB_BASE"
-export LD_LIBRARY_PATH=$LIB_BASE:$LIB_BASE/lib:$LD_LIBRARY_PATH:$GCC_BASE:$GCC_BASE/lib:
-export PATH=$LIB_BASE/bin:$GCC_BASE/bin:$PATH
-
+TEST_PURRS="yes"
 # Log file.
 TODAY=`date +%Y-%m-%d`
 INST_LOG=/tmp/purrs_dep_inst_$TODAY.log
 
 # Library versions.
 # Assumption: LIB-VER.tar.[bz2|gz] expands to LIB-VER/
-# Repackage the few libraries that don't.
+# Repackage the few libraries that don't; the ones available via FTP
+# have already been repackaged when needed.
 GMP=gmp-4.1.4
 CLN=cln-1.1.11
 GINAC=ginac-1.3.3
 NTL=ntl-5.3.2
 GIAC=giac-0.4.0-ap3
 CGICC=cgicc-3.2.3
+
+###     Your shouldn't need to edit anything below this line.     ###
+
+CONFIGURE_DEFAULT_OPTIONS="--prefix=$LIB_BASE"
+export LD_LIBRARY_PATH=$LIB_BASE:$LIB_BASE/lib:$LD_LIBRARY_PATH:$GCC_BASE:$GCC_BASE/lib:
+export PATH=$LIB_BASE/bin:$GCC_BASE/bin:$PATH
 
 # Some libraries have naive configuration conventions. Insert here
 # any commands to be executed before running configure.
@@ -93,7 +95,13 @@ ASK_CONTINUE=0
 
 # Check that the user can write in the destination path.
 if [ ! -w $LIB_BASE ]; then
-  echo "*** You need write permissions in the destination directory."
+  echo "*** You need write permissions in the destination directory $LIB_BASE."
+  ASK_CONTINUE=1
+fi
+
+# Check that the specified gcc actually exists.
+if [ ! -x $GCC_BASE/bin/gcc ]; then
+  echo "*** The chosen compiler $GCC_BASE/bin/gcc does not exist."
   ASK_CONTINUE=1
 fi
 
@@ -118,8 +126,7 @@ if test $ASK_CONTINUE -ne 0; then
   fi
 fi
 
-#for LIB_SHORT_NAME in GMP CLN GINAC NTL GIAC CGICC ; do
-for LIB_SHORT_NAME in ; do
+for LIB_SHORT_NAME in $INSTALL_LIST; do
   LIBNAME=${!LIB_SHORT_NAME}
   OPT_PARAM_NAME="OPT_${LIB_SHORT_NAME}"
   OPT_PARAM=${!OPT_PARAM_NAME}
