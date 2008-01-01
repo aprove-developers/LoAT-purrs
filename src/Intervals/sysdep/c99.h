@@ -1,5 +1,5 @@
 /* FPU control for compilers conforming to the C99 standard.
-   Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
+   Copyright (C) 2001-2008 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma Interval Library (PIL).
 

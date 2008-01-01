@@ -1,4 +1,4 @@
-dnl Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
+dnl Copyright (C) 2001-2008 Roberto Bagnara <bagnara@cs.unipr.it>
 dnl  
 dnl This file is free software; as a special exception the author gives
 dnl unlimited permission to copy and/or distribute it, with or without 

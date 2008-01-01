@@ -1,5 +1,5 @@
 # Autoconf source file for the Parma Recurrence Relation Solver.
-# Copyright (C) 2001 Roberto Bagnara <bagnara@cs.unipr.it>
+# Copyright (C) 2001-2008 Roberto Bagnara <bagnara@cs.unipr.it>
 #
 # This file is free software; as a special exception the author gives
 # unlimited permission to copy and/or distribute it, with or without

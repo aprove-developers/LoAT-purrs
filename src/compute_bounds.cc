@@ -1,6 +1,6 @@
 /* Recurrence class implementation: methods (and associated auxiliary
    functions) associated to the computation of lower and upper bounds.
-   Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
+   Copyright (C) 2001-2008 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
 Solver (PURRS).

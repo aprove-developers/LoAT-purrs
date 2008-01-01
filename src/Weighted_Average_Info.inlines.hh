@@ -1,5 +1,5 @@
 /* Weighted_Average_Info class implementation: inline functions.
-   Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
+   Copyright (C) 2001-2008 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
 Solver (PURRS).

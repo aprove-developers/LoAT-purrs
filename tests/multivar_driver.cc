@@ -1,5 +1,5 @@
 /* Simple program to test the recurrence relation solver.
-   Copyright (C) 2005 Roberto Bagnara <bagnara@cs.unipr.it>
+   Copyright (C) 2001-2008 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
 Solver (PURRS).
@@ -357,7 +357,7 @@ process_options(int argc, char* argv[]) {
     case 'V':
       cerr << "multivar_driver version " << PACKAGE_VERSION << ".\n"
         "This is the Parma Recurrence Relation Solver driver.\n"
-        "Copyright (C) 2002-2005 Roberto Bagnara <bagnara@cs.unipr.it>\n"
+        "Copyright (C) 2001-2008 Roberto Bagnara <bagnara@cs.unipr.it>\n"
         "This is free software; see the source for copying conditions.  There is NO\n"
         "warranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n"
         "See http://www.cs.unipr.it/purrs/ for more information.\n"

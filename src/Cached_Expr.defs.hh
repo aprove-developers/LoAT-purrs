@@ -1,6 +1,6 @@
 /* A class for holding expressions and attributes we may have or may have
    not computed (and that we do not want to compute more than once).
-   Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
+   Copyright (C) 2001-2008 Roberto Bagnara <bagnara@cs.unipr.it>
 
 This file is part of the Parma University's Recurrence Relation
 Solver (PURRS).

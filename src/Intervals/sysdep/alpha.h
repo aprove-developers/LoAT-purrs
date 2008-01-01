@@ -1,6 +1,6 @@
 // FPU control for the Alpha architecture.
 
-// Copyright (C) 2002 Roberto Bagnara <bagnara@cs.unipr.it>
+// Copyright (C) 2001-2008 Roberto Bagnara <bagnara@cs.unipr.it>
 //
 // This program is free software; you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
