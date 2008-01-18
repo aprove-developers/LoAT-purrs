@@ -842,8 +842,12 @@ bool insert_initial_conditions(Expr& solution) {
 }
 
 
-Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& terms_with_x,
-		    const Symbol& n_replacement, Expr& real_var_symbol, Expr& solution) {
+Recurrence::Solver_Status multivar_solve(Expr& lhs,
+					 Expr& rhs,
+					 vector<Expr>& terms_with_x,
+					 const Symbol& n_replacement,
+					 Expr& real_var_symbol,
+					 Expr& solution) {
   const int num_param = lhs.arg(1).nops();
   vector<int> dummy(num_param);
 
@@ -1028,7 +1032,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
 
 // We have two resolution methods: the latter seems to be better when initial
 // conditions are not parametric.
-#if 0
+#if 1
 	// The final solution will be given as a combination of two possibile solutions.
 	Expr solution_0 = solution;
 	Expr solution_1 = solution;
