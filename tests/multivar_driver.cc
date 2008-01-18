@@ -1032,7 +1032,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs,
 
 // We have two resolution methods: the latter seems to be better when initial
 // conditions are not parametric.
-#if 1
+#if 0
 	// The final solution will be given as a combination of two possibile solutions.
 	Expr solution_0 = solution;
 	Expr solution_1 = solution;

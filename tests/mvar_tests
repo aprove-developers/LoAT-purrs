@@ -47,5 +47,4 @@ I x(1, {0}) = b
 
 % Bounded queue
 * x(20, {m,n}) = a+b+x(10, {m-1,1+n})
-I x(20, {m,0}) = c
-% Solution: (a+b)*x1+a+c
+I x(20, {0,n}) = c
