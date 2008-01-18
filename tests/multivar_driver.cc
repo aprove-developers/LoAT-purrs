@@ -64,7 +64,7 @@ void
 print_usage() {
   cerr << "Usage: " << program_name << " [OPTION]...\n\n"
     "  -R, --recurrence  \"<rec>\"        set the right-hand side of the recurrence\n"
-    "                           that has to be solved/approximated\n" 
+    "                           that has to be solved/approximated\n"
         "  -h, --help               print this help text\n"
         "  -f, --format=FORMAT      give output in the specified FORMAT:\n"
        "                           text (default), Prolog\n"
@@ -111,7 +111,7 @@ init_symbols() {
     }
 }
 
-// If 'n' happens to be among the arguments, it will be temporary 
+// If 'n' happens to be among the arguments, it will be temporary
 // replaced by a new symbol.
 // Global scope is needed because these symbols will be used troughout
 // the program.
@@ -251,7 +251,7 @@ process_options(int argc, char* argv[]) {
 	recs.push_back(rec);
       }
       break;
-      
+
     case 'I':
       {
         string cond = optarg;
@@ -475,7 +475,7 @@ set_expectations(const string& s) {
       break;
     case 'D':
       expect_diagnose_domain_error = true;
-      break; 
+      break;
     case '*':
       break;
     default:
@@ -677,7 +677,7 @@ output_solution_prolog_term(const Kind& kind, const Expr& solution_or_bound,
     s << ", " << validation;
   // End of the Prolog term.
   s << ").";
-  
+
   cout << s.str() << endl;
 }
 
@@ -689,7 +689,7 @@ prepare_for_the_output(const Kind& kind,
   std::ostringstream s;
   s << "n>=" << precp->first_valid_index_for_solution();
   conditions.push_back(s.str());
-  
+
   // If there is also the exact solution then this is the case
   // of "trivial" bound: the necessary informations on the bound are
   // the informations on the exact solution.
@@ -772,7 +772,7 @@ result_of_the_verification(unsigned type,
         cerr << "*** unexpected conclusive upper bound's verification: gave "
              << status << endl;
     unexpected_conclusive_verifications.push_back(line_number);
-  }  
+  }
 }
 
 
@@ -787,7 +787,7 @@ bool find_terms_with_x(const Expr& this_term, vector<Expr>& terms_with_x) {
   }
   else if (this_term.nops() == 0)
     return true;
-  else { 	   
+  else {
     for (int i = this_term.nops()-1; i >= 0; --i) {
       // FIXME: why do we use different names for the op() and arg() functions?
       // Write a generalized op().
@@ -841,8 +841,8 @@ bool insert_initial_conditions(Expr& solution) {
   return replaced;
 }
 
-      
-Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& terms_with_x, 
+
+Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& terms_with_x,
 		    const Symbol& n_replacement, Expr& real_var_symbol, Expr& solution) {
   const int num_param = lhs.arg(1).nops();
   vector<int> dummy(num_param);
@@ -856,10 +856,10 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
     terms_with_x[i] = terms_with_x[i].substitute(Recurrence::n, n_replacement);
   for (unsigned i = conds.size(); i-- > 0; )
     conds[i] = conds[i].substitute(Recurrence::n, n_replacement);
-  
+
   for (unsigned i = num_param; i-- > 0; ) {
     dummy[i] = true;
-    for (vector<Expr>::const_iterator j = terms_with_x.begin(); j != terms_with_x.end(); ++j) 
+    for (vector<Expr>::const_iterator j = terms_with_x.begin(); j != terms_with_x.end(); ++j)
       if (lhs.arg(0) == j->arg(0)) {
 	if (!dummy[i])
 	  break;
@@ -885,7 +885,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
       }
   }
   std::vector<int> real_var_index;
-  
+
   for (int i = num_param - 1; i >= 0; --i) {
     if (!dummy[i]) {
       if (real_var_index.size() >= 2) {
@@ -896,7 +896,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
 	real_var_index.push_back(i);
     }
   }
-  
+
   // One of the x2() functions will be converted into the x1() function.
   index_type converted_x_index;
 
@@ -904,7 +904,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
   Recurrence::Solver_Status outcome;
   bool constant_difference = false;
   bool constant_sum = false;
-    
+
   if (real_var_index.size() == 1) {
     for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
       const Expr& this_term = (*i);
@@ -923,42 +923,42 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
       // FIXME: Behave properly when multiple x2() functions appear.
       converted_x_index = this_term.arg(0).ex_to_number().to_unsigned_int();
     }
-    
+
     rec.replace_recurrence(rhs);
-    
+
     outcome = compute_exact_solution_wrapper(rec);
-    
+
     if (outcome == Recurrence::SUCCESS) {
       rec.exact_solution(solution);
-      
+
       if (verbose)
 	std::cerr << solution << endl;
-      
-      
+
+
       // FIXME: The recurrence must not have been rewritten for this to succeed.
-      
+
       // Restore original arity and symbol names.
       for (unsigned int i = 0; i < solution.nops(); ++i) {
 	const Expr& this_term = solution.op(i);
 	if (this_term.is_the_x1_function()) {
-	  solution = solution.substitute(this_term, 
+	  solution = solution.substitute(this_term,
 					 lhs.substitute(real_var_symbol, this_term.arg(0)));
 	}
       }
 
       insert_initial_conditions(solution);
-      
+
       // Replace the substituted symbols back to their place.
       solution = solution.substitute(Recurrence::n, real_var_symbol);
       solution = solution.substitute(n_replacement, Recurrence::n);
       lhs = lhs.substitute(n_replacement, Recurrence::n);
-      
+
     }
   }
   else if (real_var_index.size() == 2) {
     // We can solve the recurrence even if we have two true parameters
     // provided that their difference is constant.
-    
+
     // Check whether the difference or sum is constant.
     constant_difference = true;
     bool invalid_constant_difference = false;
@@ -966,12 +966,12 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
     bool invalid_constant_sum = false;
     size_t decreasing_variable;
     size_t increasing_variable;
-    
+
     Expr real_var_expr_0;
     Expr real_var_expr_1;
     Expr real_var_symbol_0;
     Expr real_var_symbol_1;
-    
+
     for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
       const Expr& this_term = (*i);
       real_var_expr_0 = this_term.arg(1).op(real_var_index[0]);
@@ -982,7 +982,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
 	constant_difference = false;
       if (real_var_expr_0 + real_var_expr_1 != real_var_symbol_0 + real_var_symbol_1)
 	constant_sum = false;
-      if (real_var_expr_0.substitute(real_var_symbol_0, different_symbol) !=  
+      if (real_var_expr_0.substitute(real_var_symbol_0, different_symbol) !=
 	  real_var_expr_1.substitute(real_var_symbol_1, different_symbol))
 	invalid_constant_difference = true;
       // FIXME: Write a similar check for invalid_constant_sum.
@@ -1007,7 +1007,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
 #if DEBUG
       cout << "Constant difference." << endl;
 #endif
-    
+
       // Pick one of the two variables and solve the recurrence with respect to it.
       for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
 	const Expr& this_term = (*i);
@@ -1015,17 +1015,17 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
 	real_var_symbol_0 = lhs.arg(1).op(real_var_index[0]);
 	rhs = rhs.substitute(this_term, x(real_var_expr_0.substitute(real_var_symbol_0, Recurrence::n)));
       }
-      
+
       rec.replace_recurrence(rhs);
-      
+
       outcome = compute_exact_solution_wrapper(rec);
-      
+
       if (outcome == Recurrence::SUCCESS) {
 	rec.exact_solution(solution);
-	
+
 	if (verbose)
 	  cout << "Auxiliary recurrence solution: " << solution << endl;
-	
+
 // We have two resolution methods: the latter seems to be better when initial
 // conditions are not parametric.
 #if 0
@@ -1036,25 +1036,25 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
 	for (unsigned int i = 0; i < solution.nops(); ++i) {
 	  const Expr& this_term = solution.op(i);
 	  if (this_term.is_the_x1_function()) {
-	    solution_0 = solution_0.substitute(this_term, 
+	    solution_0 = solution_0.substitute(this_term,
 					       lhs.substitute(real_var_symbol_0, this_term.arg(0)));
-	    solution_1 = solution_1.substitute(this_term, 
+	    solution_1 = solution_1.substitute(this_term,
 					       lhs.substitute(real_var_symbol_0, this_term.arg(0)));
 	    //	  cout << this_term << " - " << solution << endl;
 	  }
 	}
-	
+
 	insert_initial_conditions(solution_0);
 	insert_initial_conditions(solution_1);
 
 	// Replace the substituted symbols back to their place.
 	solution_0 = solution_0.substitute(Recurrence::n, real_var_symbol_0);
 	solution_1 = solution_1.substitute(Recurrence::n, real_var_symbol_1);
-       
+
 	Expr zero = 0;
-	solution = max(real_var_symbol_0 - real_var_symbol_1, zero) / 
+	solution = max(real_var_symbol_0 - real_var_symbol_1, zero) /
 	  (real_var_symbol_0 - real_var_symbol_1) * solution_0 +
-	  max(real_var_symbol_1 - real_var_symbol_0, zero) / 
+	  max(real_var_symbol_1 - real_var_symbol_0, zero) /
 	  (real_var_symbol_1 - real_var_symbol_0) * solution_1;
 
 	// If 'n` was substituted, perform the inverse substitution.
@@ -1067,13 +1067,13 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
 	  if (this_term.is_the_x1_function()) {
 	    const Expr& arg = this_term.arg(0);
 	    Symbol real_var_symbol_0_replacement;
-	    solution = solution.substitute(this_term, 
+	    solution = solution.substitute(this_term,
 					   lhs.substitute(real_var_symbol_0, real_var_symbol_0_replacement).
 					   substitute(real_var_symbol_1, max(arg, real_var_symbol_0 - real_var_symbol_1)).
 					   substitute(real_var_symbol_0_replacement, max(real_var_symbol_1 - real_var_symbol_0, arg)));
 	  }
 	}
-	
+
 	// FIXME: Devise a new method to deal with initial conditions in this case.
 	//	insert_initial_conditions(solution_0);
 	//	insert_initial_conditions(solution_1);
@@ -1095,7 +1095,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
 #if DEBUG
 	cout << "Constant sum." << endl;
 #endif
-    
+
 	// Solve the recurrence with respect to the decreasing variable.
 	for (vector<Expr>::const_iterator i = terms_with_x.begin(); i != terms_with_x.end(); ++i) {
 	  const Expr& this_term = (*i);
@@ -1103,30 +1103,30 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs, Expr& rhs, vector<Expr>& ter
 	  real_var_symbol_0 = lhs.arg(1).op(decreasing_variable);
 	  rhs = rhs.substitute(this_term, x(real_var_expr_0.substitute(real_var_symbol_0, Recurrence::n)));
 	}
-	
+
 	rec.replace_recurrence(rhs);
-	
+
 	outcome = compute_exact_solution_wrapper(rec);
-	
+
 	if (outcome == Recurrence::SUCCESS) {
 	  rec.exact_solution(solution);
-	  
+
 	  if (verbose)
 	    cout << "Auxiliary recurrence solution: " << solution << endl;
-	  
+
 	  // Restore original arity and symbol names.
 	  real_var_symbol_1 = lhs.arg(1).op(increasing_variable);
 	  for (unsigned int i = 0; i < solution.nops(); ++i) {
 	    const Expr& this_term = solution.op(i);
 	    if (this_term.is_the_x1_function()) {
-	      solution = solution.substitute(this_term, 
+	      solution = solution.substitute(this_term,
 					     lhs.substitute(real_var_symbol_0, this_term.arg(0))
 					     .substitute(real_var_symbol_1, real_var_symbol_1 + real_var_symbol_0));
 	    }
 	  }
-	  
+
 	  insert_initial_conditions(solution);
-	  
+
 	  // Replace the substituted symbols back to their place.
 	  solution = solution.substitute(Recurrence::n, real_var_symbol_0);
 	  solution = solution.substitute(n_replacement, Recurrence::n);
@@ -1150,6 +1150,9 @@ main(int argc, char *argv[]) try {
   init_symbols();
 
   process_options(argc, argv);
+
+  if (recs.size() == 0)
+    my_exit(0);
 
   if (recs.size() > 1)
     error_message("Systems of recurrences are not yet supported");
@@ -1188,18 +1191,18 @@ main(int argc, char *argv[]) try {
   }
 
   Expr exact_solution;
-  
+
   Recurrence::Solver_Status solve;
 
   solve = multivar_solve(lhs, rhs, terms_with_x, n_replacement, real_var_symbol, exact_solution);
-  
+
 #ifdef DEBUG
   cout << "Auxiliary recurrence: " << rhs << endl;
 #endif
-  
+
   switch (solve) {
   case Recurrence::SUCCESS: {
-    
+
     switch (output) {
       // FIXME: Prolog must be handled differently.
     case PROLOG:
@@ -1231,10 +1234,10 @@ main(int argc, char *argv[]) try {
   default:
     break;
   }
-  
+
  finish:
   my_exit(0);
-} 
+}
 catch (exception &p) {
   cerr << "std::exception caught: " << p.what() << endl;
   my_exit(1);
