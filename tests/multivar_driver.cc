@@ -841,6 +841,40 @@ bool insert_initial_conditions(Expr& solution) {
   return replaced;
 }
 
+// The former method only explores first-level subexpressions and can
+// miss some substitutions. The latter visits all subexpressions.
+#if 0
+Expr restore_arity_constant_sum(Expr solution, const Expr& lhs, 
+				const Expr& real_var_symbol_0, const Expr& real_var_symbol_1) {
+  for (unsigned int i = 0; i < solution.nops(); ++i) {
+    const Expr& this_term = solution.op(i);
+    if (this_term.is_the_x1_function()) {
+      solution = solution.substitute(this_term,
+				     lhs.substitute(real_var_symbol_0, this_term.arg(0))
+				     .substitute(real_var_symbol_1, real_var_symbol_1 + real_var_symbol_0));
+    }
+  }
+  return solution;
+}
+#else
+Expr restore_arity_constant_sum(Expr ex, const Expr& lhs, 
+				const Expr& real_var_symbol_0, const Expr& real_var_symbol_1) {
+  if (ex.nops() <= 1) {
+    if (ex.is_the_x1_function())
+      ex = ex.substitute(ex,
+			 lhs.substitute(real_var_symbol_0, ex.arg(0))
+			 .substitute(real_var_symbol_1, real_var_symbol_1 + real_var_symbol_0));
+  }
+  else {
+    for (unsigned int i = 0; i < ex.nops(); ++i) {
+      // This limitation comes from an assertion forbidding to call nops() on powers.
+      if (!ex.op(i).is_a_power())
+	ex = ex.substitute(ex.op(i), restore_arity_constant_sum(ex.op(i), lhs, real_var_symbol_0, real_var_symbol_1));
+    }
+  }
+  return ex;
+}
+#endif
 
 Recurrence::Solver_Status multivar_solve(Expr& lhs,
 					 Expr& rhs,
@@ -1120,15 +1154,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs,
 
 	  // Restore original arity and symbol names.
 	  real_var_symbol_1 = lhs.arg(1).op(increasing_variable);
-	  for (unsigned int i = 0; i < solution.nops(); ++i) {
-	    const Expr& this_term = solution.op(i);
-	    if (this_term.is_the_x1_function()) {
-	      solution = solution.substitute(this_term,
-					     lhs.substitute(real_var_symbol_0, this_term.arg(0))
-					     .substitute(real_var_symbol_1, real_var_symbol_1 + real_var_symbol_0));
-	    }
-	  }
-
+	  solution = restore_arity_constant_sum(solution, lhs, real_var_symbol_0, real_var_symbol_1);
 	  insert_initial_conditions(solution);
 
 	  // Replace the substituted symbols back to their place.
