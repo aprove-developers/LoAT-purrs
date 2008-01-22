@@ -802,6 +802,8 @@ bool find_terms_with_x(const Expr& this_term, vector<Expr>& terms_with_x) {
 }
 
 // Insert initial conditions.
+// FIXME: This works for immediate subexpressions only, and should
+// eventually be replaced by the recursive version below.
 bool insert_initial_conditions(Expr& solution) {
   bool replaced = false;
   for (unsigned int i = 0; i < solution.nops(); ++i) {
@@ -841,6 +843,50 @@ bool insert_initial_conditions(Expr& solution) {
   return replaced;
 }
 
+// Insert initial conditions, recursive version.
+Expr insert_initial_conditions_recursive(Expr ex) {
+  // This limitation comes from an assertion forbidding to call nops() on powers.
+  if (ex.is_a_power() || ex.is_a_function() || ex.nops() <= 1) {
+    const Expr& this_term = ex;
+    if (this_term.is_the_x2_function()) {
+      for (unsigned int j = 0; j < conds.size(); ++j) {
+	bool matches = true;
+	const Expr& term_list = this_term.arg(1);
+	const Expr& this_lhs = conds[j].op(0);
+	const Expr& this_list = this_lhs.arg(1);
+	const Expr& this_rhs = conds[j].op(1);
+	if (this_term.arg(0) == this_lhs.arg(0)) {
+	  for (unsigned int k = 0; k < this_list.nops(); ++k) {
+	    if (this_list.op(k).is_a_number()) {
+	      if (!term_list.op(k).is_a_number())
+		matches = false;
+	      else
+		if (term_list.op(k) != this_list.op(k))
+		  matches = false;
+	    }
+	    if (!matches)
+	      break;
+	  }
+	}
+	else
+	  matches = false;
+	if (matches) {
+	  Expr new_rhs = this_rhs;
+	  for (unsigned int h = 0; h < term_list.nops(); ++h)
+	    new_rhs = new_rhs.substitute(this_list.op(h), term_list.op(h));
+	  ex = ex.substitute(this_term, new_rhs);
+	}
+      }
+    }
+  }
+  else {
+    for (unsigned int i = 0; i < ex.nops(); ++i) {
+      ex = ex.substitute(ex.op(i), insert_initial_conditions_recursive(ex.op(i)));
+    }
+  }
+  return ex;
+}
+
 // The former method only explores first-level subexpressions and can
 // miss some substitutions. The latter visits all subexpressions.
 #if 0
@@ -859,7 +905,8 @@ Expr restore_arity_constant_sum(Expr solution, const Expr& lhs,
 #else
 Expr restore_arity_constant_sum(Expr ex, const Expr& lhs, 
 				const Expr& real_var_symbol_0, const Expr& real_var_symbol_1) {
-  if (ex.nops() <= 1) {
+  // This limitation comes from an assertion forbidding to call nops() on powers.
+  if (ex.is_a_power() || ex.is_a_function() || ex.nops() <= 1) {
     if (ex.is_the_x1_function())
       ex = ex.substitute(ex,
 			 lhs.substitute(real_var_symbol_0, ex.arg(0))
@@ -867,9 +914,7 @@ Expr restore_arity_constant_sum(Expr ex, const Expr& lhs,
   }
   else {
     for (unsigned int i = 0; i < ex.nops(); ++i) {
-      // This limitation comes from an assertion forbidding to call nops() on powers.
-      if (!ex.op(i).is_a_power())
-	ex = ex.substitute(ex.op(i), restore_arity_constant_sum(ex.op(i), lhs, real_var_symbol_0, real_var_symbol_1));
+      ex = ex.substitute(ex.op(i), restore_arity_constant_sum(ex.op(i), lhs, real_var_symbol_0, real_var_symbol_1));
     }
   }
   return ex;
@@ -1155,7 +1200,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs,
 	  // Restore original arity and symbol names.
 	  real_var_symbol_1 = lhs.arg(1).op(increasing_variable);
 	  solution = restore_arity_constant_sum(solution, lhs, real_var_symbol_0, real_var_symbol_1);
-	  insert_initial_conditions(solution);
+	  solution = insert_initial_conditions_recursive(solution);
 
 	  // Replace the substituted symbols back to their place.
 	  solution = solution.substitute(Recurrence::n, real_var_symbol_0);
