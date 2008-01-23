@@ -34,17 +34,22 @@
 % Each recurrence must be followed by a line starting with I that contains
 % a (possibly empty) semicolon-separated list of initial conditions.
 
-* x(5, {m, p, q}) = 2*x(5, {m, p-1, q})+q
-I x(5, {m, 0, q}) = k
+% One true variable.
+* x(5, {m, p, q}) == 2*x(5, {m, p-1, q})+q
+I x(5, {m, 0, q}) == k
 
-% Constant difference
-* x(4, {l, m, n}) = 2 * x(4, {l-1, m, n-1}) + l - m
-I x(4, {0, m, n}) = 3; x(4, {l, m, 0}) = 3
+% Constant difference.
+* x(4, {l, m, n}) == 2 * x(4, {l-1, m, n-1}) + l - m
+I x(4, {0, m, n}) == 3; x(4, {l, m, 0}) = 3
 
-% Length
-* x(1,{m}) = a+x(1,{m-1})
-I x(1, {0}) = b
+% Length.
+* x(1,{m}) == a+x(1,{m-1})
+I x(1, {0}) == b
 
-% Bounded queue
-* x(20, {m,n}) = a+b+x(10, {m-1,1+n})
-I x(20, {0,n}) = c
+% Bounded queue.
+* x(20, {m,n}) == a+b+x(20, {m-1,1+n})
+I x(20, {0,n}) == c
+
+% Variant of the bounded queue example.
+* x(20, {m,n}) == a+b+2*x(20, {m-1,1+n})
+I x(20, {0,n}) == c
