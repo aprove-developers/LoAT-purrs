@@ -65,13 +65,15 @@ const char* program_name = 0;
 void
 print_usage() {
   cerr << "Usage: " << program_name << " [OPTION]...\n\n"
-    "  -R, --recurrence  \"<rec>\"        set the right-hand side of the recurrence\n"
-    "                           that has to be solved/approximated\n"
-        "  -h, --help               print this help text\n"
-        "  -f, --format=FORMAT      give output in the specified FORMAT:\n"
-       "                           text (default), Prolog\n"
-    "  -r, --regress-test       set regression-testing mode on\n"
-    "  -V, --version            show version number and exit"
+    "  -R, --recurrence \"<rec>\"     set the recurrence to be solved\n"
+    "                               Example: -R \"x(1,{n,m}) == 2*x(1,{n-1,m+1})\"\n"
+    "  -I, -initial-condition \"<c>\" set a universally quantified initial condition\n"
+    "                               Example: -I \"x(1,{0,m}) == 3\"\n"
+        "  -h, --help                   print this help text\n"
+        "  -f, --format=FORMAT          give output in the specified FORMAT:\n"
+       "                               text (default), Prolog\n"
+    "  -r, --regress-test           set regression-testing mode on\n"
+    "  -V, --version                show version number and exit"
        << endl;
 }
 
