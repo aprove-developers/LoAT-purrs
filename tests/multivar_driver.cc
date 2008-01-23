@@ -58,6 +58,8 @@ static struct option long_options[] = {
 
 enum Formats {TEXT, PROLOG};
 
+enum Recurrence_Types {ONE_TRUE_VARIABLE, CONSTANT_DIFFERENCE, CONSTANT_SUM};
+
 const char* program_name = 0;
 
 void
@@ -78,9 +80,6 @@ print_usage() {
 // To avoid mixing incompatible options.
 static bool production_mode = false;
 static bool test_mode = false;
-
-// When true, the recurrence for the production mode has been specified.
-static bool have_recurrence = false;
 
 // When true, the output has the form of prolog term.
 static bool prolog_term_required = false;
@@ -202,13 +201,7 @@ std::vector<Expr> recs;
 std::vector<Expr> conds;
 
 
-static void
-init_production_recurrence() {
-  if (precp == 0)
-    precp = new Recurrence();
-}
-
-  std::map<index_type, Expr> function_args;
+std::map<index_type, Expr> function_args;
 
 
 static void
@@ -890,31 +883,69 @@ Expr insert_initial_conditions_recursive(Expr ex) {
 // The former method only explores first-level subexpressions and can
 // miss some substitutions. The latter visits all subexpressions.
 #if 0
-Expr restore_arity_constant_sum(Expr solution, const Expr& lhs, 
-				const Expr& real_var_symbol_0, const Expr& real_var_symbol_1) {
+Expr restore_arity(Expr solution, const Expr& lhs, 
+		   const Expr& real_var_symbol_0, const Expr& real_var_symbol_1,
+		   int type) {
   for (unsigned int i = 0; i < solution.nops(); ++i) {
     const Expr& this_term = solution.op(i);
     if (this_term.is_the_x1_function()) {
-      solution = solution.substitute(this_term,
-				     lhs.substitute(real_var_symbol_0, this_term.arg(0))
-				     .substitute(real_var_symbol_1, real_var_symbol_1 + real_var_symbol_0));
+      switch (type) {
+      case ONE_TRUE_VARIABLE:
+	solution = solution.substitute(solution,
+				       lhs.substitute(real_var_symbol_0, solution.arg(0)));
+	break;
+      case CONSTANT_DIFFERENCE: {
+	const Expr& arg = this_term.arg(0);
+	Symbol real_var_symbol_0_replacement;
+	solution = solution.substitute(this_term,
+				       lhs.substitute(real_var_symbol_0, real_var_symbol_0_replacement).
+				       substitute(real_var_symbol_1, max(arg, real_var_symbol_0 - real_var_symbol_1)).
+				       substitute(real_var_symbol_0_replacement, max(real_var_symbol_1 - real_var_symbol_0, arg)));
+	break;
+      }
+      case CONSTANT_SUM:
+	solution = solution.substitute(this_term,
+				       lhs.substitute(real_var_symbol_0, this_term.arg(0))
+				       .substitute(real_var_symbol_1, real_var_symbol_1 + real_var_symbol_0));
+	break;
+      }
     }
   }
   return solution;
 }
 #else
-Expr restore_arity_constant_sum(Expr ex, const Expr& lhs, 
-				const Expr& real_var_symbol_0, const Expr& real_var_symbol_1) {
+Expr restore_arity(Expr ex, const Expr& lhs, 
+		   const Expr& real_var_symbol_0, const Expr& real_var_symbol_1,
+		   int type) {
   // This limitation comes from an assertion forbidding to call nops() on powers.
   if (ex.is_a_power() || ex.is_a_function() || ex.nops() <= 1) {
     if (ex.is_the_x1_function())
-      ex = ex.substitute(ex,
-			 lhs.substitute(real_var_symbol_0, ex.arg(0))
-			 .substitute(real_var_symbol_1, real_var_symbol_1 + real_var_symbol_0));
+      switch (type) {
+      case ONE_TRUE_VARIABLE:
+	// We don't use real_var_symbol_1 here, because it's equal to
+	// real_var_symbol_0 in this case.
+	ex = ex.substitute(ex,
+			   lhs.substitute(real_var_symbol_0, ex.arg(0)));
+	break;
+      case CONSTANT_DIFFERENCE: {
+	const Expr& arg = ex.arg(0);
+	Symbol real_var_symbol_0_replacement;
+	ex = ex.substitute(ex,
+			   lhs.substitute(real_var_symbol_0, real_var_symbol_0_replacement).
+			   substitute(real_var_symbol_1, max(arg, real_var_symbol_0 - real_var_symbol_1)).
+			   substitute(real_var_symbol_0_replacement, max(real_var_symbol_1 - real_var_symbol_0, arg)));
+	break;
+      }
+      case CONSTANT_SUM:
+	ex = ex.substitute(ex,
+			   lhs.substitute(real_var_symbol_0, ex.arg(0))
+			   .substitute(real_var_symbol_1, real_var_symbol_1 + real_var_symbol_0));
+	break;
+      }
   }
   else {
     for (unsigned int i = 0; i < ex.nops(); ++i) {
-      ex = ex.substitute(ex.op(i), restore_arity_constant_sum(ex.op(i), lhs, real_var_symbol_0, real_var_symbol_1));
+      ex = ex.substitute(ex.op(i), restore_arity(ex.op(i), lhs, real_var_symbol_0, real_var_symbol_1, type));
     }
   }
   return ex;
@@ -1017,19 +1048,12 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs,
       if (verbose)
 	std::cerr << solution << endl;
 
-
       // FIXME: The recurrence must not have been rewritten for this to succeed.
 
       // Restore original arity and symbol names.
-      for (unsigned int i = 0; i < solution.nops(); ++i) {
-	const Expr& this_term = solution.op(i);
-	if (this_term.is_the_x1_function()) {
-	  solution = solution.substitute(this_term,
-					 lhs.substitute(real_var_symbol, this_term.arg(0)));
-	}
-      }
+      solution = restore_arity(solution, lhs, real_var_symbol, real_var_symbol, ONE_TRUE_VARIABLE);
 
-      insert_initial_conditions(solution);
+      solution = insert_initial_conditions_recursive(solution);
 
       // Replace the substituted symbols back to their place.
       solution = solution.substitute(Recurrence::n, real_var_symbol);
@@ -1116,6 +1140,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs,
 	Expr solution_0 = solution;
 	Expr solution_1 = solution;
 	// Restore original arity and symbol names.
+	// FIXME: This works for immediate subexpressions only.
 	for (unsigned int i = 0; i < solution.nops(); ++i) {
 	  const Expr& this_term = solution.op(i);
 	  if (this_term.is_the_x1_function()) {
@@ -1145,21 +1170,12 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs,
 	lhs = lhs.substitute(n_replacement, Recurrence::n);
 #else
 	// Restore original arity and symbol names.
-	for (unsigned int i = 0; i < solution.nops(); ++i) {
-	  const Expr& this_term = solution.op(i);
-	  if (this_term.is_the_x1_function()) {
-	    const Expr& arg = this_term.arg(0);
-	    Symbol real_var_symbol_0_replacement;
-	    solution = solution.substitute(this_term,
-					   lhs.substitute(real_var_symbol_0, real_var_symbol_0_replacement).
-					   substitute(real_var_symbol_1, max(arg, real_var_symbol_0 - real_var_symbol_1)).
-					   substitute(real_var_symbol_0_replacement, max(real_var_symbol_1 - real_var_symbol_0, arg)));
-	  }
-	}
+	solution = restore_arity(solution, lhs, real_var_symbol_0, real_var_symbol_1, CONSTANT_DIFFERENCE);
 
-	// FIXME: Devise a new method to deal with initial conditions in this case.
-	//	insert_initial_conditions(solution_0);
-	//	insert_initial_conditions(solution_1);
+	// FIXME: This is not enough in some cases. But handling expressions containing
+	// max() operators is quite complex, and well-definedness of initial conditions
+	// is problematic too.
+	solution = insert_initial_conditions_recursive(solution);
 
 	// Replace the substituted symbols back to their place.
 	// 'n` must be replaced by the minimum of the two involved arguments.
@@ -1199,7 +1215,7 @@ Recurrence::Solver_Status multivar_solve(Expr& lhs,
 
 	  // Restore original arity and symbol names.
 	  real_var_symbol_1 = lhs.arg(1).op(increasing_variable);
-	  solution = restore_arity_constant_sum(solution, lhs, real_var_symbol_0, real_var_symbol_1);
+	  solution = restore_arity(solution, lhs, real_var_symbol_0, real_var_symbol_1, CONSTANT_SUM);
 	  solution = insert_initial_conditions_recursive(solution);
 
 	  // Replace the substituted symbols back to their place.
