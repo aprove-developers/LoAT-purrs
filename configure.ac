@@ -15,10 +15,17 @@
 AC_INIT([the Parma Recurrence Relation Solver], 0.0.3, purrs-devel@cs.unipr.it, purrs)
 
 # Minimum autoconf version required.
-AC_PREREQ(2.52g)
+AC_PREREQ(2.61)
 
 # Make sure the sources are there.
 AC_CONFIG_SRCDIR(src/Recurrence.cc)
+
+# Specify the location of additional local Autoconf macros.
+AC_CONFIG_MACRO_DIR([m4])
+
+# Determine the system type and set output variables to the names of
+# the canonical system types.
+AC_CANONICAL_HOST
 
 # Use Automake.
 AM_INIT_AUTOMAKE([foreign dist-bzip2 dist-zip 1.5])
@@ -29,8 +36,6 @@ AM_CONFIG_HEADER(config.h)
 
 ISODATE=`date +%Y-%m-%d`
 AC_SUBST(ISODATE)
-
-AC_CANONICAL_HOST
 
 AH_TOP([
 #ifndef _purrs_config_h
@@ -121,19 +126,15 @@ AC_CHECK_SIZEOF(mp_limb_t, 4, [#include <gmp.h>])
 extra_includes="${extra_includes} ${gmp_includes_option}"
 extra_libraries="${extra_libraries} ${gmp_library_option}"
 
+
 # CLN library
 
-AC_PATH_CLN(1.1.4, [
-  extra_libraries="${extra_libraries} ${CLN_LIBS}"
-  extra_includes="${extra_includes} $CLN_CPPFLAGS"  
-], AC_MSG_ERROR([need to have the CLN library installed]))
+AC_LIB_LINKFLAGS([cln])
 
 # GiNaC library
 
-AC_PATH_GINAC(1.0.5, [
-  extra_libraries="${extra_libraries} ${GINACLIB_LIBS}"
-  extra_includes="${extra_includes} $GINACLIB_CPPFLAGS"  
-], AC_MSG_ERROR([need to have the GiNaC library installed]))
+AC_LIB_LINKFLAGS([ginac])
+extra_libraries="${extra_libraries} ${LTLIBGINAC}"
 
 # Compilation flags
 

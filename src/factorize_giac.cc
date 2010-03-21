@@ -115,7 +115,8 @@ translate(const Expr& e, Expr& num_factors, Expr& not_num_factors,
   }
   else if (e.is_a_power())
     return pow(translate(e.arg(0), num_factors, not_num_factors, blackboard),
-	       translate(e.arg(1), num_factors, not_num_factors, blackboard));
+	       translate(e.arg(1), num_factors, not_num_factors, blackboard),
+               0);
   else if (e.is_a_function()) {
     if (e.nops() == 1) {
       // Recursevely factorize the argument of the function `e'.
@@ -323,7 +324,9 @@ factorize_giac_recursive(const Expr& e,
   // Translate GiNaC expressions in giac expressions.
   gen giac_e = translate(e, num_factors, not_num_factors, blackboard);
   // Call the giac function in order to factorize expression.
-  gen giac_e_factorized = factor(giac_e);
+  // FIXME: the boolean parameter is called `withsqrt' and was not
+  //present in old releases of giac: should it be true or false here?
+  gen giac_e_factorized = factor(giac_e, false, 0);
   // The decomposition executed by `giac' considers the numeric factors,
   // but when we come back to the GiNaC's expressions, the numeric
   // factors are automatically distributed. In order to avoid this,
