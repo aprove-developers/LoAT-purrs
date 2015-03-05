@@ -70,10 +70,10 @@ myprint(const gen& e_giac, unsigned int indent = 0) {
     myprint(e_giac._FRACptr->den, indent+2);
   }
   else if (e_giac.type == _IDNT)
-    cout << "identif: " << *(e_giac._IDNTptr->name) << endl;
+    cout << "identif: " << (e_giac._IDNTptr->name()) << endl;
   else if (e_giac.type == _SYMB) {
     cout << "symbolic: ";
-    cout << e_giac._SYMBptr->sommet.ptr->s << endl;
+    cout << e_giac._SYMBptr->sommet.ptr()->s << endl;
     myprint(e_giac._SYMBptr->feuille, indent+2);
   }
   else if (e_giac.type == _VECT) {
@@ -85,10 +85,10 @@ myprint(const gen& e_giac, unsigned int indent = 0) {
 }
 
 unary_function_ptr
-find_functor_ptr(const std::string& str, unary_function_ptr tab[]) {
+find_functor_ptr(const std::string& str, const unary_function_ptr tab[]) {
   for (int i = 1; *tab != 0; ++tab, ++i) {
     unary_function_ptr tmp = *tab;
-    if (tmp.ptr->s == str)
+    if (tmp.ptr()->s == str)
       return tmp;
   }
   return 0;
@@ -124,19 +124,25 @@ translate(const Expr& e, Expr& num_factors, Expr& not_num_factors,
       Expr not_num_factors_arg;
       factorize_giac_recursive(e.arg(0), num_factors_arg, not_num_factors_arg);
       unary_function_ptr functor = find_functor_ptr(e.get_function_name(),
-						    archive_function_tab);
+						    archive_function_tab());
       // FIXME: Not to use the constructor of the class `symbolic' but 
       // to use the identificateur (as for the functions with more than one
       // arguments).
       // Using the identificateur is better than the symbolic object
       // because in this way is applicable the factorization's process
       // (on symbolic object the factorization's process does not work).
-      if (functor == 0)
+      if (functor == 0) {
 #if 1
-	return symbolic(unary_function_abstract(e.get_function_name()),
-			translate(num_factors_arg*not_num_factors_arg,
-				  num_factors, not_num_factors,
-				  blackboard));
+        unary_function_abstract ufa = unary_function_abstract(0, e.get_function_name());
+        return symbolic(
+                 unary_function_ptr(&ufa),
+                 translate(
+                   num_factors_arg*not_num_factors_arg,
+                   num_factors,
+                   not_num_factors,
+                   blackboard
+                 )
+               );
 #else
       {
 // 	const Expr& tmp = apply(e.functor(), argument);
@@ -144,6 +150,7 @@ translate(const Expr& e, Expr& num_factors, Expr& not_num_factors,
 	
       }
 #endif
+      }
       else
 #if 1
 	return symbolic(functor, translate(num_factors_arg*not_num_factors_arg,
@@ -283,7 +290,7 @@ translate(const gen& e_giac) {
     return Number(e_giac._FRACptr->num.to_int(),
 		  e_giac._FRACptr->den.to_int());
   else if (e_giac.type == _IDNT)
-    return Symbol(*(e_giac._IDNTptr->name));
+    return Symbol(e_giac._IDNTptr->name());
   else if (e_giac.type == _SYMB) {
     if (e_giac.is_symb_of_sommet(at_prod)) {
       gen& arg = e_giac._SYMBptr->feuille;
@@ -308,7 +315,7 @@ translate(const gen& e_giac) {
       return pwr(translate(e_giac._SYMBptr->feuille._VECTptr->front()),
 		 translate(e_giac._SYMBptr->feuille._VECTptr->back()));
     else {
-      Functor f = find_functor(e_giac._SYMBptr->sommet.ptr->s);
+      Functor f = find_functor(e_giac._SYMBptr->sommet.ptr()->s);
       Expr arg = translate(e_giac._SYMBptr->feuille);
       return apply(f, arg); 
     }
