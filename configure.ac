@@ -130,6 +130,7 @@ extra_libraries="${extra_libraries} ${gmp_library_option}"
 # CLN library
 
 AC_LIB_LINKFLAGS([cln])
+extra_libraries="${extra_libraries} ${LTLIBCLN}"
 
 # GiNaC library
 
