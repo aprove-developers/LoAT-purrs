@@ -1,0 +1,15 @@
+*.o
+*.Po
+*.in
+*.cgi
+*latex
+*html
+*.a
+*.m4
+*driver
+Makefile
+*.0
+*.1
+*.log
+*.status
+
