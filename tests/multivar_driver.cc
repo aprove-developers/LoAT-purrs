@@ -126,7 +126,14 @@ parse_expression(const string& s, Expr& expr) {
   try {
     //  for (unsigned int i = 0; i < symbols.nops(); ++i)
     //    cout << symbols.op(i) << endl;
-    expr = Expr(s, symbols);
+    std::string ss = std::string(s);
+    int firstEq = ss.find_first_of("=");
+    int lastEq = ss.find_last_of("=");
+    std::string lhss = ss.substr(0, firstEq);
+    std::string rhss = ss.substr(lastEq + 1);
+    Expr lhs = Expr(lhss, symbols);
+    Expr rhs = Expr(rhss, symbols);
+    expr = Expr(lhs, rhs);
     return true;
   }
   catch (exception& e) {
