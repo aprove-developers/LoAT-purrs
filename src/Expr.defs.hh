@@ -495,6 +495,14 @@ public:
   //! Default constructor.
   Expr();
 
+
+  //! PATCH: allow conversion from a GiNaC::ex pression
+  static Expr fromGiNaC(const Base &b) { return Expr(b); }
+
+  //! PATCH: allow conversion back to a GiNaC::ex pression
+  inline Base toGiNaC() const { return (GiNaC::ex)*this; }
+
+
   //! Builds the integer expression \p i.
   Expr(int i);
 
