@@ -612,7 +612,7 @@ reduce_to_standard_form(const Number& root_index, const Number& r) {
   num /= g;
   den /= g; // clear any common factors from num, den.
   if (k % 2 == 0 && sign == -1) // complex sign if k is even and r < 0.
-    sign = k > 0 ? Number::I : -Number::I;
+    sign = k > 0 ? Number::I() : -Number::I();
   if (k < 0) { // swap numerator and denominator, and change sign of k.
     Number i = num;
     num = den;

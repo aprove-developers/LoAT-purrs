@@ -27,5 +27,3 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Number.defs.hh"
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
-
-const PURRS::Number PURRS::Number::I = GiNaC::I;

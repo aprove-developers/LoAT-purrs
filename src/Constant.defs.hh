@@ -51,7 +51,7 @@ public:
   Constant& operator=(const Constant& k);
 
   //! The Archimedes'constant \f$ \pi = 3.14159\dots \f$.
-  static const Constant Pi;
+  static Constant Pi();
 
 private:
   friend class Expr;

@@ -390,6 +390,11 @@ mod(const Number& x, const Number& y) {
   return GiNaC::mod(x.n, y.n);
 }
 
+inline Number
+Number::I() {
+  return GiNaC::I;
+}
+
 } // namespace Parma_Recurrence_Relation_Solver
 
 #endif // !defined(PURRS_Number_inlines_hh)

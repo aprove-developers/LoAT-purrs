@@ -787,11 +787,11 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
   // Compute `to_sub_in_solution': it is the value to substitute to the
   // function `mod()'.
   Expr to_sub_in_solution = 0;
-  const Expr& theta = 2*Constant::Pi/gcd_among_decrements;
+  const Expr& theta = 2*Constant::Pi()/gcd_among_decrements;
   // FIXME: the commented code is probably better for the simplifications,
   // but it is not clear which is more efficient.
 #if 0
-  const Expr& omega = cos(theta) + Number::I*sin(theta);
+  const Expr& omega = cos(theta) + Number::I()*sin(theta);
   for (unsigned int j = 1; j < gcd_among_decrements; ++j) {
     const Expr& root_of_unity = pwr(omega, j);
     to_sub_in_solution += root_of_unity * pwr(1 - root_of_unity, -1)
@@ -799,7 +799,7 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
   }
 #else
   for (unsigned int j = 1; j <= gcd_among_decrements; ++j) {
-    const Expr& root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
+    const Expr& root_of_unity = cos(j*theta) + Number::I()*sin(j*theta);
     // Skip the contribution of the root of unity equal to `1'.
     if (root_of_unity != 1)
       to_sub_in_solution += root_of_unity * pwr(1 - root_of_unity, -1)
@@ -826,7 +826,7 @@ PURRS::Recurrence::write_expanded_solution(const Recurrence& rec,
       }
 #else
       for (unsigned int j = 1; j <= gcd_among_decrements; ++j) {	  
-	const Expr& root_of_unity = cos(j*theta) + Number::I*sin(j*theta);
+	const Expr& root_of_unity = cos(j*theta) + Number::I()*sin(j*theta);
 	tmp += pwr(root_of_unity,
 		   Recurrence::n - (i + h * gcd_among_decrements));
       }

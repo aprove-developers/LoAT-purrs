@@ -25,6 +25,8 @@ http://www.cs.unipr.it/purrs/ . */
 #ifndef PURRS_Constant_inlines_hh
 #define PURRS_Constant_inlines_hh
 
+#include "Constant.defs.hh"
+
 namespace Parma_Recurrence_Relation_Solver {
 
 inline
@@ -49,6 +51,11 @@ Constant::Constant(const GiNaC::constant& gc)
 
 inline
 Constant::~Constant() {
+}
+
+inline
+Constant Constant::Pi() {
+  return GiNaC::Pi;
 }
 
 } // namespace Parma_Recurrence_Relation_Solver

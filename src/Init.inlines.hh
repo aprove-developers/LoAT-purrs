@@ -35,6 +35,10 @@ Init::Init() {
   if (count++ == 0) {
     // ... create and immediately destroy an instance
     // of each user-defined function.
+
+/*  Note: undefined initialization order with GiNaC's static constants
+          causes segfaults when linked statically
+
     Symbol a;
     Expr* dummy;
     dummy = new Expr(x(a));
@@ -42,7 +46,7 @@ Init::Init() {
     dummy = new Expr(sum(a, 1, 2, a));
     delete dummy;
     dummy = new Expr(prod(a, 1, 2, a));
-    delete dummy;
+    delete dummy; */
   }
 }
 

@@ -27,5 +27,3 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Constant.defs.hh"
 
 namespace PURRS = Parma_Recurrence_Relation_Solver;
-
-const PURRS::Constant PURRS::Constant::Pi = GiNaC::Pi;

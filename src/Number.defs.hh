@@ -313,7 +313,7 @@ public:
   Number denominator() const;
 
   //! The imaginary unit.
-  static const Number I;
+  static Number I();
 
 private:
   friend class Expr;
