@@ -17,4 +17,6 @@ VPATH = @srcdir@
 
 EXTRA_DIST = configure # purrs.lsm.in purrs.spec.in acinclude.m4 BUGS CREDITS
 
-SUBDIRS = src doc m4 tests demos #interfaces
+# exclude demos to reduce dependencies
+SUBDIRS = src doc m4 tests
+# SUBDIRS = src doc m4 tests demos #interfaces
