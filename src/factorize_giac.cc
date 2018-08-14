@@ -30,6 +30,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "Expr.defs.hh"
 #include "Symbol.defs.hh"
 #include "Number.defs.hh"
+#include <giac/global.h>
 #include <giac/sym2poly.h>
 #include <giac/usual.h>
 #include <giac/symbolic.h>
