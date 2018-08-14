@@ -19,7 +19,6 @@ Building LoAT-purrs is a bit painful. The following steps worked for me (on Debi
   * `libreadline-dev`
 * install `libgiac-dev`
   * available from Debian's unstable-repository or https://www-fourier.ujf-grenoble.fr/~parisse/install_en#packages
-* comment the line `& !ctrl_c && !interrupted` in `/usr/include/giac/poly.h`, which unfortunately causes compilation errors
 * compile and install LoAT-purrs by the following steps:
   * `autoreconf --install`
   * `autoconf` (I guess this step isn't necessary)
@@ -29,15 +28,31 @@ Building LoAT-purrs is a bit painful. The following steps worked for me (on Debi
   * `sudo checkinstall`
   * alternatively, `sudo make install` should work as well, but then you bypass your package manager...
 
-## Problems
+## Known Issues
 
-If you get compiler errors caused by the GiNaC headers (ginac.h), you might need to enable C++11 features:
+ * Adding _compiler flags_ (e.g. for non-standard include directories):
 
-```
-./configure --with-cxxflags='-std=c++11'
-```
+   PURRS' Makefiles seem to ignore (or override) the usual environment variables (`CFLAGS`, `CXXFLAGS`).
+   Instead, one can specify flags to `configure` with the `--with-cxxflags` option (see below for examples).
 
-This flag can also be used to specify other compiler flags, such as non standard include directories (via `-I/path/to/include`), since PURRS' Makefiles seem to ignore (or override) the usual environment variables (`CFLAGS`, `CXXFLAGS`).
+ * Depending on how `libntl` was configured, it might need `pthread`. So if you see _linker errors_ similar to these:
+
+   ```
+   libntl.so: undefined reference to `pthread_key_create'
+   libntl.so: undefined reference to `pthread_setspecific'
+   ```
+
+   You might have to add the `-pthread` flag to the compiler:
+
+   ```
+   ./configure --with-cxxflags='-pthread'
+   ```
+
+ * If you get _compiler errors caused by the GiNaC headers_ (ginac.h), you might need to enable C++11 features:
+
+   ```
+   ./configure --with-cxxflags='-std=c++11'
+   ```
 
 ## Demos
 
