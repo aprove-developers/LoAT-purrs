@@ -17,11 +17,11 @@ Building LoAT-purrs is a bit painful. The following steps worked for me (on Debi
   * `libginac-dev`
   * `libntl-dev`
   * `libreadline-dev`
+  * `libfltk1.3-dev`
 * install `libgiac-dev`
   * available from Debian's unstable-repository or https://www-fourier.ujf-grenoble.fr/~parisse/install_en#packages
 * compile and install LoAT-purrs by the following steps:
   * `autoreconf --install`
-  * `autoconf` (I guess this step isn't necessary)
   * `automake`
   * `./configure`
   * `make`
