@@ -36,38 +36,38 @@ Expr_List::Expr_List() {
 
 inline
 Expr_List::Expr_List(const Symbol& x)
-  : l(x.s) {
+  : l({x.s}) {
 }
 
 inline
 Expr_List::Expr_List(const Expr& e)
-  : l(static_cast<const GiNaC::ex>(e)) {
+  : l({static_cast<const GiNaC::ex>(e)}) {
 }
 
 inline
 Expr_List::Expr_List(const Expr& e1, const Expr& e2)
-  : l(static_cast<const GiNaC::ex>(e1), static_cast<const GiNaC::ex>(e2)) {
+  : l({static_cast<const GiNaC::ex>(e1), static_cast<const GiNaC::ex>(e2)}) {
 };
 
 inline
 Expr_List::Expr_List(const Expr& e1, const Expr& e2, const Expr& e3,
 		     const Expr& e4, const Expr& e5)
-  : l(static_cast<const GiNaC::ex>(e1),
+  : l({static_cast<const GiNaC::ex>(e1),
       static_cast<const GiNaC::ex>(e2),
       static_cast<const GiNaC::ex>(e3),
       static_cast<const GiNaC::ex>(e4),
-      static_cast<const GiNaC::ex>(e5)) {
+      static_cast<const GiNaC::ex>(e5)}) {
 };
 
 inline
 Expr_List::Expr_List(const Expr& e1, const Expr& e2, const Expr& e3,
 		     const Expr& e4, const Expr& e5, const Expr& e6)
-  : l(static_cast<const GiNaC::ex>(e1),
+  : l({static_cast<const GiNaC::ex>(e1),
       static_cast<const GiNaC::ex>(e2),
       static_cast<const GiNaC::ex>(e3),
       static_cast<const GiNaC::ex>(e4),
       static_cast<const GiNaC::ex>(e5),
-      static_cast<const GiNaC::ex>(e6)) {
+      static_cast<const GiNaC::ex>(e6)}) {
 };
 
 inline

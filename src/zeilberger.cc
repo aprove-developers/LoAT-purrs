@@ -32,6 +32,7 @@ http://www.cs.unipr.it/purrs/ . */
 #include "simplify.hh"
 #include "util.hh"
 #include "Recurrence.defs.hh"
+#include "Recurrence.inlines.hh"
 #include "Expr.defs.hh"
 #include "Symbol.defs.hh"
 
