@@ -827,7 +827,7 @@ manip_factor(const Expr& e, bool input) {
       if (factor_e_rewritten.is_a_function())
 	if (factor_e_rewritten.nops() == 1)
 	  factor_function
-	    *= apply(factor_e_rewritten.functor(),
+	    *= PURRS::apply(factor_e_rewritten.functor(),
 		     simplify_expanded_ex_for_output(factor_e_rewritten.arg(0)
 						     .expand(), input));
 	else {
@@ -837,7 +837,7 @@ manip_factor(const Expr& e, bool input) {
 	    argument[i]
 	      = simplify_expanded_ex_for_output(factor_e_rewritten.arg(i)
 						.expand(), input);
-	  factor_function *= apply(factor_e_rewritten.functor(), argument);
+	  factor_function *= PURRS::apply(factor_e_rewritten.functor(), argument);
 	}
       else
 	factor_no_function *= factor_e_rewritten;
@@ -846,7 +846,7 @@ manip_factor(const Expr& e, bool input) {
   }
   else if (e_rewritten.is_a_function()) {
     if (e_rewritten.nops() == 1)
-      e_rewritten = apply(e_rewritten.functor(),
+      e_rewritten = PURRS::apply(e_rewritten.functor(),
 			  simplify_expanded_ex_for_output(e_rewritten.arg(0)
 							  .expand(), input));
     else {
@@ -855,7 +855,7 @@ manip_factor(const Expr& e, bool input) {
       for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = simplify_expanded_ex_for_output(e_rewritten.arg(i)
 						      .expand(), input);
-      e_rewritten = apply(e_rewritten.functor(), argument);
+      e_rewritten = PURRS::apply(e_rewritten.functor(), argument);
     }
   }
   D_MSGVAR("e_rewritten dopo function: ", e_rewritten);
@@ -949,14 +949,14 @@ simplify_expanded_ex_for_input(const Expr& e, bool input) {
     return simplify_powers(e, input);
   else if (e.is_a_function()) {
     if (e.nops() == 1)
-      return apply(e.functor(),
+      return PURRS::apply(e.functor(),
 		   simplify_expanded_ex_for_input(e.arg(0).expand(), input));
     else {
       unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = simplify_expanded_ex_for_input(e.arg(i).expand(), input);
-      return apply(e.functor(), argument);
+      return PURRS::apply(e.functor(), argument);
     }
   }
   else
@@ -1015,7 +1015,7 @@ simplify_expanded_ex_for_output(const Expr& e, bool input) {
   }
   else if (e.is_a_function()) {
     if (e.nops() == 1)
-      return apply(e.functor(),
+      return PURRS::apply(e.functor(),
 		   simplify_expanded_ex_for_output(e.arg(0).expand(), input));
     else {
       unsigned int num_argument = e.nops();
@@ -1023,7 +1023,7 @@ simplify_expanded_ex_for_output(const Expr& e, bool input) {
       for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = simplify_expanded_ex_for_output(e.arg(i).expand(),
 						      input);
-      return apply(e.functor(), argument);
+      return PURRS::apply(e.functor(), argument);
     }
   }
   else
@@ -1127,14 +1127,14 @@ rewrite_factorials_and_exponentials(const Expr& e) {
       return decompose_factorial(e);
     else
       if (e.nops() == 1)
-	return apply(e.functor(),
+	return PURRS::apply(e.functor(),
 		     rewrite_factorials_and_exponentials(e.arg(0)));
       else {
 	unsigned int num_argument = e.nops();
 	std::vector<Expr> argument(num_argument);
 	for (unsigned int i = 0; i < num_argument; ++i)
 	  argument[i] = rewrite_factorials_and_exponentials(e.arg(i));
-	return apply(e.functor(), argument);
+	return PURRS::apply(e.functor(), argument);
       }
   else
     return e;
@@ -1195,14 +1195,14 @@ rewrite_binomials(const Expr& e) {
     }
     else
       if (e.nops() == 1)
-	return apply(e.functor(),
+	return PURRS::apply(e.functor(),
 		     rewrite_binomials(e.arg(0)));
       else {
 	unsigned int num_argument = e.nops();
 	std::vector<Expr> argument(num_argument);
 	for (unsigned int i = 0; i < num_argument; ++i)
 	  argument[i] = rewrite_binomials(e.arg(i));
-	return apply(e.functor(), argument);
+	return PURRS::apply(e.functor(), argument);
       }
   else
     return e;
@@ -1626,13 +1626,13 @@ simplify_logarithm_in_expanded_ex(const Expr& e) {
     if (e.is_the_log_function())
       return apply_elementary_prop(e);
     else if (e.nops() == 1)
-      return apply(e.functor(), simplify_logarithm_in_expanded_ex(e.arg(0)));
+      return PURRS::apply(e.functor(), simplify_logarithm_in_expanded_ex(e.arg(0)));
     else {
       unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = simplify_logarithm_in_expanded_ex(e.arg(i));
-      return apply(e.functor(), argument);
+      return PURRS::apply(e.functor(), argument);
     }
   }
   else 
@@ -1823,7 +1823,7 @@ simplify_sum_in_expanded_ex(const Expr& e,
 	       simplify_sum_in_expanded_ex(e.arg(1), simplification));
   else if (e.is_a_function()) {
     if (e.nops() == 1)
-      return apply(e.functor(),
+      return PURRS::apply(e.functor(),
 		   simplify_sum_in_expanded_ex(e.arg(0), simplification));
     else {
       if (e.is_the_sum_function()) {
@@ -1856,7 +1856,7 @@ simplify_sum_in_expanded_ex(const Expr& e,
       std::vector<Expr> argument(num_argument);
       for (unsigned int i = 0; i < num_argument; ++i)
       argument[i] = simplify_sum_in_expanded_ex(e.arg(i), simplification);
-      return apply(e.functor(), argument);
+      return PURRS::apply(e.functor(), argument);
     }
   }
   else 

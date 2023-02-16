@@ -773,13 +773,13 @@ PURRS::Expr::substitute(const Expr& s, const Expr& r) const {
     return pwr(e.arg(0).substitute(s, r), e.arg(1).substitute(s, r));
   else if (e.is_a_function())
     if (e.nops() == 1)
-      return apply(e.functor(), e.arg(0).substitute(s, r));
+      return PURRS::apply(e.functor(), e.arg(0).substitute(s, r));
     else {
       unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned int j = 0; j < num_argument; ++j)
 	argument[j] = e.arg(j).substitute(s, r);
-      return apply(e.functor(), argument);
+      return PURRS::apply(e.functor(), argument);
     }
   else if (e.is_a_Expr_List()) {
     unsigned int num_arguments = e.nops();

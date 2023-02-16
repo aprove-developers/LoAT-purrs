@@ -136,14 +136,14 @@ rewrite_factor(const Expr& e, const Symbol& r, unsigned int gcd_among_decrements
       return x(Recurrence::n + decrement / gcd_among_decrements);
     }
     else if (e.nops() == 1)
-      return apply(e.functor(),
+      return PURRS::apply(e.functor(),
 		   rewrite_factor(e.arg(0), r, gcd_among_decrements));
     else {
       unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = rewrite_factor(e.arg(i), r, gcd_among_decrements);
-      return apply(e.functor(), argument);
+      return PURRS::apply(e.functor(), argument);
     }
   else if (e == Recurrence::n)
     return gcd_among_decrements * Recurrence::n + r;
@@ -716,7 +716,7 @@ PURRS::come_back_to_original_variable(const Expr& e, const Symbol& r,
       return x(gcd_among_decrements * arg + m);
     }
     else if (e.nops() == 1)
-      return apply(e.functor(),
+      return PURRS::apply(e.functor(),
 		   come_back_to_original_variable(e.arg(0), r,
 						  m, gcd_among_decrements));
     else {
@@ -725,7 +725,7 @@ PURRS::come_back_to_original_variable(const Expr& e, const Symbol& r,
       for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = come_back_to_original_variable(e.arg(i), r,
 						     m, gcd_among_decrements);
-      return apply(e.functor(), argument);
+      return PURRS::apply(e.functor(), argument);
     }
   else if (e == Recurrence::n)
     return Number(1, gcd_among_decrements) * (Recurrence::n - m);

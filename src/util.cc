@@ -635,14 +635,14 @@ PURRS::substitute_x_function(const Expr& e, const Expr& k,
 				 "substitute_x_function().");
       }
     else if (e.nops() == 1)
-      return apply(e.functor(), substitute_x_function(e.arg(0), k,
+      return PURRS::apply(e.functor(), substitute_x_function(e.arg(0), k,
 						      mode_subs_x));
     else {
       unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = substitute_x_function(e.arg(i), k, mode_subs_x);
-      return apply(e.functor(), argument);
+      return PURRS::apply(e.functor(), argument);
     }
   }
   else

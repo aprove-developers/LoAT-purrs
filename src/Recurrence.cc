@@ -657,13 +657,13 @@ increase_argument_x_function(const Expr& e, unsigned int num) {
     if (e.is_the_x_function())
       return x(e.arg(0)+num);
     else if (e.nops() == 1)
-      return apply(e.functor(), increase_argument_x_function(e.arg(0), num));
+      return PURRS::apply(e.functor(), increase_argument_x_function(e.arg(0), num));
     else {
       unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned int j = 0; j < num_argument; ++j)
 	argument[j] = increase_argument_x_function(e.arg(j), num);
-      return apply(e.functor(), argument);
+      return PURRS::apply(e.functor(), argument);
     }
   }
   else

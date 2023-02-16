@@ -155,16 +155,16 @@ change_variable_function_x(const Expr& e, const Expr& s, const Expr& r) {
   else if (e.is_a_function())
     if (e.nops() == 1)
       if (e.is_the_x_function())
-	return apply(e.functor(), e.arg(0).substitute(s, r));
+	return PURRS::apply(e.functor(), e.arg(0).substitute(s, r));
       else
-	return apply(e.functor(),
+	return PURRS::apply(e.functor(),
 		     change_variable_function_x(e.arg(0), s, r));
     else {
       unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned int j = 0; j < num_argument; ++j)
 	argument[j] = change_variable_function_x(e.arg(j), s, r);
-      return apply(e.functor(), argument);
+      return PURRS::apply(e.functor(), argument);
     }
     else
       return e;

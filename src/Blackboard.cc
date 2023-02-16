@@ -60,13 +60,13 @@ PURRS::Blackboard::rewrite(const Expr& e) const {
     e_rewritten = pwr(rewrite(e.arg(0)), rewrite(e.arg(1)));
   else if (e.is_a_function()) {
     if (e.nops() == 1)
-      e_rewritten = apply(e.functor(), rewrite(e.arg(0)));
+      e_rewritten = PURRS::apply(e.functor(), rewrite(e.arg(0)));
     else {
       unsigned int num_argument = e.nops();
       std::vector<Expr> argument(num_argument);
       for (unsigned int i = 0; i < num_argument; ++i)
 	argument[i] = rewrite(e.arg(i));
-      e_rewritten = apply(e.functor(), argument);
+      e_rewritten = PURRS::apply(e.functor(), argument);
     }
   }
   else if (e.is_a_symbol()) {

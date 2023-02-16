@@ -174,7 +174,7 @@ translate(const Expr& e, Expr& num_factors, Expr& not_num_factors,
 				 num_factors_arg, not_num_factors_arg);
 	argument[i] = num_factors_arg * not_num_factors_arg;
       }
-      const Expr& tmp = apply(e.functor(), argument);
+      const Expr& tmp = PURRS::apply(e.functor(), argument);
       return identificateur(blackboard.find_symbol(tmp).get_name());
     }
   }
@@ -251,7 +251,7 @@ translate(const Expr& e, Blackboard& blackboard) {
 				 num_factors_arg, not_num_factors_arg);
 	argument[i] = num_factors_arg * not_num_factors_arg;
       }
-      const Expr& tmp = apply(e.functor(), argument);
+      const Expr& tmp = PURRS::apply(e.functor(), argument);
       return identificateur(blackboard.find_symbol(tmp).get_name());
     }
   }
@@ -318,7 +318,7 @@ translate(const gen& e_giac) {
     else {
       Functor f = find_functor(e_giac._SYMBptr->sommet.ptr()->s);
       Expr arg = translate(e_giac._SYMBptr->feuille);
-      return apply(f, arg); 
+      return PURRS::apply(f, arg); 
     }
   }
 

@@ -260,7 +260,7 @@ substitute_pwr_diff_symbols(const Expr& e,
   }
   else if (e.is_a_function())
     if (e.nops() == 1)
-      return apply(e.functor(), substitute_pwr_diff_symbols(e.arg(0),
+      return PURRS::apply(e.functor(), substitute_pwr_diff_symbols(e.arg(0),
 							    alpha, lambda,
 							    subs_to_diff));
     else {
@@ -269,7 +269,7 @@ substitute_pwr_diff_symbols(const Expr& e,
       for (unsigned int j = 0; j < num_argument; ++j)
 	argument[j] = substitute_pwr_diff_symbols(e.arg(j), alpha, lambda,
 						  subs_to_diff);
-      return apply(e.functor(), argument);
+      return PURRS::apply(e.functor(), argument);
     }
   else
     e_substituted = e;
