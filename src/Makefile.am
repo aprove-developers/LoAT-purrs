@@ -62,7 +62,6 @@ size_norm.hh \
 size_norm_impl.hh \
 alg_eq_solver.hh \
 poly_factor.hh \
-zeilberger.hh \
 gosper.hh \
 simplify.hh \
 factorize.hh \
@@ -106,7 +105,6 @@ Symbol.cc \
 alg_eq_solver.cc \
 size_norm.cc \
 globals.cc \
-zeilberger.cc \
 gosper.cc \
 factorize.cc \
 factorize_giac.cc \
