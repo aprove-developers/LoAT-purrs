@@ -65,7 +65,6 @@ poly_factor.hh \
 gosper.hh \
 simplify.hh \
 factorize.hh \
-factorize_giac.hh \
 compute_prod.hh \
 ep_decomp.hh \
 fact_decomp.hh \
@@ -107,7 +106,6 @@ size_norm.cc \
 globals.cc \
 gosper.cc \
 factorize.cc \
-factorize_giac.cc \
 poly_factor.cc \
 finite_order.cc \
 functional_equation.cc \
